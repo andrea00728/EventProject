@@ -14,33 +14,11 @@ import Test from "../layouts/test";
 import Connnexiongoogle from "../services/connexiongoogl";
 import Evenemenpage from "../pages/Evenementpage";
 const router=createBrowserRouter([
-    //  {
-    //     path:"/",
-    //     element:<Test/>,
-    //     children:[
-           
-    //         {
-    //             path:"/",
-    //             element:<Navigate to="/accueil"/>
-    //         },
-    //         {
-    //             path:"/accueil",
-    //             element:<Accueil/>
-    //         },
-    //         // {
-    //         //     path:"/evenement",
-    //         //     element:<Evenement/>
-    //         // },
-    //         // {
-    //         //     path:"/apropos",
-    //         //     element:<Apropos/>
-    //         // }
-    //     ]
-    // },
-    {
+     {
         path:"/",
-        element:<DefaultLayout/>,
+        element:<Test/>,
         children:[
+           
             {
                 path:"/",
                 element:<Navigate to="/accueil"/>
@@ -49,16 +27,38 @@ const router=createBrowserRouter([
                 path:"/accueil",
                 element:<Accueil/>
             },
-            {
-                path:"/evenement",
-                element:<Evenemenpage/>
-            },
+            // {
+            //     path:"/evenement",
+            //     element:<Evenement/>
+            // },
             // {
             //     path:"/apropos",
             //     element:<Apropos/>
             // }
         ]
     },
+    // {
+    //     path:"/",
+    //     element:<DefaultLayout/>,
+    //     children:[
+    //         {
+    //             path:"/",
+    //             element:<Navigate to="/accueil"/>
+    //         },
+    //         {
+    //             path:"/accueil",
+    //             element:<Accueil/>
+    //         },
+    //         {
+    //             path:"/evenement",
+    //             element:<Evenemenpage/>
+    //         },
+    //         // {
+    //         //     path:"/apropos",
+    //         //     element:<Apropos/>
+    //         // }
+    //     ]
+    // },
     //  {
     //     path:"/",
     //     element:<AdminLayout/>,

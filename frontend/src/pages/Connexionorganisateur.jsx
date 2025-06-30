@@ -1,6 +1,5 @@
 export default function Connexionorganisateur() {
-    return
-    (
+    return (
         <>
             <div className='min-h-screen flex justify-center items-center py-10 px-4'>
                 <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md mt-20">
