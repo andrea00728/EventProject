@@ -1,10 +1,6 @@
-/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-// import { AuthModule } from './modules/auth/auth.module';
-// import { UsersModule } from './modules/users/users.module';
-// import { User } from './entities/user.entity';
 import { ProfileController } from './controllers/profile/profile.controller';
 import { TableModule } from './modules/table/table.module';
 import { InviteModule } from './modules/invite/invite.module';
@@ -19,21 +15,28 @@ import { TableEvent } from './entities/Table';
 import { EvenementModule } from './modules/evenement/evenement.module';
 import { AuthModule } from './Authentication/auth.module';
 import { User } from './Authentication/entities/auth.entity';
+import { GeminiModule } from './modules/gemini/gemini.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env'], // Spécifie le fichier .env (optionnel, par défaut .env)
+      envFilePath: ['.env'],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const dbHost = configService.get<string>('DB_HOST');
-        const dbPort = configService.get<number>('DB_PORT');
+        const dbPort = parseInt(configService.get<string>('DB_PORT') || '5432', 10);
         const dbUsername = configService.get<string>('DB_USERNAME');
         const dbPassword = configService.get<string>('DB_PASSWORD');
         const dbDatabase = configService.get<string>('DB_DATABASE');
+
+        console.log('DB_HOST:', dbHost);
+        console.log('DB_PORT:', dbPort);
+        console.log('DB_USERNAME:', dbUsername);
+        console.log('DB_PASSWORD:', dbPassword);
+        console.log('DB_DATABASE:', dbDatabase);
 
         if (!dbHost || !dbPort || !dbUsername || !dbPassword || !dbDatabase) {
           throw new Error('Les variables d\'environnement de la base de données sont manquantes');
@@ -46,20 +49,19 @@ import { User } from './Authentication/entities/auth.entity';
           username: dbUsername,
           password: dbPassword,
           database: dbDatabase,
-          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent],
-     
-          synchronize: true,
+          entities: [User, Evenement, Localisation, Invitation, Invite, Salle, TableEvent],
+          synchronize: true, // À désactiver en production
         };
       },
       inject: [ConfigService],
     }),
     AuthModule,
-    // UsersModule,
     TableModule,
     InviteModule,
     InvitationModule,
     EvenementModule,
-    LocationModule
+    LocationModule,
+    GeminiModule,
   ],
   controllers: [ProfileController],
 })
