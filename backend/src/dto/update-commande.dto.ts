@@ -1,9 +1,8 @@
 import { CommandeStatus } from '../entities/commande.entity';
 
-export class CreateCommandeDto {
-  tableId: number;
-  eventId: number;
-  total: number;
+export class UpdateCommandeDto {
+  tableId?: number;
+  total?: number;
   statut?: CommandeStatus;
   items?: {
     nom: string;

@@ -1,28 +1,44 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
-import { MenuItem } from './menu-item.entity';
-
-export type CommandeStatus = 'en_attente' | 'paye' | 'annule';
-
-@Entity()
-export class Commande {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  eventId: number;
-
-  @Column()
-  tableId: number;
-
-  @OneToMany(() => MenuItem, item => item.commande, { cascade: true, eager: true })
-  items: MenuItem[];
-
-  @Column('decimal')
-  total: number;
-
-  @Column({ type: 'enum', enum: ['en_attente', 'paye', 'annule'], default: 'en_attente' })
-  statut: CommandeStatus;
-
-  @CreateDateColumn()
-  createdAt: Date;
-}
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    OneToMany,
+    CreateDateColumn,
+  } from 'typeorm';
+  import { MenuItem } from './menu-item.entity';
+  
+  export enum CommandeStatus {
+    EN_ATTENTE = 'en_attente',
+    CONFIRMEE = 'confirmee',
+    ANNULEE = 'annulee',
+    PENDING = "PENDING",
+  }
+  
+  @Entity()
+  export class Commande {
+    @PrimaryGeneratedColumn()
+    id: number;
+  
+    @Column()
+    tableId: number;
+  
+    @Column()
+    eventId: number;
+  
+    @Column({ type: 'enum', enum: CommandeStatus, default: CommandeStatus.EN_ATTENTE })
+    statut: CommandeStatus;
+  
+    @Column('decimal', { precision: 10, scale: 2, default: 0 })
+    total: number;
+  
+    @OneToMany(() => MenuItem, (item) => item.commande, {
+      cascade: true,
+      eager: true, // Charge les items automatiquement (optionnel)
+      onDelete: 'CASCADE',
+    })
+    items: MenuItem[];
+  
+    @CreateDateColumn()
+    createdAt: Date;
+  }
+  

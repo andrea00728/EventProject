@@ -1,42 +1,34 @@
-import { Body, Controller, Get, NotFoundException, Param, ParseIntPipe, Post } from '@nestjs/common';
-import { CreateCommandeDto } from 'src/dto/create-commande.dto';
+import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
 import { CommandeService } from 'src/services/commande/commande.service';
-import { QrCodeService } from 'src/services/qrcode/qrcode.service';
+import { CreateCommandeDto } from 'src/dto/create-commande.dto';
+import { UpdateCommandeDto } from 'src/dto/update-commande.dto';
 
-@Controller('commande')
+@Controller('commandes')  // <-- La route de base doit être 'commandes'
 export class CommandeController {
-  constructor(
-    private readonly qrCodeService: QrCodeService,
-    private readonly commandeService: CommandeService,
-  ) {}
-
-  @Get(':id/qrcode')
-  async getQrCode(@Param('id', ParseIntPipe) id: number) {
-    const commande = await this.commandeService.findOne(id);
-
-    if (!commande) {
-      throw new NotFoundException(`Commande ${id} introuvable`);
-    }
-
-    const resume = commande.items
-      .map(i => `${i.quantite} x ${i.nom} (${i.prix}€)`)
-      .join(', ');
-
-    const qrData = JSON.stringify({
-      id: commande.id,
-      tableId: commande.tableId,
-      eventId: commande.eventId,
-      total: commande.total,
-      resume: resume,
-    });
-    
-
-    const qrCode = await this.qrCodeService.generate(qrData);
-    return { qrCode };
-  }
+  constructor(private readonly commandeService: CommandeService) {}
 
   @Post()
-  async createCommande(@Body() createCommandeDto: CreateCommandeDto) {
-    return this.commandeService.create(createCommandeDto);
+  createCommande(@Body() dto: CreateCommandeDto) {
+    return this.commandeService.create(dto);
+  }
+
+  @Get()
+  findAll() {
+    return this.commandeService.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.commandeService.findOne(+id);
+  }
+
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateCommandeDto) {
+    return this.commandeService.update(+id, dto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.commandeService.remove(+id);
   }
 }
