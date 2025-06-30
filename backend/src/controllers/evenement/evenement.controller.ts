@@ -1,18 +1,37 @@
 // src/event/event.controller.ts
-import { Controller, Post, Body, Get, Param, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, BadRequestException, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { CreateEventDto } from 'src/dto/CreateEvenementDTO';
+import { Evenement } from 'src/entities/Evenement';
 import { EvenementService } from 'src/services/evenement/evenement.service';
 
 @Controller('evenements')
 export class EvenementController {
   constructor(private readonly evenementService: EvenementService) {}
 
-  @Post()
-  async create(@Body() dto: CreateEventDto) {
-    if (!dto.nom || !dto.type || !dto.theme || !dto.date || !dto.locationId || !dto.salleId) {
-      throw new BadRequestException('Tous les champs sont requis');
+  
+    //creation d'evenement
+   @Post()
+  @UseGuards(AuthGuard('jwt'))
+  async create(@Body() dto: CreateEventDto, @Req() req: any): Promise<Evenement> {
+    const userIdFromToken = req.user?.sub;
+    if (!userIdFromToken) {
+      throw new UnauthorizedException('Utilisateur non authentifié');
     }
+    dto.utilisateur_id=userIdFromToken;
     return this.evenementService.create(dto);
+  }
+
+  //recuperation par compte connecte
+   @Get('/me')
+  @UseGuards(AuthGuard('jwt'))
+  async findUserEvenement(@Req() req: any): Promise<Evenement[]> {
+    const userIdFromToken = req.user?.sub;
+    if (!userIdFromToken) {
+      throw new UnauthorizedException('Utilisateur non authentifié');
+    }
+    console.log('ID utilisateur récupéré du token:', userIdFromToken);
+    return this.evenementService.findByUser(userIdFromToken);
   }
 
   @Get()
@@ -25,3 +44,5 @@ export class EvenementController {
     return this.evenementService.findOne(+id);
   }
 }
+
+

@@ -211,4 +211,13 @@ export class GuestService {
     }
     return invite;
   }
+
+
+  async findLastEventByUser(userId: string): Promise<Evenement | null> {
+  return this.evenementRepository.findOne({
+    where: { user: { id: userId } },
+    order: { id: 'DESC' },
+  });
+}
+
 }

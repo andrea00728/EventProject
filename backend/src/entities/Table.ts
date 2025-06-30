@@ -1,5 +1,4 @@
-// src/entities/Table.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { Invite } from './Invite';
 import { Evenement } from './Evenement';
 
@@ -18,8 +17,11 @@ export class TableEvent {
   placeReserve: number;
 
   @ManyToOne(() => Evenement, (evenement) => evenement.tables)
+  @JoinColumn({name:'eventId'})
   event: Evenement;
 
   @OneToMany(() => Invite, (invite) => invite.table)
   guests: Invite[];
+
+
 }

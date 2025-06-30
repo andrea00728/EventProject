@@ -5,6 +5,7 @@ import { Evenement } from 'src/entities/Evenement';
 import { Repository } from 'typeorm';
 import { LocationService } from '../localisation-service/localisation-service.service';
 import { CreateEventDto } from 'src/dto/CreateEvenementDTO';
+import { User } from 'src/Authentication/entities/auth.entity';
 
 @Injectable()
 export class EvenementService {
@@ -24,15 +25,19 @@ export class EvenementService {
     if (salle.location.id !== location.id) {
       throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
     }
+   const user = new User();
+user.id = dto.utilisateur_id;
 
-    const evenement = this.evenementRepository.create({
-      nom: dto.nom,
-      type: dto.type,
-      theme: dto.theme,
-      date: dto.date,
-      location,
-      salle,
-    });
+const evenement = this.evenementRepository.create({
+  nom: dto.nom,
+  type: dto.type,
+  theme: dto.theme,
+  date: dto.date,
+  location,
+  salle,
+  user,  // relation user
+});
+
     return this.evenementRepository.save(evenement);
   }
 
@@ -50,4 +55,22 @@ export class EvenementService {
     }
     return evenement;
   }
+  async findByUser(utilisateur_id: string): Promise<Evenement[]> {
+  console.log('utilisateur_id reçu :', utilisateur_id);
+  return this.evenementRepository.find({
+    where: { 
+      user:{id:utilisateur_id}
+     },
+    relations: ['user'], 
+  });
+}
+
+//recuperation dernier evenement creer
+async findLastEventByUserId(userId: string): Promise<Evenement | null> {
+  return this.evenementRepository.findOne({
+    where: { user: { id: userId } },
+    order: { id: 'DESC' },
+  });
+}
+
 }

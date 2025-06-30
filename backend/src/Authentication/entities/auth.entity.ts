@@ -22,4 +22,7 @@ export class User {
   
   @ManyToMany(()=>Evenement,evenement=>evenement.user)
   evenement:Evenement[];
+
 }
+
+
