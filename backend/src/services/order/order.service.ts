@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DeepPartial } from 'typeorm';
 import { Order } from '../../entities/order.entity';
 import { OrderItem } from '../../entities/order-item.entity';
 import { TableEvent } from '../../entities/Table';
@@ -39,16 +39,19 @@ export class OrderService {
     const orderItems = await Promise.all(
       items.map(async (item) => {
         const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
-        if (!menuItem) {
-          throw new NotFoundException(`Menu item ${item.menuItemId} not found`);
-        }
+        if (!menuItem) throw new NotFoundException(`Menu item ${item.menuItemId} not found`);
         const subtotal = menuItem.price * item.quantity;
 
         // Réduire le stock
         menuItem.stock -= item.quantity;
         await this.menuItemRepository.save(menuItem);
 
-        return this.orderItemRepository.create({ order: savedOrder, menuItem, quantity: item.quantity, subtotal });
+        return this.orderItemRepository.create({
+          order: savedOrder,
+          menuItem: menuItem as MenuItem,
+          quantity: item.quantity,
+          subtotal,
+        } as DeepPartial<OrderItem>);
       }),
     );
 
@@ -63,8 +66,17 @@ export class OrderService {
     return this.orderRepository.save(order);
   }
 
-  async findOrdersByTable(tableId: number): Promise<Order[]> {
-    return this.orderRepository.find({ where: { table: { id: tableId } }, relations: ['items', 'items.menuItem'] });
+  async findOrdersByTable(tableId: number): Promise<(Order & { total: number })[]> {
+    const orders = await this.orderRepository.find({ where: { table: { id: tableId } }, relations: ['items', 'items.menuItem'] });
+    return Promise.all(
+      orders.map(async (order) => {
+        const result = await this.orderRepository.query(
+          `SELECT total FROM "order" WHERE id = $1`,
+          [order.id],
+        );
+        return { ...order, total: parseFloat(result[0].total) };
+      }),
+    );
   }
 
   async cancelOrder(orderId: number): Promise<void> {
