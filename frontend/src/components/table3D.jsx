@@ -4,66 +4,63 @@ import { OrbitControls } from "@react-three/drei";
 import TableModel from "./TableModel";
 
 export default function Table3DScene({ tables, eventId }) {
-  if (!eventId) {
-    return <p>Aucun événement fourni.</p>;
-  }
+  if (!eventId) return <p>Aucun événement fourni.</p>;
 
-  // 🔄 Calcul des positions avec 3 rangées
-  const rows = 3;
-  const spacingX = 8; // Espace horizontal entre colonnes
-  const spacingZ = 6; // Espace vertical entre rangées
+ 
+  const rows = 4;
+  const spacingX = 7;
+  const spacingZ = 8;
   const cols = Math.ceil(tables.length / rows);
 
   const tablePositions = tables.map((_, i) => {
-    const row = i % rows; // 0, 1, 2
+    const row = i % rows;
     const col = Math.floor(i / rows);
-    const x = col * spacingX - ((cols - 1) * spacingX) / 2; // Centrer horizontalement
-    const z = row * spacingZ - ((rows - 1) * spacingZ) / 2; // Centrer verticalement
-    return [x, 0, z];
+    const x = col * spacingX - ((cols - 0) * spacingX) / 2;
+    const z = row * spacingZ - ((rows - 1) * spacingZ) / 2;
+    return [x, 1, z];
   });
 
-  const sceneWidth = cols * spacingX + spacingX;
-  const sceneDepth = rows * spacingZ + spacingZ;
-  const wallHeight = 5; 
+  const sceneWidth = cols * spacingX + spacingX; 
+  const sceneDepth = rows * spacingZ + spacingZ; 
+  const wallHeight = 1;
 
   return (
     <>
       <h2>Tables pour l'événement {eventId}</h2>
-      <div className="w-[35cm] h-[500px]">
-        <Canvas camera={{ position: [0, 5, 15], fov: 20 }}> 
+      <div className="w-[35cm] h-[500px] ">
+        <Canvas camera={{ position: [80, 40, 1], fov: 20 }}>
+          {/* Lumières */}
           <ambientLight intensity={0.5} />
-          <directionalLight position={[5, 10, 5]} />
-          <OrbitControls
-          
-           enableRotate={false}
-    enablePan={false}
-    enableZoom={true}
-          />
+          <directionalLight position={[0, 40, 50]} />
 
-          {/* Floor */}
-          <mesh rotation={[-Math.PI / 2,0,0]} position={[2, -0.1, 0]}>
+          {/* Contrôles caméra */}
+          <OrbitControls enableRotate={true} enablePan={true} enableZoom={true} />
+
+          {/* Sol */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]}>
             <planeGeometry args={[sceneWidth, sceneDepth]} />
-            <meshStandardMaterial color="#FFE3BB" /> {/* Light beige/cream floor */}
+            <meshStandardMaterial color="#FFE3BB" />
           </mesh>
 
-          {/* Back Wall */}
-          <mesh position={[0, wallHeight / 1, -sceneDepth / 1]}>
+          {/* /* Mur arrière */}
+          <mesh position={[0, wallHeight / 2, -sceneDepth / 2]}>
             <boxGeometry args={[sceneWidth, wallHeight, 0.5]} />
-            <meshStandardMaterial color="#EAA64D" /> {/* Darker wall color for contrast */}
+            <meshStandardMaterial color="#EAA64D" />
+          </mesh> 
+
+          {/* {/* Mur gauche */}
+          <mesh position={[-sceneWidth / 2, wallHeight / 2, 0]}>
+            <boxGeometry args={[0.5, wallHeight, sceneDepth]} />
+            <meshStandardMaterial color="#EAA64D" />
+          </mesh> 
+
+          {/* Mur droit */}
+          <mesh position={[sceneWidth / 2, wallHeight / 2, 0]}>
+            <boxGeometry args={[0.5, wallHeight, sceneDepth]} />
+            <meshStandardMaterial color="#EAA64D" />
           </mesh>
 
-          {/* Left Wall */}
-          <mesh position={[-sceneWidth / 1, wallHeight / 1, 0]}>
-            <boxGeometry args={[0, wallHeight, sceneDepth]} />
-            <meshStandardMaterial color="#303030" />
-          </mesh>
-
-          {/* Right Wall */}
-          <mesh position={[sceneWidth / 1, wallHeight / 1, 0]}>
-            <boxGeometry args={[0.0, wallHeight, sceneDepth]} />
-            <meshStandardMaterial color="#303030" />
-          </mesh>
-
+          {/* Tables */}
           {tables.map((table, i) => (
             <TableModel
               key={table.id}

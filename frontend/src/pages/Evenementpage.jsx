@@ -20,8 +20,23 @@ export default function Evenemenpage() {
       <div>
         <Stepper currentStep={currentStep} />
         {currentStep === 1 && <Evenementform onNext={handleNext} />}
-        {currentStep === 2 && <Table eventId={evenementData.eventId} />}
-        {currentStep === 3 && <Inviteform eventId={evenementData.eventId} />}
+        {/* {currentStep === 2 && <Table eventId={evenementData.eventId} />} */}
+
+        {currentStep === 2 && (
+          <Table
+            eventId={evenementData.eventId}
+            onNext={() => setCurrentStep(3)} 
+            onBack={() => setCurrentStep(1)} 
+          />
+        )}
+        {/* {currentStep === 3 && <Inviteform eventId={evenementData.eventId} />} */}
+        {currentStep === 3 && (
+        <Inviteform
+          eventId={evenementData.eventId}
+          onBack={() => setCurrentStep(2)}
+        />
+)}
+
       </div>
     </div>
   );

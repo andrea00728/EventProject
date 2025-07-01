@@ -8,7 +8,7 @@ export class TableEvent {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({unique:true})
+  @Column()
   numero: number;
 
   @Column()
