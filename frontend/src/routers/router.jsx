@@ -14,29 +14,29 @@ import Test from "../layouts/test";
 import Connnexiongoogle from "../services/connexiongoogl";
 import Evenemenpage from "../pages/Evenementpage";
 const router=createBrowserRouter([
-    //  {
-    //     path:"/",
-    //     element:<Test/>,
-    //     children:[
+     {
+        path:"/",
+        element:<Test/>,
+        children:[
            
-    //         {
-    //             path:"/",
-    //             element:<Navigate to="/accueil"/>
-    //         },
-    //         {
-    //             path:"/accueil",
-    //             element:<Accueil/>
-    //         },
-    //         // {
-    //         //     path:"/evenement",
-    //         //     element:<Evenement/>
-    //         // },
-    //         // {
-    //         //     path:"/apropos",
-    //         //     element:<Apropos/>
-    //         // }
-    //     ]
-    // },
+            // {
+            //     path:"/",
+            //     element:<Navigate to="/accueil"/>
+            // },
+            // {
+            //     path:"/accueil",
+            //     element:<Accueil/>
+            // },
+            // {
+            //     path:"/evenement",
+            //     element:<Evenement/>
+            // },
+            // {
+            //     path:"/apropos",
+            //     element:<Apropos/>
+            // }
+        ]
+    },
     {
         path:"/",
         element:<DefaultLayout/>,
@@ -72,32 +72,32 @@ const router=createBrowserRouter([
     //         // },
     //     ]
     // },
-    {
-        path:"/",
-        element:<GuestLayout/>,
-        children:[
-            {
-                path:"/",
-                element:<Navigate to="/pagepublic"/>
-            },
-            {
-                path:"/pagepublic",
-                element:<Pagepublic/>
-            },
-            {
-                path:"/connexion",
-                element:<Connexionorganisateur/>
-            },
-            {
-                path:"/callback",
-                element:<Connnexiongoogle/>
-            },
-            {
-                path:"/inscription",
-                element:<Inscription/>
-            }
-        ]
-    },
+    // {
+    //     path:"/",
+    //     element:<GuestLayout/>,
+    //     children:[
+    //         {
+    //             path:"/",
+    //             element:<Navigate to="/pagepublic"/>
+    //         },
+    //         {
+    //             path:"/pagepublic",
+    //             element:<Pagepublic/>
+    //         },
+    //         {
+    //             path:"/connexion",
+    //             element:<Connexionorganisateur/>
+    //         },
+    //         {
+    //             path:"/callback",
+    //             element:<Connnexiongoogle/>
+    //         },
+    //         {
+    //             path:"/inscription",
+    //             element:<Inscription/>
+    //         }
+    //     ]
+    // },
     {
         path:"*",
         element:<Notfound/>

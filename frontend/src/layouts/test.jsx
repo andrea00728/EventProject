@@ -1,10 +1,10 @@
 import React from 'react'
-import Accueil from '../pages/Accueil'
+import App from '../pages/footer'
 
 export default function test() {
   return (
     <div>
-        <Accueil/>
+       <App/>
     </div>
   )
 }
