@@ -2,7 +2,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Evenement } from 'src/entities/Evenement';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { LocationService } from '../localisation-service/localisation-service.service';
 import { CreateEventDto } from 'src/dto/CreateEvenementDTO';
 import { User } from 'src/Authentication/entities/auth.entity';
@@ -25,6 +25,25 @@ export class EvenementService {
     if (salle.location.id !== location.id) {
       throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
     }
+
+    const eventDate = new Date(dto.date);
+const startOfDay = new Date(eventDate);
+startOfDay.setHours(0, 0, 0, 0);
+
+const endOfDay = new Date(eventDate);
+endOfDay.setHours(23, 59, 59, 999);
+
+// Vérifier si la salle est déjà réservée ce jour-là
+const existingEvent = await this.evenementRepository.findOne({
+  where: {
+    salle: { id: dto.salleId },
+    date: Between(startOfDay, endOfDay),
+  },
+});
+
+if (existingEvent) {
+  throw new BadRequestException(`Cette salle est déjà réservée à cette date`);
+}
    const user = new User();
 user.id = dto.utilisateur_id;
 
@@ -41,6 +60,7 @@ const evenement = this.evenementRepository.create({
     return this.evenementRepository.save(evenement);
   }
 
+  
   async findAll(): Promise<Evenement[]> {
     return this.evenementRepository.find({ relations: ['location', 'salle', 'tables', 'invites'] });
   }

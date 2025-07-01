@@ -21,7 +21,7 @@ export class InvitationController {
     try {
       return await this.invitationService.createInvitation(dto);
     } catch (error) {
-      throw new HttpException(
+         throw new HttpException(
         'Erreur lors de la création ou de l’envoi des invitations',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );

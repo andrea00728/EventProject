@@ -11,14 +11,14 @@ export default function Profil() {
     if (user) {
       setUserName(user.name || "Utilisateur");
       setUserEmail(user.email || "email@example.com");
-      setUserPhoto(user.photo || "");
+      setUserPhoto(user.photo );
     }
   }, [user]);
   if (isLoading) return <p>Chargement...</p>;
   return (
     <div className="flex items-center gap-4">
       <img
-        src={userPhoto || ""}
+        src={userPhoto }
         alt="Profil"
         className="w-9 h-9 rounded-full object-cover"
       />

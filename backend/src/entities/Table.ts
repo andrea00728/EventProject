@@ -1,13 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, Unique } from 'typeorm';
 import { Invite } from './Invite';
 import { Evenement } from './Evenement';
 
+@Unique(['numero','event'])
 @Entity()
 export class TableEvent {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({unique:true})
   numero: number;
 
   @Column()
@@ -22,6 +23,5 @@ export class TableEvent {
 
   @OneToMany(() => Invite, (invite) => invite.table)
   guests: Invite[];
-
 
 }

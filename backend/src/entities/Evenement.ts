@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn,Unique } from 'typeorm';
 import { Localisation } from './Location';
 import { Salle } from './salle';
 import { TableEvent } from './Table';
@@ -6,7 +6,7 @@ import { Invite } from './Invite';
 import { User } from 'src/Authentication/entities/auth.entity';
 
 
-
+@Unique(['nom','user'])
 @Entity()
 export class Evenement {
   @PrimaryGeneratedColumn()

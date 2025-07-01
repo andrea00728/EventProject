@@ -4,7 +4,6 @@ import DefaultLayout from "../layouts/DefaultLayout";
 import GuestLayout from "../layouts/GuestLayout";
 import Accueil from "../pages/Accueil";
 import Evenement from "../pages/Evenement";
-// import Apropos from "../pages/Apropos";
 import Notfound from "../pages/Notofoundpage";
 import AdminLayout from "../layouts/AdminLayout";
 import Pagepublic from "../pages/Pagepublic";
@@ -13,6 +12,7 @@ import Inscription from "../pages/Inscription";
 import Test from "../layouts/test";
 import Connnexiongoogle from "../services/connexiongoogl";
 import Evenemenpage from "../pages/Evenementpage";
+import Apropos from "../pages/apropos";
 const router=createBrowserRouter([
     //  {
     //     path:"/",
@@ -53,10 +53,10 @@ const router=createBrowserRouter([
                 path:"/evenement",
                 element:<Evenemenpage/>
             },
-            // {
-            //     path:"/apropos",
-            //     element:<Apropos/>
-            // }
+            {
+                path:"/apropos",
+                element:<Apropos/>
+            }
         ]
     },
     //  {
