@@ -25,6 +25,9 @@ import { CommandeModule } from './modules/commande/commande.module';
 import { Commande } from './entities/commande.entity';
 import { MenuItem } from './entities/menu-item.entity';
 import { QrCodeModule } from './modules/qrcode/qrcode.module';
+import { MenuItemController } from './controllers/menu-item/menu-item.controller';
+import { MenuItemModule } from './modules/menu-item/menu-item.module';
+import { MenuItemService } from './services/menu-item/menu-item.service';
 
 @Module({
   imports: [
@@ -55,8 +58,9 @@ import { QrCodeModule } from './modules/qrcode/qrcode.module';
     GeminiModule,
     CommandeModule,
     QrCodeModule,
+    MenuItemModule,
   ],
-  controllers: [ProfileController, CommandeController, RestaurationController],
+  controllers: [ProfileController, CommandeController, RestaurationController, MenuItemController],
   providers: [
     // QrCodeService supprimé d'ici
     RestaurationService,
