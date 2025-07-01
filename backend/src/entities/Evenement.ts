@@ -8,6 +8,7 @@ import { User } from 'src/Authentication/entities/auth.entity';
 
 @Entity()
 export class Evenement {
+  [x: string]: any;
   @PrimaryGeneratedColumn()
   id: number;
 

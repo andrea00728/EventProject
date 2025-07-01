@@ -22,4 +22,5 @@ export class TableEvent {
 
   @OneToMany(() => Invite, (invite) => invite.table)
   guests: Invite[];
+    orders: any;
 }

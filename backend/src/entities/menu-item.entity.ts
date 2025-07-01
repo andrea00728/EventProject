@@ -1,11 +1,5 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { Commande } from './commande.entity';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Menu } from './menu.entity';
 
 @Entity()
 export class MenuItem {
@@ -13,33 +7,20 @@ export class MenuItem {
   id: number;
 
   @Column()
-  nom: string;
+  name: string;
 
-  @Column('decimal', { precision: 10, scale: 2 })
-  prix: number;
+  @Column()
+  description: string;
+
+  @Column('decimal')
+  price: number;
+
+  @Column()
+  category: string;
 
   @Column({ default: 0 })
   stock: number;
 
-  @Column({ nullable: true })
-  description: string;
-
-  @Column({ nullable: true })
-  photoUrl: string;
-
-  @Column({ nullable: true })
-  allergenes: string;
-
-  @Column()
-  eventId: number;
-
-  @Column()
-  categorieId: number;
-
-  @Column({ default: 0 })
-  quantite: number;
-
-  @ManyToOne(() => Commande, (commande) => commande.items, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'commandeId' })
-  commande: Commande;
+  @ManyToOne(() => Menu, (menu) => menu.items)
+  menu: Menu;
 }

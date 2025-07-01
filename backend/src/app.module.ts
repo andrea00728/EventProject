@@ -12,22 +12,17 @@ import { Invitation } from './entities/Invitation';
 import { Invite } from './entities/Invite';
 import { Salle } from './entities/salle';
 import { TableEvent } from './entities/Table';
+import { Menu } from './entities/menu.entity';
+import { MenuItem } from './entities/menu-item.entity';
+import { Order } from './entities/order.entity';
+import { OrderItem } from './entities/order-item.entity';
 import { EvenementModule } from './modules/evenement/evenement.module';
 import { AuthModule } from './Authentication/auth.module';
 import { User } from './Authentication/entities/auth.entity';
 import { GeminiModule } from './modules/gemini/gemini.module';
-import { QrCodeService } from './services/qrcode/qrcode.service';
-import { CommandeController } from './controllers/commande/commande.controller';
-import { CommandeService } from './services/commande/commande.service';
-import { RestaurationService } from './services/restauration/restauration.service';
-import { RestaurationController } from './controllers/restauration/restauration.controller';
-import { CommandeModule } from './modules/commande/commande.module';
-import { Commande } from './entities/commande.entity';
-import { MenuItem } from './entities/menu-item.entity';
 import { QrCodeModule } from './modules/qrcode/qrcode.module';
-import { MenuItemController } from './controllers/menu-item/menu-item.controller';
-import { MenuItemModule } from './modules/menu-item/menu-item.module';
-import { MenuItemService } from './services/menu-item/menu-item.service';
+import { MenuModule } from './modules/menu/menu.module';
+import { OrderModule } from './modules/order/order.module';
 
 @Module({
   imports: [
@@ -44,8 +39,21 @@ import { MenuItemService } from './services/menu-item/menu-item.service';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User, Evenement, Localisation, Invitation, Invite, Salle, TableEvent, Commande, MenuItem],
+        entities: [
+          User,
+          Evenement,
+          Localisation,
+          Invitation,
+          Invite,
+          Salle,
+          TableEvent,
+          Menu,
+          MenuItem,
+          Order,
+          OrderItem,
+        ],
         synchronize: true,
+        logging: true,
       }),
       inject: [ConfigService],
     }),
@@ -56,14 +64,11 @@ import { MenuItemService } from './services/menu-item/menu-item.service';
     EvenementModule,
     LocationModule,
     GeminiModule,
-    CommandeModule,
     QrCodeModule,
-    MenuItemModule,
+    MenuModule,
+    OrderModule,
   ],
-  controllers: [ProfileController, CommandeController, RestaurationController, MenuItemController],
-  providers: [
-    // QrCodeService supprimé d'ici
-    RestaurationService,
-  ],
+  controllers: [ProfileController],
+  providers: [],
 })
 export class AppModule {}
