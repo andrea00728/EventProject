@@ -5,7 +5,7 @@ const Modal = ({ isOpen, onClose, children, title, icon }) => {
 
   return (
     <div className="fixed inset-0  bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full mx-4 relative">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full h-[90vh] mx-4 relative">
         {/* En-tête du modal */}
         <div className="flex justify-between items-center pb-3 border-b border-gray-200">
           <h3 className="text-2xl font-bold text-gray-800">{icon} {title}</h3>
@@ -36,7 +36,7 @@ const Modal = ({ isOpen, onClose, children, title, icon }) => {
         </div>
 
         {/* Pied de page du modal (optionnel) */}
-        <div className="pt-3 border-t border-gray-200 flex justify-end">
+        <div className="pt-10 border-t border-gray-200 flex justify-end items-center">
           <button
             onClick={onClose}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none"

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { FaDatabase, FaTable, FaShare } from 'react-icons/fa';
-import { MdOutlineSecurity } from "react-icons/md";
+import { FaDatabase, FaTable, FaShare, FaArrowCircleLeft, FaArrowCircleRight, FaArrowLeft } from 'react-icons/fa';
+import { MdOutlineSecurity, MdArrowLeft, MdArrowRight } from "react-icons/md";
 import { LuUserRoundCheck } from "react-icons/lu";
 import Modal from './Modal'; // Assurez-vous que le chemin est correct
 
@@ -9,6 +9,7 @@ const Confidentialite = () => {
     const [modalContent, setModalContent] = useState('');
     const [modalTitle, setModalTitle] = useState('');
     const [modalIcon, setModalIcon] = useState(null);
+    const [index, setIndex] = useState(0)
 
     // Contenu complet pour chaque section
     const sections = [
@@ -37,8 +38,6 @@ const Confidentialite = () => {
                 Nous pouvons collecter différents types d'informations vous concernant, y compris :
 
                 Informations personnelles identifiables (IPI) : Lors de l'inscription/création de compte : Nom, prénom, adresse e-mail, numéro de téléphone, mot de passe.
-
-                Lors de la création ou de la participation à un événement : Informations de paiement (via des processeurs tiers sécurisés), adresse de facturation, informations spécifiques à l'événement (par exemple, préférences alimentair ...
             `
         },
         {
@@ -64,8 +63,6 @@ const Confidentialite = () => {
                 Nous utilisons les informations collectées à diverses fins :
 
                 Fournir et maintenir le Service : Créer et gérer votre compte, traiter les paiements, héberger vos événements, gérer les inscriptions. 
-
-                Améliorer et personnaliser le Service : Comprendre vos préférences, améliorer les fonctionnalités, personnaliser votre expérience utilisateur. 
             `
         },
         {
@@ -88,7 +85,7 @@ const Confidentialite = () => {
             truncatedText: `
                 Nous ne vendons ni ne louons vos informations personnelles à des tiers. Nous pouvons partager vos informations dans les situations suivantes :
 
-                Avec les organisateurs d'événements : Si vous êtes un participant, les informations nécessaires à votre inscription et à votre participation (nom, e-mail, réponses aux questions personnalisée ... 
+                Avec les organisateurs d'événements : Si vous êtes un participant, les informations nécessaires à votre inscription et à votre participation (nom, e-mail, réponses aux questions personnalisées de l'événement) seront partagées avec l'organisateur de l'événement concerné. 
             `,
         },
         {
@@ -99,8 +96,7 @@ const Confidentialite = () => {
                 Nous mettons en œuvre des mesures de sécurité techniques et organisationnelles appropriées pour protéger vos informations personnelles contre l'accès non autorisé, la divulgation, l'altération ou la destruction. Cependant, aucune méthode de transmission sur Internet ou de stockage électronique n'est 100% sécurisée. Par conséquent, bien que nous nous efforcions de protéger vos informations personnelles, nous ne pouvons garantir leur sécurité absolue.
             `,
             truncatedText: `
-                Nous mettons en œuvre des mesures de sécurité techniques et organisationnelles appropriées pour protéger vos informations personnelles contre l'accès non autorisé, la divulgation, l'altération ou la destruction. Cependant, aucune méthode de transmission sur Internet ou de stockage électronique n'est 100% sécurisée. 
-                Par conséquent, bien que nous nous efforcions de protéger vos inf ... 
+                Nous mettons en œuvre des mesures de sécurité techniques et organisationnelles appropriées pour protéger vos informations personnelles contre l'accès non autorisé,
             `,
         },
         {
@@ -128,8 +124,6 @@ const Confidentialite = () => {
                 Conformément à la législation applicable sur la protection des données, vous disposez de certains droits concernant vos informations personnelles :
 
                 Droit d'accès : Vous avez le droit de demander une copie des informations personnelles que nous détenons à votre sujet.
-
-                Droit de rectification : Vous avez le droit de  ...
             `,
         },
     ]
@@ -148,40 +142,56 @@ const Confidentialite = () => {
         setModalTitle('');
     };
 
+    const handleNext = () => {
+        index === sections.length - 1 ? setIndex(0) : setIndex(index + 1)
+    }
+
+    const handlePrevious = () => {
+        index === 0 ? setIndex(sections.length - 1) : setIndex(index - 1)
+    }
+
     return (
         <div>
-            {
-                sections.map((section, index) => (
-                    <div className='p-6' key={index}>
-                        <h2 className='font-semibold text-gray-800 p-4 text-2xl'>
-                            {section.icon} <span className='inline'>{section.title}</span>
-                        </h2>
-
-                        <div className={`flex justify-center items-center ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'} flex-wrap-reverse p-4 gap-20`}>
-                            <img className='w-full max-w-[600px]' src={section.image} alt="" />
-                            <p className='w-full md:w-2/5 text-lg'> {/* Utilisez md:w-2/5 pour des écrans plus grands */}
-                                {section.truncatedText}
-                                <span
-                                    className='text-blue-700 cursor-pointer hover:underline ml-1 inline'
-                                    onClick={() => openModal(index)}
-                                >
-                                    Afficher plus
-                                </span>
-                            </p>
-                        </div>
-
-                        {/* Le Modal est rendu ici, il n'est visible que si isModalOpen est true */}
-                        <Modal
-                            isOpen={isModalOpen}
-                            onClose={closeModal}
-                            icon={modalIcon}
-                            title={modalTitle}
-                        >
-                            <p className="whitespace-pre-line">{modalContent}</p> {/* whitespace-pre-line pour conserver les sauts de ligne */}
-                        </Modal>
+            <h1 className='text-center p-6 text-gray-500 font-medium text-3xl'>Politique de confidentialité</h1>
+            <h2 className='text-center p-3 text-gray-500 font-normal text-xl w-[60%] mx-auto'>
+                Votre vie privée est très importante pour nous. Cette Politique de Confidentialité explique comment MasterTable collecte, utilise, divulgue et protège vos informations lorsque vous utilisez notre site de gestion d'événements.
+            </h2>
+            <div className='flex justify-around items-center h-[80vh] gap-2 overflow-hidden'>
+                <span onClick={handlePrevious} className='text-8xl mx-2 text-gray-500 hover:text-gray-800 transition duration-100 cursor-pointer'>
+                    <MdArrowLeft />
+                </span>
+                <div className='px-11 py-10 bg-white rounded-lg shadow-lg'>
+                    <h2 className='font-semibold text-gray-800 px-4 text-2xl pb-10'>
+                        {sections[index].icon} <span className='inline'>{sections[index].title}</span>
+                    </h2>
+                    <div className={`flex justify-center items-center ${index % 2 === 0 ? 'flex-row-reverse' : 'flex-row'} flex-wrap-reverse h-[50vh] p-4 gap-20`}>
+                        <img className='w-full max-w-[400px]' src={sections[index].image} alt="" />
+                        <p className='w-full md:w-2/5 text-lg text-[#4E4E4E] whitespace-pre-line'> {/* Utilisez md:w-2/5 pour des écrans plus grands */}
+                            {sections[index].truncatedText}
+                            ...
+                            <span
+                                className='mx-1 text-blue-700 cursor-pointer hover:underline'
+                                onClick={() => openModal(index)}
+                            >
+                                Afficher plus
+                            </span>
+                        </p>
                     </div>
-                ))
-            }
+
+                    {/* Le Modal est rendu ici, il n'est visible que si isModalOpen est true */}
+                    <Modal
+                        isOpen={isModalOpen}
+                        onClose={closeModal}
+                        icon={modalIcon}
+                        title={modalTitle}
+                    >
+                        <p className="whitespace-pre-line">{modalContent}</p> {/* whitespace-pre-line pour conserver les sauts de ligne */}
+                    </Modal>
+                </div>
+                <span onClick={handleNext} className='text-8xl mx-2 text-gray-500 hover:text-gray-800 transition duration-100 cursor-pointer'>
+                    <MdArrowRight />
+                </span>
+            </div>
         </div>
     );
 };
