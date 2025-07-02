@@ -16,7 +16,7 @@ import Apropos from "../pages/apropos";
 import Table3DScene from "../components/table3D";
 import ChoixModeInvite from "../layouts/ChoixModeInvite";
 import Inviteform from "../pages/choixModInvite/inviteForm";
-import Importation from "../pages/choixModInvite/importation";
+import ImportGuestsCSV from "../pages/choixModInvite/importation";
 import AffichageInvite from "../pages/choixModInvite/affichageInvite";
 import InviteformWithId from "../pages/choixModInvite/InviteFormparId";
 const router=createBrowserRouter([
@@ -54,7 +54,7 @@ const router=createBrowserRouter([
                     {
             
                         path: "importerInv",
-                        element: <Importation />
+                        element: <ImportGuestsCSV />
                     },
                      {
             

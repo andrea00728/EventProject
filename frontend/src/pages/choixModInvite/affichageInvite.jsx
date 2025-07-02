@@ -4,6 +4,7 @@ import { getMyEvents } from "../../services/evenementServ";
 import { useStateContext } from "../../context/ContextProvider";
 import { DataGrid } from "@mui/x-data-grid";
 import DeleteGuestButton from "../../util/DeleteInviteButton";
+import EditGuestButton from "../../util/buttonModifIvite";
 
 export default function AffichageInvite() {
   const { token } = useStateContext();
@@ -34,25 +35,41 @@ export default function AffichageInvite() {
   };
 
   const columns = [
-    { field: "nom", headerName: "Nom", width: 130 },
-    { field: "prenom", headerName: "Prénom", width: 130 },
-    { field: "email", headerName: "Email", width: 140 },
-    {field: "sex",headerName: "Sexe", width: 170, valueGetter: (params) => {
+    { field: "nom", headerName: "Nom", width: 150 },
+    { field: "prenom", headerName: "Prénom", width: 150 },
+    { field: "email", headerName: "Email", width: 150 },
+    {field: "sex",headerName: "Sexe", width: 150, valueGetter: (params) => {
         if (!params.row || params.row.sex === undefined) {
           return "-";
         }
         return params.row.sex === "M" ? "Homme" : params.row.sex === "F" ? "Femme" : "-";
       },
     },
-{ field: "actions", headerName: "Actions", width: 150, sortable: false, renderCell: (params) => (
-    <DeleteGuestButton
-      guestId={params.row.id}
-      onDeleted={(deletedId) => {
-        setGuests((prev) => prev.filter((g) => g.id !== deletedId));
-      }}
-    />
+{
+  field: "actions",
+  headerName: "Actions",
+  width: 150,
+  sortable: false,
+  renderCell: (params) => (
+    <>
+      <EditGuestButton
+        guest={params.row}
+        onUpdated={(updatedGuest) => {
+          setGuests((prev) =>
+            prev.map((g) => (g.id === updatedGuest.id ? updatedGuest : g))
+          );
+        }}
+      />
+      <DeleteGuestButton
+        guestId={params.row.id}
+        onDeleted={(deletedId) =>
+          setGuests((prev) => prev.filter((g) => g.id !== deletedId))
+        }
+      />
+    </>
   ),
 }
+
 
   ];
 

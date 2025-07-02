@@ -100,21 +100,21 @@ export const importGuestsToSpecificEvent = async (file, eventId, token) => {
   if (!file) throw new Error("Aucun fichier fourni pour l'importation.");
 
   const formData = new FormData();
-  formData.append('file', file); // 'file' doit correspondre au nom attendu par @UploadedFile() dans NestJS
+  formData.append('file', file); //  correspond à @UploadedFile() côté NestJS
 
   try {
     const response = await axiosClient.post(`/guests/import/${eventId}`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data', 
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`, //  laisser Axios gérer le Content-Type
+      },
     });
     return response.data;
   } catch (error) {
-    console.error(`Erreur lors de l'importation des invités pour l'événement ${eventId}:`, error);
+    console.error(` Erreur lors de l'importation des invités pour l'événement ${eventId}:`, error);
     throw error;
   }
 };
+
 
 /**
  * suppresion invite
@@ -131,6 +131,26 @@ export const deleteGuest = async (guestId, token) => {
     return response.data;
   } catch (error) {
     console.error("Erreur lors de la suppression de l'invité :", error);
+    throw error;
+  }
+};
+
+/**
+   * modifiction invite
+   */
+  export const updateGuest = async (guestId, data, token) => {
+  if (!token) throw new Error("Utilisateur non authentifié");
+  if (!guestId) throw new Error("ID de l'invité manquant");
+
+  try {
+    const response = await axiosClient.put(`/guests/${guestId}`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour de l'invité :", error);
     throw error;
   }
 };
