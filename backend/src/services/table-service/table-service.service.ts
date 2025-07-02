@@ -1,10 +1,11 @@
 
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateTableDto } from 'src/dto/CreateTaleDto';
 import { Invite } from 'src/entities/Invite';
 import { TableEvent } from 'src/entities/Table';
+import { Evenement } from 'src/entities/Evenement';
 
 @Injectable()
 export class TableService {
@@ -13,19 +14,37 @@ export class TableService {
     private readonly tableRepository: Repository<TableEvent>,
     @InjectRepository(Invite)
     private readonly guestRepository: Repository<Invite>,
+    @InjectRepository(Evenement)
+    private readonly eventRepository:Repository<Evenement>,
   ) {}
 
-  async createTable(dto: CreateTableDto): Promise<TableEvent> {
-    if (!dto || dto.numero === undefined || dto.capacite === undefined || !dto.eventId) {
-      throw new BadRequestException('Données de création de table incomplètes');
-    }
-    const table = this.tableRepository.create({
-      numero: dto.numero,
-      capacite: dto.capacite,
-      event: { id: dto.eventId },
-    });
-    return this.tableRepository.save(table);
+  async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEvent> {
+  if (!dto || dto.numero === undefined || dto.capacite === undefined || !dto.eventId) {
+    throw new BadRequestException('Données de création de table incomplètes');
   }
+  // Vérifier que l'événement existe et appartient bien à l'utilisateur
+  const event = await this.eventRepository.findOne({
+    where: {
+      id: dto.eventId,
+      user: { id: utilisateurId }
+    },
+    relations: ['user']
+  });
+
+  if (!event) {
+    throw new UnauthorizedException("Cet événement n'appartient pas à l'utilisateur connecté");
+  }
+
+  const table = this.tableRepository.create({
+    numero: dto.numero,
+    capacite: dto.capacite,
+    event
+  });
+
+  return this.tableRepository.save(table);
+}
+
+
 
   async assignGuestToTable(guestId: number, tableId: number, seatNumber: number): Promise<TableEvent> {
     const table = await this.tableRepository.findOne({

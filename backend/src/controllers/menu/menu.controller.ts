@@ -1,27 +1,27 @@
-import { Controller, Post, Get, Patch, Body, Param, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Param, UsePipes, ValidationPipe, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { MenuService } from '../../services/menu/menu.service';
-import { CreateMenuDto, CreateMenuItemDto } from 'src/dto/menu.dto';
-import { IsInt, Min } from 'class-validator';
-
-export class RestockMenuItemDto {
-  @IsInt()
-  @Min(1)
-  quantity: number;
-}
+import { CreateMenuDto, CreateMenuItemDto, RestockMenuItemDto } from '../../dto/menu.dto';
 
 @Controller('menus')
 export class MenuController {
   constructor(private menuService: MenuService) {}
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   @UsePipes(new ValidationPipe())
-  createMenu(@Body() body: CreateMenuDto) {
+  async createMenu(@Body() body: CreateMenuDto, @Req() req: any) {
+    const userId = req.user?.sub;
+    if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
     return this.menuService.createMenu(body.name, body.eventId);
   }
 
   @Post(':menuId/items')
+  @UseGuards(AuthGuard('jwt'))
   @UsePipes(new ValidationPipe())
-  addMenuItem(@Param('menuId') menuId: number, @Body() body: CreateMenuItemDto) {
+  async addMenuItem(@Param('menuId') menuId: number, @Body() body: CreateMenuItemDto, @Req() req: any) {
+    const userId = req.user?.sub;
+    if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
     return this.menuService.addMenuItem(menuId, body);
   }
 
@@ -36,8 +36,11 @@ export class MenuController {
   }
 
   @Patch('items/:menuItemId/restock')
+  @UseGuards(AuthGuard('jwt'))
   @UsePipes(new ValidationPipe())
-  restockMenuItem(@Param('menuItemId') menuItemId: number, @Body() body: RestockMenuItemDto) {
+  async restockMenuItem(@Param('menuItemId') menuItemId: number, @Body() body: RestockMenuItemDto, @Req() req: any) {
+    const userId = req.user?.sub;
+    if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
     return this.menuService.restockMenuItem(menuItemId, body.quantity);
   }
 }

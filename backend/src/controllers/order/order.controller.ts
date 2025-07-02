@@ -1,14 +1,18 @@
-import { Controller, Post, Get, Patch, Delete, Body, Param, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Delete, Body, Param, UsePipes, ValidationPipe, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { OrderService } from '../../services/order/order.service';
-import { CreateOrderDto, UpdateOrderStatusDto } from 'src/dto/order.dto';
+import { CreateOrderDto, UpdateOrderStatusDto } from '../../dto/order.dto';
 
 @Controller('orders')
 export class OrderController {
   constructor(private orderService: OrderService) {}
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   @UsePipes(new ValidationPipe())
-  createOrder(@Body() body: CreateOrderDto) {
+  async createOrder(@Body() body: CreateOrderDto, @Req() req: any) {
+    const userId = req.user?.sub;
+    if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
     return this.orderService.createOrder(body.tableId, body.items);
   }
 
@@ -19,7 +23,10 @@ export class OrderController {
   }
 
   @Get('table/:tableId')
-  findOrdersByTable(@Param('tableId') tableId: number) {
+  @UseGuards(AuthGuard('jwt'))
+  async findOrdersByTable(@Param('tableId') tableId: number, @Req() req: any) {
+    const userId = req.user?.sub;
+    if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
     return this.orderService.findOrdersByTable(tableId);
   }
 

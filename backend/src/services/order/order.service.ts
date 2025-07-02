@@ -23,7 +23,6 @@ export class OrderService {
     const table = await this.tableEventRepository.findOne({ where: { id: tableId } });
     if (!table) throw new NotFoundException('Table not found');
 
-    // Vérifier la disponibilité du stock
     for (const item of items) {
       const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
       if (!menuItem) throw new NotFoundException(`Menu item ${item.menuItemId} not found`);
@@ -32,7 +31,6 @@ export class OrderService {
       }
     }
 
-    // Créer la commande
     const order = this.orderRepository.create({ table, orderDate: new Date(), status: 'pending' });
     const savedOrder = await this.orderRepository.save(order);
 
@@ -42,7 +40,6 @@ export class OrderService {
         if (!menuItem) throw new NotFoundException(`Menu item ${item.menuItemId} not found`);
         const subtotal = menuItem.price * item.quantity;
 
-        // Réduire le stock
         menuItem.stock -= item.quantity;
         await this.menuItemRepository.save(menuItem);
 
@@ -70,11 +67,17 @@ export class OrderService {
     const orders = await this.orderRepository.find({ where: { table: { id: tableId } }, relations: ['items', 'items.menuItem'] });
     return Promise.all(
       orders.map(async (order) => {
-        const result = await this.orderRepository.query(
-          `SELECT total FROM "order" WHERE id = $1`,
-          [order.id],
-        );
-        return { ...order, total: parseFloat(result[0].total) };
+        try {
+          const result = await this.orderRepository.query(
+            `SELECT total FROM "order" WHERE id = $1`,
+            [order.id],
+          );
+          return { ...order, total: parseFloat(result[0].total) };
+        } catch (error) {
+          // Fallback: Calculate total from order items if total column is missing
+          const total = order.items.reduce((sum, item) => sum + item.subtotal, 0);
+          return { ...order, total };
+        }
       }),
     );
   }
@@ -83,14 +86,12 @@ export class OrderService {
     const order = await this.orderRepository.findOne({ where: { id: orderId }, relations: ['items', 'items.menuItem'] });
     if (!order) throw new NotFoundException('Order not found');
 
-    // Restaurer le stock
     for (const orderItem of order.items) {
       const menuItem = orderItem.menuItem;
       menuItem.stock += orderItem.quantity;
       await this.menuItemRepository.save(menuItem);
     }
 
-    // Supprimer la commande
     await this.orderRepository.delete(orderId);
   }
 }
