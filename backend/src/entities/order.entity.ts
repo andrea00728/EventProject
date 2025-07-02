@@ -14,7 +14,10 @@ export class Order {
   orderDate: Date;
 
   @Column({ default: 'pending' })
-  status: 'pending' | 'preparing' | 'served' | 'paid';
+  status: 'pending' | 'preparing' | 'served';
+
+  @Column({ default: 'non payé' })
+  paymentStatus: 'payé' | 'non payé';
 
   @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
   items: OrderItem[];
