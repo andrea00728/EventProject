@@ -24,7 +24,13 @@ export class GuestService {
       throw new BadRequestException('Événement non trouvé');
     }
 
-    const existing = await this.guestRepository.findOne({ where: { email: dto.email } });
+    const existing = await this.guestRepository.findOne({
+       where: { 
+        email: dto.email,
+        event:{id:eventId}
+      } 
+      
+      });
     if (existing) {
       throw new BadRequestException(`L'email ${dto.email} est déjà utilisé.`);
     }
@@ -72,7 +78,12 @@ export class GuestService {
           const savedGuests: Invite[] = [];
 
           for (const record of guestsRaw) {
-            const existing = await this.guestRepository.findOne({ where: { email: record.email } });
+            const existing = await this.guestRepository.findOne({ 
+              where: { 
+                email: record.email,
+                event:{id:eventId}
+              } 
+            });
             if (existing) {
               throw new BadRequestException(`L'email ${record.email} est déjà utilisé`);
             }
@@ -219,5 +230,25 @@ export class GuestService {
     order: { id: 'DESC' },
   });
 }
+
+
+async deleteById(id: number, userId: string): Promise<{ message: string }> {
+  const invite = await this.guestRepository.findOne({
+    where: { id },
+    relations: ['event', 'table', 'event.user'],
+  });
+  if (!invite) {
+    throw new BadRequestException(`Invité avec ID ${id} non trouvé`);
+  }
+  if (invite.event.user.id !== userId) {
+    throw new BadRequestException(`Accès refusé à cet invité`);
+  }
+  if (invite.table) {
+    await this.tableService.decrementPlaceReserve(invite.table.id);
+  }
+  await this.guestRepository.delete(id);
+  return { message: `Invité avec ID ${id} supprimé avec succès` };
+}
+
 
 }

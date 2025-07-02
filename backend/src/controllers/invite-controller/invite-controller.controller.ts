@@ -1,17 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Param,
-  Get,
-  UploadedFile,
-  UseInterceptors,
-  ParseIntPipe,
-  Put,
-  HttpException,
-  HttpStatus,
-  Req,
-  UseGuards,
+import {Controller,Post, Body,Param, Get, UploadedFile, UseInterceptors, ParseIntPipe, Put, HttpException, HttpStatus, Req, UseGuards, Delete,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -23,46 +10,10 @@ import { GuestService } from 'src/services/invite-service/invite-service.service
 export class GuestController {
   constructor(private readonly guestService: GuestService) {}
 
-  // Créer un invité manuellement
-//  @Post('/create/:eventId')
-//   async create(@Body() dto: CreateInviteDto, @Param('eventId') eventId: number): Promise<Invite> {
-//     const guest = await this.guestService.createGuest(dto, eventId);
-//     return this.guestService.findById(guest.id);
-//   }
-  
-//   // Importer un fichier CSV avec des invités
-//   @Post('import/:eventId')
-//   @UseInterceptors(FileInterceptor('file'))
-//   async importGuests(
-//     @UploadedFile() file: Express.Multer.File,
-//     @Param('eventId', ParseIntPipe) eventId: number,
-//   ): Promise<Invite[]> {
-//     if (!file) {
-//       throw new HttpException('Aucun fichier fourni.', HttpStatus.BAD_REQUEST);
-//     }
-//     return await this.guestService.importGuests(file, eventId);
-//   }
-
-//   // Récupérer tous les invités d’un événement
-//   @Get('event/:eventId')
-//   async getGuestsByEvent(
-//     @Param('eventId', ParseIntPipe) eventId: number,
-//   ): Promise<Invite[]> {
-//     return await this.guestService.findByEvent(eventId);
-//   }
-
-//   // Mise à jour d’un invité
-//   @Put(':id')
-//   async updateGuest(
-//     @Param('id', ParseIntPipe) id: number,
-//     @Body() updateDto: Partial<Invite>,
-//   ): Promise<Invite> {
-//     return await this.guestService.update(id, updateDto);
-//   }
-
  @Post('/create')
   @UseGuards(AuthGuard('jwt'))
   async create(@Body() dto: CreateInviteDto, @Req() req): Promise<Invite> {
+    console.log("user connecte:",req.user);
     const userId = req.user?.sub;
     if (!userId) throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
 
@@ -89,6 +40,28 @@ export class GuestController {
     return await this.guestService.importGuests(file, lastEvent.id);
   }
 
+  //  Importer des invités pour un ÉVÉNEMENT SPÉCIFIQUE**
+  @Post('import/:eventId') 
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(FileInterceptor('file'))
+  async importGuestsToSpecificEvent(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('eventId', ParseIntPipe) eventId: number, // Utilise ParseIntPipe
+    @Req() req,
+  ): Promise<Invite[]> {
+    if (!file) throw new HttpException('Aucun fichier fourni.', HttpStatus.BAD_REQUEST);
+
+    const userId = req.user?.sub;
+    if (!userId) throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
+    const evenement = await this.guestService['evenementRepository'].findOne({ where: { id: eventId, user: { id: userId } } });
+    if (!evenement) {
+        throw new HttpException('Événement introuvable ou non autorisé', HttpStatus.NOT_FOUND);
+    }
+    return await this.guestService.importGuests(file, eventId);
+  }
+
+
+
   // Récupérer tous les invités du dernier événement de l'utilisateur connecté
   @Get('last-event')
    @UseGuards(AuthGuard('jwt'))
@@ -102,10 +75,81 @@ export class GuestController {
     return await this.guestService.findByEvent(lastEvent.id);
   }
 
+
+   //Récupérer les invités d’un événement spécifique
+    @Get('event/:id')
+    @UseGuards(AuthGuard('jwt'))
+    async getGuestsByEvent(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<Invite[]> {
+      const userId = req.user?.sub;
+      if (!userId) throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
+
+      // Optionnel : tu peux vérifier que l’événement appartient bien à l'utilisateur ici
+      const guests = await this.guestService.findByEvent(id);
+      return guests;
+    }
+
+
+
+// **ROUTE CORRIGÉE : Récupérer les invités d’un événement spécifique**
+  @Get(':eventId') 
+  @UseGuards(AuthGuard('jwt'))
+  async getGuestsByEventId(
+    @Param('eventId', ParseIntPipe) eventId: number, // <- Utilisez ParseIntPipe ici
+    @Req() req,
+  ): Promise<Invite[]> {
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
+    }
+    const evenement = await this.guestService['evenementRepository'].findOne({
+        where: { id: eventId, user: { id: userId } },
+    });
+    if (!evenement) {
+      throw new HttpException('Événement introuvable ou non autorisé pour cet utilisateur', HttpStatus.NOT_FOUND);
+    }
+    return await this.guestService.findByEvent(eventId); 
+  }
+
+
+
+
+
+     
   // Mise à jour d’un invité (peut rester comme ça)
   @Put(':id')
    @UseGuards(AuthGuard('jwt'))
   async updateGuest(@Param('id', ParseIntPipe) id: number, @Body() updateDto: Partial<Invite>): Promise<Invite> {
     return await this.guestService.update(id, updateDto);
   }
+
+
+
+  // creation invite specifique
+ @Post(':eventId') 
+  @UseGuards(AuthGuard('jwt'))
+  async createInviteForSpecificEvent(
+    @Param('eventId', ParseIntPipe) eventId: number, 
+    @Body() createInviteDto: CreateInviteDto,
+    @Req() req,
+  ): Promise<Invite> {
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
+    }
+    return await this.guestService.createGuest(createInviteDto, eventId);
+  }
+
+  //supprimer invite
+  @Delete(':id')
+@UseGuards(AuthGuard('jwt'))
+async deleteGuest(
+  @Param('id', ParseIntPipe) id: number,
+  @Req() req,
+): Promise<{ message: string }> {
+  const userId = req.user?.sub;
+  if (!userId) {
+    throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
+  }
+  return await this.guestService.deleteById(id, userId);
+}
 }

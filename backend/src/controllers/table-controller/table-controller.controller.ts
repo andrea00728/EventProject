@@ -41,6 +41,7 @@ export class TableController {
       numero: dto.numero,
       capacite: dto.capacite,
       eventId: lastEvent.id,
+      type:dto.type,
     }, userId);
   }
   // Obtenir les places disponibles d'une table

@@ -4,6 +4,7 @@ import { Evenement } from './Evenement';
 
 @Entity()
 @Unique(['table','place'])
+@Unique(['email','event'])
 export class Invite {
   @PrimaryGeneratedColumn()
   id: number;
@@ -14,7 +15,7 @@ export class Invite {
   @Column()
   prenom: string;
 
-  @Column({ unique: true })
+  @Column()
   email: string;
 
   @Column({ enum: ['M', 'F'] })

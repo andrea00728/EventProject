@@ -17,6 +17,10 @@ export class TableEvent {
   @Column({ default: 0 })
   placeReserve: number;
 
+  @Column({ type: 'enum', enum: ['ronde', 'carree', 'rectangle', 'ovale'], default: 'ronde' })
+  type: 'ronde' | 'carree' | 'rectangle' | 'ovale';
+
+
   @ManyToOne(() => Evenement, (evenement) => evenement.tables)
   @JoinColumn({name:'eventId'})
   event: Evenement;

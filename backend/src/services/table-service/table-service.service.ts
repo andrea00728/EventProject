@@ -38,6 +38,7 @@ export class TableService {
   const table = this.tableRepository.create({
     numero: dto.numero,
     capacite: dto.capacite,
+    type:dto.type,
     event
   });
 
@@ -107,4 +108,16 @@ async updatePlaceReserve(tableId: number): Promise<void> {
       relations: ['guests'],
     });
   }
+
+    //decrementation du place si linvite supprimer
+  async decrementPlaceReserve(tableId: number): Promise<void> {
+  const table = await this.tableRepository.findOne({ where: { id: tableId } });
+  if (!table) {
+    throw new BadRequestException(`Table avec ID ${tableId} non trouvée`);
+  }
+
+  table.placeReserve = Math.max(0, table.placeReserve - 1); // éviter négatif
+  await this.tableRepository.save(table);
+}
+
 }
