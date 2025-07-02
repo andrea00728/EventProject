@@ -1,4 +1,5 @@
 import React from 'react';
+import Footer from './footer';
 
 export default function Accueil() {
   return (
@@ -84,6 +85,9 @@ export default function Accueil() {
             ))}
           </div>
         </div>
+      </section>
+      <section>
+        <Footer/>
       </section>
     </>
   );

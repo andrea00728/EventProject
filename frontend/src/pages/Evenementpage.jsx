@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Evenementform from '../components/evenementForm';
-import Inviteform from '../components/inviteForm';
+import Inviteform from './choixModInvite/inviteForm';
 import Stepper from '../util/Stepper';
 import Table from './Table';
 

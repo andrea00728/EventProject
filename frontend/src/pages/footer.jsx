@@ -2,7 +2,7 @@ import React from 'react';
 import { FaPhone, FaFacebook, FaInstagram } from 'react-icons/fa'; // Pour les icônes Font Awesome
 import { MdEmail } from 'react-icons/md'; // Pour les icônes Material Design
 
-function App() {
+function Footer() {
   return (
     <footer className="bg-gray-100 text-gray-800 py-10 font-sans shadow-lg"> {/* Fond blanc, texte gris foncé */}
       <div className="container mx-auto px-4">
@@ -69,4 +69,4 @@ function App() {
   );
 }
 
-export default App;
+export default Footer;

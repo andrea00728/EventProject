@@ -68,6 +68,7 @@ export default function Table3DScene({ tables, eventId }) {
               capacite={table.capacite}
               reserved={table.capacite - table.available}
               numero={table.numero}
+              type={table.type}
             />
           ))}
         </Canvas>

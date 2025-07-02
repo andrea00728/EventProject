@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 export default function CreateTable({ onSubmitTable }) {
-  const [form, setForm] = useState({ numero: "", capacite: "" });
+  const [form, setForm] = useState({ numero: "", capacite: "",type:"ronde" });
   const [error, setError] = useState(null);
 
   const handleChange = (e) => {
@@ -12,7 +12,7 @@ export default function CreateTable({ onSubmitTable }) {
     e.preventDefault();
     try {
       await onSubmitTable(form);
-      setForm({ numero: "", capacite: "" });
+      setForm({ numero: "", capacite: "",type:"" });
     } catch (err) {
       setError("Erreur lors de la création de la table");
     }
@@ -47,6 +47,23 @@ export default function CreateTable({ onSubmitTable }) {
             className="border bg-[#f5f5f5] border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" 
           />
         </div>
+        <div className="flex flex-col">
+        <label htmlFor="type" className="block text-gray-700 text-sm font-bold mb-2">Type de Table</label>
+        <select
+          id="type"
+          name="type"
+          value={form.type}
+          onChange={handleChange}
+          required
+          className="border bg-[#f5f5f5] border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="ronde">Ronde</option>
+          <option value="carree">Carrée</option>
+          <option value="rectangle">Rectangle</option>
+          <option value="ovale">Ovale</option>
+        </select>
+      </div>
+
       </div>
       
       <div className="mt-6"> 

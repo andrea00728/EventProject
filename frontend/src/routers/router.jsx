@@ -9,34 +9,18 @@ import AdminLayout from "../layouts/AdminLayout";
 import Pagepublic from "../pages/Pagepublic";
 import Connexionorganisateur from "../pages/Connexionorganisateur";
 import Inscription from "../pages/Inscription";
-import Test from "../layouts/test";
 import Connnexiongoogle from "../services/connexiongoogl";
 import Evenemenpage from "../pages/Evenementpage";
 import Apropos from "../pages/apropos";
+
+import Table3DScene from "../components/table3D";
+import ChoixModeInvite from "../layouts/ChoixModeInvite";
+import Inviteform from "../pages/choixModInvite/inviteForm";
+import Importation from "../pages/choixModInvite/importation";
+import AffichageInvite from "../pages/choixModInvite/affichageInvite";
+import InviteformWithId from "../pages/choixModInvite/InviteFormparId";
 const router=createBrowserRouter([
-     {
-        path:"/",
-        element:<Test/>,
-        children:[
-           
-            // {
-            //     path:"/",
-            //     element:<Navigate to="/accueil"/>
-            // },
-            // {
-            //     path:"/accueil",
-            //     element:<Accueil/>
-            // },
-            // {
-            //     path:"/evenement",
-            //     element:<Evenement/>
-            // },
-            // {
-            //     path:"/apropos",
-            //     element:<Apropos/>
-            // }
-        ]
-    },
+   
     {
         path:"/",
         element:<DefaultLayout/>,
@@ -56,7 +40,33 @@ const router=createBrowserRouter([
             {
                 path:"/apropos",
                 element:<Apropos/>
-            }
+            },
+             {
+                path: "/evenement/invites",
+                element: <ChoixModeInvite />,
+                children: [
+                    
+                    {
+                       
+                        path: "creationInv",
+                        element:<InviteformWithId/>
+                    },
+                    {
+            
+                        path: "importerInv",
+                        element: <Importation />
+                    },
+                     {
+            
+                        path: "affichageInv",
+                        element: <AffichageInvite/>,
+                    }
+                ]
+            },
+             {
+                path:"/evenement/tables",
+                element:<Table3DScene/>
+            },
         ]
     },
     //  {
@@ -72,32 +82,32 @@ const router=createBrowserRouter([
     //         // },
     //     ]
     // },
-    // {
-    //     path:"/",
-    //     element:<GuestLayout/>,
-    //     children:[
-    //         {
-    //             path:"/",
-    //             element:<Navigate to="/pagepublic"/>
-    //         },
-    //         {
-    //             path:"/pagepublic",
-    //             element:<Pagepublic/>
-    //         },
-    //         {
-    //             path:"/connexion",
-    //             element:<Connexionorganisateur/>
-    //         },
-    //         {
-    //             path:"/callback",
-    //             element:<Connnexiongoogle/>
-    //         },
-    //         {
-    //             path:"/inscription",
-    //             element:<Inscription/>
-    //         }
-    //     ]
-    // },
+    {
+        path:"/",
+        element:<GuestLayout/>,
+        children:[
+            {
+                path:"/",
+                element:<Navigate to="/pagepublic"/>
+            },
+            {
+                path:"/pagepublic",
+                element:<Pagepublic/>
+            },
+            {
+                path:"/connexion",
+                element:<Connexionorganisateur/>
+            },
+            {
+                path:"/callback",
+                element:<Connnexiongoogle/>
+            },
+            {
+                path:"/inscription",
+                element:<Inscription/>
+            }
+        ]
+    },
     {
         path:"*",
         element:<Notfound/>

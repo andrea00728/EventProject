@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { createInvite } from "../../services/inviteService";
+import { useStateContext } from "../../context/ContextProvider";
 
-export default function Inviteform({ onBack, onSubmitInvite }) {
+export default function Inviteform({ onBack }) {
   const [form, setForm] = useState({
     nom: "",
     prenom: "",
@@ -8,6 +10,7 @@ export default function Inviteform({ onBack, onSubmitInvite }) {
     sex: "",
   });
   const [error, setError] = useState(null);
+  const { token } = useStateContext();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -16,17 +19,19 @@ export default function Inviteform({ onBack, onSubmitInvite }) {
   const onSubmit = async (e) => {
     e.preventDefault();
     try {
-      await onSubmitInvite(form);
+      const invite = await createInvite(form, token); 
       setForm({ nom: "", prenom: "", email: "", sex: "" });
+      setError(null); 
     } catch (err) {
-      setError("Erreur lors de la création de l'invité");
+      console.error("Erreur back-end:", err.response?.data || err.message);
+      setError(err.response?.data?.message || "Erreur lors de la création de l'invité");
     }
   };
 
   return (
     <form
       onSubmit={onSubmit}
-      className="p-8 bg-white w-full md:w-[60%] lg:w-[50%] mx-auto shadow-md rounded-lg mb-8"
+      className="p-8 mt-12 bg-white w-full  mx-auto shadow-md rounded-lg mb-8"
     >
       <h2 className="text-2xl font-bold text-center mb-6 text-[#1C1B2E]">
         Ajouter un invité
