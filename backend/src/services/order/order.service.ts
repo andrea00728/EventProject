@@ -31,7 +31,7 @@ export class OrderService {
       }
     }
 
-    const order = this.orderRepository.create({ table, orderDate: new Date(), status: 'pending' });
+    const order = this.orderRepository.create({ table, orderDate: new Date(), status: 'pending', total: 0 });
     const savedOrder = await this.orderRepository.save(order);
 
     const orderItems = await Promise.all(
@@ -53,6 +53,7 @@ export class OrderService {
     );
 
     savedOrder.items = await this.orderItemRepository.save(orderItems);
+    savedOrder.total = orderItems.reduce((sum, item) => sum + Number(item.subtotal), 0);
     return this.orderRepository.save(savedOrder);
   }
 
@@ -63,23 +64,9 @@ export class OrderService {
     return this.orderRepository.save(order);
   }
 
-  async findOrdersByTable(tableId: number): Promise<(Order & { total: number })[]> {
+  async findOrdersByTable(tableId: number): Promise<Order[]> {
     const orders = await this.orderRepository.find({ where: { table: { id: tableId } }, relations: ['items', 'items.menuItem'] });
-    return Promise.all(
-      orders.map(async (order) => {
-        try {
-          const result = await this.orderRepository.query(
-            `SELECT total FROM "order" WHERE id = $1`,
-            [order.id],
-          );
-          return { ...order, total: parseFloat(result[0].total) };
-        } catch (error) {
-          // Fallback: Calculate total from order items if total column is missing
-          const total = order.items.reduce((sum, item) => sum + item.subtotal, 0);
-          return { ...order, total };
-        }
-      }),
-    );
+    return orders;
   }
 
   async cancelOrder(orderId: number): Promise<void> {
