@@ -23,6 +23,7 @@ import { GeminiModule } from './modules/gemini/gemini.module';
 import { QrCodeModule } from './modules/qrcode/qrcode.module';
 import { MenuModule } from './modules/menu/menu.module';
 import { OrderModule } from './modules/order/order.module';
+import { NotificationModule } from './notification/notification/notification.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { OrderModule } from './modules/order/order.module';
     QrCodeModule,
     MenuModule,
     OrderModule,
+    NotificationModule,
   ],
   controllers: [ProfileController],
   providers: [],

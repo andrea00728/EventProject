@@ -1,14 +1,15 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, Unique } from 'typeorm';
 import { Invite } from './Invite';
 import { Evenement } from './Evenement';
+import { Order } from './order.entity';
 
-@Unique(['numero','event'])
+@Unique(['numero', 'event'])
 @Entity()
 export class TableEvent {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({unique:true})
+  @Column()
   numero: number;
 
   @Column()
@@ -18,11 +19,12 @@ export class TableEvent {
   placeReserve: number;
 
   @ManyToOne(() => Evenement, (evenement) => evenement.tables)
-  @JoinColumn({name:'eventId'})
+  @JoinColumn({ name: 'eventId' })
   event: Evenement;
 
   @OneToMany(() => Invite, (invite) => invite.table)
   guests: Invite[];
-  orders: any;
 
+  @OneToMany(() => Order, (order) => order.table)
+  orders: Order[];
 }

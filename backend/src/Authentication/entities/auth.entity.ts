@@ -1,10 +1,9 @@
-
-import { Evenement } from 'src/entities/Evenement';
 import { Entity, Column, PrimaryColumn, ManyToMany } from 'typeorm';
+import { Evenement } from 'src/entities/Evenement';
 
 @Entity()
 export class User {
-  @PrimaryColumn({type:'varchar'})
+  @PrimaryColumn({ type: 'varchar' })
   id: string;
 
   @Column()
@@ -13,13 +12,12 @@ export class User {
   @Column()
   name: string;
 
-  @Column({ type: 'varchar', nullable: true }) // Ajout de la colonne pour l'URL de l'image
+  @Column({ type: 'varchar', nullable: true })
   photo: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  
-  @ManyToMany(()=>Evenement,evenement=>evenement.user)
-  evenement:Evenement[];
+  @ManyToMany(() => Evenement, (evenement) => evenement.user)
+  evenement: Evenement[];
 }

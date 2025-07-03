@@ -1,12 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn,Unique } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, Unique } from 'typeorm';
 import { Localisation } from './Location';
 import { Salle } from './salle';
 import { TableEvent } from './Table';
 import { Invite } from './Invite';
 import { User } from 'src/Authentication/entities/auth.entity';
+import { Menu } from './menu.entity';
 
-
-@Unique(['nom','user'])
+@Unique(['nom', 'user'])
 @Entity()
 export class Evenement {
   @PrimaryGeneratedColumn()
@@ -36,11 +36,10 @@ export class Evenement {
   @OneToMany(() => Invite, (invite) => invite.event)
   invites: Invite[];
 
-  // @Column({ type: 'varchar', length: 255 })
-  //   utilisateur_id: string;
-    @ManyToOne(()=>User,(user)=>user.id,{nullable:false})
-    @JoinColumn({name:'utilisateur_id'})
-    user:User
-  menus: any;
-}
+  @ManyToOne(() => User, (user) => user.id, { nullable: false })
+  @JoinColumn({ name: 'utilisateur_id' })
+  user: User;
 
+  @OneToMany(() => Menu, (menu) => menu.event)
+  menus: Menu[];
+}

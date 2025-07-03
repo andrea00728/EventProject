@@ -1,46 +1,52 @@
-import { Controller, Post, Get, Patch, Body, Param, UsePipes, ValidationPipe, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Controller, Post, Get, Patch, Delete, Body, Param, UseGuards, ParseIntPipe, Query } from '@nestjs/common';
 import { MenuService } from '../../services/menu/menu.service';
-import { CreateMenuDto, CreateMenuItemDto, RestockMenuItemDto } from '../../dto/menu.dto';
+import { Menu } from '../../entities/menu.entity';
+import { MenuItem } from '../../entities/menu-item.entity';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../../guards/roles.guard';
+import { Roles } from '../../decorators/roles.decorator';
 
 @Controller('menus')
 export class MenuController {
-  constructor(private menuService: MenuService) {}
+  constructor(private readonly menuService: MenuService) {}
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
-  @UsePipes(new ValidationPipe())
-  async createMenu(@Body() body: CreateMenuDto, @Req() req: any) {
-    const userId = req.user?.sub;
-    if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
+  async createMenu(@Body() body: { name: string; eventId: number }): Promise<Menu> {
     return this.menuService.createMenu(body.name, body.eventId);
   }
 
-  @Post(':menuId/items')
-  @UseGuards(AuthGuard('jwt'))
-  @UsePipes(new ValidationPipe())
-  async addMenuItem(@Param('menuId') menuId: number, @Body() body: CreateMenuItemDto, @Req() req: any) {
-    const userId = req.user?.sub;
-    if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
+  @Post(':id/items')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
+  async addMenuItem(
+    @Param('id', ParseIntPipe) menuId: number,
+    @Body() body: { name: string; description: string; price: number; category: string; stock: number; stockThreshold?: number; eventId: number },
+  ): Promise<MenuItem> {
     return this.menuService.addMenuItem(menuId, body);
   }
 
-  @Get('event/:eventId')
-  findMenuByEvent(@Param('eventId') eventId: number) {
-    return this.menuService.findMenuByEvent(eventId);
+  @Patch(':menuId/items/:itemId')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
+  async updateMenuItem(
+    @Param('menuId', ParseIntPipe) menuId: number,
+    @Param('itemId', ParseIntPipe) itemId: number,
+    @Body() body: { name?: string; description?: string; price?: number; category?: string; stock?: number; disabled?: boolean; stockThreshold?: number; eventId: number },
+  ): Promise<MenuItem> {
+    return this.menuService.updateMenuItem(menuId, itemId, body);
   }
 
-  @Get('items/:menuItemId')
-  getMenuItem(@Param('menuItemId') menuItemId: number) {
-    return this.menuService.getMenuItem(menuItemId);
+  @Delete(':menuId/items/:itemId')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
+  async deleteMenuItem(@Param('menuId', ParseIntPipe) menuId: number, @Param('itemId', ParseIntPipe) itemId: number, @Body('eventId', ParseIntPipe) eventId: number): Promise<void> {
+    return this.menuService.deleteMenuItem(menuId, itemId, eventId);
   }
 
-  @Patch('items/:menuItemId/restock')
-  @UseGuards(AuthGuard('jwt'))
-  @UsePipes(new ValidationPipe())
-  async restockMenuItem(@Param('menuItemId') menuItemId: number, @Body() body: RestockMenuItemDto, @Req() req: any) {
-    const userId = req.user?.sub;
-    if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
-    return this.menuService.restockMenuItem(menuItemId, body.quantity);
+  @Get('public')
+  async getPublicMenu(@Query('eventId', ParseIntPipe) eventId: number): Promise<MenuItem[]> {
+    return this.menuService.getPublicMenu(eventId);
   }
 }

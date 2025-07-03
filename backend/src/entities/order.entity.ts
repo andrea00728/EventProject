@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 import { TableEvent } from './Table';
 import { OrderItem } from './order-item.entity';
 
@@ -13,15 +13,15 @@ export class Order {
   @Column()
   orderDate: Date;
 
-  @Column({ default: 'pending' })
-  status: 'pending' | 'preparing' | 'served';
+  @Column({ enum: ['PENDING', 'IN_PROGRESS', 'READY'] })
+  status: 'PENDING' | 'IN_PROGRESS' | 'READY';
 
-  @Column({ default: 'non payé' })
+  @Column({ enum: ['payé', 'non payé'] })
   paymentStatus: 'payé' | 'non payé';
 
-  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
-  items: OrderItem[];
-
-  @Column({ type: 'decimal', default: 0 })
+  @Column('decimal')
   total: number;
+
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
+  items: OrderItem[];
 }

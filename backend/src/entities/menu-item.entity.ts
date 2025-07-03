@@ -12,14 +12,20 @@ export class MenuItem {
   @Column()
   description: string;
 
-  @Column('decimal')
+  @Column({ type: 'decimal' })
   price: number;
 
   @Column()
   category: string;
 
-  @Column({ default: 0 })
+  @Column()
   stock: number;
+
+  @Column({ default: false })
+  disabled: boolean;
+
+  @Column({ type: 'decimal', default: 5 })
+  stockThreshold: number;
 
   @ManyToOne(() => Menu, (menu) => menu.items)
   menu: Menu;
