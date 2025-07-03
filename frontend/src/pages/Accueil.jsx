@@ -1,4 +1,5 @@
 import React from 'react';
+import Confidentialite from '../util/Confidentialite';
 
 export default function Accueil() {
   return (
@@ -85,6 +86,7 @@ export default function Accueil() {
           </div>
         </div>
       </section>
+      <Confidentialite/>
     </>
   );
 }
