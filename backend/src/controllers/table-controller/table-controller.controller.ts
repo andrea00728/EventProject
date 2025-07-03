@@ -10,12 +10,15 @@ import {
   UseGuards,
   UnauthorizedException,
   NotFoundException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateTableDto } from 'src/dto/CreateTaleDto';
 import { TableEvent } from 'src/entities/Table';
 import { EvenementService } from 'src/services/evenement/evenement.service';
 import { TableService } from 'src/services/table-service/table-service.service';
+import { Table } from 'typeorm';
 
 @Controller('tables')
 export class TableController {
@@ -24,6 +27,14 @@ export class TableController {
     private readonly evenementService:EvenementService,
   ) {}
 
+
+  /**
+   * 
+   * @param dto 
+   * @param req 
+   * @returns 
+   * creation dúne table
+   */
 @Post('/create')
   @UseGuards(AuthGuard('jwt'))
   async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<any> {
@@ -44,7 +55,13 @@ export class TableController {
       type:dto.type,
     }, userId);
   }
-  // Obtenir les places disponibles d'une table
+  
+  /**
+   * 
+   * @param tableId 
+   * @returns 
+   *  // Obtenir les places disponibles d'une table
+   */
   @Get(':tableId/available-seats')
   // @UseGuards(AuthGuard('jwt'))
   async getAvailableSeats(
@@ -53,15 +70,39 @@ export class TableController {
     return await this.tableService.getAvailableSeats(tableId);
   }
 
-  // Obtenir les tables liées à un événement
+  /**
+   * 
+   * @param eventId 
+   * @param req 
+   * @returns 
+   * // Obtenir les tables liées à un événement
+   */
+
+
   @Get('event/:eventId')
-  async getTablesByEvent(
-    @Param('eventId', ParseIntPipe) eventId: number,
-  ): Promise<TableEvent[]> {
-    return await this.tableService.findByEvent(eventId);
+  // async getTablesByEvent(
+  //   @Param('eventId', ParseIntPipe) eventId: number,
+  // ): Promise<TableEvent[]> {
+  //   return await this.tableService.findByEvent(eventId);
+  // }
+
+  @UseGuards(AuthGuard('jwt'))
+  async getTablesByEvent(@Param('eventId',ParseIntPipe) eventId:number,@Req() req): Promise<TableEvent[]>{
+      const userId=req.user?.sub;
+      if(!userId) throw new HttpException('utilisateur non authentifie',HttpStatus.UNAUTHORIZED);
+      const table=await this.tableService.findByEvent(eventId);
+      return table
   }
 
-  // Obtenir les tables liées au dernier  événement creer par l'útilisateur connecter
+
+ 
+
+
+ /**
+  * 
+  * @param // Obtenir les tables liées au dernier  événement creer par l'útilisateur connecter
+  * @returns 
+  */
 
    @Get('/by-last-event')
   @UseGuards(AuthGuard('jwt'))
@@ -74,4 +115,22 @@ export class TableController {
 
     return this.tableService.findByEvent(lastEvent.id);
   }
+
+  /**
+   * 
+   * @param id 
+   * @param req 
+   * @returns 
+   * restApi pour la suppression de table
+   */
+//   @UseGuards(AuthGuard('jwt'))
+//   @Post(':id/delete')
+//   async deleteTable(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<{ message: string }> {
+//   const userId = req.user?.sub;
+//   if (!userId) {
+//     throw new UnauthorizedException('Utilisateur non authentifié');
+//   }
+//   return await this.tableService.DeleteTable(id, userId);
+// }
+
 }

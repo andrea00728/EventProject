@@ -1,53 +1,55 @@
 import React from 'react';
-
+import { motion } from "framer-motion";
 const Stepper = ({ currentStep }) => {
-  return (
-    <div className="flex justify-center mb-6 gap-10">
-      {/* Étape 1 : Événement */}
-      <div className={`
-        flex items-center px-4 py-2
-        transition-colors duration-300
-        ${currentStep >= 1 ? 'text-gray-700' : 'text-gray-500'} {/* Le texte "Événement" est maintenant gris, avec une légère différence d'opacité */}
-      `}>
-        <span className={`
-          w-[40px] h-[40px] rounded-full flex-shrink-0 flex items-center justify-center text-lg mr-2
-          transition-all duration-300
-          ${currentStep >= 1 ? 'bg-[#333446] text-white' : 'bg-gray-300 text-gray-600'} {/* Seul le cercle change de couleur de fond et de texte */}
-        `}>
-          1
-        </span>
-        <p className="text-sm md:text-base">Événement</p>
-      </div>
+  const steps = [
+    { number: 1, label: "Événement" },
+    { number: 2, label: "Table" },
+    { number: 3, label: "Invite" },
+  ];
 
-      {/* Étape 2 : Invite */}
-      <div className={`
-        flex items-center px-4 py-2
-        transition-colors duration-300
-        ${currentStep >= 2 ? 'text-gray-700' : 'text-gray-500'}
-      `}>
-        <span className={`
-          w-[40px] h-[40px] rounded-full flex-shrink-0 flex items-center justify-center text-lg mr-2
-          transition-all duration-300
-          ${currentStep >= 2 ? 'bg-[#333446] text-white' : 'bg-gray-300 text-gray-600'}
-        `}>
-          2
-        </span>
-        <p className="text-sm md:text-base">Table</p>
-      </div>
-      <div className={`
-        flex items-center px-4 py-2
-        transition-colors duration-300
-        ${currentStep >= 3 ? 'text-gray-700' : 'text-gray-500'}
-      `}>
-        <span className={`
-          w-[40px] h-[40px] rounded-full flex-shrink-0 flex items-center justify-center text-lg mr-2
-          transition-all duration-300
-          ${currentStep >= 3 ? 'bg-[#333446] text-white' : 'bg-gray-300 text-gray-600'}
-        `}>
-          3
-        </span>
-        <p className="text-sm md:text-base">Invite</p>
-      </div>
+  return (
+    <div className="relative flex items-center justify-center mb-8 gap-12">
+      {steps.map((step, index) => (
+        <React.Fragment key={step.number}>
+          {/* Cercle et texte de l'étape */}
+          <div
+            className="flex items-center flex-col"
+            aria-current={currentStep === step.number ? "step" : undefined}
+            aria-label={`Étape ${step.number} : ${step.label} ${currentStep >= step.number ? "complétée" : "en attente"}`}
+          >
+            <motion.div
+              className={`
+                w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold shadow-md
+                transition-all duration-300 ease-in-out
+                ${currentStep >= step.number ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white' : 'bg-gray-200 text-gray-500'}
+              `}
+              whileHover={{ scale: currentStep >= step.number ? 1.1 : 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              {step.number}
+            </motion.div>
+            <p className={`
+              mt-2 text-center text-base font-medium
+              ${currentStep >= step.number ? 'text-gray-900' : 'text-gray-400'}
+              transition-colors duration-300
+            `}>
+              {step.label}
+            </p>
+          </div>
+
+          {/* Ligne de progression (sauf pour la dernière étape) */}
+          {index < steps.length - 1 && (
+            <div className="flex-1 h-1 bg-gray-200">
+              <motion.div
+                className="h-1 bg-gradient-to-r from-indigo-600 to-indigo-700"
+                initial={{ width: 0 }}
+                animate={{ width: currentStep > step.number ? "100%" : "0%" }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+          )}
+        </React.Fragment>
+      ))}
     </div>
   );
 };

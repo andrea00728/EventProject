@@ -102,14 +102,27 @@ async updatePlaceReserve(tableId: number): Promise<void> {
 }
 
 
+  // async findByEvent(eventId: number): Promise<TableEvent[]> {
+  //   return this.tableRepository.find({
+  //     where: { event: { id: eventId } },
+  //     relations: ['guests'],
+  //   });
+  // }
+
+  
   async findByEvent(eventId: number): Promise<TableEvent[]> {
     return this.tableRepository.find({
       where: { event: { id: eventId } },
-      relations: ['guests'],
+      relations: ['guests','event'],
     });
   }
 
-    //decrementation du place si linvite supprimer
+    /**
+     * 
+     * @param tableId 
+     * //decrementation du place si linvite supprimer
+     */
+
   async decrementPlaceReserve(tableId: number): Promise<void> {
   const table = await this.tableRepository.findOne({ where: { id: tableId } });
   if (!table) {
@@ -119,5 +132,60 @@ async updatePlaceReserve(tableId: number): Promise<void> {
   table.placeReserve = Math.max(0, table.placeReserve - 1); // éviter négatif
   await this.tableRepository.save(table);
 }
+
+
+
+/**
+ * 
+ * @param id 
+ * @param data 
+ * @returns 
+ * mettre a jour les tables
+ */
+
+  async updateTable(id:number,data:Partial<TableEvent>):  Promise<TableEvent>{
+    await this.tableRepository.update(id,data);
+    const table=await this.tableRepository.findOne({
+      where:{id},
+      relations:['guests']
+    });
+     if (!table) {
+      throw new BadRequestException(`table avec ID ${id} non trouvé`);
+    }
+
+    return table;
+  }
+
+//   async DeleteTable(id: number, userId: number): Promise<{ message: string }> {
+//   // Récupérer la table avec ses relations
+//   const table = await this.tableRepository.findOne({
+//     where: { id },
+//     relations: ['event', 'event.user', 'guests'],
+//   });
+
+//   // Vérifier si la table existe
+//   if (!table) {
+//     throw new BadRequestException("Table non trouvée");
+//   }
+
+//   // Vérifier que la table appartient bien à l'utilisateur connecté
+//   if (table.event.user.id !== userId) {
+//     throw new UnauthorizedException("Vous n'avez pas l'autorisation de supprimer cette table");
+//   }
+
+//   // Détacher les invités associés à cette table
+//   for (const guest of table.guests) {
+//     guest.table = null;
+//     guest.place = null;
+//     await this.guestRepository.save(guest);
+//   }
+
+//   // Supprimer la table
+//   await this.tableRepository.remove(table);
+
+//   return { message: "Table supprimée avec succès" };
+// }
+
+
 
 }

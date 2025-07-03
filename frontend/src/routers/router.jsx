@@ -19,6 +19,10 @@ import Inviteform from "../pages/choixModInvite/inviteForm";
 import ImportGuestsCSV from "../pages/choixModInvite/importation";
 import AffichageInvite from "../pages/choixModInvite/affichageInvite";
 import InviteformWithId from "../pages/choixModInvite/InviteFormparId";
+import TableLayout from "../layouts/TableLayout.jsx";
+import Tablecreation from "../pages/TableOrganisation/Tablecreation";
+import Listetable from "../pages/TableOrganisation/ListeTable";
+import Affichage3dTable from "../pages/TableOrganisation/Affichage3dTable";
 const router=createBrowserRouter([
    
     {
@@ -65,7 +69,22 @@ const router=createBrowserRouter([
             },
              {
                 path:"/evenement/tables",
-                element:<Table3DScene/>
+                element:<TableLayout/>,
+                children:[
+                    {
+                        path:"creationTable",
+                        element:<Tablecreation/>
+                    },
+                    {
+                        path:"affichageTable",
+                        element:<Listetable/>
+                    },
+                    {
+                        path:"3Dtable",
+                        element:<Affichage3dTable/>
+                    }
+                ]
+
             },
         ]
     },

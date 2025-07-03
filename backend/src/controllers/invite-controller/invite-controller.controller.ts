@@ -10,6 +10,14 @@ import { GuestService } from 'src/services/invite-service/invite-service.service
 export class GuestController {
   constructor(private readonly guestService: GuestService) {}
 
+  /**
+   * 
+   * @param dto 
+   * @param req 
+   * @returns 
+   * creation dínvite lie au evenement precedent
+   */
+
  @Post('/create')
   @UseGuards(AuthGuard('jwt'))
   async create(@Body() dto: CreateInviteDto, @Req() req): Promise<Invite> {
@@ -24,7 +32,14 @@ export class GuestController {
     return this.guestService.findById(guest.id);
   }
 
-  // Importer un fichier CSV avec des invités, sans eventId côté client
+ 
+  /**
+   * 
+   * @param file 
+   * @param req 
+   * @returns 
+   *  // Importer un fichier CSV avec des invités, sans eventId côté client
+   */
   @Post('import')
    @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file'))
@@ -40,7 +55,16 @@ export class GuestController {
     return await this.guestService.importGuests(file, lastEvent.id);
   }
 
-  //  Importer des invités pour un ÉVÉNEMENT SPÉCIFIQUE**
+  /**
+   * 
+   * @param file 
+   * @param eventId 
+   * @param req 
+   * @returns 
+   * //  Importer des invités pour un ÉVÉNEMENT SPÉCIFIQUE**
+   */
+
+
   @Post('import/:eventId') 
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file'))
@@ -62,7 +86,13 @@ export class GuestController {
 
 
 
-  // Récupérer tous les invités du dernier événement de l'utilisateur connecté
+  /**
+   * 
+   * @param req 
+   * @returns 
+   * // Récupérer tous les invités du dernier événement de l'utilisateur connecté
+   */
+
   @Get('last-event')
    @UseGuards(AuthGuard('jwt'))
   async getGuestsByLastEvent(@Req() req): Promise<Invite[]> {
@@ -76,7 +106,14 @@ export class GuestController {
   }
 
 
-   //Récupérer les invités d’un événement spécifique
+  /**
+   * 
+   * @param id 
+   * @param req 
+   * @returns 
+   *  //Récupérer les invités d’un événement spécifique
+   */
+
     @Get('event/:id')
     @UseGuards(AuthGuard('jwt'))
     async getGuestsByEvent(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<Invite[]> {
@@ -90,7 +127,13 @@ export class GuestController {
 
 
 
-// **ROUTE CORRIGÉE : Récupérer les invités d’un événement spécifique**
+/**
+ * 
+ * @param eventId 
+ * @param req 
+ * @returns 
+ * /  Récupérer les invités d’un événement spécifique**
+ */
   @Get(':eventId') 
   @UseGuards(AuthGuard('jwt'))
   async getGuestsByEventId(
@@ -115,7 +158,13 @@ export class GuestController {
 
 
      
-  // Mise à jour d’un invité (peut rester comme ça)
+ /**
+  * 
+  * @param id 
+  * @param updateDto 
+  * @returns 
+  *  // Mise à jour d’un invité 
+  */
   @Put(':id')
    @UseGuards(AuthGuard('jwt'))
   async updateGuest(@Param('id', ParseIntPipe) id: number, @Body() updateDto: Partial<Invite>): Promise<Invite> {
@@ -124,7 +173,15 @@ export class GuestController {
 
 
 
-  // creation invite specifique
+  /**
+   * 
+   * @param eventId 
+   * @param createInviteDto 
+   * @param req 
+   * @returns 
+   * // creation invite specifique
+   */
+
  @Post(':eventId') 
   @UseGuards(AuthGuard('jwt'))
   async createInviteForSpecificEvent(
@@ -139,7 +196,14 @@ export class GuestController {
     return await this.guestService.createGuest(createInviteDto, eventId);
   }
 
-  //supprimer invite
+  /**
+   * 
+   * @param id 
+   * @param req 
+   * @returns 
+   * //supprimer invite
+   */
+  
   @Delete(':id')
 @UseGuards(AuthGuard('jwt'))
 async deleteGuest(
