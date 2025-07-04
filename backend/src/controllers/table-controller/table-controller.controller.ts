@@ -155,6 +155,7 @@ async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<TableEvent> 
 
 
 
+
   @Patch(':tableId/position')
   @UseGuards(AuthGuard('jwt'))
   async updateTablePosition(

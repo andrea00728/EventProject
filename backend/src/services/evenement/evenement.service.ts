@@ -113,4 +113,23 @@ async findLastEventByUserId(userId: string): Promise<Evenement | null> {
   });
 }
 
+/**
+ * requete de suppression d'un evenement
+ */
+
+async deleteEvent(id: number, userId: string): Promise<{ message: string }> {
+  const event = await this.evenementRepository.findOne({
+    where: { id, user: { id: userId } },
+    relations: ['user', 'tables', 'invites'],
+  });
+  if (!event) {
+    throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de le supprimer`);
+  }
+  // Supprimer tous les invités liés à cet événement
+  await this.evenementRepository.manager.delete('Invite', { event: { id } });
+  // Supprimer toutes les tables liées à cet événement
+  await this.evenementRepository.manager.delete('TableEvent', { event: { id } });
+  await this.evenementRepository.remove(event);
+  return { message: 'Événement supprimé avec succès' };
+}
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getMyEvents } from '../../services/evenementServ';
 import { useStateContext } from '../../context/ContextProvider';
 import Modal from '../../components/Modal/EventModal';
-
+import DeleteEventButton from '../../util/DeleteEvenement';
 const EventAccept = () => {
   const { token } = useStateContext();
   const [events, setEvents] = useState([]);
@@ -112,6 +112,7 @@ const EventAccept = () => {
               >
                 Voir les tables
               </button>
+              <DeleteEventButton eventId={event.id} onDeleted={(deletedId) => setEvents(events.filter(e => e.id !== deletedId))} />
             </div>
           ))}
         </div>

@@ -33,10 +33,10 @@ export class Evenement {
   @ManyToOne(() => Salle, (salle) => salle.location)
   salle: Salle;
 
-  @OneToMany(() => TableEvent, (table) => table.event)
+  @OneToMany(() => TableEvent, (table) => table.event, {onDelete: 'CASCADE'})
   tables: TableEvent[];
 
-  @OneToMany(() => Invite, (invite) => invite.event)
+  @OneToMany(() => Invite, (invite) => invite.event,{onDelete: 'CASCADE'})
   invites: Invite[];
 
   // @Column({ type: 'varchar', length: 255 })
