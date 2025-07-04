@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { createEvent, getLocations, getSallesByLocation } from "../services/evenementServ";
 
+const EVENT_TYPES = [
+  { value: "mariage", label: "Mariage", color: "bg-pink-100 text-pink-700" },
+  { value: "reunion", label: "Réunion", color: "bg-blue-100 text-blue-700" },
+  { value: "anniversaire", label: "Anniversaire", color: "bg-yellow-100 text-yellow-700" },
+  { value: "engagement", label: "Engagement", color: "bg-green-100 text-green-700" },
+  { value: "autre", label: "Autre", color: "bg-gray-100 text-gray-700" },
+];
+
 export default function Evenementform({ onNext }) {
   const [form, setForm] = useState({
     nom: "",
@@ -16,6 +24,7 @@ export default function Evenementform({ onNext }) {
   const [salles, setSalles] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalSalleOpen, setModalSalleOpen] = useState(false);
+  const [modalTypeOpen, setModalTypeOpen] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -65,8 +74,18 @@ export default function Evenementform({ onNext }) {
       <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5 py-4">
         <input name="nom" value={form.nom} onChange={handleChange} placeholder="Événement" required
           className="border border-gray-300  rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm]" />
-        <input name="type" value={form.type} onChange={handleChange} placeholder="Type" required
-          className="border border-gray-300 rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm]" />
+        
+        {/* Sélection du type d'événement via modale */}
+        <input
+          name="type"
+          value={EVENT_TYPES.find(t => t.value === form.type)?.label || "Type d'événement"}
+          readOnly
+          onClick={() => setModalTypeOpen(true)}
+          placeholder="Type d'événement"
+          required
+          className="border border-gray-300 rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm] cursor-pointer focus:ring-2 focus:ring-pink-400"
+        />
+        
         <input name="theme" value={form.theme} onChange={handleChange} placeholder="Thème" required
           className="border border-gray-300 rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm]" />
         
@@ -129,6 +148,38 @@ export default function Evenementform({ onNext }) {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal pour le type d'événement */}
+      {modalTypeOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 w-[90vw] max-w-2xl">
+            <h3 className="text-xl font-bold text-center mb-6 text-gray-800">Choisissez le type d'événement</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              {EVENT_TYPES.map(type => (
+                <button
+                  key={type.value}
+                  type="button"
+                  className={`flex flex-col items-center justify-center rounded-xl p-6 border-2 border-transparent hover:border-pink-400 transition ${type.color} shadow-md hover:shadow-lg focus:outline-none ${form.type === type.value ? 'ring-2 ring-pink-400' : ''}`}
+                  onClick={() => {
+                    setForm({ ...form, type: type.value });
+                    setModalTypeOpen(false);
+                  }}
+                >
+                  <span className="text-lg font-semibold mb-2">{type.label}</span>
+                  <span className="text-xs uppercase tracking-wider">{type.value}</span>
+                </button>
+              ))}
+            </div>
+            <button
+              className="mt-8 w-full py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
+              onClick={() => setModalTypeOpen(false)}
+              type="button"
+            >
+              Annuler
+            </button>
           </div>
         </div>
       )}

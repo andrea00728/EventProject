@@ -11,6 +11,7 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   // 🔄 Récupère les événements de l'utilisateur
   useEffect(() => {
@@ -37,13 +38,28 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
     }
 
     setLoading(true);
+    setError("");
+    setMessage("");
     try {
-      await importGuestsToSpecificEvent(file, eventId, token);
-      setMessage("✅ Importation réussie !");
+      const result = await importGuestsToSpecificEvent(file, eventId, token);
+      if (result && (result.imported || result.errors)) {
+        if (result.imported && result.imported.length > 0) {
+          setMessage(`✅ ${result.imported.length} invité(s) importé(s) avec succès !`);
+        }
+        if (result.errors && result.errors.length > 0) {
+          setError(result.errors.join("\n"));
+        }
+      } else {
+        setMessage("✅ Importation réussie !");
+      }
       setFile(null);
       if (onImportSuccess) onImportSuccess();
     } catch (err) {
-      setError("❌ Erreur lors de l'importation. Vérifiez le format du fichier.");
+      if (err.response && err.response.data && err.response.data.message) {
+        setError("❌ " + err.response.data.message);
+      } else {
+        setError("❌ Erreur lors de l'importation. Vérifiez le format du fichier.");
+      }
     } finally {
       setLoading(false);
     }
@@ -54,20 +70,56 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
       <div className="bg-white shadow rounded p-6">
         <h2 className="text-lg font-semibold mb-4">📁 Importer des invités (.CSV)</h2>
 
-        {/* Sélection de l'événement */}
-        <label className="block mb-2 font-medium text-gray-700">Événement :</label>
-        <select
-          className="mb-4 block w-full border border-gray-300 rounded px-3 py-2 text-sm"
-          value={eventId}
-          onChange={(e) => setEventId(e.target.value)}
-        >
-          <option value="">-- Sélectionner un événement --</option>
-          {events.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.nom} ({new Date(event.date).toLocaleDateString()})
-            </option>
-          ))}
-        </select>
+        {/* Sélection de l'événement via modale UX/UI */}
+        <div className="mb-4">
+          <label className="block mb-2 font-medium text-gray-700">Événement :</label>
+          <input
+            type="text"
+            value={events.find(e => e.id === eventId)?.nom ? `${events.find(e => e.id === eventId).nom} (${new Date(events.find(e => e.id === eventId).date).toLocaleDateString()})` : ''}
+            readOnly
+            placeholder="Cliquez pour sélectionner un événement"
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-50 cursor-pointer focus:ring-2 focus:ring-indigo-400"
+            onClick={() => setModalOpen(true)}
+          />
+        </div>
+
+        {/* Modale de sélection d'événement */}
+        {modalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 w-[90vw] max-w-3xl relative">
+              <button
+                className="absolute top-4 right-4 text-gray-500 hover:text-red-600 text-2xl font-bold focus:outline-none"
+                onClick={() => setModalOpen(false)}
+              >
+                ×
+              </button>
+              <h3 className="text-xl font-bold text-center mb-6 text-gray-800">Sélectionnez un événement</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {events.length === 0 ? (
+                  <div className="col-span-full text-center text-gray-500">Aucun événement disponible.</div>
+                ) : (
+                  events.map(event => (
+                    <button
+                      key={event.id}
+                      type="button"
+                      className={`flex flex-col items-center justify-center rounded-xl p-6 border-2 border-transparent hover:border-pink-400 transition bg-gray-50 shadow-md hover:shadow-lg focus:outline-none ${eventId === event.id ? 'ring-2 ring-pink-400' : ''}`}
+                      onClick={() => {
+                        setModalOpen(false);
+                        setEventId(event.id);
+                        setError("");
+                        setMessage("");
+                      }}
+                    >
+                      <span className="text-lg font-semibold mb-2 text-indigo-700">{event.nom}</span>
+                      <span className="text-xs text-gray-500 mb-1">{new Date(event.date).toLocaleDateString()}</span>
+                      <span className="text-xs text-gray-400">{event.theme}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Input pour le fichier CSV */}
         <input
@@ -94,7 +146,7 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
         )}
 
         {error && (
-          <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
+          <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded whitespace-pre-line">
             {error}
           </div>
         )}

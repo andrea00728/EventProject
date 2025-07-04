@@ -51,78 +51,71 @@ export class GuestService {
 
     return this.findById(saved.id);
   }
-
   
-  
-  async importGuests(file: Express.Multer.File, eventId: number): Promise<Invite[]> {
-    const evenement = await this.evenementRepository.findOne({ where: { id: eventId } });
-    if (!evenement) {
-      throw new BadRequestException('Événement non trouvé');
-    }
+ async importGuests(file: Express.Multer.File, eventId: number): Promise<{ imported: Invite[]; errors: string[] }> {
+  const evenement = await this.evenementRepository.findOne({ where: { id: eventId } });
+  if (!evenement) {
+    throw new BadRequestException('Événement non trouvé');
+  }
 
-    const guestsRaw: any[] = [];
-    const parser = parse({ columns: true, trim: true });
-    const stream = streamifier.createReadStream(file.buffer);
+  const guestsRaw: any[] = [];
+  const parser = parse({ columns: true, trim: true });
+  const stream = streamifier.createReadStream(file.buffer);
 
-    stream.pipe(parser);
+  stream.pipe(parser);
 
-    return new Promise((resolve, reject) => {
-      parser.on('data', (record) => {
-        if (!record.nom || !record.prenom || !record.email || !record.sex) {
-          reject(new BadRequestException('CSV invalide : colonnes manquantes'));
-          return;
-        }
-        guestsRaw.push(record);
-      });
+  return new Promise((resolve, reject) => {
+    parser.on('data', (record) => {
+      if (!record.nom || !record.prenom || !record.email || !record.sex) {
+        reject(new BadRequestException('CSV invalide : colonnes manquantes'));
+        return;
+      }
+      guestsRaw.push(record);
+    });
 
-      parser.on('end', async () => {
+    parser.on('end', async () => {
+      const savedGuests: Invite[] = [];
+      const errors: string[] = [];
+
+      for (const record of guestsRaw) {
         try {
-          const savedGuests: Invite[] = [];
-
-          for (const record of guestsRaw) {
-            const existing = await this.guestRepository.findOne({ 
-              where: { 
-                email: record.email,
-                event:{id:eventId}
-              } 
-            });
-            if (existing) {
-              throw new BadRequestException(`L'email ${record.email} est déjà utilisé`);
-            }
-
-            const { table, place } = await this.findNextAvailablePlace(eventId);
-
-            const newGuest = this.guestRepository.create({
-              nom: record.nom,
-              prenom: record.prenom,
+          const existing = await this.guestRepository.findOne({
+            where: {
               email: record.email,
-              sex: record.sex,
-              event: evenement,
-              table,
-              place,
-            });
-
-            const saved = await this.guestRepository.save(newGuest);
-
-            await this.tableService.updatePlaceReserve(table.id);
-
-            savedGuests.push(saved);
+              event: { id: eventId }
+            }
+          });
+          if (existing) {
+            errors.push(`L'email ${record.email} est déjà utilisé`);
+            continue;
           }
 
-          const loadedGuests = await this.guestRepository.find({
-            where: { event: { id: eventId } },
-            relations: ['event', 'table'],
+          const { table, place } = await this.findNextAvailablePlace(eventId);
+
+          const newGuest = this.guestRepository.create({
+            nom: record.nom,
+            prenom: record.prenom,
+            email: record.email,
+            sex: record.sex,
+            event: evenement,
+            table,
+            place,
           });
 
-          resolve(loadedGuests);
-        } catch (error) {
-          reject(error);
+          const saved = await this.guestRepository.save(newGuest);
+          await this.tableService.updatePlaceReserve(table.id);
+          savedGuests.push(saved);
+        } catch (err) {
+          errors.push(`Erreur pour ${record.email}: ${err.message}`);
         }
-      });
+      }
 
-      parser.on('error', (error) => reject(error));
+      resolve({ imported: savedGuests, errors });
     });
-  }
+
+    parser.on('error', (error) => reject(error));
+  });
+}
 
   private async findNextAvailablePlace(eventId: number): Promise<{ table: any; place: number }> {
     const tables = await this.tableService.findByEvent(eventId);

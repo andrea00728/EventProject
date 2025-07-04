@@ -52,7 +52,8 @@ export class GuestController {
     const lastEvent = await this.guestService.findLastEventByUser(userId);
     if (!lastEvent) throw new HttpException('Aucun événement trouvé pour cet utilisateur', HttpStatus.BAD_REQUEST);
 
-    return await this.guestService.importGuests(file, lastEvent.id);
+    const result = await this.guestService.importGuests(file, lastEvent.id);
+    return result.imported;
   }
 
   /**
@@ -81,7 +82,8 @@ export class GuestController {
     if (!evenement) {
         throw new HttpException('Événement introuvable ou non autorisé', HttpStatus.NOT_FOUND);
     }
-    return await this.guestService.importGuests(file, eventId);
+    const result = await this.guestService.importGuests(file, eventId);
+    return result.imported;
   }
 
 
