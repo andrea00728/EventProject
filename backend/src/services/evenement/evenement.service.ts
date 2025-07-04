@@ -1,5 +1,5 @@
 // src/event/event.service.ts
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Evenement } from 'src/entities/Evenement';
 import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
@@ -34,6 +34,7 @@ async create(dto: CreateEventDto): Promise<Evenement> {
       date: LessThanOrEqual(dto.date_fin),
       date_fin: MoreThanOrEqual(dto.date),
     },
+    relations:['user']
   });
 
   if (existingEvent) {
@@ -58,6 +59,26 @@ async create(dto: CreateEventDto): Promise<Evenement> {
 
   return this.evenementRepository.save(evenement);
 }
+
+/**
+ * 
+ * @returns 
+ * creation table par evenement specifique
+ * 
+ */
+
+async findOneById(eventId: number): Promise<Evenement> {
+  const event = await this.evenementRepository.findOne({
+    where: { id: eventId },
+    relations: ['user'],
+  });
+  if(!event){
+    throw new NotFoundException(`Événement avec ID ${eventId} non trouvé`)
+  }
+  return event;
+}
+
+
 
   
   async findAll(): Promise<Evenement[]> {

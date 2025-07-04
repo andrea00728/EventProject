@@ -9,6 +9,15 @@ export const createTable = async (data, token) => {
   return response.data;
 };
 
+  export const createTableByIdevent = async (data, token) => {
+    const response = await axiosClient.post("/tables/create/by_event", data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  };
+
 export const getTablesByEventId = async (eventId, token) => {
   const response = await axiosClient.get(`/tables/event/${eventId}`, {
     headers: {

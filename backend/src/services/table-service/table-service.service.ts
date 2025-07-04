@@ -18,7 +18,7 @@ export class TableService {
     private readonly eventRepository:Repository<Evenement>,
   ) {}
 
-  async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEvent> {
+async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEvent> {
   if (!dto || dto.numero === undefined || dto.capacite === undefined || !dto.eventId) {
     throw new BadRequestException('Données de création de table incomplètes');
   }
@@ -35,10 +35,21 @@ export class TableService {
     throw new UnauthorizedException("Cet événement n'appartient pas à l'utilisateur connecté");
   }
 
+  // Vérification du numéro de table déjà utilisé
+  const existingTable = await this.tableRepository.findOne({
+    where: {
+      numero: dto.numero,
+      event: { id: dto.eventId }
+    }
+  });
+  if (existingTable) {
+    throw new BadRequestException("Le numéro de table est déjà utilisé pour cet événement.");
+  }
+
   const table = this.tableRepository.create({
     numero: dto.numero,
     capacite: dto.capacite,
-    type:dto.type,
+    type: dto.type,
     position: dto.position || { left: 0, top: 0 },
     event
   });

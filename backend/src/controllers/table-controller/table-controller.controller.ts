@@ -38,7 +38,7 @@ export class TableController {
    */
 @Post('/create')
   @UseGuards(AuthGuard('jwt'))
-  async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<any> {
+  async creationTablebyIdEvent(@Body() dto: CreateTableDto, @Req() req): Promise<any> {
     const userId = req.user?.sub;
     if (!userId) {
       throw new UnauthorizedException('Utilisateur non authentifié');
@@ -57,6 +57,25 @@ export class TableController {
     }, userId);
   }
   
+  @Post('/create/by_event')
+@UseGuards(AuthGuard('jwt'))
+async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<TableEvent> {
+  const userId = req.user?.sub;
+  if (!userId) {
+    throw new UnauthorizedException('Utilisateur non authentifié');
+  }
+
+  // Vérifier que l'événement existe et appartient à l'utilisateur
+  const event = await this.evenementService.findOneById(dto.eventId);
+  if (!event) { 
+    throw new NotFoundException("Événement non trouvé");
+  }
+  if (event.user.id !== userId) {
+    throw new UnauthorizedException("Cet événement n'appartient pas à l'utilisateur connecté");
+  }
+
+  return this.tableService.createTable(dto, userId);
+}
   /**
    * 
    * @param tableId 
