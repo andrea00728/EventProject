@@ -68,15 +68,10 @@ export class OrderService {
 
   async findOrdersByTable(tableId: number): Promise<(Order & { total: number })[]> {
     const orders = await this.orderRepository.find({ where: { table: { id: tableId } }, relations: ['items', 'items.menuItem'] });
-    return Promise.all(
-      orders.map(async (order) => {
-        const result = await this.orderRepository.query(
-          `SELECT total FROM "order" WHERE id = $1`,
-          [order.id],
-        );
-        return { ...order, total: parseFloat(result[0].total) };
-      }),
-    );
+    return orders.map((order) => {
+      const total = order.items.reduce((sum, item) => sum + item.subtotal, 0);
+      return { ...order, total };
+    });
   }
 
   async cancelOrder(orderId: number): Promise<void> {
@@ -92,5 +87,13 @@ export class OrderService {
 
     // Supprimer la commande
     await this.orderRepository.delete(orderId);
+  }
+
+  async findAllOrders(): Promise<(Order & { total: number })[]> {
+    const orders = await this.orderRepository.find({ relations: ['items', 'items.menuItem'] });
+    return orders.map((order) => {
+      const total = order.items.reduce((sum, item) => sum + item.subtotal, 0);
+      return { ...order, total };
+    });
   }
 }

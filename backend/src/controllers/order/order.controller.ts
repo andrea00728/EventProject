@@ -12,6 +12,11 @@ export class OrderController {
     return this.orderService.createOrder(body.tableId, body.items);
   }
 
+  @Get()
+  findAllOrders() {
+    return this.orderService.findAllOrders();
+  }
+
   @Patch(':id/status')
   @UsePipes(new ValidationPipe())
   updateOrderStatus(@Param('id') id: number, @Body() body: UpdateOrderStatusDto) {

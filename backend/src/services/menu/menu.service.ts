@@ -29,6 +29,10 @@ export class MenuService {
     return this.menuRepository.find({ where: { event: { id: eventId } }, relations: ['items'] });
   }
 
+  async findAllMenus(): Promise<Menu[]> {
+    return this.menuRepository.find({ relations: ['items'] });
+  }
+
   async getMenuItem(menuItemId: number): Promise<MenuItem> {
     const menuItem = await this.menuItemRepository.findOne({ where: { id: menuItemId } });
     if (!menuItem) throw new NotFoundException('Menu item not found');
