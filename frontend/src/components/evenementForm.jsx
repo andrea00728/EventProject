@@ -7,6 +7,7 @@ export default function Evenementform({ onNext }) {
     type: "",
     theme: "",
     date: "",
+    date_fin: "", // <-- Ajouté
     locationId: "",
     salleId: "",
   });
@@ -37,10 +38,15 @@ export default function Evenementform({ onNext }) {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    try {
-    const event = await createEvent(form);
-    onNext && onNext({ eventId: event.id }); // 
 
+    if (new Date(form.date) >= new Date(form.date_fin)) {
+      setError("La date de fin doit être après la date de début.");
+      return;
+    }
+
+    try {
+      const event = await createEvent(form);
+      onNext && onNext({ eventId: event.id });
     } catch {
       setError("Erreur lors de la création de l'événement.");
     }
@@ -52,8 +58,7 @@ export default function Evenementform({ onNext }) {
   return (
     <div className="w-full max-w-4xl mx-auto mt-10 px-6">
       <h2 className="text-3xl font-bold text-center mb-2">Quel est votre événement ?</h2>
-      <p className="text-center text-gray-500 mb-4">Prêt à le créer maintenant ?</p><br/>
-    
+      <p className="text-center text-gray-500 mb-4">Prêt à le créer maintenant ?</p><br />
 
       {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
@@ -64,8 +69,15 @@ export default function Evenementform({ onNext }) {
           className="border border-gray-300 rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm]" />
         <input name="theme" value={form.theme} onChange={handleChange} placeholder="Thème" required
           className="border border-gray-300 rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm]" />
+        
+        {/* Date de début */}
         <input type="datetime-local" name="date" value={form.date} onChange={handleChange} required
           className="border border-gray-300 rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm]" />
+
+        {/* Date de fin */}
+        <input type="datetime-local" name="date_fin" value={form.date_fin} onChange={handleChange} required
+          className="border border-gray-300 rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm]" />
+
         <input type="text" value={selectedLocationName()} readOnly onClick={() => setModalOpen(true)}
           placeholder="Où se déroulera l’événement ?" className="border border-gray-300 rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm] cursor-pointer" />
         <input type="text" value={selectedSalleName()} readOnly disabled={!form.locationId}

@@ -28,8 +28,18 @@ export const getSallesByLocation = async (locationId) => {
   return response.data;
 };
 
+// export const getMyEvents = async (token) => {
+//   const response = await axiosClient.get("/evenements/me", {
+//     headers: {
+//       Authorization: `Bearer ${token}`,
+//     },
+//   });
+//   return response.data;
+// };
+
+
 export const getMyEvents = async (token) => {
-  const response = await axiosClient.get("/evenements/me", {
+  const response = await axiosClient.get('/evenements/me', {
     headers: {
       Authorization: `Bearer ${token}`,
     },

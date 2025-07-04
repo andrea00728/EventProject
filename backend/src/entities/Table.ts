@@ -20,6 +20,8 @@ export class TableEvent {
   @Column({ type: 'enum', enum: ['ronde', 'carree', 'rectangle', 'ovale'], default: 'ronde' })
   type: 'ronde' | 'carree' | 'rectangle' | 'ovale';
 
+  @Column({ type: 'jsonb', nullable: true })
+  position: { left: number; top: number };
 
   @ManyToOne(() => Evenement, (evenement) => evenement.tables)
   @JoinColumn({name:'eventId'})

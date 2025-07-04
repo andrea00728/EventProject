@@ -39,6 +39,7 @@ export class TableService {
     numero: dto.numero,
     capacite: dto.capacite,
     type:dto.type,
+    position: dto.position || { left: 0, top: 0 },
     event
   });
 
@@ -187,5 +188,18 @@ async updatePlaceReserve(tableId: number): Promise<void> {
 // }
 
 
+ async updateTablePosition(tableId: number, position: { left: number; top: number }): Promise<TableEvent> {
+    const table = await this.tableRepository.findOne({
+      where: { id: tableId },
+      relations: ['guests', 'event'],
+    });
+
+    if (!table) {
+      throw new BadRequestException(`Table avec ID ${tableId} non trouvée`);
+    }
+
+    table.position = position;
+    return this.tableRepository.save(table);
+  }
 
 }

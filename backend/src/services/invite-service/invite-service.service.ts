@@ -52,6 +52,8 @@ export class GuestService {
     return this.findById(saved.id);
   }
 
+  
+  
   async importGuests(file: Express.Multer.File, eventId: number): Promise<Invite[]> {
     const evenement = await this.evenementRepository.findOne({ where: { id: eventId } });
     if (!evenement) {

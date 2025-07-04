@@ -20,7 +20,7 @@
         name: "Evenement",
         subMenus: [
           { path: "/evenement", name: "Organisations", icon: "../../public/red-carpet.png" },
-          { path: "/evenement/brouillons", name: "evenement", icon: "../../public/file.png" },
+          { path: "/evenement/evenement", name: "evenement", icon: "../../public/file.png" },
           { path: "/evenement/tables", name: "Tables", icon: "../../public/chair.png" },
           { path: "/evenement/invites", name: "Invités", icon: "../../public/guest.png" },
           { path: "/evenement/rapports", name: "Invitation", icon: "../../public/invitation.png" },

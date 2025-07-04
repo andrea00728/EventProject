@@ -4,6 +4,7 @@ export class CreateEventDto {
   type: 'mariage' | 'reunion' | 'anniversaire' | 'engagement' | 'autre';
   theme: string;
   date: Date;
+  date_fin:Date;
   locationId: number;
   salleId: number;
 }

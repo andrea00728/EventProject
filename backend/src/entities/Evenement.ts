@@ -24,6 +24,9 @@ export class Evenement {
   @Column()
   date: Date;
 
+  @Column({nullable:true})
+  date_fin: Date;
+  
   @ManyToOne(() => Localisation, (localisation) => localisation.salles)
   location: Localisation;
 
@@ -37,9 +40,12 @@ export class Evenement {
   invites: Invite[];
 
   // @Column({ type: 'varchar', length: 255 })
-  //   utilisateur_id: string;
+    //   utilisateur_id: string;
     @ManyToOne(()=>User,(user)=>user.id,{nullable:false})
     @JoinColumn({name:'utilisateur_id'})
     user:User
+
+    @Column({nullable:true})
+    createdAt: Date;
 }
 

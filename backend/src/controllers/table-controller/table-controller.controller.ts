@@ -4,6 +4,7 @@ import {
   Body,
   Param,
   Get,
+  Patch,
   ParseIntPipe,
   BadRequestException,
   Req,
@@ -133,4 +134,19 @@ export class TableController {
 //   return await this.tableService.DeleteTable(id, userId);
 // }
 
+
+
+  @Patch(':tableId/position')
+  @UseGuards(AuthGuard('jwt'))
+  async updateTablePosition(
+    @Param('tableId', ParseIntPipe) tableId: number,
+    @Body() position: { left: number; top: number },
+    @Req() req
+  ): Promise<TableEvent> {
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('Utilisateur non authentifié');
+    }
+    return this.tableService.updateTablePosition(tableId, position);
+  }
 }
