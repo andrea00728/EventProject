@@ -36,7 +36,7 @@ export class GuestService {
     }
 
     const { table, place } = await this.findNextAvailablePlace(eventId);
-
+    await this.ckeckPaymentRequirement(evenement);
     const inv = this.guestRepository.create({
       ...dto,
       event: evenement,
@@ -52,7 +52,7 @@ export class GuestService {
     return this.findById(saved.id);
   }
   
- async importGuests(file: Express.Multer.File, eventId: number): Promise<{ imported: Invite[]; errors: string[] }> {
+async importGuests(file: Express.Multer.File, eventId: number): Promise<{ imported: Invite[]; errors: string[] }> {
   const evenement = await this.evenementRepository.findOne({ where: { id: eventId } });
   if (!evenement) {
     throw new BadRequestException('Événement non trouvé');
@@ -77,15 +77,36 @@ export class GuestService {
       const savedGuests: Invite[] = [];
       const errors: string[] = [];
 
+      const totalExisting = await this.guestRepository.count({
+        where: { event: { id: eventId } },
+      });
+
+      const totalFinal = totalExisting + guestsRaw.length;
+
+      console.log('✔️ Total existants:', totalExisting);
+      console.log('📄 Total CSV à importer:', guestsRaw.length);
+      console.log('💰 Montant transaction:', evenement.montanttransaction);
+      console.log('🔢 Total final:', totalFinal);
+
+      // Vérifie le seuil de paiement
+      if (totalFinal > 50 && (!evenement.montanttransaction || evenement.montanttransaction === 0)) {
+        reject(new BadRequestException(`❌ Vous avez atteint la limite gratuite de 50 invités. Veuillez effectuer le paiement pour continuer.`));
+        return;
+      }
+
       for (const record of guestsRaw) {
         try {
+          console.log(`➡️ Traitement de ${record.email}`);
+          
           const existing = await this.guestRepository.findOne({
             where: {
               email: record.email,
               event: { id: eventId }
             }
           });
+
           if (existing) {
+            console.log(`⚠️ L'email ${record.email} est déjà utilisé`);
             errors.push(`L'email ${record.email} est déjà utilisé`);
             continue;
           }
@@ -106,16 +127,42 @@ export class GuestService {
           await this.tableService.updatePlaceReserve(table.id);
           savedGuests.push(saved);
         } catch (err) {
+          console.error(`❌ Erreur lors du traitement de ${record.email}: ${err.message}`);
           errors.push(`Erreur pour ${record.email}: ${err.message}`);
         }
       }
 
+      console.log(`✅ Import terminé. ${savedGuests.length} invités enregistrés. ${errors.length} erreurs.`);
+
       resolve({ imported: savedGuests, errors });
     });
 
-    parser.on('error', (error) => reject(error));
+    parser.on('error', (error) => {
+      console.error('❌ Erreur lors du parsing du CSV:', error.message);
+      reject(error);
+    });
   });
 }
+
+
+/**
+ * 
+ * @param eventId 
+ * @returns 
+ * Methode pour verifier si le payement est necessaire
+ */
+  private async ckeckPaymentRequirement(event: Evenement): Promise<void> {
+    const count = await this.guestRepository.count({
+      where: { event: { id: event.id } },
+    });
+
+    if (count >= 50 && !event.montanttransaction) {
+      throw new BadRequestException(
+        `Vous avez atteint la limite gratuite de 50 invités. Veuillez effectuer le paiement pour continuer.`
+      );
+    }
+    return;
+  }
 
   private async findNextAvailablePlace(eventId: number): Promise<{ table: any; place: number }> {
     const tables = await this.tableService.findByEvent(eventId);

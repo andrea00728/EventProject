@@ -67,7 +67,8 @@ const router=createBrowserRouter([
             
                         path: "affichageInv",
                         element: <AffichageInvite/>,
-                    }
+                    },
+                    
                 ]
             },
              {
@@ -85,7 +86,7 @@ const router=createBrowserRouter([
                     {
                         path:"3Dtable",
                         element:<Affichage3dTable/>
-                    }
+                    },
                 ]
 
             },

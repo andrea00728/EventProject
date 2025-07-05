@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { importGuestsToSpecificEvent } from "../../services/inviteService";
 import { getMyEvents } from "../../services/evenementServ";
 import { useStateContext } from "../../context/ContextProvider";
+import { createPaypalPaymentLink } from "../../services/payementService"; // Ajout
 
 export default function ImportGuestsCSV({ onImportSuccess }) {
   const { token } = useStateContext();
@@ -12,6 +13,10 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Ajout pour paiement
+  const [showPayment, setShowPayment] = useState(false);
+  const [pendingAmount, setPendingAmount] = useState(20); // Montant par défaut, adapte si besoin
 
   // 🔄 Récupère les événements de l'utilisateur
   useEffect(() => {
@@ -40,6 +45,7 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
     setLoading(true);
     setError("");
     setMessage("");
+    setShowPayment(false); // reset paiement
     try {
       const result = await importGuestsToSpecificEvent(file, eventId, token);
       if (result && (result.imported || result.errors)) {
@@ -55,13 +61,34 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
       setFile(null);
       if (onImportSuccess) onImportSuccess();
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.message) {
+      // Gestion de la limite gratuite
+      if (
+        err.response &&
+        err.response.data &&
+        err.response.data.message &&
+        err.response.data.message.includes("limite gratuite de 50 invités")
+      ) {
+        setError("❌ " + err.response.data.message);
+        setShowPayment(true);
+        // Si le montant est dynamique, récupère-le ici
+        setPendingAmount(20); // ou adapte selon ta logique
+      } else if (err.response && err.response.data && err.response.data.message) {
         setError("❌ " + err.response.data.message);
       } else {
         setError("❌ Erreur lors de l'importation. Vérifiez le format du fichier.");
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handler pour lancer le paiement
+  const handlePay = async () => {
+    try {
+      const url = await createPaypalPaymentLink(eventId, pendingAmount, token);
+      window.location.href = url; // Redirige vers PayPal
+    } catch (err) {
+      setError("Erreur lors de la création du paiement.");
     }
   };
 
@@ -138,6 +165,21 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
         >
           {loading ? "Importation..." : "Importer"}
         </button>
+
+        {/* Affichage du bouton de paiement si besoin */}
+        {showPayment && (
+          <div className="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+            <p className="text-yellow-800 mb-2">
+              Vous avez atteint la limite gratuite de 50 invités. Veuillez effectuer le paiement pour continuer.
+            </p>
+            <button
+              onClick={handlePay}
+              className="px-4 py-2 rounded bg-yellow-600 text-white font-semibold hover:bg-yellow-700 transition"
+            >
+              Payer {pendingAmount} €
+            </button>
+          </div>
+        )}
 
         {message && (
           <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded">

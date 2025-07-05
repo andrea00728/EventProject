@@ -19,6 +19,9 @@ import { TableEvent } from './entities/Table';
 import { EvenementModule } from './modules/evenement/evenement.module';
 import { AuthModule } from './Authentication/auth.module';
 import { User } from './Authentication/entities/auth.entity';
+import { PaiementService } from './services/paiement/paiement.service';
+import { PaiementController } from './controllers/paiement/paiement.controller';
+import { PaiementModule } from './modules/paiement/paiement.module';
 
 @Module({
   imports: [
@@ -59,8 +62,11 @@ import { User } from './Authentication/entities/auth.entity';
     InviteModule,
     InvitationModule,
     EvenementModule,
-    LocationModule
+    LocationModule,
+    PaiementModule,
+   
   ],
   controllers: [ProfileController],
+  providers: [],
 })
 export class AppModule {}

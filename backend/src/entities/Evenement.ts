@@ -39,11 +39,12 @@ export class Evenement {
   @OneToMany(() => Invite, (invite) => invite.event,{onDelete: 'CASCADE'})
   invites: Invite[];
 
-  // @Column({ type: 'varchar', length: 255 })
-    //   utilisateur_id: string;
     @ManyToOne(()=>User,(user)=>user.id,{nullable:false})
     @JoinColumn({name:'utilisateur_id'})
     user:User
+
+    @Column({type:'float',nullable:true})
+    montanttransaction?: number;
 
     @Column({nullable:true})
     createdAt: Date;
