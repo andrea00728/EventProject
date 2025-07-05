@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaDatabase, FaTable, FaShare, FaArrowCircleLeft, FaArrowCircleRight, FaArrowLeft } from 'react-icons/fa';
 import { MdOutlineSecurity, MdArrowLeft, MdArrowRight } from "react-icons/md";
-import { LuUserRoundCheck } from "react-icons/lu";
+import { LuUserCheck } from "react-icons/lu";
 import Modal from './Modal'; // Assurez-vous que le chemin est correct
 
 const Confidentialite = () => {
@@ -101,7 +101,7 @@ const Confidentialite = () => {
         },
         {
             title: "Vos droits",
-            icon: <LuUserRoundCheck className='mr-2 mb-1 inline' />,
+            icon: <LuUserCheck className='mr-2 mb-1 inline' />,
             image: 'src/assets/istockphoto-1314379517-612x612.jpg',
             fullText: `
                 Conformément à la législation applicable sur la protection des données, vous disposez de certains droits concernant vos informations personnelles :

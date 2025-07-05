@@ -13,7 +13,7 @@ import Connnexiongoogle from "../services/connexiongoogl";
 import Evenemenpage from "../pages/Evenementpage";
 import Apropos from "../pages/apropos";
 
-import Table3DScene from "../components/table3D";
+// import Table3DScene from "../components/table3D";
 import ChoixModeInvite from "../layouts/ChoixModeInvite";
 import Inviteform from "../pages/choixModInvite/inviteForm";
 import ImportGuestsCSV from "../pages/choixModInvite/importation";

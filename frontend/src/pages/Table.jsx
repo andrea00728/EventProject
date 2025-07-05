@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getTablesByEventId, getAvailableSeats, createTable } from "../services/tableService";
-import Table3DScene from "../components/table3D";
+// import Table3DScene from "../components/table3D";
 import CreateTable from "../components/tableForm";
 import { useStateContext } from "../context/ContextProvider";
 
@@ -40,7 +40,7 @@ export default function Table({ eventId, onNext, onBack }) {
   return (
     <div className="flex flex-col items-center">
       <CreateTable onSubmitTable={handleCreateTable} />
-      <Table3DScene tables={tables} eventId={eventId} />
+      {/* <Table3DScene tables={tables} eventId={eventId} /> */}
 
       <div className="flex gap-4 mt-6">
         {onBack && (
