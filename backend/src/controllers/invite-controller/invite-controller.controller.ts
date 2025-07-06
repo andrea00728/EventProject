@@ -4,6 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateInviteDto } from 'src/dto/CreateInviteDto';
 import { Invite } from 'src/entities/Invite';
+import { TableEvent } from 'src/entities/Table';
 import { GuestService } from 'src/services/invite-service/invite-service.service';
 
 @Controller('guests')
@@ -218,4 +219,41 @@ async deleteGuest(
   }
   return await this.guestService.deleteById(id, userId);
 }
+
+@Get('tables/:eventId')
+@UseGuards(AuthGuard('jwt'))
+async getTablesByEventId(
+  @Param('eventId', ParseIntPipe) eventId: number,
+  @Req() req,
+): Promise<TableEvent[]> {
+  const userId = req.user?.sub;
+  if (!userId) throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
+
+  const event = await this.guestService['evenementRepository'].findOne({ where: { id: eventId, user: { id: userId } } });
+  if (!event) throw new HttpException('Événement introuvable ou non autorisé', HttpStatus.NOT_FOUND);
+
+  return this.guestService['tableRepository'].find({ where: { event: { id: eventId } } });
 }
+
+
+@Post(':id/assign')
+  @UseGuards(AuthGuard('jwt'))
+  async assignGuestToTable(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() { tableId, place }: { tableId: number; place: number },
+    @Req() req,
+  ): Promise<Invite> {
+    const userId = req.user?.sub;
+    if (!userId) throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
+
+    const guest = await this.guestService.findById(id);
+    if (!guest) throw new HttpException('Invité non trouvé', HttpStatus.NOT_FOUND);
+
+    const event = await this.guestService['evenementRepository'].findOne({ where: { id: guest.event.id, user: { id: userId } } });
+    if (!event) throw new HttpException('Événement non autorisé pour cet utilisateur', HttpStatus.FORBIDDEN);
+
+    return await this.guestService.assignGuestToTable(id, tableId, place, userId);
+  }
+}
+
+

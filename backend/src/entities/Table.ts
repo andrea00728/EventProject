@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, Unique } from 'typeorm';
 import { Invite } from './Invite';
 import { Evenement } from './Evenement';
+import { Place } from './Place';
 
 @Unique(['numero','event'])
 @Entity()
@@ -29,5 +30,7 @@ export class TableEvent {
 
   @OneToMany(() => Invite, (invite) => invite.table)
   guests: Invite[];
+  @OneToMany(() => Place, (place) => place.table)
+  places: Place[];
 
 }

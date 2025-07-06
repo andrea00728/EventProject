@@ -26,6 +26,7 @@ import Listetable from "../pages/TableOrganisation/ListeTable";
 import Affichage3dTable from "../pages/TableOrganisation/Affichage3dTable";
 import EventPending from "../pages/dashboardEvenement/Eventpadding.jsx";
 import EventAccept from "../pages/dashboardEvenement/EventAccepted.jsx";
+import PaypalSuccess from "../pages/choixModInvite/PaypalSucces.jsx";
 const router=createBrowserRouter([
    
     {
@@ -105,7 +106,11 @@ const router=createBrowserRouter([
                 ]
 
             },
-        ]
+            {
+        path: "/paypal-success", // Nouvelle route pour la confirmation
+        element: <PaypalSuccess />,
+            },
+        ]   
     },
     //  {
     //     path:"/",

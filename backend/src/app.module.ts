@@ -22,6 +22,7 @@ import { User } from './Authentication/entities/auth.entity';
 import { PaiementService } from './services/paiement/paiement.service';
 import { PaiementController } from './controllers/paiement/paiement.controller';
 import { PaiementModule } from './modules/paiement/paiement.module';
+import { Place } from './entities/Place';
 
 @Module({
   imports: [
@@ -49,7 +50,7 @@ import { PaiementModule } from './modules/paiement/paiement.module';
           username: dbUsername,
           password: dbPassword,
           database: dbDatabase,
-          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent],
+          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place],
      
           synchronize: true,
         };
