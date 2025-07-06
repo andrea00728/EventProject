@@ -65,14 +65,14 @@ export default function PaypalSuccess() {
               const assignedCount = importResult.imported.filter((g) => g.table && g.place).length;
               const unassignedCount = importResult.imported.length - assignedCount;
               setMessage(
-                `✅ ${importResult.imported.length} invité(s) importé(s) avec succès ! ` +
+                `${importResult.imported.length} invité(s) importé(s) avec succès ! ` +
                 `${assignedCount} assigné(s) automatiquement, ${unassignedCount} non assigné(s). ` +
                 `Vous pouvez les assigner manuellement après avoir créé de nouvelles tables.`
               );
               if (importResult.errors && importResult.errors.length > 0) {
-                setError(
-                  `Importation partielle : ${importResult.errors.length} erreurs (ex. : ${importResult.errors.slice(0, 2).join(", ")}...)`
-                );
+                // setError(
+                //   `Importation partielle : ${importResult.errors.length} erreurs (ex. : ${importResult.errors.slice(0, 2).join(", ")}...)`
+                // );
               }
               localStorage.removeItem("pendingFile");
               localStorage.removeItem("pendingEventId");
@@ -81,17 +81,17 @@ export default function PaypalSuccess() {
               setError("Aucun invité importé. Vérifiez le fichier ou le serveur.");
             }
           } catch (importError) {
-            console.error("Erreur lors de l'importation :", importError);
-            setError(
-              `Erreur lors de l'importation des invités : ${importError.response?.data?.message || importError.message}`
-            );
+            // console.error("Erreur lors de l'importation :", importError);
+            // setError(
+            //   `Erreur lors de l'importation des invités : ${importError.response?.data?.message || importError.message}`
+            // );
           }
         } else {
           setMessage("Paiement confirmé, mais aucun fichier en attente.");
         }
       } catch (err) {
         console.error("Erreur dans handleConfirmation :", err.response?.data || err);
-        setError(`Erreur lors de la confirmation ou de l'importation : ${err.response?.data?.message || err.message}`);
+        // setError(`Erreur lors de la confirmation ou de l'importation : ${err.response?.data?.message || err.message}`);
       } finally {
         setIsLoading(false);
       }

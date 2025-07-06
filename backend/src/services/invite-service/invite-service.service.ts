@@ -182,19 +182,19 @@ async importGuests(file: Express.Multer.File, eventId: number): Promise<{ import
       const totalExisting = await this.guestRepository.count({ where: { event: { id: eventId } } });
       const totalFinal = totalExisting + guestsRaw.length;
 
-      console.log('✔️ Total existants:', totalExisting);
-      console.log('📄 Total CSV à importer:', guestsRaw.length);
-      console.log('💰 Montant transaction:', evenement.montanttransaction);
-      console.log('🔢 Total final:', totalFinal);
+      console.log(' Total existants:', totalExisting);
+      console.log(' Total CSV à importer:', guestsRaw.length);
+      console.log('Montant transaction:', evenement.montanttransaction);
+      console.log(' Total final:', totalFinal);
 
       if (totalFinal > 50 && (!evenement.montanttransaction || evenement.montanttransaction === 0)) {
-        reject(new BadRequestException('❌ Vous avez atteint la limite gratuite de 50 invités. Veuillez effectuer le paiement pour continuer.'));
+        reject(new BadRequestException('Vous avez atteint la limite gratuite de 50 invités. Veuillez effectuer le paiement pour continuer.'));
         return;
       }
 
       for (const record of guestsRaw) {
         try {
-          console.log(`➡️ Traitement de ${record.email}`);
+          console.log(` Traitement de ${record.email}`);
           const existing = await this.guestRepository.findOne({ where: { email: record.email, event: { id: eventId } } });
           if (existing) {
             errors.push(`L'email ${record.email} est déjà utilisé pour cet événement`);
@@ -243,12 +243,12 @@ async importGuests(file: Express.Multer.File, eventId: number): Promise<{ import
         }
       }
 
-      console.log(`✅ Import terminé. ${savedGuests.length} invités enregistrés. ${errors.length} erreurs.`);
+      console.log(`Import terminé. ${savedGuests.length} invités enregistrés. ${errors.length} erreurs.`);
       resolve({ imported: savedGuests, errors });
     });
 
     parser.on('error', (error) => {
-      console.error('❌ Erreur lors du parsing du CSV:', error.message);
+      console.error(' Erreur lors du parsing du CSV:', error.message);
       reject(error);
     });
   });

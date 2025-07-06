@@ -67,13 +67,13 @@ const handleImport = async () => {
     const result = await importGuestsToSpecificEvent(file, eventId, token);
     if (result && (result.imported || result.errors)) {
       if (result.imported && result.imported.length > 0) {
-        setMessage(`✅ ${result.imported.length} invité(s) importé(s) avec succès !`);
+        setMessage(`${result.imported.length} invité(s) importé(s) avec succès !`);
       }
       if (result.errors && result.errors.length > 0) {
         setError(result.errors.join("\n"));
       }
     } else {
-      setMessage("✅ Importation réussie !");
+      setMessage(" Importation réussie !");
     }
     setFile(null);
     if (onImportSuccess) onImportSuccess();
@@ -84,13 +84,13 @@ const handleImport = async () => {
     err.response.data.message &&
     err.response.data.message.includes("limite gratuite de 50 invités")
   ) {
-    setError(err.response.data.message);
+    // setError(err.response.data.message);
     setShowPayment(true);
     setPendingAmount(20);
   } else if (err.response && err.response.data && err.response.data.message) {
-    setError(err.response.data.message);
+    // setError(err.response.data.message);
   } else {
-    setError("Erreur lors de l'importation. Vérifiez le format du fichier.");
+    // setError("Erreur lors de l'importation. Vérifiez le format du fichier.");
   }
 } finally {
   setLoading(false);
@@ -118,7 +118,7 @@ const handlePay = async () => {
     // Convertir le fichier en une chaîne (par exemple, Base64 ou texte brut)
     const fileReader = new FileReader();
     fileReader.onload = (event) => {
-      const fileContent = event.target.result; // Contenu du fichier (par exemple, en Base64)
+      const fileContent = event.target.result;
       localStorage.setItem("pendingFile", fileContent); // Stocker le contenu
       localStorage.setItem("pendingEventId", eventId);
       window.location.href = url;
@@ -142,7 +142,7 @@ const handlePay = async () => {
           const fileBlob = new File([pendingFile], "imported.csv", { type: "text/csv" });
           const importResult = await importGuestsToSpecificEvent(fileBlob, eventId, token);
           if (importResult.imported && importResult.imported.length > 0) {
-            setMessage(`✅ ${importResult.imported.length} invité(s) importé(s) après paiement !`);
+            setMessage(` ${importResult.imported.length} invité(s) importé(s) après paiement !`);
           }
           localStorage.removeItem("pendingFile");
           localStorage.removeItem("pendingEventId");
