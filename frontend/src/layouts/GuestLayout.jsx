@@ -4,11 +4,22 @@ import { Link, Navigate, Outlet } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function GuestLayout() {
-  const { token } = useStateContext();
+  const { token,role } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   if (token) {
-    return <Navigate to="/accueil" replace />;
+    if(role==="organisateur"){
+       return <Navigate to="/accueil" replace />;
+    }
+    if(role==="accueil"){
+      return <Navigate to="/personnelAccueil" replace/>
+    }
+    if(role==="caissier"){
+      return <Navigate to="/personnelCaisse" replace/>
+    }
+    if(role==="cuisinier"){
+      return <Navigate to="/personnelCuisine" replace/>
+    }
   }
 
   const navItems = [

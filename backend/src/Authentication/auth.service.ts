@@ -18,23 +18,6 @@ export class AuthService {
     private readonly personnelRepository: Repository<Personnel>,
   ) {}
 
-  // async validateUser(profile: any): Promise<any> {
-  //   const { id, emails, displayName, photos } = profile;
-  //   let user = await this.userRepository.findOne({ where: { id } });
-
-  //   if (!user) {
-  //     user = this.userRepository.create({
-  //       id,
-  //       email: emails[0].value,
-  //       name: displayName,
-  //       photo: photos?.[0]?.value || null,
-  //       role:'organisateur',
-  //     });
-  //     await this.userRepository.save(user);
-  //   }
-
-  //   return user;
-  // }
 
 async validateUser(profile: any): Promise<any> {
   const { emails, displayName, photos } = profile;
@@ -46,9 +29,7 @@ async validateUser(profile: any): Promise<any> {
     relations: ['evenement'],
   });
 
-  // Détermine le rôle
   const role = personnel?.role || 'organisateur';
-
   // Vérifie si déjà dans users
   let user = await this.userRepository.findOne({ where: { email } });
 
@@ -58,7 +39,7 @@ async validateUser(profile: any): Promise<any> {
       email,
       name: displayName,
       photo: photos?.[0]?.value || '',
-      role, // ✅ UTILISE LE ROLE DU PERSONNEL SI DISPONIBLE
+      role, 
     });
 
     await this.userRepository.save(user);
@@ -66,20 +47,6 @@ async validateUser(profile: any): Promise<any> {
 
   return user;
 }
-
-
-
-
-  // async login(user: any) {
-  //   const payload = { 
-  //     email: user.email,
-  //      sub: user.id,
-  //      role:user.role, 
-  //     };
-  //   return {
-  //     access_token: this.jwtService.sign(payload),
-  //   };
-  // }
 
   async login(user: any) {
   const payload = { 

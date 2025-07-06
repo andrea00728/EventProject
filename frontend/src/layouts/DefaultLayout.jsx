@@ -5,12 +5,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import Profil from "../util/profils";
 
 export default function DefaultLayout() {
-  const { token } = useStateContext();
+  const { token,role,isLoading } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEvenementHovered, setIsEvenementHovered] = useState(false);
 
+  if(isLoading) return <div>Chargement ...</div>
   if (!token) {
-    return <Navigate to="/pagepublic" />;
+    return <Navigate to="/pagepublic"  replace/>;
+  }
+  switch (role) {
+    case "organisateur":
+      break; // Reste sur cette page
+    case "accueil":
+      return <Navigate to="/personnelAccueil" replace />;
+    case "caissier":
+      return <Navigate to="/personnelCaisse" replace />;
+    case "cuisinier":
+      return <Navigate to="/personnelCuisine" replace />;
+    default:
+      return <Navigate to="/pagepublic" replace />;
   }
 
   const navItems = [

@@ -41,11 +41,13 @@ export class AuthController {
       email: req.user.email,
       name: req.user.name,
       photo: req.user.photo || '', 
+      role: req.user.role || 'organisateur', // Assurez-vous que le rôle est défini
     };
 
   
-   const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}`;
-    
+  //  const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}`;
+    const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}`;
+
     return res.redirect(redirectUrl);
   }
 }
