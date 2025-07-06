@@ -2,9 +2,11 @@
 import { Evenement } from 'src/entities/Evenement';
 import { Entity, Column, PrimaryColumn, ManyToMany } from 'typeorm';
 
-@Entity()
+
+export type UserRole='organisateur'|'accueil'|'caissier'|'cuisinier';
+@Entity('users')
 export class User {
-  @PrimaryColumn({type:'varchar'})
+  @PrimaryColumn('uuid')
   id: string;
 
   @Column()
@@ -13,8 +15,14 @@ export class User {
   @Column()
   name: string;
 
-  @Column({ type: 'varchar', nullable: true }) // Ajout de la colonne pour l'URL de l'image
+  @Column({ type: 'varchar', nullable: true }) 
   photo: string;
+ @Column({
+    type: 'enum',
+    enum: ['organisateur', 'accueil', 'caissier', 'cuisinier'],
+    default: 'organisateur',
+  })
+  role: UserRole;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

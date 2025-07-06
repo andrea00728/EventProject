@@ -1,15 +1,34 @@
 // auth.controller.ts
-import { Controller, Get, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Res, Body, Post } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
+import { CreateUserDto } from './dto/create-auth.dto';
+import { User } from './entities/auth.entity';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
-
+  constructor(private readonly authService: AuthService
+  
+  ) {}
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth(@Req() req) {
+  }
+
+
+  /**
+   * 
+   * @param req 
+   * @param res 
+   * @returns 
+   * 
+   * creation des des personnel avec leur rol
+   */
+
+  @Post('create')
+  @UseGuards(AuthGuard('jwt'))
+  async createUser(@Body() dto: CreateUserDto){
+    return this.authService.createUser(dto);
   }
 
   @Get('google/callback')

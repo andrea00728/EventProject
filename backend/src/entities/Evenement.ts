@@ -4,6 +4,7 @@ import { Salle } from './salle';
 import { TableEvent } from './Table';
 import { Invite } from './Invite';
 import { User } from 'src/Authentication/entities/auth.entity';
+import { Personnel } from './Personnel';
 
 
 @Unique(['nom','user'])
@@ -46,6 +47,8 @@ export class Evenement {
     @Column({type:'float',nullable:true})
     montanttransaction?: number;
 
+    @OneToMany(() => Personnel, (personnel) => personnel.evenement, { onDelete: 'CASCADE' })
+    personnels:Personnel[];
     @Column({nullable:true})
     createdAt: Date;
 }
