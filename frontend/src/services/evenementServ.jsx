@@ -45,3 +45,13 @@ export const DeleteEvent = async (eventId, token) => {
   });
   return response.data;
 }
+
+/*********************  Modification que j'ai fait dans la partie Admin (Sylvano)    ********************* */
+
+/**
+ * Récupère tous les événements.
+ */
+export const getAllEvents = async () => {
+  const response = await axiosClient.get('/evenements');
+  return response.data;
+};
