@@ -9,9 +9,10 @@ export class PersonnelController {
   constructor(private readonly personnelService: PersonnelService) {}
 
  
-  @Post()
+  @Post('/create')
    @UseGuards(AuthGuard('jwt'))
   async create(@Body() dto: CreatePersonnelDto, @Req() req) {
+    console.log("donne recu:",dto)
     const userId = req.user.id; 
     return this.personnelService.create(dto, userId);
   }
