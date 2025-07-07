@@ -1,10 +1,12 @@
-import { Controller, Post, Get, Patch, Body, Param, UsePipes, ValidationPipe, ParseIntPipe, UseInterceptors, UploadedFile, Delete } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Param, UsePipes, ValidationPipe, ParseIntPipe, UseInterceptors, UploadedFile, Delete, UseGuards } from '@nestjs/common';
 import { MenuService } from '../../services/menu/menu.service';
 import { CreateMenuDto, CreateMenuItemDto } from 'src/dto/menu.dto';
 import { IsInt, Min } from 'class-validator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { Roles } from 'src/guards/roles.decorator';
+
 
 export class RestockMenuItemDto {
   @IsInt()
@@ -21,12 +23,14 @@ export class MenuController {
     return this.menuService.findAllMenus();
   }
 
+  @Roles('organisateur')
   @Post()
   @UsePipes(new ValidationPipe())
   createMenu(@Body() body: CreateMenuDto) {
     return this.menuService.createMenu(body.name, body.eventId);
   }
 
+  @Roles('organisateur')
   @Post(':menuId/items')
   @UseInterceptors(FileInterceptor('photo', {
     storage: diskStorage({
@@ -84,6 +88,7 @@ updateMenuItem(
   return this.menuService.updateMenuItem(menuItemId, body, photoPath);
 }
 
+@Roles('organisateur')
 @Delete('items/:menuItemId')
 async deleteMenuItem(@Param('menuItemId', ParseIntPipe) menuItemId: number) {
   return this.menuService.deleteMenuItem(menuItemId);

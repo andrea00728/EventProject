@@ -5,7 +5,6 @@ import { Order } from '../../entities/order.entity';
 import { OrderItem } from '../../entities/order-item.entity';
 import { TableEvent } from '../../entities/Table';
 import { MenuItem } from '../../entities/menu-item.entity';
-import { CreateOrderItemDto } from 'src/dto/order.dto';
 
 @Injectable()
 export class OrderService {
