@@ -5,6 +5,7 @@ import { Order } from '../../entities/order.entity';
 import { OrderItem } from '../../entities/order-item.entity';
 import { TableEvent } from '../../entities/Table';
 import { MenuItem } from '../../entities/menu-item.entity';
+import { CreateOrderItemDto } from 'src/dto/order.dto';
 
 @Injectable()
 export class OrderService {
@@ -96,4 +97,69 @@ export class OrderService {
       return { ...order, total };
     });
   }
+
+  async updateOrder(
+    orderId: number,
+    tableId: number,
+    items: { menuItemId: number; quantity: number }[]
+  ): Promise<Order> {
+    // 1. Récupérer la commande avec les relations
+    const order = await this.orderRepository.findOne({
+      where: { id: orderId },
+      relations: ['items', 'items.menuItem'],
+    });
+    if (!order) throw new NotFoundException('Order not found');
+  
+    // 2. Restaurer le stock des anciens items
+    for (const orderItem of order.items) {
+      const menuItem = orderItem.menuItem;
+      if (menuItem) {
+        menuItem.stock += orderItem.quantity;
+        await this.menuItemRepository.save(menuItem);
+      }
+    }
+  
+    // 3. Supprimer les anciens order items
+    await this.orderItemRepository.delete({ order: { id: orderId } });
+  
+    // 4. Vérifier disponibilité du stock pour les nouveaux items
+    for (const item of items) {
+      const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
+      if (!menuItem) throw new NotFoundException(`Menu item ${item.menuItemId} not found`);
+      if (menuItem.stock < item.quantity) {
+        throw new BadRequestException(
+          `Stock insuffisant pour ${menuItem.name}. Disponible : ${menuItem.stock}, demandé : ${item.quantity}`
+        );
+      }
+    }
+  
+    // 5. Créer les nouveaux order items et ajuster le stock
+    const newOrderItems = await Promise.all(
+      items.map(async (item) => {
+        const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
+        if (!menuItem) throw new NotFoundException(`Menu item ${item.menuItemId} not found`);
+  
+        menuItem.stock -= item.quantity;
+        await this.menuItemRepository.save(menuItem);
+  
+        return this.orderItemRepository.create({
+          order,
+          menuItem,
+          quantity: item.quantity,
+          subtotal: menuItem.price * item.quantity,
+        });
+      })
+    );
+  
+    // 6. Réassocier les nouveaux items à la commande
+    order.items = await this.orderItemRepository.save(newOrderItems);
+  
+    // 7. Mettre à jour la table si nécessaire
+    const newTable = await this.tableEventRepository.findOne({ where: { id: tableId } });
+    if (!newTable) throw new NotFoundException('Table not found');
+    order.table = newTable;
+  
+    return this.orderRepository.save(order);
+  }
+  
 }

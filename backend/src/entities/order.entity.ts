@@ -17,5 +17,5 @@ export class Order {
   status: 'pending' | 'preparing' | 'served' | 'paid';
 
   @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
-  items: OrderItem[];
+  items: OrderItem[]; 
 }

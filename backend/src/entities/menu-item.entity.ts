@@ -21,6 +21,9 @@ export class MenuItem {
   @Column({ default: 0 })
   stock: number;
 
+  @Column({ nullable: true })
+  photo: string;
+
   @ManyToOne(() => Menu, (menu) => menu.items)
   menu: Menu;
 }

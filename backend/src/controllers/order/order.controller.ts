@@ -32,4 +32,14 @@ export class OrderController {
   cancelOrder(@Param('id') id: number) {
     return this.orderService.cancelOrder(id);
   }
+
+  @Patch(':id')
+  @UsePipes(new ValidationPipe())
+  pdateOrder(
+  @Param('id') id: number,
+  @Body() body: CreateOrderDto // même DTO que pour créer
+) {
+  return this.orderService.updateOrder(id, body.tableId, body.items);
+}
+
 }

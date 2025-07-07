@@ -1,6 +1,4 @@
 // Patch pour rendre crypto global (pour TypeORM et NestJS)
-globalThis.crypto = require('crypto');
-
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 

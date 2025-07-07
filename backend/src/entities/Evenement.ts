@@ -5,6 +5,7 @@ import { TableEvent } from './Table';
 import { Invite } from './Invite';
 import { User } from 'src/Authentication/entities/auth.entity';
 import { Personnel } from './Personnel';
+import { Menu } from './menu.entity';
 
 
 @Unique(['nom','user'])
@@ -27,6 +28,9 @@ export class Evenement {
 
   @Column({nullable:true})
   date_fin: Date;
+  @OneToMany(() => Menu, (menu) => menu.evenement)
+  menus: Menu[];
+
   
   @ManyToOne(() => Localisation, (localisation) => localisation.salles)
   location: Localisation;

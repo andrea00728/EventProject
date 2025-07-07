@@ -15,4 +15,5 @@ export class Menu {
 
   @OneToMany(() => MenuItem, (menuItem) => menuItem.menu)
   items: MenuItem[];
-}
+  evenement: any;
+} 
