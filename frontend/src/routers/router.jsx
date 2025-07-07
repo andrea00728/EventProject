@@ -34,7 +34,9 @@ import DashboardpersCaisse from "../pages/PersonnelCaisse/Dashboard.jsx";
 import PersonnelCuisine from "../layouts/personnel/Personnalcuisine.jsx";
 import DashboardpersCuisine from "../pages/PersonnelCuisine/Dashboard.jsx";
 import ProtectedRoute from "./ProtectedRouter.jsx";
-
+import OrganisationPersonnelLayout from "../layouts/OrganisationPersonnelLayout.jsx";
+import CreationPersonnel from "../pages/oranisation_personnel/creation_personnel.jsx";
+import DashboardPersonnel from "../pages/oranisation_personnel/Dashboard_personnel.jsx";
 const router=createBrowserRouter([
    
   {
@@ -109,6 +111,21 @@ const router=createBrowserRouter([
           path: "eventAccept",
           element: <EventAccept />
         }
+      ]
+    },
+    {
+      path: "/evenement/personnel",
+      element:<OrganisationPersonnelLayout />,
+      children: [
+        {
+          path: "createPersonnel",
+          element:<CreationPersonnel />
+        },
+        {
+          path: "dashboard_personnel",
+          element: <DashboardPersonnel />
+        }
+      
       ]
     },
     {

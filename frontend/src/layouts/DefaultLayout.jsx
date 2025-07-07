@@ -37,6 +37,7 @@ export default function DefaultLayout() {
         { path: "/evenement/tables", name: "Tables", icon: "/chair.png" },
         { path: "/evenement/invites", name: "Invités", icon: "/guest.png" },
         { path: "/evenement/rapports", name: "Invitation", icon: "/invitation.png" },
+        { path: "/evenement/personnel", name: "Personnel", icon: "/community-center.png" },
         { path: "/evenement/facturation", name: "Facturation", icon: "/payment-method.png" },
       ],
     },
@@ -61,7 +62,7 @@ export default function DefaultLayout() {
             <div className="w-14 h-14 bg-indigo-100 flex items-center justify-center rounded-xl shadow-lg border-4 border-indigo-200">
               <span className="text-3xl font-extrabold text-indigo-700 tracking-tight">🎟️</span>
             </div>
-            <span className="ml-2 text-2xl font-bold text-indigo-700 tracking-wide hidden sm:block">EventMaster</span>
+            <span className="ml-2 text-2xl font-bold text-indigo-700 tracking-wide hidden sm:block">TableMaster</span>
           </div>
           <nav className="hidden md:flex flex-1 items-center justify-center gap-8 text-indigo-900 font-medium text-base">
             {navItems.map((item) => (
@@ -91,9 +92,9 @@ export default function DefaultLayout() {
                   <AnimatePresence>
                     {isEvenementHovered && (
                       <motion.div
-                        className="absolute top-[1] left-1/2 -translate-x-1/2 mt-4 bg-white shadow-2xl rounded-2xl py-10 px-16 z-40
-                          grid grid-cols-2 md:grid-cols-3 gap-x-10 gap-y-8 border-2 border-indigo-100"
-                        style={{ minWidth: "900px", maxWidth: "1200px", height: "400px" }} // hauteur 350px
+                        className="absolute top-[1] left-1/2 -translate-x-1/2 mt-3  bg-white shadow-2xl rounded-2xl py-10 px-16 z-40
+                          grid grid-cols-2 md:grid-cols-3 gap-x-1 gap-y-8 border-2 border-indigo-100"
+                        style={{ minWidth: "33cm", maxWidth: "50cm", height: "400px" }} 
                         variants={subMenuVariants}
                         initial="hidden"
                         animate="visible"
@@ -103,11 +104,11 @@ export default function DefaultLayout() {
                           <Link
                             key={subItem.path}
                             to={subItem.path}
-                            className="flex flex-col items-center p-6 hover:bg-indigo-50 rounded-xl transition-colors duration-200 cursor-pointer text-indigo-800 hover:text-indigo-900"
+                            className="flex flex-col items-center p-1 hover:bg-indigo-50 rounded-xl transition-colors duration-200 cursor-pointer text-indigo-800 hover:text-indigo-900"
                             onClick={() => setIsEvenementHovered(false)}
                           >
                             {subItem.icon && (
-                              <img src={subItem.icon} alt={subItem.name} className="w-16 h-16 mb-3 drop-shadow" />
+                              <img src={subItem.icon} alt={subItem.name} className="w-12 h-12 mb-3 drop-shadow" />
                             )}
                             <span className="text-lg font-semibold text-center">{subItem.name}</span>
                           </Link>
