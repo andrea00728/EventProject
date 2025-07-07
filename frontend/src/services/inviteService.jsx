@@ -234,3 +234,17 @@ export async function assignGuestToTable(guestId, tableId, place, token) {
     throw error;
   }
 }
+
+
+
+/*********************    ************************************ */
+
+export async function getManagerList() {
+  try {
+    const response = await axiosClient.get(`/auth/ManagerList`);
+    return response.data;
+  } catch (error) {
+    console.error("Erreur lors de l'assignation :", error);
+    throw error;
+  }
+}

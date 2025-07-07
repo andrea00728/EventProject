@@ -82,7 +82,7 @@ async findOneById(eventId: number): Promise<Evenement> {
 
   
   async findAll(): Promise<Evenement[]> {
-    return this.evenementRepository.find({ relations: ['location', 'salle', 'tables', 'invites'] });
+    return this.evenementRepository.find({ relations: ['location', 'salle', 'tables', 'invites', 'user'] });
   }
 
   async findOne(id: number): Promise<Evenement> {

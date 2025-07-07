@@ -35,8 +35,11 @@ export class Evenement {
   @ManyToOne(() => Localisation, (localisation) => localisation.salles)
   location: Localisation;
 
-  @ManyToOne(() => Salle, (salle) => salle.location)
+  @ManyToOne(() => Salle, { onDelete: 'CASCADE' })
   salle: Salle;
+
+  @Column({ nullable: true })
+  salleId: number;
 
   @OneToMany(() => TableEvent, (table) => table.event, {onDelete: 'CASCADE'})
   tables: TableEvent[];

@@ -26,170 +26,121 @@ import Listetable from "../pages/TableOrganisation/ListeTable";
 import Affichage3dTable from "../pages/TableOrganisation/Affichage3dTable";
 import EventPending from "../pages/dashboardEvenement/Eventpadding.jsx";
 import EventAccept from "../pages/dashboardEvenement/EventAccepted.jsx";
-import PaypalSuccess from "../pages/choixModInvite/PaypalSucces.jsx";
-import PersonnelAccueil from "../layouts/personnel/PersonnelAccueil.jsx";
-import DashboardpersAccueil from "../pages/PersonnelAccueil/Dashboard.jsx";
-import PersonnelCaisse from "../layouts/personnel/Personnelcaissie.jsx";
-import DashboardpersCaisse from "../pages/PersonnelCaisse/Dashboard.jsx";
-import PersonnelCuisine from "../layouts/personnel/Personnalcuisine.jsx";
-import DashboardpersCuisine from "../pages/PersonnelCuisine/Dashboard.jsx";
-import ProtectedRoute from "./ProtectedRouter.jsx";
-
+import Dashboard from "../pages/Admin/DashBoard";
+import EvenementAd from "../pages/Admin/Evenement";
+import Organisateur from "../pages/Admin/Organisateur";
+import Parametre from "../pages/Admin/Parametre";
+import LocationSalle from "../pages/Admin/LocationSalle.jsx";
 const router=createBrowserRouter([
    
-  {
-  path: "/",
-  element: (
-    <ProtectedRoute allowedRoles={["organisateur", "caissier", "cuisinier"]}>
-      <DefaultLayout />
-    </ProtectedRoute>
-  ),
-  children: [
     {
-      path: "/",
-      element: <Navigate to="/accueil" />
-    },
-    {
-      path: "/accueil",
-      element: <Accueil />
-    },
-    {
-      path: "/evenement",
-      element: <Evenemenpage />
-    },
-    {
-      path: "/apropos",
-      element: <Apropos />
-    },
-    {
-      path: "/evenement/invites",
-      element: <ChoixModeInvite />,
-      children: [
-        {
-          path: "creationInv",
-          element: <InviteformWithId />
-        },
-        {
-          path: "importerInv",
-          element: <ImportGuestsCSV />
-        },
-        {
-          path: "affichageInv",
-          element: <AffichageInvite />
-        }
-      ]
-    },
-    {
-      path: "/evenement/tables",
-      element: <TableLayout />,
-      children: [
-        {
-          path: "creationTable",
-          element: <Tablecreation />
-        },
-        {
-          path: "affichageTable",
-          element: <Listetable />
-        },
-        {
-          path: "3Dtable",
-          element: <Affichage3dTable />
-        }
-      ]
-    },
-    {
-      path: "/evenement/evenement",
-      element: <EventLayout />,
-      children: [
-        {
-          path: "eventpadding",
-          element: <EventPending />
-        },
-        {
-          path: "eventAccept",
-          element: <EventAccept />
-        }
-      ]
-    },
-    {
-      path: "/paypal-success",
-      element: <PaypalSuccess />
-    }
-  ]
-},
+        path:"/",
+        element:<DefaultLayout/>,
+        children:[
+            {
+                path:"/",
+                element:<Navigate to="/accueil"/>
+            },
+            {
+                path:"/accueil",
+                element:<Accueil/>
+            },
+            {
+                path:"/evenement",
+                element:<Evenemenpage/>
+            },
+            {
+                path:"/apropos",
+                element:<Apropos/>
+            },
+             {
+                path: "/evenement/invites",
+                element: <ChoixModeInvite />,
+                children: [
+                    
+                    {
+                       
+                        path: "creationInv",
+                        element:<InviteformWithId/>
+                    },
+                    {
+            
+                        path: "importerInv",
+                        element: <ImportGuestsCSV />
+                    },
+                     {
+            
+                        path: "affichageInv",
+                        element: <AffichageInvite/>,
+                    }
+                ]
+            },
+             {
+                path:"/evenement/tables",
+                element:<TableLayout/>,
+                children:[
+                    {
+                        path:"creationTable",
+                        element:<Tablecreation/>
+                    },
+                    {
+                        path:"affichageTable",
+                        element:<Listetable/>
+                    },
+                    {
+                        path:"3Dtable",
+                        element:<Affichage3dTable/>
+                    }
+                ]
 
+            },
+             {
+                path:"/evenement/evenement",
+                element:<EventLayout/>,
+                children:[
+                    {
+                        path:"eventpadding",
+                        element:<EventPending/>
+                    },
+                    {
+                        path:"eventAccept",
+                        element:<EventAccept/>
+                    },
+                ]
 
-    /**
-     * rout personnel accueil
-     */
-   {
-  path: "/",
-  element: <PersonnelAccueil />,
-  children: [
-    {
-      path: "/",
-      element: <Navigate to="/personnelAccueil" />
+            },
+        ]
     },
-    {
-      path: "/personnelAccueil",
-      element: (
-        <ProtectedRoute allowedRoles={["accueil", "caissier", "cuisinier"]}>
-          <DashboardpersAccueil />
-        </ProtectedRoute>
-      )
-    }
-  ]
-},
-   {
-  path: "/",
-  element: <PersonnelCaisse />,
-  children: [
-    {
-      path: "/",
-      element: <Navigate to="/personnelCaisse" />
+     {
+        path:"/",
+        element:<AdminLayout/>,
+        children:[
+            {
+                path:"/",
+                element:<Navigate to="/AdminAccueil"/>
+            },{
+                path:"/AdminAccueil",
+                element:<Dashboard/>
+            },
+            {
+                path:"/AdminEvenement",
+                element:<EvenementAd/>
+            },
+            {
+                path:"/AdminOrganisateur",
+                element:<Organisateur/>
+            },
+            {
+                path:"/AdminParametre",
+                element:<Parametre/>
+            },
+
+            {
+                path:"/LocationSalle",
+                element:<LocationSalle/>
+            },
+        ]
     },
-    {
-      path: "/personnelCaisse",
-      element: (
-        <ProtectedRoute allowedRoles={["caissier", "organisateur", "accueil"]}>
-          <DashboardpersCaisse />
-        </ProtectedRoute>
-      )
-    }
-  ]
-},
-  {
-  path: "/",
-  element: <PersonnelCuisine />,
-  children: [
-    {
-      path: "/",
-      element: <Navigate to="/personnelCuisine" />
-    },
-    {
-      path: "/personnelCuisine",
-      element: (
-        <ProtectedRoute allowedRoles={["cuisinier", "organisateur", "accueil"]}>
-          <DashboardpersCuisine />
-        </ProtectedRoute>
-      )
-    }
-  ]
-},
-  
-    //  {
-    //     path:"/",
-    //     element:<AdminLayout/>,
-    //     children:[
-    //         // {
-    //         //     path:"/",
-    //         //     element:<Navigate to="/AdminAccueil"/>
-    //         // },{
-    //         //     path:"/AdminAccueil",
-    //         //     element:<Adminaccueil/>
-    //         // },
-    //     ]
-    // },
     {
         path:"/",
         element:<GuestLayout/>,
