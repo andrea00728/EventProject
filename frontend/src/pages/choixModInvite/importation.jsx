@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { importGuestsToSpecificEvent } from "../../services/inviteService";
 import { getMyEvents } from "../../services/evenementServ";
 import { useStateContext } from "../../context/ContextProvider";
+import { createPaypalPaymentLink, confirmPaypalSuccess, getPaymentDetails } from "../../services/payementService";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 export default function ImportGuestsCSV({ onImportSuccess }) {
   const { token } = useStateContext();
@@ -12,56 +14,160 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [pendingAmount, setPendingAmount] = useState(20);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  // 🔄 Récupère les événements de l'utilisateur
   useEffect(() => {
     if (!token) return;
     getMyEvents(token)
       .then(setEvents)
       .catch(() => setError("Erreur lors du chargement des événements."));
-  }, [token]);
 
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    // Récupérer eventId depuis l'URL si retour après échec
+    const urlEventId = searchParams.get("eventId");
+    if (urlEventId) {
+      setEventId(urlEventId);
+    }
+  }, [token, searchParams]);
+
+const handleFileChange = async (e) => {
+  const selectedFile = e.target.files[0];
+  if (selectedFile) {
+    const text = await selectedFile.text();
+    const lines = text.split('\n').slice(1);
+    const emails = lines.map(line => line.split(',')[2]).filter(email => email);
+    const uniqueEmails = new Set(emails);
+    if (uniqueEmails.size !== emails.length) {
+      setError("Le fichier CSV contient des emails en double.");
+      return;
+    }
+    setFile(selectedFile);
     setMessage("");
     setError("");
+  }
+};
+
+const handleImport = async () => {
+  if (!file) {
+    setError("Veuillez sélectionner un fichier CSV.");
+    return;
+  }
+  if (!eventId) {
+    setError("Veuillez sélectionner un événement.");
+    return;
+  }
+  if (loading) return; // Protection contre les doubles clics
+  setLoading(true);
+  setError("");
+  setMessage("");
+  setShowPayment(false);
+  try {
+    const result = await importGuestsToSpecificEvent(file, eventId, token);
+    if (result && (result.imported || result.errors)) {
+      if (result.imported && result.imported.length > 0) {
+        setMessage(`${result.imported.length} invité(s) importé(s) avec succès !`);
+      }
+      if (result.errors && result.errors.length > 0) {
+        setError(result.errors.join("\n"));
+      }
+    } else {
+      setMessage(" Importation réussie !");
+    }
+    setFile(null);
+    if (onImportSuccess) onImportSuccess();
+  } catch (err) {
+  if (
+    err.response &&
+    err.response.data &&
+    err.response.data.message &&
+    err.response.data.message.includes("limite gratuite de 50 invités")
+  ) {
+    // setError(err.response.data.message);
+    setShowPayment(true);
+    setPendingAmount(20);
+  } else if (err.response && err.response.data && err.response.data.message) {
+    // setError(err.response.data.message);
+  } else {
+    // setError("Erreur lors de l'importation. Vérifiez le format du fichier.");
+  }
+} finally {
+  setLoading(false);
+}
+};
+
+const handlePay = async () => {
+  if (!file) {
+    setError("Aucun fichier à importer après paiement.");
+    return;
+  }
+  if (!eventId) {
+    setError("Aucun événement sélectionné.");
+    return;
+  }
+  try {
+    console.log("Tentative de paiement pour eventId:", eventId, "montant:", pendingAmount);
+    if (pendingAmount == null || isNaN(pendingAmount)) {
+      setPendingAmount(20); // Valeur par défaut si invalide
+      console.warn("Montant invalide, réinitialisé à 20.");
+    }
+    const url = await createPaypalPaymentLink(eventId, pendingAmount, token);
+    console.log("URL PayPal générée :", url);
+
+    // Convertir le fichier en une chaîne (par exemple, Base64 ou texte brut)
+    const fileReader = new FileReader();
+    fileReader.onload = (event) => {
+      const fileContent = event.target.result;
+      localStorage.setItem("pendingFile", fileContent); // Stocker le contenu
+      localStorage.setItem("pendingEventId", eventId);
+      window.location.href = url;
+    };
+    fileReader.readAsDataURL(file); // Utilise DataURL pour stocker le fichier
+  } catch (err) {
+    console.error("Erreur handlePay :", err);
+    setError("Erreur lors de la création du paiement : " + err.message);
+  }
+};
+
+  const handlePaypalReturn = async () => {
+    const params = new URLSearchParams(window.location.search);
+    const eventId = params.get("eventId");
+    const amount = params.get("amount");
+    if (eventId && amount && token) {
+      try {
+        await confirmPaypalSuccess(eventId, amount);
+        const pendingFile = localStorage.getItem("pendingFile");
+        if (pendingFile) {
+          const fileBlob = new File([pendingFile], "imported.csv", { type: "text/csv" });
+          const importResult = await importGuestsToSpecificEvent(fileBlob, eventId, token);
+          if (importResult.imported && importResult.imported.length > 0) {
+            setMessage(` ${importResult.imported.length} invité(s) importé(s) après paiement !`);
+          }
+          localStorage.removeItem("pendingFile");
+          localStorage.removeItem("pendingEventId");
+          if (onImportSuccess) onImportSuccess();
+        }
+      } catch (err) {
+        setError("Erreur lors de la confirmation du paiement ou de l'importation : " + err.message);
+      }
+    }
   };
 
-  const handleImport = async () => {
-    if (!file) {
-      setError("Veuillez sélectionner un fichier CSV.");
-      return;
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("eventId") && params.get("amount")) {
+      handlePaypalReturn();
     }
-    if (!eventId) {
-      setError("Veuillez sélectionner un événement.");
-      return;
-    }
+  }, []);
 
-    setLoading(true);
-    setError("");
-    setMessage("");
-    try {
-      const result = await importGuestsToSpecificEvent(file, eventId, token);
-      if (result && (result.imported || result.errors)) {
-        if (result.imported && result.imported.length > 0) {
-          setMessage(`✅ ${result.imported.length} invité(s) importé(s) avec succès !`);
-        }
-        if (result.errors && result.errors.length > 0) {
-          setError(result.errors.join("\n"));
-        }
-      } else {
-        setMessage("✅ Importation réussie !");
-      }
-      setFile(null);
-      if (onImportSuccess) onImportSuccess();
-    } catch (err) {
-      if (err.response && err.response.data && err.response.data.message) {
-        setError("❌ " + err.response.data.message);
-      } else {
-        setError("❌ Erreur lors de l'importation. Vérifiez le format du fichier.");
-      }
-    } finally {
-      setLoading(false);
+  const handleModifyAmount = () => {
+    const newAmount = prompt("Entrez le nouveau montant (€) :", pendingAmount);
+    if (newAmount && !isNaN(newAmount) && newAmount > 0) {
+      setPendingAmount(parseFloat(newAmount));
+      setMessage(`Montant mis à jour à ${newAmount} €.`);
+    } else {
+      setError("Montant invalide.");
     }
   };
 
@@ -70,7 +176,6 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
       <div className="bg-white shadow rounded p-6">
         <h2 className="text-lg font-semibold mb-4">📁 Importer des invités (.CSV)</h2>
 
-        {/* Sélection de l'événement via modale UX/UI */}
         <div className="mb-4">
           <label className="block mb-2 font-medium text-gray-700">Événement :</label>
           <input
@@ -83,7 +188,6 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
           />
         </div>
 
-        {/* Modale de sélection d'événement */}
         {modalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl shadow-2xl p-8 w-[90vw] max-w-3xl relative">
@@ -121,7 +225,6 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
           </div>
         )}
 
-        {/* Input pour le fichier CSV */}
         <input
           type="file"
           accept=".csv"
@@ -139,6 +242,27 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
           {loading ? "Importation..." : "Importer"}
         </button>
 
+        {showPayment && (
+          <div className="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+            <p className="text-yellow-800 mb-2">
+              Vous avez atteint la limite gratuite de 50 invités. Veuillez effectuer le paiement pour continuer.
+            </p>
+            <p className="text-yellow-700">Montant : {pendingAmount} €</p>
+            <button
+              onClick={handlePay}
+              className="mt-2 px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+            >
+              Payer {pendingAmount} €
+            </button>
+            <button
+              onClick={handleModifyAmount}
+              className="mt-2 ml-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Modifier le montant
+            </button>
+          </div>
+        )}
+
         {message && (
           <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded">
             {message}
@@ -152,7 +276,6 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
         )}
       </div>
 
-      {/* Tutoriel CSV en bas */}
       <div className="mt-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
         <h3 className="text-md font-semibold text-blue-700 mb-2">📄 Format CSV attendu :</h3>
         <p className="text-sm text-gray-700">

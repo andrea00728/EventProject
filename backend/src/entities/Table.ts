@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, Unique } from 'typeorm';
 import { Invite } from './Invite';
 import { Evenement } from './Evenement';
+import { Place } from './Place';
 
 @Unique(['numero','event'])
 @Entity()
@@ -23,11 +24,13 @@ export class TableEvent {
   @Column({ type: 'jsonb', nullable: true })
   position: { left: number; top: number };
 
-  @ManyToOne(() => Evenement, (evenement) => evenement.tables)
+  @ManyToOne(() => Evenement, (evenement) => evenement.tables,{onDelete: 'CASCADE'})
   @JoinColumn({name:'eventId'})
   event: Evenement;
 
   @OneToMany(() => Invite, (invite) => invite.table)
   guests: Invite[];
+  @OneToMany(() => Place, (place) => place.table)
+  places: Place[];
 
 }

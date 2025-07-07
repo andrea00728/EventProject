@@ -1,7 +1,49 @@
 import { useState } from "react";
 
+// Types de tables avec schéma SVG
+const TABLE_TYPES = [
+  {
+    value: "ronde",
+    label: "Table ronde",
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 48 48" className="mx-auto">
+        <circle cx="24" cy="24" r="16" fill="#e0e7ff" stroke="#6366f1" strokeWidth="3" />
+      </svg>
+    ),
+  },
+  {
+    value: "rectangle",
+    label: "Table rectangulaire",
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 48 48" className="mx-auto">
+        <rect x="8" y="16" width="32" height="16" rx="4" fill="#e0e7ff" stroke="#6366f1" strokeWidth="3" />
+      </svg>
+    ),
+  },
+  {
+    value: "ovale",
+    label: "Table ovale",
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 48 48" className="mx-auto">
+        <ellipse cx="24" cy="24" rx="16" ry="10" fill="#e0e7ff" stroke="#6366f1" strokeWidth="3" />
+      </svg>
+    ),
+  },
+  {
+    value: "carree",
+    label: "Table carrée",
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 48 48" className="mx-auto">
+        <rect x="12" y="12" width="24" height="24" fill="#e0e7ff" stroke="#6366f1" strokeWidth="3" />
+      </svg>
+    ),
+  },
+];
+
 export default function CreateTable({ onSubmitTable }) {
-  const [form, setForm] = useState({ numero: "", capacite: "", type: "ronde" });
+  const [form, setForm] = useState({ numero: "", capacite: "" });
+  const [selectedType, setSelectedType] = useState(TABLE_TYPES[0].value);
+  const [modalTypeOpen, setModalTypeOpen] = useState(false);
   const [error, setError] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
 
@@ -14,8 +56,11 @@ export default function CreateTable({ onSubmitTable }) {
     setError(null);
     setShowAlert(false);
     try {
-      await onSubmitTable(form);
-      setForm({ numero: "", capacite: "", type: "" });
+      await onSubmitTable({
+        ...form,
+        type: selectedType,
+      });
+      setForm({ numero: "", capacite: "" });
     } catch (err) {
       if (err.message && err.message.includes("déjà utilisé")) {
         setShowAlert(true);
@@ -25,9 +70,9 @@ export default function CreateTable({ onSubmitTable }) {
     }
   };
 
-  const closeAlert = () => {
-    setShowAlert(false);
-  };
+  const closeAlert = () => setShowAlert(false);
+
+  const selectedTypeObj = TABLE_TYPES.find((t) => t.value === selectedType);
 
   return (
     <div className="relative">
@@ -60,21 +105,21 @@ export default function CreateTable({ onSubmitTable }) {
               className="border border-gray-200 bg-gray-100 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
             />
           </div>
+          {/* Affiche le type sélectionné */}
           <div className="flex flex-col md:col-span-2">
-            <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">Type de Table</label>
-            <select
-              id="type"
-              name="type"
-              value={form.type}
-              onChange={handleChange}
-              required
-              className="border border-gray-200 bg-gray-100 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200 w-full"
+            <label className="block text-sm font-medium text-gray-700 mb-2">Type de Table</label>
+            <div
+              className="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100 cursor-pointer hover:bg-indigo-100 transition"
+              onClick={() => setModalTypeOpen(true)}
+              title="Changer le type de table"
             >
-              <option value="ronde">Ronde</option>
-              <option value="carree">Carrée</option>
-              <option value="rectangle">Rectangle</option>
-              <option value="ovale">Ovale</option>
-            </select>
+              {selectedTypeObj?.icon}
+              <span className="font-semibold text-indigo-700 capitalize">{selectedTypeObj?.label}</span>
+              <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            <span className="text-xs text-gray-400 mt-1">Cliquez pour changer le type</span>
           </div>
         </div>
         <div className="mt-8">
@@ -94,6 +139,47 @@ export default function CreateTable({ onSubmitTable }) {
           </p>
         )}
       </form>
+
+      {/* Modal de sélection du type de table */}
+      {modalTypeOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 w-[90vw] max-w-2xl relative">
+            <button
+              className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"
+              onClick={() => setModalTypeOpen(false)}
+            >
+              ×
+            </button>
+            <h3 className="text-2xl font-bold text-center mb-8 text-indigo-700">
+              Sélectionnez le type de table
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {TABLE_TYPES.map((type) => (
+                <button
+                  key={type.value}
+                  type="button"
+                  className={`flex flex-col items-center justify-center rounded-xl p-6 border-2 transition shadow-md hover:shadow-lg focus:outline-none ${
+                    selectedType === type.value
+                      ? "border-indigo-600 bg-indigo-50 ring-2 ring-indigo-400"
+                      : "border-gray-200 bg-white"
+                  }`}
+                  onClick={() => setSelectedType(type.value)}
+                >
+                  {type.icon}
+                  <span className="text-lg font-semibold mb-2">{type.label}</span>
+                </button>
+              ))}
+            </div>
+            <button
+              className="mt-8 w-full py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition"
+              onClick={() => setModalTypeOpen(false)}
+              type="button"
+            >
+              Valider le type de table
+            </button>
+          </div>
+        </div>
+      )}
 
       {showAlert && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

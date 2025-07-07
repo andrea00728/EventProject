@@ -4,6 +4,7 @@ import { Salle } from './salle';
 import { TableEvent } from './Table';
 import { Invite } from './Invite';
 import { User } from 'src/Authentication/entities/auth.entity';
+import { Personnel } from './Personnel';
 
 
 @Unique(['nom','user'])
@@ -39,12 +40,15 @@ export class Evenement {
   @OneToMany(() => Invite, (invite) => invite.event,{onDelete: 'CASCADE'})
   invites: Invite[];
 
-  // @Column({ type: 'varchar', length: 255 })
-    //   utilisateur_id: string;
     @ManyToOne(()=>User,(user)=>user.id,{nullable:false})
     @JoinColumn({name:'utilisateur_id'})
     user:User
 
+    @Column({type:'float',nullable:true})
+    montanttransaction?: number;
+
+    @OneToMany(() => Personnel, (personnel) => personnel.evenement, { onDelete: 'CASCADE' })
+    personnels:Personnel[];
     @Column({nullable:true})
     createdAt: Date;
 }

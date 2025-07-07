@@ -19,6 +19,14 @@ import { TableEvent } from './entities/Table';
 import { EvenementModule } from './modules/evenement/evenement.module';
 import { AuthModule } from './Authentication/auth.module';
 import { User } from './Authentication/entities/auth.entity';
+import { PaiementService } from './services/paiement/paiement.service';
+import { PaiementController } from './controllers/paiement/paiement.controller';
+import { PaiementModule } from './modules/paiement/paiement.module';
+import { Place } from './entities/Place';
+
+import { PersonnelController } from './controllers/personnel/personnel.controller';
+import { PersonnelModule } from './modules/personnel/personnel.module';
+import { Personnel } from './entities/Personnel';
 
 @Module({
   imports: [
@@ -46,7 +54,7 @@ import { User } from './Authentication/entities/auth.entity';
           username: dbUsername,
           password: dbPassword,
           database: dbDatabase,
-          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent],
+          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel],
      
           synchronize: true,
         };
@@ -59,8 +67,12 @@ import { User } from './Authentication/entities/auth.entity';
     InviteModule,
     InvitationModule,
     EvenementModule,
-    LocationModule
+    LocationModule,
+    PaiementModule,
+    PersonnelModule,
+   
   ],
   controllers: [ProfileController],
+  providers: [],
 })
 export class AppModule {}

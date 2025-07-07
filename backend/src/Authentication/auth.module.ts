@@ -8,11 +8,12 @@ import { GoogleStrategy } from './google.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtStrategy } from 'src/strategies/jwt.strategy';
 import { User } from './entities/auth.entity';
+import { Personnel } from 'src/entities/Personnel';
 
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User,Personnel]),
     PassportModule,
     JwtModule.register({
       secret: 'andreanadjasylvanoilaina',

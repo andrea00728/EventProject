@@ -1,38 +1,57 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useStateContext } from '../context/ContextProvider';
 
-function Connnexiongoogle() {
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useStateContext } from "../context/ContextProvider";
+
+function ConnexionGoogle() {
   const navigate = useNavigate();
   const location = useLocation();
   const { setUser, setToken } = useStateContext();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("Location search brut :", location.search); // Log pour l'URL complète
-    console.log("Location hash brut :", location.hash); // Log pour vérifier hash
-    const searchParams = new URLSearchParams(location.search); // Lire depuis location.search
-    const token = searchParams.get('token');
-    const name = searchParams.get('name');
-    const email = searchParams.get('email');
-    const photo = searchParams.get('photo');
+    const searchParams = new URLSearchParams(location.search);
+    const token = searchParams.get("token");
+    const name = searchParams.get("name");
+    const email = searchParams.get("email");
+    const photo = searchParams.get("photo");
+    const role = searchParams.get("role"); 
 
-    console.log("Token extrait :", token);
-    console.log("Paramètres extraits :", { name, email, photo });
+    console.log("🔐 Token extrait :", token);
+    console.log("👤 Infos :", { name, email, photo, role });
 
-    if (token) {
+    if (token && email && name && role) {
+    
       setToken(token);
       setUser({
-        name: decodeURIComponent(name || 'Utilisateur inconnu'),
-        email: decodeURIComponent(email || ''),
-        photo: decodeURIComponent(photo || '')
+        name: decodeURIComponent(name),
+        email: decodeURIComponent(email),
+        photo: decodeURIComponent(photo || ""),
+        role: decodeURIComponent(role),
       });
-      console.log("Token défini dans le contexte :", token);
-      navigate('/accueil', { replace: true });
+  
+      switch (decodeURIComponent(role)) {
+        case "organisateur":
+          navigate("/accueil", { replace: true });
+          break;
+        case "caissier":
+          navigate("/personnelCaisse", { replace: true });
+          break;
+        case "cuisinier":
+          navigate("/personnelCuisine", { replace: true });
+          break;
+        case "accueil":
+          navigate("/personnelAccueil", { replace: true });
+          break;
+        default:
+          navigate("/pagepublic", { replace: true });
+          break;
+      }
     } else {
-      console.error("Aucun token trouvé dans l'URL de callback");
-      navigate('/pagepublic', { replace: true });
+      console.warn("⚠️ Token ou rôle manquant");
+      navigate("/pagepublic", { replace: true });
     }
+
     setLoading(false);
   }, [location, navigate, setToken, setUser]);
 
@@ -41,4 +60,4 @@ function Connnexiongoogle() {
   return null;
 }
 
-export default Connnexiongoogle;
+export default ConnexionGoogle;

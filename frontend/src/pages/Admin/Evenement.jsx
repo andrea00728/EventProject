@@ -1,81 +1,115 @@
 import { useEffect, useState } from "react";
-import ModalAdmin from "./ModalAdmin";
+import ModalEvenement from "./ModalEvenement";
 import { getAllEvents } from "../../services/evenementServ";
+
+// Helper function to format date
+export const formatDate = (dateString) => {
+  if (!dateString) return ''; // Handle cases where date might be missing
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+};
 
 export default function EvenementAd() {
   const [data, setData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalData, setModalData] = useState({})
+  const [modalData, setModalData] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
     const fetchEvents = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const data = await getAllEvents();
         setData(data);
         console.log(data);
       } catch (error) {
-        console.log("Erreur : ", error);
+        console.error("Erreur lors de la récupération des événements : ", error);
+        setError("Impossible de charger les événements.");
+      } finally {
+        setLoading(false);
       }
     };
     fetchEvents();
   }, []);
 
   const openModal = (key) => {
-    setModalData(data[0])
+    setModalData(data[key]);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
-    setModalData({})
+    setModalData({});
     setIsModalOpen(false);
   };
+
   return (
     <div>
       <div className="grid grid-cols-3 items-center">
-        <h2 className="text-2xl  py-3 pl-3 text-start font-semibold">
+        <h2 className="text-2xl py-3 pl-3 text-start  font-semibold">
           Liste des événements
         </h2>
-        {/* <div className="relative">
-          <input type="text" className="px-6 py-2 mt-8 rounded-2xl shadow-lg" placeholder="Recherche ... " />
-          <MdSearch className="text-2xl mx-0 relative bottom-8 left-[30vh]" />
-        </div> */}
       </div>
       <div className="flex justify-center items-center pt-5">
         <div className="bg-white shadow-2xl rounded-2xl p-4 overflow-y-auto">
-          <table>
-            <thead>
-              <tr>
-                <th className="p-3 text-start">Nom</th>
-                <th className="p-3 text-start">Type</th>
-                <th className="p-3 text-start">Thème</th>
-                <th className="p-3 text-start">Date début</th>
-                <th className="p-3 text-start">Date fin</th>
-                <th className="p-3 text-start">Localisation</th>
-                <th className="p-3 text-start">Organisateur</th>
-                <th className="p-3 text-start">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((value, key) => (
-                <tr key={key}>
-                  <td className="p-3 text-start">{value.nom}</td>
-                  <td className="p-3 text-start">{value.type}</td>
-                  <td className="p-3 text-start">{value.theme}</td>
-                  <td className="p-3 text-start">{value.date}</td>
-                  <td className="p-3 text-start">{value.date_fin}</td>
-                  <td className="p-3 text-start">{value.location.nom}</td>
-                  <td className="p-3 text-start">{value.user.name}</td>
-                  <td>
-                    <button className="p-3 text-start text-blue-600 cursor-pointer hover:text-blue-800 transition duration-200" onClick={()=> openModal(key)}>Détails </button>
-                  </td>
+          {loading && (
+            <p className="text-center text-lg py-5">Chargement des événements...</p>
+          )}
+          {error && (
+            <p className="text-center text-lg py-5 text-red-600">{error}</p>
+          )}
+          {!loading && !error && data.length === 0 && (
+            <p className="text-center text-lg py-5">Aucun événement disponible.</p>
+          )}
+          {!loading && !error && data.length > 0 && (
+            <table>
+              <thead>
+                <tr>
+                  <th className="p-3 text-start font-semibold">Nom</th>
+                  <th className="p-3 text-start font-semibold">Type</th>
+                  <th className="p-3 text-start font-semibold">Thème</th>
+                  <th className="p-3 text-start font-semibold">Date début</th>
+                  <th className="p-3 text-start font-semibold">Date fin</th>
+                  <th className="p-3 text-start font-semibold">Localisation</th>
+                  <th className="p-3 text-start font-semibold">Organisateur</th>
+                  <th className="p-3 text-start font-semibold">Action</th>
                 </tr>
-              ))}
-              <ModalAdmin
-                isOpen={isModalOpen}
-                onClose={closeModal}
-                data={modalData}
-              />
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.map((value, key) => (
+                  <tr key={key}>
+                    <td className="p-3 text-start ">{value.nom}</td>
+                    <td className="p-3 text-start ">{value.type}</td>
+                    <td className="p-3 text-start ">{value.theme}</td>
+                    <td className="p-3 text-start ">{formatDate(value.date)}</td> {/* Applied formatting here */}
+                    <td className="p-3 text-start ">{formatDate(value.date_fin)}</td> {/* Applied formatting here */}
+                    <td className="p-3 text-start ">{value.location.nom}</td>
+                    <td className="p-3 text-start ">{value.user.name}</td>
+                    <td>
+                      <button
+                        className="p-3 text-start  text-blue-600 cursor-pointer hover:text-blue-800 transition duration-200"
+                        onClick={() => openModal(key)}
+                      >
+                        Détails{" "}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <ModalEvenement
+            isOpen={isModalOpen}
+            onClose={closeModal}
+            data={modalData}
+          />
         </div>
       </div>
     </div>

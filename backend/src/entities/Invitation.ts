@@ -13,7 +13,7 @@ export class Invitation {
 
   @Column()
   design: string; 
-  @ManyToOne(() => Evenement, (event) => event.invites)
+  @ManyToOne(() => Evenement, (event) => event.invites,{onDelete: 'CASCADE'})
   event: Evenement;
 
   @Column()

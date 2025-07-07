@@ -9,8 +9,9 @@ import {
   MdAttachMoney,
   MdSearch,MdFileDownload, MdStars, MdLocationCity, MdRoom, MdQrCode, MdStarBorderPurple500
 } from "react-icons/md";
+import { formatDate } from "./Evenement";
 
-const ModalAdmin = ({ isOpen, onClose, data }) => {
+const ModalEvenement = ({ isOpen, onClose, data }) => {
   if (!isOpen) return null;
 
   return (
@@ -46,7 +47,7 @@ const ModalAdmin = ({ isOpen, onClose, data }) => {
           className="text-center text-2xl font-normal my-3"
           style={{ fontFamily: "serif" }}
         >
-          <MdStarBorderPurple500 className="mr-3 mb-2 inline" />Evénement : {data.nom}
+          Evénement : {data.nom}
         </h3>
 
         {/* Contenu du modal */}
@@ -73,7 +74,7 @@ const ModalAdmin = ({ isOpen, onClose, data }) => {
             <div className="pt-5 px-5  rounded-2xl shadow-lg hover:translate-y-[-8px] transition duration-300">
               <h3 className="font-semibold mr-8">Date de début</h3>
               <div className="flex justify-between items-center pt-8 pb-3 text-start m-0">
-                <span className="text-[20px] mr-3">{data.date}</span>
+                <span className="text-[20px] mr-3">{formatDate(data.date)}</span>
                 <span className="text-[24px]">
                   <MdOutlineCalendarMonth />
                 </span>
@@ -82,7 +83,7 @@ const ModalAdmin = ({ isOpen, onClose, data }) => {
             <div className="pt-5 px-5  rounded-2xl shadow-lg hover:translate-y-[-8px] transition duration-300">
               <h3 className="font-semibold mr-8">Date de fin</h3>
               <div className="flex justify-between items-center pt-8 pb-3 text-start m-0">
-                <span className="text-[20px] mr-3">{data.date_fin}</span>
+                <span className="text-[20px] mr-3">{formatDate(data.date_fin)}</span>
                 <span className="text-[24px]">
                   <MdOutlineCalendarMonth />
                 </span>
@@ -127,7 +128,7 @@ const ModalAdmin = ({ isOpen, onClose, data }) => {
           </div>
           <div className="flex justify-end">
             <button className="bg-indigo-600 rounded-2xl px-6 py-2 text-[17px] text-white hover:bg-indigo-800 transition duration-200 font-semibold cursor-pointer">
-              Importer en CSV <MdFileDownload className="inline ml-2"/>
+              Exporter en CSV <MdFileDownload className="inline ml-2"/>
             </button>
           </div>
           <div className="p-4 overflow-y-auto flex justify-center">
@@ -162,4 +163,4 @@ const ModalAdmin = ({ isOpen, onClose, data }) => {
   );
 };
 
-export default ModalAdmin;
+export default ModalEvenement;

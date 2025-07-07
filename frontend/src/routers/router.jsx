@@ -26,12 +26,12 @@ import Listetable from "../pages/TableOrganisation/ListeTable";
 import Affichage3dTable from "../pages/TableOrganisation/Affichage3dTable";
 import EventPending from "../pages/dashboardEvenement/Eventpadding.jsx";
 import EventAccept from "../pages/dashboardEvenement/EventAccepted.jsx";
-
-import Dashboard from "../pages/Admin/DashBoard.jsx";
+import Dashboard from "../pages/Admin/DashBoard";
 import EvenementAd from "../pages/Admin/Evenement";
-import Organisateur from "../pages/Admin/Organisateur.jsx";
-import Parametre from "../pages/Admin/Parametre.jsx";
+import Organisateur from "../pages/Admin/Organisateur";
+import Parametre from "../pages/Admin/Parametre";
 const router=createBrowserRouter([
+   
     {
         path:"/",
         element:<DefaultLayout/>,
@@ -110,7 +110,7 @@ const router=createBrowserRouter([
             },
         ]
     },
-    {
+     {
         path:"/",
         element:<AdminLayout/>,
         children:[
@@ -120,13 +120,16 @@ const router=createBrowserRouter([
             },{
                 path:"/AdminAccueil",
                 element:<Dashboard/>
-            },{
+            },
+            {
                 path:"/AdminEvenement",
                 element:<EvenementAd/>
-            },{
+            },
+            {
                 path:"/AdminOrganisateur",
                 element:<Organisateur/>
-            },{
+            },
+            {
                 path:"/AdminParametre",
                 element:<Parametre/>
             },

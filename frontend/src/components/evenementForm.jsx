@@ -15,7 +15,7 @@ export default function Evenementform({ onNext }) {
     type: "",
     theme: "",
     date: "",
-    date_fin: "", // <-- Ajouté
+    date_fin: "",
     locationId: "",
     salleId: "",
   });
@@ -65,64 +65,123 @@ export default function Evenementform({ onNext }) {
   const selectedSalleName = () => salles.find(s => s.id === form.salleId)?.nom || "";
 
   return (
-    <div className="w-full max-w-4xl mx-auto mt-10 px-6">
-      <h2 className="text-3xl font-bold text-center mb-2">Quel est votre événement ?</h2>
-      <p className="text-center text-gray-500 mb-4">Prêt à le créer maintenant ?</p><br />
+    <div className="w-400 max-w-3xl mx-auto mt-12 px-6">
+      <div className="bg-white rounded-3xl shadow-2xl p-10 border border-gray-100">
+        <h2 className="text-4xl font-extrabold text-center mb-2 text-indigo-800 tracking-tight">Créer un événement</h2>
+        <p className="text-center text-gray-500 mb-8">Décrivez votre événement pour commencer l'organisation.</p>
 
-      {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-      <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5 py-4">
-        <input name="nom" value={form.nom} onChange={handleChange} placeholder="Événement" required
-          className="border border-gray-300  rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm]" />
-        
-        {/* Sélection du type d'événement via modale */}
-        <input
-          name="type"
-          value={EVENT_TYPES.find(t => t.value === form.type)?.label || "Type d'événement"}
-          readOnly
-          onClick={() => setModalTypeOpen(true)}
-          placeholder="Type d'événement"
-          required
-          className="border border-gray-300 rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm] cursor-pointer focus:ring-2 focus:ring-pink-400"
-        />
-        
-        <input name="theme" value={form.theme} onChange={handleChange} placeholder="Thème" required
-          className="border border-gray-300 rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm]" />
-        
-        {/* Date de début */}
-        <input type="datetime-local" name="date" value={form.date} onChange={handleChange} required
-          className="border border-gray-300 rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm]" />
-
-        {/* Date de fin */}
-        <input type="datetime-local" name="date_fin" value={form.date_fin} onChange={handleChange} required
-          className="border border-gray-300 rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm]" />
-
-        <input type="text" value={selectedLocationName()} readOnly onClick={() => setModalOpen(true)}
-          placeholder="Où se déroulera l’événement ?" className="border border-gray-300 rounded-[15px] px-5 py-3 bg-[#f5f5f5] w-[8cm] cursor-pointer" />
-        <input type="text" value={selectedSalleName()} readOnly disabled={!form.locationId}
-          onClick={() => form.locationId && setModalSalleOpen(true)} placeholder="Salle"
-          className={`border border-gray-300 rounded-[15px] px-5 py-3 ${form.locationId ? "cursor-pointer bg-[#f5f5f5]" : "bg-gray-200"} w-[8cm]`} />
-
-        <div className="col-span-1 md:col-span-2 mt-4">
-          <button type="submit" className="w-full bg-[#1C1B2E] text-white font-semibold cursor-pointer py-3 rounded-[15px] hover:bg-[#2e2d44] ">
-            LOCALISATION
-          </button>
-        </div>
-      </form>
+        <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-7">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Nom de l'événement</label>
+            <input
+              name="nom"
+              value={form.nom}
+              onChange={handleChange}
+              placeholder="Ex: Mariage de Sarah & Paul"
+              required
+              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Type d'événement</label>
+            <input
+              name="type"
+              value={EVENT_TYPES.find(t => t.value === form.type)?.label || "Type d'événement"}
+              readOnly
+              onClick={() => setModalTypeOpen(true)}
+              placeholder="Type d'événement"
+              required
+              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 cursor-pointer focus:ring-2 focus:ring-pink-400 transition"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Thème</label>
+            <input
+              name="theme"
+              value={form.theme}
+              onChange={handleChange}
+              placeholder="Ex: Chic, Bohème, Classique..."
+              required
+              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Date de début</label>
+            <input
+              type="datetime-local"
+              name="date"
+              value={form.date}
+              onChange={handleChange}
+              required
+              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Date de fin</label>
+            <input
+              type="datetime-local"
+              name="date_fin"
+              value={form.date_fin}
+              onChange={handleChange}
+              required
+              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Lieu</label>
+            <input
+              type="text"
+              value={selectedLocationName()}
+              readOnly
+              onClick={() => setModalOpen(true)}
+              placeholder="Où se déroulera l’événement ?"
+              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 cursor-pointer focus:ring-2 focus:ring-indigo-200 transition"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Salle</label>
+            <input
+              type="text"
+              value={selectedSalleName()}
+              readOnly
+              disabled={!form.locationId}
+              onClick={() => form.locationId && setModalSalleOpen(true)}
+              placeholder="Salle"
+              className={`border border-gray-300 rounded-xl px-5 py-3 ${form.locationId ? "cursor-pointer bg-gray-50" : "bg-gray-200"} focus:ring-2 focus:ring-indigo-200 transition`}
+            />
+          </div>
+          <div className="col-span-1 md:col-span-2 mt-4">
+            <button
+              type="submit"
+              className="w-full bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition"
+            >
+              Créer l'événement
+            </button>
+          </div>
+        </form>
+      </div>
 
       {/* Modal lieux */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-[#ffffff] opacity-90 flex items-center justify-center z-50">
-          <div className="relative w-[50%] h-[400px] bg-[#333446] shadow-lg rounded-lg p-6 overflow-y-auto">
-            <button className="absolute top-2 right-4 text-2xl font-bold text-[#ffffff] hover:text-red-600"
-              onClick={() => setModalOpen(false)}>×</button>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="relative w-full max-w-lg bg-white shadow-2xl rounded-2xl p-8">
+            <button
+              className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"
+              onClick={() => setModalOpen(false)}
+            >×</button>
+            <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">Choisissez un lieu</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {locations.map(loc => (
-                <div key={loc.id} onClick={() => {
-                  setForm({ ...form, locationId: loc.id, salleId: "" });
-                  setModalOpen(false);
-                }}
-                  className="border rounded-xl px-4 py-3 text-center bg-[#333446] text-[#ffffff]  cursor-pointer transition">
+                <div
+                  key={loc.id}
+                  onClick={() => {
+                    setForm({ ...form, locationId: loc.id, salleId: "" });
+                    setModalOpen(false);
+                  }}
+                  className="border-2 border-indigo-100 rounded-xl px-4 py-3 text-center bg-indigo-50 text-indigo-800 cursor-pointer hover:bg-indigo-100 hover:border-indigo-400 font-semibold transition"
+                >
                   {loc.nom}
                 </div>
               ))}
@@ -133,17 +192,23 @@ export default function Evenementform({ onNext }) {
 
       {/* Modal salles */}
       {modalSalleOpen && (
-        <div className="fixed inset-0 bg-[#ffffff] opacity-90 flex items-center justify-center z-50">
-          <div className="relative w-[50%] h-[400px] bg-[#333446] shadow-lg rounded-lg p-6 overflow-y-auto">
-            <button className="absolute top-2 right-4 text-2xl font-bold text-[#ffffff] hover:text-red-600"
-              onClick={() => setModalSalleOpen(false)}>×</button>
-            <div className="grid grid-cols-2 md:grid-cols-3 text-[#ffffff] gap-4 mt-6">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="relative w-full max-w-lg bg-white shadow-2xl rounded-2xl p-8">
+            <button
+              className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"
+              onClick={() => setModalSalleOpen(false)}
+            >×</button>
+            <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">Choisissez une salle</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {salles.map(salle => (
-                <div key={salle.id} onClick={() => {
-                  setForm({ ...form, salleId: salle.id });
-                  setModalSalleOpen(false);
-                }}
-                  className="border rounded-xl px-4 py-3 text-center bg-[#333446]  cursor-pointer transition">
+                <div
+                  key={salle.id}
+                  onClick={() => {
+                    setForm({ ...form, salleId: salle.id });
+                    setModalSalleOpen(false);
+                  }}
+                  className="border-2 border-indigo-100 rounded-xl px-4 py-3 text-center bg-indigo-50 text-indigo-800 cursor-pointer hover:bg-indigo-100 hover:border-indigo-400 font-semibold transition"
+                >
                   {salle.nom}
                 </div>
               ))}
@@ -156,7 +221,7 @@ export default function Evenementform({ onNext }) {
       {modalTypeOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-2xl p-8 w-[90vw] max-w-2xl">
-            <h3 className="text-xl font-bold text-center mb-6 text-gray-800">Choisissez le type d'événement</h3>
+            <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">Choisissez le type d'événement</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               {EVENT_TYPES.map(type => (
                 <button

@@ -6,5 +6,6 @@ export class CreateEventDto {
   date: Date;
   date_fin:Date;
   locationId: number;
+  montanttransaction?: number;
   salleId: number;
 }

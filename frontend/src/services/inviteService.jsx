@@ -100,17 +100,17 @@ export const importGuestsToSpecificEvent = async (file, eventId, token) => {
   if (!file) throw new Error("Aucun fichier fourni pour l'importation.");
 
   const formData = new FormData();
-  formData.append('file', file); //  correspond à @UploadedFile() côté NestJS
+  formData.append("file", file);
 
   try {
     const response = await axiosClient.post(`/guests/import/${eventId}`, formData, {
       headers: {
-        Authorization: `Bearer ${token}`, //  laisser Axios gérer le Content-Type
+        Authorization: `Bearer ${token}`,
       },
     });
     return response.data;
   } catch (error) {
-    console.error(` Erreur lors de l'importation des invités pour l'événement ${eventId}:`, error);
+    console.error(`Erreur lors de l'importation des invités pour l'événement ${eventId}:`, error);
     throw error;
   }
 };
@@ -154,3 +154,97 @@ export const deleteGuest = async (guestId, token) => {
     throw error;
   }
 };
+
+
+// export async function getTablesByEventId(eventId, token) {
+//   const response = await fetch(`http://localhost:3000/guests/tables/${eventId}`, {
+//     method: 'GET',
+//     headers: {
+//       'Content-Type': 'application/json',
+//       Authorization: `Bearer ${token}`,
+//     },
+//   });
+
+//   const contentType = response.headers.get("Content-Type");
+
+//   if (!response.ok || !contentType.includes("application/json")) {
+//     const text = await response.text();
+//     console.error("Erreur serveur:", text);
+//     throw new Error("Le serveur a retourné une erreur ou une page HTML au lieu du JSON");
+//   }
+
+//   return response.json();
+// }
+
+
+
+
+// export async function assignGuestToTable(guestId, tableId, place, token) {
+//   try {
+//     const response = await fetch(`/guests/${guestId}/assign`, { // Ajusté à '/api/guests' pour correspondre à votre controller
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         Authorization: `Bearer ${token}`,
+//       },
+//       body: JSON.stringify({ tableId, place }),
+//     });
+
+//     if (!response.ok) {
+//       const errorData = await response.json();
+//       throw new Error(errorData.message || "Échec de l'assignation");
+//     }
+
+//     return await response.json(); // Retourne les données mises à jour si nécessaire
+//   } catch (error) {
+//     console.error("Erreur lors de l'assignation :", error);
+//     throw error;
+//   }
+// }
+
+
+export async function getTablesByEventId(eventId, token) {
+  if (!token) throw new Error("Utilisateur non authentifié");
+  if (!eventId) throw new Error("L'ID de l'événement est manquant pour la récupération des tables.");
+
+  try {
+    const response = await axiosClient.get(`/guests/tables/${eventId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Erreur lors de la récupération des tables:", error);
+    throw error;
+  }
+}
+
+export async function assignGuestToTable(guestId, tableId, place, token) {
+  if (!token) throw new Error("Utilisateur non authentifié");
+  try {
+    const response = await axiosClient.post(`/guests/${guestId}/assign`, { tableId, place }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Erreur lors de l'assignation :", error);
+    throw error;
+  }
+}
+
+
+
+/*********************    ************************************ */
+
+export async function getManagerList() {
+  try {
+    const response = await axiosClient.get(`/auth/ManagerList`);
+    return response.data;
+  } catch (error) {
+    console.error("Erreur lors de l'assignation :", error);
+    throw error;
+  }
+}

@@ -21,7 +21,7 @@ export class Invite {
   @Column({ enum: ['M', 'F'] })
   sex: string;
 
-  @ManyToOne(() => Evenement, (event) => event.invites)
+  @ManyToOne(() => Evenement, (event) => event.invites,{onDelete: 'CASCADE'})
   event: Evenement;
 
   @ManyToOne(() => TableEvent, (table) => table.guests, { nullable: true })

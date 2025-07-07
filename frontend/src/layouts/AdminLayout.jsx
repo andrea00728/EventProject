@@ -21,7 +21,7 @@ export default function AdminLayout() {
   return (
     <>
       <div className="flex justify-between">
-        <header className=" text-white bg-indigo-600 w-[20%] h-screen items-start p-6 fixed left-0">
+        <header className=" text-white bg-indigo-500 w-[20%] h-screen items-start p-6 fixed left-0">
           <h1
             className="text-2xl text-center"
             style={{ fontFamily: "cursive", fontStyle: "italic" }}

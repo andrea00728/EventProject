@@ -6,13 +6,16 @@ import { DataGrid } from "@mui/x-data-grid";
 import DeleteGuestButton from "../../util/DeleteInviteButton";
 import EditGuestButton from "../../util/buttonModifIvite";
 
-// Composant pour une option d'événement dans le modal
+// Composant pour une option d'événement dans le modal (UI/UX moderne)
 const EventOption = ({ event, onSelect }) => (
   <div
-    className="px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-lg transition-colors duration-200"
+    className="flex items-center gap-3 px-5 py-4 hover:bg-indigo-50 cursor-pointer rounded-xl transition-all duration-200 border border-transparent hover:border-indigo-300 shadow-sm"
     onClick={() => onSelect(event.id, event.nom)}
   >
-    {event.nom} ({new Date(event.date).toLocaleDateString("fr-FR")})
+    <div className="flex flex-col">
+      <span className="font-semibold text-indigo-700">{event.nom}</span>
+      <span className="text-xs text-gray-500">{new Date(event.date).toLocaleDateString("fr-FR")}</span>
+    </div>
   </div>
 );
 
@@ -47,8 +50,8 @@ export default function AffichageInvite() {
     if (!selectedEventId || !token) return;
     setIsLoading(true);
     getGuestsByEventId(selectedEventId, token)
-      .then((data) => {
-        setGuests(data);
+      .then((guestsData) => {
+        setGuests(guestsData);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -67,7 +70,7 @@ export default function AffichageInvite() {
     setShowModal(false);
   };
 
-  // Configuration des colonnes du DataGrid
+  // Configuration des colonnes du DataGrid (sans table/place)
   const columns = [
     { field: "nom", headerName: "Nom", width: 150, headerClassName: "font-bold text-gray-900" },
     { field: "prenom", headerName: "Prénom", width: 150, headerClassName: "font-bold text-gray-900" },
@@ -75,14 +78,14 @@ export default function AffichageInvite() {
     {
       field: "sex",
       headerName: "Sexe",
-      width: 150,
+      width: 120,
       headerClassName: "font-bold text-gray-900",
       valueGetter: ({ row }) => (row?.sex === "M" ? "Homme" : row?.sex === "F" ? "Femme" : "-"),
     },
     {
       field: "actions",
-      headerName: "Actions",
-      width: 150,
+      headerName: "",
+      width: 160,
       sortable: false,
       headerClassName: "font-bold text-gray-900",
       renderCell: ({ row }) => (
@@ -105,41 +108,41 @@ export default function AffichageInvite() {
   ];
 
   return (
-    <div  >
+    <div>
       <div className="mb-[-30px]">
-        {/* Sélecteur d'événement avec modal */}
-        <div className="mb-4">
-          <label htmlFor="eventSelect" className="text-sm font-medium text-gray-700 mb-2 block">
+        {/* Sélecteur d'événement avec modal UX moderne */}
+        <div className="mb-6">
+          <label htmlFor="eventSelect" className="text-base font-semibold text-gray-800 mb-2 block">
             Sélectionner un événement
           </label>
           <div
-            className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 w-full max-w-md cursor-pointer hover:bg-gray-100 focus:ring-2 focus:ring-indigo-600 focus:outline-none transition-all duration-200 text-gray-900 flex items-center justify-between"
+            className="border border-indigo-200 bg-white rounded-xl px-5 py-4 w-full max-w-md cursor-pointer hover:bg-indigo-50 focus:ring-2 focus:ring-indigo-400 focus:outline-none transition-all duration-200 text-gray-900 flex items-center justify-between shadow"
             onClick={() => setShowModal(true)}
           >
-            <span>{selectedEventName || "-- Sélectionner un événement --"}</span>
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span className="font-medium text-indigo-700">{selectedEventName || "-- Sélectionner un événement --"}</span>
+            <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
 
           {showModal && (
-            <div className="fixed inset-0 bg-white opacity-50 flex items-center justify-center z-50">
-              <div className="bg-black p-6 rounded-xl shadow-lg w-full max-w-md animate-fadeIn">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg  text-white">Sélectionner un événement</h3>
-                  <button
-                    onClick={() => setShowModal(false)}
-                    className="text-white hover:text-gray-700 transition-colors duration-200"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {events.map((event) => (
-                    <EventOption key={event.id} event={event} onSelect={handleEventSelect} />
-                  ))}
+            <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+              <div className="bg-white rounded-2xl shadow-2xl p-8 w-[90vw] max-w-2xl relative">
+                <button
+                  className="absolute top-4 right-4 text-gray-400 hover:text-red-600 text-2xl font-bold focus:outline-none"
+                  onClick={() => setShowModal(false)}
+                >
+                  ×
+                </button>
+                <h3 className="text-2xl font-bold text-center mb-6 text-indigo-700">Sélectionnez un événement</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {events.length === 0 ? (
+                    <div className="col-span-full text-center text-gray-500">Aucun événement disponible.</div>
+                  ) : (
+                    events.map((event) => (
+                      <EventOption key={event.id} event={event} onSelect={handleEventSelect} />
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -171,30 +174,32 @@ export default function AffichageInvite() {
           </div>
         )}
 
-        {/* Tableau des invités avec scroll si > 5 */}
+        {/* Tableau des invités */}
         {!isLoading && (
-          <div className="rounded-xl overflow-hidden border border-gray-200">
+          <div className="rounded-xl overflow-hidden border border-gray-200 shadow">
             <DataGrid
               rows={guests}
               columns={columns}
               getRowId={(row) => row.id}
-              pageSizeOptions={[5, 10, 20]}
+              pageSizeOptions={[5, 10, 20, 100]}
               autoHeight={guests.length <= 5}
               getRowHeight={() => (guests.length > 5 ? "auto" : undefined)}
               sx={{
                 "& .MuiDataGrid-columnHeaders": {
-                  backgroundColor: "rgba(243, 244, 246, 0.8)",
-                  color: "#111827",
+                  backgroundColor: "rgba(238,242,255,0.8)",
+                  color: "#3730a3",
                   fontWeight: "bold",
+                  fontSize: "1rem",
                 },
                 "& .MuiDataGrid-cell": {
-                  borderBottom: "1px solid #e5e7eb",
+                  borderBottom: "1px solid #e0e7ff",
+                  fontSize: "0.98rem",
                 },
                 "& .MuiDataGrid-row:hover": {
-                  backgroundColor: "#f9fafb",
+                  backgroundColor: "#f1f5f9",
                 },
                 ...(guests.length > 5 && {
-                  height: "384px", // h-96
+                  height: "384px",
                   "& .MuiDataGrid-virtualScroller": {
                     overflowY: "auto",
                   },
