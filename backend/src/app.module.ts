@@ -27,6 +27,14 @@ import { Place } from './entities/Place';
 import { PersonnelController } from './controllers/personnel/personnel.controller';
 import { PersonnelModule } from './modules/personnel/personnel.module';
 import { Personnel } from './entities/Personnel';
+import { QrCodeModule } from './modules/qrcode/qrcode.module';
+import { MenuModule } from './modules/menu/menu.module';
+import { OrderModule } from './modules/order/order.module';
+
+import { Menu } from './entities/menu.entity';
+import { MenuItem } from './entities/menu-item.entity';
+import { Order } from './entities/order.entity';
+import { OrderItem } from './entities/order-item.entity';
 
 @Module({
   imports: [
@@ -54,7 +62,7 @@ import { Personnel } from './entities/Personnel';
           username: dbUsername,
           password: dbPassword,
           database: dbDatabase,
-          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel],
+          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem],
      
           synchronize: true,
         };
@@ -70,6 +78,9 @@ import { Personnel } from './entities/Personnel';
     LocationModule,
     PaiementModule,
     PersonnelModule,
+    QrCodeModule,
+    MenuModule,
+    OrderModule,
    
   ],
   controllers: [ProfileController],
