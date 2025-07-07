@@ -83,7 +83,7 @@ import { OrderItem } from './entities/order-item.entity';
     OrderModule,
    
   ],
-  controllers: [ProfileController],
+  controllers: [ProfileController,],
   providers: [],
 })
 export class AppModule {}
