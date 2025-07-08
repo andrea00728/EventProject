@@ -90,9 +90,9 @@ async confirmEmail(token: string): Promise<string> {
     personnel.status = 'accepter';
     await this.personnelRepository.save(personnel);
 
-    return "✅ Confirmation réussie. Vous êtes maintenant membre du personnel.";
+    return "Confirmation réussie. Vous êtes maintenant membre du personnel.";
   } catch (err) {
-    throw new BadRequestException("❌ Lien invalide ou expiré.");
+    throw new BadRequestException("Lien invalide ou expiré.");
   }
 }
 
@@ -187,4 +187,15 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
   return savedPersonnel;
 }
 
+
+ async findCountPersonnelByEvenement(evenementId: number): Promise<number> {
+    const count = await this.personnelRepository.count({
+      where: {
+        evenement: {
+          id: evenementId,
+        },
+      },
+    });
+    return count;
+  }
 }

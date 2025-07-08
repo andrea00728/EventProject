@@ -23,16 +23,6 @@ export class PersonnelController {
     return this.personnelService.findByEvenement(Number(eventId)); 
   }
 
-//   @Get('/confirm')
-// async confirm(@Query('token') token: string) {
-//   return this.personnelService.confirmEmail(token);
-// }
-
-// @Get('/reject')
-// async reject(@Query('token') token: string) {
-//   return this.personnelService.RefuseEmail(token);
-// }
-
 @Get('/response')
 async response(@Query('token') token: string,@Query('action') action: string) {
   if (action === 'confirm') {
@@ -43,5 +33,13 @@ async response(@Query('token') token: string,@Query('action') action: string) {
     throw new BadRequestException("Action non valide. Utilisez 'confirm' ou 'refuse'.");
   }
 
+  
+}
+
+@Get('/count/:eventId')
+@UseGuards(AuthGuard('jwt'))
+ async findCountByEvent(@Param('eventId') eventId: string) {
+  const count = await this.personnelService.findCountPersonnelByEvenement(Number(eventId));
+  return { count };
 }
 }
