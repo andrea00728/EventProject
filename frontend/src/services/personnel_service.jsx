@@ -16,3 +16,4 @@ export const getPersonnelByEventId = async (eventId, token) => {
   });
   return response.data;
 }
+

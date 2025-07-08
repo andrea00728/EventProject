@@ -1,11 +1,8 @@
-import React from "react";
-import { createBrowserRouter, Navigate, Router } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import DefaultLayout from "../layouts/DefaultLayout";
 import GuestLayout from "../layouts/GuestLayout";
 import Accueil from "../pages/Accueil";
-import Evenement from "../pages/Evenement";
 import Notfound from "../pages/Notofoundpage";
-import AdminLayout from "../layouts/AdminLayout";
 import Pagepublic from "../pages/Pagepublic";
 import Connexionorganisateur from "../pages/Connexionorganisateur";
 import Inscription from "../pages/Inscription";
@@ -15,7 +12,6 @@ import Apropos from "../pages/apropos";
 
 // import Table3DScene from "../components/table3D";
 import ChoixModeInvite from "../layouts/ChoixModeInvite";
-import Inviteform from "../pages/choixModInvite/inviteForm";
 import ImportGuestsCSV from "../pages/choixModInvite/importation";
 import AffichageInvite from "../pages/choixModInvite/affichageInvite";
 import InviteformWithId from "../pages/choixModInvite/InviteFormparId";
@@ -37,6 +33,7 @@ import ProtectedRoute from "./ProtectedRouter.jsx";
 import OrganisationPersonnelLayout from "../layouts/OrganisationPersonnelLayout.jsx";
 import CreationPersonnel from "../pages/oranisation_personnel/creation_personnel.jsx";
 import DashboardPersonnel from "../pages/oranisation_personnel/Dashboard_personnel.jsx";
+import Optionpersonnel from "../pages/oranisation_personnel/confirmationRefus.jsx";
 const router=createBrowserRouter([
    
   {
@@ -193,6 +190,11 @@ const router=createBrowserRouter([
     }
   ]
 },
+{
+  path:"/personnel/response",
+  element:<Optionpersonnel/>
+},
+
   
     //  {
     //     path:"/",

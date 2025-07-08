@@ -1,8 +1,9 @@
 
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, Unique } from 'typeorm';
 import { Evenement } from './Evenement';
 
 @Entity()
+@Unique(['email','evenement'])
 export class Personnel {
   @PrimaryGeneratedColumn()
   id: number;
@@ -19,6 +20,12 @@ export class Personnel {
   @ManyToOne(() => Evenement, evenement => evenement.personnels, { onDelete: 'CASCADE' })
   evenement: Evenement;
 
-   @Column({nullable:true})
-    createdAt: Date;
+  @Column({ type: 'enum', enum: ['attent', 'accepter'], default: 'attent' })
+  status: 'attent' | 'accepter';
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  updatedAt: Date;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
 }
