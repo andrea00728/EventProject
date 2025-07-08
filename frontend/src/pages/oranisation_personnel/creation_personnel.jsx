@@ -261,6 +261,10 @@ export default function CreationPersonnel() {
       try {
         const data = await getMyEvents(token);
         setEvents(data);
+        if(data.length>0){
+          setSelectedEvent(data[0].id);
+          setForm({ ...form, event: data[0].id });
+        }
       } catch (error) {
         setEventError(
           error.response?.data?.message || "Impossible de charger les événements"

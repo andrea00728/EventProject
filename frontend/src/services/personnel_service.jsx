@@ -17,3 +17,13 @@ export const getPersonnelByEventId = async (eventId, token) => {
   return response.data;
 }
 
+
+export const CountPersonnelByEvent = async (eventId, token) => {
+  const response = await axiosClient.get(`/personnel/count/${eventId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+}
+

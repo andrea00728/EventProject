@@ -1,8 +1,13 @@
+import React from 'react';
+
+import CountPersonnelCard from './Count_personnelByevent';
+import ListePersonnel from './Listepersonnel';
 export default function DashboardPersonnel() {
     return (
-        <div>
-            <h1>Dashboard Personnel</h1>
-            {/* Contenu du tableau de bord du personnel */}
+        <>
+          <div className=''>
+        <CountPersonnelCard/>
         </div>
+        </>
     );
 }
