@@ -41,7 +41,7 @@ export class AuthController {
       email: req.user.email,
       name: req.user.name,
       photo: req.user.photo || '', 
-      role: req.user.role || 'organisateur', // Assurez-vous que le rôle est défini
+      role: req.user.role || 'organisateur', 
     };
 
   
