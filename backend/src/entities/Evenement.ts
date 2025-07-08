@@ -6,6 +6,8 @@ import { Invite } from './Invite';
 import { User } from 'src/Authentication/entities/auth.entity';
 import { Personnel } from './Personnel';
 import { Menu } from './menu.entity';
+import { Balance } from './balance.entity';
+import { Payment } from './payment.entity';
 
 
 @Unique(['nom','user'])
@@ -46,6 +48,12 @@ export class Evenement {
 
   @OneToMany(() => Invite, (invite) => invite.event,{onDelete: 'CASCADE'})
   invites: Invite[];
+
+  @OneToMany(() => Balance, (balance) => balance.event)
+  balances: Balance[];
+
+  @OneToMany(() => Payment, (payment) => payment.event)
+  payments: Payment[];
 
     @ManyToOne(()=>User,(user)=>user.id,{nullable:false})
     @JoinColumn({name:'utilisateur_id'})

@@ -36,6 +36,8 @@ import { MenuItem } from './entities/menu-item.entity';
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { SharedModule } from './modules/shared/shared.module';
+import { Balance } from './entities/balance.entity';
+import { Payment } from './entities/payment.entity';
 
 @Module({
   imports: [
@@ -63,7 +65,7 @@ import { SharedModule } from './modules/shared/shared.module';
           username: dbUsername,
           password: dbPassword,
           database: dbDatabase,
-          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem],
+          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance],
      
           synchronize: true,
         };

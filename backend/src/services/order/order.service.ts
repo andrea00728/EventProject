@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeepPartial } from 'typeorm';
 import { Order } from '../../entities/order.entity';
@@ -6,6 +6,9 @@ import { OrderItem } from '../../entities/order-item.entity';
 import { TableEvent } from '../../entities/Table';
 import { MenuItem } from '../../entities/menu-item.entity';
 import { User } from 'src/Authentication/entities/auth.entity';
+import { Balance } from 'src/entities/balance.entity';
+import { Evenement } from 'src/entities/Evenement';
+import { Payment } from 'src/entities/payment.entity';
 
 @Injectable()
 export class OrderService {
@@ -20,6 +23,12 @@ export class OrderService {
     private menuItemRepository: Repository<MenuItem>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Balance)
+    private balanceRepository: Repository<Balance>,
+    @InjectRepository(Evenement)
+    private eventRepository: Repository<Evenement>,
+    @InjectRepository(Payment)
+    private paymentRepository: Repository<Payment>,
   ) {}
 
   async createOrder(tableId: number, items: { menuItemId: number; quantity: number }[], userId?: string,): Promise<Order> {
@@ -48,7 +57,7 @@ export class OrderService {
     }
 
     // Créer la commande
-    const order = this.orderRepository.create({ table, user, orderDate: new Date(), status: 'pending' });
+    const order = this.orderRepository.create({ table, user, orderDate: new Date(), status: 'pending', paymentStatus: 'unpaid', });
     const savedOrder = await this.orderRepository.save(order);
 
     const orderItems = await Promise.all(
@@ -74,12 +83,6 @@ export class OrderService {
     return this.orderRepository.save(savedOrder);
   }
 
-  async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served' | 'paid'): Promise<Order> {
-    const order = await this.orderRepository.findOne({ where: { id: orderId } });
-    if (!order) throw new NotFoundException('Order not found');
-    order.status = status;
-    return this.orderRepository.save(order);
-  }
 
   async findOrdersByTable(tableId: number): Promise<(Order & { total: number })[]> {
     const orders = await this.orderRepository.find({ where: { table: { id: tableId } }, relations: ['items', 'items.menuItem', 'user'] });
@@ -175,5 +178,102 @@ export class OrderService {
   
     return this.orderRepository.save(order);
   }
-  
+
+  async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served', userId: string): Promise<Order> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user || user.role !== 'cuisinier') {
+      throw new UnauthorizedException('Only cuisinier can update order status');
+    }
+    const order = await this.orderRepository.findOne({
+      where: { id: orderId },
+      relations: ['items', 'items.menuItem', 'table', 'user', 'table.event'],
+    });
+    if (!order) throw new NotFoundException('Order not found');
+    order.status = status;
+    return this.orderRepository.save(order);
+  }
+
+  async validatePayment(orderId: number, userId: string): Promise<Order> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user || user.role !== 'caissier') {
+      throw new UnauthorizedException('Only caissier can validate payment');
+    }
+    const order = await this.orderRepository.findOne({
+      where: { id: orderId },
+      relations: ['items', 'table', 'table.event'],
+    });
+    if (!order) throw new NotFoundException('Order not found');
+    if (order.paymentStatus === 'paid') {
+      throw new BadRequestException('Order is already paid');
+    }
+
+    const total = order.items.reduce((sum, item) => sum + item.subtotal, 0);
+    const eventId = order.table.event.id;
+
+    // Create Payment record
+    const payment = this.paymentRepository.create({
+      order,
+      orderId,
+      user,
+      userId,
+      amount: total,
+      event: order.table.event,
+      eventId,
+      paymentDate: new Date(),
+    });
+    await this.paymentRepository.save(payment);
+
+    // Update paymentStatus
+    order.paymentStatus = 'paid';
+    const savedOrder = await this.orderRepository.save(order);
+
+    // Update event-specific balance
+    let balance = await this.balanceRepository.findOne({ where: { eventId } });
+    if (!balance) {
+      balance = this.balanceRepository.create({
+        total,
+        updatedAt: new Date(),
+        event: order.table.event,
+        eventId,
+      });
+    } else {
+      balance.total += total;
+      balance.updatedAt = new Date();
+    }
+    await this.balanceRepository.save(balance);
+
+    
+
+    const existingOrder = await this.orderRepository.findOne({
+      where: { id: orderId },
+      relations: ['items', 'items.menuItem', 'table', 'user', 'table.event', 'payments'],
+    });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    return order;
+  }
+
+  async getBalance(eventId: number, userId: string): Promise<number> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user || user.role !== 'caissier') {
+      throw new UnauthorizedException('Only caissier can view balance');
+    }
+    const balance = await this.balanceRepository.findOne({ where: { eventId } });
+    return balance ? balance.total : 0;
+  }
+
+  async getPaymentsByEvent(eventId: number, userId: string): Promise<Payment[]> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user || user.role !== 'caissier') {
+      throw new UnauthorizedException('Only caissier can view payments');
+    }
+    return this.paymentRepository.find({
+      where: { eventId },
+      relations: ['order', 'order.items', 'order.items.menuItem', 'user'],
+    });
+  }
+
 }
+
+  

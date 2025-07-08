@@ -26,6 +26,6 @@ export class CreateOrderDto {
 }
 
 export class UpdateOrderStatusDto {
-  @IsEnum(['pending', 'preparing', 'served', 'paid'])
-  status: 'pending' | 'preparing' | 'served' | 'paid';
+  @IsEnum(['pending', 'preparing', 'served'])
+  status: 'pending' | 'preparing' | 'served';
 }

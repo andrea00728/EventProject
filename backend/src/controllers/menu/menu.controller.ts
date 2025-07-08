@@ -68,6 +68,7 @@ export class MenuController {
     return this.menuService.restockMenuItem(menuItemId, body.quantity);
   }
 
+@Roles('organisateur')
 @Patch('items/:menuItemId')
   @UseInterceptors(FileInterceptor('photo', {
   storage: diskStorage({
