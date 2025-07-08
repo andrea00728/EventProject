@@ -15,7 +15,7 @@ export default function DefaultLayout() {
   }
   switch (role) {
     case "organisateur":
-      break; // Reste sur cette page
+      break; 
     case "accueil":
       return <Navigate to="/personnelAccueil" replace />;
     case "caissier":
@@ -45,13 +45,13 @@ export default function DefaultLayout() {
   ];
 
   const subMenuVariants = {
-    hidden: { opacity: 0, y: -10, pointerEvents: "none", transition: { duration: 0.18 } },
-    visible: { opacity: 1, y: 0, pointerEvents: "auto", transition: { duration: 0.18 } },
+    hidden: { opacity: 0, y: -10, pointerEvents: "none", transition: { duration: 0.4 } },
+    visible: { opacity: 1, y: 0, pointerEvents: "auto", transition: { duration: 0.4 } },
   };
 
   const menuVariants = {
-    open: { opacity: 1, height: "auto", transition: { duration: 0.3 } },
-    closed: { opacity: 0, height: 0, transition: { duration: 0.3 } },
+    open: { opacity: 1, height: "auto", transition: { duration: 0.9 } },
+    closed: { opacity: 0, height: 0, transition: { duration: 0.9 } },
   };
 
   return (
@@ -76,7 +76,7 @@ export default function DefaultLayout() {
               >
                 <Link
                   to={item.path}
-                  className="px-4 py-2 hover:text-indigo-600 transition-colors duration-200 relative z-10 font-semibold tracking-wide"
+                  className="px-4 py-2 hover:text-indigo-600 transition-colors duration-300 relative z-10 font-semibold tracking-wide"
                 >
                   {item.name}
                 </Link>
@@ -86,7 +86,7 @@ export default function DefaultLayout() {
                     rest: { width: 0 },
                     hover: { width: "100%" },
                   }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: 0.6 }}
                 />
                 {item.subMenus && (
                   <AnimatePresence>
