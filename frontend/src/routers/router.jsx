@@ -34,6 +34,13 @@ import OrganisationPersonnelLayout from "../layouts/OrganisationPersonnelLayout.
 import CreationPersonnel from "../pages/oranisation_personnel/creation_personnel.jsx";
 import DashboardPersonnel from "../pages/oranisation_personnel/Dashboard_personnel.jsx";
 import Optionpersonnel from "../pages/oranisation_personnel/confirmationRefus.jsx";
+import AdminLayout from "../layouts/AdminLayout.jsx";
+import Dashboard from "../pages/admin/Dashboard.jsx";
+import EvenementAd from "../pages/admin/Evenement.jsx";
+import Organisateur from "../pages/admin/Organisateur.jsx";
+import Parametre from "../pages/admin/Parametre.jsx";
+import LocationSalle from "../pages/admin/LocationSalle.jsx";
+
 const router=createBrowserRouter([
    
   {
@@ -194,21 +201,36 @@ const router=createBrowserRouter([
   path:"/personnel/response",
   element:<Optionpersonnel/>
 },
+{
+        path:"/",
+        element:<AdminLayout/>,
+        children:[
+            {
+                path:"/",
+                element:<Navigate to="/AdminAccueil"/>
+            },{
+                path:"/AdminAccueil",
+                element:<Dashboard/>
+            },
+            {
+                path:"/AdminEvenement",
+                element:<EvenementAd/>
+            },
+            {
+                path:"/AdminOrganisateur",
+                element:<Organisateur />
+            },
+            {
+                path:"/AdminParametre",
+                element:<Parametre/>
+            },
 
-  
-    //  {
-    //     path:"/",
-    //     element:<AdminLayout/>,
-    //     children:[
-    //         // {
-    //         //     path:"/",
-    //         //     element:<Navigate to="/AdminAccueil"/>
-    //         // },{
-    //         //     path:"/AdminAccueil",
-    //         //     element:<Adminaccueil/>
-    //         // },
-    //     ]
-    // },
+            {
+                path:"/LocationSalle",
+                element:<LocationSalle/>
+            }
+        ]
+    },
     {
         path:"/",
         element:<GuestLayout/>,

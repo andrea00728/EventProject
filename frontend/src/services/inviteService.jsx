@@ -234,3 +234,32 @@ export async function assignGuestToTable(guestId, tableId, place, token) {
     throw error;
   }
 }
+
+
+/*********************    ************************************ */
+
+export async function getManagerList() {
+  try {
+    const response = await axiosClient.get(`/auth/ManagerList`);
+    return response.data;
+  } catch (error) {
+    console.error("Erreur lors de l'assignation :", error);
+    throw error;
+  }
+}
+
+export async function deleteManager(id) {
+  // if (!token) throw new Error("Utilisateur non authentifié");
+  try {
+    const response = await axiosClient.delete(`/auth/deleteManager/${id}`);
+    // {
+    //   headers: {
+    //     Authorization: `Bearer ${token}`,
+    //   },
+    // }
+    return response.data;
+  } catch (error) {
+    console.error("Erreur lors de la suppression de l'organisateur :", error);
+    throw error;
+  }
+}

@@ -63,6 +63,11 @@ export class EvenementController {
     }
     return this.evenementService.deleteEvent(id, userIdFromToken);
   }
+  /****************************** ******************** */
+  @Get(':id/managerEvents')
+  findManagerEvents(@Param('id') id: string) {
+    return this.evenementService.findManagerEvents(id);   
   }
+}
 
 
