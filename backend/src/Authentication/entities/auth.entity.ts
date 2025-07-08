@@ -32,5 +32,3 @@ export class User {
   evenement:Evenement[];
 
 }
-
-

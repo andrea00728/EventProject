@@ -10,7 +10,6 @@ export default function PersonnelCountDashboard() {
   const [count, setCount] = useState(null);
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
-  const [loadingCount, setLoadingCount] = useState(false);
   const [error, setError] = useState('');
   const { token } = useStateContext();
 
@@ -22,7 +21,6 @@ export default function PersonnelCountDashboard() {
         if(data.length > 0) {
           setSelectedEventId(data[0].id);
           setSelectedEventName(data[0].nom || `Événement ${data[0].id}`);
-          setLoadingCount(true);
         }
       } catch (err) {
         setError('Erreur lors de la récupération des événements.');
@@ -37,7 +35,6 @@ export default function PersonnelCountDashboard() {
   const handleEventClick = async (event) => {
     setSelectedEventId(event.id);
     setSelectedEventName(event.nom || `Événement ${event.id}`);
-    setLoadingCount(true);
     setCount(null);
     setError('');
 
