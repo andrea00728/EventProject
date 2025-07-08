@@ -19,6 +19,6 @@ export class Personnel {
   @ManyToOne(() => Evenement, evenement => evenement.personnels, { onDelete: 'CASCADE' })
   evenement: Evenement;
 
-   @Column({nullable:true})
+  @Column({nullable:true})
     createdAt: Date;
 }
