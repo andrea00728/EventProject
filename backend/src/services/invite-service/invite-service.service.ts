@@ -342,12 +342,6 @@ async importGuests(file: Express.Multer.File, eventId: number): Promise<{ import
     }
   }
 
-  // async findByEvent(eventId: number): Promise<Invite[]> {
-  //   return this.guestRepository.find({
-  //     where: { event: { id: eventId } },
-  //     relations: ['event', 'table'],
-  //   });
-  // }
 
   async findByEvent(eventId: number): Promise<Invite[]> {
   return this.guestRepository.find({
