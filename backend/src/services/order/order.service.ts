@@ -5,6 +5,7 @@ import { Order } from '../../entities/order.entity';
 import { OrderItem } from '../../entities/order-item.entity';
 import { TableEvent } from '../../entities/Table';
 import { MenuItem } from '../../entities/menu-item.entity';
+import { User } from 'src/Authentication/entities/auth.entity';
 
 @Injectable()
 export class OrderService {
@@ -17,11 +18,25 @@ export class OrderService {
     private tableEventRepository: Repository<TableEvent>,
     @InjectRepository(MenuItem)
     private menuItemRepository: Repository<MenuItem>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
 
-  async createOrder(tableId: number, items: { menuItemId: number; quantity: number }[]): Promise<Order> {
+  async createOrder(tableId: number, items: { menuItemId: number; quantity: number }[], userId?: string,): Promise<Order> {
     const table = await this.tableEventRepository.findOne({ where: { id: tableId } });
     if (!table) throw new NotFoundException('Table not found');
+
+
+    // Vérifier l'utilisateur si userId est fourni
+    let user: User | undefined;
+    if (userId) {
+      const foundUser = await this.userRepository.findOne({ where: { id: userId } });
+      user = foundUser !== null ? foundUser : undefined;
+      if (!user) throw new NotFoundException(`User with ID ${userId} not found`);
+      if (!['organisateur', 'accueil'].includes(user.role)) {
+        throw new BadRequestException('Only users with role "organisateur" or "accueil" can create orders');
+      }
+    }
 
     // Vérifier la disponibilité du stock
     for (const item of items) {
@@ -33,12 +48,12 @@ export class OrderService {
     }
 
     // Créer la commande
-    const order = this.orderRepository.create({ table, orderDate: new Date(), status: 'pending' });
+    const order = this.orderRepository.create({ table, user, orderDate: new Date(), status: 'pending' });
     const savedOrder = await this.orderRepository.save(order);
 
     const orderItems = await Promise.all(
       items.map(async (item) => {
-        const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
+        const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId }});
         if (!menuItem) throw new NotFoundException(`Menu item ${item.menuItemId} not found`);
         const subtotal = menuItem.price * item.quantity;
 
@@ -67,7 +82,7 @@ export class OrderService {
   }
 
   async findOrdersByTable(tableId: number): Promise<(Order & { total: number })[]> {
-    const orders = await this.orderRepository.find({ where: { table: { id: tableId } }, relations: ['items', 'items.menuItem'] });
+    const orders = await this.orderRepository.find({ where: { table: { id: tableId } }, relations: ['items', 'items.menuItem', 'user'] });
     return orders.map((order) => {
       const total = order.items.reduce((sum, item) => sum + item.subtotal, 0);
       return { ...order, total };
@@ -90,7 +105,7 @@ export class OrderService {
   }
 
   async findAllOrders(): Promise<(Order & { total: number })[]> {
-    const orders = await this.orderRepository.find({ relations: ['items', 'items.menuItem'] });
+    const orders = await this.orderRepository.find({ relations: ['items', 'items.menuItem', 'user'] });
     return orders.map((order) => {
       const total = order.items.reduce((sum, item) => sum + item.subtotal, 0);
       return { ...order, total };

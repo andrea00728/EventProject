@@ -1,6 +1,7 @@
 
 import { Evenement } from 'src/entities/Evenement';
-import { Entity, Column, PrimaryColumn, ManyToMany } from 'typeorm';
+import { Order } from 'src/entities/order.entity';
+import { Entity, Column, PrimaryColumn, ManyToMany, OneToMany } from 'typeorm';
 
 
 export type UserRole='organisateur'|'accueil'|'caissier'|'cuisinier';
@@ -30,6 +31,9 @@ export class User {
   
   @ManyToMany(()=>Evenement,evenement=>evenement.user)
   evenement:Evenement[];
+ 
+  @OneToMany(() => Order, (order) => order.user)
+  orders: Order[];
 
 }
 

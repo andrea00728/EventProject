@@ -35,6 +35,7 @@ import { Menu } from './entities/menu.entity';
 import { MenuItem } from './entities/menu-item.entity';
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
+import { SharedModule } from './modules/shared/shared.module';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { OrderItem } from './entities/order-item.entity';
     QrCodeModule,
     MenuModule,
     OrderModule,
+    SharedModule,
    
   ],
   controllers: [ProfileController,],
