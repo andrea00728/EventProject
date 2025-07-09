@@ -1,6 +1,7 @@
 
 import { Evenement } from 'src/entities/Evenement';
-import { Entity, Column, PrimaryColumn, ManyToMany } from 'typeorm';
+import { Forfait } from 'src/entities/Forfait';
+import { Entity, Column, PrimaryColumn, ManyToMany, ManyToOne } from 'typeorm';
 
 
 export type UserRole='organisateur'|'accueil'|'caissier'|'cuisinier';
@@ -31,6 +32,11 @@ export class User {
   @ManyToMany(()=>Evenement,evenement=>evenement.user)
   evenement:Evenement[];
 
+  @ManyToOne(()=>Forfait,{nullable:true})
+  forfait:Forfait;
+
+  @Column({type:'timestamp',nullable:true})
+  forfaitExpiration:Date;
 }
 
 
