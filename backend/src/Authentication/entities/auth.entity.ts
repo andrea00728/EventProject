@@ -1,10 +1,8 @@
-
 import { Evenement } from 'src/entities/Evenement';
-import { Order } from 'src/entities/order.entity';
-import { Entity, Column, PrimaryColumn, ManyToMany, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryColumn, ManyToMany } from 'typeorm';
 
+export type UserRole = 'organisateur' | 'accueil' | 'caissier' | 'cuisinier';
 
-export type UserRole='organisateur'|'accueil'|'caissier'|'cuisinier';
 @Entity('users')
 export class User {
   @PrimaryColumn('uuid')
@@ -16,9 +14,10 @@ export class User {
   @Column()
   name: string;
 
-  @Column({ type: 'varchar', nullable: true }) 
+  @Column({ type: 'varchar', nullable: true })
   photo: string;
- @Column({
+
+  @Column({
     type: 'enum',
     enum: ['organisateur', 'accueil', 'caissier', 'cuisinier'],
     default: 'organisateur',
@@ -28,13 +27,6 @@ export class User {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  
-  @ManyToMany(()=>Evenement,evenement=>evenement.user)
-  evenement:Evenement[];
- 
-  @OneToMany(() => Order, (order) => order.user)
-  orders: Order[];
-
+  @ManyToMany(() => Evenement, evenement => evenement.user)
+  evenement: Evenement[];
 }
-
-

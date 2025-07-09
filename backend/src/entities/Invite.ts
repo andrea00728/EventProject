@@ -1,10 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, TableUnique, Unique } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, Unique, OneToMany } from 'typeorm';
 import { TableEvent } from './Table';
 import { Evenement } from './Evenement';
+import { Order } from './order.entity';
 
 @Entity()
-@Unique(['table','place'])
-@Unique(['email','event'])
+@Unique(['table', 'place'])
+@Unique(['email', 'event'])
 export class Invite {
   @PrimaryGeneratedColumn()
   id: number;
@@ -21,7 +22,7 @@ export class Invite {
   @Column({ enum: ['M', 'F'] })
   sex: string;
 
-  @ManyToOne(() => Evenement, (event) => event.invites,{onDelete: 'CASCADE'})
+  @ManyToOne(() => Evenement, (event) => event.invites, { onDelete: 'CASCADE' })
   event: Evenement;
 
   @ManyToOne(() => TableEvent, (table) => table.guests, { nullable: true })
@@ -32,4 +33,7 @@ export class Invite {
 
   @Column({ nullable: true })
   qrCode: string;
+
+  // @OneToMany(() => Order, (order) => order.invite)
+  // orders: Order[];
 }

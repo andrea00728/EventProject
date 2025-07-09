@@ -1,5 +1,4 @@
-// order.dto.ts
-import { IsString, IsInt, IsArray, IsEnum, Min, ValidateNested, IsOptional } from 'class-validator';
+import { IsString, IsInt, IsArray, IsEnum, Min, ValidateNested, IsOptional, IsEmail } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateOrderItemDto {
@@ -16,8 +15,12 @@ export class CreateOrderDto {
   tableId: number;
 
   @IsString()
-  @IsOptional() // Optionnel si la commande peut être passée sans utilisateur
-  userId: string; // UUID est une string
+  @IsOptional()
+  nom: string;
+
+  @IsEmail()
+  @IsOptional()
+  email: string;
 
   @IsArray()
   @ValidateNested({ each: true })
