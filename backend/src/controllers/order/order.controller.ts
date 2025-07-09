@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Delete, Body, Param, UsePipes, ValidationPipe, UseGuards, Req, UnauthorizedException, Request } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Delete, Body, Param, UsePipes, ValidationPipe, UseGuards, Req, UnauthorizedException, Request, NotFoundException, ParseIntPipe } from '@nestjs/common';
 import { OrderService } from '../../services/order/order.service';
 import { CreateOrderDto, UpdateOrderStatusDto } from 'src/dto/order.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -93,6 +93,16 @@ export class OrderController {
   async findOrdersByTable(@Param('tableId') tableId: number): Promise<(Order & { total: number })[]> {
     return this.orderService.findOrdersByTable(tableId);
   }
+
+
+  @Get(':id')
+  async findOrderById(@Param('id', ParseIntPipe) id: number) {
+    const order = await this.orderService.findById(id);
+    if (!order) {
+      throw new NotFoundException(`Commande avec id ${id} non trouvée`);
+    }
+    return order;
+}
 
 
 }

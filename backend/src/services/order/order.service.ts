@@ -57,7 +57,7 @@ export class OrderService {
     }
 
     // Créer la commande
-    const order = this.orderRepository.create({ table, user, orderDate: new Date(), status: 'pending', paymentStatus: 'unpaid', });
+    const order = this.orderRepository.create({ table, user, orderDate: new Date(), status: 'pending', paymentStatus: 'unpaid', total: 0,});
     const savedOrder = await this.orderRepository.save(order);
 
     const orderItems = await Promise.all(
@@ -79,18 +79,29 @@ export class OrderService {
       }),
     );
 
+  const total = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+  savedOrder.total = total;
+
     savedOrder.items = await this.orderItemRepository.save(orderItems);
     return this.orderRepository.save(savedOrder);
   }
 
 
+
+
+
+
   async findOrdersByTable(tableId: number): Promise<(Order & { total: number })[]> {
     const orders = await this.orderRepository.find({ where: { table: { id: tableId } }, relations: ['items', 'items.menuItem', 'user'] });
     return orders.map((order) => {
-      const total = order.items.reduce((sum, item) => sum + item.subtotal, 0);
-      return { ...order, total };
+      return { ...order};
     });
   }
+
+
+
+
+
 
   async cancelOrder(orderId: number): Promise<void> {
     const order = await this.orderRepository.findOne({ where: { id: orderId }, relations: ['items', 'items.menuItem'] });
@@ -107,13 +118,23 @@ export class OrderService {
     await this.orderRepository.delete(orderId);
   }
 
-  async findAllOrders(): Promise<(Order & { total: number })[]> {
+
+
+
+
+
+  async findAllOrders(): Promise<(Order)[]> {
     const orders = await this.orderRepository.find({ relations: ['items', 'items.menuItem', 'user'] });
     return orders.map((order) => {
-      const total = order.items.reduce((sum, item) => sum + item.subtotal, 0);
-      return { ...order, total };
+      return { ...order};
     });
   }
+
+
+
+
+
+
 
   async updateOrder(
     orderId: number,
@@ -123,7 +144,7 @@ export class OrderService {
     // 1. Récupérer la commande avec les relations
     const order = await this.orderRepository.findOne({
       where: { id: orderId },
-      relations: ['items', 'items.menuItem'],
+      relations: ['items', 'items.menuItem', 'table'],
     });
     if (!order) throw new NotFoundException('Order not found');
   
@@ -158,12 +179,15 @@ export class OrderService {
   
         menuItem.stock -= item.quantity;
         await this.menuItemRepository.save(menuItem);
+
+
+        const subtotal = menuItem.price * item.quantity;
   
         return this.orderItemRepository.create({
           order,
           menuItem,
           quantity: item.quantity,
-          subtotal: menuItem.price * item.quantity,
+          subtotal,
         });
       })
     );
@@ -172,12 +196,23 @@ export class OrderService {
     order.items = await this.orderItemRepository.save(newOrderItems);
   
     // 7. Mettre à jour la table si nécessaire
-    const newTable = await this.tableEventRepository.findOne({ where: { id: tableId } });
-    if (!newTable) throw new NotFoundException('Table not found');
-    order.table = newTable;
+    if (order.table.id !== tableId) { // ✅ AJOUTÉ : évite requête inutile
+      const newTable = await this.tableEventRepository.findOne({ where: { id: tableId } });
+      if (!newTable) throw new NotFoundException('Table not found');
+      order.table = newTable;
+    }
+
+    const total = newOrderItems.reduce((sum, item) => sum + item.subtotal, 0);
+    order.total = total;
   
     return this.orderRepository.save(order);
   }
+
+
+
+
+
+
 
   async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served', userId: string): Promise<Order> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -274,6 +309,18 @@ export class OrderService {
     });
   }
 
+
+
+
+
+  // src/services/order/order.service.ts
+async findById(id: number) {
+  return await this.orderRepository.findOne({
+    where: { id },
+    relations: ['table', 'user', 'items', 'items.menuItem'], // ajuste selon tes relations
+  });
 }
 
-  
+
+}
+

@@ -16,6 +16,9 @@ export class Order {
   @ManyToOne(() => User, (user) => user.orders, { nullable: true })
   user: User;
 
+  @Column({ type: 'float', default: 0 })
+  total: number;
+
   @Column()
   orderDate: Date;
 

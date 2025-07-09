@@ -81,7 +81,7 @@ export class MenuService {
   
     // Supprimer le fichier image s’il existe
     if (item.photo) {
-      const filePath = join(__dirname, '..', '..', '..', item.photo); // adapte le chemin si nécessaire
+      const filePath = join(__dirname, '..', '..', '..', item.photo);
       try {
         await new Promise((resolve, reject) => {
           unlink(filePath, (err) => {
