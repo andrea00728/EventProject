@@ -202,6 +202,12 @@ export class OrderService {
     return this.orderRepository.save(order);
   }
 
+
+
+
+
+
+
   async validatePayment(orderId: number, userId: string): Promise<Order> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user || user.role !== 'caissier') {
@@ -216,7 +222,7 @@ export class OrderService {
       throw new BadRequestException('Order is already paid');
     }
 
-    const total = order.items.reduce((sum, item) => sum + item.subtotal, 0);
+    const total = order.total;
     const eventId = order.table.event.id;
 
     const payment = this.paymentRepository.create({
@@ -234,19 +240,39 @@ export class OrderService {
     order.paymentStatus = 'paid';
     const savedOrder = await this.orderRepository.save(order);
 
-    let balance = await this.balanceRepository.findOne({ where: { eventId } });
-    if (!balance) {
-      balance = this.balanceRepository.create({
-        total,
-        updatedAt: new Date(),
-        event: order.table.event,
-        eventId,
-      });
-    } else {
-      balance.total += total;
-      balance.updatedAt = new Date();
-    }
-    await this.balanceRepository.save(balance);
+
+    // Recalculer le solde à partir de toutes les commandes payées de cet événement
+  const paidOrders = await this.orderRepository.find({
+    where: {
+      paymentStatus: 'paid',
+      table: {
+        event: { id: eventId }
+      }
+    },
+    relations: ['table']
+  });
+
+  const updatedTotal = paidOrders.reduce((sum, ord) => sum + ord.total, 0);
+
+  // Mettre à jour ou créer le solde
+  let balance = await this.balanceRepository.findOne({ where: { eventId } });
+
+  if (!balance) {
+    balance = this.balanceRepository.create({
+      total: updatedTotal,
+      updatedAt: new Date(),
+      event: order.table.event,
+      eventId,
+    });
+  } else {
+    balance.total = updatedTotal;
+    balance.updatedAt = new Date();
+  }
+
+  await this.balanceRepository.save(balance);
+
+
+    
 
     const existingOrder = await this.orderRepository.findOne({
       where: { id: orderId },
@@ -258,6 +284,14 @@ export class OrderService {
     return existingOrder;
   }
 
+
+
+
+
+
+
+
+
   async getBalance(eventId: number, userId: string): Promise<number> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user || user.role !== 'caissier') {
@@ -266,6 +300,12 @@ export class OrderService {
     const balance = await this.balanceRepository.findOne({ where: { eventId } });
     return balance ? balance.total : 0;
   }
+
+
+
+
+
+
 
   async getPaymentsByEvent(eventId: number, userId: string): Promise<Payment[]> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
