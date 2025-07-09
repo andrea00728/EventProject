@@ -137,7 +137,7 @@ export default function LocationSalle() {
   };
 
   return (
-    <div className="p-8 bg-white my-2 rounded-2xl shadow-2xl border border-gray-200">
+    <div className="p-8 bg-white h-screen overflow-auto rounded-2xl shadow-2xl border border-gray-200">
       <h2 className="text-2xl font-semibold mb-6 text-gray-800 border-b border-gray-200 pb-4 flex items-center">
         <MdLocationCity className="mr-3" /> Paramètres - Gestion des Lieux et Salles
       </h2>

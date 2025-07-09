@@ -14,7 +14,7 @@ import {
 
 export default function Dashboard() {
   return (
-    <div className="p-8 bg-white my-2 rounded-2xl shadow-2xl border border-gray-200">
+    <div className="p-8 h-screen overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-200">
       <div>
         <h2 className="text-2xl font-semibold mb-6 text-gray-800 border-b border-gray-200 pb-4 flex items-center">
                 <MdDashboard className="mr-3" /> Tableau de bord
@@ -134,10 +134,10 @@ export default function Dashboard() {
         </div>
       </div>
       <div className="flex justify-center flex-wrap gap-5 items-start py-6">
-        <div>
+        <div className="p-4">
           <EventChart />
         </div>
-        <div>
+        <div className='p-4'>
           <MoneyChart />
         </div>
       </div>

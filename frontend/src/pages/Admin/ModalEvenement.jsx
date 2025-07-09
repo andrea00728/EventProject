@@ -18,6 +18,7 @@ import {
 import { formatDate } from "./Evenement";
 import PlanSalle from "../../components/planTable/PlanSalle";
 import { getTablesByEventId } from "../../services/tableService";
+import { handleDownloadXLSX } from "../../services/downloadXLSX";
 
 const ModalEvenement = ({ isOpen, onClose, data }) => {
   const [activeTab, setActiveTab] = useState("invites");
@@ -35,6 +36,8 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
         return <Personnels data={data} />;
       case "revenu":
         return <Revenus data={data} />;
+      case "commande":
+        return <Commandes data={data} />;
       default:
         return null;
     }
@@ -156,7 +159,7 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
         <div className="flex justify-center gap-4 my-6 flex-wrap">
           <button
             onClick={() => setActiveTab("invites")}
-            className={`px-4 py-2 rounded-full font-semibold cursor-pointer ${
+            className={`px-4 py-2 rounded-full font-semibold cursor-pointer hover:scale-y-105 hover:scale-x-105 ${
               activeTab === "invites"
                 ? "bg-[#cfc6c4] text-black"
                 : "bg-gray-200 text-gray-800"
@@ -166,7 +169,7 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
           </button>
           <button
             onClick={() => setActiveTab("tables")}
-            className={`px-4 py-2 rounded-full font-semibold cursor-pointer ${
+            className={`px-4 py-2 rounded-full font-semibold cursor-pointer hover:scale-y-105 hover:scale-x-105 ${
               activeTab === "tables"
                 ? "bg-[#cfc6c4] text-black"
                 : "bg-gray-200 text-gray-800"
@@ -176,7 +179,7 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
           </button>
           <button
             onClick={() => setActiveTab("personnels")}
-            className={`px-4 py-2 rounded-full font-semibold cursor-pointer ${
+            className={`px-4 py-2 rounded-full font-semibold cursor-pointer hover:scale-y-105 hover:scale-x-105 ${
               activeTab === "personnels"
                 ? "bg-[#cfc6c4] text-black"
                 : "bg-gray-200 text-gray-800"
@@ -185,14 +188,24 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
             Liste des personnels
           </button>
           <button
+            onClick={() => setActiveTab("commande")}
+            className={`px-4 py-2 rounded-full font-semibold cursor-pointer hover:scale-y-105 hover:scale-x-105 ${
+              activeTab === "commande"
+                ? "bg-[#cfc6c4] text-black"
+                : "bg-gray-200 text-gray-800"
+            }`}
+          >
+            Commande
+          </button>
+          <button
             onClick={() => setActiveTab("revenu")}
-            className={`px-4 py-2 rounded-full font-semibold cursor-pointer ${
+            className={`px-4 py-2 rounded-full font-semibold cursor-pointer hover:scale-y-105 hover:scale-x-105 ${
               activeTab === "revenu"
                 ? "bg-[#cfc6c4] text-black"
                 : "bg-gray-200 text-gray-800"
             }`}
           >
-            Revenu des entrées
+            Revenu 
           </button>
         </div>
 
@@ -206,10 +219,25 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
 export default ModalEvenement;
 
 function Invites({ data }) {
+  const handleExportExcel = () => {
+    const page = data.invites.map((p) => ({
+      Nom: p.nom,
+      Prenom: p.prenom,
+      Email: p.email,
+      Sexe: p.sex,
+      Place: p.place,
+      QrCode: "https://example.com/qrcode", // Placeholder for QR code URL
+    }));
+    handleDownloadXLSX(page, 'liste_invites');
+  };
+
   return (
     <>
       <div className="flex justify-end mb-4">
-        <button className="bg-[#cfc6c4] hover:bg-[#c2bab8] rounded-2xl px-6 py-2 text-[17px] text-black font-semibold cursor-pointer">
+        <button
+          onClick={handleExportExcel}
+          className="bg-[#cfc6c4] hover:bg-[#c2bab8] rounded-2xl px-6 py-2 text-[17px] text-black font-semibold cursor-pointer"
+        >
           Exporter en CSV <MdFileDownload className="inline ml-2" />
         </button>
       </div>
@@ -252,13 +280,11 @@ function Invites({ data }) {
 
 function TablePlace({ data }) {
   const [tables, setTables] = useState([]);
-    console.log("GestionPlan - selectedEventId:", data.id);
-    useEffect(() => {
-      if (!data.id) return;
-      getTablesByEventId(data.id).then(setTables).catch(console.error);
-    }, [data.id]);
-  
-    console.log("GestionPlan - selectedEventId:", tables);
+
+  useEffect(() => {
+    if (!data.id) return;
+    getTablesByEventId(data.id).then(setTables).catch(console.error);
+  }, [data.id]);
 
   return (
     <>
@@ -272,7 +298,11 @@ function TablePlace({ data }) {
           Emplacement des tables
         </h3>
         <div className="overflow-y-auto flex justify-center py-10">
-          <PlanSalle event={{ id: data.id }} tables={tables} setTables={setTables} />
+          <PlanSalle
+            event={{ id: data.id }}
+            tables={tables}
+            setTables={setTables}
+          />
         </div>
       </div>
     </>
@@ -335,6 +365,51 @@ function Revenus({ data }) {
       <div className="p-4">
         <h3 className="text-2xl ml-5 my-3 font-semibold text-gray-800">
           Les revenus des entrées
+        </h3>
+        <div className="overflow-y-auto flex justify-center">
+          <table>
+            <thead>
+              <tr>
+                <th className="p-3 text-start">Nom</th>
+                <th className="p-3 text-start">Prénom</th>
+                <th className="p-3 text-start">Email</th>
+                <th className="p-3 text-start">Sexe</th>
+                <th className="p-3 text-start">Place</th>
+                <th className="p-3 text-start">Qr Code</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.invites.map((value, key) => (
+                <tr key={key}>
+                  <td className="p-3 text-start">{value.nom}</td>
+                  <td className="p-3 text-start">{value.prenom}</td>
+                  <td className="p-3 text-start">{value.email}</td>
+                  <td className="p-3 text-start">{value.sex}</td>
+                  <td className="p-3 text-start">{value.place}</td>
+                  <td className="p-3 text-start text-4xl">
+                    <MdQrCode />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Commandes({ data }) {
+  return (
+    <>
+      <div className="flex justify-end mb-4">
+        <button className="bg-[#cfc6c4] hover:bg-[#c2bab8] rounded-2xl px-6 py-2 text-[17px] text-black font-semibold cursor-pointer">
+          Exporter en CSV <MdFileDownload className="inline ml-2" />
+        </button>
+      </div>
+      <div className="p-4">
+        <h3 className="text-2xl ml-5 my-3 font-semibold text-gray-800">
+          Liste des commandes
         </h3>
         <div className="overflow-y-auto flex justify-center">
           <table>

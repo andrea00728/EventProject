@@ -7,6 +7,7 @@ import { getAllManagerEvents } from "../../services/evenementServ";
 import ModalManager from "./ModalManager";
 import DeleteModal from "./DeleteModal";
 import { FaUsers } from "react-icons/fa6";
+import { handleDownloadXLSX } from "../../services/downloadXLSX";
 
 export default function Organisateur() {
   const [data, setData] = useState([]);
@@ -84,15 +85,29 @@ export default function Organisateur() {
     }
   };
 
+  const handleDownload = () => {
+
+    console.log(data)
+
+    const page = data.map((p) => ({
+      Nom: p.name,
+      Email: p.email,
+      Date_creation: formatDate(p.createdAt),
+    }));
+
+    handleDownloadXLSX(page, 'liste_organisateurs');
+
+  }
+
   return (
-    <div className="p-8 my-2 bg-white rounded-2xl shadow-2xl border border-gray-200">
+    <div className="py-10 px-8 h-screen bg-white rounded-2xl shadow-2xl border border-gray-200">
       <div>
         <h2 className="text-2xl font-semibold mb-6 text-gray-800 border-b border-gray-200 pb-4 flex items-center">
             <FaUsers className="mr-3" /> Liste des organisateurs
         </h2>
       </div>
       <div className="flex justify-end">
-        <button className="bg-[#cfc6c4] hover:bg-[#c2bab8] rounded-2xl px-6 py-2 text-[17px] text-black transition duration-200 font-semibold cursor-pointer">
+        <button onClick={handleDownload} className="bg-[#cfc6c4] hover:bg-[#c2bab8] rounded-2xl px-6 py-2 text-[17px] text-black transition duration-200 font-semibold cursor-pointer">
           Exporter en CSV <MdFileDownload className="inline ml-2" />
         </button>
       </div>

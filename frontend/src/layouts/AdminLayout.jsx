@@ -11,7 +11,7 @@ import {
   MdSearch,
   MdRoom,
 } from "react-icons/md";
-import { motion } from "framer-motion";
+import { delay, motion } from "framer-motion";
 
 export default function AdminLayout() {
   const choixItems = [
@@ -26,13 +26,15 @@ export default function AdminLayout() {
       // Compact state: only icons
       transition: {
         type: "spring", // Use spring physics for a more natural feel
-        duration: 0.5,
+        duration: 3,
+        bounce:0.4
       },
     },
     open: {
       transition: {
         type: "spring",
-        duration: 0.5,
+        duration: 3,
+        bounce:0.4,
       },
     },
   };
@@ -40,26 +42,33 @@ export default function AdminLayout() {
   const [isHover, setIsHover] = useState(false);
   return (
     <>
-      <div className="flex">
-        <div className="top-0 fixed h-full py-1">
+      <div className="flex justify-center">
+        <div className="pt-1">
           <motion.header
-            className=" text-black transition-all ease-in duration-initial h-full bg-[#cfc6c4]  rounded-4xl items-start ml-2 p-4"
+            className=" text-black h-[99vh] bg-[#cfc6c4]  rounded-4xl items-start ml-2 p-4"
             onMouseLeave={() => {
               setIsHover(false);
             }}
             onMouseEnter={() => {
               setIsHover(true);
             }}
-            animate={isHover ? "open" : "closed"}
+            initial={isHover && "closed"}
+            animate={isHover && "open"}
             variants={navVariants}
+            exit={!isHover && "closed"}
           >
             <motion.h1
+              initial={isHover && {
+                  opacity: 0,
+                  transition: { duration: 3,x:-100, type: "spring" },
+                }}
               animate={
                 isHover && {
                   opacity: 1,
-                  transition: { duration: 0.5, ease: "easeIn", type: "spring" },
+                  transition: { duration: 3,x:0, type: "spring" },
                 }
               }
+
               className="text-2xl text-center transition-all duration-500"
               style={{ fontFamily: "cursive", fontStyle: "italic" }}
             >
@@ -102,8 +111,8 @@ export default function AdminLayout() {
             </nav>
           </motion.header>
         </div>
-        <div className={`px-2 ${isHover ? "ml-[42vh]" : "ml-[15vh]"} flex-4/5`}>
-          <Outlet />
+        <div className={`px-2 flex-4/5 h-full`}>
+          <Outlet/>
         </div>
       </div>
     </>

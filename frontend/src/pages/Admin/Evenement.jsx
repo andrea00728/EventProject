@@ -2,17 +2,18 @@ import { useEffect, useState } from "react";
 import ModalEvenement from "./ModalEvenement";
 import { getAllEvents } from "../../services/evenementServ";
 import { FaEye } from "react-icons/fa";
-import { MdCalendarToday } from "react-icons/md";
+import { MdCalendarToday, MdFileDownload } from "react-icons/md";
+import { handleDownloadXLSX } from "../../services/downloadXLSX";
 
 // Helper function to format date
 export const formatDate = (dateString) => {
-  if (!dateString) return ''; // Handle cases where date might be missing
+  if (!dateString) return ""; // Handle cases where date might be missing
   const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // Month is 0-indexed
   const year = date.getFullYear();
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
 
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 };
@@ -33,7 +34,10 @@ export default function EvenementAd() {
         setData(data);
         console.log(data);
       } catch (error) {
-        console.error("Erreur lors de la récupération des événements : ", error);
+        console.error(
+          "Erreur lors de la récupération des événements : ",
+          error
+        );
         setError("Impossible de charger les événements.");
       } finally {
         setLoading(false);
@@ -52,23 +56,51 @@ export default function EvenementAd() {
     setIsModalOpen(false);
   };
 
+  const handleExportExcel = () => {
+    console.log(data);
+
+    const page = data.map((value) => ({
+      Nom: value.nom,
+      Type: value.type,
+      Theme:value.theme,
+      Date_debut: value.date,
+      Date_fin:value.date_fin,
+      Localisation: value.location,
+      Organisateur:value.user.name    
+    }));
+
+    handleDownloadXLSX(page, "liste_evenements");
+  };
+
   return (
-    <div  className="p-8 bg-white my-2 rounded-2xl shadow-2xl border border-gray-200">
+    <div className="p-8 h-screen bg-white rounded-2xl shadow-2xl border border-gray-200">
       <div>
         <h2 className="text-2xl font-semibold mb-6 text-gray-800 border-b border-gray-200 pb-4 flex items-center">
-            <MdCalendarToday className="mr-3" /> Liste des événements
+          <MdCalendarToday className="mr-3" /> Liste des événements
         </h2>
+      </div>
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={handleExportExcel}
+          className="bg-[#cfc6c4] hover:bg-[#c2bab8] rounded-2xl px-6 py-2 text-[17px] text-black font-semibold cursor-pointer"
+        >
+          Exporter en CSV <MdFileDownload className="inline ml-2" />
+        </button>
       </div>
       <div className="flex justify-center items-center pt-5">
         <div className="bg-white shadow-2xl rounded-2xl p-4 overflow-y-auto">
           {loading && (
-            <p className="text-center text-lg py-5">Chargement des événements...</p>
+            <p className="text-center text-lg py-5">
+              Chargement des événements...
+            </p>
           )}
           {error && (
             <p className="text-center text-lg py-5 text-red-600">{error}</p>
           )}
           {!loading && !error && data.length === 0 && (
-            <p className="text-center text-lg py-5">Aucun événement disponible.</p>
+            <p className="text-center text-lg py-5">
+              Aucun événement disponible.
+            </p>
           )}
           {!loading && !error && data.length > 0 && (
             <table>
@@ -90,8 +122,14 @@ export default function EvenementAd() {
                     <td className="p-3 text-start ">{value.nom}</td>
                     <td className="p-3 text-start ">{value.type}</td>
                     <td className="p-3 text-start ">{value.theme}</td>
-                    <td className="p-3 text-start ">{formatDate(value.date)}</td> {/* Applied formatting here */}
-                    <td className="p-3 text-start ">{formatDate(value.date_fin)}</td> {/* Applied formatting here */}
+                    <td className="p-3 text-start ">
+                      {formatDate(value.date)}
+                    </td>{" "}
+                    {/* Applied formatting here */}
+                    <td className="p-3 text-start ">
+                      {formatDate(value.date_fin)}
+                    </td>{" "}
+                    {/* Applied formatting here */}
                     <td className="p-3 text-start ">{value.location.nom}</td>
                     <td className="p-3 text-start ">{value.user.name}</td>
                     <td>
@@ -99,7 +137,7 @@ export default function EvenementAd() {
                         className="py-2 px-4  text-black font-semibold rounded-2xl border-none text-start  bg-[#cfc6c4] cursor-pointer hover:bg-[#c2bab8] transition duration-200"
                         onClick={() => openModal(key)}
                       >
-                        Détail <FaEye className="ml-1 mb-1 inline"/>
+                        Détail <FaEye className="ml-1 mb-1 inline" />
                       </button>
                     </td>
                   </tr>
