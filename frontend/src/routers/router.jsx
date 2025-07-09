@@ -40,6 +40,7 @@ import EvenementAd from "../pages/admin/Evenement.jsx";
 import Organisateur from "../pages/admin/Organisateur.jsx";
 import Parametre from "../pages/admin/Parametre.jsx";
 import LocationSalle from "../pages/admin/LocationSalle.jsx";
+import PageCuisine from "../pages/Admin/PageCuisine.jsx";
 
 const router=createBrowserRouter([
    
@@ -228,6 +229,12 @@ const router=createBrowserRouter([
             {
                 path:"/LocationSalle",
                 element:<LocationSalle/>
+            }
+            ,
+
+            {
+                path:"/Cuisine",
+                element:<PageCuisine/>
             }
         ]
     },

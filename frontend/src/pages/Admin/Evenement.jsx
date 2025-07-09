@@ -65,7 +65,7 @@ export default function EvenementAd() {
       Theme:value.theme,
       Date_debut: value.date,
       Date_fin:value.date_fin,
-      Localisation: value.location,
+      Localisation: value.location.nom,
       Organisateur:value.user.name    
     }));
 
