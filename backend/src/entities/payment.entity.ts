@@ -1,4 +1,4 @@
-// entities/payment.entity.ts
+// src/entities/payment.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { Order } from './order.entity';
 import { User } from 'src/Authentication/entities/auth.entity';
@@ -9,11 +9,14 @@ export class Payment {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @ManyToOne(() => Order, (order) => order.payments)
+  order: Order;
+
   @Column()
   orderId: number;
 
   @ManyToOne(() => User)
-  user: User; // Caissier qui a validé le paiement
+  user: User;
 
   @Column()
   userId: string;
@@ -29,11 +32,6 @@ export class Payment {
 
   @Column()
   paymentDate: Date;
-
-
-  @ManyToOne(() => Order, (order) => order.payments)
-  order: Order;
-
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
