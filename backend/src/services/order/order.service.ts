@@ -38,17 +38,17 @@ export class OrderService {
     const table = await this.tableEventRepository.findOne({ where: { id: tableId }, relations: ['event'] });
     if (!table) throw new NotFoundException('Table not found');
 
-    let invite: Invite | undefined;
-    if (nom && email) {
-      const eventId = table.event.id;
-      const foundInvite = await this.inviteRepository.findOne({ where: { email, event: { id: eventId } } });
-      if (foundInvite) {
-        invite = foundInvite;
-      } else {
-        invite = this.inviteRepository.create({ nom, email, event: table.event, sex: 'M' }); // Default sex to 'M' if not provided
-        await this.inviteRepository.save(invite);
-      }
-    }
+    // let invite: Invite | undefined;
+    // if (nom && email) {
+    //   const eventId = table.event.id;
+    //   const foundInvite = await this.inviteRepository.findOne({ where: { email, event: { id: eventId } } });
+    //   if (foundInvite) {
+    //     invite = foundInvite;
+    //   } else {
+    //     invite = this.inviteRepository.create({ nom, email, event: table.event, sex: 'M' }); // Default sex to 'M' if not provided
+    //     await this.inviteRepository.save(invite);
+    //   }
+    // }
 
     for (const item of items) {
       const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
@@ -61,6 +61,8 @@ export class OrderService {
     const order = this.orderRepository.create({
       table,
       // invite,
+      nom: nom,
+      email: email,
       orderDate: new Date(),
       status: 'pending',
       paymentStatus: 'unpaid',

@@ -1,7 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
 import { TableEvent } from './Table';
 import { OrderItem } from './order-item.entity';
-import { Invite } from './Invite';
 import { Payment } from './payment.entity';
 
 @Entity()
@@ -11,6 +10,12 @@ export class Order {
 
   @ManyToOne(() => TableEvent, (table) => table.orders)
   table: TableEvent;
+
+  @Column()
+  nom: string;
+
+  @Column()
+  email: string;
 
   // @ManyToOne(() => Invite, (invite) => invite.orders, { nullable: true })
   // invite: Invite;
