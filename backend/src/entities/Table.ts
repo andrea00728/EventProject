@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColum
 import { Invite } from './Invite';
 import { Evenement } from './Evenement';
 import { Place } from './Place';
+import { Order } from './order.entity';
 
 @Unique(['numero','event'])
 @Entity()
@@ -17,6 +18,10 @@ export class TableEvent {
 
   @Column({ default: 0 })
   placeReserve: number;
+
+  @OneToMany(() => Order, (order) => order.table)
+  orders: Order[];
+
 
   @Column({ type: 'enum', enum: ['ronde', 'carree', 'rectangle', 'ovale'], default: 'ronde' })
   type: 'ronde' | 'carree' | 'rectangle' | 'ovale';

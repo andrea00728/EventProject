@@ -11,7 +11,7 @@ import {
   MdSearch,
   MdRoom,
 } from "react-icons/md";
-import { delay, motion } from "framer-motion";
+import { delay, motion, AnimatePresence } from "framer-motion";
 
 export default function AdminLayout() {
   const choixItems = [
@@ -29,8 +29,10 @@ export default function AdminLayout() {
         duration: 3,
         bounce:0.4
       },
+      scale: 0.8,  
     },
     open: {
+      scale: 1,
       transition: {
         type: "spring",
         duration: 3,
@@ -42,8 +44,8 @@ export default function AdminLayout() {
   const [isHover, setIsHover] = useState(false);
   return (
     <>
-      <div className="flex justify-center">
-        <div className="pt-1">
+      <div className="flex justify-center items-center">
+        <AnimatePresence>
           <motion.header
             className=" text-black h-[99vh] bg-[#cfc6c4]  rounded-4xl items-start ml-2 p-4"
             onMouseLeave={() => {
@@ -110,7 +112,7 @@ export default function AdminLayout() {
               </ul>
             </nav>
           </motion.header>
-        </div>
+        </AnimatePresence>
         <div className={`px-2 flex-4/5 h-full`}>
           <Outlet/>
         </div>

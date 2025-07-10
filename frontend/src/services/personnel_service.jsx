@@ -18,6 +18,17 @@ export const getPersonnelByEventId = async (eventId, token) => {
 }
 
 
+/******* Affichage dans la page react de la liste des personnels lors d' un événement, pour la page Admin 
+ *********************** (Sans restriction ) ** */
+
+export const getPersonnelListByEventId = async (eventId) => {
+  const response = await axiosClient.get(`/personnel/byEvent/${eventId}`);
+  return response.data;
+}
+
+/****************************************************************** */
+
+
 export const CountPersonnelByEvent = async (eventId, token) => {
   const response = await axiosClient.get(`/personnel/count/${eventId}`, {
     headers: {
