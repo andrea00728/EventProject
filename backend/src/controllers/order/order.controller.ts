@@ -9,25 +9,16 @@ import { Payment } from 'src/entities/payment.entity';
 export class OrderController {
   constructor(private orderService: OrderService) {}
 
-
   @Post()
-  @UseGuards(AuthGuard('jwt'))
   @UsePipes(new ValidationPipe())
-  async create(@Body() dto: CreateOrderDto, @Req() req: any): Promise<Order> {
-    const userIdFromToken = req.user?.sub;
-    if (!userIdFromToken) {
-      throw new UnauthorizedException('Utilisateur non authentifié');
-    }
-    return this.orderService.createOrder(dto.tableId, dto.items, userIdFromToken);
+  async create(@Body() dto: CreateOrderDto): Promise<Order> {
+    return this.orderService.createOrder(dto.tableId, dto.items, dto.nom, dto.email);
   }
 
   @Get()
   findAllOrders() {
     return this.orderService.findAllOrders();
   }
-
-
-
 
   @Delete(':id')
   cancelOrder(@Param('id') id: number) {
@@ -36,14 +27,11 @@ export class OrderController {
 
   @Patch(':id')
   @UsePipes(new ValidationPipe())
-  pdateOrder(
-  @Param('id') id: number,
-  @Body() body: CreateOrderDto // même DTO que pour créer
-) {
-  return this.orderService.updateOrder(id, body.tableId, body.items);
-}
+  updateOrder(@Param('id') id: number, @Body() body: CreateOrderDto) {
+    return this.orderService.updateOrder(id, body.tableId, body.items);
+  }
 
-@Patch(':id/status')
+  @Patch(':id/status')
   @UseGuards(AuthGuard('jwt'))
   @UsePipes(new ValidationPipe())
   async updateOrderStatus(
@@ -89,11 +77,9 @@ export class OrderController {
   }
 
   @Get('table/:tableId')
-  @UseGuards(AuthGuard('jwt'))
   async findOrdersByTable(@Param('tableId') tableId: number): Promise<(Order & { total: number })[]> {
     return this.orderService.findOrdersByTable(tableId);
   }
-
 
   @Get(':id')
   async findOrderById(@Param('id', ParseIntPipe) id: number) {
@@ -102,7 +88,5 @@ export class OrderController {
       throw new NotFoundException(`Commande avec id ${id} non trouvée`);
     }
     return order;
-}
-
-
+  }
 }
