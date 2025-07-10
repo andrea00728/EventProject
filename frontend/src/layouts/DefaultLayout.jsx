@@ -3,12 +3,12 @@ import { useStateContext } from "../context/ContextProvider";
 import { Link, Navigate, Outlet } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Profil from "../util/profils";
-
+import ForfaitPage from "../pages/forfaitpage/forfaitpage";
 export default function DefaultLayout() {
   const { token,role,isLoading } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEvenementHovered, setIsEvenementHovered] = useState(false);
-
+  const [showForfaitModal, setShowForfaitModal] = useState(false);
   if(isLoading) return <div>Chargement ...</div>
   if (!token) {
     return <Navigate to="/pagepublic"  replace/>;
@@ -121,12 +121,24 @@ export default function DefaultLayout() {
             ))}
           </nav>
           <div className="flex items-center gap-4">
-            <button
-              className="hidden md:block px-5 py-2 bg-indigo-600 cursor-pointer text-white rounded-lg font-bold shadow hover:bg-indigo-700 transition-all duration-200 focus:ring-2 focus:ring-indigo-300 focus:outline-none"
-              aria-label="Tutoriel"
-            >
-              Tutoriel
-            </button>
+                <button
+                onClick={() => setShowForfaitModal(true)}
+                className="inline-flex items-center gap-2 cursor-pointer bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold px-6 py-3 rounded-xl shadow-md hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg transition-all duration-300"
+                >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                forfaits
+              </button>
+             <div className="min-h-screen bg-gray-100">
+              <ForfaitPage open={showForfaitModal} onClose={() => setShowForfaitModal(false)} />
+              </div>
             <Profil />
             <button
               className="md:hidden p-2 text-indigo-700 hover:text-indigo-900 transition-colors duration-200"
