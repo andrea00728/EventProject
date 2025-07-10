@@ -34,6 +34,7 @@ import OrganisationPersonnelLayout from "../layouts/OrganisationPersonnelLayout.
 import CreationPersonnel from "../pages/oranisation_personnel/creation_personnel.jsx";
 import DashboardPersonnel from "../pages/oranisation_personnel/Dashboard_personnel.jsx";
 import Optionpersonnel from "../pages/oranisation_personnel/confirmationRefus.jsx";
+import SystemPromptManager from "../pages/SystemPromptManager.jsx";
 const router=createBrowserRouter([
    
   {
@@ -238,6 +239,11 @@ const router=createBrowserRouter([
     {
         path:"*",
         element:<Notfound/>
+    }
+    ,
+    {
+        path:"/systemprompt",
+        element:<SystemPromptManager />
     }
     
 ]);

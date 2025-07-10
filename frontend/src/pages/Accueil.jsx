@@ -18,7 +18,7 @@ export default function Accueil() {
             <p className="mt-8 text-[#6D6767] text-xl leading-relaxed font-medium">
               Profitez pleinement de toutes les fonctionnalités de notre plateforme et organisez vos événements facilement, de manière professionnelle et sans stress !
             </p>
-            <button className="mt-10 bg-gradient-to-r from-[#6B46C1] to-[#8B5CF6] text-white px-8 py-4 rounded-full hover:from-[#553C9A] hover:to-[#6B46C1] transition-all duration-200 shadow-lg text-lg font-semibold tracking-wide">
+            <button className="mt-10 bg-gradient-to-r from-[#6B46C1] to-[#8B5CF6] text-white px-8 py-4 rounded-full hover:from-[#553C9A] hover:to-[#6B46C1] transition-all duration-200 shadow-lg text-lg font-semibold tracking-wide cursor-pointer">
               Découvrir maintenant
             </button>
           </div>

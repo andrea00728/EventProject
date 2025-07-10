@@ -20,8 +20,8 @@ export default function Connexionorganisateur() {
                     </button>
 
                     <button className="cursor-pointer mt-4 w-full bg-gray-50 py-3 rounded-md border border-gray-100 flex items-center justify-center space-x-2 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                        <img src="https://api.iconify.design/logos:google-icon.svg" alt="Google logo" className="h-6" />
-                        <span className="text-sm font-semibold text-gray-700">Se connecter avec Google</span>
+                        <img src="https://api.iconify.design/logos:google-icon.svg" alt="Google logo" className="h-6 cursor-pointer" />
+                        <span className="text-sm font-semibold text-gray-700 cursor-pointer">Se connecter avec Google</span>
                     </button>
                 </div>
             </div>

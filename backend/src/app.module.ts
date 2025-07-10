@@ -34,6 +34,8 @@ import { SharedModule } from './modules/shared/shared.module';
 import { Balance } from './entities/balance.entity';
 import { Payment } from './entities/payment.entity';
 import { GeminiModule } from './modules/gemini/gemini.module';
+import { SystemPrompt } from './entities/system-prompt.entity';
+import { SystemPromptModule } from './modules/system-prompt/system-prompt.module';
 
 @Module({
   imports: [
@@ -61,7 +63,7 @@ import { GeminiModule } from './modules/gemini/gemini.module';
           username: dbUsername,
           password: dbPassword,
           database: dbDatabase,
-          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance],
+          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, SystemPrompt],
      
           synchronize: true,
         };
@@ -82,6 +84,8 @@ import { GeminiModule } from './modules/gemini/gemini.module';
     OrderModule,
     SharedModule,
     GeminiModule,
+    SystemPrompt,
+    SystemPromptModule,
    
   ],
   controllers: [ProfileController,],
