@@ -1,0 +1,252 @@
+import React from "react";
+import { createBrowserRouter, Navigate, Router } from "react-router-dom";
+import DefaultLayout from "../layouts/DefaultLayout";
+import GuestLayout from "../layouts/GuestLayout";
+import Accueil from "../pages/Accueil";
+import Evenement from "../pages/Evenement";
+import Notfound from "../pages/Notofoundpage";
+import AdminLayout from "../layouts/AdminLayout";
+import Pagepublic from "../pages/Pagepublic";
+import Connexionorganisateur from "../pages/Connexionorganisateur";
+import Inscription from "../pages/Inscription";
+import Connnexiongoogle from "../services/connexiongoogl";
+import Evenemenpage from "../pages/Evenementpage";
+import Apropos from "../pages/apropos";
+
+// import Table3DScene from "../components/table3D";
+import ChoixModeInvite from "../layouts/ChoixModeInvite";
+import Inviteform from "../pages/choixModInvite/inviteForm";
+import ImportGuestsCSV from "../pages/choixModInvite/importation";
+import AffichageInvite from "../pages/choixModInvite/affichageInvite";
+import InviteformWithId from "../pages/choixModInvite/InviteFormparId";
+import TableLayout from "../layouts/TableLayout.jsx";
+import EventLayout from "../layouts/eventLayout.jsx";
+import Tablecreation from "../pages/TableOrganisation/Tablecreation";
+import Listetable from "../pages/TableOrganisation/ListeTable";
+import Affichage3dTable from "../pages/TableOrganisation/Affichage3dTable";
+import EventPending from "../pages/dashboardEvenement/Eventpadding.jsx";
+import EventAccept from "../pages/dashboardEvenement/EventAccepted.jsx";
+import PaypalSuccess from "../pages/choixModInvite/PaypalSucces.jsx";
+import PersonnelAccueil from "../layouts/personnel/PersonnelAccueil.jsx";
+import DashboardpersAccueil from "../pages/PersonnelAccueil/Dashboard.jsx";
+import PersonnelCaisse from "../layouts/personnel/Personnelcaissie.jsx";
+import DashboardpersCaisse from "../pages/PersonnelCaisse/Dashboard.jsx";
+import PersonnelCuisine from "../layouts/personnel/Personnalcuisine.jsx";
+import DashboardpersCuisine from "../pages/PersonnelCuisine/Dashboard.jsx";
+import ProtectedRoute from "./ProtectedRouter.jsx";
+import Test from "../layouts/test.jsx";
+
+const router=createBrowserRouter([  
+
+
+//    {
+//         path:"/",
+//         element:<Test/>,
+//         children:[
+           
+//             {
+//                 path:"/",
+//                 element:<Navigate to="/accueil"/>
+//             },
+//             {
+//                 path:"/accueil",
+//                 element:<Accueil/>
+//             },
+//             // {
+//             //     path:"/evenement",
+//             //     element:<Evenement/>
+//             // },
+//             // {
+//             //     path:"/apropos",
+//             //     element:<Apropos/>
+//             // }
+//         ]
+//     },
+   
+  {
+  path: "/",
+  element: (
+    <ProtectedRoute allowedRoles={["organisateur", "caissier", "cuisinier"]}>
+      <DefaultLayout />
+    </ProtectedRoute>
+  ),
+  children: [
+    {
+      path: "/",
+      element: <Navigate to="/accueil" />
+    },
+    {
+      path: "/accueil",
+      element: <Accueil />
+    },
+    {
+      path: "/evenement",
+      element: <Evenemenpage />
+    },
+    {
+      path: "/apropos",
+      element: <Apropos />
+    },
+    {
+      path: "/evenement/invites",
+      element: <ChoixModeInvite />,
+      children: [
+        {
+          path: "creationInv",
+          element: <InviteformWithId />
+        },
+        {
+          path: "importerInv",
+          element: <ImportGuestsCSV />
+        },
+        {
+          path: "affichageInv",
+          element: <AffichageInvite />
+        }
+      ]
+    },
+    {
+      path: "/evenement/tables",
+      element: <TableLayout />,
+      children: [
+        {
+          path: "creationTable",
+          element: <Tablecreation />
+        },
+        {
+          path: "affichageTable",
+          element: <Listetable />
+        },
+        {
+          path: "3Dtable",
+          element: <Affichage3dTable />
+        }
+      ]
+    },
+    {
+      path: "/evenement/evenement",
+      element: <EventLayout />,
+      children: [
+        {
+          path: "eventpadding",
+          element: <EventPending />
+        },
+        {
+          path: "eventAccept",
+          element: <EventAccept />
+        }
+      ]
+    },
+    {
+      path: "/paypal-success",
+      element: <PaypalSuccess />
+    }
+  ]
+},
+
+
+//     /**
+//      * rout personnel accueil
+//      */
+   {
+  path: "/",
+  element: <PersonnelAccueil />,
+  children: [
+    {
+      path: "/",
+      element: <Navigate to="/personnelAccueil" />
+    },
+    {
+      path: "/personnelAccueil",
+      element: (
+        <ProtectedRoute allowedRoles={["accueil", "caissier", "cuisinier"]}>
+          <DashboardpersAccueil />
+        </ProtectedRoute>
+      )
+    }
+  ]
+},
+   {
+  path: "/",
+  element: <PersonnelCaisse />,
+  children: [
+    {
+      path: "/",
+      element: <Navigate to="/personnelCaisse" />
+    },
+    {
+      path: "/personnelCaisse",
+      element: (
+        <ProtectedRoute allowedRoles={["caissier", "organisateur", "accueil"]}>
+          <DashboardpersCaisse />
+        </ProtectedRoute>
+      )
+    }
+  ]
+},
+  {
+  path: "/",
+  element: <PersonnelCuisine />,
+  children: [
+    {
+      path: "/",
+      element: <Navigate to="/personnelCuisine" />
+    },
+    {
+      path: "/personnelCuisine",
+      element: (
+        <ProtectedRoute allowedRoles={["cuisinier", "organisateur", "accueil"]}>
+          <DashboardpersCuisine />
+        </ProtectedRoute>
+      )
+    }
+  ]
+},
+  
+     {
+        path:"/",
+        element:<AdminLayout/>,
+        children:[
+            // {
+            //     path:"/",
+            //     element:<Navigate to="/AdminAccueil"/>
+            // },{
+            //     path:"/AdminAccueil",
+            //     element:<Adminaccueil/>
+            // },
+        ]
+    },
+    {
+        path:"/",
+        element:<GuestLayout/>,
+        children:[
+            {
+                path:"/",
+                element:<Navigate to="/pagepublic"/>
+            },
+            {
+                path:"/pagepublic",
+                element:<Pagepublic/>
+            },
+            {
+                path:"/connexion",
+                element:<Connexionorganisateur/>
+            },
+            {
+                path:"/callback",
+                element:<Connnexiongoogle/>
+            },
+            {
+                path:"/inscription",
+                element:<Inscription/>
+            }
+        ]
+    },
+    {
+        path:"*",
+        element:<Notfound/>
+    }
+    
+]);
+
+export default router;
