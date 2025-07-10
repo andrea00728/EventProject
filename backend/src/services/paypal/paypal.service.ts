@@ -55,9 +55,28 @@ export class PaypalService {
 
     const approvalUrl = response.data.links.find((l: any) => l.rel === 'approve')?.href;
     if (!approvalUrl) {
-      throw new Error('❌ URL d’approbation introuvable dans la réponse PayPal.');
+      throw new Error(' URL d’approbation introuvable dans la réponse PayPal.');
     }
 
     return approvalUrl;
   }
+
+
+
+  async getSubscriptionDetails(subscriptionId: string): Promise<any> {
+  const token = await this.getAccessToken();
+
+  const response = await axios.get(
+    `${this.apiUrl}/v1/billing/subscriptions/${subscriptionId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    },
+  );
+
+  return response.data; // Contient `plan_id`, `subscriber`, etc.
+}
+
 }

@@ -137,38 +137,44 @@ export class ForfaitController {
       res.status(500).send('error');
     }
   }
-  @Get('success')
-  @UseGuards(AuthGuard('jwt'))
-  async handleSuccess(
-    @Query('subscription_id') subscriptionId: string,
-    @Req() req: any,
-  ) {
-    const userId = req.user?.sub;
-    console.log('✅ Paiement validé - Subscription ID :', subscriptionId);
-
-    if (!userId) {
-      throw new UnauthorizedException('Utilisateur non authentifié');
-    }
-    const forfait = await this.forfaitRepository.findOne({
-      where: { nom: 'starter' },
-    });
-
-    if (!forfait) {
-      throw new BadRequestException('Forfait introuvable');
-    }
-
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new BadRequestException('Utilisateur introuvable');
-    }
-
-    user.forfait = forfait;
-    await this.userRepository.save(user);
-
-    return {
-      message: '🎉 Paiement accepté, votre forfait a été mis à jour !',
-    };
+ @Get('success')
+@UseGuards(AuthGuard('jwt'))
+async handleSuccess(
+  @Query('subscription_id') subscriptionId: string,
+  @Req() req: any,
+) {
+  const userId = req.user?.sub;
+  if (!userId) {
+    throw new UnauthorizedException('Utilisateur non authentifié');
   }
+
+  if (!subscriptionId) {
+    throw new BadRequestException('Subscription ID manquant');
+  }
+  const subscription = await this.paypalService.getSubscriptionDetails(subscriptionId);
+  const planId = subscription.plan_id;
+
+  if (!planId) {
+    throw new BadRequestException('Impossible de récupérer plan_id depuis PayPal');
+  }
+  const forfait = await this.forfaitRepository.findOne({
+    where: { paypalplanid: planId },
+  });
+  if (!forfait) {
+    throw new BadRequestException(`Aucun forfait trouvé pour planId : ${planId}`);
+  }
+  const user = await this.userRepository.findOne({ where: { id: userId } });
+  if (!user) {
+    throw new BadRequestException('Utilisateur introuvable');
+  }
+  user.forfait = forfait;
+  user.datedowngraded = null;
+  await this.userRepository.save(user);
+  return {
+    message: `🎉 Paiement accepté, votre forfait ${forfait.nom} a été activé !`,
+  };
+}
+
   @Get('cancel')
   async handleCancel() {
     return {

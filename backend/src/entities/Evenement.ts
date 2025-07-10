@@ -47,7 +47,7 @@ export class Evenement {
     // @JoinColumn({name:'utilisateur_id'})
     // user:User
 
-    @ManyToOne(() => User, (user) => user.evenement, { nullable: false })
+    @ManyToOne(() => User, (user) => user.evenement, { nullable: false ,onDelete: 'CASCADE'})
 @JoinColumn({ name: 'utilisateur_id' })
 user: User;
 
