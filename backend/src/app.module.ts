@@ -1,4 +1,7 @@
 /* eslint-disable prettier/prettier */
+import * as crypto from 'crypto'
+(global as any).crypto = crypto
+ 
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';

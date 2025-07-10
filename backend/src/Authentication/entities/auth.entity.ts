@@ -30,9 +30,6 @@ export class User {
   
   @ManyToMany(()=>Evenement,evenement=>evenement.user)
   evenement:Evenement[];
- 
-  @OneToMany(() => Order, (order) => order.user)
-  orders: Order[];
 
 }
 

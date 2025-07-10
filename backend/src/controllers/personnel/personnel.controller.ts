@@ -23,6 +23,16 @@ export class PersonnelController {
     return this.personnelService.findByEvenement(Number(eventId)); 
   }
 
+  /*******  Récupèration de la liste des personnels pour l' Admin (Pas encore de restriction) ********* */
+
+
+  @Get('byEvent/:eventId')
+  async find_By_Event(@Param('eventId') eventId: string) {
+    return this.personnelService.findAllPersonalForOneEvent(Number(eventId)); 
+  }
+
+  /*********************************************************************** */
+
 @Get('/response')
 async response(@Query('token') token: string,@Query('action') action: string) {
   if (action === 'confirm') {

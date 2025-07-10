@@ -62,6 +62,18 @@ export class PersonnelService {
     });
   }
 
+  /************  Back pour l'affichage des personnels par event pour l'admin   *************** */
+
+  async findAllPersonalForOneEvent(evenementId: number): Promise<Personnel[]> {
+    return this.personnelRepository.find({
+      where: {
+        evenement: {
+          id: evenementId,
+        },
+      }
+    });
+  }
+
 
   /**
    * confirmer le demande  pour etre un membre du personnel
