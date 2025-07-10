@@ -26,11 +26,11 @@ export class Order {
   @Column()
   orderDate: Date;
 
-  @Column({ default: 'pending' })
-  status: 'pending' | 'preparing' | 'served';
+  @Column({ default: 'En attente' })
+  status: 'en attente' | 'en preparation' | 'servi';
 
   @Column({ default: 'unpaid' })
-  paymentStatus: 'unpaid' | 'paid';
+  paymentStatus: 'non paye' | 'paye';
 
   @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
   items: OrderItem[];

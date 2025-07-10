@@ -64,8 +64,8 @@ export class OrderService {
       nom: nom,
       email: email,
       orderDate: new Date(),
-      status: 'pending',
-      paymentStatus: 'unpaid',
+      status: 'en attente',
+      paymentStatus: 'non paye',
       total: 0,
     });
     const savedOrder = await this.orderRepository.save(order);
@@ -190,7 +190,7 @@ export class OrderService {
     return this.orderRepository.save(order);
   }
 
-  async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served', userId: string): Promise<Order> {
+  async updateOrderStatus(orderId: number, status: 'en attente' | 'en preparation' | 'servi', userId: string): Promise<Order> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user || user.role !== 'cuisinier') {
       throw new UnauthorizedException('Only cuisinier can update order status');
@@ -220,7 +220,7 @@ export class OrderService {
       relations: ['items', 'table', 'table.event', 'invite'],
     });
     if (!order) throw new NotFoundException('Order not found');
-    if (order.paymentStatus === 'paid') {
+    if (order.paymentStatus === 'paye') {
       throw new BadRequestException('Order is already paid');
     }
 
@@ -239,14 +239,14 @@ export class OrderService {
     });
     await this.paymentRepository.save(payment);
 
-    order.paymentStatus = 'paid';
+    order.paymentStatus = 'paye';
     const savedOrder = await this.orderRepository.save(order);
 
 
     // Recalculer le solde à partir de toutes les commandes payées de cet événement
   const paidOrders = await this.orderRepository.find({
     where: {
-      paymentStatus: 'paid',
+      paymentStatus: 'paye',
       table: {
         event: { id: eventId }
       }

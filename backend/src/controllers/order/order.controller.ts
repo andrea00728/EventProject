@@ -111,16 +111,5 @@ export class OrderController {
     return orders;
   }
 
-
-  @Get('event-name')
-  async findOrdersByEventName(@Query('eventName') eventName: string): Promise<(Order & { total: number })[]> {
-    if (!eventName) {
-      throw new BadRequestException('Event name query is required');
-    }
-    const orders = await this.orderService.findOrdersByEventName(eventName);
-    if (!orders || orders.length === 0) {
-      throw new NotFoundException(`No orders found for event name: ${eventName}`);
-    }
-    return orders;
-  }
+  
 }
