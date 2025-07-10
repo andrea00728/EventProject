@@ -35,12 +35,11 @@ import CreationPersonnel from "../pages/oranisation_personnel/creation_personnel
 import DashboardPersonnel from "../pages/oranisation_personnel/Dashboard_personnel.jsx";
 import Optionpersonnel from "../pages/oranisation_personnel/confirmationRefus.jsx";
 import AdminLayout from "../layouts/AdminLayout.jsx";
-import Dashboard from "../pages/admin/Dashboard.jsx";
-import EvenementAd from "../pages/admin/Evenement.jsx";
-import Organisateur from "../pages/admin/Organisateur.jsx";
-import Parametre from "../pages/admin/Parametre.jsx";
-import LocationSalle from "../pages/admin/LocationSalle.jsx";
-import PageCuisine from "../pages/Admin/PageCuisine.jsx";
+import Dashboard from   "../pages/Admin/DashBoard.jsx";
+import EvenementAd from "../pages/Admin/Evenement.jsx";
+import Organisateur from "../pages/Admin/Organisateur.jsx";
+import Parametre from "../pages/Admin/Parametre.jsx";
+import LocationSalle from "../pages/Admin/LocationSalle.jsx";
 
 const router = createBrowserRouter([
   {
@@ -232,11 +231,13 @@ const router = createBrowserRouter([
         path: "/LocationSalle",
         element: <LocationSalle />,
       },
-      {
-        path: "/Cuisine",
-        element: <PageCuisine />,
-      },
     ],
+  },
+  ,
+  /************************* Page pour les cuisiniers ************** */
+  {
+    path: "/Cuisine",
+    element: <DashboardpersCuisine />,
   },
   {
     path: "/",

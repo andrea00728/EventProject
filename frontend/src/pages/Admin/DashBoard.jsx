@@ -1,81 +1,85 @@
 import { FaGears, FaUsers, FaUser } from "react-icons/fa6";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { LineChart } from "@mui/x-charts/LineChart";
+import { motion } from "framer-motion";
 
 import {
   MdDashboard,
   MdCalendarToday,
   MdOutlineCalendarMonth,
-  MdOutlineCalendarToday,
   MdVerifiedUser,
   MdAttachMoney,
-  MdSearch,
 } from "react-icons/md";
 
 export default function Dashboard() {
+  const stats = [
+    {
+      label: "Nombre d'événements",
+      value: "20",
+      icon: <MdCalendarToday />,
+    },
+    {
+      label: "Total des revenus",
+      value: "$17,000",
+      icon: <MdAttachMoney />,
+    },
+    {
+      label: "Événements passés",
+      value: "20",
+      icon: <MdOutlineCalendarMonth />,
+    },
+    {
+      label: "Événements actifs",
+      value: "20",
+      icon: <MdCalendarToday />,
+    },
+    {
+      label: "Organisateurs",
+      value: "20",
+      icon: <FaUsers />,
+    },
+  ];
+
   return (
-    <div className="p-8 h-screen overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-200">
+    <div className="p-8 h-screen overflow-y-auto bg-gradient-to-r from-white to-gray-50 rounded-2xl shadow-2xl border border-gray-200">
       <div>
-        <h2 className="text-2xl font-semibold mb-6 text-gray-800 border-b border-gray-200 pb-4 flex items-center">
-                <MdDashboard className="mr-3" /> Tableau de bord
+        <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center">
+          <MdDashboard className="mr-3" /> Tableau de bord
         </h2>
       </div>
-      <div className="flex justify-center gap-3 py-5  flex-wrap">
-        <div className="pt-5 px-5  rounded-2xl shadow-lg hover:translate-y-[-8px] transition duration-300">
-          <h3 className="font-semibold mr-8">Nombre d'événements</h3>
-          <div className="flex justify-between items-center pt-8 pb-3 text-start m-0">
-            <span className="text-[20px]">20</span>
-            <span className="text-[24px]">
-              <MdCalendarToday />
-            </span>
-          </div>
-        </div>
-        <div className="pt-5 px-5  rounded-2xl shadow-lg hover:translate-y-[-8px] transition duration-300">
-          <h3 className="font-semibold mr-8">Total des revenus</h3>
-          <div className="flex justify-between items-center pt-8 pb-3 text-start m-0">
-            <span className="text-[20px]">$ 17000</span>
-            <span className="text-[24px]">
-              <MdAttachMoney />
-            </span>
-          </div>
-        </div>
-        <div className="pt-5 px-5  rounded-2xl shadow-lg hover:translate-y-[-8px] transition duration-300">
-          <h3 className="font-semibold mr-8">Total d'événements passées</h3>
-          <div className="flex justify-between items-center pt-8 pb-3 text-start m-0">
-            <span className="text-[20px]">20</span>
-            <span className="text-[24px]">
-              <MdOutlineCalendarMonth />
-            </span>
-          </div>
-        </div>
-        <div className="pt-5 px-5  rounded-2xl shadow-lg hover:translate-y-[-8px] transition duration-300">
-          <h3 className="font-semibold mr-8">Total d'événements actifs</h3>
-          <div className="flex justify-between items-center pt-8 pb-3 text-start m-0">
-            <span className="text-[20px]">20</span>
-            <span className="text-[24px]">
-              <MdOutlineCalendarToday />
-            </span>
-          </div>
-        </div>
-        <div className="pt-5 px-5  rounded-2xl shadow-lg hover:translate-y-[-8px] transition duration-300">
-          <h3 className="font-semibold mr-8">Total des organisateurs</h3>
-          <div className="flex justify-between items-center pt-8 pb-3 text-start m-0">
-            <span className="text-[20px]">20</span>
-            <span className="text-[24px]">
-              <FaUsers />
-            </span>
-          </div>
-        </div>
+
+      <div className="flex justify-center gap-5 flex-wrap py-5">
+        {stats.map((stat, index) => (
+          <motion.div
+            key={index}
+            whileHover={{ scale: 1.05 }}
+            className="pt-5 px-6 rounded-2xl bg-white shadow-xl transition duration-300 cursor-pointer"
+          >
+            <h3 className="font-semibold text-gray-700">{stat.label}</h3>
+            <div className="flex justify-between items-center pt-8 pb-3">
+              <span className="text-[22px] font-bold text-gray-800">
+                {stat.value}
+              </span>
+              <span className="text-[26px] text-gray-500">{stat.icon}</span>
+            </div>
+          </motion.div>
+        ))}
       </div>
-      <div className="flex justify-around flex-wrap gap-1 px-2 items-center py-6">
-        <div>
-          <h3 className="text-lg font-semibold text-start my-3">
-            Prochaines événements
+
+      <div className="flex justify-around flex-wrap gap-4 px-2 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex-1 min-w-[350px] max-w-[550px]"
+        >
+          <h3 className="text-xl font-semibold text-start mb-4">
+            Prochains événements
           </h3>
-          <div className="bg-white shadow-2xl rounded-2xl p-4 overflow-y-auto h-[250px]">
-            <table>
+          <div className="bg-white shadow-xl rounded-2xl p-4 overflow-y-auto h-[250px]">
+            <table className="w-full">
               <thead>
-                <tr>
+                <tr className="text-gray-700">
                   <th className="p-3 text-start">Nom</th>
                   <th className="p-3 text-start">Type</th>
                   <th className="p-3 text-start">Date</th>
@@ -83,63 +87,60 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td className="p-3 text-start">Mariage de Bu & Nu</td>
-                  <td className="p-3 text-start">Mariage</td>
-                  <td className="p-3 text-start">06/07/2025 06:00</td>
-                  <td className="p-3 text-start">Mariage de Bu & Nu</td>
-                </tr>
-                <tr>
-                  <td className="p-3 text-start">Mariage de Bu & Nu</td>
-                  <td className="p-3 text-start">Mariage</td>
-                  <td className="p-3 text-start">06/07/2025 06:00</td>
-                  <td className="p-3 text-start">Mariage de Bu & Nu</td>
-                </tr>
-                <tr>
-                  <td className="p-3 text-start">Mariage de Bu & Nu</td>
-                  <td className="p-3 text-start">Mariage</td>
-                  <td className="p-3 text-start">06/07/2025 06:00</td>
-                  <td className="p-3 text-start">Mariage de Bu & Nu</td>
-                </tr>
-                <tr>
-                  <td className="p-3 text-start">Mariage de Bu & Nu</td>
-                  <td className="p-3 text-start">Mariage</td>
-                  <td className="p-3 text-start">06/07/2025 06:00</td>
-                  <td className="p-3 text-start">Mariage de Bu & Nu</td>
-                </tr>
-                <tr>
-                  <td className="p-3 text-start">Mariage de Bu & Nu</td>
-                  <td className="p-3 text-start">Mariage</td>
-                  <td className="p-3 text-start">06/07/2025 06:00</td>
-                  <td className="p-3 text-start">Mariage de Bu & Nu</td>
-                </tr>
+                {Array(5)
+                  .fill(0)
+                  .map((_, i) => (
+                    <tr key={i} className="hover:bg-gray-50">
+                      <td className="p-3 text-start">Mariage de Bu & Nu</td>
+                      <td className="p-3 text-start">Mariage</td>
+                      <td className="p-3 text-start">06/07/2025 06:00</td>
+                      <td className="p-3 text-start">Antananarivo</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-start my-3">
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex-1 min-w-[300px] max-w-[400px]"
+        >
+          <h3 className="text-xl font-semibold text-start mb-4">
             Notifications
           </h3>
-          <div className="bg-white shadow-2xl rounded-2xl px-6 py-8 overflow-y-auto h-[250px]">
-            <span className=" hover:text-blue-600 transition duration-300 cursor-pointer m-2 block">
-              <FaUser className="inline mr-2 mb-1" />
-              Nouveau organisateur qui vient de s'inscrire
-            </span>
-            <span className=" hover:text-blue-600 transition duration-300 cursor-pointer m-2 block">
-              <FaUser className="inline mr-2 mb-1" />
-              Nouveau organisateur qui vient de s'inscrire
-            </span>
+          <div className="bg-white shadow-xl rounded-2xl p-4 overflow-y-auto h-[250px]">
+            {Array(4)
+              .fill(0)
+              .map((_, i) => (
+                <motion.span
+                  whileHover={{ scale: 1.02, color: "#2563EB" }}
+                  className="block my-2 text-gray-700 cursor-pointer transition duration-300"
+                  key={i}
+                >
+                  <FaUser className="inline mr-2" />
+                  Nouvel organisateur inscrit
+                </motion.span>
+              ))}
           </div>
-        </div>
+        </motion.div>
       </div>
-      <div className="flex justify-center flex-wrap gap-5 items-start py-6">
-        <div className="p-4">
+
+      <div className="flex justify-center flex-wrap gap-8 py-6">
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          className="p-4 bg-white rounded-2xl shadow-xl"
+        >
           <EventChart />
-        </div>
-        <div className='p-4'>
+        </motion.div>
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          className="p-4 bg-white rounded-2xl shadow-xl"
+        >
           <MoneyChart />
-        </div>
+        </motion.div>
       </div>
     </div>
   );
@@ -149,19 +150,17 @@ function EventChart() {
   return (
     <div>
       <h3 className="text-lg font-semibold text-start my-3">Événements</h3>
-      <div className="bg-white shadow-2xl rounded-2xl p-4">
-        <BarChart
-          series={[
-            { data: [35, 44, 24, 34] },
-            { data: [51, 6, 49, 30] },
-            { data: [15, 25, 30, 50] },
-            { data: [60, 50, 15, 25] },
-          ]}
-          height={290}
-          width={450}
-          xAxis={[{ data: ["Q1", "Q2", "Q3", "Q4"] }]}
-        />
-      </div>
+      <BarChart
+        series={[
+          { data: [35, 44, 24, 34] },
+          { data: [51, 6, 49, 30] },
+          { data: [15, 25, 30, 50] },
+          { data: [60, 50, 15, 25] },
+        ]}
+        height={290}
+        width={450}
+        xAxis={[{ data: ["Q1", "Q2", "Q3", "Q4"] }]}
+      />
     </div>
   );
 }
@@ -181,20 +180,18 @@ function MoneyChart() {
   ];
   return (
     <div>
-      <h3 className="text-lg font-semibold text-start my-3">Payements</h3>
-      <div className="bg-white shadow-2xl rounded-2xl p-4">
-        <LineChart
-          height={280}
-          series={[
-            { data: pData, label: "pv" },
-            { data: uData, label: "uv" },
-          ]}
-          xAxis={[{ scaleType: "point", data: xLabels }]}
-          yAxis={[{ width: 50 }]}
-          margin={margin}
-          width={450}
-        />
-      </div>
+      <h3 className="text-lg font-semibold text-start my-3">Paiements</h3>
+      <LineChart
+        height={280}
+        series={[
+          { data: pData, label: "PV" },
+          { data: uData, label: "UV" },
+        ]}
+        xAxis={[{ scaleType: "point", data: xLabels }]}
+        yAxis={[{ width: 50 }]}
+        margin={margin}
+        width={450}
+      />
     </div>
   );
 }
