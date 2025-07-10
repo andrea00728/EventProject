@@ -1,5 +1,4 @@
-// src/components/ChatWidget.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -8,6 +7,44 @@ export default function ChatWidget() {
   const [prompt, setPrompt] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  // État pour gérer le texte affiché progressivement pour chaque message
+  const [displayedMessages, setDisplayedMessages] = useState([]);
+
+  // Fonction pour simuler l'effet de typing
+  const typeMessage = (fullText, messageIndex) => {
+    let currentText = '';
+    let charIndex = 0;
+
+    const interval = setInterval(() => {
+      if (charIndex < fullText.length) {
+        currentText += fullText[charIndex];
+        setDisplayedMessages((prev) =>
+          prev.map((msg, idx) =>
+            idx === messageIndex ? { ...msg, displayedText: currentText } : msg
+          )
+        );
+        charIndex++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 30); // Vitesse de l'animation (30ms par caractère, ajustable)
+  };
+
+  // Met à jour displayedMessages à chaque changement de messages
+  useEffect(() => {
+    setDisplayedMessages(
+      messages.map((msg, idx) => ({
+        ...msg,
+        displayedText: msg.role === 'user' ? msg.text : '', // Les messages utilisateur s'affichent immédiatement
+      }))
+    );
+
+    // Lancer l'effet de typing pour le dernier message du bot
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && lastMessage.role === 'bot') {
+      typeMessage(lastMessage.text, messages.length - 1);
+    }
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!prompt.trim()) return;
@@ -42,7 +79,6 @@ export default function ChatWidget() {
           }
           setIsOpen(!isOpen);
         }}
-        
         aria-label="Ouvrir le chat"
       >
         💬
@@ -64,7 +100,7 @@ export default function ChatWidget() {
             </div>
 
             <div className="flex-1 p-3 overflow-y-auto space-y-3 text-sm">
-              {messages.map((msg, idx) => (
+              {displayedMessages.map((msg, idx) => (
                 <div
                   key={idx}
                   className={`flex ${
@@ -78,7 +114,7 @@ export default function ChatWidget() {
                         : 'bg-gray-100 text-gray-800'
                     } shadow`}
                   >
-                    {msg.text}
+                    {msg.displayedText || msg.text}
                   </div>
                 </div>
               ))}
@@ -120,10 +156,6 @@ export default function ChatWidget() {
                 Envoyer
               </button>
             </div>
-
-
-
-
           </motion.div>
         )}
       </AnimatePresence>
