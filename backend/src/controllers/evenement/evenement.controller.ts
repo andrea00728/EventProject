@@ -4,23 +4,39 @@ import { AuthGuard } from '@nestjs/passport';
 import { CreateEventDto } from 'src/dto/CreateEvenementDTO';
 import { Evenement } from 'src/entities/Evenement';
 import { EvenementService } from 'src/services/evenement/evenement.service';
+import { ForfaitService } from 'src/services/forfait/forfait.service';
 
 @Controller('evenements')
 export class EvenementController {
-  constructor(private readonly evenementService: EvenementService) {}
+  constructor(
+    private readonly evenementService: EvenementService,
+    private readonly forfaitService :ForfaitService
+  ) {}
 
   
     //creation d'evenement
-   @Post()
-  @UseGuards(AuthGuard('jwt'))
-  async create(@Body() dto: CreateEventDto, @Req() req: any): Promise<Evenement> {
-    const userIdFromToken = req.user?.sub;
-    if (!userIdFromToken) {
-      throw new UnauthorizedException('Utilisateur non authentifié');
-    }
-    dto.utilisateur_id=userIdFromToken;
-    return this.evenementService.create(dto);
+  @Post()
+@UseGuards(AuthGuard('jwt'))
+async create(@Body() dto: CreateEventDto, @Req() req: any): Promise<Evenement> {
+  // Récupérer l'ID utilisateur depuis le token JWT
+  const userIdFromToken = req.user?.sub;
+  if (!userIdFromToken) {
+    throw new UnauthorizedException('Utilisateur non authentifié');
   }
+
+  // Vérifier si l'utilisateur peut encore créer un événement selon son forfait
+  const canCreateEvent = await this.forfaitService.canCreateEvent(userIdFromToken);
+  if (!canCreateEvent) {
+    throw new BadRequestException('Vous avez atteint le nombre maximum d\'événements');
+  }
+
+  // Injecter l'ID utilisateur dans le DTO avant création
+  dto.utilisateur_id = userIdFromToken;
+
+  // Créer et sauvegarder l'événement
+  return this.evenementService.create(dto);
+}
+
   /**
    * 
    * @param req 

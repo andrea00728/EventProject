@@ -1,6 +1,7 @@
 
 import { Evenement } from 'src/entities/Evenement';
-import { Entity, Column, PrimaryColumn, ManyToMany } from 'typeorm';
+import { Forfait } from 'src/entities/Forfait';
+import { Entity, Column, PrimaryColumn, ManyToMany, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
 
 export type UserRole='organisateur'|'accueil'|'caissier'|'cuisinier';
@@ -27,8 +28,18 @@ export class User {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  
-  @ManyToMany(()=>Evenement,evenement=>evenement.user)
+  /**
+   * natoko anio alony
+   */
+  // @ManyToMany(()=>Evenement,evenement=>evenement.user)
+  // evenement:Evenement[];
+  @OneToMany(()=>Evenement,evenement=>evenement.user)
   evenement:Evenement[];
 
+  @ManyToOne(()=>Forfait,{nullable:true})
+  @JoinColumn({name:'forfait_id'})
+  forfait:Forfait;
+
+  @Column({type:'timestamp',nullable:true})
+  datedowngraded:Date|null;
 }

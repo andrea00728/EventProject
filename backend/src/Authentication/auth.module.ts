@@ -9,11 +9,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtStrategy } from 'src/strategies/jwt.strategy';
 import { User } from './entities/auth.entity';
 import { Personnel } from 'src/entities/Personnel';
+import { Forfait } from 'src/entities/Forfait';
 
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User,Personnel]),
+    TypeOrmModule.forFeature([User,Personnel,Forfait]),
     PassportModule,
     JwtModule.register({
       secret: 'andreanadjasylvanoilaina',
