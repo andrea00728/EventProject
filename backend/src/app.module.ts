@@ -19,18 +19,13 @@ import { TableEvent } from './entities/Table';
 import { EvenementModule } from './modules/evenement/evenement.module';
 import { AuthModule } from './Authentication/auth.module';
 import { User } from './Authentication/entities/auth.entity';
-import { PaiementService } from './services/paiement/paiement.service';
-import { PaiementController } from './controllers/paiement/paiement.controller';
 import { PaiementModule } from './modules/paiement/paiement.module';
 import { Place } from './entities/Place';
-
-import { PersonnelController } from './controllers/personnel/personnel.controller';
 import { PersonnelModule } from './modules/personnel/personnel.module';
 import { Personnel } from './entities/Personnel';
 import { QrCodeModule } from './modules/qrcode/qrcode.module';
 import { MenuModule } from './modules/menu/menu.module';
 import { OrderModule } from './modules/order/order.module';
-
 import { Menu } from './entities/menu.entity';
 import { MenuItem } from './entities/menu-item.entity';
 import { Order } from './entities/order.entity';
@@ -38,6 +33,7 @@ import { OrderItem } from './entities/order-item.entity';
 import { SharedModule } from './modules/shared/shared.module';
 import { Balance } from './entities/balance.entity';
 import { Payment } from './entities/payment.entity';
+import { GeminiModule } from './modules/gemini/gemini.module';
 
 @Module({
   imports: [
@@ -85,6 +81,7 @@ import { Payment } from './entities/payment.entity';
     MenuModule,
     OrderModule,
     SharedModule,
+    GeminiModule,
    
   ],
   controllers: [ProfileController,],

@@ -3,6 +3,7 @@ import { useStateContext } from "../context/ContextProvider";
 import { Link, Navigate, Outlet } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Profil from "../util/profils";
+import ChatWidget from "../pages/ChatWidget";
 
 export default function DefaultLayout() {
   const { token,role,isLoading } = useStateContext();
@@ -177,6 +178,7 @@ export default function DefaultLayout() {
       </header>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-24">
         <Outlet />
+        <ChatWidget />
       </main>
     </>
   );

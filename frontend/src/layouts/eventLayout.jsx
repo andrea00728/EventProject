@@ -1,4 +1,5 @@
 import { Link, Outlet } from "react-router-dom";
+import ChatWidget from "../pages/ChatWidget";
 
 export default function EventLayout() {
     const choixItems = [
@@ -34,7 +35,9 @@ export default function EventLayout() {
             <main className="flex-1 p-8 bg-[#ffffff] overflow-auto">
                 <div className="bg-white p-8 rounded-lg shadow-md border border-gray-200">
                     <Outlet />
+                    <ChatWidget />
                 </div>
+
             </main>
         </div>
     );

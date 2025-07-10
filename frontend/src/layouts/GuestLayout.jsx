@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useStateContext } from "../context/ContextProvider";
 import { Link, Navigate, Outlet } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import ChatWidget from "../pages/ChatWidget";
 
 export default function GuestLayout() {
   const { token,role } = useStateContext();
@@ -109,6 +110,7 @@ export default function GuestLayout() {
       </header>
       <main className="max-w-7xl mx-auto px-4 sm:px-8 py-12 mt-24 rounded-3xl bg-white shadow-2xl border border-indigo-100 min-h-[80vh]">
         <Outlet />
+        <ChatWidget />
       </main>
       <footer className="w-full text-center py-6 text-gray-400 text-sm mt-10">
         © {new Date().getFullYear()} RAPEX Event. Tous droits réservés.

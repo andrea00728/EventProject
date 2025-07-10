@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Delete, Body, Param, UsePipes, ValidationPipe, UseGuards, Req, UnauthorizedException, Request, NotFoundException, ParseIntPipe } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Delete, Body, Param, UsePipes, ValidationPipe, UseGuards, Req, UnauthorizedException, Request, NotFoundException, ParseIntPipe, BadRequestException, Query } from '@nestjs/common';
 import { OrderService } from '../../services/order/order.service';
 import { CreateOrderDto, UpdateOrderStatusDto } from 'src/dto/order.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -88,5 +88,39 @@ export class OrderController {
       throw new NotFoundException(`Commande avec id ${id} non trouvée`);
     }
     return order;
+  }
+
+  @Get('event/:eventId')
+  async findOrdersByEvent(@Param('eventId', ParseIntPipe) eventId: number): Promise<(Order & { total: number })[]> {
+    const orders = await this.orderService.findOrdersByEvent(eventId);
+    if (!orders || orders.length === 0) {
+      throw new NotFoundException(`No orders found for event with id ${eventId}`);
+    }
+    return orders;
+  }
+
+  @Get('search')
+  async findOrdersByNameOrEmail(@Query('search') search: string): Promise<(Order & { total: number })[]> {
+    if (!search) {
+      throw new BadRequestException('Search query is required');
+    }
+    const orders = await this.orderService.findOrdersByNameOrEmail(search);
+    if (!orders || orders.length === 0) {
+      throw new NotFoundException(`No orders found for search query: ${search}`);
+    }
+    return orders;
+  }
+
+
+  @Get('event-name')
+  async findOrdersByEventName(@Query('eventName') eventName: string): Promise<(Order & { total: number })[]> {
+    if (!eventName) {
+      throw new BadRequestException('Event name query is required');
+    }
+    const orders = await this.orderService.findOrdersByEventName(eventName);
+    if (!orders || orders.length === 0) {
+      throw new NotFoundException(`No orders found for event name: ${eventName}`);
+    }
+    return orders;
   }
 }

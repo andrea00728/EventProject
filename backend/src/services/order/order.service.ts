@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DeepPartial } from 'typeorm';
+import { Repository, DeepPartial, Like } from 'typeorm';
 import { Order } from '../../entities/order.entity';
 import { OrderItem } from '../../entities/order-item.entity';
 import { TableEvent } from '../../entities/Table';
@@ -325,5 +325,43 @@ export class OrderService {
       where: { id },
       relations: ['table', 'invite', 'items', 'items.menuItem'],
     });
+  }
+
+
+  async findOrdersByEvent(eventId: number): Promise<(Order & { total: number })[]> {
+    const orders = await this.orderRepository.find({
+      where: { table: { event: { id: eventId } } },
+      relations: ['items', 'items.menuItem', 'invite', 'table', 'table.event'],
+    });
+    return orders.map((order) => ({
+      ...order,
+    }));
+  }
+
+
+
+
+  async findOrdersByNameOrEmail(search: string): Promise<(Order & { total: number })[]> {
+    const orders = await this.orderRepository.find({
+      where: [
+        { nom: Like(`%${search}%`) },
+        { email: Like(`%${search}%`) },
+      ],
+      relations: ['items', 'items.menuItem', 'invite', 'table', 'table.event'],
+    });
+    return orders.map((order) => ({
+      ...order,
+    }));
+  }
+
+
+  async findOrdersByEventName(eventName: string): Promise<(Order & { total: number })[]> {
+    const orders = await this.orderRepository.find({
+      where: { table: { event: { nom: Like(`%${eventName}%`) } } },
+      relations: ['items', 'items.menuItem', 'invite', 'table', 'table.event'],
+    });
+    return orders.map((order) => ({
+      ...order,
+    }));
   }
 }

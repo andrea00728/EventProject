@@ -5,7 +5,7 @@ import Test from './layouts/test'
 function App() {
   return (
     <>
-      <div>  
+      <div>
       </div>
     </>
   )
