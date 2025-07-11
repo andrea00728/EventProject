@@ -1,21 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useStateContext } from "../context/ContextProvider";
 import { Link, Navigate, Outlet } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Profil from "../util/profils";
 import ForfaitPage from "../pages/forfaitpage/forfaitpage";
+import { getUserForfait } from "../services/forfaitService";
+
 export default function DefaultLayout() {
-  const { token,role,isLoading } = useStateContext();
+  const { token, role, isLoading } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEvenementHovered, setIsEvenementHovered] = useState(false);
+  const [forfait, setForfait] = useState(null);
   const [showForfaitModal, setShowForfaitModal] = useState(false);
-  if(isLoading) return <div>Chargement ...</div>
-  if (!token) {
-    return <Navigate to="/pagepublic"  replace/>;
-  }
+
+  // ⏳ Ne pas continuer si en chargement
+  if (isLoading) return <div>Chargement ...</div>;
+
+  // 🔐 Rediriger si non connecté
+  if (!token) return <Navigate to="/pagepublic" replace />;
+
+  // 🔁 Rediriger selon rôle
   switch (role) {
     case "organisateur":
-      break; 
+      break;
     case "accueil":
       return <Navigate to="/personnelAccueil" replace />;
     case "caissier":
@@ -26,6 +33,31 @@ export default function DefaultLayout() {
       return <Navigate to="/pagepublic" replace />;
   }
 
+  // ✅ Récupérer le forfait utilisateur (au démarrage + si modifié)
+  useEffect(() => {
+    const fetchAndSetForfait = async () => {
+      try {
+        const data = await getUserForfait(token);
+        setForfait(data.forfait);
+      } catch (err) {
+        console.error("Erreur lors de la récupération du forfait", err);
+      }
+    };
+
+    fetchAndSetForfait();
+
+    // 🔄 Mettre à jour dynamiquement après activation
+    const handleForfaitUpdate = () => {
+      fetchAndSetForfait();
+    };
+
+    window.addEventListener("forfaitUpdated", handleForfaitUpdate);
+    return () => {
+      window.removeEventListener("forfaitUpdated", handleForfaitUpdate);
+    };
+  }, [token]);
+
+  // ✅ Configuration dynamique du menu
   const navItems = [
     { path: "/accueil", name: "Accueil" },
     {
@@ -38,20 +70,29 @@ export default function DefaultLayout() {
         { path: "/evenement/invites", name: "Invités", icon: "/guest.png" },
         { path: "/evenement/rapports", name: "Invitation", icon: "/invitation.png" },
         { path: "/evenement/personnel", name: "Personnel", icon: "/community-center.png" },
-        { path: "/evenement/facturation", name: "Facturation", icon: "/payment-method.png" },
-      ],
+        // 👇 Afficher seulement pour les forfaits premium
+        ...(
+          ["pro", "premium", "gold"].includes(forfait?.nom)
+            ? [{
+                path: "/evenement/restauration",
+                name: "restauration",
+                icon: "/payment-method.png"
+              }]
+            : []
+        ),
+      ]
     },
-    { path: "/apropos", name: "A propos" },
+    { path: "/apropos", name: "A propos" }
   ];
 
   const subMenuVariants = {
     hidden: { opacity: 0, y: -10, pointerEvents: "none", transition: { duration: 0.4 } },
-    visible: { opacity: 1, y: 0, pointerEvents: "auto", transition: { duration: 0.4 } },
+    visible: { opacity: 1, y: 0, pointerEvents: "auto", transition: { duration: 0.4 } }
   };
 
   const menuVariants = {
     open: { opacity: 1, height: "auto", transition: { duration: 0.9 } },
-    closed: { opacity: 0, height: 0, transition: { duration: 0.9 } },
+    closed: { opacity: 0, height: 0, transition: { duration: 0.9 } }
   };
 
   return (
@@ -64,6 +105,7 @@ export default function DefaultLayout() {
             </div>
             <span className="ml-2 text-2xl font-bold text-indigo-700 tracking-wide hidden sm:block">TableMaster</span>
           </div>
+
           <nav className="hidden md:flex flex-1 items-center justify-center gap-8 text-indigo-900 font-medium text-base">
             {navItems.map((item) => (
               <motion.div
@@ -74,27 +116,20 @@ export default function DefaultLayout() {
                 onMouseEnter={() => item.name === "Evenement" && setIsEvenementHovered(true)}
                 onMouseLeave={() => item.name === "Evenement" && setIsEvenementHovered(false)}
               >
-                <Link
-                  to={item.path}
-                  className="px-4 py-2 hover:text-indigo-600 transition-colors duration-300 relative z-10 font-semibold tracking-wide"
-                >
+                <Link to={item.path} className="px-4 py-2 hover:text-indigo-600 transition-colors duration-300 relative z-10 font-semibold tracking-wide">
                   {item.name}
                 </Link>
                 <motion.div
                   className="absolute bottom-0 left-0 h-0.5 bg-indigo-600"
-                  variants={{
-                    rest: { width: 0 },
-                    hover: { width: "100%" },
-                  }}
+                  variants={{ rest: { width: 0 }, hover: { width: "100%" } }}
                   transition={{ duration: 0.6 }}
                 />
                 {item.subMenus && (
                   <AnimatePresence>
                     {isEvenementHovered && (
                       <motion.div
-                        className="absolute top-[1] left-1/2 -translate-x-1/2 mt-3  bg-white shadow-2xl rounded-2xl py-10 px-16 z-40
-                          grid grid-cols-2 md:grid-cols-3 gap-x-1 gap-y-8 border-2 border-indigo-100"
-                        style={{ minWidth: "33cm", maxWidth: "50cm", height: "400px" }} 
+                        className="absolute top-[1] left-1/2 -translate-x-1/2 mt-3  bg-white shadow-2xl rounded-2xl py-10 px-16 z-40 grid grid-cols-2 md:grid-cols-3 gap-x-1 gap-y-8 border-2 border-indigo-100"
+                        style={{ minWidth: "33cm", maxWidth: "50cm", height: "400px" }}
                         variants={subMenuVariants}
                         initial="hidden"
                         animate="visible"
@@ -120,73 +155,27 @@ export default function DefaultLayout() {
               </motion.div>
             ))}
           </nav>
+
           <div className="flex items-center gap-4">
-                <button
-                onClick={() => setShowForfaitModal(true)}
-                className="inline-flex items-center gap-2 cursor-pointer bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold px-6 py-3 rounded-xl shadow-md hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg transition-all duration-300"
-                >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                forfaits
-              </button>
-             <div className="min-h-screen bg-gray-100">
-              <ForfaitPage open={showForfaitModal} onClose={() => setShowForfaitModal(false)} />
-              </div>
-            <Profil />
             <button
-              className="md:hidden p-2 text-indigo-700 hover:text-indigo-900 transition-colors duration-200"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="Toggle menu"
+              onClick={() => setShowForfaitModal(true)}
+              className="inline-flex items-center gap-2 cursor-pointer bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold px-6 py-3 rounded-xl shadow-md hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg transition-all duration-300"
             >
-              <svg
-                className="w-7 h-7"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4 6h16M4 12h16m-7 6h7"
-                />
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
+              forfaits
             </button>
+
+            <div className="min-h-screen bg-gray-100">
+              <ForfaitPage open={showForfaitModal} onClose={() => setShowForfaitModal(false)} />
+            </div>
+
+            <Profil />
           </div>
         </div>
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div
-              className="md:hidden bg-white shadow-2xl border-b-2 border-indigo-100"
-              variants={menuVariants}
-              initial="closed"
-              animate="open"
-              exit="closed"
-            >
-              <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col gap-3 text-indigo-900 font-semibold text-lg">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className="px-4 py-3 hover:bg-indigo-50 rounded-lg transition-colors duration-200"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </header>
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-24">
         <Outlet />
       </main>

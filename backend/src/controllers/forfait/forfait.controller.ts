@@ -60,42 +60,7 @@ export class ForfaitController {
       res.status(500).send('error');
     }
   }
-//  @Get('success')
-// async handleSuccess(
-//   @Query('subscription_id') subscriptionId: string,
-//   @Req() req: any,
-// ) {
-//   const userId = req.user?.sub;
-//   if (!userId) {
-//     throw new UnauthorizedException('Utilisateur non authentifié');
-//   }
 
-//   if (!subscriptionId) {
-//     throw new BadRequestException('Subscription ID manquant');
-//   }
-//   const subscription = await this.paypalService.getSubscriptionDetails(subscriptionId);
-//   const planId = subscription.plan_id;
-
-//   if (!planId) {
-//     throw new BadRequestException('Impossible de récupérer plan_id depuis PayPal');
-//   }
-//   const forfait = await this.forfaitRepository.findOne({
-//     where: { paypalplanid: planId },
-//   });
-//   if (!forfait) {
-//     throw new BadRequestException(`Aucun forfait trouvé pour planId : ${planId}`);
-//   }
-//   const user = await this.userRepository.findOne({ where: { id: userId } });
-//   if (!user) {
-//     throw new BadRequestException('Utilisateur introuvable');
-//   }
-//   user.forfait = forfait;
-//   user.datedowngraded = null;
-//   await this.userRepository.save(user);
-//   return {
-//     message: ` Paiement accepté, votre forfait ${forfait.nom} a été activé !`,
-//   };
-// }
 /**
  * 
  * @param subscriptionId 
@@ -140,37 +105,7 @@ async redirectToFrontend(
    * 
    */
 
-  // utilisé dans ForfaitSuccess.jsx côté React avec axios
-// @Get('success-confirmation')
-// @UseGuards(AuthGuard('jwt'))
-// async handleSuccess(
-//   @Query('subscription_id') subscriptionId: string,
-//   @Req() req: any,
-// ) {
-//   const userId = req.user?.sub;
-//   if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
 
-//   if (!subscriptionId) throw new BadRequestException('Subscription ID manquant');
-
-//   const subscription = await this.paypalService.getSubscriptionDetails(subscriptionId);
-//   const planId = subscription.plan_id;
-
-//   const forfait = await this.forfaitRepository.findOne({
-//     where: { paypalplanid: planId },
-//   });
-//   if (!forfait) throw new BadRequestException(`Aucun forfait trouvé pour planId : ${planId}`);
-
-//   const user = await this.userRepository.findOne({ where: { id: userId } });
-//   if (!user) throw new BadRequestException('Utilisateur introuvable');
-
-//   user.forfait = forfait;
-//   user.datedowngraded = null;
-//   await this.userRepository.save(user);
-
-//   return {
-//     message: `Paiement accepté, votre forfait ${forfait.nom} a été activé !`,
-//   };
-// }
 
 
 @Get('success-confirmation')

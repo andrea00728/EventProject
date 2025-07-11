@@ -25,7 +25,6 @@ export class GuestController {
     console.log("user connecte:",req.user);
     const userId = req.user?.sub;
     if (!userId) throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
-
     const lastEvent = await this.guestService.findLastEventByUser(userId);
     if (!lastEvent) throw new HttpException('Aucun événement trouvé pour cet utilisateur', HttpStatus.BAD_REQUEST);
 

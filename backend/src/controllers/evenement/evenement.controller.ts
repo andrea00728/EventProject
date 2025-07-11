@@ -16,10 +16,9 @@ export class EvenementController {
 
   
     //creation d'evenement
-  @Post()
+@Post()
 @UseGuards(AuthGuard('jwt'))
 async create(@Body() dto: CreateEventDto, @Req() req: any): Promise<Evenement> {
-  // Récupérer l'ID utilisateur depuis le token JWT
   const userIdFromToken = req.user?.sub;
   if (!userIdFromToken) {
     throw new UnauthorizedException('Utilisateur non authentifié');
@@ -27,18 +26,22 @@ async create(@Body() dto: CreateEventDto, @Req() req: any): Promise<Evenement> {
 
   await this.forfaitService.checkForfaitExpiration(userIdFromToken);
 
-  // Vérifier si l'utilisateur peut encore créer un événement selon son forfait
   const canCreateEvent = await this.forfaitService.canCreateEvent(userIdFromToken);
   if (!canCreateEvent) {
     throw new BadRequestException('Vous avez atteint le nombre maximum d\'événements');
   }
-
-  // Injecter l'ID utilisateur dans le DTO avant création
   dto.utilisateur_id = userIdFromToken;
 
-  // Créer et sauvegarder l'événement
-  return this.evenementService.create(dto);
+  try {
+    return await this.evenementService.create(dto);
+  } catch (error) {
+    if (error.code === '23505') {
+      throw new BadRequestException("Vous avez déjà créé un événement avec ce nom.");
+    }
+    throw error;
+  }
 }
+
 
   /**
    * 
