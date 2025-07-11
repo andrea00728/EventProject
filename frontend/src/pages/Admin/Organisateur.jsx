@@ -19,24 +19,26 @@ export default function Organisateur() {
   const [managerName, setManagerName] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedManager, setSelectedManager] = useState(null);
+  const [loading, setLoading] = useState(true); // ← Nouveau : état de chargement
 
   useEffect(() => {
     document.title = "Organisateur - Admin";
     const fetchData = async () => {
       try {
+        setLoading(true);
         const data = await getManagerList();
         setData(data);
       } catch (error) {
         console.error("Erreur lors de la récupération des organisateurs :", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
   }, []);
 
   const filteredData = data.filter((organisateur) =>
-    organisateur[filterType]
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
+    organisateur[filterType].toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleTakeManagerEvents = async (id) => {
@@ -122,7 +124,37 @@ export default function Organisateur() {
       </div>
 
       <div className="flex-1 overflow-auto bg-white shadow-2xl rounded-2xl p-4">
-        {filteredData.length === 0 ? (
+        {loading ? (
+          <table className="w-full border-collapse animate-pulse min-w-[600px]">
+            <thead className="bg-gray-100 border-b border-gray-300">
+              <tr>
+                <th className="py-3 px-6 text-start font-semibold text-gray-700">
+                  Nom
+                </th>
+                <th className="py-3 px-6 text-start font-semibold text-gray-700">
+                  Email
+                </th>
+                <th className="py-3 px-6 text-start font-semibold text-gray-700">
+                  Date de création
+                </th>
+                <th className="py-3 px-6 text-center font-semibold text-gray-700">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <tr key={index} className="hover:bg-gray-50">
+                  {Array.from({ length: 4 }).map((__, idx) => (
+                    <td key={idx} className="py-3 px-6">
+                      <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : filteredData.length === 0 ? (
           <p className="text-center text-lg py-5 text-gray-600">
             Aucun organisateur correspondant
           </p>

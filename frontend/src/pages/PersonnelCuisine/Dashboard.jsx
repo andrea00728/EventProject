@@ -14,6 +14,7 @@ import {
   MdError,
   MdHourglassEmpty,
   MdLogout,
+  MdKeyboardArrowDown
 } from "react-icons/md";
 import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
@@ -138,21 +139,46 @@ export default function DashboardpersCuisine() {
       {/* Sidebar */}
       <div className={`md:block bg-white p-4 shadow-xl rounded-r-2xl md:w-64`}>
         <div className="flex flex-col items-center mb-8 p-4 bg-[#f9f9f9] rounded-xl border border-gray-200 shadow">
-          <img
-            src={user.photo}
-            alt="Utilisateur"
-            className="w-20 h-20 rounded-full border-4 border-white shadow-md mb-3"
-          />
-          <p className="font-semibold text-gray-800 text-center text-lg">
-            {user.name}
-          </p>
           <button
-            onClick={handleLogout}
-            className="mt-4 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md flex items-center gap-2 transition duration-200"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            className="flex flex-col items-center focus:outline-none group"
           >
-            <MdLogout className="text-xl" />
-            Déconnexion
+            <img
+              src={user.photo}
+              alt="Utilisateur"
+              className="w-20 h-20 rounded-full border-4 border-white shadow-md mb-2"
+            />
+            <div className="flex items-center gap-1">
+              <p className="font-semibold text-gray-800 text-center text-lg">
+                {user.name}
+              </p>
+              <MdKeyboardArrowDown
+                className={`text-xl text-gray-600 transition-transform ${
+                  menuOpen ? "rotate-180" : ""
+                }`}
+              />
+            </div>
           </button>
+
+          <AnimatePresence>
+            {menuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="mt-3 bg-white border border-gray-200 rounded-xl shadow-lg w-full"
+              >
+                <button
+                  onClick={handleLogout}
+                  className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 rounded-t-xl flex items-center gap-2 transition"
+                >
+                  <MdLogout className="text-xl" />
+                  Déconnexion
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <nav className="flex flex-col space-y-4">
@@ -198,9 +224,31 @@ export default function DashboardpersCuisine() {
               </h1>
 
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-10 text-gray-600">
-                  <MdHourglassEmpty className="text-5xl animate-spin" />
-                  <p className="mt-4 text-lg font-semibold">Chargement...</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse shadow-lg rounded-lg bg-white animate-pulse">
+                    <thead>
+                      <tr className="bg-[#f2f0ef] text-gray-700 uppercase text-sm">
+                        <th className="p-4">ID</th>
+                        <th className="p-4">Client</th>
+                        <th className="p-4">Table</th>
+                        <th className="p-4">Plats & Quantités</th>
+                        <th className="p-4">Date & Heure</th>
+                        <th className="p-4">Statut</th>
+                        <th className="p-4">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: 5 }).map((_, idx) => (
+                        <tr key={idx} className="text-center border-t">
+                          {Array.from({ length: 7 }).map((__, i) => (
+                            <td key={i} className="p-4">
+                              <div className="h-4 bg-gray-300 rounded w-3/4 mx-auto"></div>
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               ) : error ? (
                 <div className="flex flex-col items-center justify-center py-10 text-red-600">

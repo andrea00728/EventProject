@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import ModalEvenement from "./ModalEvenement";
 import { getAllEvents } from "../../services/evenementServ";
 import { FaEye } from "react-icons/fa";
-import { MdCalendarToday, MdFileDownload, MdSearch, MdFilterList } from "react-icons/md";
+import {
+  MdCalendarToday,
+  MdFileDownload,
+  MdSearch,
+  MdFilterList,
+} from "react-icons/md";
 import { handleDownloadXLSX } from "../../services/downloadXLSX";
 
 // Helper function to format date
@@ -24,7 +29,7 @@ export default function EvenementAd() {
   const [modalData, setModalData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Filtrage dynamique
   const [filterField, setFilterField] = useState("nom");
   const [searchValue, setSearchValue] = useState("");
@@ -37,7 +42,10 @@ export default function EvenementAd() {
         const data = await getAllEvents();
         setData(data);
       } catch (error) {
-        console.error("Erreur lors de la récupération des événements : ", error);
+        console.error(
+          "Erreur lors de la récupération des événements : ",
+          error
+        );
         setError("Impossible de charger les événements.");
       } finally {
         setLoading(false);
@@ -142,17 +150,38 @@ export default function EvenementAd() {
       <div className="flex justify-center items-center pt-5">
         <div className="bg-white shadow-2xl rounded-2xl p-4 overflow-y-auto">
           {loading && (
-            <p className="text-center text-lg py-5">
-              Chargement des événements...
-            </p>
+            <table className="w-full border-collapse animate-pulse">
+              <thead>
+                <tr>
+                  <th className="p-3 text-start font-semibold">Nom</th>
+                  <th className="p-3 text-start font-semibold">Type</th>
+                  <th className="p-3 text-start font-semibold">Thème</th>
+                  <th className="p-3 text-start font-semibold">Date début</th>
+                  <th className="p-3 text-start font-semibold">Date fin</th>
+                  <th className="p-3 text-start font-semibold">Localisation</th>
+                  <th className="p-3 text-start font-semibold">Organisateur</th>
+                  <th className="p-3 text-start font-semibold">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <tr key={index}>
+                    {Array.from({ length: 8 }).map((__, idx) => (
+                      <td key={idx} className="p-3">
+                        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
+
           {error && (
             <p className="text-center text-lg py-5 text-red-600">{error}</p>
           )}
           {!loading && !error && filteredData.length === 0 && (
-            <p className="text-center text-lg py-5">
-              Aucun événement trouvé.
-            </p>
+            <p className="text-center text-lg py-5">Aucun événement trouvé.</p>
           )}
           {!loading && !error && filteredData.length > 0 && (
             <table>
