@@ -4,16 +4,32 @@ import { CreateOrderDto, UpdateOrderStatusDto } from 'src/dto/order.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Order } from 'src/entities/order.entity';
 import { Payment } from 'src/entities/payment.entity';
+import { TableEvent } from 'src/entities/Table';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Controller('orders')
 export class OrderController {
-  constructor(private orderService: OrderService) {}
+  constructor(private orderService: OrderService,
+    @InjectRepository(TableEvent)
+    private readonly tableRepository: Repository<TableEvent>,
+  ) {}
 
-  @Post()
-  @UsePipes(new ValidationPipe())
-  async create(@Body() dto: CreateOrderDto): Promise<Order> {
-    return this.orderService.createOrder(dto.tableId, dto.items, dto.nom, dto.email);
+// src/controllers/order/order.controller.ts
+@Post()
+@UsePipes(new ValidationPipe())
+async create(@Body() dto: CreateOrderDto): Promise<Order> {
+  // Vérifier que la table existe
+  const table = await this.tableRepository.findOne({
+    where: { id: dto.tableId },
+    relations: ['event'],
+  });
+  if (!table) {
+    throw new BadRequestException(`Table avec ID ${dto.tableId} non trouvée`);
   }
+  // Appeler createOrder sans eventId
+  return this.orderService.createOrder(dto.tableId, dto.items, dto.nom, dto.email);
+}
 
   @Get()
   findAllOrders() {

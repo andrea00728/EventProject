@@ -9,10 +9,11 @@ import { InvitationService } from 'src/services/invitation-service/invitation-se
 import { GuestService } from 'src/services/invite-service/invite-service.service';
 import { TableService } from 'src/services/table-service/table-service.service';
 import { EvenementModule } from '../evenement/evenement.module';
+import { QrCodeService } from 'src/services/qrcode/qrcode.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Invitation, Invite, TableEvent,Evenement]),EvenementModule],
-  providers: [InvitationService, GuestService, TableService],
+  providers: [InvitationService, GuestService, TableService, QrCodeService],
   controllers: [InvitationController],
 })
 export class InvitationModule {}

@@ -1,5 +1,8 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
+// src/entities/order.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 import { TableEvent } from './Table';
+import { Evenement } from './Evenement';
+import { Invite } from './Invite';
 import { OrderItem } from './order-item.entity';
 import { Payment } from './payment.entity';
 
@@ -8,29 +11,32 @@ export class Order {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => TableEvent, (table) => table.orders)
+  @ManyToOne(() => TableEvent, (table) => table.orders, { onDelete: 'CASCADE' })
   table: TableEvent;
 
-  @Column()
+  @ManyToOne(() => Evenement, { onDelete: 'CASCADE' })
+  event: Evenement;
+
+  @ManyToOne(() => Invite, (invite) => invite.orders, { nullable: true })
+  invite: Invite;
+
+  @Column({ nullable: true })
   nom: string;
 
-  @Column()
+  @Column({ nullable: true })
   email: string;
-
-  // @ManyToOne(() => Invite, (invite) => invite.orders, { nullable: true })
-  // invite: Invite;
-
-  @Column({ type: 'float', default: 0 })
-  total: number;
 
   @Column()
   orderDate: Date;
 
-  @Column({ default: 'En attente' })
-  status: 'en attente' | 'en preparation' | 'servi';
+  @Column()
+  status: string;
 
-  @Column({ default: 'unpaid' })
-  paymentStatus: 'non paye' | 'paye';
+  @Column()
+  paymentStatus: string;
+
+  @Column('float')
+  total: number;
 
   @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
   items: OrderItem[];

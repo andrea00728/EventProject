@@ -6,14 +6,15 @@ import { TableController } from 'src/controllers/table-controller/table-controll
 import { TableService } from 'src/services/table-service/table-service.service';
 import { Evenement } from 'src/entities/Evenement';
 import { EvenementModule } from '../evenement/evenement.module';
+import { QrCodeModule } from '../qrcode/qrcode.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([TableEvent, Invite,Evenement]),
-    EvenementModule,
+    EvenementModule, QrCodeModule
   ],
   controllers: [TableController],
-  providers: [TableService,],
-  exports: [TableService], 
+  providers: [TableService],
+  exports: [TableService],
 })
 export class TableModule {}

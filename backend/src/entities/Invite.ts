@@ -34,6 +34,6 @@ export class Invite {
   @Column({ nullable: true })
   qrCode: string;
 
-  // @OneToMany(() => Order, (order) => order.invite)
-  // orders: Order[];
+  @OneToMany(() => Order, (order) => order.invite)
+  orders: Order[];
 }

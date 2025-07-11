@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DeepPartial, Like } from 'typeorm';
+import { Repository, DeepPartial, Like, In } from 'typeorm';
 import { Order } from '../../entities/order.entity';
 import { OrderItem } from '../../entities/order-item.entity';
 import { TableEvent } from '../../entities/Table';
@@ -34,65 +34,108 @@ export class OrderService {
     private inviteRepository: Repository<Invite>,
   ) {}
 
-  async createOrder(tableId: number, items: { menuItemId: number; quantity: number }[], nom?: string, email?: string): Promise<Order> {
-    const table = await this.tableEventRepository.findOne({ where: { id: tableId }, relations: ['event'] });
-    if (!table) throw new NotFoundException('Table not found');
-
-    // let invite: Invite | undefined;
-    // if (nom && email) {
-    //   const eventId = table.event.id;
-    //   const foundInvite = await this.inviteRepository.findOne({ where: { email, event: { id: eventId } } });
-    //   if (foundInvite) {
-    //     invite = foundInvite;
-    //   } else {
-    //     invite = this.inviteRepository.create({ nom, email, event: table.event, sex: 'M' }); // Default sex to 'M' if not provided
-    //     await this.inviteRepository.save(invite);
-    //   }
-    // }
-
+  async createOrder(
+    tableId: number,
+    items: { menuItemId: number; quantity: number }[],
+    nom?: string,
+    email?: string,
+  ): Promise<Order> {
+    // Valider les entrées
+    if (!items || items.length === 0) {
+      throw new BadRequestException('La liste des items ne peut pas être vide');
+    }
+  
+    // Récupérer la table avec son événement
+    const table = await this.tableEventRepository.findOne({
+      where: { id: tableId },
+      relations: ['event'],
+    });
+    if (!table) {
+      throw new NotFoundException(`Table avec ID ${tableId} non trouvée`);
+    }
+  
+    // Créer ou récupérer l'invité si nom et email sont fournis
+    let invite: Invite | undefined;
+    if (nom && email) {
+      const eventId = table.event.id;
+      let foundInvite = await this.inviteRepository.findOne({
+        where: { email, event: { id: eventId } },
+        relations: ['event'],
+      });
+      if (!foundInvite) {
+        foundInvite = this.inviteRepository.create({
+          nom,
+          email,
+          event: table.event,
+          sex: 'M', // Assurez-vous que ce champ est facultatif dans l'entité Invite
+        });
+        await this.inviteRepository.save(foundInvite);
+      }
+      invite = foundInvite;
+    }
+  
+    // Récupérer tous les menuItems en une seule requête
+    const menuItemIds = items.map((item) => item.menuItemId);
+    const menuItems = await this.menuItemRepository.find({
+      where: { id: In(menuItemIds), event: { id: table.event.id } }, // Vérifier que les items appartiennent à l'événement
+    });
+  
+    // Vérifier que tous les menuItems existent et ont assez de stock
     for (const item of items) {
-      const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
-      if (!menuItem) throw new NotFoundException(`Menu item ${item.menuItemId} not found`);
+      const menuItem = menuItems.find((m) => m.id === item.menuItemId);
+      if (!menuItem) {
+        throw new NotFoundException(`Menu item ${item.menuItemId} non trouvé ou n'appartient pas à l'événement`);
+      }
       if (menuItem.stock < item.quantity) {
-        throw new BadRequestException(`Insufficient stock for menu item ${menuItem.name}. Available: ${menuItem.stock}, Requested: ${item.quantity}`);
+        throw new BadRequestException(
+          `Stock insuffisant pour l'item ${menuItem.name}. Disponible: ${menuItem.stock}, Demandé: ${item.quantity}`,
+        );
       }
     }
-
-    const order = this.orderRepository.create({
-      table,
-      // invite,
-      nom: nom,
-      email: email,
-      orderDate: new Date(),
-      status: 'en attente',
-      paymentStatus: 'non paye',
-      total: 0,
+  
+    // Utiliser une transaction pour garantir la cohérence
+    return this.orderRepository.manager.transaction(async (transactionalEntityManager) => {
+      // Créer la commande
+      const order = this.orderRepository.create({
+        table,
+        invite,
+        event: table.event,
+        nom,
+        email,
+        orderDate: new Date(),
+        status: 'en attente',
+        paymentStatus: 'non paye',
+        total: 0,
+      });
+      const savedOrder = await transactionalEntityManager.save(Order, order);
+  
+      // Créer les orderItems et mettre à jour le stock
+      const orderItems = await Promise.all(
+        items.map(async (item) => {
+          const menuItem = menuItems.find((m) => m.id === item.menuItemId)!;
+          const subtotal = menuItem.price * item.quantity;
+  
+          // Mettre à jour le stock
+          menuItem.stock -= item.quantity;
+          await transactionalEntityManager.save(MenuItem, menuItem);
+  
+          return this.orderItemRepository.create({
+            order: savedOrder,
+            menuItem,
+            quantity: item.quantity,
+            subtotal,
+          } as DeepPartial<OrderItem>);
+        }),
+      );
+  
+      // Calculer le total
+      const total = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+      savedOrder.total = total;
+      savedOrder.items = await transactionalEntityManager.save(OrderItem, orderItems);
+  
+      // Sauvegarder la commande avec le total et les items
+      return transactionalEntityManager.save(Order, savedOrder);
     });
-    const savedOrder = await this.orderRepository.save(order);
-
-    const orderItems = await Promise.all(
-      items.map(async (item) => {
-        const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
-        if (!menuItem) throw new NotFoundException(`Menu item ${item.menuItemId} not found`);
-        const subtotal = menuItem.price * item.quantity;
-
-        menuItem.stock -= item.quantity;
-        await this.menuItemRepository.save(menuItem);
-
-        return this.orderItemRepository.create({
-          order: savedOrder,
-          menuItem: menuItem as MenuItem,
-          quantity: item.quantity,
-          subtotal,
-        } as DeepPartial<OrderItem>);
-      }),
-    );
-
-    const total = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
-    savedOrder.total = total;
-
-    savedOrder.items = await this.orderItemRepository.save(orderItems);
-    return this.orderRepository.save(savedOrder);
   }
 
   async findOrdersByTable(tableId: number): Promise<(Order & { total: number })[]> {

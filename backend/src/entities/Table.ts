@@ -38,4 +38,7 @@ export class TableEvent {
   @OneToMany(() => Place, (place) => place.table)
   places: Place[];
 
+  @Column({ nullable: true })
+  qrCode: string;
+
 }

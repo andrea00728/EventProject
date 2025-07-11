@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { Menu } from './menu.entity';
+import { Evenement } from './Evenement';
 
 @Entity()
 export class MenuItem {
@@ -26,4 +27,7 @@ export class MenuItem {
 
   @ManyToOne(() => Menu, (menu) => menu.items)
   menu: Menu;
+
+  @ManyToOne(() => Evenement, (event) => event.menuItems, { onDelete: 'CASCADE' })
+  event: Evenement;
 }

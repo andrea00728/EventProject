@@ -6,9 +6,13 @@ import { Invite } from 'src/entities/Invite';
 import { TableEvent } from 'src/entities/Table';
 import { GuestService } from 'src/services/invite-service/invite-service.service';
 import { TableService } from 'src/services/table-service/table-service.service';
+import { QrCodeModule } from '../qrcode/qrcode.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Invite, TableEvent,Evenement])],
+  imports: [TypeOrmModule.forFeature([Invite, TableEvent,Evenement]),
+  QrCodeModule
+
+],
   providers: [GuestService, TableService],
   controllers: [GuestController],
   exports: [GuestService],

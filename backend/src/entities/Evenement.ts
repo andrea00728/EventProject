@@ -8,6 +8,7 @@ import { Personnel } from './Personnel';
 import { Menu } from './menu.entity';
 import { Balance } from './balance.entity';
 import { Payment } from './payment.entity';
+import { MenuItem } from './menu-item.entity';
 
 
 @Unique(['nom','user'])
@@ -51,6 +52,9 @@ export class Evenement {
 
   @OneToMany(() => Balance, (balance) => balance.event)
   balances: Balance[];
+
+  @OneToMany(() => MenuItem, (menuItem) => menuItem.event, { cascade: true })
+  menuItems: MenuItem[];
 
   @OneToMany(() => Payment, (payment) => payment.event)
   payments: Payment[];

@@ -6,6 +6,7 @@ import { CreateTableDto } from 'src/dto/CreateTaleDto';
 import { Invite } from 'src/entities/Invite';
 import { TableEvent } from 'src/entities/Table';
 import { Evenement } from 'src/entities/Evenement';
+import { QrCodeService } from '../qrcode/qrcode.service';
 
 @Injectable()
 export class TableService {
@@ -16,6 +17,7 @@ export class TableService {
     private readonly guestRepository: Repository<Invite>,
     @InjectRepository(Evenement)
     private readonly eventRepository:Repository<Evenement>,
+    private readonly qrCodeService: QrCodeService,
   ) {}
 
 async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEvent> {
@@ -54,7 +56,13 @@ async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEven
     event
   });
 
-  return this.tableRepository.save(table);
+  // Sauvegarder la table pour obtenir un ID
+  const savedTable = await this.tableRepository.save(table);
+
+  // Générer le QR code pour la table
+  savedTable.qrCode = await this.qrCodeService.generateQrCodeForTable(dto.eventId, savedTable.id)
+
+  return this.tableRepository.save(savedTable);
 }
 
 
@@ -155,18 +163,24 @@ async updatePlaceReserve(tableId: number): Promise<void> {
  * mettre a jour les tables
  */
 
-  async updateTable(id:number,data:Partial<TableEvent>):  Promise<TableEvent>{
-    await this.tableRepository.update(id,data);
-    const table=await this.tableRepository.findOne({
-      where:{id},
-      relations:['guests']
-    });
-     if (!table) {
-      throw new BadRequestException(`table avec ID ${id} non trouvé`);
-    }
-
-    return table;
+async updateTable(id: number, data: Partial<TableEvent>): Promise<TableEvent> {
+  await this.tableRepository.update(id, data);
+  const table = await this.tableRepository.findOne({
+    where: { id },
+    relations: ['guests', 'event'],
+  });
+  if (!table) {
+    throw new BadRequestException(`Table avec ID ${id} non trouvée`);
   }
+
+  // Régénérer le QR code si l'eventId ou l'ID de la table change
+  if (data.event || data.id) {
+    table.qrCode = await this.qrCodeService.generateQrCodeForTable(table.event.id, table.id);
+    await this.tableRepository.save(table);
+  }
+
+  return table;
+}
 
 //   async DeleteTable(id: number, userId: number): Promise<{ message: string }> {
 //   // Récupérer la table avec ses relations
