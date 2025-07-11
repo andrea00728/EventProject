@@ -11,14 +11,14 @@ import { User } from 'src/Authentication/entities/auth.entity';
 import { Balance } from 'src/entities/balance.entity';
 import { Evenement } from 'src/entities/Evenement';
 import { Payment } from 'src/entities/payment.entity';
-import { Invite } from 'src/entities/Invite';
+import { OrdersGateway } from 'src/Gateway/orders.gateway';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, OrderItem, TableEvent, MenuItem, User, Balance, Evenement, Payment, Invite]),
+    TypeOrmModule.forFeature([Order, OrderItem, TableEvent, MenuItem, User, Balance, Evenement, Payment]),
     AuthModule, // Import AuthModule to access UserRepository
   ],
   controllers: [OrderController],
-  providers: [OrderService],
+  providers: [OrderService, OrdersGateway],
 })
 export class OrderModule {}

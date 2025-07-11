@@ -32,18 +32,18 @@ export class OrderController {
   }
 
   @Patch(':id/status')
-  @UseGuards(AuthGuard('jwt'))
-  @UsePipes(new ValidationPipe())
+  // @UseGuards(AuthGuard('jwt'))
+  // @UsePipes(new ValidationPipe())
   async updateOrderStatus(
     @Param('id') id: number,
     @Body() body: UpdateOrderStatusDto,
-    @Request() req: any,
+    /*@Request() req: any,*/
   ): Promise<Order> {
-    const userId = req.user?.sub;
-    if (!userId) {
-      throw new UnauthorizedException('Utilisateur non authentifié');
-    }
-    return this.orderService.updateOrderStatus(id, body.status, userId);
+    // const userId = req.user?.sub;
+    // if (!userId) {
+    //   throw new UnauthorizedException('Utilisateur non authentifié');
+    // }
+    return this.orderService.updateOrderStatus(id, body.status, /*userId*/);
   }
 
   @Patch(':id/payment')

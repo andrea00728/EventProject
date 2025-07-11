@@ -1,11 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   MdDashboard,
   MdBarChart,
   MdFastfood,
   MdTableRestaurant,
-  MdTimer,
-  MdCheckCircle,
   MdFileDownload,
   MdPendingActions,
   MdKitchen,
@@ -13,9 +11,19 @@ import {
   MdMenu,
   MdAssignment,
   MdPerson,
+  MdError,
+  MdHourglassEmpty,
+  MdLogout,
 } from "react-icons/md";
 import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
+import {
+  getAllOrdersForOnEvent,
+  updateOrderStatus,
+} from "../../services/orders";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:3000");
 
 const formatDateTime = (dateString) => {
   const date = new Date(dateString);
@@ -32,64 +40,80 @@ const formatDateTime = (dateString) => {
 export default function DashboardpersCuisine() {
   const [activeTab, setActiveTab] = useState("commandes");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [commandes, setCommandes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [user, setUser] = useState({
+    name: "Utilisateur Gmail",
+    photo: "https://via.placeholder.com/50", // Remplace par l'URL de la photo Gmail après connexion réelle
+  });
 
-  const [commandes, setCommandes] = useState([
-    {
-      id: 1,
-      nomClient: "Jean Dupont",
-      table: 5,
-      statut: "pending",
-      date: new Date(),
-      plats: [
-        { nom: "Pizza", quantite: 2 },
-        { nom: "Salade", quantite: 1 },
-      ],
-    },
-    {
-      id: 2,
-      nomClient: "Marie Durand",
-      table: 2,
-      statut: "preparing",
-      date: new Date(),
-      plats: [
-        { nom: "Burger", quantite: 3 },
-        { nom: "Frites", quantite: 2 },
-      ],
-    },
-    {
-      id: 3,
-      nomClient: "Paul Martin",
-      table: 3,
-      statut: "served",
-      date: new Date(),
-      plats: [
-        { nom: "Sushi", quantite: 4 },
-        { nom: "Soupe", quantite: 1 },
-      ],
-    },
-  ]);
+  useEffect(() => {
+    const fetchOrders = async (idEvent = 1) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getAllOrdersForOnEvent(idEvent);
+        setCommandes(data);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des commandes :", error);
+        setError("Impossible de charger les commandes.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
 
-  const changerStatut = (id) => {
-    setCommandes((prev) =>
-      prev.map((c) => {
-        if (c.id === id) {
-          if (c.statut === "pending") return { ...c, statut: "preparing" };
-          if (c.statut === "preparing") return { ...c, statut: "served" };
-        }
-        return c;
-      })
-    );
+    socket.on("updateStatus", (updatedOrder) => {
+      setCommandes((prev) =>
+        prev.map((order) =>
+          order.id === updatedOrder.id
+            ? { ...order, status: updatedOrder.status }
+            : order
+        )
+      );
+    });
+
+    return () => {
+      socket.off("updateStatus");
+    };
+  }, []);
+
+  const changeDataBaseStatus = async (id, status) => {
+    await updateOrderStatus(id, status);
+  };
+
+  const changerStatut = async (id, direction = "next") => {
+    const updatedOrder = commandes.find((c) => c.id === id);
+    let newStatus = updatedOrder.status;
+
+    if (direction === "next") {
+      if (newStatus === "pending") newStatus = "preparing";
+      else if (newStatus === "preparing") newStatus = "served";
+    } else if (direction === "prev" && newStatus === "preparing") {
+      newStatus = "pending";
+    }
+
+    if (newStatus !== updatedOrder.status) {
+      socket.emit("changeStatus", { id, status: newStatus });
+      await changeDataBaseStatus(id, newStatus);
+      setCommandes((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, status: newStatus } : c))
+      );
+    }
   };
 
   const exporterExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(
       commandes.map((commande) => ({
         ID: commande.id,
-        "Nom du client": commande.nomClient,
-        Table: commande.table,
-        "Date de commande": formatDateTime(commande.date),
-        Plats: commande.plats.map((p) => `${p.nom} (x${p.quantite})`).join(", "),
-        Statut: commande.statut,
+        "Nom du client": commande.nom,
+        Table: commande.table.numero,
+        "Date de commande": formatDateTime(commande.orderDate),
+        Plats: commande.items
+          .map((p) => `${p.menuItem.name} (x${p.quantity})`)
+          .join(", "),
+        Statut: commande.status,
       }))
     );
     const workbook = XLSX.utils.book_new();
@@ -97,41 +121,43 @@ export default function DashboardpersCuisine() {
     XLSX.writeFile(workbook, "commandes_evenement.xlsx");
   };
 
+  const handleLogout = () => {
+    alert("Déconnecté !");
+    // Place ici ta logique de déconnexion réelle (Google SignOut, etc.)
+  };
+
   const stats = {
     total: commandes.length,
-    pending: commandes.filter((c) => c.statut === "pending").length,
-    preparing: commandes.filter((c) => c.statut === "preparing").length,
-    served: commandes.filter((c) => c.statut === "served").length,
+    pending: commandes.filter((c) => c.status === "pending").length,
+    preparing: commandes.filter((c) => c.status === "preparing").length,
+    served: commandes.filter((c) => c.status === "served").length,
   };
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-[#fafafa]">
-      {/* Menu Mobile */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-white shadow-md">
-        <h2 className="text-xl font-bold text-[#333]">Cuisine</h2>
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="text-2xl text-gray-800"
-        >
-          <MdMenu />
-        </button>
-      </div>
+      {/* Sidebar */}
+      <div className={`md:block bg-white p-4 shadow-xl rounded-r-2xl md:w-64`}>
+        <div className="flex flex-col items-center mb-8 p-4 bg-[#f9f9f9] rounded-xl border border-gray-200 shadow">
+          <img
+            src={user.photo}
+            alt="Utilisateur"
+            className="w-20 h-20 rounded-full border-4 border-white shadow-md mb-3"
+          />
+          <p className="font-semibold text-gray-800 text-center text-lg">
+            {user.name}
+          </p>
+          <button
+            onClick={handleLogout}
+            className="mt-4 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md flex items-center gap-2 transition duration-200"
+          >
+            <MdLogout className="text-xl" />
+            Déconnexion
+          </button>
+        </div>
 
-      {/* Menu Sidebar */}
-      <div
-        className={`${
-          menuOpen ? "block" : "hidden"
-        } md:block bg-white p-4 shadow-xl rounded-r-2xl md:w-64`}
-      >
-        <h2 className="hidden md:block text-2xl font-bold mb-10 text-center text-[#333]">
-          Cuisine
-        </h2>
         <nav className="flex flex-col space-y-4">
           <button
-            onClick={() => {
-              setActiveTab("commandes");
-              setMenuOpen(false);
-            }}
+            onClick={() => setActiveTab("commandes")}
             className={`flex items-center gap-3 p-3 rounded-lg font-semibold text-left transition ${
               activeTab === "commandes"
                 ? "bg-[#cfc6c4] text-black shadow"
@@ -142,10 +168,7 @@ export default function DashboardpersCuisine() {
             Commandes récentes
           </button>
           <button
-            onClick={() => {
-              setActiveTab("stats");
-              setMenuOpen(false);
-            }}
+            onClick={() => setActiveTab("stats")}
             className={`flex items-center gap-3 p-3 rounded-lg font-semibold text-left transition ${
               activeTab === "stats"
                 ? "bg-[#cfc6c4] text-black shadow"
@@ -173,79 +196,109 @@ export default function DashboardpersCuisine() {
                 <MdFastfood />
                 Commandes récentes
               </h1>
-              <div className="flex justify-end mb-4">
-                <button
-                  onClick={exporterExcel}
-                  className="bg-[#cfc6c4] hover:bg-[#b9aeac] px-4 py-2 rounded-lg font-semibold text-black shadow flex items-center gap-2"
-                >
-                  Télécharger Excel <MdFileDownload className="text-xl" />
-                </button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse shadow-lg rounded-lg bg-white">
-                  <thead>
-                    <tr className="bg-[#f2f0ef] text-gray-700 uppercase text-sm">
-                      <th className="p-4">ID</th>
-                      <th className="p-4">Client</th>
-                      <th className="p-4">Table</th>
-                      <th className="p-4">Plats & Quantités</th>
-                      <th className="p-4">Date & Heure</th>
-                      <th className="p-4">Statut</th>
-                      <th className="p-4">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {commandes.map((commande) => (
-                      <tr key={commande.id} className="text-center border-t">
-                        <td className="p-4">{commande.id}</td>
-                        <td className="p-4">
-                          <MdPerson className="inline mr-2 text-xl" />
-                          {commande.nomClient}
-                        </td>
-                        <td className="p-4">
-                          <MdTableRestaurant className="inline mr-2 text-xl" />
-                          {commande.table}
-                        </td>
-                        <td className="p-4">
-                          {commande.plats
-                            .map((p) => `${p.nom} (x${p.quantite})`)
-                            .join(", ")}
-                        </td>
-                        <td className="p-4">
-                          {formatDateTime(commande.date)}
-                        </td>
-                        <td className="p-4 capitalize">
-                          {commande.statut === "pending" && (
-                            <span className="flex items-center gap-1 justify-center text-yellow-500 font-semibold">
-                              <MdPendingActions className="text-xl" /> En attente
-                            </span>
-                          )}
-                          {commande.statut === "preparing" && (
-                            <span className="flex items-center gap-1 justify-center text-orange-500 font-semibold">
-                              <MdKitchen className="text-xl" /> En préparation
-                            </span>
-                          )}
-                          {commande.statut === "served" && (
-                            <span className="flex items-center gap-1 justify-center text-green-600 font-semibold">
-                              <MdDoneAll className="text-xl" /> Servie
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          {commande.statut !== "served" && (
-                            <button
-                              onClick={() => changerStatut(commande.id)}
-                              className="bg-[#cfc6c4] hover:bg-[#b9aeac] px-4 py-2 rounded-lg font-semibold text-black shadow"
-                            >
-                              Suivant
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-10 text-gray-600">
+                  <MdHourglassEmpty className="text-5xl animate-spin" />
+                  <p className="mt-4 text-lg font-semibold">Chargement...</p>
+                </div>
+              ) : error ? (
+                <div className="flex flex-col items-center justify-center py-10 text-red-600">
+                  <MdError className="text-5xl" />
+                  <p className="mt-4 text-lg font-semibold">{error}</p>
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse shadow-lg rounded-lg bg-white">
+                      <thead>
+                        <tr className="bg-[#f2f0ef] text-gray-700 uppercase text-sm">
+                          <th className="p-4">ID</th>
+                          <th className="p-4">Client</th>
+                          <th className="p-4">Table</th>
+                          <th className="p-4">Plats & Quantités</th>
+                          <th className="p-4">Date & Heure</th>
+                          <th className="p-4">Statut</th>
+                          <th className="p-4">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {commandes.map((commande) => (
+                          <tr
+                            key={commande.id}
+                            className="text-center border-t"
+                          >
+                            <td className="p-4">{commande.id}</td>
+                            <td className="p-4">
+                              <MdPerson className="inline mr-2 text-xl" />
+                              {commande.nom}
+                            </td>
+                            <td className="p-4">
+                              <MdTableRestaurant className="inline mr-2 text-xl" />
+                              {commande.table.numero}
+                            </td>
+                            <td className="p-4">
+                              {commande.items
+                                .map(
+                                  (p) => `${p.menuItem.name} (x${p.quantity})`
+                                )
+                                .join(", ")}
+                            </td>
+                            <td className="p-4">
+                              {formatDateTime(commande.orderDate)}
+                            </td>
+                            <td className="p-4 capitalize">
+                              {commande.status === "pending" && (
+                                <span className="flex items-center gap-1 justify-center text-yellow-500 font-semibold">
+                                  <MdPendingActions className="text-xl" /> En
+                                  attente
+                                </span>
+                              )}
+                              {commande.status === "preparing" && (
+                                <span className="flex items-center gap-1 justify-center text-orange-500 font-semibold">
+                                  <MdKitchen className="text-xl" /> En
+                                  préparation
+                                </span>
+                              )}
+                              {commande.status === "served" && (
+                                <span className="flex items-center gap-1 justify-center text-green-600 font-semibold">
+                                  <MdDoneAll className="text-xl" /> Servie
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-4">
+                              <div className="flex flex-col md:flex-row justify-center gap-2">
+                                {commande.status === "preparing" && (
+                                  <button
+                                    onClick={() =>
+                                      changerStatut(commande.id, "prev")
+                                    }
+                                    className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg shadow-md font-semibold transition transform hover:scale-105 flex items-center gap-2"
+                                  >
+                                    <MdPendingActions className="text-xl" />
+                                    Retour
+                                  </button>
+                                )}
+                                {commande.status !== "served" && (
+                                  <button
+                                    onClick={() =>
+                                      changerStatut(commande.id, "next")
+                                    }
+                                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md font-semibold transition transform hover:scale-105 flex items-center gap-2"
+                                  >
+                                    <MdDoneAll className="text-xl" />
+                                    Suivant
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </motion.div>
           )}
 
@@ -262,6 +315,14 @@ export default function DashboardpersCuisine() {
                 <MdBarChart />
                 Statistiques des commandes
               </h1>
+              <div className="flex justify-end mb-4">
+                <button
+                  onClick={exporterExcel}
+                  className="bg-[#cfc6c4] hover:bg-[#b9aeac] px-4 py-2 rounded-lg font-semibold text-black shadow flex items-center gap-2"
+                >
+                  Liste des commandes <MdFileDownload className="text-xl" />
+                </button>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white p-6 rounded-lg shadow flex items-center gap-4">
                   <MdAssignment className="text-4xl text-gray-600" />

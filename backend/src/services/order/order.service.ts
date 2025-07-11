@@ -9,7 +9,6 @@ import { User } from 'src/Authentication/entities/auth.entity';
 import { Balance } from 'src/entities/balance.entity';
 import { Evenement } from 'src/entities/Evenement';
 import { Payment } from 'src/entities/payment.entity';
-import { Invite } from '../../entities/Invite';
 
 @Injectable()
 export class OrderService {
@@ -30,8 +29,7 @@ export class OrderService {
     private eventRepository: Repository<Evenement>,
     @InjectRepository(Payment)
     private paymentRepository: Repository<Payment>,
-    @InjectRepository(Invite)
-    private inviteRepository: Repository<Invite>,
+    
   ) {}
 
   async createOrder(tableId: number, items: { menuItemId: number; quantity: number }[], nom?: string, email?: string): Promise<Order> {
@@ -98,7 +96,7 @@ export class OrderService {
   async findOrdersByTable(tableId: number): Promise<(Order & { total: number })[]> {
     const orders = await this.orderRepository.find({
       where: { table: { id: tableId } },
-      relations: ['items', 'items.menuItem', 'invite'],
+      relations: ['items', 'items.menuItem'],
     });
     return orders.map((order) => ({
       ...order,
@@ -123,7 +121,7 @@ export class OrderService {
 
   async findAllOrders(): Promise<(Order)[]> {
     const orders = await this.orderRepository.find({
-      relations: ['items', 'items.menuItem', 'invite'],
+      relations: ['items', 'items.menuItem'],
     });
     return orders.map((order) => ({
       ...order,
@@ -190,15 +188,16 @@ export class OrderService {
     return this.orderRepository.save(order);
   }
 
-  async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served', userId: string): Promise<Order> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user || user.role !== 'cuisinier') {
-      throw new UnauthorizedException('Only cuisinier can update order status');
-    }
+  async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served'/*, userId: string*/): Promise<Order> {
+    // const user = await this.userRepository.findOne({ where: { id: userId } });
+    // if (!user || user.role !== 'cuisinier') {
+    //   throw new UnauthorizedException('Only cuisinier can update order status');
+    // }
     const order = await this.orderRepository.findOne({
       where: { id: orderId },
-      relations: ['items', 'items.menuItem', 'table', 'invite', 'table.event'],
+      relations: ['items', 'items.menuItem', 'table', 'table.event'],
     });
+
     if (!order) throw new NotFoundException('Order not found');
     order.status = status;
     return this.orderRepository.save(order);
@@ -323,7 +322,7 @@ export class OrderService {
   async findById(id: number) {
     return await this.orderRepository.findOne({
       where: { id },
-      relations: ['table', 'invite', 'items', 'items.menuItem'],
+      relations: ['table', 'items', 'items.menuItem'],
     });
   }
 
@@ -331,7 +330,8 @@ export class OrderService {
   async findOrdersByEvent(eventId: number): Promise<(Order & { total: number })[]> {
     const orders = await this.orderRepository.find({
       where: { table: { event: { id: eventId } } },
-      relations: ['items', 'items.menuItem', 'invite', 'table', 'table.event'],
+      relations: ['items', 'items.menuItem', 'table', 'table.event'],
+      order: { id: 'ASC' },
     });
     return orders.map((order) => ({
       ...order,
@@ -347,7 +347,7 @@ export class OrderService {
         { nom: Like(`%${search}%`) },
         { email: Like(`%${search}%`) },
       ],
-      relations: ['items', 'items.menuItem', 'invite', 'table', 'table.event'],
+      relations: ['items', 'items.menuItem', 'table', 'table.event'],
     });
     return orders.map((order) => ({
       ...order,
@@ -358,7 +358,7 @@ export class OrderService {
   async findOrdersByEventName(eventName: string): Promise<(Order & { total: number })[]> {
     const orders = await this.orderRepository.find({
       where: { table: { event: { nom: Like(`%${eventName}%`) } } },
-      relations: ['items', 'items.menuItem', 'invite', 'table', 'table.event'],
+      relations: ['items', 'items.menuItem', 'table', 'table.event'],
     });
     return orders.map((order) => ({
       ...order,

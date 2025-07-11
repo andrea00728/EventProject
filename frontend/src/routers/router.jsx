@@ -40,6 +40,7 @@ import EvenementAd from "../pages/Admin/Evenement.jsx";
 import Organisateur from "../pages/Admin/Organisateur.jsx";
 import Parametre from "../pages/Admin/Parametre.jsx";
 import LocationSalle from "../pages/Admin/LocationSalle.jsx";
+import CaissierInterface from "../pages/PersonnelCuisine/OrderGateway.jsx";
 
 const router = createBrowserRouter([
   {
@@ -234,11 +235,16 @@ const router = createBrowserRouter([
     ],
   },
   ,
-  /************************* Page pour les cuisiniers ************** */
+  /************************* Page pour les cuisiniers (poue le test) ************** */
   {
     path: "/Cuisine",
     element: <DashboardpersCuisine />,
   },
+  {
+    path: "/exemple",
+    element: <CaissierInterface />,
+  },
+  /*********************************************************** */
   {
     path: "/",
     element: <GuestLayout />,
