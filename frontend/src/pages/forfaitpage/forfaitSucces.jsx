@@ -30,7 +30,8 @@ const ForfaitSuccess = () => {
         const res = await getSuccessForfait(token, subscriptionId);
         setMessage(res.message);
         // Rediriger vers la page des forfaits après 3 secondes
-        setTimeout(() => navigate('/forfaits'), 3000);
+        setTimeout(() => navigate('/forfaits'), 1000);
+           window.dispatchEvent(new Event('forfaitUpdated'));
       } catch (error) {
         console.error('Erreur de confirmation', error);
         setMessage('Erreur lors de la confirmation du forfait.');

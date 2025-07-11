@@ -10,7 +10,7 @@ const ForfaitModal = ({ forfaits, loading, onChoisir, onClose, activeForfait, ex
       <div className="bg-white p-8 max-w-5xl w-full rounded-2xl shadow-2xl animate-fade-in overflow-y-auto max-h-[90vh] relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-red-500 text-3xl font-bold transition"
+          className="absolute top-4 right-4 text-gray-500 hover:text-red-500 text-3xl font-bold transition cursor-pointer"
         >
           ×
         </button>
@@ -34,14 +34,11 @@ const ForfaitModal = ({ forfaits, loading, onChoisir, onClose, activeForfait, ex
                   index === 1 && !isActive ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200'
                 }`}
               >
-                {/* Badge populaire */}
                 {index === 1 && !isActive && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
                     Populaire
                   </div>
                 )}
-
-                {/* Badge actif */}
                 {isActive && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
                     Actif
@@ -75,7 +72,7 @@ const ForfaitModal = ({ forfaits, loading, onChoisir, onClose, activeForfait, ex
                 <button
                   disabled={loading || isForfaitActive}
                   onClick={() => onChoisir(f.nom)}
-                  className={`w-full py-3 rounded-lg font-semibold transition-all ${
+                  className={`w-full cursor-pointer py-3 rounded-lg font-semibold transition-all ${
                     isForfaitActive
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : loading
