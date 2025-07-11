@@ -42,4 +42,7 @@ export class User {
 
   @Column({type:'timestamp',nullable:true})
   datedowngraded:Date|null;
+
+   @Column({type:'timestamp',nullable:true})
+    forfaitexpirationdate:Date|null;
 }

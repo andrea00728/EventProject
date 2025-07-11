@@ -1,41 +1,36 @@
 import React, { useEffect, useState } from 'react';
-import { getAllForfait, updateForfait } from '../../services/forfaitService';
+import { getAllForfait, updateForfait, getUserForfait } from '../../services/forfaitService';
 import { useStateContext } from '../../context/ContextProvider';
 import ForfaitModal from '../../components/Modal/ForfaitModal';
 
 const ForfaitPage = ({ open, onClose }) => {
   const [forfaits, setForfaits] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [activeForfait, setActiveForfait] = useState(null);
+  const [expirationDate, setExpirationDate] = useState(null);
   const { token } = useStateContext();
-   const [activeNom, setActiveNom] = useState(null);
- const filtreForfait = forfaits.filter((f) => f.nom.trim().toLowerCase() !== 'freemium');
+
   useEffect(() => {
-    if (!open) return;
+    if (!open || !token) return;
+
     const fetchData = async () => {
       try {
-        const data = await getAllForfait(token);
-        setForfaits(data);
+        // Récupérer tous les forfaits
+        const forfaitsData = await getAllForfait(token);
+        setForfaits(forfaitsData.filter((f) => f.nom.toLowerCase() !== 'freemium'));
+
+        // Récupérer le forfait actif de l'utilisateur
+        const userForfait = await getUserForfait(token);
+        setActiveForfait(userForfait.forfait);
+        setExpirationDate(userForfait.forfaitExpirationDate);
       } catch (err) {
-        alert('Erreur lors du chargement des forfaits');
+        console.error('Erreur lors du chargement des données', err);
+        alert('Erreur lors du chargement des forfaits ou du forfait actif');
       }
     };
+
     fetchData();
-  }, [open]);
-  useEffect(() => {
-  const fetchAll = async () => {
-    try {
-      const data = await getAllForfait(token);
-      setForfaits(data);
-
-      const res = await getSuccessForfait(token);
-      if (res.nom) setActiveNom(res.nom);
-    } catch (err) {
-      console.error('Erreur dans la récupération du forfait actif', err);
-    }
-  };
-
-  if (open && token) fetchAll();
-}, [open, token]);
+  }, [open, token]);
 
   const handleChoisir = async (nom) => {
     try {
@@ -43,6 +38,7 @@ const ForfaitPage = ({ open, onClose }) => {
       const res = await updateForfait(token, nom);
       window.location.href = res.url;
     } catch (err) {
+      console.error('Erreur lors du choix du forfait', err);
       alert(err.message || 'Erreur lors du choix du forfait');
     } finally {
       setLoading(false);
@@ -51,11 +47,12 @@ const ForfaitPage = ({ open, onClose }) => {
 
   return open ? (
     <ForfaitModal
-      forfaits={filtreForfait}
+      forfaits={forfaits}
       loading={loading}
       onChoisir={handleChoisir}
-      activeNom={activeNom}
       onClose={onClose}
+      activeForfait={activeForfait}
+      expirationDate={expirationDate}
     />
   ) : null;
 };

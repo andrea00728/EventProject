@@ -18,12 +18,14 @@ export class Forfait{
     @Column({default:1})
     validationduration:number;
 
-    @Column({type:'timestamp',nullable:true})
-    expirationdate:Date;
+    // @Column({type:'timestamp',nullable:true})
+    // expirationdate:Date;
 
     @Column({nullable:true})
     paypalplanid:string;
 
     @Column({type:'float',default:0})
     price:number;
+
+
 }

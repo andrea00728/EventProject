@@ -12,15 +12,14 @@ const ForfaitSuccess = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const subId = params.get("subscription_id");
+    const subId = params.get('subscription_id');
 
     if (!subId) {
-      setMessage("Aucun identifiant de souscription trouvé.");
+      setMessage('Aucun identifiant de souscription trouvé.');
       return;
     }
 
-    setSubscriptionId(subId); // stocké séparément
-
+    setSubscriptionId(subId);
   }, [location.search]);
 
   useEffect(() => {
@@ -29,34 +28,32 @@ const ForfaitSuccess = () => {
 
       try {
         const res = await getSuccessForfait(token, subscriptionId);
-        if (res.message) {
-          setMessage(res.message);
-        } else {
-          setMessage("Le forfait a été activé, mais aucun message n'a été retourné.");
-        }
+        setMessage(res.message);
+        // Rediriger vers la page des forfaits après 3 secondes
+        setTimeout(() => navigate('/forfaits'), 3000);
       } catch (error) {
         console.error('Erreur de confirmation', error);
-        setMessage("Erreur lors de la confirmation du forfait.");
+        setMessage('Erreur lors de la confirmation du forfait.');
       }
     };
 
     fetchConfirmation();
-  }, [token, subscriptionId]);
+  }, [token, subscriptionId, navigate]);
 
   return (
-    <div className="max-w-xl mx-auto mt-10">
+    <div className="max-w-xl mx-auto mt-10 p-6">
       {message && (
-        <div className="bg-green-100 border border-green-400 text-green-800 px-6 py-4 rounded-lg shadow-md text-center">
-          {message}
+        <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg shadow-md text-center">
+          <p className="font-semibold">{message}</p>
         </div>
       )}
 
       {!token && (
         <div className="text-center mt-6">
-          <p className="text-red-600 mb-2">Vous devez être connecté pour activer votre forfait.</p>
+          <p className="text-red-600 mb-4">Vous devez être connecté pour activer votre forfait.</p>
           <button
-            onClick={() => navigate('/login')} // ou ta page de connexion Google
-            className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+            onClick={() => navigate('/login')}
+            className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition"
           >
             Se connecter
           </button>

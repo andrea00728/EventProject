@@ -18,7 +18,7 @@ import { PaypalService } from 'src/services/paypal/paypal.service';
 import { Repository } from 'typeorm';
 import { Request, Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
-
+import { addDays } from 'date-fns';
 @Controller('forfait')
 export class ForfaitController {
   constructor(
@@ -141,6 +141,38 @@ async redirectToFrontend(
    */
 
   // utilisé dans ForfaitSuccess.jsx côté React avec axios
+// @Get('success-confirmation')
+// @UseGuards(AuthGuard('jwt'))
+// async handleSuccess(
+//   @Query('subscription_id') subscriptionId: string,
+//   @Req() req: any,
+// ) {
+//   const userId = req.user?.sub;
+//   if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
+
+//   if (!subscriptionId) throw new BadRequestException('Subscription ID manquant');
+
+//   const subscription = await this.paypalService.getSubscriptionDetails(subscriptionId);
+//   const planId = subscription.plan_id;
+
+//   const forfait = await this.forfaitRepository.findOne({
+//     where: { paypalplanid: planId },
+//   });
+//   if (!forfait) throw new BadRequestException(`Aucun forfait trouvé pour planId : ${planId}`);
+
+//   const user = await this.userRepository.findOne({ where: { id: userId } });
+//   if (!user) throw new BadRequestException('Utilisateur introuvable');
+
+//   user.forfait = forfait;
+//   user.datedowngraded = null;
+//   await this.userRepository.save(user);
+
+//   return {
+//     message: `Paiement accepté, votre forfait ${forfait.nom} a été activé !`,
+//   };
+// }
+
+
 @Get('success-confirmation')
 @UseGuards(AuthGuard('jwt'))
 async handleSuccess(
@@ -163,12 +195,35 @@ async handleSuccess(
   const user = await this.userRepository.findOne({ where: { id: userId } });
   if (!user) throw new BadRequestException('Utilisateur introuvable');
 
+  // Mettre à jour le forfait et la date d'expiration
   user.forfait = forfait;
   user.datedowngraded = null;
+  user.forfaitexpirationdate = addDays(new Date(), forfait.validationduration); // Ajouter la durée de validation
+
   await this.userRepository.save(user);
 
   return {
-    message: `Paiement accepté, votre forfait ${forfait.nom} a été activé !`,
+    message: `Paiement accepté, votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
+  };
+}
+
+
+
+@Get('user/forfait')
+@UseGuards(AuthGuard('jwt'))
+async getUserForfait(@Req() req: any) {
+  const userId = req.user?.sub;
+  if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
+
+  const user = await this.userRepository.findOne({
+    where: { id: userId },
+    relations: ['forfait'],
+  });
+  if (!user) throw new BadRequestException('Utilisateur introuvable');
+
+  return {
+    forfait: user.forfait,
+    forfaitExpirationDate: user.forfaitexpirationdate,
   };
 }
 

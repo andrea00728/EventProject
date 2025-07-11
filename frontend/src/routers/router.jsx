@@ -35,6 +35,8 @@ import CreationPersonnel from "../pages/oranisation_personnel/creation_personnel
 import DashboardPersonnel from "../pages/oranisation_personnel/Dashboard_personnel.jsx";
 import Optionpersonnel from "../pages/oranisation_personnel/confirmationRefus.jsx";
 import ForfaitSuccess from "../pages/forfaitpage/forfaitSucces.jsx";
+import ForfaitPage from "../pages/forfaitpage/forfaitpage.jsx";
+import ForfaitActive from "../pages/forfaitpage/forfaitActive.jsx";
 const router=createBrowserRouter([
    
   {
@@ -129,6 +131,10 @@ const router=createBrowserRouter([
      {
       path:'/forfait/success',
       element:<ForfaitSuccess/>
+    },
+    {
+      path:'/forfaits',
+      element:<ForfaitActive/>
     },
   ]
 },

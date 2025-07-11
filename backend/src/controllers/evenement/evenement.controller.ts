@@ -5,6 +5,7 @@ import { CreateEventDto } from 'src/dto/CreateEvenementDTO';
 import { Evenement } from 'src/entities/Evenement';
 import { EvenementService } from 'src/services/evenement/evenement.service';
 import { ForfaitService } from 'src/services/forfait/forfait.service';
+import { PaypalService } from 'src/services/paypal/paypal.service';
 
 @Controller('evenements')
 export class EvenementController {
@@ -23,6 +24,8 @@ async create(@Body() dto: CreateEventDto, @Req() req: any): Promise<Evenement> {
   if (!userIdFromToken) {
     throw new UnauthorizedException('Utilisateur non authentifié');
   }
+
+  await this.forfaitService.checkForfaitExpiration(userIdFromToken);
 
   // Vérifier si l'utilisateur peut encore créer un événement selon son forfait
   const canCreateEvent = await this.forfaitService.canCreateEvent(userIdFromToken);
