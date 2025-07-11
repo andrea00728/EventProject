@@ -1,4 +1,4 @@
-import {Controller,Post, Body,Param, Get, UploadedFile, UseInterceptors, ParseIntPipe, Put, HttpException, HttpStatus, Req, UseGuards, Delete,
+import {Controller,Post, Body,Param, Get, UploadedFile, UseInterceptors, ParseIntPipe, Put, HttpException, HttpStatus, Req, UseGuards, Delete, BadRequestException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -29,7 +29,7 @@ export class GuestController {
     const lastEvent = await this.guestService.findLastEventByUser(userId);
     if (!lastEvent) throw new HttpException('Aucun événement trouvé pour cet utilisateur', HttpStatus.BAD_REQUEST);
 
-    const guest = await this.guestService.createGuest(dto, lastEvent.id);
+    const guest = await this.guestService.createGuest(dto, lastEvent.id,userId);
     return this.guestService.findById(guest.id);
   }
 
@@ -53,7 +53,7 @@ export class GuestController {
     const lastEvent = await this.guestService.findLastEventByUser(userId);
     if (!lastEvent) throw new HttpException('Aucun événement trouvé pour cet utilisateur', HttpStatus.BAD_REQUEST);
 
-    const result = await this.guestService.importGuests(file, lastEvent.id);
+    const result = await this.guestService.importGuests(file, lastEvent.id,userId);
     return result.imported;
   }
 
@@ -67,25 +67,46 @@ export class GuestController {
    */
 
 
-  @Post('import/:eventId') 
-  @UseGuards(AuthGuard('jwt'))
-  @UseInterceptors(FileInterceptor('file'))
-  async importGuestsToSpecificEvent(
-    @UploadedFile() file: Express.Multer.File,
-    @Param('eventId', ParseIntPipe) eventId: number, // Utilise ParseIntPipe
-    @Req() req,
-  ): Promise<Invite[]> {
-    if (!file) throw new HttpException('Aucun fichier fourni.', HttpStatus.BAD_REQUEST);
-
-    const userId = req.user?.sub;
-    if (!userId) throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
-    const evenement = await this.guestService['evenementRepository'].findOne({ where: { id: eventId, user: { id: userId } } });
-    if (!evenement) {
-        throw new HttpException('Événement introuvable ou non autorisé', HttpStatus.NOT_FOUND);
-    }
-    const result = await this.guestService.importGuests(file, eventId);
-    return result.imported;
+@Post('import/:eventId') 
+@UseGuards(AuthGuard('jwt'))
+@UseInterceptors(FileInterceptor('file'))
+async importGuestsToSpecificEvent(
+  @UploadedFile() file: Express.Multer.File,
+  @Param('eventId', ParseIntPipe) eventId: number,
+  @Req() req,
+) {
+  if (!file) {
+    throw new HttpException('Aucun fichier fourni.', HttpStatus.BAD_REQUEST);
   }
+
+  const userId = req.user?.sub;
+  if (!userId) {
+    throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
+  }
+
+  const evenement = await this.guestService['evenementRepository'].findOne({
+    where: { id: eventId, user: { id: userId } },
+  });
+
+  if (!evenement) {
+    throw new HttpException('Événement introuvable ou non autorisé', HttpStatus.NOT_FOUND);
+  }
+
+  const result = await this.guestService.importGuests(file, eventId, userId);
+
+
+  if (result.imported.length === 0 && result.errors.length > 0) {
+    throw new BadRequestException(result.errors.join('\n'));
+  }
+
+
+  return {
+    message: 'Importation terminée.',
+    invites_importes: result.imported,
+    erreurs: result.errors,
+  };
+}
+
 
 
 
@@ -196,7 +217,7 @@ export class GuestController {
     if (!userId) {
       throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
     }
-    return await this.guestService.createGuest(createInviteDto, eventId);
+    return await this.guestService.createGuest(createInviteDto, eventId,userId);
   }
 
   /**

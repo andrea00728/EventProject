@@ -8,6 +8,7 @@ import { CreateInviteDto } from 'src/dto/CreateInviteDto';
 import { Evenement } from 'src/entities/Evenement';
 import * as streamifier from 'streamifier';
 import { TableEvent } from 'src/entities/Table';
+import { User } from 'src/Authentication/entities/auth.entity';
 
 @Injectable()
 export class GuestService {
@@ -20,13 +21,17 @@ export class GuestService {
 
     @InjectRepository(TableEvent)
     private readonly tableRepository: Repository<TableEvent>, 
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
-  async createGuest(dto: CreateInviteDto, eventId: number): Promise<Invite> {
+  async createGuest(dto: CreateInviteDto, eventId: number,userId:string): Promise<Invite> {
     const evenement = await this.evenementRepository.findOne({ where: { id: eventId } });
     if (!evenement) {
       throw new BadRequestException('Événement non trouvé');
     }
+
+    await this.checkInviteLimit(eventId,userId,1)
 
     const existing = await this.guestRepository.findOne({
        where: { 
@@ -40,14 +45,16 @@ export class GuestService {
     }
 
     const { table, place } = await this.findNextAvailablePlace(eventId);
-    await this.ckeckPaymentRequirement(evenement);
+  /**
+   * (nasiko commentaire satry tsy miasa lony)
+   */
+    // await this.ckeckPaymentRequirement(evenement);
     const inv = this.guestRepository.create({
       ...dto,
       event: evenement,
       table,
       place,
     });
-
     const saved = await this.guestRepository.save(inv);
 
     // Met à jour le compteur des places réservées dans la table
@@ -148,8 +155,11 @@ export class GuestService {
 //   });
 // }
 
-async importGuests(file: Express.Multer.File, eventId: number): Promise<{ imported: Invite[]; errors: string[] }> {
-  const evenement = await this.evenementRepository.findOne({ where: { id: eventId } });
+async importGuests(file: Express.Multer.File, eventId: number,userId:string): Promise<{ imported: Invite[]; errors: string[] }> {
+  const evenement = await this.evenementRepository.findOne({ 
+    where: { id: eventId },
+    relations:['user']
+  });
   if (!evenement) {
     throw new BadRequestException('Événement non trouvé');
   }
@@ -179,18 +189,12 @@ async importGuests(file: Express.Multer.File, eventId: number): Promise<{ import
       const savedGuests: Invite[] = [];
       const errors: string[] = [];
 
-      const totalExisting = await this.guestRepository.count({ where: { event: { id: eventId } } });
-      const totalFinal = totalExisting + guestsRaw.length;
-
-      console.log(' Total existants:', totalExisting);
-      console.log(' Total CSV à importer:', guestsRaw.length);
-      console.log('Montant transaction:', evenement.montanttransaction);
-      console.log(' Total final:', totalFinal);
-
-      if (totalFinal > 50 && (!evenement.montanttransaction || evenement.montanttransaction === 0)) {
-        reject(new BadRequestException('Vous avez atteint la limite gratuite de 50 invités. Veuillez effectuer le paiement pour continuer.'));
-        return;
-      }
+            try {
+          await this.checkInviteLimit( eventId, userId,guestsRaw.length);
+        } catch (limitErr) {
+          errors.push(`Limite forfait dépassée: ${limitErr.message}`);
+          return resolve({ imported: [], errors }); // Pas de throw ici
+        }
 
       for (const record of guestsRaw) {
         try {
@@ -255,11 +259,38 @@ async importGuests(file: Express.Multer.File, eventId: number): Promise<{ import
 }
 
 
+/***
+ * methode central pour les limites de cretion et importation d'invite
+ */
+  async checkInviteLimit(eventId: number,userId: string,newInviteCount:number): Promise<void> {
+    const user= await this.userRepository.findOne({
+      where:{id:userId},
+      relations:['forfait'],
+    });
+    if(!user){
+      throw new BadRequestException('Utilisateur non trouvé');
+    }
+
+    const maxinvites=user.forfait?.maxinvites;
+    /**
+     * applique pour forfait gold parce que l'rganisateur n'a pas de limite si fait une abonnement gold
+     */
+    if(!maxinvites) return;
+
+    const currentCount=await this.guestRepository.count({
+      where:{event:{id:eventId}},
+    });
+    if(currentCount+newInviteCount>maxinvites){
+    throw new BadRequestException(`Vous avez atteint la limite gratuite de ${maxinvites} invités. Veuillez effectuer un abonnement pour continuer.`);
+    }
+  }
+
+
 /**
  * 
  * @param eventId 
  * @returns 
- * Methode pour verifier si le payement est necessaire
+ * Methode pour verifier si le payement est necessaire  (asorina avie)
  */
   private async ckeckPaymentRequirement(event: Evenement): Promise<void> {
     const count = await this.guestRepository.count({
@@ -342,12 +373,6 @@ async importGuests(file: Express.Multer.File, eventId: number): Promise<{ import
     }
   }
 
-  // async findByEvent(eventId: number): Promise<Invite[]> {
-  //   return this.guestRepository.find({
-  //     where: { event: { id: eventId } },
-  //     relations: ['event', 'table'],
-  //   });
-  // }
 
   async findByEvent(eventId: number): Promise<Invite[]> {
   return this.guestRepository.find({

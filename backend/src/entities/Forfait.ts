@@ -1,22 +1,31 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('forfait')
-export class Forfait {
+export class Forfait{
+
     @PrimaryGeneratedColumn()
     id:number;
 
-    @Column()
-    nom:String;
+    @Column({default:'freemium'})
+    nom:string;
+
+    @Column({nullable:true,type:'int'})
+    maxevents:number|null;
+
+    @Column({nullable:true,type:'int'})
+    maxinvites:number;
+
+    @Column({default:1})
+    validationduration:number;
+
+    // @Column({type:'timestamp',nullable:true})
+    // expirationdate:Date;
 
     @Column({nullable:true})
-    maxEvents:number;
+    paypalplanid:string;
 
-    @Column()
-    maxInvites:number;
+    @Column({type:'float',default:0})
+    price:number;
 
-    @Column()
-    validationDuration:number;
 
-    @Column({type:'timestamp',default:()=>'CURRENT_TIMESTAMP'})
-    createdAt:Date
 }
