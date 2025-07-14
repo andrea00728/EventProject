@@ -53,12 +53,14 @@ export default function Evenementform({ onNext }) {
       return;
     }
 
-    try {
-      const event = await createEvent(form);
-      onNext && onNext({ eventId: event.id });
-    } catch {
-      setError("Erreur lors de la création de l'événement.");
-    }
+  try {
+  const event = await createEvent(form);
+  onNext && onNext({ eventId: event.id });
+} catch (error) {
+  const errorMessage =
+    error?.response?.data?.message || "Erreur lors de la création de l'événement.";
+  setError(errorMessage);
+}
   };
 
   const selectedLocationName = () => locations.find(l => l.id === form.locationId)?.nom || "";

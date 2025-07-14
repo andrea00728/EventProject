@@ -8,6 +8,7 @@ import { User } from './entities/auth.entity';
 import { CreateUserDto } from './dto/create-auth.dto';
 import { Personnel } from 'src/entities/Personnel';
 import { Evenement } from 'src/entities/Evenement';
+import { Forfait } from 'src/entities/Forfait';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,8 @@ export class AuthService {
     private readonly personnelRepository: Repository<Personnel>,
     @InjectRepository(Evenement)
     private readonly eventRepository: Repository<Evenement>,
+    @InjectRepository(Forfait)
+    private readonly forfaitRepository:Repository<Forfait>
   ) {}
 
 
@@ -33,16 +36,25 @@ async validateUser(profile: any): Promise<any> {
   });
 
   const role = personnel?.role || 'organisateur';
+
   // Vérifie si déjà dans users
   let user = await this.userRepository.findOne({ where: { email } });
 
   if (!user) {
+    //  Trouve le forfait freemium (id 11)
+    const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
+
+    if (!freemium) {
+      throw new Error('Forfait freemium non trouvé'); // Sécurité
+    }
+
     user = this.userRepository.create({
       id: uuidv4(),
       email,
       name: displayName,
       photo: photos?.[0]?.value || '',
-      role, 
+      role,
+      forfait: {id:11} as Forfait, //  Lien vers le forfait freemium
     });
 
     await this.userRepository.save(user);
@@ -50,6 +62,7 @@ async validateUser(profile: any): Promise<any> {
 
   return user;
 }
+
 
   async login(user: any) {
   const payload = { 

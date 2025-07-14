@@ -24,8 +24,8 @@ export default function Accueil() {
           </div>
           <div className="flex justify-center md:justify-end w-full md:w-auto">
             <img
-              src="/src/assets/vecteezy_beautiful-vintage-group-silhouette-sharing-ideas-meeting_60786770.png"
-              className="w-full max-w-md md:max-w-xl object-contain rounded-2xl shadow-xl border border-indigo-100 transition-transform duration-300 hover:scale-105"
+              src="/src/assets/undraw_having-fun_kkeu.svg"
+             
               alt="Organisateurs"
             />
           </div>

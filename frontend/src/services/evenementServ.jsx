@@ -6,10 +6,20 @@ import axiosClient from "../api/axios-client";
  * @param {Object} eventData - Les données de l'événement (nom, type, theme, date, locationId, salleId)
  * @returns {Promise<Object>} - L'événement créé
  */
+// export const createEvent = async (eventData) => {
+//   const response = await axiosClient.post('/evenements', eventData);
+//   return response.data;
+// };
+
 export const createEvent = async (eventData) => {
-  const response = await axiosClient.post('/evenements', eventData);
-  return response.data;
+  try {
+    const response = await axiosClient.post('/evenements', eventData);
+    return response.data;
+  } catch (error) {
+    throw error; // pour que le frontend récupère le message
+  }
 };
+
 
 /**
  * Récupère tous les lieux.

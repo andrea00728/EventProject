@@ -10,11 +10,12 @@ import { JwtStrategy } from 'src/strategies/jwt.strategy';
 import { User } from './entities/auth.entity';
 import { Personnel } from 'src/entities/Personnel';
 import { Evenement } from 'src/entities/Evenement';
+import { Forfait } from 'src/entities/Forfait';
 
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User,Personnel, Evenement]),
+    TypeOrmModule.forFeature([User,Personnel, Evenement,Forfait]),
     PassportModule,
     JwtModule.register({
       secret: 'andreanadjasylvanoilaina',

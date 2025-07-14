@@ -35,108 +35,110 @@ import CreationPersonnel from "../pages/oranisation_personnel/creation_personnel
 import DashboardPersonnel from "../pages/oranisation_personnel/Dashboard_personnel.jsx";
 import Optionpersonnel from "../pages/oranisation_personnel/confirmationRefus.jsx";
 import AdminLayout from "../layouts/AdminLayout.jsx";
-import Dashboard from   "../pages/Admin/DashBoard.jsx";
+import Dashboard from "../pages/Admin/Dashboard.jsx";
 import EvenementAd from "../pages/Admin/Evenement.jsx";
 import Organisateur from "../pages/Admin/Organisateur.jsx";
 import Parametre from "../pages/Admin/Parametre.jsx";
 import LocationSalle from "../pages/Admin/LocationSalle.jsx";
-import CaissierInterface from "../pages/PersonnelCuisine/OrderGateway.jsx";
-
-const router = createBrowserRouter([
+import MyComponent from "../pages/PersonnelCuisine/OrderGateway.jsx";
+const router=createBrowserRouter([
+   
   {
-    path: "/",
-    element: (
-      <ProtectedRoute allowedRoles={["organisateur", "caissier", "cuisinier"]}>
-        <DefaultLayout />
-      </ProtectedRoute>
-    ),
-    children: [
-      {
-        path: "/",
-        element: <Navigate to="/accueil" />,
-      },
-      {
-        path: "/accueil",
-        element: <Accueil />,
-      },
-      {
-        path: "/evenement",
-        element: <Evenemenpage />,
-      },
-      {
-        path: "/apropos",
-        element: <Apropos />,
-      },
-      {
-        path: "/evenement/invites",
-        element: <ChoixModeInvite />,
-        children: [
-          {
-            path: "creationInv",
-            element: <InviteformWithId />,
-          },
-          {
-            path: "importerInv",
-            element: <ImportGuestsCSV />,
-          },
-          {
-            path: "affichageInv",
-            element: <AffichageInvite />,
-          },
-        ],
-      },
-      {
-        path: "/evenement/tables",
-        element: <TableLayout />,
-        children: [
-          {
-            path: "creationTable",
-            element: <Tablecreation />,
-          },
-          {
-            path: "affichageTable",
-            element: <Listetable />,
-          },
-          {
-            path: "3Dtable",
-            element: <Affichage3dTable />,
-          },
-        ],
-      },
-      {
-        path: "/evenement/evenement",
-        element: <EventLayout />,
-        children: [
-          {
-            path: "eventpadding",
-            element: <EventPending />,
-          },
-          {
-            path: "eventAccept",
-            element: <EventAccept />,
-          },
-        ],
-      },
-      {
-        path: "/evenement/personnel",
-        element: <OrganisationPersonnelLayout />,
-        children: [
-          {
-            path: "createPersonnel",
-            element: <CreationPersonnel />,
-          },
-          {
-            path: "dashboard_personnel",
-            element: <DashboardPersonnel />,
-          },
-        ],
-      },
-      {
-        path: "/paypal-success",
-        element: <PaypalSuccess />,
-      },
-    ],
-  },
+  path: "/",
+  element: (
+    <ProtectedRoute allowedRoles={["organisateur", "caissier", "cuisinier"]}>
+      <DefaultLayout />
+    </ProtectedRoute>
+  ),
+  children: [
+    {
+      path: "/",
+      element: <Navigate to="/accueil" />
+    },
+    {
+      path: "/accueil",
+      element: <Accueil />
+    },
+    {
+      path: "/evenement",
+      element: <Evenemenpage />
+    },
+    {
+      path: "/apropos",
+      element: <Apropos />
+    },
+    {
+      path: "/evenement/invites",
+      element: <ChoixModeInvite />,
+      children: [
+        {
+          path: "creationInv",
+          element: <InviteformWithId />
+        },
+        {
+          path: "importerInv",
+          element: <ImportGuestsCSV />
+        },
+        {
+          path: "affichageInv",
+          element: <AffichageInvite />
+        }
+      ]
+    },
+    {
+      path: "/evenement/tables",
+      element: <TableLayout />,
+      children: [
+        {
+          path: "creationTable",
+          element: <Tablecreation />
+        },
+        {
+          path: "affichageTable",
+          element: <Listetable />
+        },
+        {
+          path: "3Dtable",
+          element: <Affichage3dTable />
+        }
+      ]
+    },
+    {
+      path: "/evenement/evenement",
+      element: <EventLayout />,
+      children: [
+        {
+          path: "eventpadding",
+          element: <EventPending />
+        },
+        {
+          path: "eventAccept",
+          element: <EventAccept />
+        }
+      ]
+    },
+    {
+      path: "/evenement/personnel",
+      element:<OrganisationPersonnelLayout />,
+      children: [
+        {
+          path: "createPersonnel",
+          element:<CreationPersonnel />
+        },
+        {
+          path: "dashboard_personnel",
+          element: <DashboardPersonnel />
+        }
+      
+      ]
+    },
+    {
+      path: "/paypal-success",
+      element: <PaypalSuccess />
+    }
+  ]
+},
+
 
   /**
    * rout personnel accueil
@@ -242,7 +244,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/exemple",
-    element: <CaissierInterface />,
+    element: <MyComponent />,
   },
   /*********************************************************** */
   {

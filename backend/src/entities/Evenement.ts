@@ -55,9 +55,17 @@ export class Evenement {
   @OneToMany(() => Payment, (payment) => payment.event)
   payments: Payment[];
 
-    @ManyToOne(()=>User,(user)=>user.id,{nullable:false})
-    @JoinColumn({name:'utilisateur_id'})
-    user:User
+  /**
+   * natoko anio ko lony
+   */
+    // @ManyToOne(()=>User,(user)=>user.id,{nullable:false})
+    // @JoinColumn({name:'utilisateur_id'})
+    // user:User
+
+    @ManyToOne(() => User, (user) => user.evenement, { nullable: false ,onDelete: 'CASCADE'})
+    @JoinColumn({ name: 'utilisateur_id' })
+    user: User;
+
 
     @Column({type:'float',nullable:true})
     montanttransaction?: number;
