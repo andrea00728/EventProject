@@ -36,6 +36,8 @@ import { Payment } from './entities/payment.entity';
 import { GeminiModule } from './modules/gemini/gemini.module';
 import { SystemPrompt } from './entities/system-prompt.entity';
 import { SystemPromptModule } from './modules/system-prompt/system-prompt.module';
+import { ShortLinkController } from './controllers/short-link/short-link.controller';
+import { ShortLink } from './entities/ShortLink';
 
 @Module({
   imports: [
@@ -63,7 +65,7 @@ import { SystemPromptModule } from './modules/system-prompt/system-prompt.module
           username: dbUsername,
           password: dbPassword,
           database: dbDatabase,
-          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, SystemPrompt],
+          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, SystemPrompt, ShortLink],
      
           synchronize: true,
         };

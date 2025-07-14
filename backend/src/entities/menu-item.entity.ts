@@ -27,7 +27,4 @@ export class MenuItem {
 
   @ManyToOne(() => Menu, (menu) => menu.items)
   menu: Menu;
-
-  @ManyToOne(() => Evenement, (event) => event.menuItems, { onDelete: 'CASCADE' })
-  event: Evenement;
 }

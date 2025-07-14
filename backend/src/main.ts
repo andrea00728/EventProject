@@ -1,6 +1,8 @@
 // Patch pour rendre crypto global (pour TypeORM et NestJS)
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { join } from 'path';
+import * as express from 'express';
 
 
 async function bootstrap() {
@@ -11,6 +13,8 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true, // si tu utilises des cookies ou l'authentification
   });
+  app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
+
   
   await app.listen(process.env.PORT ?? 3000);
 

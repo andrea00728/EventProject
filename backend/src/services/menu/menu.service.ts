@@ -20,6 +20,7 @@ export class MenuService {
     const menu = this.menuRepository.create({ name, event: { id: eventId } });
     return this.menuRepository.save(menu);
   }
+  //const { eventId } = extractIdsFromUrl();
 
   async addMenuItem(
     menuId: number,
@@ -35,7 +36,7 @@ export class MenuService {
   
 
   async findMenuByEvent(eventId: number): Promise<Menu[]> {
-    return this.menuRepository.find({ where: { event: { id: eventId } }, relations: ['items'] });
+    return this.menuRepository.find({ where: { event: { id: eventId } }, relations: ['items', 'event'] });
   }
 
   async findAllMenus(): Promise<Menu[]> {

@@ -77,7 +77,7 @@ export class OrderService {
     // Récupérer tous les menuItems en une seule requête
     const menuItemIds = items.map((item) => item.menuItemId);
     const menuItems = await this.menuItemRepository.find({
-      where: { id: In(menuItemIds), event: { id: table.event.id } }, // Vérifier que les items appartiennent à l'événement
+      where: { id: In(menuItemIds) }, // Vérifier que les items appartiennent à l'événement
     });
   
     // Vérifier que tous les menuItems existent et ont assez de stock

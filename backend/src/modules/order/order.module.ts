@@ -12,10 +12,11 @@ import { Balance } from 'src/entities/balance.entity';
 import { Evenement } from 'src/entities/Evenement';
 import { Payment } from 'src/entities/payment.entity';
 import { Invite } from 'src/entities/Invite';
+import { ShortLink } from 'src/entities/ShortLink';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, OrderItem, TableEvent, MenuItem, User, Balance, Evenement, Payment, Invite]),
+    TypeOrmModule.forFeature([Order, OrderItem, TableEvent, MenuItem, User, Balance, Evenement, Payment, Invite, ShortLink]),
     AuthModule, // Import AuthModule to access UserRepository
   ],
   controllers: [OrderController],

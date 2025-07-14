@@ -7,28 +7,39 @@ import { Payment } from 'src/entities/payment.entity';
 import { TableEvent } from 'src/entities/Table';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ShortLink } from 'src/entities/ShortLink';
 
 @Controller('orders')
 export class OrderController {
   constructor(private orderService: OrderService,
     @InjectRepository(TableEvent)
     private readonly tableRepository: Repository<TableEvent>,
+    @InjectRepository(ShortLink)
+    private readonly shortLinkRepository: Repository<ShortLink>,
   ) {}
 
 // src/controllers/order/order.controller.ts
 @Post()
 @UsePipes(new ValidationPipe())
 async create(@Body() dto: CreateOrderDto): Promise<Order> {
+  // Récupérer eventId et tableId à partir du slug
+  const shortLink = await this.shortLinkRepository.findOne({
+    where: { slug: dto.slug },
+  });
+  if (!shortLink) {
+    throw new BadRequestException(`Lien court ${dto.slug} non trouvé`);
+  }
+
   // Vérifier que la table existe
   const table = await this.tableRepository.findOne({
-    where: { id: dto.tableId },
+    where: { id: shortLink.tableId, event: { id: shortLink.eventId } },
     relations: ['event'],
   });
   if (!table) {
-    throw new BadRequestException(`Table avec ID ${dto.tableId} non trouvée`);
+    throw new BadRequestException(`Table avec ID ${shortLink.tableId} non trouvée pour l'événement ${shortLink.eventId}`);
   }
   // Appeler createOrder sans eventId
-  return this.orderService.createOrder(dto.tableId, dto.items, dto.nom, dto.email);
+  return this.orderService.createOrder(shortLink.tableId, dto.items, dto.nom, dto.email);
 }
 
   @Get()
@@ -44,7 +55,8 @@ async create(@Body() dto: CreateOrderDto): Promise<Order> {
   @Patch(':id')
   @UsePipes(new ValidationPipe())
   updateOrder(@Param('id') id: number, @Body() body: CreateOrderDto) {
-    return this.orderService.updateOrder(id, body.tableId, body.items);
+    // Si vous voulez gérer les slugs ici aussi, vous devrez adapter la logique
+    return this.orderService.updateOrder(id, body.slug ? /* Récupérer tableId depuis slug */ body.tableId : body.tableId, body.items);
   }
 
   @Patch(':id/status')

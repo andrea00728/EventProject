@@ -35,6 +35,9 @@ import CreationPersonnel from "../pages/oranisation_personnel/creation_personnel
 import DashboardPersonnel from "../pages/oranisation_personnel/Dashboard_personnel.jsx";
 import Optionpersonnel from "../pages/oranisation_personnel/confirmationRefus.jsx";
 import SystemPromptManager from "../pages/SystemPromptManager.jsx";
+import MenuForm from "../pages/menu.jsx";
+import MenuItemForm from "../pages/menuItem.jsx";
+import MenuListWithCart from "../pages/commande.jsx";
 const router=createBrowserRouter([
    
   {
@@ -244,7 +247,21 @@ const router=createBrowserRouter([
     {
         path:"/systemprompt",
         element:<SystemPromptManager />
+    },
+    {
+      path:"/menuform",
+      element:<MenuForm />
+    },
+    {
+      path:"/menulist/:id",
+      element:<MenuListWithCart />
+    },
+    {
+      path:"/menutitemform",
+      element:<MenuItemForm />
     }
+
+    
     
 ]);
 

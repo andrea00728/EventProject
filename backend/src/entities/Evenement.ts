@@ -53,9 +53,6 @@ export class Evenement {
   @OneToMany(() => Balance, (balance) => balance.event)
   balances: Balance[];
 
-  @OneToMany(() => MenuItem, (menuItem) => menuItem.event, { cascade: true })
-  menuItems: MenuItem[];
-
   @OneToMany(() => Payment, (payment) => payment.event)
   payments: Payment[];
 
