@@ -8,7 +8,7 @@ import Notfound from "../pages/Notofoundpage";
 import Pagepublic from "../pages/Pagepublic";
 import Connexionorganisateur from "../pages/Connexionorganisateur";
 import Inscription from "../pages/Inscription";
-import Connnexiongoogle from "../services/connexiongoogl";
+import Connnexiongoogle from "../services/connexiongoogl.jsx";
 import Evenemenpage from "../pages/Evenementpage";
 import Apropos from "../pages/apropos";
 
@@ -84,7 +84,7 @@ const router=createBrowserRouter([
           element: <InviteformWithId />
         },
         {
-          path: "importerInv",
+          path: "",
           element: <ImportGuestsCSV />
         },
         {
@@ -102,7 +102,7 @@ const router=createBrowserRouter([
           element: <Tablecreation />
         },
         {
-          path: "affichageTable",
+          path: "",
           element: <Listetable />
         },
         {
@@ -120,7 +120,7 @@ const router=createBrowserRouter([
           element: <EventPending />
         },
         {
-          path: "eventAccept",
+          path: "",
           element: <EventAccept />
         }
       ]
@@ -128,13 +128,13 @@ const router=createBrowserRouter([
     {
       path: "/evenement/personnel",
       element:<OrganisationPersonnelLayout />,
-      children: [
+      children: [ 
         {
           path: "createPersonnel",
           element:<CreationPersonnel />
         },
         {
-          path: "dashboard_personnel",
+          path: "",
           element: <DashboardPersonnel />
         }
       
@@ -148,70 +148,66 @@ const router=createBrowserRouter([
 },
 
 
-  /**
-   * rout personnel accueil
-   */
-  {
+    /**
+     * rout personnel accueil
+     */
+   {
     path: "/",
     element: <PersonnelAccueil />,
     children: [
       {
         path: "/",
-        element: <Navigate to="/personnelAccueil" />,
+        element: <Navigate to="/personnelAccueil" />
       },
       {
         path: "/personnelAccueil",
         element: (
-          <ProtectedRoute allowedRoles={["accueil", "caissier", "cuisinier"]}>
+          <ProtectedRoute allowedRoles={["accueil", "caissier", "cuisinier","organisateur"]}>
             <DashboardpersAccueil />
           </ProtectedRoute>
-        ),
-      },
-    ],
+        )
+      }
+    ]
   },
-  {
+    {
     path: "/",
     element: <PersonnelCaisse />,
     children: [
       {
         path: "/",
-        element: <Navigate to="/personnelCaisse" />,
+        element: <Navigate to="/personnelCaisse" />
       },
       {
         path: "/personnelCaisse",
         element: (
-          <ProtectedRoute
-            allowedRoles={["caissier", "organisateur", "accueil"]}
-          >
+          <ProtectedRoute allowedRoles={["caissier", "organisateur", "accueil","cuisinier"]}>
             <DashboardpersCaisse />
           </ProtectedRoute>
-        ),
-      },
-    ],
+        )
+      }
+    ]
   },
-  {
+    {
     path: "/",
     element: <PersonnelCuisine />,
     children: [
       {
         path: "/",
-        element: <Navigate to="/personnelCuisine" />,
+        element: <Navigate to="/personnelCuisine" />
       },
       {
         path: "/personnelCuisine",
         element: (
-          <ProtectedRoute
-            allowedRoles={["cuisinier", "organisateur", "accueil"]}
-          >
+          <ProtectedRoute allowedRoles={["cuisinier", "organisateur", "accueil","caissier"]}>
             <DashboardpersCuisine />
           </ProtectedRoute>
-        ),
-      },
-    ],
+        )
+      }
+    ]
   },
   {
-    path: "/personnel/response",
-    element: <Optionpersonnel />,
+    path:"/personnel/response",
+    element:<Optionpersonnel/>
   },
   {
     path: "/",

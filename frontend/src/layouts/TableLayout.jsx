@@ -3,7 +3,7 @@ import { Link, Outlet } from "react-router-dom";
 export default function TableLayout() {
     const choixItems = [
         { path: "creationTable", name: "nouveaux table" },
-        { path: "affichageTable", name: "Tale enregistre" },
+        { path: "", name: "Tale enregistre" },
         { path: "3Dtable", name: "Graphique" },
     ];
 

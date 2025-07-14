@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createInviteForSpecificEvent } from "../../services/inviteService";
 import { getMyEvents } from "../../services/evenementServ";
 import { useStateContext } from "../../context/ContextProvider";
+import { checkEmail, textControll } from "../../services/controll_champs/controll_champs";
 
 const EventSelectionModal = ({ events, onSelectEvent, onClose }) => {
   return (
@@ -112,10 +113,12 @@ export default function InviteFormWithId({ onBack }) {
     if (!form.prenom.trim()) {
       newValidationErrors.prenom = "Le prénom est requis.";
     }
-    if (!form.email.trim()) {
-      newValidationErrors.email = "L'email est requis.";
-    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-      newValidationErrors.email = "Format d'email invalide.";
+   
+
+    const emailValid= await checkEmail(form.email.trim());
+
+    if(!emailValid){
+      setError("l'adresse email saisi n'existe pas");
     }
     if (!form.sex) {
       newValidationErrors.sex = "Le sexe est requis.";
@@ -172,7 +175,7 @@ export default function InviteFormWithId({ onBack }) {
             name="nom"
             type="text"
             value={form.nom}
-            onChange={handleChange}
+            onChange={(e)=>{setForm({...form,nom:textControll(e.target.value)})}}
             placeholder="Nom de l'invité"
             required
             className={`border ${
@@ -213,7 +216,7 @@ export default function InviteFormWithId({ onBack }) {
             name="prenom"
             type="text"
             value={form.prenom}
-            onChange={handleChange}
+            onChange={(e)=>{setForm({...form,prenom:textControll(e.target.value)})}}
             placeholder="Prénom de l'invité"
             required
             className={`border ${

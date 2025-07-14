@@ -1,4 +1,3 @@
-// src/event/event.service.ts
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Evenement } from 'src/entities/Evenement';
@@ -18,23 +17,18 @@ export class EvenementService {
 async create(dto: CreateEventDto): Promise<Evenement> {
   // Valider le lieu
   const location = await this.locationService.findLocationById(dto.locationId);
-
   // Valider la salle
   const salle = await this.locationService.findSalleById(dto.salleId);
-
   // Vérifier que la salle appartient bien au lieu
   if (salle.location.id !== location.id) {
     throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
   }
-
   // Validation des dates reçues
   const parsedDate = new Date(dto.date);
   const parsedDateFin = new Date(dto.date_fin);
-
   if (isNaN(parsedDate.getTime()) || isNaN(parsedDateFin.getTime())) {
     throw new BadRequestException('La date ou la date de fin est invalide');
   }
-
   // Vérifie s'il y a chevauchement d’événements dans cette salle
   const existingEvent = await this.evenementRepository.findOne({
     where: {
@@ -48,7 +42,6 @@ async create(dto: CreateEventDto): Promise<Evenement> {
   if (existingEvent) {
     throw new BadRequestException(`Cette salle est déjà réservée pendant cette période`);
   }
-
   // Création de l'utilisateur (juste référence par id)
   const user = new User();
   user.id = dto.utilisateur_id;
@@ -63,6 +56,7 @@ async create(dto: CreateEventDto): Promise<Evenement> {
     location,
     salle,
     user,
+    isPublic:dto.isPublic,
   });
 
   // Sauvegarde en base

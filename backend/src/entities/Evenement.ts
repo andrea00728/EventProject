@@ -75,5 +75,8 @@ export class Evenement {
     personnels:Personnel[];
     @Column({nullable:true})
     createdAt: Date;
+
+    @Column({type:'boolean',default:false})
+    isPublic:boolean;
 }
 

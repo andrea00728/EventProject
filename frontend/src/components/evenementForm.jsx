@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createEvent, getLocations, getSallesByLocation } from "../services/evenementServ";
+import { textControll } from "../services/controll_champs/controll_champs";
 
 const EVENT_TYPES = [
   { value: "mariage", label: "Mariage", color: "bg-pink-100 text-pink-700" },
@@ -18,6 +19,7 @@ export default function Evenementform({ onNext }) {
     date_fin: "",
     locationId: "",
     salleId: "",
+    isPublic:false,
   });
 
   const [locations, setLocations] = useState([]);
@@ -41,10 +43,13 @@ export default function Evenementform({ onNext }) {
     }
   }, [form.locationId]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  // const handleChange = (e) => {
+  //   setForm({ ...form, [e.target.name]: e.target.value });
+  // };
 
+   const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.type === "checkbox" ? e.target.checked : e.target.value });
+  };
   const onSubmit = async (e) => {
     e.preventDefault();
 
@@ -54,7 +59,8 @@ export default function Evenementform({ onNext }) {
     }
 
   try {
-  const event = await createEvent(form);
+  // const event = await createEvent(form);
+   const event = await createEvent({...form,isPublic:form.isPublic});
   onNext && onNext({ eventId: event.id });
 } catch (error) {
   const errorMessage =
@@ -80,7 +86,9 @@ export default function Evenementform({ onNext }) {
             <input
               name="nom"
               value={form.nom}
-              onChange={handleChange}
+              onChange={(e)=>{
+                setForm({...form,nom:textControll(e.target.value)})
+              }}
               placeholder="Ex: Mariage de Sarah & Paul"
               required
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
@@ -154,6 +162,16 @@ export default function Evenementform({ onNext }) {
               className={`border border-gray-300 rounded-xl px-5 py-3 ${form.locationId ? "cursor-pointer bg-gray-50" : "bg-gray-200"} focus:ring-2 focus:ring-indigo-200 transition`}
             />
           </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Événement public ?</label>
+            <input
+              type="checkbox"
+              name="isPublic"
+              checked={form.isPublic}
+              onChange={handleChange}
+              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+            />
+          </div>
           <div className="col-span-1 md:col-span-2 mt-4">
             <button
               type="submit"
@@ -167,7 +185,7 @@ export default function Evenementform({ onNext }) {
 
       {/* Modal lieux */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="relative w-full max-w-lg bg-white shadow-2xl rounded-2xl p-8">
             <button
               className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"
@@ -194,7 +212,7 @@ export default function Evenementform({ onNext }) {
 
       {/* Modal salles */}
       {modalSalleOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="relative w-full max-w-lg bg-white shadow-2xl rounded-2xl p-8">
             <button
               className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { getMyEvents } from "../../services/evenementServ";
 import { createTableByIdevent } from "../../services/tableService";
 import { useStateContext } from "../../context/ContextProvider";
+import { chiffreControll } from "../../services/controll_champs/controll_champs";
 
 export default function Tablecreation() {
   const { token } = useStateContext();
@@ -103,7 +104,6 @@ export default function Tablecreation() {
 
   return (
     <div className="relative">
-      {/* Formulaire de création de table */}
       <form
         onSubmit={onSubmit}
         className="p-8 bg-gray-50 max-w-md mx-auto shadow-lg rounded-xl mb-10 border border-gray-100"
@@ -118,7 +118,9 @@ export default function Tablecreation() {
               id="numero"
               name="numero"
               value={form.numero}
-              onChange={handleChange}
+              onChange={(e)=>{
+                setForm({...form,numero:chiffreControll(e.target.value)})
+              }}
               placeholder="Ex: 1, 2, G1, G2..."
               required
               className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
@@ -221,10 +223,8 @@ export default function Tablecreation() {
           </button>
         </div>
       </form>
-
-      {/* Modal pour sélectionner un événement */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="fixed inset-0 z-50 flex items-center justify-center mt-[80px] bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl mx-auto transform transition-all duration-300 ease-out scale-100 animate-fadeIn">
             <button
               onClick={() => setIsModalOpen(false)}

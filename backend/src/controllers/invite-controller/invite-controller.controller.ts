@@ -5,11 +5,14 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateInviteDto } from 'src/dto/CreateInviteDto';
 import { Invite } from 'src/entities/Invite';
 import { TableEvent } from 'src/entities/Table';
+import { ForfaitService } from 'src/services/forfait/forfait.service';
 import { GuestService } from 'src/services/invite-service/invite-service.service';
 
 @Controller('guests')
 export class GuestController {
-  constructor(private readonly guestService: GuestService) {}
+  constructor(private readonly guestService: GuestService,
+    private readonly forfaitService :ForfaitService,
+  ) {}
 
   /**
    * 
@@ -25,11 +28,15 @@ export class GuestController {
     console.log("user connecte:",req.user);
     const userId = req.user?.sub;
     if (!userId) throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
+    await this.forfaitService.checkForfaitExpiration(userId);
     const lastEvent = await this.guestService.findLastEventByUser(userId);
     if (!lastEvent) throw new HttpException('Aucun événement trouvé pour cet utilisateur', HttpStatus.BAD_REQUEST);
-
-    const guest = await this.guestService.createGuest(dto, lastEvent.id,userId);
+    try{
+       const guest = await this.guestService.createGuest(dto, lastEvent.id,userId);
     return this.guestService.findById(guest.id);
+    }catch(error){
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
   }
 
  
@@ -82,7 +89,7 @@ async importGuestsToSpecificEvent(
   if (!userId) {
     throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
   }
-
+    await this.forfaitService.checkForfaitExpiration(userId);
   const evenement = await this.guestService['evenementRepository'].findOne({
     where: { id: eventId, user: { id: userId } },
   });

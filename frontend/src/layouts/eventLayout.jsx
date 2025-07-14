@@ -4,7 +4,7 @@ import ChatWidget from "../pages/ChatWidget";
 export default function EventLayout() {
     const choixItems = [
         { path: "eventpadding", name: "Evenement en attent" },
-        { path: "eventAccept", name: "evenement Encours" },
+        { path: "", name: "evenement Encours" },
     ];
 
     return (
