@@ -12,16 +12,39 @@ const MenuItemForm = ({ menuId, token }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [itemCreated, setItemCreated] = useState(false); 
-  
+
+  const [isLoading, setIsLoading] = useState(false);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
-    if (!category.trim()) {
-      setMessage('La catégorie est obligatoire.');
+    setIsLoading(true);
+
+    if (!name.trim() || !description.trim() || !price || !category.trim() || !stock) {
+      setMessage('Veuillez remplir tous les champs obligatoires.');
+      setIsLoading(false);
       return;
     }
-    setLoading(true);
+
+    if (isNaN(parseFloat(price)) || parseFloat(price) < 0) {
+      setMessage('Le prix doit être un nombre valide supérieur ou égal à 0.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (isNaN(parseInt(stock, 10)) || parseInt(stock, 10) < 0) {
+      setMessage('Le stock doit être un nombre entier valide supérieur ou égal à 0.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (photo && !['image/jpeg', 'image/png'].includes(photo.type)) {
+      setMessage('Seuls les fichiers JPEG et PNG sont autorisés.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append('name', name);
@@ -34,96 +57,147 @@ const MenuItemForm = ({ menuId, token }) => {
       }
 
       await axios.post(`http://localhost:3000/menus/${menuId}/items`, formData, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
       });
 
       setMessage('Item créé avec succès !');
-      setItemCreated(true); c
+      setItemCreated(true);
+      setName('');
+      setDescription('');
+      setPrice('');
+      setCategory('');
+      setStock('');
+      setPhoto(null);
     } catch (error) {
-      setMessage('Erreur lors de la création de l’item.');
+      if (error.response?.status === 403) {
+        setMessage('Accès refusé : vous devez être organisateur.');
+      } else if (error.response?.status === 400) {
+        setMessage('Erreur dans les données fournies.');
+      } else {
+        setMessage('Erreur lors de la création de l\'item.');
+      }
+      console.error(error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  if (itemCreated) {
-    return <OrderForm />; 
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="max-w-md mx-auto p-6 bg-white rounded-md shadow-md" encType="multipart/form-data">
-      <h3 className="text-xl font-semibold mb-6 text-center text-green-600">Ajouter un Item au Menu</h3>
-      <div className="space-y-4">
-        <input
-          type="text"
-          required
-          placeholder="Nom"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
-        />
-        <textarea
-          required
-          placeholder="Description"
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-          className="w-full px-4 py-2 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-green-400"
-          rows={3}
-        />
-        <input
-          type="number"
-          step="0.01"
-          min="0"
-          required
-          placeholder="Prix"
-          value={price}
-          onChange={e => setPrice(e.target.value)}
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
-        />
-        <input
-          type="text"
-          required
-          placeholder="Catégorie (ex: main, starter, dessert, drink)"
-          value={category}
-          onChange={e => setCategory(e.target.value)}
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
-        />
-        <input
-          type="number"
-          min="0"
-          required
-          placeholder="Stock"
-          value={stock}
-          onChange={e => setStock(e.target.value)}
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
-        />
-        {/* Champ upload image */}
-        <input
-          type="file"
-          accept="image/*"
-          onChange={e => setPhoto(e.target.files[0])}
-          className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
-                     file:rounded-md file:border-0
-                     file:text-sm file:font-semibold
-                     file:bg-green-50 file:text-green-700
-                     hover:file:bg-green-100
-                     cursor-pointer"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-3 rounded-md text-white font-semibold transition ${
-            loading ? 'bg-green-300 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
-          }`}
-        >
-          {loading ? 'Chargement...' : 'Créer l’item'}
-        </button>
-        {message && <p className="mt-3 text-center text-sm text-red-600">{message}</p>}
-      </div>
-    </form>
+    <div className="max-w-lg mx-auto p-6 bg-white dark:bg-gray-900 rounded-md shadow-md mt-10">
+      {itemCreated ? (
+        <div className="text-center">
+          <p className="text-green-600 mb-4">{message}</p>
+          <button
+            onClick={() => setItemCreated(false)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Ajouter un autre item
+          </button>
+        </div>
+      ) : (
+        <>
+          <h2 className="text-2xl font-semibold mb-6 text-center text-blue-600 dark:text-blue-400">
+            Ajouter un Item au Menu
+          </h2>
+          {message && (
+            <p className={`text-center mb-4 ${message.includes('Erreur') ? 'text-red-600' : 'text-green-600'}`}>
+              {message}
+            </p>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block mb-1 font-medium text-gray-700 dark:text-gray-300">
+                Nom de l'item
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                placeholder="Entrez le nom de l'item"
+                required
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium text-gray-700 dark:text-gray-300">
+                Description
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                placeholder="Entrez une description"
+                rows="4"
+                required
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium text-gray-700 dark:text-gray-300">
+                Prix (€)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                placeholder="Entrez le prix"
+                required
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium text-gray-700 dark:text-gray-300">
+                Catégorie
+              </label>
+              <input
+                type="text"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                placeholder="Entrez la catégorie (ex: Entrées, Plats)"
+                required
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium text-gray-700 dark:text-gray-300">
+                Stock
+              </label>
+              <input
+                type="number"
+                value={stock}
+                onChange={(e) => setStock(e.target.value)}
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                placeholder="Entrez le stock disponible"
+                required
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium text-gray-700 dark:text-gray-300">
+                Photo (optionnel)
+              </label>
+              <input
+                type="file"
+                accept="image/jpeg,image/png"
+                onChange={(e) => setPhoto(e.target.files[0])}
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`w-full py-3 rounded-md text-white font-semibold transition ${
+                isLoading ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {isLoading ? 'Ajout en cours...' : 'Ajouter l\'Item'}
+            </button>
+          </form>
+        </>
+      )}
+    </div>
   );
 };
 

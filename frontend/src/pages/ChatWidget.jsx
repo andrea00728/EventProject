@@ -147,7 +147,7 @@ export default function ChatWidget() {
                     sendMessage();
                   }
                 }}
-                placeholder="Pose ta question... "
+                placeholder="Posez votre question... "
               />
               <button
                 onClick={sendMessage}

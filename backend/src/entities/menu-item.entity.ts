@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { Menu } from './menu.entity';
+import { Evenement } from './Evenement';
 
 @Entity()
 export class MenuItem {

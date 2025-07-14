@@ -140,6 +140,10 @@ import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 import { PaypalService } from './services/paypal/paypal.service';
 import { PaypalWebhookService } from './services/paypal-webhook/paypal-webhook.service';
 import { PaypalModule } from './modules/paypal/paypal.module';
+import { SystemPrompt } from './entities/system-prompt.entity';
+import { SystemPromptModule } from './modules/system-prompt/system-prompt.module';
+import { ShortLinkController } from './controllers/short-link/short-link.controller';
+import { ShortLink } from './entities/ShortLink';
 
 
 @Module({
@@ -172,7 +176,7 @@ import { PaypalModule } from './modules/paypal/paypal.module';
           username: dbUsername,
           password: dbPassword,
           database: dbDatabase,
-          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, Forfait],
+          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, Forfait, SystemPrompt, ShortLink],
      
           synchronize: true, 
         };
@@ -220,6 +224,8 @@ import { PaypalModule } from './modules/paypal/paypal.module';
     OrderModule,
     SharedModule,
     GeminiModule,
+    SystemPrompt,
+    SystemPromptModule,
    
     ForfaitModule,
     PaypalModule,

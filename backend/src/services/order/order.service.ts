@@ -92,6 +92,7 @@ export class OrderService {
     savedOrder.items = await this.orderItemRepository.save(orderItems);
     return this.orderRepository.save(savedOrder);
   }
+
   async findOrdersByTable(tableId: number): Promise<(Order & { total: number })[]> {
     const orders = await this.orderRepository.find({
       where: { table: { id: tableId } },
@@ -188,11 +189,11 @@ export class OrderService {
     return this.orderRepository.save(order);
   }
 
-  async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served'/*, userId: string*/): Promise<Order> {
-    // const user = await this.userRepository.findOne({ where: { id: userId } });
-    // if (!user || user.role !== 'cuisinier') {
-    //   throw new UnauthorizedException('Only cuisinier can update order status');
-    // }
+  async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served', userId: string): Promise<Order> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user || user.role !== 'cuisinier') {
+      throw new UnauthorizedException('Only cuisinier can update order status');
+    }
     const order = await this.orderRepository.findOne({
       where: { id: orderId },
       relations: ['items', 'items.menuItem', 'table', 'table.event'],

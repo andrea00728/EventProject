@@ -8,6 +8,7 @@ import { Personnel } from './Personnel';
 import { Menu } from './menu.entity';
 import { Balance } from './balance.entity';
 import { Payment } from './payment.entity';
+import { MenuItem } from './menu-item.entity';
 
 
 @Unique(['nom','user'])

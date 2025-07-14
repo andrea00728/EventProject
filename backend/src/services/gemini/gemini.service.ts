@@ -1,34 +1,22 @@
 import { Injectable, HttpException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { SystemPromptService } from '../system-prompt/system-prompt.service';
 
 @Injectable()
 export class GeminiService {
-  private readonly GEMINI_URL ='https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent';
+  private readonly GEMINI_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent';
   private readonly API_KEY = process.env.GEMINI_API_KEY;
 
-  constructor(private readonly httpService: HttpService) {
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly systemPromptService: SystemPromptService,
+  ) {
     console.log('✅ Clé API Gemini chargée :', this.API_KEY);
   }
 
   async generate(prompt: string): Promise<string> {
-    // Prompt système qui limite le domaine de réponse
-    const systemPrompt = `
-Tu es une intelligence artificielle experte de la plateforme "MasterTable", une application web de gestion d’événements avec plans de table interactifs.
-
-Tu peux répondre uniquement à des questions en lien avec :
-- La création et la gestion d’événements
-- Le placement d’invités sur des plans de tables
-- La restauration associée à un événement
-- Les QR codes, la galerie photo, les modules sociaux (chat, mini-jeux)
-- Le tableau de bord de l’organisateur
-- Les abonnements, les statistiques et les technologies utilisées dans MasterTable
-
-Si la question sort de ce cadre, tu dois répondre :
-"Je suis désolé, je ne peux répondre qu’aux questions liées à la plateforme MasterTable."
-
-Toujours répondre en français, de façon claire et concise.
-`;
+    const systemPrompt = await this.systemPromptService.getActivePrompt();
 
     const body = {
       contents: [
@@ -36,7 +24,7 @@ Toujours répondre en français, de façon claire et concise.
           role: 'user',
           parts: [
             {
-              text: `${systemPrompt}\n\nQuestion de l'utilisateur : ${prompt}`,
+              text: `${systemPrompt.content}\n\nQuestion de l'utilisateur : ${prompt}`,
             },
           ],
         },

@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsArray, IsEnum, Min, ValidateNested, IsOptional, IsEmail } from 'class-validator';
+import { IsString, IsInt, IsArray, IsEnum, Min, ValidateNested, IsOptional, IsEmail, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateOrderItemDto {
@@ -11,8 +11,9 @@ export class CreateOrderItemDto {
 }
 
 export class CreateOrderDto {
-  @IsInt()
-  tableId: number;
+  @IsString()
+  @IsNotEmpty()
+  slug: string
 
   @IsString()
   @IsOptional()
@@ -26,6 +27,7 @@ export class CreateOrderDto {
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
   items: CreateOrderItemDto[];
+  tableId: number;
 }
 
 export class UpdateOrderStatusDto {

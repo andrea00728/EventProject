@@ -46,6 +46,9 @@ import LocationSalle from "../pages/Admin/LocationSalle.jsx";
 import MyComponent from "../pages/PersonnelCuisine/OrderGateway.jsx";
 import Test from "../layouts/test.jsx";
 import MenuListWithCart from "../pages/Menu/MenuListWithCart.jsx";
+import SystemPromptManager from "../pages/SystemPromptManager.jsx";
+import MenuForm from "../pages/menu.jsx";
+import MenuItemForm from "../pages/menuItem.jsx";
 const router=createBrowserRouter([
    
   {
@@ -286,6 +289,23 @@ const router=createBrowserRouter([
     path: "menus",
     element: <MenuListWithCart />
   },
+  ,
+    {
+        path:"/systemprompt",
+        element:<SystemPromptManager />
+    },
+    {
+      path:"/menuform",
+      element:<MenuForm />
+    },
+    {
+      path:"/menulist/:id",
+      element:<MenuListWithCart />
+    },
+    {
+      path:"/menutitemform",
+      element:<MenuItemForm />
+    }
 ]);
 
 export default router;
