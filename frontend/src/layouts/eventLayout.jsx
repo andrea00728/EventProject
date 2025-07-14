@@ -3,7 +3,7 @@ import { Link, Outlet } from "react-router-dom";
 export default function EventLayout() {
     const choixItems = [
         { path: "eventpadding", name: "Evenement en attent" },
-        { path: "eventAccept", name: "evenement Encours" },
+        { path: "", name: "evenement Encours" },
     ];
 
     return (

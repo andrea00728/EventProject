@@ -1,4 +1,4 @@
-import { IsDateString, IsNotEmpty, IsNumber } from "class-validator";
+import { IsBoolean, IsDateString, IsNotEmpty, IsNumber } from "class-validator";
 
 export class CreateEventDto {
   utilisateur_id:string;
@@ -8,16 +8,25 @@ export class CreateEventDto {
 
    @IsNotEmpty()
   theme: string;
+
   @IsNotEmpty()
   @IsDateString()
   date: string;
-   @IsNotEmpty()
+
+  @IsNotEmpty()
   @IsDateString()
   date_fin:string;
 
   @IsNumber()
   locationId: number;
+
   @IsNumber()
   montanttransaction?: number;
   salleId: number;
+
+  @IsBoolean()
+  isPublic: boolean;
+
+  
+
 }

@@ -26,30 +26,6 @@ export class PersonnelService {
     },
   });
 
-  // async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
-  //   const evenement = await this.evenementRepository.findOne({
-  //     where: {
-  //       id: Number(dto.evenementId),
-  //       user: {
-  //         id: userId,
-  //       },
-  //     },
-  //     relations: ['user'],
-  //   });
-
-  //   if (!evenement) {
-  //     throw new BadRequestException("Événement non trouvé pour cet utilisateur.");
-  //   }
-
-  //   const personnel = this.personnelRepository.create({
-  //     nom: dto.nom,
-  //     email: dto.email,
-  //     role: dto.role,
-  //     evenement,
-  //   });
-
-  //   return this.personnelRepository.save(personnel);
-  // }
 
   async findByEvenement(evenementId: number): Promise<Personnel[]> {
     return this.personnelRepository.find({
@@ -118,7 +94,7 @@ async RefuseEmail(token: string): Promise<string> {
       throw new BadRequestException("Invitation déjà confirmée ou refusée.");
     }
     personnel.status = 'attent'; // Vous pouvez changer le statut à 'accepter' ou un autre statut selon votre logique
-    await this.personnelRepository.save(personnel);
+    await this.personnelRepository.remove(personnel);
 
     return " Invitation refusée avec succès.";
   } catch (err) {

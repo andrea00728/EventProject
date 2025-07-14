@@ -3,7 +3,7 @@ import { Link, Outlet } from "react-router-dom";
 export default function ChoixModeInvite() {
     const choixItems = [
         { path: "creationInv", name: "Créer manuellement" },
-        { path: "importerInv", name: "Importer / CSV" },
+        { path: "", name: "Importer / CSV" },
         { path: "affichageInv", name: "Liste des Invites" },
     ];
 

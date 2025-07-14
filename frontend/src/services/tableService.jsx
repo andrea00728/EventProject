@@ -33,9 +33,9 @@ export const getAvailableSeats = async (tableId) => {
 };
 
 export const updateTablePosition = async (tableId, position, token) => {
-  const response = await axiosClient.put(
+  const response = await axiosClient.patch(
     `/tables/${tableId}/position`,
-    { position },
+     position ,
     {
       headers: {
         Authorization: `Bearer ${token}`,

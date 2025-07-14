@@ -6,7 +6,7 @@ import Notfound from "../pages/Notofoundpage";
 import Pagepublic from "../pages/Pagepublic";
 import Connexionorganisateur from "../pages/Connexionorganisateur";
 import Inscription from "../pages/Inscription";
-import Connnexiongoogle from "../services/connexiongoogl";
+import Connnexiongoogle from "../services/connexiongoogl.jsx";
 import Evenemenpage from "../pages/Evenementpage";
 import Apropos from "../pages/apropos";
 
@@ -72,7 +72,7 @@ const router=createBrowserRouter([
           element: <InviteformWithId />
         },
         {
-          path: "importerInv",
+          path: "",
           element: <ImportGuestsCSV />
         },
         {
@@ -90,7 +90,7 @@ const router=createBrowserRouter([
           element: <Tablecreation />
         },
         {
-          path: "affichageTable",
+          path: "",
           element: <Listetable />
         },
         {
@@ -108,7 +108,7 @@ const router=createBrowserRouter([
           element: <EventPending />
         },
         {
-          path: "eventAccept",
+          path: "",
           element: <EventAccept />
         }
       ]
@@ -122,7 +122,7 @@ const router=createBrowserRouter([
           element:<CreationPersonnel />
         },
         {
-          path: "dashboard_personnel",
+          path: "",
           element: <DashboardPersonnel />
         }
       
@@ -154,7 +154,7 @@ const router=createBrowserRouter([
     {
       path: "/personnelAccueil",
       element: (
-        <ProtectedRoute allowedRoles={["accueil", "caissier", "cuisinier"]}>
+        <ProtectedRoute allowedRoles={["accueil", "caissier", "cuisinier","organisateur"]}>
           <DashboardpersAccueil />
         </ProtectedRoute>
       )
@@ -172,7 +172,7 @@ const router=createBrowserRouter([
     {
       path: "/personnelCaisse",
       element: (
-        <ProtectedRoute allowedRoles={["caissier", "organisateur", "accueil"]}>
+        <ProtectedRoute allowedRoles={["caissier", "organisateur", "accueil","cuisinier"]}>
           <DashboardpersCaisse />
         </ProtectedRoute>
       )
@@ -190,7 +190,7 @@ const router=createBrowserRouter([
     {
       path: "/personnelCuisine",
       element: (
-        <ProtectedRoute allowedRoles={["cuisinier", "organisateur", "accueil"]}>
+        <ProtectedRoute allowedRoles={["cuisinier", "organisateur", "accueil","caissier"]}>
           <DashboardpersCuisine />
         </ProtectedRoute>
       )
