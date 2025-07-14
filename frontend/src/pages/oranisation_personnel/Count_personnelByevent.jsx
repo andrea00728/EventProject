@@ -7,7 +7,6 @@ import ListePersonnel from './Listepersonnel';
 export default function PersonnelCountDashboard() {
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [selectedEventName, setSelectedEventName] = useState('');
-  const [count, setCount] = useState(null);
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [error, setError] = useState('');
@@ -37,15 +36,6 @@ export default function PersonnelCountDashboard() {
     setSelectedEventName(event.nom || `Événement ${event.id}`);
     setCount(null);
     setError('');
-
-    try {
-      const result = await CountPersonnelByEvent(event.id, token);
-      setCount(result.count);
-    } catch (err) {
-      setError('Erreur lors du comptage du personnel.');
-    } finally {
-      setLoadingCount(false);
-    }
   };
 
   return (
