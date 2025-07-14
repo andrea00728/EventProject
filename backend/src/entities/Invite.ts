@@ -13,7 +13,7 @@ export class Invite {
   @Column()
   nom: string;
 
-  @Column()
+  @Column({ nullable: true })
   prenom: string;
 
   @Column()
