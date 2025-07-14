@@ -1,11 +1,19 @@
+<<<<<<< HEAD
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+=======
+import { BadRequestException, Injectable } from '@nestjs/common';
+>>>>>>> 0ef7910015ba8bcaffd4a3e5719f6f870aba665c
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Evenement } from 'src/entities/Evenement';
 import { Personnel } from 'src/entities/Personnel';
 import { CreatePersonnelDto } from 'src/dto/PersonnelDto';
+<<<<<<< HEAD
 import { JwtService } from '@nestjs/jwt';
 import * as nodemailer from 'nodemailer';
+=======
+
+>>>>>>> 0ef7910015ba8bcaffd4a3e5719f6f870aba665c
 @Injectable()
 export class PersonnelService {
   constructor(
@@ -14,6 +22,7 @@ export class PersonnelService {
 
     @InjectRepository(Evenement)
     private evenementRepository: Repository<Evenement>,
+<<<<<<< HEAD
 
     private jwtService:JwtService,
   ) {}
@@ -50,6 +59,34 @@ export class PersonnelService {
 
   //   return this.personnelRepository.save(personnel);
   // }
+=======
+  ) {}
+
+  async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
+    const evenement = await this.evenementRepository.findOne({
+      where: {
+        id: Number(dto.evenementId),
+        user: {
+          id: userId,
+        },
+      },
+      relations: ['user'],
+    });
+
+    if (!evenement) {
+      throw new BadRequestException("Événement non trouvé pour cet utilisateur.");
+    }
+
+    const personnel = this.personnelRepository.create({
+      nom: dto.nom,
+      email: dto.email,
+      role: dto.role,
+      evenement,
+    });
+
+    return this.personnelRepository.save(personnel);
+  }
+>>>>>>> 0ef7910015ba8bcaffd4a3e5719f6f870aba665c
 
   async findByEvenement(evenementId: number): Promise<Personnel[]> {
     return this.personnelRepository.find({
@@ -61,6 +98,7 @@ export class PersonnelService {
       relations: ['evenement'],
     });
   }
+<<<<<<< HEAD
 
   /************  Back pour l'affichage des personnels par event pour l'admin   *************** */
 
@@ -210,4 +248,6 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
     });
     return count;
   }
+=======
+>>>>>>> 0ef7910015ba8bcaffd4a3e5719f6f870aba665c
 }

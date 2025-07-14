@@ -97,7 +97,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ScheduleModule } from '@nestjs/schedule'; // Gardons ScheduleModule à sa place habituelle
 
-// Importez toutes vos entités
 import { Evenement } from './entities/Evenement';
 import { Localisation } from './entities/Location';
 import { Invitation } from './entities/Invitation';

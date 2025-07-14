@@ -39,7 +39,7 @@ export class MenuService {
   }
 
   async findAllMenus(): Promise<Menu[]> {
-    return this.menuRepository.find({ relations: ['items'] });
+    return this.menuRepository.find({ relations: ['items','event'] });
   }
 
   async getMenuItem(menuItemId: number): Promise<MenuItem> {

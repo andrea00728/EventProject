@@ -1,7 +1,9 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import React from "react";
 import DefaultLayout from "../layouts/DefaultLayout";
+import { createBrowserRouter, Navigate, Router } from "react-router-dom";
 import GuestLayout from "../layouts/GuestLayout";
 import Accueil from "../pages/Accueil";
+import Evenement from "../pages/Evenement";
 import Notfound from "../pages/Notofoundpage";
 import Pagepublic from "../pages/Pagepublic";
 import Connexionorganisateur from "../pages/Connexionorganisateur";
@@ -12,6 +14,7 @@ import Apropos from "../pages/apropos";
 
 // import Table3DScene from "../components/table3D";
 import ChoixModeInvite from "../layouts/ChoixModeInvite";
+import Inviteform from "../pages/choixModInvite/inviteForm";
 import ImportGuestsCSV from "../pages/choixModInvite/importation";
 import AffichageInvite from "../pages/choixModInvite/affichageInvite";
 import InviteformWithId from "../pages/choixModInvite/InviteFormparId";
@@ -41,6 +44,8 @@ import Organisateur from "../pages/Admin/Organisateur.jsx";
 import Parametre from "../pages/Admin/Parametre.jsx";
 import LocationSalle from "../pages/Admin/LocationSalle.jsx";
 import MyComponent from "../pages/PersonnelCuisine/OrderGateway.jsx";
+import Test from "../layouts/test.jsx";
+import MenuListWithCart from "../pages/Menu/MenuListWithCart.jsx";
 const router=createBrowserRouter([
    
   {
@@ -84,7 +89,7 @@ const router=createBrowserRouter([
           element: <AffichageInvite />
         }
       ]
-    },
+    },    
     {
       path: "/evenement/tables",
       element: <TableLayout />,
@@ -276,6 +281,10 @@ const router=createBrowserRouter([
   {
     path: "*",
     element: <Notfound />,
+  },
+  {
+    path: "menus",
+    element: <MenuListWithCart />
   },
 ]);
 

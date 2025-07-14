@@ -36,7 +36,6 @@ async validateUser(profile: any): Promise<any> {
   });
 
   const role = personnel?.role || 'organisateur';
-
   // Vérifie si déjà dans users
   let user = await this.userRepository.findOne({ where: { email } });
 
@@ -62,7 +61,6 @@ async validateUser(profile: any): Promise<any> {
 
   return user;
 }
-
 
   async login(user: any) {
   const payload = { 

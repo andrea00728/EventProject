@@ -126,7 +126,6 @@ async findLastEventByUserId(userId: string): Promise<Evenement | null> {
  * requete de suppression d'un evenement
  */
 
-
 async deleteEvent(id: number, userId: string): Promise<{ message: string }> {
   const event = await this.evenementRepository.findOne({
     where: { id, user: { id: userId } },

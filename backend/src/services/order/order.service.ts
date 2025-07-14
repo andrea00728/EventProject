@@ -92,7 +92,6 @@ export class OrderService {
     savedOrder.items = await this.orderItemRepository.save(orderItems);
     return this.orderRepository.save(savedOrder);
   }
-
   async findOrdersByTable(tableId: number): Promise<(Order & { total: number })[]> {
     const orders = await this.orderRepository.find({
       where: { table: { id: tableId } },
@@ -102,6 +101,7 @@ export class OrderService {
       ...order,
     }));
   }
+  
 
   async cancelOrder(orderId: number): Promise<void> {
     const order = await this.orderRepository.findOne({
