@@ -167,7 +167,7 @@ export default function Evenementform({ onNext }) {
 
       {/* Modal lieux */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="relative w-full max-w-lg bg-white shadow-2xl rounded-2xl p-8">
             <button
               className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"
@@ -194,7 +194,7 @@ export default function Evenementform({ onNext }) {
 
       {/* Modal salles */}
       {modalSalleOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="relative w-full max-w-lg bg-white shadow-2xl rounded-2xl p-8">
             <button
               className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"

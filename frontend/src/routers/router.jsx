@@ -116,7 +116,7 @@ const router=createBrowserRouter([
     {
       path: "/evenement/personnel",
       element:<OrganisationPersonnelLayout />,
-      children: [
+      children: [ 
         {
           path: "createPersonnel",
           element:<CreationPersonnel />

@@ -103,7 +103,6 @@ export default function Tablecreation() {
 
   return (
     <div className="relative">
-      {/* Formulaire de création de table */}
       <form
         onSubmit={onSubmit}
         className="p-8 bg-gray-50 max-w-md mx-auto shadow-lg rounded-xl mb-10 border border-gray-100"
@@ -221,10 +220,8 @@ export default function Tablecreation() {
           </button>
         </div>
       </form>
-
-      {/* Modal pour sélectionner un événement */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="fixed inset-0 z-50 flex items-center justify-center mt-[80px] bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl mx-auto transform transition-all duration-300 ease-out scale-100 animate-fadeIn">
             <button
               onClick={() => setIsModalOpen(false)}

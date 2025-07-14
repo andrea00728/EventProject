@@ -7,9 +7,12 @@ import { Invite } from 'src/entities/Invite';
 import { TableEvent } from 'src/entities/Table';
 import { GuestService } from 'src/services/invite-service/invite-service.service';
 import { TableService } from 'src/services/table-service/table-service.service';
+import { ForfaitModule } from '../forfait/forfait.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Invite, TableEvent,Evenement,User])],
+  imports: [TypeOrmModule.forFeature([Invite, TableEvent,Evenement,User]),
+  ForfaitModule
+],
   providers: [GuestService, TableService],
   controllers: [GuestController],
   exports: [GuestService],
