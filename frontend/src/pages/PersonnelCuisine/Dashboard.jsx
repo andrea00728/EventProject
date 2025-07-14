@@ -78,7 +78,6 @@ export default function DashboardpersCuisine() {
     return () => {
       socket.off("updateStatus");
     };
-    
   }, []);
 
   const changeDataBaseStatus = async (id, status) => {
