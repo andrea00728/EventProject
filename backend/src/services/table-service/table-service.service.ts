@@ -168,35 +168,6 @@ async updatePlaceReserve(tableId: number): Promise<void> {
     return table;
   }
 
-//   async DeleteTable(id: number, userId: number): Promise<{ message: string }> {
-//   // Récupérer la table avec ses relations
-//   const table = await this.tableRepository.findOne({
-//     where: { id },
-//     relations: ['event', 'event.user', 'guests'],
-//   });
-
-//   // Vérifier si la table existe
-//   if (!table) {
-//     throw new BadRequestException("Table non trouvée");
-//   }
-
-//   // Vérifier que la table appartient bien à l'utilisateur connecté
-//   if (table.event.user.id !== userId) {
-//     throw new UnauthorizedException("Vous n'avez pas l'autorisation de supprimer cette table");
-//   }
-
-//   // Détacher les invités associés à cette table
-//   for (const guest of table.guests) {
-//     guest.table = null;
-//     guest.place = null;
-//     await this.guestRepository.save(guest);
-//   }
-
-//   // Supprimer la table
-//   await this.tableRepository.remove(table);
-
-//   return { message: "Table supprimée avec succès" };
-// }
 
 
  async updateTablePosition(tableId: number, position: { left: number; top: number }): Promise<TableEvent> {

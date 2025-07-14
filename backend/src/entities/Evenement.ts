@@ -40,16 +40,9 @@ export class Evenement {
   @OneToMany(() => Invite, (invite) => invite.event,{onDelete: 'CASCADE'})
   invites: Invite[];
 
-  /**
-   * natoko anio ko lony
-   */
-    // @ManyToOne(()=>User,(user)=>user.id,{nullable:false})
-    // @JoinColumn({name:'utilisateur_id'})
-    // user:User
-
     @ManyToOne(() => User, (user) => user.evenement, { nullable: false ,onDelete: 'CASCADE'})
-@JoinColumn({ name: 'utilisateur_id' })
-user: User;
+    @JoinColumn({ name: 'utilisateur_id' })
+    user: User;
 
 
     @Column({type:'float',nullable:true})
@@ -59,5 +52,8 @@ user: User;
     personnels:Personnel[];
     @Column({nullable:true})
     createdAt: Date;
+
+    @Column({type:'boolean',default:false})
+    isPublic:boolean;
 }
 

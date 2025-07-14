@@ -23,16 +23,6 @@ export class PersonnelController {
     return this.personnelService.findByEvenement(Number(eventId)); 
   }
 
-//   @Get('/confirm')
-// async confirm(@Query('token') token: string) {
-//   return this.personnelService.confirmEmail(token);
-// }
-
-// @Get('/reject')
-// async reject(@Query('token') token: string) {
-//   return this.personnelService.RefuseEmail(token);
-// }
-
 @Get('/response')
 async response(@Query('token') token: string,@Query('action') action: string) {
   if (action === 'confirm') {

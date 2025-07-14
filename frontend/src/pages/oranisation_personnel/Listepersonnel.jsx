@@ -35,8 +35,21 @@ export default function ListePersonnel({ eventId, token, refreshTrigger }) {
       }
     };
     fetchPersonnels();
+
+    const Interval=setInterval(fetchPersonnels, 6000);
+    return () => clearInterval(Interval);
   }, [eventId, token, refreshTrigger]);
 
+  const appliFilter=(data)=>{
+    let result=data;
+    if (selectedRole !== "all") {
+      result = result.filter((p) => p.role === selectedRole);
+    }
+    if (selectedStatus !== "all") {
+      result = result.filter((p) => p.status === selectedStatus);
+    }
+    setFiltered(result);
+  }
   const handleFilter = (role) => {
     setSelectedRole(role);
   

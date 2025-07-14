@@ -88,12 +88,6 @@ export default function Table({ eventId, onNext, onBack }) {
         <p className="text-center text-gray-500 mb-8">
           Créez et visualisez vos tables pour organiser vos invités.
         </p>
-        {/* <button
-          className="mb-6 mx-auto block px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow hover:bg-indigo-700 transition"
-          onClick={() => setModalTypeOpen(true)}
-        >
-          Choisir le type de table
-        </button> */}
         <CreateTable onSubmitTable={handleCreateTable} selectedType={selectedType} />
       </div>
 

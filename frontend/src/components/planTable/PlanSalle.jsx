@@ -96,7 +96,7 @@ export default function PlanSalle({ event, tables, setTables }) {
   // Met à jour la position localement et côté backend
   const handleTableMove = async (tableId, position) => {
     try {
-      await updateTablePosition(tableId, position);
+      await updateTablePosition(tableId, position,token);
       if (setTables) {
         setTables((prev) =>
           prev.map((t) => (t.id === tableId ? { ...t, position } : t))
