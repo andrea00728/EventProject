@@ -3,6 +3,8 @@ import { useStateContext } from "../context/ContextProvider";
 import { Link, Navigate, Outlet } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Profil from "../util/profils";
+import ForfaitPage from "../pages/forfaitpage/forfaitpage";
+import ChatWidget from "../pages/ChatWidget";
 
 export default function DefaultLayout() {
   const { token, role, isLoading } = useStateContext();
