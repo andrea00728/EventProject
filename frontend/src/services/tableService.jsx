@@ -44,3 +44,25 @@ export const updateTablePosition = async (tableId, position, token) => {
   );
   return response.data;
 };
+
+export const updateRotation = async (tableId, rotation, token) => {
+  const response = await axiosClient.patch(
+    `/tables/${tableId}/rotation`,
+    { rotation },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return response.data;
+};
+
+export const deleteTable = async (tableId, token) => {
+  const response = await axiosClient.delete(`/tables/${tableId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
