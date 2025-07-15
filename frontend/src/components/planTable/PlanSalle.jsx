@@ -296,11 +296,11 @@ export default function PlanSalle({ event, tables, setTables }) {
         <div className="absolute top-4 left-1/2 -translate-x-1/2 text-xl font-extrabold text-indigo-700 tracking-wide drop-shadow-lg">
            Plan des Tables 
           <br/>
-          {selectedPlace && (
+          {/* {selectedPlace && (
             <span className="ml-4 text-yellow-600 font-semibold">
               Invité sélectionné : {selectedPlace.guestName}
             </span>
-          )}
+          )} */}
         </div>
 
         {tables.map((table) => (
