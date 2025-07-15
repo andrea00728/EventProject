@@ -17,6 +17,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateTableDto } from 'src/dto/CreateTaleDto';
+import { Invite } from 'src/entities/Invite';
 import { TableEvent } from 'src/entities/Table';
 import { EvenementService } from 'src/services/evenement/evenement.service';
 import { TableService } from 'src/services/table-service/table-service.service';
@@ -168,9 +169,17 @@ async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<TableEvent> 
     return this.tableService.updateRotation(tableId, rotation);
   }
 
+  /**
+   * 
+   * @param tableId 
+   * @returns 
+   * suppression de table
+   */
+
   @Delete(':tableId')
   @UseGuards(AuthGuard('jwt'))
   async deleteTableEvent(@Param('tableId', ParseIntPipe) tableId: number): Promise<void> {
     return this.tableService.deleteTableEvent(tableId);
   }
+
 }

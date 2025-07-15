@@ -1,4 +1,4 @@
-import {Controller,Post, Body,Param, Get, UploadedFile, UseInterceptors, ParseIntPipe, Put, HttpException, HttpStatus, Req, UseGuards, Delete, BadRequestException,
+import {Controller,Post, Body,Param, Get, UploadedFile, UseInterceptors, ParseIntPipe, Put, HttpException, HttpStatus, Req, UseGuards, Delete, BadRequestException, Patch,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -281,6 +281,30 @@ async getTablesByEventId(
 
     return await this.guestService.assignGuestToTable(id, tableId, place, userId);
   }
+
+
+
+/**
+ * 
+ * modification du placement de l'invite
+ * 
+ */
+
+  @Patch(':inviteId/reassign')
+@UseGuards(AuthGuard('jwt'))
+async reassignGuest(
+  @Param('inviteId') inviteId: string,
+  @Body() data: { tableId: number; place: number },
+  @Req() req: any
+) {
+  const userId = req.user?.sub;
+  const id = parseInt(inviteId,10);
+  if(isNaN(id)){
+    throw new BadRequestException('InviteId non valide')
+  }
+  return this.guestService.rassignGuestToTable(id, data.tableId, data.place, userId);
+}
+
 }
 
 
