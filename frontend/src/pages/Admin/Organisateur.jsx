@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
 import { deleteManager, getManagerList } from "../../services/inviteService";
 import { formatDate } from "./Evenement";
-import { MdFileDownload, MdSearch } from "react-icons/md";
+import {
+  MdFileDownload,
+  MdSearch,
+  MdOutlineCalendarMonth,
+  MdFilterList,
+} from "react-icons/md";
 import { TbTrashXFilled } from "react-icons/tb";
 import { getAllManagerEvents } from "../../services/evenementServ";
 import ModalManager from "./ModalManager";
 import DeleteModal from "./DeleteModal";
 import { FaUsers } from "react-icons/fa6";
 import { handleDownloadXLSX } from "../../services/downloadXLSX";
-import { motion, AnimatePresence } from "framer-motion";
+import { DataGrid } from "@mui/x-data-grid";
+import { motion } from "framer-motion";
+import ForfaitModal from "../../components/Modal/ForfaitModal";
 
 export default function Organisateur() {
   const [data, setData] = useState([]);
@@ -19,7 +26,7 @@ export default function Organisateur() {
   const [managerName, setManagerName] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedManager, setSelectedManager] = useState(null);
-  const [loading, setLoading] = useState(true); // ← Nouveau : état de chargement
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     document.title = "Organisateur - Admin";
@@ -27,9 +34,13 @@ export default function Organisateur() {
       try {
         setLoading(true);
         const data = await getManagerList();
+        console.log(data);
         setData(data);
       } catch (error) {
-        console.error("Erreur lors de la récupération des organisateurs :", error);
+        console.error(
+          "Erreur lors de la récupération des organisateurs :",
+          error
+        );
       } finally {
         setLoading(false);
       }
@@ -87,134 +98,124 @@ export default function Organisateur() {
 
   return (
     <div className="py-10 px-8 h-screen bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col">
-      <h2 className="text-2xl font-semibold mb-6 text-gray-800 border-b border-gray-200 pb-4 flex items-center">
-        <FaUsers className="mr-3" /> Liste des organisateurs
-      </h2>
+      <div>
+        <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center">
+          <FaUsers className="mr-3" /> Liste des organisateurs
+        </h2>
+      </div>
 
       {/* Zone de recherche */}
-      <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
-        <div className="flex items-center bg-gray-100 rounded-xl px-4 py-2 shadow-inner">
-          <MdSearch className="text-gray-500 text-xl mr-2" />
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={handleDownload}
+          className="bg-[#cfc6c4] hover:bg-[#c2bab8] rounded-2xl px-6 py-2 text-[17px] text-black font-semibold cursor-pointer"
+        >
+          Exporter en CSV <MdFileDownload className="inline ml-2" />
+        </button>
+      </div>
+      <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+        <div className="flex items-center gap-2">
+          <MdFilterList className="text-gray-500" />
+          <select
+            className="p-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cfc6c4]"
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+          >
+            <option value="name">Nom</option>
+            <option value="email">Email</option>
+          </select>
+        </div>
+        <div className="relative w-full md:w-1/3">
+          <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Rechercher..."
-            className="bg-transparent outline-none text-gray-700 w-52"
+            placeholder={`Rechercher par ${filterType}...`}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#cfc6c4]"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-
-        <div>
-          <select
-            className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 font-semibold cursor-pointer shadow-inner focus:outline-none"
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-          >
-            <option value="name">Par Nom</option>
-            <option value="email">Par Email</option>
-          </select>
-        </div>
-
-        <button
-          onClick={handleDownload}
-          className="inline-flex items-center gap-2 bg-[#cfc6c4] hover:bg-[#bfb4b0] rounded-2xl px-6 py-2 text-[17px] font-semibold text-black transition duration-200 focus:outline-none focus:ring-2 focus:ring-[#a89f9c]"
-        >
-          Exporter en CSV <MdFileDownload />
-        </button>
       </div>
 
       <div className="flex-1 overflow-auto bg-white shadow-2xl rounded-2xl p-4">
         {loading ? (
-          <table className="w-full border-collapse animate-pulse min-w-[600px]">
-            <thead className="bg-gray-100 border-b border-gray-300">
-              <tr>
-                <th className="py-3 px-6 text-start font-semibold text-gray-700">
-                  Nom
-                </th>
-                <th className="py-3 px-6 text-start font-semibold text-gray-700">
-                  Email
-                </th>
-                <th className="py-3 px-6 text-start font-semibold text-gray-700">
-                  Date de création
-                </th>
-                <th className="py-3 px-6 text-center font-semibold text-gray-700">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: 5 }).map((_, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  {Array.from({ length: 4 }).map((__, idx) => (
-                    <td key={idx} className="py-3 px-6">
-                      <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <p className="text-center text-lg py-5">Chargement...</p>
         ) : filteredData.length === 0 ? (
           <p className="text-center text-lg py-5 text-gray-600">
             Aucun organisateur correspondant
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse min-w-[600px]">
-              <thead className="bg-gray-100 border-b border-gray-300">
-                <tr>
-                  <th className="py-3 px-6 text-start font-semibold text-gray-700">
-                    Nom
-                  </th>
-                  <th className="py-3 px-6 text-start font-semibold text-gray-700">
-                    Email
-                  </th>
-                  <th className="py-3 px-6 text-start font-semibold text-gray-700">
-                    Date de création
-                  </th>
-                  <th className="py-3 px-6 text-center font-semibold text-gray-700">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {filteredData.map((organisateur, index) => (
-                    <motion.tr
-                      key={organisateur.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2, delay: index * 0.05 }}
-                      className="hover:bg-gray-50"
-                    >
-                      <td className="py-3 px-6">{organisateur.name}</td>
-                      <td className="py-3 px-6">{organisateur.email}</td>
-                      <td className="py-3 px-6">
-                        {formatDate(organisateur.createdAt)}
-                      </td>
-                      <td className="py-3 px-6 text-center flex justify-center gap-2 items-center">
-                        <button
+          <div className="h-[600px] w-full overflow-auto">
+            <DataGrid
+              rows={filteredData.map((org) => ({
+                id: org.id,
+                name: org.name,
+                email: org.email,
+                nameForfait: org.forfait?.nom || "Aucun forfait",
+                createdAt: formatDate(org.createdAt),
+                forfaitexpirationdate: formatDate(org.forfaitexpirationdate),
+                fullData: org,
+              }))}
+              columns={[
+                { field: "name", headerName: "Nom", flex: 1, minWidth: 150 },
+                { field: "email", headerName: "Email", flex: 1, minWidth: 200 },
+                {
+                  field: "nameForfait",
+                  headerName: "Forfait",
+                  flex: 1,
+                  minWidth: 150,
+                },
+                {
+                  field: "createdAt",
+                  headerName: "Date de création",
+                  flex: 1,
+                  minWidth: 150,
+                },
+                {
+                  field: "forfaitexpirationdate",
+                  headerName: "Date d'expiration",
+                  flex: 1,
+                  minWidth: 170,
+                },
+                {
+                  field: "actions",
+                  headerName: "Actions",
+                  flex: 1,
+                  minWidth: 220,
+                  sortable: false,
+                  renderCell: (params) => {
+                    const org = params.row.fullData;
+                    return (
+                      <div className="flex gap-2 items-center pt-2">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() => {
-                            handleTakeManagerEvents(organisateur.id);
-                            setManagerName(organisateur.name);
+                            handleTakeManagerEvents(org.id);
+                            setManagerName(org.name);
                           }}
-                          className="bg-[#cfc6c4] hover:bg-[#bfb4b0] px-4 py-1 rounded-2xl font-semibold text-black transition duration-200 focus:outline-none focus:ring-2 focus:ring-[#a89f9c]"
+                          className="inline-flex items-center gap-2 bg-[#cfc6c4] hover:bg-[#bfb3b1] text-sm text-black font-semibold py-1.5 px-4 rounded-full shadow-md transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#cfc6c4]"
                         >
-                          Ses événements
-                        </button>
+                          <MdOutlineCalendarMonth className="text-lg" />
+                          <span>Ses événements</span>
+                        </motion.button>
+
                         <button
-                          onClick={() => openDeleteModal(organisateur)}
+                          onClick={() => openDeleteModal(org)}
                           className="text-red-600 hover:text-red-800 text-2xl transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-400 rounded"
                         >
                           <TbTrashXFilled />
                         </button>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+                      </div>
+                    );
+                  },
+                },
+              ]}
+              pageSize={5}
+              rowsPerPageOptions={[5, 10, 20]}
+              disableSelectionOnClick
+              autoHeight
+            />
           </div>
         )}
 

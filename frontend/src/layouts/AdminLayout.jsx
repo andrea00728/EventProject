@@ -44,7 +44,7 @@ export default function AdminLayout() {
   const [isHover, setIsHover] = useState(false);
   return (
     <>
-      <div className="flex justify-center items-center">
+      <div className="flex justify-center items-center overflow-hidden">
         <AnimatePresence>
           <motion.header
             className=" text-black h-[99vh] bg-[#cfc6c4]  rounded-4xl items-start ml-2 p-4"
@@ -113,7 +113,7 @@ export default function AdminLayout() {
             </nav>
           </motion.header>
         </AnimatePresence>
-        <div className={`px-2 flex-4/5 h-full`}>
+        <div className={`flex-1 overflow-auto bg-white rounded-2xl shadow-2xl ml-4`}>
           <Outlet/>
         </div>
       </div>

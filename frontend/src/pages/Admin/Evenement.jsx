@@ -9,6 +9,7 @@ import {
   MdFilterList,
 } from "react-icons/md";
 import { handleDownloadXLSX } from "../../services/downloadXLSX";
+import { DataGrid } from "@mui/x-data-grid";
 
 // Helper function to format date
 export const formatDate = (dateString) => {
@@ -64,7 +65,6 @@ export default function EvenementAd() {
     setIsModalOpen(false);
   };
 
-  // Filtrage dynamique
   const filteredData = data.filter((event) => {
     let value = "";
     switch (filterField) {
@@ -90,22 +90,24 @@ export default function EvenementAd() {
   });
 
   const handleExportExcel = () => {
-    const page = (filteredData === 0 ? data : filteredData).map((value) => ({
-      Nom: value.nom,
-      Type: value.type,
-      Theme: value.theme,
-      Date_debut: value.date,
-      Date_fin: value.date_fin,
-      Localisation: value.location.nom,
-      Organisateur: value.user.name,
-    }));
+    const page = (filteredData.length === 0 ? data : filteredData).map(
+      (value) => ({
+        Nom: value.nom,
+        Type: value.type,
+        Theme: value.theme,
+        Date_debut: value.date,
+        Date_fin: value.date_fin,
+        Localisation: value.location.nom,
+        Organisateur: value.user.name,
+      })
+    );
     handleDownloadXLSX(page, "liste_evenements");
   };
 
   return (
     <div className="p-8 h-screen bg-white rounded-2xl shadow-2xl border border-gray-200">
       <div>
-        <h2 className="text-2xl font-semibold mb-6 text-gray-800 border-b border-gray-200 pb-4 flex items-center">
+        <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center">
           <MdCalendarToday className="mr-3" /> Liste des événements
         </h2>
       </div>
@@ -147,91 +149,65 @@ export default function EvenementAd() {
         </div>
       </div>
 
-      <div className="flex justify-center items-center pt-5">
-        <div className="bg-white shadow-2xl rounded-2xl p-4 overflow-y-auto">
-          {loading && (
-            <table className="w-full border-collapse animate-pulse">
-              <thead>
-                <tr>
-                  <th className="p-3 text-start font-semibold">Nom</th>
-                  <th className="p-3 text-start font-semibold">Type</th>
-                  <th className="p-3 text-start font-semibold">Thème</th>
-                  <th className="p-3 text-start font-semibold">Date début</th>
-                  <th className="p-3 text-start font-semibold">Date fin</th>
-                  <th className="p-3 text-start font-semibold">Localisation</th>
-                  <th className="p-3 text-start font-semibold">Organisateur</th>
-                  <th className="p-3 text-start font-semibold">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <tr key={index}>
-                    {Array.from({ length: 8 }).map((__, idx) => (
-                      <td key={idx} className="p-3">
-                        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {error && (
-            <p className="text-center text-lg py-5 text-red-600">{error}</p>
-          )}
-          {!loading && !error && filteredData.length === 0 && (
-            <p className="text-center text-lg py-5">Aucun événement trouvé.</p>
-          )}
-          {!loading && !error && filteredData.length > 0 && (
-            <table>
-              <thead>
-                <tr>
-                  <th className="p-3 text-start font-semibold">Nom</th>
-                  <th className="p-3 text-start font-semibold">Type</th>
-                  <th className="p-3 text-start font-semibold">Thème</th>
-                  <th className="p-3 text-start font-semibold">Date début</th>
-                  <th className="p-3 text-start font-semibold">Date fin</th>
-                  <th className="p-3 text-start font-semibold">Localisation</th>
-                  <th className="p-3 text-start font-semibold">Organisateur</th>
-                  <th className="p-3 text-start font-semibold">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData.map((value, key) => (
-                  <tr key={key}>
-                    <td className="p-3 text-start ">{value.nom}</td>
-                    <td className="p-3 text-start ">{value.type}</td>
-                    <td className="p-3 text-start ">{value.theme}</td>
-                    <td className="p-3 text-start ">
-                      {formatDate(value.date)}
-                    </td>
-                    <td className="p-3 text-start ">
-                      {formatDate(value.date_fin)}
-                    </td>
-                    <td className="p-3 text-start ">{value.location.nom}</td>
-                    <td className="p-3 text-start ">{value.user.name}</td>
-                    <td>
-                      <button
-                        className="py-2 px-4 text-black font-semibold rounded-2xl border-none text-start bg-[#cfc6c4] cursor-pointer hover:bg-[#c2bab8] transition duration-200"
-                        onClick={() => openModal(key)}
-                      >
-                        Détail <FaEye className="ml-1 mb-1 inline" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          <ModalEvenement
-            isOpen={isModalOpen}
-            onClose={closeModal}
-            data={modalData}
-          />
-        </div>
+      <div className="bg-white shadow-2xl rounded-2xl p-4">
+        {loading ? (
+          <p className="text-center text-lg py-5">Chargement...</p>
+        ) : error ? (
+          <p className="text-center text-lg py-5 text-red-600">{error}</p>
+        ) : filteredData.length === 0 ? (
+          <p className="text-center text-lg py-5">Aucun événement trouvé.</p>
+        ) : (
+          <div className="h-[600px] w-full overflow-auto">
+            <DataGrid
+              autoHeight
+              rows={filteredData.map((event, index) => ({
+                id: index,
+                nom: event.nom,
+                type: event.type,
+                theme: event.theme,
+                date: formatDate(event.date),
+                date_fin: formatDate(event.date_fin),
+                localisation: event.location.nom,
+                organisateur: event.user.name,
+                action: index,
+              }))}
+              columns={[
+                { field: "nom", headerName: "Nom", flex: 1 },
+                { field: "type", headerName: "Type", flex: 1 },
+                { field: "theme", headerName: "Thème", flex: 1 },
+                { field: "date", headerName: "Date début", flex: 1 },
+                { field: "date_fin", headerName: "Date fin", flex: 1 },
+                { field: "localisation", headerName: "Localisation", flex: 1 },
+                { field: "organisateur", headerName: "Organisateur", flex: 1 },
+                {
+                  field: "action",
+                  headerName: "Action",
+                  flex: 1,
+                  sortable: false,
+                  renderCell: (params) => (
+                    <button
+                      onClick={() => openModal(params.value)}
+                      className="group flex items-center mt-2 gap-2 bg-[#cfc6c4] hover:bg-[#bfb3b1] text-sm text-black font-medium py-1.5 px-4 rounded-full shadow-md transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#cfc6c4]"
+                    >
+                      <FaEye className="text-gray-700 group-hover:text-black transition-transform duration-200 group-hover:scale-110" />
+                      <span className="tracking-wide">Voir détail</span>
+                    </button>
+                  ),
+                },
+              ]}
+              pageSize={5}
+              rowsPerPageOptions={[5, 10, 20]}
+              disableSelectionOnClick
+            />
+          </div>
+        )}
       </div>
+
+      <ModalEvenement
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        data={modalData}
+      />
     </div>
   );
 }

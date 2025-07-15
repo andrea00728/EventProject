@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Profil from "../util/profils";
 import ForfaitPage from "../pages/forfaitpage/forfaitpage";
 import ChatWidget from "../pages/ChatWidget";
+import { getUserForfait } from "../services/forfaitService";
 
 export default function DefaultLayout() {
   const { token, role, isLoading } = useStateContext();

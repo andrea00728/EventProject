@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { MdLocationCity, MdRoom, MdAdd, MdEdit, MdDelete, MdSave, MdClose, MdCheck } from "react-icons/md";
+import {
+  MdLocationCity,
+  MdRoom,
+  MdAdd,
+  MdEdit,
+  MdDelete,
+  MdSave,
+  MdClose,
+  MdCheck,
+  MdCalendarToday
+} from "react-icons/md";
 
 export default function LocationSalle() {
   const [locations, setLocations] = useState([]);
@@ -69,13 +79,13 @@ export default function LocationSalle() {
 
   // Open delete confirmation modal for location
   const openDeleteLocationModal = (id, nom) => {
-    setDeleteItem({ type: 'location', id, nom });
+    setDeleteItem({ type: "location", id, nom });
     setShowDeleteModal(true);
   };
 
   // Open delete confirmation modal for salle
   const openDeleteSalleModal = (id, nom) => {
-    setDeleteItem({ type: 'salle', id, nom });
+    setDeleteItem({ type: "salle", id, nom });
     setShowDeleteModal(true);
   };
 
@@ -85,17 +95,20 @@ export default function LocationSalle() {
 
     const { type, id } = deleteItem;
     try {
-      if (type === 'location') {
+      if (type === "location") {
         await axios.delete(`${API_URL}/${id}`);
         setLocations(locations.filter((loc) => loc.id !== id));
         setError(null);
-      } else if (type === 'salle') {
+      } else if (type === "salle") {
         await axios.delete(`${API_URL}/salles/${id}`);
         fetchLocations();
         setError(null);
       }
     } catch (err) {
-      setError(err.response?.data?.message || `Erreur lors de la suppression de la ${type}`);
+      setError(
+        err.response?.data?.message ||
+          `Erreur lors de la suppression de la ${type}`
+      );
     } finally {
       setShowDeleteModal(false);
       setDeleteItem(null);
@@ -109,7 +122,9 @@ export default function LocationSalle() {
       return;
     }
     try {
-      await axios.post(`${API_URL}/${locationId}/salles`, { nom: newSalleName });
+      await axios.post(`${API_URL}/${locationId}/salles`, {
+        nom: newSalleName,
+      });
       setNewSalleName("");
       setSelectedLocationId(null);
       fetchLocations();
@@ -138,9 +153,11 @@ export default function LocationSalle() {
 
   return (
     <div className="p-8 bg-white h-screen overflow-auto rounded-2xl shadow-2xl border border-gray-200">
-      <h2 className="text-2xl font-semibold mb-6 text-gray-800 border-b border-gray-200 pb-4 flex items-center">
-        <MdLocationCity className="mr-3" /> Paramètres - Gestion des Lieux et Salles
-      </h2>
+      <div>
+        <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center">
+          <MdLocationCity className="mr-3" /> Gestion des lieux et salles
+        </h2>
+      </div>
 
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
@@ -153,7 +170,10 @@ export default function LocationSalle() {
         <h3 className="text-lg font-semibold mb-4 flex items-center">
           <MdLocationCity className="mr-2" /> Ajouter un lieu
         </h3>
-        <form onSubmit={handleCreateLocation} className="flex gap-4 items-center">
+        <form
+          onSubmit={handleCreateLocation}
+          className="flex gap-4 items-center"
+        >
           <input
             type="text"
             value={newLocationName}
@@ -179,7 +199,9 @@ export default function LocationSalle() {
               Confirmer la suppression
             </h3>
             <p className="mb-6">
-              Êtes-vous sûr de vouloir supprimer {deleteItem.type === 'location' ? 'le lieu' : 'la salle'} "{deleteItem.nom}" ?
+              Êtes-vous sûr de vouloir supprimer{" "}
+              {deleteItem.type === "location" ? "le lieu" : "la salle"} "
+              {deleteItem.nom}" ?
             </p>
             <div className="flex justify-end gap-4">
               <button
@@ -251,7 +273,9 @@ export default function LocationSalle() {
                       <MdEdit className="text-xl" />
                     </button>
                     <button
-                      onClick={() => openDeleteLocationModal(location.id, location.nom)}
+                      onClick={() =>
+                        openDeleteLocationModal(location.id, location.nom)
+                      }
                       className="p-3 bg-red-600 text-white rounded-md hover:bg-red-800 transition duration-200"
                       title="Supprimer le lieu"
                     >
@@ -293,7 +317,8 @@ export default function LocationSalle() {
                 className="mb-4 p-3 bg-gray-600 text-white rounded-md hover:bg-gray-800 transition duration-200"
                 title="Ajouter une salle"
               >
-                <MdAdd className="text-xl inline mr-2" />ajouer une salle
+                <MdAdd className="text-xl inline mr-2" />
+                ajouer une salle
               </button>
             )}
 
@@ -307,7 +332,9 @@ export default function LocationSalle() {
                   <thead>
                     <tr>
                       <th className="p-3 text-start font-semibold">Nom</th>
-                      <th className="p-3 text-start font-semibold flex justify-end">Actions</th>
+                      <th className="p-3 text-start font-semibold flex justify-end">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -351,7 +378,9 @@ export default function LocationSalle() {
                                 <MdEdit className="text-xl" />
                               </button>
                               <button
-                                onClick={() => openDeleteSalleModal(salle.id, salle.nom)}
+                                onClick={() =>
+                                  openDeleteSalleModal(salle.id, salle.nom)
+                                }
                                 className="p-3 bg-red-600 text-white rounded-md hover:bg-red-800 transition duration-200"
                                 title="Supprimer la salle"
                               >

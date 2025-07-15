@@ -25,7 +25,8 @@ export class QrCodeService {
     if (!shortLink) {
 
 
-      const { nanoid } = await import('nanoid');
+      // const { nanoid } = await import('nanoid');
+      const { nanoid } = require('nanoid');
       const slug = nanoid(8);// Slug de 8 caractères
       const originalUrl = `http://localhost:3000/menus/event/${eventId}/table/${tableId}`;
 

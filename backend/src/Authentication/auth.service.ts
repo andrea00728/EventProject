@@ -82,7 +82,8 @@ async validateUser(profile: any): Promise<any> {
 
   async getManagerList(): Promise<any> {
     return this.userRepository.find({
-      where: { role: 'organisateur' }
+      where: { role: 'organisateur' },
+      relations: ['forfait'],
     });
   }
 

@@ -14,6 +14,7 @@ import {
   MdRoom,
   MdQrCode,
   MdStarBorderPurple500,
+  MdFilterList 
 } from "react-icons/md";
 import { formatDate } from "./Evenement";
 import PlanSalle from "../../components/planTable/PlanSalle";
@@ -21,11 +22,14 @@ import { getTablesByEventId } from "../../services/tableService";
 import { handleDownloadXLSX } from "../../services/downloadXLSX";
 import { getPersonnelListByEventId } from "../../services/personnel_service";
 import { motion, AnimatePresence } from "framer-motion";
+import { DataGrid } from "@mui/x-data-grid";
+
 
 const ModalEvenement = ({ isOpen, onClose, data }) => {
   const [activeTab, setActiveTab] = useState("invites");
 
   if (!isOpen) return null;
+  
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -229,21 +233,48 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
 
 export default ModalEvenement;
 
-function Invites({ data }) {
+function Invites({data}){
+  const [filterField, setFilterField] = useState("nom");
+  const [searchValue, setSearchValue] = useState("");
+
   const handleExportExcel = () => {
-    const page = data.invites.map((p) => ({
+    const exportData = filteredRows.map((p) => ({
       Nom: p.nom,
-      Prenom: p.prenom,
+      Prénom: p.prenom,
       Email: p.email,
       Sexe: p.sex,
       Place: p.place,
-      QrCode: "https://example.com/qrcode", // Placeholder for QR code URL
+      QrCode: "https://example.com/qrcode", // ou p.qrCode
     }));
-    handleDownloadXLSX(page, "liste_invites");
+    handleDownloadXLSX(exportData, "liste_invites");
   };
 
+  const columns = [
+    { field: "nom", headerName: "Nom", flex: 1 },
+    { field: "prenom", headerName: "Prénom", flex: 1 },
+    { field: "email", headerName: "Email", flex: 1 },
+    { field: "sex", headerName: "Sexe", flex: 0.7 },
+    { field: "place", headerName: "Place", flex: 0.7 },
+    {
+      field: "qrCode",
+      headerName: "QR Code",
+      flex: 0.5,
+      sortable: false,
+      renderCell: () => <MdQrCode className="text-3xl text-gray-700" />,
+    },
+  ];
+
+  const rows = data.invites.map((invite, index) => ({
+    id: index,
+    ...invite,
+  }));
+
+  const filteredRows = rows.filter((row) =>
+    row[filterField]?.toString().toLowerCase().includes(searchValue.toLowerCase())
+  );
+
   return (
-    <>
+    <div className="p-4">
       <div className="flex justify-end mb-4">
         <button
           onClick={handleExportExcel}
@@ -252,42 +283,52 @@ function Invites({ data }) {
           Exporter en CSV <MdFileDownload className="inline ml-2" />
         </button>
       </div>
-      <div className="p-4">
-        <h3 className="text-2xl ml-5 my-3 font-semibold text-gray-800">
-          Liste des invités
-        </h3>
-        <div className="overflow-y-auto flex justify-center">
-          <table>
-            <thead>
-              <tr>
-                <th className="p-3 text-start">Nom</th>
-                <th className="p-3 text-start">Prénom</th>
-                <th className="p-3 text-start">Email</th>
-                <th className="p-3 text-start">Sexe</th>
-                <th className="p-3 text-start">Place</th>
-                <th className="p-3 text-start">Qr Code</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.invites.map((value, key) => (
-                <tr key={key}>
-                  <td className="p-3 text-start">{value.nom}</td>
-                  <td className="p-3 text-start">{value.prenom}</td>
-                  <td className="p-3 text-start">{value.email}</td>
-                  <td className="p-3 text-start">{value.sex}</td>
-                  <td className="p-3 text-start">{value.place}</td>
-                  <td className="p-3 text-start text-4xl">
-                    <MdQrCode />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+      <h3 className="text-2xl ml-5 my-3 font-semibold text-gray-800">
+        Liste des invités
+      </h3>
+
+      {/* Filtrage dynamique */}
+      <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+        <div className="flex items-center gap-2">
+          <MdFilterList className="text-gray-500" />
+          <select
+            className="p-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cfc6c4]"
+            value={filterField}
+            onChange={(e) => setFilterField(e.target.value)}
+          >
+            <option value="nom">Nom</option>
+            <option value="prenom">Prénom</option>
+            <option value="email">Email</option>
+            <option value="sex">Sexe</option>
+            <option value="place">Place</option>
+          </select>
+        </div>
+        <div className="relative w-full md:w-1/3">
+          <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder={`Rechercher par ${filterField}...`}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#cfc6c4]"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+          />
         </div>
       </div>
-    </>
+
+      <div style={{ width: "100%", height: 500 }}>
+        <DataGrid
+          rows={filteredRows}
+          columns={columns}
+          pageSize={5}
+          rowsPerPageOptions={[]}
+          autoHeight
+        />
+      </div>
+    </div>
   );
 }
+
 
 function TablePlace({ data }) {
   const [tables, setTables] = useState([]);

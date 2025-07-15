@@ -69,16 +69,16 @@ export default function SystemPromptManager() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-3xl font-extrabold text-gray-900 mb-6">
-            Gestion des Prompts Système
-          </h2>
+          <h3 className="text-2xl font-semibold text-gray-900 mb-6">
+            Gestion des Prompts de l'IA
+          </h3>
         </motion.div>
 
         {error && (

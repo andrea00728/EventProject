@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { QrcodeController } from './qrcode.controller';
+import { QrCodeController } from './qrcode.controller';
 
 describe('QrcodeController', () => {
-  let controller: QrcodeController;
+  let controller: QrCodeController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [QrcodeController],
+      controllers: [QrCodeController],
     }).compile();
 
-    controller = module.get<QrcodeController>(QrcodeController);
+    controller = module.get<QrCodeController>(QrCodeController);
   });
 
   it('should be defined', () => {
