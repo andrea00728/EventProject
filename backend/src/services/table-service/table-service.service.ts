@@ -1,7 +1,7 @@
 
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CreateTableDto } from 'src/dto/CreateTaleDto';
 import { Invite } from 'src/entities/Invite';
 import { TableEvent } from 'src/entities/Table';
@@ -113,14 +113,6 @@ async updatePlaceReserve(tableId: number): Promise<void> {
   await this.tableRepository.update(tableId, { placeReserve: count });
 }
 
-
-  // async findByEvent(eventId: number): Promise<TableEvent[]> {
-  //   return this.tableRepository.find({
-  //     where: { event: { id: eventId } },
-  //     relations: ['guests'],
-  //   });
-  // }
-
   
   async findByEvent(eventId: number): Promise<TableEvent[]> {
     return this.tableRepository.find({
@@ -196,7 +188,14 @@ async updatePlaceReserve(tableId: number): Promise<void> {
     return this.tableRepository.save(table);
   }
 
+  /**
+   * 
+   * @param tableId 
+   * suppression table par leur id
+   */
   async deleteTableEvent(tableId: number): Promise<void> {
     await this.tableRepository.delete(tableId);
   }
+
+
 }
