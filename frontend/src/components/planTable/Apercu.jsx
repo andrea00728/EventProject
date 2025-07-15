@@ -46,7 +46,7 @@ export default function Apercu() {
         <h2 className="text-xl font-semibold mb-2">
           Plan de salle pour : {events.find((e) => e.id === selectedEventId)?.nom}
         </h2>
-        <GestionPlan selectedEventId={selectedEventId} />
+        <GestionPlan  selectedEventId={selectedEventId} />
       </>
     )}
   </div>

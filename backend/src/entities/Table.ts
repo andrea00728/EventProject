@@ -29,6 +29,9 @@ export class TableEvent {
   @Column({ type: 'jsonb', nullable: true })
   position: { left: number; top: number };
 
+  @Column({type:'float',default:0})
+  rotation:number;
+
   @ManyToOne(() => Evenement, (evenement) => evenement.tables,{onDelete: 'CASCADE'})
   @JoinColumn({name:'eventId'})
   event: Evenement;

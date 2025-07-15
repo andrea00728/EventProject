@@ -400,4 +400,46 @@ async assignGuestToTable(id: number, tableId: number, place: number, userId: str
   return this.guestRepository.save(guest);
 }
 
+
+
+async rassignGuestToTable(id: number, tableId: number, place: number, userId: string) {
+  try {
+    const guest = await this.guestRepository.findOne({
+      where: { id },
+      relations: ['event', 'event.user', 'table'],
+    });
+
+    if (!guest || guest.event.user.id !== userId) {
+      throw new UnauthorizedException('Accès non autorisé');
+    }
+
+    const newTable = await this.tableRepository.findOneBy({ id: tableId });
+    if (!newTable) throw new BadRequestException('Table non trouvée');
+
+    const placeTaken = await this.guestRepository.findOne({
+      where: { table: { id: tableId }, place },
+    });
+
+    if (placeTaken && placeTaken.id !== id) {
+      throw new BadRequestException('Place non disponible');
+    }
+
+    const oldTableId = guest.table?.id;
+
+    guest.table = newTable;
+    guest.place = place;
+
+    const updatedGuest = await this.guestRepository.save(guest);
+    if (oldTableId && oldTableId !== newTable.id) {
+      await this.tableService.updatePlaceReserve(oldTableId);
+    }
+    await this.tableService.updatePlaceReserve(newTable.id);
+
+    return updatedGuest;
+  } catch (err) {
+    console.error("Erreur lors du déplacement des invités :", err);
+    throw new BadRequestException(err.message);
+  }
+}
+
 }
