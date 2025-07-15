@@ -390,45 +390,6 @@ async assignGuestToTable(id: number, tableId: number, place: number, userId: str
 
 
 
-
-// async rassignGuestToTable(id: number, tableId: number, place: number, userId: string){
-//   try{
-    
-//      const guest = await this.guestRepository.findOne({
-//     where: { id },
-//     relations: ['event','event.user' ,'table'],
-//   });
-
-//   if(!guest||guest.event.user.id!==userId){
-//      throw new UnauthorizedException('Accès non autorisé');
-//   }
-//   const table = await this.tableRepository.findOneBy({id:tableId});
-//   if(!table) throw new BadRequestException('Table non trouvée');
-
-//   /**
-//    * verification disponnibilite du place
-//    */
-
-//   const placeTaken=await this.guestRepository.findOne({
-//     where:{table:{id:tableId},place:place},
-//   });
-
-//   if(placeTaken && placeTaken.id!==id){
-//     throw new BadRequestException('Place non disponible');
-//   }
-  
-//   guest.table=table;
-//   guest.place=place;
-//   const updatedGuest=await this.guestRepository.save(guest);
-//   await this.tableService.updatePlaceReserve(table.id);
-
-//   return updatedGuest;
-//   }catch(err){
-//     throw new BadRequestException(err.message);
-//     console.log('erreur lors de la deplacement des invite')
-//   }
-// }
-
 async rassignGuestToTable(id: number, tableId: number, place: number, userId: string) {
   try {
     const guest = await this.guestRepository.findOne({
