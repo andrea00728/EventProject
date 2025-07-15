@@ -13,6 +13,7 @@ import {
   NotFoundException,
   HttpException,
   HttpStatus,
+  Delete,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateTableDto } from 'src/dto/CreateTaleDto';
@@ -100,12 +101,6 @@ async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<TableEvent> 
 
 
   @Get('event/:eventId')
-  // async getTablesByEvent(
-  //   @Param('eventId', ParseIntPipe) eventId: number,
-  // ): Promise<TableEvent[]> {
-  //   return await this.tableService.findByEvent(eventId);
-  // }
-
   @UseGuards(AuthGuard('jwt'))
   async getTablesByEvent(@Param('eventId',ParseIntPipe) eventId:number,@Req() req): Promise<TableEvent[]>{
       const userId=req.user?.sub;
@@ -143,17 +138,6 @@ async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<TableEvent> 
    * @returns 
    * restApi pour la suppression de table
    */
-//   @UseGuards(AuthGuard('jwt'))
-//   @Post(':id/delete')
-//   async deleteTable(@Param('id', ParseIntPipe) id: number, @Req() req): Promise<{ message: string }> {
-//   const userId = req.user?.sub;
-//   if (!userId) {
-//     throw new UnauthorizedException('Utilisateur non authentifié');
-//   }
-//   return await this.tableService.DeleteTable(id, userId);
-// }
-
-
 
 
   @Patch(':tableId/position')
@@ -168,5 +152,25 @@ async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<TableEvent> 
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
     return this.tableService.updateTablePosition(tableId, position);
+  }
+
+  @Patch(':tableId/rotation')
+  @UseGuards(AuthGuard('jwt'))
+  async updateTableRotation(
+    @Param('tableId', ParseIntPipe) tableId: number,
+    @Body('rotation') rotation: number,
+    @Req() req
+  ): Promise<TableEvent> {
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('Utilisateur non authentifié');
+    }
+    return this.tableService.updateRotation(tableId, rotation);
+  }
+
+  @Delete(':tableId')
+  @UseGuards(AuthGuard('jwt'))
+  async deleteTableEvent(@Param('tableId', ParseIntPipe) tableId: number): Promise<void> {
+    return this.tableService.deleteTableEvent(tableId);
   }
 }

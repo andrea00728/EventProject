@@ -184,4 +184,19 @@ async updatePlaceReserve(tableId: number): Promise<void> {
     return this.tableRepository.save(table);
   }
 
+  async updateRotation(tableId: number, rotation: number): Promise<TableEvent> {
+    const table = await this.tableRepository.findOne({
+      where: { id: tableId },
+      relations: ['guests', 'event'],
+    });
+    if (!table) {
+      throw new BadRequestException(`Table avec ID ${tableId} non trouvée`);
+    }
+    table.rotation = rotation;
+    return this.tableRepository.save(table);
+  }
+
+  async deleteTableEvent(tableId: number): Promise<void> {
+    await this.tableRepository.delete(tableId);
+  }
 }
