@@ -9,6 +9,7 @@ import { Evenement } from 'src/entities/Evenement';
 import * as streamifier from 'streamifier';
 import { TableEvent } from 'src/entities/Table';
 import { User } from 'src/Authentication/entities/auth.entity';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class GuestService {
@@ -23,6 +24,7 @@ export class GuestService {
     private readonly tableRepository: Repository<TableEvent>, 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly notificationservice:NotificationService,
   ) {}
 
   async createGuest(dto: CreateInviteDto, eventId: number,userId:string): Promise<Invite> {
@@ -56,7 +58,11 @@ export class GuestService {
       place,
     });
     const saved = await this.guestRepository.save(inv);
-
+    await this.notificationservice.notifyAll(
+      'invite cree avec success',
+      `${saved.nom} ${saved.prenom} a ete ajoute comme invite de l'evenement ${evenement.nom}`,
+    )
+  
     // Met à jour le compteur des places réservées dans la table
     await this.tableService.updatePlaceReserve(table.id);
 

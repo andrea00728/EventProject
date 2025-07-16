@@ -6,6 +6,7 @@ import { Personnel } from 'src/entities/Personnel';
 import { CreatePersonnelDto } from 'src/dto/PersonnelDto';
 import { JwtService } from '@nestjs/jwt';
 import * as nodemailer from 'nodemailer';
+import { NotificationService } from '../notification/notification.service';
 @Injectable()
 export class PersonnelService {
   constructor(
@@ -16,6 +17,7 @@ export class PersonnelService {
     private evenementRepository: Repository<Evenement>,
 
     private jwtService:JwtService,
+    private readonly notificationService:NotificationService,
   ) {}
 
   private transporter=nodemailer.createTransport({
@@ -93,9 +95,12 @@ async RefuseEmail(token: string): Promise<string> {
     if (personnel.status !== 'attent') {
       throw new BadRequestException("Invitation déjà confirmée ou refusée.");
     }
-    personnel.status = 'attent'; // Vous pouvez changer le statut à 'accepter' ou un autre statut selon votre logique
-    await this.personnelRepository.remove(personnel);
-
+    personnel.status = 'attent'; 
+    const refu=await this.personnelRepository.remove(personnel);
+     await this.notificationService.notifyAll(
+      'invitation refusee',
+      `l'email de l'utilisateur est ${personnel.email} refuse votre invitation de devenir ${personnel.role} de l'evenement ${personnel.evenement.nom}`,
+    )
     return " Invitation refusée avec succès.";
   } catch (err) {
     throw new BadRequestException(" Lien invalide ou expiré.");
@@ -126,7 +131,10 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
   });
 
   const savedPersonnel = await this.personnelRepository.save(personnel);
-
+  await this.notificationService.notifyAll(
+    'personnel créer avec success',
+    `veuillez attendre leur confirmation de votre invitation de devenir ${savedPersonnel.role} de l'evenement ${evenement.nom}`,
+  )
   //  Génération du token de confirmation
   const token = this.jwtService.sign(
     { email: savedPersonnel.email, evenementId: evenement.id ,status:'attent'},

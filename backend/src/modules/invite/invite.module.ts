@@ -8,10 +8,11 @@ import { TableEvent } from 'src/entities/Table';
 import { GuestService } from 'src/services/invite-service/invite-service.service';
 import { TableService } from 'src/services/table-service/table-service.service';
 import { ForfaitModule } from '../forfait/forfait.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Invite, TableEvent,Evenement,User]),
-  ForfaitModule
+  ForfaitModule,NotificationModule,
 ],
   providers: [GuestService, TableService],
   controllers: [GuestController],

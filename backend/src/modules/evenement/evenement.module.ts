@@ -9,11 +9,12 @@ import {  TableEvent } from 'src/entities/Table';
 import { EvenementService } from 'src/services/evenement/evenement.service';
 import { LocationService } from 'src/services/localisation-service/localisation-service.service';
 import { ForfaitModule } from '../forfait/forfait.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
     imports:[
         TypeOrmModule.forFeature([Evenement,Localisation,Salle,TableEvent,User]),
-        ForfaitModule,
+        ForfaitModule,NotificationModule,
     ],
     controllers:[EvenementController],
     providers:[EvenementService,LocationService],

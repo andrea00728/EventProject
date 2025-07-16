@@ -6,7 +6,8 @@ import { CreateTableDto } from 'src/dto/CreateTaleDto';
 import { Invite } from 'src/entities/Invite';
 import { TableEvent } from 'src/entities/Table';
 import { Evenement } from 'src/entities/Evenement';
-
+import { NotificationService } from '../notification/notification.service';
+  
 @Injectable()
 export class TableService {
   constructor(
@@ -16,6 +17,8 @@ export class TableService {
     private readonly guestRepository: Repository<Invite>,
     @InjectRepository(Evenement)
     private readonly eventRepository:Repository<Evenement>,
+
+    private readonly notificationService:NotificationService,
   ) {}
 
 async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEvent> {
@@ -54,7 +57,13 @@ async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEven
     event
   });
 
-  return this.tableRepository.save(table);
+  const table_event=await this.tableRepository.save(table);
+  await this.notificationService.notifyAll(
+    'Nouvelle table ajoutée',
+    `Une nouvelle table numero ${table_event.numero} a été ajouté pour l'événement ${event.nom}.`,
+  );
+
+  return table_event;
 }
 
 
@@ -194,7 +203,7 @@ async updatePlaceReserve(tableId: number): Promise<void> {
    * suppression table par leur id
    */
   async deleteTableEvent(tableId: number): Promise<void> {
-    await this.tableRepository.delete(tableId);
+     await this.tableRepository.delete(tableId);
   }
 
 
