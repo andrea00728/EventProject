@@ -9,10 +9,11 @@ import { PaypalService } from 'src/services/paypal/paypal.service';
 import { PaypalModule } from '../paypal/paypal.module';
 import { ForfaitController } from 'src/controllers/forfait/forfait.controller';
 import { Evenement } from 'src/entities/Evenement';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
     imports:[TypeOrmModule.forFeature([User,Forfait,Evenement]),
-    PaypalModule,
+    PaypalModule,NotificationModule,
 ],
     providers:[ForfaitCronService,ForfaitService],
     exports:[ForfaitCronService,ForfaitService] ,
