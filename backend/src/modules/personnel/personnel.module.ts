@@ -8,6 +8,7 @@ import { PersonnelService } from 'src/services/personnel/personnel.service';
 import { PersonnelController } from 'src/controllers/personnel/personnel.controller';
 import { User } from 'src/Authentication/entities/auth.entity';
 import { JwtModule } from '@nestjs/jwt';
+import { NotificationModule } from '../notification/notification.module';
 
 
 @Module({
@@ -17,6 +18,7 @@ import { JwtModule } from '@nestjs/jwt';
       secret: process.env.JWT_SECRET || 'defaultSecretKey',
       signOptions: { expiresIn: '1h' },
     }),
+    NotificationModule,
   ],
   providers: [PersonnelService],
   controllers: [PersonnelController],
