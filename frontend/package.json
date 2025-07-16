@@ -20,7 +20,6 @@
     "@mui/material": "^6.4.3",
     "@mui/x-charts": "^8.7.0",
     "@mui/x-data-grid": "^8.7.0",
-    "@mui/x-data-grid-pro": "^8.8.0",
     "@tailwindcss/vite": "^4.0.6",
     "@toolpad/core": "^0.12.0",
     "axios": "^1.7.9",

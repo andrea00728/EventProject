@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { DataGrid } from "@mui/x-data-grid";
 import { formatDate } from "./Evenement";
 import ModalEvenement from "./ModalEvenement";
+import { handleDownloadXLSX } from "../../services/downloadXLSX";
 
 const ModalManager = ({ isOpen, onClose, data, managerName }) => {
   if (!isOpen) return null;
@@ -90,6 +91,18 @@ const ModalManager = ({ isOpen, onClose, data, managerName }) => {
     locationNom: value.location?.nom || "Non défini",
   }));
 
+  const handleDownload = () => {
+    const formattedData = filteredData.map((event) => ({
+      Nom: event.nom,
+      Type: event.type,
+      Thème: event.theme,
+      "Date début": formatDate(event.date),
+      "Date fin": formatDate(event.date_fin),
+      Localisation: event.location?.nom || "Non défini",
+    }));
+    handleDownloadXLSX(formattedData, `evenements_manager_${managerName}`);
+  }
+
   return (
     <AnimatePresence>
       <motion.div
@@ -97,7 +110,7 @@ const ModalManager = ({ isOpen, onClose, data, managerName }) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        className="fixed inset-0  flex items-center justify-center z-50"
       >
         <div className="bg-white rounded-lg shadow-xl p-6 w-full h-screen mx-4 relative overflow-auto">
           {/* En-tête */}
@@ -130,7 +143,7 @@ const ModalManager = ({ isOpen, onClose, data, managerName }) => {
           {/* Filtrage */}
           <div className="flex justify-end my-2">
             <button
-              
+              onClick={handleDownload}
               className="bg-[#cfc6c4] hover:bg-[#c2bab8] rounded-2xl px-6 py-2 text-[17px] text-black font-semibold cursor-pointer"
             >
               Exporter en CSV <MdFileDownload className="inline ml-2" />

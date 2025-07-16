@@ -149,7 +149,7 @@ export default function EvenementAd() {
         </div>
       </div>
 
-      <div className="bg-white shadow-2xl rounded-2xl p-4">
+      <div className="p-4">
         {loading ? (
           <p className="text-center text-lg py-5">Chargement...</p>
         ) : error ? (

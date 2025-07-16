@@ -320,7 +320,7 @@ function Invites({data}){
         <DataGrid
           rows={filteredRows}
           columns={columns}
-          pageSize={5}
+          pageSize={10}
           rowsPerPageOptions={[]}
           autoHeight
         />
