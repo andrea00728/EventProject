@@ -19,6 +19,7 @@ import { Repository } from 'typeorm';
 import { Request, Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { addDays } from 'date-fns';
+import { NotificationService } from 'src/services/notification/notification.service';
 @Controller('forfait')
 export class ForfaitController {
   constructor(
@@ -28,6 +29,7 @@ export class ForfaitController {
     private userRepository: Repository<User>,
     @InjectRepository(Forfait)
     private forfaitRepository: Repository<Forfait>,
+    private readonly notificationService:NotificationService,
   ) {}
 
   @Post('upgrade')
@@ -135,11 +137,17 @@ async handleSuccess(
   user.datedowngraded = null;
   user.forfaitexpirationdate = addDays(new Date(), forfait.validationduration); // Ajouter la durée de validation
 
-  await this.userRepository.save(user);
+  const success=await this.userRepository.save(user);
+  await this.notificationService.notifyAll(
+    'payement accepté',
+    `votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
+  )
 
-  return {
-    message: `Paiement accepté, votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
-  };
+  return success;
+
+  // return {
+  //   message: `Paiement accepté, votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
+  // };
 }
 
 
