@@ -319,6 +319,11 @@ const router = createBrowserRouter([
     path: "/menutitemform",
     element: <MenuItemForm />,
   },
+  {
+    path: "/menulist/:slug",
+    element: <MenuListWithCart />,
+  },
+
 ]);
 
 export default router;
