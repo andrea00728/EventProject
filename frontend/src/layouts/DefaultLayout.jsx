@@ -6,6 +6,8 @@ import Profil from "../util/profils";
 import ForfaitPage from "../pages/forfaitpage/forfaitpage";
 import ChatWidget from "../pages/ChatWidget";
 import { getUserForfait } from "../services/forfaitService";
+import NotificationListener from "../util/Notification/notification";
+import { ToastContainer } from "react-toastify";
 
 export default function DefaultLayout() {
   const { token, role, isLoading } = useStateContext();
@@ -14,13 +16,13 @@ export default function DefaultLayout() {
   const [forfait, setForfait] = useState(null);
   const [showForfaitModal, setShowForfaitModal] = useState(false);
 
-  // ⏳ Ne pas continuer si en chargement
+  //  Ne pas continuer si en chargement
   if (isLoading) return <div>Chargement ...</div>;
 
   // 🔐 Rediriger si non connecté
   if (!token) return <Navigate to="/pagepublic" replace />;
 
-  // 🔁 Rediriger selon rôle
+  // Rediriger selon rôle
   switch (role) {
     case "organisateur":
       break;
@@ -34,7 +36,6 @@ export default function DefaultLayout() {
       return <Navigate to="/pagepublic" replace />;
   }
 
-  // ✅ Récupérer le forfait utilisateur (au démarrage + si modifié)
   useEffect(() => {
     const fetchAndSetForfait = async () => {
       try {
@@ -47,7 +48,7 @@ export default function DefaultLayout() {
 
     fetchAndSetForfait();
 
-    // 🔄 Mettre à jour dynamiquement après activation
+    // Mettre à jour dynamiquement après activation
     const handleForfaitUpdate = () => {
       fetchAndSetForfait();
     };
@@ -58,7 +59,7 @@ export default function DefaultLayout() {
     };
   }, [token]);
 
-  // ✅ Configuration dynamique du menu
+  //  Configuration dynamique du menu
   const navItems = [
     { path: "/accueil", name: "Accueil" },
     {
@@ -71,7 +72,7 @@ export default function DefaultLayout() {
         { path: "/evenement/invites", name: "Invités", icon: "/guest.png" },
         { path: "/evenement/rapports", name: "Invitation", icon: "/invitation.png" },
         { path: "/evenement/personnel", name: "Personnel", icon: "/community-center.png" },
-        // 👇 Afficher seulement pour les forfaits premium
+        //  Afficher seulement pour les forfaits premium
         ...(
           ["pro", "premium", "gold"].includes(forfait?.nom)
             ? [{
@@ -178,6 +179,8 @@ export default function DefaultLayout() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-24">
+        <NotificationListener/>
+        <ToastContainer position="top-right"/>
         <Outlet />
         <ChatWidget />
       </main>

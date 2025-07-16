@@ -13,10 +13,11 @@ import { QrCodeService } from 'src/services/qrcode/qrcode.service';
 import { ShortLink } from 'src/entities/ShortLink';
 import { InviteModule } from '../invite/invite.module';
 import { User } from 'src/Authentication/entities/auth.entity';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Invitation, Invite, TableEvent,Evenement, ShortLink, User]),EvenementModule,InviteModule],
-  providers: [InvitationService, GuestService, TableService, QrCodeService],
+  imports: [TypeOrmModule.forFeature([Invitation, Invite, TableEvent,Evenement, ShortLink, User]),EvenementModule,InviteModule,NotificationModule,],
+  providers: [InvitationService, TableService,GuestService, QrCodeService],
   controllers: [InvitationController],
 })
 export class InvitationModule {}

@@ -38,7 +38,7 @@ import CreationPersonnel from "../pages/oranisation_personnel/creation_personnel
 import DashboardPersonnel from "../pages/oranisation_personnel/Dashboard_personnel.jsx";
 import Optionpersonnel from "../pages/oranisation_personnel/confirmationRefus.jsx";
 import AdminLayout from "../layouts/AdminLayout.jsx";
-import Dashboard from "../pages/Admin/Dashboard.jsx";
+import Dashboard from "../pages/Admin/DashBoard.jsx";
 import EvenementAd from "../pages/Admin/Evenement.jsx";
 import Organisateur from "../pages/Admin/Organisateur.jsx";
 import Parametre from "../pages/Admin/Parametre.jsx";
@@ -50,6 +50,8 @@ import SystemPromptManager from "../pages/Admin/SystemPromptManager.jsx";
 import MenuForm from "../pages/menu.jsx";
 import MenuItemForm from "../pages/menuItem.jsx";
 import InvitePage from "../layouts/InvitePage.jsx";
+import ForfaitSuccess from "../pages/forfaitpage/forfaitSucces.jsx";
+import ForfaitActive from "../pages/forfaitpage/forfaitActive.jsx";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -143,22 +145,31 @@ const router = createBrowserRouter([
         path: "/paypal-success",
         element: <PaypalSuccess />,
       },
+      ,
+      {
+        path: "/forfait/success",
+        element: <ForfaitSuccess />,
+      },
+      {
+        path: "/forfaits",
+        element: <ForfaitActive />,
+      },
     ],
   },
 
   {
-    path:'/',
-    element: <InvitePage/>,
-    children:[
+    path: "/",
+    element: <InvitePage />,
+    children: [
       {
-        path:'/',
+        path: "/",
         element: <Navigate to="/invitePage" />,
       },
       {
-        path:'/invitePage',
-        element: <MenuListWithCart/>
-      }
-    ]
+        path: "/invitePage",
+        element: <MenuListWithCart />,
+      },
+    ],
   },
 
   /**

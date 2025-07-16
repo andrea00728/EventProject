@@ -5,6 +5,7 @@ import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { LocationService } from '../localisation-service/localisation-service.service';
 import { CreateEventDto } from 'src/dto/CreateEvenementDTO';
 import { User } from 'src/Authentication/entities/auth.entity';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class EvenementService {
@@ -12,6 +13,7 @@ export class EvenementService {
     @InjectRepository(Evenement)
     private readonly evenementRepository: Repository<Evenement>,
     private readonly locationService: LocationService,
+    private readonly notificationService:NotificationService,
   ) {}
 
 async create(dto: CreateEventDto): Promise<Evenement> {
@@ -59,8 +61,13 @@ async create(dto: CreateEventDto): Promise<Evenement> {
     isPublic:dto.isPublic,
   });
 
-  // Sauvegarde en base
-  return this.evenementRepository.save(evenement);
+  const event =await this.evenementRepository.save(evenement);
+  await this.notificationService.notifyAll(
+    'Novelle Événement',
+    `Le nouvel Événement ${event.nom} a bien été créé`
+  );
+
+  return event;
 }
 
 /**

@@ -7,7 +7,7 @@ import { Invite } from 'src/entities/Invite';
 import { TableEvent } from 'src/entities/Table';
 import { Evenement } from 'src/entities/Evenement';
 import { QrCodeService } from '../qrcode/qrcode.service';
-
+import { NotificationService } from '../notification/notification.service';
 @Injectable()
 export class TableService {
   constructor(
@@ -18,6 +18,7 @@ export class TableService {
     @InjectRepository(Evenement)
     private readonly eventRepository:Repository<Evenement>,
     private readonly qrCodeService: QrCodeService,
+    private readonly notificationService:NotificationService,
   ) {}
 
 async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEvent> {
@@ -56,13 +57,19 @@ async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEven
     event
   });
 
-  // Sauvegarder la table pour obtenir un ID
+    // Sauvegarder la table pour obtenir un ID
   const savedTable = await this.tableRepository.save(table);
 
   // Générer le QR code pour la table
   savedTable.qrCode = await this.qrCodeService.generateQrCodeForTable(dto.eventId, savedTable.id)
+  
+  const table_event=await this.tableRepository.save(table);
+  await this.notificationService.notifyAll(
+    'Nouvelle table ajoutée',
+    `Une nouvelle table numero ${table_event.numero} a été ajouté pour l'événement ${event.nom}.`,
+  );
 
-  return this.tableRepository.save(savedTable);
+  return table_event;
 }
 
 
@@ -237,7 +244,7 @@ async updateTable(id: number, data: Partial<TableEvent>): Promise<TableEvent> {
    * suppression table par leur id
    */
   async deleteTableEvent(tableId: number): Promise<void> {
-    await this.tableRepository.delete(tableId);
+     await this.tableRepository.delete(tableId);
   }
 
 
