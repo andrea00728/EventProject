@@ -58,6 +58,7 @@ import { ShortLinkController } from './controllers/short-link/short-link.control
 import { ShortLink } from './entities/ShortLink';
 import { NotificationService } from './services/notification/notification.service';
 import { NotificationModule } from './modules/notification/notification.module';
+import { ShortLinkModule } from './modules/short-link/short-link.module';
 
 
 @Module({
@@ -143,7 +144,9 @@ import { NotificationModule } from './modules/notification/notification.module';
    
     ForfaitModule,
     PaypalModule,
-    NotificationModule
+    NotificationModule,
+    ShortLinkModule,
+
   ],
   controllers: [ProfileController,],
   providers: [],

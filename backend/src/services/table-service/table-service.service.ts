@@ -129,12 +129,12 @@ async updatePlaceReserve(tableId: number): Promise<void> {
 }
 
   
-  async findByEvent(eventId: number): Promise<TableEvent[]> {
-    return this.tableRepository.find({
-      where: { event: { id: eventId } },
-      relations: ['guests','event'],
-    });
-  }
+async findByEvent(eventId: number): Promise<TableEvent[]> {
+  return this.tableRepository.find({
+    where: { event: { id: eventId } },
+    relations: ['guests', 'event'],
+  });
+}
 
     /**
      * 

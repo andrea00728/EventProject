@@ -1,4 +1,6 @@
+// src/components/MenuListWithCart.jsx
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import HeaderSection from './HeaderSection';
 import MenuGrid from './MenuGrid';
@@ -6,6 +8,9 @@ import CartDrawer from './CartDrawer';
 import InvoiceModal from './InvoiceModal';
 
 const MenuListWithCart = () => {
+  const  slug  = useParams();
+  const navigate = useNavigate();
+
   const [menus, setMenus] = useState([]);
   const [cart, setCart] = useState([]);
   const [message, setMessage] = useState('');
@@ -15,47 +20,79 @@ const MenuListWithCart = () => {
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedTable, setSelectedTable] = useState(null);
-
+  const [currentSlug, setCurrentSlug] = useState(slug || null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
-
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
 
+  const itemsPerPage = 8;
   const token = localStorage.getItem('token');
 
-  const fetchMenus = async () => {
-    try {
-      setIsLoading(true);
-      const res = await axios.get('http://localhost:3000/menus', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const formattedMenus = res.data.map(menu => ({
-        ...menu,
-        items: menu.items.map(item => ({
-          ...item,
-          price: parseFloat(item.price) || 0,
-        })),
-      }));
-      setMenus(formattedMenus);
-    } catch (error) {
-      console.error(error);
-      setMessage('Oups, impossible de charger les menus.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Récupération des infos depuis le slug
   useEffect(() => {
-    fetchMenus();
-    const event = JSON.parse(localStorage.getItem('selectedEvent'));
-    const table = JSON.parse(localStorage.getItem('selectedTable'));
-    if (event) setSelectedEvent(event);
-    if (table) setSelectedTable(table);
-  }, []);
+    const fetchShortLinkInfo = async () => {
+      if (!slug) {
+        setMessage('Aucun lien court fourni.');
+        setTimeout(() => setMessage(''), 3000);
+        navigate('/pagepublic');
+        return;
+      }
+      console.log(slug);
 
+      try {
+        const response = await axios.get(`http://localhost:3000/qr/${slug.slug}/info`);
+        console.log(response.data);
+        setSelectedEvent(response.data.eventId);
+        setSelectedTable(response.data.tableId);
+        setCurrentSlug(slug);
+        console.log('Short link info:', response.data.eventId);
+        console.log('Short table info:', response.data.tableId);
+      } catch (error) {
+        console.error(error);
+        setMessage('Impossible de récupérer les informations du lien.');
+        setTimeout(() => setMessage(''), 3000);
+        navigate('/pagepublic');
+      }
+    };
+
+    fetchShortLinkInfo();
+  }, [slug, navigate]);
+
+  // Charger les menus
+  useEffect(() => {
+    const fetchMenus = async () => {
+      if (!selectedEvent) return;
+
+      try {
+        setIsLoading(true);
+        const res = await axios.get(`http://localhost:3000/menus/event/${selectedEvent}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const formattedMenus = res.data.map(menu => ({
+          ...menu,
+          items: menu.items.map(item => ({
+            ...item,
+            price: parseFloat(item.price) || 0,
+          })),
+        }));
+
+        setMenus(formattedMenus);
+      } catch (error) {
+        console.error(error);
+        setMessage('Oups, impossible de charger les menus.');
+        setTimeout(() => setMessage(''), 3000);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (selectedEvent) fetchMenus();
+  }, [selectedEvent, token]);
+
+  // Fonctions Panier
   const addToCart = (item) => {
-    const existing = cart.find((ci) => ci.id === item.id);
+    const existing = cart.find(ci => ci.id === item.id);
     const quantityInCart = existing ? existing.quantity : 0;
 
     if (item.stock <= 0) return;
@@ -69,7 +106,7 @@ const MenuListWithCart = () => {
     setMenus(updatedMenus);
 
     if (existing) {
-      setCart(cart.map((ci) =>
+      setCart(cart.map(ci =>
         ci.id === item.id ? { ...ci, quantity: ci.quantity + 1 } : ci
       ));
     } else {
@@ -86,7 +123,7 @@ const MenuListWithCart = () => {
   };
 
   const updateQuantity = (itemId, delta) => {
-    const cartItem = cart.find((ci) => ci.id === itemId);
+    const cartItem = cart.find(ci => ci.id === itemId);
     if (!cartItem) return;
 
     let currentStock = 0;
@@ -111,7 +148,7 @@ const MenuListWithCart = () => {
     }));
     setMenus(updatedMenus);
 
-    setCart(cart.map((ci) =>
+    setCart(cart.map(ci =>
       ci.id === itemId
         ? { ...ci, quantity: Math.max(1, ci.quantity + delta) }
         : ci
@@ -137,12 +174,12 @@ const MenuListWithCart = () => {
       setMenus(updatedMenus);
     }
 
-    setCart(cart.filter((ci) => ci.id !== itemId));
+    setCart(cart.filter(ci => ci.id !== itemId));
     setMessage('Article retiré du panier.');
     setTimeout(() => setMessage(''), 3000);
   };
 
-  const totalPrice = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const totalPrice = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   const formatPrice = (price) => {
     const num = parseFloat(price);
@@ -160,7 +197,7 @@ const MenuListWithCart = () => {
 
   const paginatedMenus = filteredMenus.map(menu => ({
     ...menu,
-    items: menu.items.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+    items: menu.items.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage),
   }));
 
   const totalItems = filteredMenus.reduce((acc, menu) => acc + menu.items.length, 0);
@@ -185,7 +222,6 @@ const MenuListWithCart = () => {
         onCartOpen={() => setIsCartOpen(true)}
       />
 
-      {/* 🎛️ Filtres avancés */}
       <div className="flex flex-wrap gap-4 mb-6 text-sm">
         <input
           type="number"
@@ -204,20 +240,20 @@ const MenuListWithCart = () => {
       </div>
 
       {message && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-slide-in">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
           {message}
         </div>
       )}
 
-      {isLoading ? (
+      {isLoading || !selectedEvent ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
         </div>
       ) : (
         <>
+          <h2 className="text-2xl font-bold mb-4">Menu pour l'événement {selectedEvent}</h2>
           <MenuGrid menus={paginatedMenus} addToCart={addToCart} formatPrice={formatPrice} />
 
-          {/* 🔁 Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center mt-8 gap-2">
               {Array.from({ length: totalPages }).map((_, i) => (
@@ -255,6 +291,7 @@ const MenuListWithCart = () => {
         formatPrice={formatPrice}
         selectedEvent={selectedEvent}
         selectedTable={selectedTable}
+        currentSlug={currentSlug}
       />
     </div>
   );

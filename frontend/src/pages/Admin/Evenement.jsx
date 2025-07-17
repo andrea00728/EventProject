@@ -41,6 +41,7 @@ export default function EvenementAd() {
         setLoading(true);
         setError(null);
         const data = await getAllEvents();
+        console.log(data);
         setData(data);
       } catch (error) {
         console.error(
@@ -105,7 +106,7 @@ export default function EvenementAd() {
   };
 
   return (
-    <div className="p-8 h-screen bg-white rounded-2xl shadow-2xl border border-gray-200">
+    <div className="p-8 h-screen overflow-auto flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-200">
       <div>
         <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center">
           <MdCalendarToday className="mr-3" /> Liste des événements
@@ -149,7 +150,7 @@ export default function EvenementAd() {
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="p-4 overflow-auto">
         {loading ? (
           <p className="text-center text-lg py-5">Chargement...</p>
         ) : error ? (
@@ -159,7 +160,6 @@ export default function EvenementAd() {
         ) : (
           <div className="h-[600px] w-full overflow-auto">
             <DataGrid
-              autoHeight
               rows={filteredData.map((event, index) => ({
                 id: index,
                 nom: event.nom,
@@ -198,6 +198,7 @@ export default function EvenementAd() {
               pageSize={5}
               rowsPerPageOptions={[5, 10, 20]}
               disableSelectionOnClick
+              autoHeight
             />
           </div>
         )}

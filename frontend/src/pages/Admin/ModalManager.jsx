@@ -112,7 +112,7 @@ const ModalManager = ({ isOpen, onClose, data, managerName }) => {
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
         className="fixed inset-0  flex items-center justify-center z-50"
       >
-        <div className="bg-white rounded-lg shadow-xl p-6 w-full h-screen mx-4 relative overflow-auto">
+        <div className="bg-white rounded-lg shadow-xl p-6 w-full h-screen mx-4 relative">
           {/* En-tête */}
           <div className="flex justify-between items-center pb-3 border-b border-gray-200">
             <h3 className="text-2xl font-semibold text-gray-800">

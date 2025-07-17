@@ -97,7 +97,7 @@ export default function Organisateur() {
   };
 
   return (
-    <div className="py-10 px-8 h-screen bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col">
+    <div className="py-10 px-8 h-screen overflow-auto flex flex-col">
       <div>
         <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center">
           <FaUsers className="mr-3" /> Liste des organisateurs

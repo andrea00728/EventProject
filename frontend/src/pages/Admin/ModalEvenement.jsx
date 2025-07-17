@@ -237,6 +237,8 @@ function Invites({data}){
   const [filterField, setFilterField] = useState("nom");
   const [searchValue, setSearchValue] = useState("");
 
+  console.log('Les invités : ',data)
+
   const handleExportExcel = () => {
     const exportData = filteredRows.map((p) => ({
       Nom: p.nom,
@@ -316,7 +318,7 @@ function Invites({data}){
         </div>
       </div>
 
-      <div style={{ width: "100%", height: 500 }}>
+      <div className="py-4 overflow-y-auto h-[600px]">
         <DataGrid
           rows={filteredRows}
           columns={columns}

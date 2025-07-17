@@ -142,6 +142,20 @@ const router = createBrowserRouter([
         ],
       },
       {
+        path: "/evenement/restauration",
+        element: <MenuForm/>,
+        // children: [
+        //   {
+        //     path: "createPersonnel",
+        //     element: <CreationPersonnel />,
+        //   },
+        //   {
+        //     path: "",
+        //     element: <DashboardPersonnel />,
+        //   },
+        // ],
+      },
+      {
         path: "/paypal-success",
         element: <PaypalSuccess />,
       },
@@ -319,11 +333,23 @@ const router = createBrowserRouter([
     path: "/menutitemform",
     element: <MenuItemForm />,
   },
+  ,
+  {
+    path: "/systemprompt",
+    element: <SystemPromptManager />,
+  },
+  {
+    path: "/menuform",
+    element: <MenuForm />,
+  },
   {
     path: "/menulist/:slug",
     element: <MenuListWithCart />,
   },
-
+  {
+    path: "/menutitemform",
+    element: <MenuItemForm />,
+  },
 ]);
 
 export default router;
