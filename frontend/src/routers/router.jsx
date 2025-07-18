@@ -1,7 +1,9 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import React from "react";
 import DefaultLayout from "../layouts/DefaultLayout";
+import { createBrowserRouter, Navigate, Router } from "react-router-dom";
 import GuestLayout from "../layouts/GuestLayout";
 import Accueil from "../pages/Accueil";
+import Evenement from "../pages/Evenement";
 import Notfound from "../pages/Notofoundpage";
 import Pagepublic from "../pages/Pagepublic";
 import Connexionorganisateur from "../pages/Connexionorganisateur";
@@ -12,6 +14,7 @@ import Apropos from "../pages/apropos";
 
 // import Table3DScene from "../components/table3D";
 import ChoixModeInvite from "../layouts/ChoixModeInvite";
+import Inviteform from "../pages/choixModInvite/inviteForm";
 import ImportGuestsCSV from "../pages/choixModInvite/importation";
 import AffichageInvite from "../pages/choixModInvite/affichageInvite";
 import InviteformWithId from "../pages/choixModInvite/InviteFormparId";
@@ -34,8 +37,20 @@ import OrganisationPersonnelLayout from "../layouts/OrganisationPersonnelLayout.
 import CreationPersonnel from "../pages/oranisation_personnel/creation_personnel.jsx";
 import DashboardPersonnel from "../pages/oranisation_personnel/Dashboard_personnel.jsx";
 import Optionpersonnel from "../pages/oranisation_personnel/confirmationRefus.jsx";
+import AdminLayout from "../layouts/AdminLayout.jsx";
+import Dashboard from "../pages/Admin/DashBoard.jsx";
+import EvenementAd from "../pages/Admin/Evenement.jsx";
+import Organisateur from "../pages/Admin/Organisateur.jsx";
+import Parametre from "../pages/Admin/Parametre.jsx";
+import LocationSalle from "../pages/Admin/LocationSalle.jsx";
+import MyComponent from "../pages/PersonnelCuisine/OrderGateway.jsx";
+import Test from "../layouts/test.jsx";
+import MenuListWithCart from "../pages/Menu/MenuListWithCart.jsx";
+import SystemPromptManager from "../pages/Admin/SystemPromptManager.jsx";
+import MenuForm from "../pages/menu.jsx";
+import MenuItemForm from "../pages/menuItem.jsx";
+import InvitePage from "../layouts/InvitePage.jsx";
 import ForfaitSuccess from "../pages/forfaitpage/forfaitSucces.jsx";
-import ForfaitPage from "../pages/forfaitpage/forfaitpage.jsx";
 import ForfaitActive from "../pages/forfaitpage/forfaitActive.jsx";
 import QrScannerComponent from "../util/QrCode_personnel_Accueil/QrCodeValidation.jsx";
 import Envoy from "../pages/PersonnelAccueil/EvoyerVerRout.jsx";
@@ -222,73 +237,184 @@ const router=createBrowserRouter([
  * 
  */
   {
-  path: "/",
-  element: <PersonnelCuisine />,
-  children: [
-    {
-      path: "/",
-      element: <Navigate to="/personnelCuisine" />
-    },
-    {
-      path: "/personnelCuisine",
-      element: (
-        <ProtectedRoute allowedRoles={["cuisinier", "organisateur", "accueil","caissier"]}>
-          <DashboardpersCuisine />
-        </ProtectedRoute>
-      )
-    }
-  ]
-},
-{
-  path:"/personnel/response",
-  element:<Optionpersonnel/>
-},
+    path: "/",
+    element: <InvitePage />,
+    children: [
+      {
+        path: "/",
+        element: <Navigate to="/invitePage" />,
+      },
+      {
+        path: "/invitePage",
+        element: <MenuListWithCart />,
+      },
+    ],
+  },
 
-  
-    //  {
-    //     path:"/",
-    //     element:<AdminLayout/>,
-    //     children:[
-    //         // {
-    //         //     path:"/",
-    //         //     element:<Navigate to="/AdminAccueil"/>
-    //         // },{
-    //         //     path:"/AdminAccueil",
-    //         //     element:<Adminaccueil/>
-    //         // },
-    //     ]
-    // },
-    {
-        path:"/",
-        element:<GuestLayout/>,
-        children:[
-            {
-                path:"/",
-                element:<Navigate to="/pagepublic"/>
-            },
-            {
-                path:"/pagepublic",
-                element:<Pagepublic/>
-            },
-            {
-                path:"/connexion",
-                element:<Connexionorganisateur/>
-            },
-            {
-                path:"/callback",
-                element:<Connnexiongoogle/>
-            },
-            {
-                path:"/inscription",
-                element:<Inscription/>
-            }
-        ]
-    },
-    {
-        path:"*",
-        element:<Notfound/>
-    }
-    
+  /**
+   * rout personnel accueil
+   */
+  {
+    path: "/",
+    element: <PersonnelAccueil />,
+    children: [
+      {
+        path: "/",
+        element: <Navigate to="/personnelAccueil" />,
+      },
+      {
+        path: "/personnelAccueil",
+        element: (
+          <ProtectedRoute
+            allowedRoles={["accueil", "caissier", "cuisinier", "organisateur"]}
+          >
+            <DashboardpersAccueil />
+          </ProtectedRoute>
+        ),
+      },
+    ],
+  },
+  {
+    path: "/",
+    element: <PersonnelCaisse />,
+    children: [
+      {
+        path: "/",
+        element: <Navigate to="/personnelCaisse" />,
+      },
+      {
+        path: "/personnelCaisse",
+        element: (
+          <ProtectedRoute
+            allowedRoles={["caissier", "organisateur", "accueil", "cuisinier"]}
+          >
+            <DashboardpersCaisse />
+          </ProtectedRoute>
+        ),
+      },
+    ],
+  },
+  {
+    path: "/",
+    element: <PersonnelCuisine />,
+    children: [
+      {
+        path: "/",
+        element: <Navigate to="/personnelCuisine" />,
+      },
+      {
+        path: "/personnelCuisine",
+        element: (
+          <ProtectedRoute
+            allowedRoles={["cuisinier", "organisateur", "accueil", "caissier"]}
+          >
+            <DashboardpersCuisine />
+          </ProtectedRoute>
+        ),
+      },
+    ],
+  },
+  {
+    path: "/personnel/response",
+    element: <Optionpersonnel />,
+  },
+  {
+    path: "/",
+    element: <AdminLayout />,
+    children: [
+      {
+        path: "/",
+        element: <Navigate to="/AdminAccueil" />,
+      },
+      {
+        path: "/AdminAccueil",
+        element: <Dashboard />,
+      },
+      {
+        path: "/AdminEvenement",
+        element: <EvenementAd />,
+      },
+      {
+        path: "/AdminOrganisateur",
+        element: <Organisateur />,
+      },
+      {
+        path: "/AdminParametre",
+        element: <Parametre />,
+      },
+
+      {
+        path: "/LocationSalle",
+        element: <LocationSalle />,
+      },
+    ],
+  },
+  ,
+  /************************* Page pour les cuisiniers (poue le test) ************** */
+  {
+    path: "/Cuisine",
+    element: <DashboardpersCuisine />,
+  },
+  {
+    path: "/exemple",
+    element: <MyComponent />,
+  },
+  /*********************************************************** */
+  {
+    path: "/",
+    element: <GuestLayout />,
+    children: [
+      {
+        path: "/",
+        element: <Navigate to="/pagepublic" />,
+      },
+      {
+        path: "/pagepublic",
+        element: <Pagepublic />,
+      },
+      {
+        path: "/connexion",
+        element: <Connexionorganisateur />,
+      },
+      {
+        path: "/callback",
+        element: <Connnexiongoogle />,
+      },
+      {
+        path: "/inscription",
+        element: <Inscription />,
+      },
+    ],
+  },
+  {
+    path: "*",
+    element: <Notfound />,
+  },
+  {
+    path: "/menuform",
+    element: <MenuForm />,
+  },
+  {
+    path: "/menutitemform",
+    element: <MenuItemForm />,
+  },
+  ,
+  {
+    path: "/systemprompt",
+    element: <SystemPromptManager />,
+  },
+  {
+    path: "/menuform",
+    element: <MenuForm />,
+  },
+  {
+    path: "/menulist/:slug",
+    element: <MenuListWithCart />,
+  },
+  {
+    path: "/menutitemform",
+    element: <MenuItemForm />,
+  },
 ]);
 
 export default router;

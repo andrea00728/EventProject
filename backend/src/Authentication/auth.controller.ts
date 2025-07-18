@@ -1,5 +1,5 @@
 // auth.controller.ts
-import { Controller, Get, UseGuards, Req, Res, Body, Post } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-auth.dto';
@@ -64,4 +64,13 @@ export class AuthController {
     return res.status(200).json({ message: 'Déconnecté avec succès' });
   }
 
+  @Get('ManagerList')
+  async getManagerList() {
+    return this.authService.getManagerList();
+  }
+
+  @Delete('deleteManager/:id')
+  async deleteAManager(@Param('id') id: string): Promise<{ message: string }> {
+    return this.authService.deleteManager(id);
+  }
 }

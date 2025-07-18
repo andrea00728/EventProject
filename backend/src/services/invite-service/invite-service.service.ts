@@ -106,12 +106,24 @@ async importGuests(file: Express.Multer.File, eventId: number,userId:string): Pr
       const savedGuests: Invite[] = [];
       const errors: string[] = [];
 
-            try {
-          await this.checkInviteLimit( eventId, userId,guestsRaw.length);
-        } catch (limitErr) {
-          errors.push(`Limite forfait dépassée: ${limitErr.message}`);
-          return resolve({ imported: [], errors }); // Pas de throw ici
-        }
+      try {
+        await this.checkInviteLimit( eventId, userId,guestsRaw.length);
+      } catch (limitErr) {
+        errors.push(`Limite forfait dépassée: ${limitErr.message}`);
+        return resolve({ imported: [], errors }); // Pas de throw ici
+      }
+      const totalExisting = await this.guestRepository.count({ where: { event: { id: eventId } } });
+      const totalFinal = totalExisting + guestsRaw.length;
+
+      console.log(' Total existants:', totalExisting);
+      console.log(' Total CSV à importer:', guestsRaw.length);
+      console.log('Montant transaction:', evenement.montanttransaction);
+      console.log(' Total final:', totalFinal);
+
+      if (totalFinal > 50 && (!evenement.montanttransaction || evenement.montanttransaction === 0)) {
+        reject(new BadRequestException('Vous avez atteint la limite gratuite de 50 invités. Veuillez effectuer le paiement pour continuer.'));
+        return;
+      }
 
       for (const record of guestsRaw) {
         try {

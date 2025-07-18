@@ -92,7 +92,7 @@ async findOneById(eventId: number): Promise<Evenement> {
 
   
   async findAll(): Promise<Evenement[]> {
-    return this.evenementRepository.find({ relations: ['location', 'salle', 'tables', 'invites'] });
+    return this.evenementRepository.find({ relations: ['location', 'salle', 'tables', 'invites', 'user',] });
   }
 
   async findOne(id: number): Promise<Evenement> {
@@ -127,7 +127,6 @@ async findLastEventByUserId(userId: string): Promise<Evenement | null> {
  * requete de suppression d'un evenement
  */
 
-
 async deleteEvent(id: number, userId: string): Promise<{ message: string }> {
   const event = await this.evenementRepository.findOne({
     where: { id, user: { id: userId } },
@@ -142,6 +141,16 @@ async deleteEvent(id: number, userId: string): Promise<{ message: string }> {
   await this.evenementRepository.manager.delete('TableEvent', { event: { id } });
   await this.evenementRepository.remove(event);
   return { message: 'Événement supprimé avec succès' };
+}
+/*** */
+async findManagerEvents(utilisateur_id: string): Promise<Evenement[]> {
+  console.log('utilisateur_id reçu :', utilisateur_id);
+  return this.evenementRepository.find({
+    where: {
+      user: { id: utilisateur_id },
+    },
+    relations: ['user', 'location', 'salle','tables','invites'], 
+  });
 }
 
 }

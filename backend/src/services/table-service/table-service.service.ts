@@ -6,8 +6,8 @@ import { CreateTableDto } from 'src/dto/CreateTaleDto';
 import { Invite } from 'src/entities/Invite';
 import { TableEvent } from 'src/entities/Table';
 import { Evenement } from 'src/entities/Evenement';
+import { QrCodeService } from '../qrcode/qrcode.service';
 import { NotificationService } from '../notification/notification.service';
-  
 @Injectable()
 export class TableService {
   constructor(
@@ -17,7 +17,7 @@ export class TableService {
     private readonly guestRepository: Repository<Invite>,
     @InjectRepository(Evenement)
     private readonly eventRepository:Repository<Evenement>,
-
+    private readonly qrCodeService: QrCodeService,
     private readonly notificationService:NotificationService,
   ) {}
 
@@ -57,6 +57,12 @@ async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEven
     event
   });
 
+    // Sauvegarder la table pour obtenir un ID
+  const savedTable = await this.tableRepository.save(table);
+
+  // Générer le QR code pour la table
+  savedTable.qrCode = await this.qrCodeService.generateQrCodeForTable(dto.eventId, savedTable.id)
+  
   const table_event=await this.tableRepository.save(table);
   await this.notificationService.notifyAll(
     'Nouvelle table ajoutée',
@@ -123,12 +129,12 @@ async updatePlaceReserve(tableId: number): Promise<void> {
 }
 
   
-  async findByEvent(eventId: number): Promise<TableEvent[]> {
-    return this.tableRepository.find({
-      where: { event: { id: eventId } },
-      relations: ['guests','event'],
-    });
-  }
+async findByEvent(eventId: number): Promise<TableEvent[]> {
+  return this.tableRepository.find({
+    where: { event: { id: eventId } },
+    relations: ['guests', 'event'],
+  });
+}
 
     /**
      * 
@@ -156,19 +162,54 @@ async updatePlaceReserve(tableId: number): Promise<void> {
  * mettre a jour les tables
  */
 
-  async updateTable(id:number,data:Partial<TableEvent>):  Promise<TableEvent>{
-    await this.tableRepository.update(id,data);
-    const table=await this.tableRepository.findOne({
-      where:{id},
-      relations:['guests']
-    });
-     if (!table) {
-      throw new BadRequestException(`table avec ID ${id} non trouvé`);
-    }
-
-    return table;
+async updateTable(id: number, data: Partial<TableEvent>): Promise<TableEvent> {
+  await this.tableRepository.update(id, data);
+  const table = await this.tableRepository.findOne({
+    where: { id },
+    relations: ['guests', 'event'],
+  });
+  if (!table) {
+    throw new BadRequestException(`Table avec ID ${id} non trouvée`);
   }
 
+  // Régénérer le QR code si l'eventId ou l'ID de la table change
+  if (data.event || data.id) {
+    table.qrCode = await this.qrCodeService.generateQrCodeForTable(table.event.id, table.id);
+    await this.tableRepository.save(table);
+  }
+
+  return table;
+}
+
+//   async DeleteTable(id: number, userId: number): Promise<{ message: string }> {
+//   // Récupérer la table avec ses relations
+//   const table = await this.tableRepository.findOne({
+//     where: { id },
+//     relations: ['event', 'event.user', 'guests'],
+//   });
+
+//   // Vérifier si la table existe
+//   if (!table) {
+//     throw new BadRequestException("Table non trouvée");
+//   }
+
+//   // Vérifier que la table appartient bien à l'utilisateur connecté
+//   if (table.event.user.id !== userId) {
+//     throw new UnauthorizedException("Vous n'avez pas l'autorisation de supprimer cette table");
+//   }
+
+//   // Détacher les invités associés à cette table
+//   for (const guest of table.guests) {
+//     guest.table = null;
+//     guest.place = null;
+//     await this.guestRepository.save(guest);
+//   }
+
+//   // Supprimer la table
+//   await this.tableRepository.remove(table);
+
+//   return { message: "Table supprimée avec succès" };
+// }
 
 
  async updateTablePosition(tableId: number, position: { left: number; top: number }): Promise<TableEvent> {

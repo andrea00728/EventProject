@@ -6,6 +6,10 @@ import { Invite } from './Invite';
 import { User } from 'src/Authentication/entities/auth.entity';
 import { Personnel } from './Personnel';
 import { Invitation } from './Invitation';
+import { Menu } from './menu.entity';
+import { Balance } from './balance.entity';
+import { Payment } from './payment.entity';
+import { MenuItem } from './menu-item.entity';
 
 
 @Unique(['nom','user'])
@@ -28,18 +32,37 @@ export class Evenement {
 
   @Column({nullable:true})
   date_fin: Date;
+  @OneToMany(() => Menu, (menu) => menu.evenement)
+  menus: Menu[];
+
   
   @ManyToOne(() => Localisation, (localisation) => localisation.salles)
   location: Localisation;
 
-  @ManyToOne(() => Salle, (salle) => salle.location)
+  @ManyToOne(() => Salle, { onDelete: 'CASCADE' })
   salle: Salle;
+
+  @Column({ nullable: true })
+  salleId: number;
 
   @OneToMany(() => TableEvent, (table) => table.event, {onDelete: 'CASCADE'})
   tables: TableEvent[];
 
   @OneToMany(() => Invite, (invite) => invite.event,{onDelete: 'CASCADE'})
   invites: Invite[];
+
+  @OneToMany(() => Balance, (balance) => balance.event)
+  balances: Balance[];
+
+  @OneToMany(() => Payment, (payment) => payment.event)
+  payments: Payment[];
+
+  /**
+   * natoko anio ko lony
+   */
+    // @ManyToOne(()=>User,(user)=>user.id,{nullable:false})
+    // @JoinColumn({name:'utilisateur_id'})
+    // user:User
 
     @ManyToOne(() => User, (user) => user.evenement, { nullable: false ,onDelete: 'CASCADE'})
     @JoinColumn({ name: 'utilisateur_id' })

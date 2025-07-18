@@ -1,9 +1,9 @@
 // Patch pour rendre crypto global (pour TypeORM et NestJS)
-globalThis.crypto = require('crypto');
-
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './Exception/http-exception.filter';
+import * as express from 'express';
+import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -13,7 +13,8 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true, // si tu utilises des cookies ou l'authentification
   });
-  
+
+  app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
   app.useGlobalFilters(new HttpExceptionFilter())
   await app.listen(process.env.PORT ?? 3000);
 

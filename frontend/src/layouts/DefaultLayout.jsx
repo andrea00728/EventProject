@@ -4,6 +4,7 @@ import { Link, Navigate, Outlet } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Profil from "../util/profils";
 import ForfaitPage from "../pages/forfaitpage/forfaitpage";
+import ChatWidget from "../pages/ChatWidget";
 import { getUserForfait } from "../services/forfaitService";
 import NotificationListener from "../util/Notification/notification";
 import { ToastContainer } from "react-toastify";
@@ -181,6 +182,7 @@ export default function DefaultLayout() {
         <NotificationListener/>
         <ToastContainer position="top-right"/>
         <Outlet />
+        <ChatWidget />
       </main>
     </>
   );

@@ -85,6 +85,11 @@ async create(@Body() dto: CreateEventDto, @Req() req: any): Promise<Evenement> {
     }
     return this.evenementService.deleteEvent(id, userIdFromToken);
   }
+  /****************************** ******************** */
+  @Get(':id/managerEvents')
+  findManagerEvents(@Param('id') id: string) {
+    return this.evenementService.findManagerEvents(id);   
   }
+}
 
 

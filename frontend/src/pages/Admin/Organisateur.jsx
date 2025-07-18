@@ -1,0 +1,242 @@
+import { useEffect, useState } from "react";
+import { deleteManager, getManagerList } from "../../services/inviteService";
+import { formatDate } from "./Evenement";
+import {
+  MdFileDownload,
+  MdSearch,
+  MdOutlineCalendarMonth,
+  MdFilterList,
+} from "react-icons/md";
+import { TbTrashXFilled } from "react-icons/tb";
+import { getAllManagerEvents } from "../../services/evenementServ";
+import ModalManager from "./ModalManager";
+import DeleteModal from "./DeleteModal";
+import { FaUsers } from "react-icons/fa6";
+import { handleDownloadXLSX } from "../../services/downloadXLSX";
+import { DataGrid } from "@mui/x-data-grid";
+import { motion } from "framer-motion";
+import ForfaitModal from "../../components/Modal/ForfaitModal";
+
+export default function Organisateur() {
+  const [data, setData] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("name");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalData, setModalData] = useState([]);
+  const [managerName, setManagerName] = useState("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedManager, setSelectedManager] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    document.title = "Organisateur - Admin";
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const data = await getManagerList();
+        console.log(data);
+        setData(data);
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des organisateurs :",
+          error
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const filteredData = data.filter((organisateur) =>
+    organisateur[filterType].toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleTakeManagerEvents = async (id) => {
+    try {
+      const data = await getAllManagerEvents(id);
+      if (data.length === 0) {
+        alert("Aucun événement trouvé pour cet organisateur.");
+        return;
+      } else {
+        setModalData(data);
+        setIsModalOpen(true);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des événements :", error);
+    }
+  };
+
+  const openDeleteModal = (manager) => {
+    setSelectedManager(manager);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setSelectedManager(null);
+    setIsDeleteModalOpen(false);
+  };
+
+  const handleDeleteManager = async () => {
+    try {
+      await deleteManager(selectedManager.id);
+      closeDeleteModal();
+      setData((prev) => prev.filter((m) => m.id !== selectedManager.id));
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
+    }
+  };
+
+  const handleDownload = () => {
+    const page = data.map((p) => ({
+      Nom: p.name,
+      Email: p.email,
+      Date_creation: formatDate(p.createdAt),
+    }));
+    handleDownloadXLSX(page, "liste_organisateurs");
+  };
+
+  return (
+    <div className="py-10 px-8 h-screen overflow-auto flex flex-col">
+      <div>
+        <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center">
+          <FaUsers className="mr-3" /> Liste des organisateurs
+        </h2>
+      </div>
+
+      {/* Zone de recherche */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={handleDownload}
+          className="bg-[#cfc6c4] hover:bg-[#c2bab8] rounded-2xl px-6 py-2 text-[17px] text-black font-semibold cursor-pointer"
+        >
+          Exporter en CSV <MdFileDownload className="inline ml-2" />
+        </button>
+      </div>
+      <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+        <div className="flex items-center gap-2">
+          <MdFilterList className="text-gray-500" />
+          <select
+            className="p-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#cfc6c4]"
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+          >
+            <option value="name">Nom</option>
+            <option value="email">Email</option>
+          </select>
+        </div>
+        <div className="relative w-full md:w-1/3">
+          <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder={`Rechercher par ${filterType}...`}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#cfc6c4]"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-auto bg-white shadow-2xl rounded-2xl p-4">
+        {loading ? (
+          <p className="text-center text-lg py-5">Chargement...</p>
+        ) : filteredData.length === 0 ? (
+          <p className="text-center text-lg py-5 text-gray-600">
+            Aucun organisateur correspondant
+          </p>
+        ) : (
+          <div className="h-[600px] w-full overflow-auto">
+            <DataGrid
+              rows={filteredData.map((org) => ({
+                id: org.id,
+                name: org.name,
+                email: org.email,
+                nameForfait: org.forfait?.nom || "Aucun forfait",
+                createdAt: formatDate(org.createdAt),
+                forfaitexpirationdate: formatDate(org.forfaitexpirationdate),
+                fullData: org,
+              }))}
+              columns={[
+                { field: "name", headerName: "Nom", flex: 1, minWidth: 150 },
+                { field: "email", headerName: "Email", flex: 1, minWidth: 200 },
+                {
+                  field: "nameForfait",
+                  headerName: "Forfait",
+                  flex: 1,
+                  minWidth: 150,
+                },
+                {
+                  field: "createdAt",
+                  headerName: "Date de création",
+                  flex: 1,
+                  minWidth: 150,
+                },
+                {
+                  field: "forfaitexpirationdate",
+                  headerName: "Date d'expiration",
+                  flex: 1,
+                  minWidth: 170,
+                },
+                {
+                  field: "actions",
+                  headerName: "Actions",
+                  flex: 1,
+                  minWidth: 220,
+                  sortable: false,
+                  renderCell: (params) => {
+                    const org = params.row.fullData;
+                    return (
+                      <div className="flex gap-2 items-center pt-2">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => {
+                            handleTakeManagerEvents(org.id);
+                            setManagerName(org.name);
+                          }}
+                          className="inline-flex items-center gap-2 bg-[#cfc6c4] hover:bg-[#bfb3b1] text-sm text-black font-semibold py-1.5 px-4 rounded-full shadow-md transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#cfc6c4]"
+                        >
+                          <MdOutlineCalendarMonth className="text-lg" />
+                          <span>Ses événements</span>
+                        </motion.button>
+
+                        <button
+                          onClick={() => openDeleteModal(org)}
+                          className="text-red-600 hover:text-red-800 text-2xl transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-400 rounded"
+                        >
+                          <TbTrashXFilled />
+                        </button>
+                      </div>
+                    );
+                  },
+                },
+              ]}
+              pageSize={5}
+              rowsPerPageOptions={[5, 10, 20]}
+              disableSelectionOnClick
+              autoHeight
+            />
+          </div>
+        )}
+
+        {/* Modals */}
+        <ModalManager
+          isOpen={isModalOpen}
+          onClose={() => {
+            setModalData([]);
+            setManagerName("");
+            setIsModalOpen(false);
+          }}
+          data={modalData}
+          managerName={managerName || "Organisateur"}
+        />
+        <DeleteModal
+          isOpen={isDeleteModalOpen}
+          onClose={closeDeleteModal}
+          onConfirm={handleDeleteManager}
+          managerName={selectedManager?.name}
+        />
+      </div>
+    </div>
+  );
+}

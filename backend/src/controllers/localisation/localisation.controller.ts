@@ -1,5 +1,5 @@
 // src/location/location.controller.ts
-import { Controller, Post, Body, Get, Param, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, BadRequestException, Put, Delete } from '@nestjs/common';
 import { LocationService } from 'src/services/localisation-service/localisation-service.service';
 
 
@@ -48,4 +48,24 @@ export class LocationController {
   findSalleById(@Param('id') id: string) {
     return this.locationService.findSalleById(+id);
   }
+
+  @Put(':id')
+  async updateLocation(@Param('id') id: string, @Body('nom') nom: string) {
+  return this.locationService.updateLocation(+id, nom);
+}
+
+@Delete(':id')
+async deleteLocation(@Param('id') id: string) {
+  return this.locationService.deleteLocation(+id);
+}
+
+@Put('salles/:id')
+async updateSalle(@Param('id') id: string, @Body('nom') nom: string) {
+  return this.locationService.updateSalle(+id, nom);
+}
+
+@Delete('salles/:id')
+async deleteSalle(@Param('id') id: string) {
+  return this.locationService.deleteSalle(+id);
+}
 }

@@ -7,13 +7,15 @@ import { Invite } from 'src/entities/Invite';
 import { TableEvent } from 'src/entities/Table';
 import { GuestService } from 'src/services/invite-service/invite-service.service';
 import { TableService } from 'src/services/table-service/table-service.service';
+import { QrCodeModule } from '../qrcode/qrcode.module';
 import { ForfaitModule } from '../forfait/forfait.module';
 import { NotificationModule } from '../notification/notification.module';
 import { PersonnelModule } from '../personnel/personnel.module';
 
+
 @Module({
   imports: [TypeOrmModule.forFeature([Invite, TableEvent,Evenement,User]),
-  ForfaitModule,NotificationModule,PersonnelModule,
+  ForfaitModule,NotificationModule,QrCodeModule,
 ],
   providers: [GuestService, TableService],
   controllers: [GuestController],

@@ -1,10 +1,9 @@
-
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
 import { Entity, Column, PrimaryColumn, ManyToMany, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
+export type UserRole = 'organisateur' | 'accueil' | 'caissier' | 'cuisinier';
 
-export type UserRole='organisateur'|'accueil'|'caissier'|'cuisinier';
 @Entity('users')
 export class User {
   @PrimaryColumn('uuid')
@@ -16,9 +15,10 @@ export class User {
   @Column()
   name: string;
 
-  @Column({ type: 'varchar', nullable: true }) 
+  @Column({ type: 'varchar', nullable: true })
   photo: string;
- @Column({
+
+  @Column({
     type: 'enum',
     enum: ['organisateur', 'accueil', 'caissier', 'cuisinier'],
     default: 'organisateur',
@@ -46,3 +46,4 @@ export class User {
    @Column({type:'timestamp',nullable:true})
     forfaitexpirationdate:Date|null;
 }
+

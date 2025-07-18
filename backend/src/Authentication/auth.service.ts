@@ -1,5 +1,5 @@
 
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { User } from './entities/auth.entity';
 import { CreateUserDto } from './dto/create-auth.dto';
 import { Personnel } from 'src/entities/Personnel';
+import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
 
 @Injectable()
@@ -17,6 +18,8 @@ export class AuthService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Personnel)
     private readonly personnelRepository: Repository<Personnel>,
+    @InjectRepository(Evenement)
+    private readonly eventRepository: Repository<Evenement>,
     @InjectRepository(Forfait)
     private readonly forfaitRepository:Repository<Forfait>
   ) {}
@@ -33,7 +36,6 @@ async validateUser(profile: any): Promise<any> {
   });
 
   const role = personnel?.role || 'organisateur';
-
   // Vérifie si déjà dans users
   let user = await this.userRepository.findOne({ where: { email } });
 
@@ -60,7 +62,6 @@ async validateUser(profile: any): Promise<any> {
   return user;
 }
 
-
   async login(user: any) {
   const payload = { 
     email: user.email,
@@ -83,4 +84,35 @@ async validateUser(profile: any): Promise<any> {
   const token = this.jwtService.sign({}, { expiresIn: '1s' });
   return { message: 'Déconnexion réussie' };
 }
+  async getManagerList(): Promise<any> {
+    return this.userRepository.find({
+      where: { role: 'organisateur' },
+      relations: ['forfait'],
+    });
+  }
+
+  async deleteManager(id: string): Promise<{ message: string }> {
+    // Récupérer le manager avec ses relations si nécessaire
+    const manager = await this.userRepository.findOne({
+      where: { id },
+    });
+
+    if (!manager) {
+      throw new NotFoundException(`Manager avec ID ${id} non trouvé`);
+    }
+
+    // Vérifier que l'utilisateur est bien un organisateur
+    if (manager.role !== 'organisateur') {
+      throw new UnauthorizedException('Vous n\'êtes pas autorisé à supprimer ce manager');
+    }
+
+    console.log(manager)
+
+    // Supprimer le manager lui-même
+    await this.eventRepository.delete({ user: { id: manager.id } }); // Supprimer les événements liés
+    await this.userRepository.delete(manager.id);
+
+    return { message: 'Organisateur supprimé avec succès' };
+  }
+
 }

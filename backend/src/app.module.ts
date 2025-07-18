@@ -1,32 +1,47 @@
 
 
+
+/* eslint-disable prettier/prettier */
+import * as crypto from 'crypto'
+(global as any).crypto = crypto
+ 
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ScheduleModule } from '@nestjs/schedule'; // Gardons ScheduleModule à sa place habituelle
 
-// Importez toutes vos entités
 import { Evenement } from './entities/Evenement';
 import { Localisation } from './entities/Location';
 import { Invitation } from './entities/Invitation';
 import { Invite } from './entities/Invite';
 import { Salle } from './entities/salle';
 import { TableEvent } from './entities/Table';
+import { EvenementModule } from './modules/evenement/evenement.module';
+import { AuthModule } from './Authentication/auth.module';
+import { User } from './Authentication/entities/auth.entity';
+import { PaiementModule } from './modules/paiement/paiement.module';
 import { Place } from './entities/Place';
+import { PersonnelModule } from './modules/personnel/personnel.module';
 import { Personnel } from './entities/Personnel';
+import { QrCodeModule } from './modules/qrcode/qrcode.module';
+import { MenuModule } from './modules/menu/menu.module';
+import { OrderModule } from './modules/order/order.module';
+import { Menu } from './entities/menu.entity';
+import { MenuItem } from './entities/menu-item.entity';
+import { Order } from './entities/order.entity';
+import { OrderItem } from './entities/order-item.entity';
+import { SharedModule } from './modules/shared/shared.module';
+import { Balance } from './entities/balance.entity';
+import { Payment } from './entities/payment.entity';
+import { GeminiModule } from './modules/gemini/gemini.module';
 import { Forfait } from './entities/Forfait';
-import { User } from './Authentication/entities/auth.entity'; // Assurez-vous que c'est la bonne entité User
 
 // Importez tous vos modules fonctionnels
-import { AuthModule } from './Authentication/auth.module';
 import { TableModule } from './modules/table/table.module';
 import { InviteModule } from './modules/invite/invite.module';
 import { InvitationModule } from './modules/invitation/invitation.module';
 import { LocationModule } from './modules/localisation/localisation.module';
-import { EvenementModule } from './modules/evenement/evenement.module';
-import { PaiementModule } from './modules/paiement/paiement.module';
-import { PersonnelModule } from './modules/personnel/personnel.module';
 import { ForfaitModule } from './modules/forfait/forfait.module';
 // Importez vos services et contrôleurs
 import { ProfileController } from './controllers/profile/profile.controller';
@@ -37,8 +52,13 @@ import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 import { PaypalService } from './services/paypal/paypal.service';
 import { PaypalWebhookService } from './services/paypal-webhook/paypal-webhook.service';
 import { PaypalModule } from './modules/paypal/paypal.module';
+import { SystemPrompt } from './entities/system-prompt.entity';
+import { SystemPromptModule } from './modules/system-prompt/system-prompt.module';
+import { ShortLinkController } from './controllers/short-link/short-link.controller';
+import { ShortLink } from './entities/ShortLink';
 import { NotificationService } from './services/notification/notification.service';
 import { NotificationModule } from './modules/notification/notification.module';
+import { ShortLinkModule } from './modules/short-link/short-link.module';
 
 
 @Module({
@@ -71,7 +91,8 @@ import { NotificationModule } from './modules/notification/notification.module';
           username: dbUsername,
           password: dbPassword,
           database: dbDatabase,
-          entities: [User, Evenement, Localisation, Invitation, Invite, Salle, TableEvent, Place, Personnel, Forfait],
+          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, Forfait, SystemPrompt, ShortLink],
+     
           synchronize: true, 
         };
       },
@@ -113,10 +134,21 @@ import { NotificationModule } from './modules/notification/notification.module';
     LocationModule,
     PaiementModule,
     PersonnelModule,
+    QrCodeModule,
+    MenuModule,
+    OrderModule,
+    SharedModule,
+    GeminiModule,
+    SystemPrompt,
+    SystemPromptModule,
+   
     ForfaitModule,
     PaypalModule,
+    NotificationModule,
+    ShortLinkModule,
+
   ],
-  controllers: [ProfileController],
+  controllers: [ProfileController,],
   providers: [],
 
 })
