@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useStateContext } from "../context/ContextProvider";
 import { Link, Navigate, Outlet } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-
+import Logo from "../assets/LogoMaster.png"
 export default function GuestLayout() {
   const { token,role } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -37,13 +37,12 @@ export default function GuestLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 bg-indigo-100 flex items-center justify-center rounded-2xl shadow-lg border border-indigo-200">
-              <span className="text-3xl font-black text-indigo-700 tracking-tight">R</span>
+              <img src={Logo} className="text-3xl font-black text-indigo-700 tracking-tight"/>
             </div>
             <span className="ml-2 text-xl font-bold text-indigo-900 tracking-wide hidden sm:block">
-              RAPEX Event
+              
             </span>
           </div>
-          {/* NAVIGATION À DROITE */}
           <nav className="flex items-center gap-10 text-indigo-800 font-semibold text-base">
             {navItems.map((item) => (
               <Link key={item.path} to={item.path}>

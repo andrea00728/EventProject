@@ -32,4 +32,7 @@ export class Invite {
 
   @Column({ nullable: true })
   qrCode: string;
+
+  @Column({ default: false })
+  ckeckedIn: boolean;
 }

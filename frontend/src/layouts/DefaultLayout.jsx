@@ -7,7 +7,7 @@ import ForfaitPage from "../pages/forfaitpage/forfaitpage";
 import { getUserForfait } from "../services/forfaitService";
 import NotificationListener from "../util/Notification/notification";
 import { ToastContainer } from "react-toastify";
-
+import Logo from "../assets/LogoMaster.png"
 export default function DefaultLayout() {
   const { token, role, isLoading } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -101,10 +101,10 @@ export default function DefaultLayout() {
       <header className="w-full bg-white shadow-2xl fixed top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-14 h-14 bg-indigo-100 flex items-center justify-center rounded-xl shadow-lg border-4 border-indigo-200">
-              <span className="text-3xl font-extrabold text-indigo-700 tracking-tight">🎟️</span>
+            <div className="w-16 h-16 bg-indigo-100 flex items-center justify-center rounded-xl shadow-lg border-4 border-indigo-200">
+              <img src={Logo} className="text-3xl font-extrabold text-indigo-700 tracking-tight"/>
             </div>
-            <span className="ml-2 text-2xl font-bold text-indigo-700 tracking-wide hidden sm:block">TableMaster</span>
+            <span className="ml-2 text-2xl font-bold text-indigo-700 tracking-wide hidden sm:block"></span>
           </div>
 
           <nav className="hidden md:flex flex-1 items-center justify-center gap-8 text-indigo-900 font-medium text-base">

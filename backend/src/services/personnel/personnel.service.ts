@@ -174,4 +174,30 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
   return savedPersonnel;
 }
 
+async findOneByUserEmailAndEvent(email: string, eventId: number): Promise<Personnel | null> {
+  return await this.personnelRepository.findOne({
+    where: {
+      email: email,
+      evenement: { id: eventId },
+    },
+    relations: ['evenement'],
+  });
+}
+
+
+/**
+ * 
+ * utilise pour  verifierr le nombre d'invite dans personnel accueil
+ */
+
+async findOneByUserEmail(email: string): Promise<Personnel | null> {
+  return await this.personnelRepository.findOne({
+    where: {
+      email: email,
+    },
+    relations: ['evenement'],
+  });
+}
+
+
 }

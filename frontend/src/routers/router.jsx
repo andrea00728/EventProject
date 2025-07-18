@@ -37,6 +37,8 @@ import Optionpersonnel from "../pages/oranisation_personnel/confirmationRefus.js
 import ForfaitSuccess from "../pages/forfaitpage/forfaitSucces.jsx";
 import ForfaitPage from "../pages/forfaitpage/forfaitpage.jsx";
 import ForfaitActive from "../pages/forfaitpage/forfaitActive.jsx";
+import QrScannerComponent from "../util/QrCode_personnel_Accueil/QrCodeValidation.jsx";
+import Envoy from "../pages/PersonnelAccueil/EvoyerVerRout.jsx";
 const router=createBrowserRouter([
    
   {
@@ -142,6 +144,7 @@ const router=createBrowserRouter([
 
     /**
      * rout personnel accueil
+     * route pour tout les fonctionalite du personnel accueil
      */
    {
   path: "/",
@@ -155,12 +158,29 @@ const router=createBrowserRouter([
       path: "/personnelAccueil",
       element: (
         <ProtectedRoute allowedRoles={["accueil", "caissier", "cuisinier","organisateur"]}>
-          <DashboardpersAccueil />
+          <Envoy/>
+        </ProtectedRoute>
+      )
+    },
+      {
+      path: "/scan",
+      element: (
+        <ProtectedRoute allowedRoles={["accueil", "caissier", "cuisinier","organisateur"]}>
+          <QrScannerComponent />
         </ProtectedRoute>
       )
     }
   ]
 },
+
+/**
+ * 
+ * 
+ * Rout pour tout les fonctionnalite du personnel de la caisse
+ * 
+ * 
+ * 
+ */
    {
   path: "/",
   element: <PersonnelCaisse />,
@@ -179,6 +199,16 @@ const router=createBrowserRouter([
     }
   ]
 },
+
+
+/***
+ * 
+ * 
+ * Rout pour tout les fonctionnalite du personnel de la cuisine
+ * 
+ * 
+ * 
+ */
   {
   path: "/",
   element: <PersonnelCuisine />,
