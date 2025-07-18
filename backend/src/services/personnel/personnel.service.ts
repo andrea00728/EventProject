@@ -184,7 +184,9 @@ async findOneByUserEmailAndEvent(email: string, eventId: number): Promise<Person
 
 /**
  * 
- * utilise pour  verifierr le nombre d'invite dans personnel accueil
+ * utilise pour  verifierr autrise
+ * 
+ * 
  */
 
 async findOneByUserEmail(email: string): Promise<Personnel | null> {

@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { CountPersonnelByEvent } from '../../services/personnel_service';
 import { getMyEvents } from '../../services/evenementServ';
 import { useStateContext } from '../../context/ContextProvider';
-import ListePersonnel from './Listepersonnel';
+import OrganisationChart from './OrganisationChart';
 
-
-export default function PersonnelCountDashboard() {
+export default function PersonnelOrganigrammeDashboard() {
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [selectedEventName, setSelectedEventName] = useState('');
   const [events, setEvents] = useState([]);
@@ -71,7 +69,7 @@ export default function PersonnelCountDashboard() {
       {/* Liste du personnel */}
       {selectedEventId && (
         <>
-          <ListePersonnel eventId={selectedEventId} token={token} />
+        <OrganisationChart eventId={selectedEventId} token={token} />
         </>
       )}
     </div>

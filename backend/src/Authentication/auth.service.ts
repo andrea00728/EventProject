@@ -78,4 +78,9 @@ async validateUser(profile: any): Promise<any> {
     const user=this.userRepository.create(dto);
     return this.userRepository.save(user);
   }
+
+  async logout(user: any) {
+  const token = this.jwtService.sign({}, { expiresIn: '1s' });
+  return { message: 'Déconnexion réussie' };
+}
 }

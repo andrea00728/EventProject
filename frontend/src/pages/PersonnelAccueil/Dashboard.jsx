@@ -44,6 +44,7 @@ const DashboardpersAccueil = () => {
           <svg className="w-3" viewBox="0 0 12 15" fill="none">
             <path d="M6 0L12 8H0L6 0Z" fill="currentColor" />
           </svg>
+            
           <span>{percentage}%</span>
         </div>
       </div>

@@ -1,12 +1,11 @@
 import React from 'react';
 
-import CountPersonnelCard from './Count_personnelByevent';
-import ListePersonnel from './Listepersonnel';
+import PersonnelCountDashboard from './Count_personnelByevent';
 export default function DashboardPersonnel() {
     return (
         <>
           <div className=''>
-        <CountPersonnelCard/>
+        <PersonnelCountDashboard/>
         </div>
         </>
     );

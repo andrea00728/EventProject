@@ -39,6 +39,9 @@ import ForfaitPage from "../pages/forfaitpage/forfaitpage.jsx";
 import ForfaitActive from "../pages/forfaitpage/forfaitActive.jsx";
 import QrScannerComponent from "../util/QrCode_personnel_Accueil/QrCodeValidation.jsx";
 import Envoy from "../pages/PersonnelAccueil/EvoyerVerRout.jsx";
+import OrganisationChart from "../pages/oranisation_personnel/OrganisationChart.jsx";
+import PersonnelOrganigrammeDashboard from "../pages/oranisation_personnel/Organigramme.jsx";
+import InvitationLayout from "../layouts/InvitationLayout.jsx";
 const router=createBrowserRouter([
    
   {
@@ -84,6 +87,11 @@ const router=createBrowserRouter([
       ]
     },
     {
+      path: "/evenement/invitation",
+      element: <InvitationLayout/>,
+    },
+    
+    {
       path: "/evenement/tables",
       element: <TableLayout />,
       children: [
@@ -126,10 +134,14 @@ const router=createBrowserRouter([
         {
           path: "",
           element: <DashboardPersonnel />
-        }
-      
+        },
+         {
+          path: "organigramme",
+          element: <PersonnelOrganigrammeDashboard/>
+        },
       ]
     },
+   
      {
       path:'/forfait/success',
       element:<ForfaitSuccess/>

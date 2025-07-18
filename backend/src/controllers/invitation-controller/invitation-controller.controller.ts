@@ -13,10 +13,14 @@ import { AuthGuard } from '@nestjs/passport';
 import { CreateInvitationDto } from 'src/dto/CreateInvitatioDto';
 import { Invitation } from 'src/entities/Invitation';
 import { InvitationService } from 'src/services/invitation-service/invitation-service.service';
+import { NotificationService } from 'src/services/notification/notification.service';
 
 @Controller('invitations')
 export class InvitationController {
-  constructor(private readonly invitationService: InvitationService) {}
+  constructor(
+    private readonly invitationService: InvitationService,
+    private readonly notificationService:NotificationService,
+  ) {}
 
   /**
    * 
@@ -32,7 +36,13 @@ export class InvitationController {
     @Body() dto: CreateInvitationDto,
   ): Promise<Invitation> {
     try {
-      return await this.invitationService.createInvitation(dto);
+      const invitation= await this.invitationService.createInvitation(dto);
+      await this.notificationService.notifyAll(
+        'ivitation envoyee',
+        `invitation evoye pour l'evenement ${dto.eventId}`,
+      )
+      return invitation;
+      
     } catch (error) {
       throw new HttpException(
         'Erreur lors de la création ou de l’envoi des invitations',

@@ -19,6 +19,13 @@ export const QrCodeValidation = async (payload, token) => {
 };
 
 
+
+/**
+ * 
+ * recuperation nombre des invites presents et absents
+ * 
+ * 
+ */
 export const getCheckinStats = async (token) => {
   const response = await axiosClient.get("/guests/count/checkin", {
     headers: {
@@ -27,4 +34,20 @@ export const getCheckinStats = async (token) => {
   });
   return response.data;
 };
+
+
+
+export const createInvitation = async (eventId, token) => {
+  const response = await axiosClient.post(
+    '/invitations',
+    { eventId },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return response.data;
+};
+
 
