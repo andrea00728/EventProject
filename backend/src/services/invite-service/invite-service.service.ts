@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { parse } from 'csv-parse';
@@ -10,6 +10,7 @@ import * as streamifier from 'streamifier';
 import { TableEvent } from 'src/entities/Table';
 import { User } from 'src/Authentication/entities/auth.entity';
 import { NotificationService } from '../notification/notification.service';
+import { PersonnelService } from '../personnel/personnel.service';
 
 @Injectable()
 export class GuestService {
@@ -25,6 +26,7 @@ export class GuestService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly notificationservice:NotificationService,
+    private readonly personnelService:PersonnelService,
   ) {}
 
   async createGuest(dto: CreateInviteDto, eventId: number,userId:string): Promise<Invite> {
@@ -436,4 +438,57 @@ async rassignGuestToTable(id: number, tableId: number, place: number, userId: st
   }
 }
 
+
+
+/**
+ * 
+ * @param guestId 
+ * @param eventId 
+ * @returns 
+ * 
+ * utilise pour le verification de l'invite via sont qrCode
+ */
+
+async findOneByIdAndEvent(guestId:number,eventId:number) {
+  return this.guestRepository.findOne(
+    {where:
+    {id:guestId,event:{id:eventId}},
+    relations:['event','table']
+  });
+}
+
+async updateforQrcode(id:number,guest:Partial<Invite>){
+ await this.guestRepository.update(id,guest)
+ await this.guestRepository.findOneBy({id:id})
+}
+
+
+
+/**
+ * 
+ * compte línvite  present et abscent
+ * 
+ */
+
+async countCheckinByPersonnel(userEmail: string) {
+  const personnel = await this.personnelService.findOneByUserEmail(userEmail);
+  const eventId = personnel?.evenement.id;
+
+
+
+  if(!personnel ||  personnel.role !=='accueil'){
+     console.error('Accès refusé pour cet utilisateur');
+      throw new ForbiddenException('Vous n\'avez pas d\'accès pour cet événement');
+  }
+  const repo=this.guestRepository;
+  const [checkedIn,notCheckedIn]=await Promise.all([
+     repo.count({ where: { event: { id: eventId }, ckeckedIn: true } }),
+     repo.count({ where: { event: { id: eventId }, ckeckedIn: false } }),
+  ]);
+   console.log('Résultats:', { checkedIn, notCheckedIn });
+   return {
+    checkedIn,
+    notCheckedIn,
+}
+}
 }

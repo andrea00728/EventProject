@@ -9,10 +9,11 @@ import { GuestService } from 'src/services/invite-service/invite-service.service
 import { TableService } from 'src/services/table-service/table-service.service';
 import { ForfaitModule } from '../forfait/forfait.module';
 import { NotificationModule } from '../notification/notification.module';
+import { PersonnelModule } from '../personnel/personnel.module';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Invite, TableEvent,Evenement,User]),
-  ForfaitModule,NotificationModule,
+  ForfaitModule,NotificationModule,PersonnelModule,
 ],
   providers: [GuestService, TableService],
   controllers: [GuestController],

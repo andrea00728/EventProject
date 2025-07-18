@@ -11,9 +11,10 @@ import { TableService } from 'src/services/table-service/table-service.service';
 import { EvenementModule } from '../evenement/evenement.module';
 import { InviteModule } from '../invite/invite.module';
 import { NotificationModule } from '../notification/notification.module';
+import { PersonnelModule } from '../personnel/personnel.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Invitation, Invite, TableEvent,Evenement]),EvenementModule,InviteModule,NotificationModule,],
+  imports: [TypeOrmModule.forFeature([Invitation, Invite, TableEvent,Evenement]),EvenementModule,InviteModule,NotificationModule,PersonnelModule],
   providers: [InvitationService, TableService],
   controllers: [InvitationController],
 })

@@ -7,15 +7,11 @@ import { Evenement } from './Evenement';
 export class Invitation {
   @PrimaryGeneratedColumn()
   id: number;
-
-  @Column()
-  templateType: string; 
-
-  @Column()
-  design: string; 
   @ManyToOne(() => Evenement, (event) => event.invites,{onDelete: 'CASCADE'})
   event: Evenement;
+  @Column({ default: 'ENVOYÉ' })
+  status: string;
 
-  @Column()
-  status: string; 
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
 }

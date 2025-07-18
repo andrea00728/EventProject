@@ -5,6 +5,7 @@ import { TableEvent } from './Table';
 import { Invite } from './Invite';
 import { User } from 'src/Authentication/entities/auth.entity';
 import { Personnel } from './Personnel';
+import { Invitation } from './Invitation';
 
 
 @Unique(['nom','user'])
@@ -55,5 +56,8 @@ export class Evenement {
 
     @Column({type:'boolean',default:false})
     isPublic:boolean;
+
+    @OneToMany(()=>Invitation,(inv)=>inv.event)
+    invitation:Invitation[];
 }
 

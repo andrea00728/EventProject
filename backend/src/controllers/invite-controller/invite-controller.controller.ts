@@ -297,14 +297,32 @@ async reassignGuest(
   @Body() data: { tableId: number; place: number },
   @Req() req: any
 ) {
+   console.log('ReassignGuest appelé - Params:', { inviteId, data });
   const userId = req.user?.sub;
+  console.log('User connecté (ID):', userId);
   const id = parseInt(inviteId,10);
   if(isNaN(id)){
+    console.error('inviteId non valide');
     throw new BadRequestException('InviteId non valide')
   }
   return this.guestService.rassignGuestToTable(id, data.tableId, data.place, userId);
+  
 }
 
+
+/**
+ * 
+ * 
+ * rout pour comparaison
+ * 
+ */
+
+@Get('/count/checkin')
+@UseGuards(AuthGuard('jwt'))
+async getCheckinStats(@Req() req) {
+  const userEmail = req.user.email;
+  return this.guestService.countCheckinByPersonnel(userEmail);
+}
 }
 
 

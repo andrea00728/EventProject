@@ -20,9 +20,9 @@ export class Personnel {
   @ManyToOne(() => Evenement, evenement => evenement.personnels, { onDelete: 'CASCADE' })
   evenement: Evenement;
 
+
   @Column({ type: 'enum', enum: ['attent', 'accepter'], default: 'attent' })
   status: 'attent' | 'accepter';
-
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 
