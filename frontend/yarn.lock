@@ -720,7 +720,7 @@
     reselect "^5.1.1"
     use-sync-external-store "^1.5.0"
 
-"@mui/x-data-grid@^8.7.0":
+"@mui/x-data-grid@^8.8.0":
   version "8.8.0"
   resolved "https://registry.npmjs.org/@mui/x-data-grid/-/x-data-grid-8.8.0.tgz"
   integrity sha512-xWoBmxHi5JvT0QvAYGYJYNy4DEi+Lez+lrsqw3YV7z0jEYyJoV9vjFCiFE4QmG6IPg62B1gZHYE5AkDLFCvPkw==

@@ -8,7 +8,7 @@ const MenuItemForm = ({ menuId, token }) => {
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('');
   const [stock, setStock] = useState('');
-  const [photo, setPhoto] = useState(null); 
+  const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [itemCreated, setItemCreated] = useState(false); 

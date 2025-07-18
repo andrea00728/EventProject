@@ -52,6 +52,9 @@ import MenuItemForm from "../pages/menuItem.jsx";
 import InvitePage from "../layouts/InvitePage.jsx";
 import ForfaitSuccess from "../pages/forfaitpage/forfaitSucces.jsx";
 import ForfaitActive from "../pages/forfaitpage/forfaitActive.jsx";
+import RestaurationPage  from "../pages/restauration/RestaurationPage.jsx";
+import MenuGrid from "../pages/Menu/MenuGrid.jsx";
+import MenuGridRestau from "../pages/restauration/MenuGrid.jsx";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -143,17 +146,22 @@ const router = createBrowserRouter([
       },
       {
         path: "/evenement/restauration",
-        element: <MenuForm/>,
-        // children: [
-        //   {
-        //     path: "createPersonnel",
-        //     element: <CreationPersonnel />,
-        //   },
-        //   {
-        //     path: "",
-        //     element: <DashboardPersonnel />,
-        //   },
-        // ],
+        element: <RestaurationPage />,
+        children: [
+          {
+            index: true, // équivaut à path: ""
+            element: <DashboardPersonnel />,
+          },
+          {
+            path: "createPersonnel", // bien RELATIF
+            element: <CreationPersonnel />,
+          },
+          {
+            path: "menu", // bien RELATIF
+            element: <MenuGridRestau />,
+          },
+        ],
+        
       },
       {
         path: "/paypal-success",

@@ -401,26 +401,26 @@ export default function ListeTable() {
             }}
           />
           <div className="flex justify-end p-4 gap-4">
-            <button
-              onClick={handlePrintSelected}
-              className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold py-2 px-4 rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200"
-              aria-label="Imprimer les tables sélectionnées"
-            >
-              🖨️ Imprimer les tables cochées
-            </button>
-            <button
-              onClick={handlePrintAll}
-              className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold py-2 px-4 rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200"
-              aria-label="Imprimer toutes les tables"
-            >
-              🖨️ Imprimer toutes les tables
-            </button>
+          <button
+            onClick={handlePrintSelected}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-2 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 cursor-pointer"
+            aria-label="Imprimer les tables sélectionnées"
+          >
+            🖨️ Imprimer
+          </button>
+          <button
+            onClick={handlePrintAll}
+            className="bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold py-2 px-4 rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 cursor-pointer"
+            aria-label="Imprimer toutes les tables"
+          >
+            🖨️ Imprimer tous
+          </button>
             <button
               onClick={handleDeleteSelected}
-              className="bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold py-2 px-4 rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200"
+              className="bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold py-2 px-4 rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 cursor-pointer"
               aria-label="Supprimer les tables sélectionnées"
             >
-              🗑️ Supprimer les tables cochées
+              🗑️ Supprimer
             </button>
           </div>
         </div>

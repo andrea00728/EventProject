@@ -20,7 +20,6 @@ export class MenuService {
     const menu = this.menuRepository.create({ name, event: { id: eventId } });
     return this.menuRepository.save(menu);
   }
-  //const { eventId } = extractIdsFromUrl();
 
   async addMenuItem(
     menuId: number,
@@ -33,7 +32,6 @@ export class MenuService {
     const menuItem = this.menuItemRepository.create({ ...item, menu, photo: photoPath });
     return this.menuItemRepository.save(menuItem);
   }
-  
 
   async findMenuByEvent(eventId: number): Promise<Menu[]> {
     return this.menuRepository.find({ where: { event: { id: eventId } }, relations: ['items', 'event'] });
@@ -64,10 +62,8 @@ export class MenuService {
     const menuItem = await this.menuItemRepository.findOne({ where: { id: menuItemId } });
     if (!menuItem) throw new NotFoundException('Menu item not found');
   
-    // Met à jour uniquement les champs fournis
     Object.assign(menuItem, updatedFields);
   
-    // Met à jour la photo si un nouveau fichier est fourni
     if (photoPath) {
       menuItem.photo = photoPath;
     }
@@ -75,12 +71,42 @@ export class MenuService {
     return this.menuItemRepository.save(menuItem);
   }
 
+  async updateMenu(menuId: number, name: string): Promise<Menu> {
+    const menu = await this.menuRepository.findOne({ where: { id: menuId } });
+    if (!menu) throw new NotFoundException('Menu not found');
+  
+    menu.name = name;
+    return this.menuRepository.save(menu);
+  }
+
+  async deleteMenu(menuId: number): Promise<{ message: string }> {
+    const menu = await this.menuRepository.findOne({ where: { id: menuId }, relations: ['items'] });
+    if (!menu) throw new NotFoundException('Menu not found');
+  
+    for (const item of menu.items) {
+      if (item.photo) {
+        const filePath = join(__dirname, '..', '..', '..', item.photo);
+        try {
+          await new Promise((resolve, reject) => {
+            unlink(filePath, (err) => {
+              if (err) reject(err);
+              else resolve(null);
+            });
+          });
+        } catch (err) {
+          console.warn('Erreur lors de la suppression du fichier image :', err.message);
+        }
+      }
+    }
+  
+    await this.menuRepository.delete(menuId);
+    return { message: 'Menu supprimé avec succès' };
+  }
 
   async deleteMenuItem(menuItemId: number): Promise<{ message: string }> {
     const item = await this.menuItemRepository.findOne({ where: { id: menuItemId } });
     if (!item) throw new NotFoundException('Menu item not found');
   
-    // Supprimer le fichier image s’il existe
     if (item.photo) {
       const filePath = join(__dirname, '..', '..', '..', item.photo);
       try {
@@ -98,6 +124,4 @@ export class MenuService {
     await this.menuItemRepository.delete(menuItemId);
     return { message: 'Menu item supprimé avec succès' };
   }
-  
-  
 }

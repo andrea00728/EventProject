@@ -1,7 +1,7 @@
 import { Controller, Post, Get, Patch, Body, Param, UsePipes, ValidationPipe, ParseIntPipe, UseInterceptors, UploadedFile, Delete, UseGuards } from '@nestjs/common';
 import { MenuService } from '../../services/menu/menu.service';
 import { CreateMenuDto, CreateMenuItemDto } from 'src/dto/menu.dto';
-import { IsInt, Min } from 'class-validator';
+import { IsInt, Min, IsString, IsNotEmpty } from 'class-validator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -11,6 +11,12 @@ export class RestockMenuItemDto {
   @IsInt()
   @Min(1)
   quantity: number;
+}
+
+export class UpdateMenuDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 }
 
 @Controller('menus')
@@ -49,7 +55,6 @@ export class MenuController {
     const photoPath = file ? `/uploads/menus/${file.filename}` : undefined;
     return this.menuService.addMenuItem(menuId, body, photoPath);
   }
-  
 
   @Get('event/:eventId')
   findMenuByEvent(@Param('eventId', ParseIntPipe) eventId: number) {
@@ -67,31 +72,46 @@ export class MenuController {
     return this.menuService.restockMenuItem(menuItemId, body.quantity);
   }
 
-@Roles('organisateur')
-@Patch('items/:menuItemId')
+  @Roles('organisateur')
+  @Patch('items/:menuItemId')
   @UseInterceptors(FileInterceptor('photo', {
-  storage: diskStorage({
-    destination: './uploads/menus',
-    filename: (req, file, callback) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      const ext = extname(file.originalname);
-      callback(null, `menuitem-${uniqueSuffix}${ext}`);
-    },
-  }),
-}))
-updateMenuItem(
-  @Param('menuItemId', ParseIntPipe) menuItemId: number,
-  @UploadedFile() file: Express.Multer.File,
-  @Body() body: Partial<CreateMenuItemDto>, // on autorise les champs partiels
-) {
-  const photoPath = file ? `/uploads/menus/${file.filename}` : undefined;
-  return this.menuService.updateMenuItem(menuItemId, body, photoPath);
-}
+    storage: diskStorage({
+      destination: './uploads/menus',
+      filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const ext = extname(file.originalname);
+        callback(null, `menuitem-${uniqueSuffix}${ext}`);
+      },
+    }),
+  }))
+  updateMenuItem(
+    @Param('menuItemId', ParseIntPipe) menuItemId: number,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: Partial<CreateMenuItemDto>,
+  ) {
+    const photoPath = file ? `/uploads/menus/${file.filename}` : undefined;
+    return this.menuService.updateMenuItem(menuItemId, body, photoPath);
+  }
 
-@Roles('organisateur')
-@Delete('items/:menuItemId')
-async deleteMenuItem(@Param('menuItemId', ParseIntPipe) menuItemId: number) {
-  return this.menuService.deleteMenuItem(menuItemId);
-}
+  @Roles('organisateur')
+  @Patch(':menuId')
+  @UsePipes(new ValidationPipe())
+  updateMenu(
+    @Param('menuId', ParseIntPipe) menuId: number,
+    @Body() body: UpdateMenuDto
+  ) {
+    return this.menuService.updateMenu(menuId, body.name);
+  }
 
+  @Roles('organisateur')
+  @Delete(':menuId')
+  deleteMenu(@Param('menuId', ParseIntPipe) menuId: number) {
+    return this.menuService.deleteMenu(menuId);
+  }
+
+  @Roles('organisateur')
+  @Delete('items/:menuItemId')
+  async deleteMenuItem(@Param('menuItemId', ParseIntPipe) menuItemId: number) {
+    return this.menuService.deleteMenuItem(menuItemId);
+  }
 }
