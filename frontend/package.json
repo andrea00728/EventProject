@@ -35,6 +35,7 @@
     "react-dom": "^19.0.0",
     "react-draggable": "^4.5.0",
     "react-icons": "^5.4.0",
+    "react-organizational-chart": "^2.2.1",
     "react-router-dom": "^7.1.5",
     "react-toastify": "^11.0.5",
     "resium": "^1.19.0-beta.1",

@@ -69,7 +69,7 @@ export default function DefaultLayout() {
         { path: "/evenement/evenement", name: "evenement", icon: "/file.png" },
         { path: "/evenement/tables", name: "Tables", icon: "/chair.png" },
         { path: "/evenement/invites", name: "Invités", icon: "/guest.png" },
-        { path: "/evenement/rapports", name: "Invitation", icon: "/invitation.png" },
+        { path: "/evenement/invitation", name: "Invitation", icon: "/invitation.png" },
         { path: "/evenement/personnel", name: "Personnel", icon: "/community-center.png" },
         //  Afficher seulement pour les forfaits premium
         ...(

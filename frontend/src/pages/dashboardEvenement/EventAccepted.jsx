@@ -3,6 +3,7 @@ import { getMyEvents } from '../../services/evenementServ';
 import { useStateContext } from '../../context/ContextProvider';
 import Modal from '../../components/Modal/EventModal';
 import DeleteEventButton from '../../util/DeleteEvenement';
+
 const EventAccept = () => {
   const { token } = useStateContext();
   const [events, setEvents] = useState([]);
@@ -88,31 +89,66 @@ const EventAccept = () => {
           {events.map((event) => (
             <div
               key={event.id}
-              className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow duration-300"
+              className="bg-gradient-to-tr from-gray-900 to-gray-800 text-white rounded-xl shadow-md p-6 hover:shadow-lg transition duration-300"
             >
-              <h2 className="text-xl font-semibold text-pink-600">{event.nom}</h2>
-              <p className="text-gray-600">Type: {event.type}</p>
-              <p className="text-gray-600">Thème: {event.theme}</p>
-              <p className="text-gray-600">
-                Date:{' '}
-                {new Date(event.date).toLocaleDateString('fr-FR', {
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </p>
-              <p className="text-gray-600">Lieu: {event.location.nom}</p>
-              <p className="text-gray-600">Salle: {event.salle.nom}</p>
-              <button
-                onClick={() => openModal(event)}
-                className="mt-4 bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 transition-colors duration-200"
-                aria-label={`Voir les tables pour l'événement ${event.nom}`}
-              >
-                Voir les tables
-              </button>
-              <DeleteEventButton eventId={event.id} onDeleted={(deletedId) => setEvents(events.filter(e => e.id !== deletedId))} />
+              <h2 className="text-lg font-semibold uppercase mb-4">{event.nom}</h2>
+              <div className="space-y-3 text-sm text-gray-300">
+                <div className="flex items-center gap-2">
+                  <span className="p-1 border rounded-full border-white/20 bg-white/20">
+                    ✅
+                  </span>
+                  <p>Type : {event.type}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="p-1 border rounded-full border-white/20 bg-white/20">
+                    🎨
+                  </span>
+                  <p>Thème : {event.theme}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="p-1 border rounded-full border-white/20 bg-white/20">
+                    📅
+                  </span>
+                  <p>
+                    Date :{' '}
+                    {new Date(event.date).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="p-1 border rounded-full border-white/20 bg-white/20">
+                    📍
+                  </span>
+                  <p>Lieu : {event.location.nom}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="p-1 border rounded-full border-white/20 bg-white/20">
+                    🏛️
+                  </span>
+                  <p>Salle : {event.salle.nom}</p>
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-between items-center">
+                <button
+                  onClick={() => openModal(event)}
+                  className="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 transition-colors duration-200"
+                  aria-label={`Voir les tables pour l'événement ${event.nom}`}
+                >
+                  Voir les tables
+                </button>
+                <DeleteEventButton
+                  eventId={event.id}
+                  onDeleted={(deletedId) =>
+                    setEvents(events.filter((e) => e.id !== deletedId))
+                  }
+                />
+              </div>
             </div>
           ))}
         </div>

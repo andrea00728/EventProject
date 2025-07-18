@@ -50,4 +50,18 @@ export class AuthController {
 
     return res.redirect(redirectUrl);
   }
+
+
+@Post('logout')
+  async logout(@Req() req, @Res() res) {
+    const user = req.user;
+    await this.authService.logout(user);
+    res.clearCookie('access_token', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false, 
+    });
+    return res.status(200).json({ message: 'Déconnecté avec succès' });
+  }
+
 }

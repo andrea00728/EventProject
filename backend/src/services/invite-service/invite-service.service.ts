@@ -475,9 +475,7 @@ async updateforQrcode(id:number,guest:Partial<Invite>){
 async countCheckinByPersonnel(userEmail: string) {
   const personnel = await this.personnelService.findOneByUserEmail(userEmail);
   const eventId = personnel?.evenement.id;
-
-
-
+  
   if(!personnel ||  personnel.role !=='accueil'){
      console.error('Accès refusé pour cet utilisateur');
       throw new ForbiddenException('Vous n\'avez pas d\'accès pour cet événement');
