@@ -210,5 +210,14 @@ async findOneByUserEmail(email: string): Promise<Personnel | null> {
   });
 }
 
-
+async findCountPersonnelByEvenement(evenementId: number): Promise<number> {
+    const count = await this.personnelRepository.count({
+      where: {
+        evenement: {
+          id: evenementId,
+        },
+      },
+    });
+    return count;
+  }
 }

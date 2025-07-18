@@ -17,7 +17,7 @@ import { NotificationModule } from '../notification/notification.module';
 import { PersonnelModule } from '../personnel/personnel.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Invitation, Invite, TableEvent,Evenement, ShortLink, User]),EvenementModule,InviteModule,NotificationModule,],
+  imports: [TypeOrmModule.forFeature([Invitation, Invite, TableEvent,Evenement, ShortLink, User]),EvenementModule,InviteModule,NotificationModule,PersonnelModule],
   providers: [InvitationService, TableService,GuestService, QrCodeService],
   controllers: [InvitationController],
 })

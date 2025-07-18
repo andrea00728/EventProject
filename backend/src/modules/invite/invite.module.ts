@@ -15,7 +15,7 @@ import { PersonnelModule } from '../personnel/personnel.module';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Invite, TableEvent,Evenement,User]),
-  ForfaitModule,NotificationModule,QrCodeModule,
+  ForfaitModule,NotificationModule,QrCodeModule,PersonnelModule,
 ],
   providers: [GuestService, TableService],
   controllers: [GuestController],

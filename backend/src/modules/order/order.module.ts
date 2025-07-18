@@ -13,7 +13,8 @@ import { Evenement } from 'src/entities/Evenement';
 import { Payment } from 'src/entities/payment.entity';
 import { Invite } from 'src/entities/Invite';
 import { ShortLink } from 'src/entities/ShortLink';
-import { OrdersGateway } from 'src/Gateway/orders.gateway';
+import { OrdersGateway } from 'src/gateway/orders.gateway';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([Order, OrderItem, TableEvent, MenuItem, User, Balance, Evenement, Payment, Invite, ShortLink]),

@@ -57,6 +57,9 @@ import Envoy from "../pages/PersonnelAccueil/EvoyerVerRout.jsx";
 import OrganisationChart from "../pages/oranisation_personnel/OrganisationChart.jsx";
 import PersonnelOrganigrammeDashboard from "../pages/oranisation_personnel/Organigramme.jsx";
 import InvitationLayout from "../layouts/InvitationLayout.jsx";
+import RestaurationPage from "../pages/restauration/RestaurationPage.jsx";
+import MenuRestauration from "../pages/restauration/MenuRestauration.jsx";
+
 const router=createBrowserRouter([
    
   {
@@ -156,6 +159,21 @@ const router=createBrowserRouter([
         },
       ]
     },
+    {
+      path:"/evenement/restauration",
+      element:<RestaurationPage/>,
+      children:[
+        {
+          path:"",
+          element:<MenuRestauration/>
+        },
+        {
+          path:"menuItem",
+          element:<MenuItemForm/>
+        }
+      ]
+    },
+
    
      {
       path:'/forfait/success',

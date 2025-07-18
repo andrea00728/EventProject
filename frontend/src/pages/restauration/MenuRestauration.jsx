@@ -25,7 +25,7 @@ import {
   FormControl
 } from "@mui/material";
 
-const MenuGridRestau = () => {
+export default function MenuRestauration () {
   const { token } = useStateContext();
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -301,5 +301,3 @@ const MenuGridRestau = () => {
     </Box>
   );
 };
-
-export default MenuGridRestau;
