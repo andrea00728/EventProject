@@ -60,6 +60,7 @@ import InvitationLayout from "../layouts/InvitationLayout.jsx";
 import RestaurationPage from "../pages/restauration/RestaurationPage.jsx";
 import MenuRestauration from "../pages/restauration/MenuRestauration.jsx";
 import RoleSelector from "../pages/RoleSelector.jsx";
+import Public_Accueil from "../pages/public_Accueil.jsx";
 
 const router=createBrowserRouter([
    
@@ -389,7 +390,8 @@ const router=createBrowserRouter([
       },
       {
         path: "/pagepublic",
-        element: <Pagepublic />,
+        // element: <Pagepublic />,
+        element:<Public_Accueil/>
       },
       {
         path: "/connexion",

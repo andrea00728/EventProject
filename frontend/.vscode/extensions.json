@@ -1,5 +1,6 @@
 {
-    "recommendations": [
-        "github.copilot-chat"
-    ]
+  "recommendations": [
+    "github.copilot-chat",
+    "bradlc.vscode-tailwindcss"
+  ]
 }
