@@ -1,0 +1,47 @@
+
+Src/Autentification:
+dossier makasika ny Authentification google rehetra ,efa ao ny Service,controller,Entity,Module
+
+
+Src/Controllers
+
+dossier misy ny controller rehetra ny projet (afaha mifandray @ client HTTP)
+
+Src/Service 
+
+Dossier misy ny Service ny  rehetra ny projet (ampiasaina misy logique rehetra)
+
+Src/dto
+
+Dossier amadihana ny entity ho lasa Objet DTO satry ny base de donnee tsy afaka tonga dia mrecupere Entite fa tsy maintsyavadika Objet alony ilay entite vao fantatry ny Base de donnee postGress
+
+
+Src/strategie
+
+misy ny strategie security JWT
+
+
+Src/gatway 
+
+misy ny logique Notification mampias 
+
+
+Src/Entities
+
+misy ny entite izay afahan mcreer ilay table ampisaina rehetra 
+
+Src/Module
+
+misy ny Module rehetra ny projet izay ampifandraisan ny relation entre service sy ny 
+
+
+/**
+*
+*
+*
+ny Authentification iany no tonga dia natokana Dossieriray ny Module,Service,Entite any 
+*
+*
+*
+*
+**/

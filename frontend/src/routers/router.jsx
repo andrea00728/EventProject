@@ -59,6 +59,7 @@ import PersonnelOrganigrammeDashboard from "../pages/oranisation_personnel/Organ
 import InvitationLayout from "../layouts/InvitationLayout.jsx";
 import RestaurationPage from "../pages/restauration/RestaurationPage.jsx";
 import MenuRestauration from "../pages/restauration/MenuRestauration.jsx";
+import RoleSelector from "../pages/RoleSelector.jsx";
 
 const router=createBrowserRouter([
    
@@ -403,6 +404,10 @@ const router=createBrowserRouter([
         element: <Inscription />,
       },
     ],
+  },
+  {
+    path:"/choix-role",
+    element:<RoleSelector/>
   },
   {
     path: "*",

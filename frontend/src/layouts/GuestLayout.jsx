@@ -6,22 +6,32 @@ import Logo from "../assets/LogoMaster.png"
 import ChatWidget from "../pages/ChatWidget";
 
 export default function GuestLayout() {
-  const { token,role } = useStateContext();
+  const { token,role,user } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  if (token) {
-    if(role==="organisateur"){
-       return <Navigate to="/accueil" replace />;
+  // if (token) {
+  //   if(role==="organisateur"){
+  //      return <Navigate to="/accueil" replace />;
+  //   }
+  //   if(role==="accueil"){
+  //     return <Navigate to="/personnelAccueil" replace/>
+  //   }
+  //   if(role==="caissier"){
+  //     return <Navigate to="/personnelCaisse" replace/>
+  //   }
+  //   if(role==="cuisinier"){
+  //     return <Navigate to="/personnelCuisine" replace/>
+  //   }
+  // }
+
+  if(token){
+    if(user?.isInPersonnel){
+      return <Navigate to="/choix-role" replace/>
     }
-    if(role==="accueil"){
-      return <Navigate to="/personnelAccueil" replace/>
-    }
-    if(role==="caissier"){
-      return <Navigate to="/personnelCaisse" replace/>
-    }
-    if(role==="cuisinier"){
-      return <Navigate to="/personnelCuisine" replace/>
-    }
+
+     if(role==="organisateur"){
+      return <Navigate to="/accueil" replace />;
+     }
   }
 
   const navItems = [

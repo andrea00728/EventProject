@@ -20,6 +20,12 @@ function ConnexionGoogle() {
     console.log("🔐 Token extrait :", token);
     console.log("👤 Infos :", { name, email, photo, role });
 
+    /**
+     * ty ilay manao mijery anazy hoe inona ny role anany
+     * @param {string} role
+     */
+
+    const isInPersonnel=searchParams.get("isInPersonnel")?.toLowerCase()==="true";
     if (token && email && name && role) {
     
       setToken(token);
@@ -28,27 +34,33 @@ function ConnexionGoogle() {
         email: decodeURIComponent(email),
         photo: decodeURIComponent(photo || ""),
         role: decodeURIComponent(role),
+        isInPersonnel,
       });
-  
-      switch (decodeURIComponent(role)) {
-        case "organisateur":
-          navigate("/accueil", { replace: true });
-          break;
-        case "caissier":
-          navigate("/personnelCaisse", { replace: true });
-          break;
-        case "cuisinier":
-          navigate("/personnelCuisine", { replace: true });
-          break;
-        case "accueil":
-          navigate("/personnelAccueil", { replace: true });
-          break;
-        default:
-          navigate("/pagepublic", { replace: true });
-          break;
-      }
+      
+      if(isInPersonnel){
+        navigate("/choix-role");
+      }else{
+      // switch (decodeURIComponent(role)) {
+      //   case "organisateur":
+      //     navigate("/accueil", { replace: true });
+      //     break;
+      //   case "caissier":
+      //     navigate("/personnelCaisse", { replace: true });
+      //     break;
+      //   case "cuisinier":
+      //     navigate("/personnelCuisine", { replace: true });
+      //     break;
+      //   case "accueil":
+      //     navigate("/personnelAccueil", { replace: true });
+      //     break;
+      //   default:
+      //     navigate("/pagepublic", { replace: true });
+      //     break;
+      // }
+      navigate("/accuei")
+    }
     } else {
-      console.warn("⚠️ Token ou rôle manquant");
+      console.warn(" Token ou rôle manquant");
       navigate("/pagepublic", { replace: true });
     }
 

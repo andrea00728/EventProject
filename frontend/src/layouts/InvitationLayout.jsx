@@ -35,7 +35,7 @@ export default function InvitationLayout({ token }) {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-3xl font-bold text-center text-indigo-600 mb-8">📩 Invitations aux Événements</h2>
+      <h2 className="text-3xl font-bold text-center text-indigo-600 mb-8"> Invitations aux Événements</h2>
 
       {message && (
         <div className="mb-6 px-4 py-3 rounded-lg text-sm font-medium text-white bg-indigo-500 shadow">
@@ -51,7 +51,7 @@ export default function InvitationLayout({ token }) {
           >
             <h3 className="text-lg font-semibold text-gray-800 mb-2">{event.nom}</h3>
             <p className="text-sm text-gray-500 mb-4">
-              📅 {new Date(event.date).toLocaleDateString('fr-FR', {
+               {new Date(event.date).toLocaleDateString('fr-FR', {
                 day: '2-digit',
                 month: 'long',
                 year: 'numeric',

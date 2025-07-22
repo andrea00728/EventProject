@@ -10,10 +10,10 @@ export class Menu {
   @Column()
   name: string;
 
-  @ManyToOne(() => Evenement, (event) => event.menus)
+  @ManyToOne(() => Evenement, (event) => event.menus,{onDelete:'CASCADE'})
   event: Evenement;
 
-  @OneToMany(() => MenuItem, (menuItem) => menuItem.menu)
+  @OneToMany(() => MenuItem, (menuItem) => menuItem.menu,{onDelete:'CASCADE'})
   items: MenuItem[];
   evenement: any;
 } 

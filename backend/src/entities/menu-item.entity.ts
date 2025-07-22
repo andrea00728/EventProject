@@ -25,6 +25,6 @@ export class MenuItem {
   @Column({ nullable: true })
   photo: string;
 
-  @ManyToOne(() => Menu, (menu) => menu.items)
+  @ManyToOne(() => Menu, (menu) => menu.items,{onDelete:'CASCADE'})
   menu: Menu;
 }

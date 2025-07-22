@@ -25,22 +25,65 @@ export class AuthService {
   ) {}
 
 
+
+  /***
+   * 
+   * natoko commentaire lony satria ito efa mande fa anao test  na role ao
+   */
+// async validateUser(profile: any): Promise<any> {
+//   const { emails, displayName, photos } = profile;
+//   const email = emails[0].value;
+
+//   // Vérifie si l'email existe dans `personnel`
+//   const personnel = await this.personnelRepository.findOne({
+//     where: { email },
+//     relations: ['evenement'],
+//   });
+
+//   const role = personnel?.role || 'organisateur';
+//   // Vérifie si déjà dans users
+//   let user = await this.userRepository.findOne({ where: { email } });
+
+//   if (!user) {
+//     //  Trouve le forfait freemium (id 11)
+//     const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
+
+//     if (!freemium) {
+//       throw new Error('Forfait freemium non trouvé'); // Sécurité
+//     }
+
+//     user = this.userRepository.create({
+//       id: uuidv4(),
+//       email,
+//       name: displayName,
+//       photo: photos?.[0]?.value || '',
+//       role,
+//       forfait: {id:11} as Forfait, //  Lien vers le forfait freemium
+//     });
+
+//     await this.userRepository.save(user);
+//   }
+
+//   return user;
+// }
+
+
 async validateUser(profile: any): Promise<any> {
   const { emails, displayName, photos } = profile;
   const email = emails[0].value;
-
-  // Vérifie si l'email existe dans `personnel`
   const personnel = await this.personnelRepository.findOne({
     where: { email },
     relations: ['evenement'],
   });
 
-  const role = personnel?.role || 'organisateur';
-  // Vérifie si déjà dans users
+  // const role = personnel?.role || 'organisateur';
+
+  const isInPersonnel=!!personnel;
+  const  isdetectedRole=isInPersonnel?personnel.role:'organisateur';
+
   let user = await this.userRepository.findOne({ where: { email } });
 
   if (!user) {
-    //  Trouve le forfait freemium (id 11)
     const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
 
     if (!freemium) {
@@ -52,15 +95,22 @@ async validateUser(profile: any): Promise<any> {
       email,
       name: displayName,
       photo: photos?.[0]?.value || '',
-      role,
-      forfait: {id:11} as Forfait, //  Lien vers le forfait freemium
+      role: isdetectedRole,
+      forfait: {id:11} as Forfait, 
     });
 
     await this.userRepository.save(user);
   }
 
-  return user;
+  return {
+    ...user,
+    role: isdetectedRole,
+    isInPersonnel,
+  }
 }
+
+
+
 
   async login(user: any) {
   const payload = { 
@@ -109,7 +159,7 @@ async validateUser(profile: any): Promise<any> {
     console.log(manager)
 
     // Supprimer le manager lui-même
-    await this.eventRepository.delete({ user: { id: manager.id } }); // Supprimer les événements liés
+    await this.eventRepository.delete({ user: { id: manager.id } }); 
     await this.userRepository.delete(manager.id);
 
     return { message: 'Organisateur supprimé avec succès' };
