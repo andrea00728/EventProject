@@ -9,6 +9,8 @@ import { CreateUserDto } from './dto/create-auth.dto';
 import { Personnel } from 'src/entities/Personnel';
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
+import * as bcrypt from 'bcrypt';
+
 
 @Injectable()
 export class AuthService {
@@ -21,8 +23,8 @@ export class AuthService {
     @InjectRepository(Evenement)
     private readonly eventRepository: Repository<Evenement>,
     @InjectRepository(Forfait)
-    private readonly forfaitRepository:Repository<Forfait>
-  ) {}
+    private readonly forfaitRepository: Repository<Forfait>
+  ) { }
 
 
 
@@ -30,110 +32,133 @@ export class AuthService {
    * 
    * natoko commentaire lony satria ito efa mande fa anao test  na role ao
    */
-// async validateUser(profile: any): Promise<any> {
-//   const { emails, displayName, photos } = profile;
-//   const email = emails[0].value;
+  // async validateUser(profile: any): Promise<any> {
+  //   const { emails, displayName, photos } = profile;
+  //   const email = emails[0].value;
 
-//   // Vérifie si l'email existe dans `personnel`
-//   const personnel = await this.personnelRepository.findOne({
-//     where: { email },
-//     relations: ['evenement'],
-//   });
+  //   // Vérifie si l'email existe dans `personnel`
+  //   const personnel = await this.personnelRepository.findOne({
+  //     where: { email },
+  //     relations: ['evenement'],
+  //   });
 
-//   const role = personnel?.role || 'organisateur';
-//   // Vérifie si déjà dans users
-//   let user = await this.userRepository.findOne({ where: { email } });
+  //   const role = personnel?.role || 'organisateur';
+  //   // Vérifie si déjà dans users
+  //   let user = await this.userRepository.findOne({ where: { email } });
 
-//   if (!user) {
-//     //  Trouve le forfait freemium (id 11)
-//     const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
+  //   if (!user) {
+  //     //  Trouve le forfait freemium (id 11)
+  //     const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
 
-//     if (!freemium) {
-//       throw new Error('Forfait freemium non trouvé'); // Sécurité
-//     }
+  //     if (!freemium) {
+  //       throw new Error('Forfait freemium non trouvé'); // Sécurité
+  //     }
 
-//     user = this.userRepository.create({
-//       id: uuidv4(),
-//       email,
-//       name: displayName,
-//       photo: photos?.[0]?.value || '',
-//       role,
-//       forfait: {id:11} as Forfait, //  Lien vers le forfait freemium
-//     });
+  //     user = this.userRepository.create({
+  //       id: uuidv4(),
+  //       email,
+  //       name: displayName,
+  //       photo: photos?.[0]?.value || '',
+  //       role,
+  //       forfait: {id:11} as Forfait, //  Lien vers le forfait freemium
+  //     });
 
-//     await this.userRepository.save(user);
-//   }
+  //     await this.userRepository.save(user);
+  //   }
 
-//   return user;
-// }
+  //   return user;
+  // }
 
 
-async validateUser(profile: any): Promise<any> {
-  const { emails, displayName, photos } = profile;
-  const email = emails[0].value;
-  const personnel = await this.personnelRepository.findOne({
-    where: { email },
-    relations: ['evenement'],
-  });
-
-  // const role = personnel?.role || 'organisateur';
-
-  const isInPersonnel=!!personnel;
-  const  isdetectedRole=isInPersonnel?personnel.role:'organisateur';
-
-  let user = await this.userRepository.findOne({ where: { email } });
-
-  if (!user) {
-    const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
-
-    if (!freemium) {
-      throw new Error('Forfait freemium non trouvé'); // Sécurité
-    }
-
-    user = this.userRepository.create({
-      id: uuidv4(),
-      email,
-      name: displayName,
-      photo: photos?.[0]?.value || '',
-      role: isdetectedRole,
-      forfait: {id:11} as Forfait, 
+  async validateUser(profile: any): Promise<any> {
+    const { emails, displayName, photos } = profile;
+    const email = emails[0].value;
+    const personnel = await this.personnelRepository.findOne({
+      where: { email },
+      relations: ['evenement'],
     });
 
-    await this.userRepository.save(user);
+    // const role = personnel?.role || 'organisateur';
+
+    const isInPersonnel = !!personnel;
+    const isdetectedRole = isInPersonnel ? personnel.role : 'organisateur';
+
+    let user = await this.userRepository.findOne({ where: { email } });
+
+    if (!user) {
+      const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
+
+      if (!freemium) {
+        throw new Error('Forfait freemium non trouvé'); // Sécurité
+      }
+
+      user = this.userRepository.create({
+        id: uuidv4(),
+        email,
+        name: displayName,
+        photo: photos?.[0]?.value || '',
+        role: isdetectedRole,
+        forfait: { id: 11 } as Forfait,
+      });
+
+      await this.userRepository.save(user);
+    }
+
+    return {
+      ...user,
+      role: isdetectedRole,
+      isInPersonnel,
+    }
   }
 
-  return {
-    ...user,
-    role: isdetectedRole,
-    isInPersonnel,
+
+  //regitre d'un user organisateur
+  async registerUser(dto: CreateUserDto) {
+    const existing = await this.userRepository.findOne({ where: { email: dto.email } });
+    if (existing) throw new Error('Email déjà utilisé');
+
+    if (!dto.password) {
+      throw new Error("Mot de passe requis !");
+    }
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    const user = this.userRepository.create({
+      id: uuidv4(),
+      email: dto.email,
+      name: dto.name,
+      role: 'organisateur', // par défaut
+      photo: dto.photo || '',
+      password: hashedPassword,
+    });
+
+    return this.userRepository.save(user);
   }
-}
 
 
 
 
   async login(user: any) {
-  const payload = { 
-    email: user.email,
-    sub: user.id,
-    role: user.role,
-  };
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+    };
 
-  return {
-    access_token: this.jwtService.sign(payload),
-  };
-}
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
+  }
 
 
-  async createUser(dto:CreateUserDto){
-    const user=this.userRepository.create(dto);
+  async createUser(dto: CreateUserDto) {
+    const user = this.userRepository.create(dto);
     return this.userRepository.save(user);
   }
 
   async logout(user: any) {
-  const token = this.jwtService.sign({}, { expiresIn: '1s' });
-  return { message: 'Déconnexion réussie' };
-}
+    const token = this.jwtService.sign({}, { expiresIn: '1s' });
+    return { message: 'Déconnexion réussie' };
+  }
   async getManagerList(): Promise<any> {
     return this.userRepository.find({
       where: { role: 'organisateur' },
@@ -156,10 +181,8 @@ async validateUser(profile: any): Promise<any> {
       throw new UnauthorizedException('Vous n\'êtes pas autorisé à supprimer ce manager');
     }
 
-    console.log(manager)
-
     // Supprimer le manager lui-même
-    await this.eventRepository.delete({ user: { id: manager.id } }); 
+    await this.eventRepository.delete({ user: { id: manager.id } });
     await this.userRepository.delete(manager.id);
 
     return { message: 'Organisateur supprimé avec succès' };
