@@ -36,6 +36,7 @@ export default function DefaultLayout() {
       return <Navigate to="/pagepublic" replace />;
   }
 
+
   useEffect(() => {
     const fetchAndSetForfait = async () => {
       try {
