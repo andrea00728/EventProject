@@ -1,8 +1,12 @@
 import React from "react";
 import Footer from "./footer";
 import { FaAward, FaMapMarkerAlt, FaUsers } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 export default function Accueil() {
+  const eventItem=[
+    {path:'/evenement',name:'Commencer gratuitement'}
+  ];
   return (
     <>
       {/* Section Hero */}
@@ -44,7 +48,12 @@ export default function Accueil() {
                 <span className="relative z-10">Commencer gratuitement</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-700 to-indigo-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </button>
-
+              {eventItem.map((item)=>(
+                <Link key={item.name} to={item.path} className="group relative bg-gradient-to-r from-[#6B46C1] via-purple-600 to-indigo-600 text-white px-8 py-4 rounded-2xl font-bold text-lg tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25 active:scale-95">
+                <span className="relative z-10">{item.name}</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-700 to-indigo-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </Link>
+              ))}
               <button className="group bg-white/80 backdrop-blur-sm text-slate-700 border-2 border-slate-200 px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-white hover:border-slate-300 hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95">
                 <span className="flex items-center gap-2">
                   Voir la démo
@@ -489,10 +498,6 @@ export default function Accueil() {
             </div>
           </div>
         </div>
-      </section>
-
-
-
       <section>
         <Footer />
       </section>

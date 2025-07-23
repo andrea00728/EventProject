@@ -1,10 +1,12 @@
 import React from "react";
 import { FaPhone, FaFacebook, FaInstagram, FaMapMarkerAlt, FaUsers, FaAward } from "react-icons/fa";
+import { FaPhone, FaFacebook, FaInstagram } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 
 function Footer() {
   return (
     <footer className="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 text-white py-24 overflow-hidden">
+    <footer className="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 text-white py-10 overflow-hidden">
       {/* Décorations de fond - même style que tes sections */}
       <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-r from-[#FB9E3A]/10 to-orange-400/10 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-10 right-10 w-64 h-64 bg-gradient-to-l from-indigo-400/15 to-purple-400/10 rounded-full blur-2xl animate-pulse delay-1000" />
@@ -13,6 +15,9 @@ function Footer() {
       <div className="container mx-auto max-w-7xl relative z-10 px-6">
         {/* En-tête du footer */}
         <div className="text-center mb-20 space-y-6">
+      <div className="container mx-auto max-w-7xl relative z-10">
+        {/* En-tête du footer */}
+        <div className="text-center mb-16 space-y-6">
           {/* Badge - même style que tes autres sections */}
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 text-sm font-medium text-white/90 shadow-sm">
             <div className="w-2 h-2 bg-[#FB9E3A] rounded-full animate-pulse"></div>
@@ -28,6 +33,7 @@ function Footer() {
         </div>
 
         {/* Newsletter */}
+        {/* Newsletter - Nouveau ajout */}
         <div className="bg-gradient-to-r from-[#FB9E3A]/10 to-orange-400/10 backdrop-blur-sm rounded-3xl p-8 border border-orange-400/20 mb-16">
           <div className="text-center space-y-6">
             <h3 className="text-2xl font-black text-white">
@@ -75,6 +81,10 @@ function Footer() {
         </div>
 
         {/* Section Copyright - Améliorée */}
+          </div>
+        </div>
+
+        {/* Section Copyright - Amélirorée */}
         <div className="border-t border-white/10 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-4">

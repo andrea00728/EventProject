@@ -7,6 +7,10 @@ import Footer from "./footer";
 export default function Pagepublic() {
   const loginwithgoogle = () => {};
 
+  const registerItems=[
+    
+  ];
+
   return (
     <>
       <section className="relative flex flex-col lg:flex-row items-center justify-between px-4 sm:px-10 lg:px-24 py-16 sm:py-24 bg-gradient-to-br from-[#f8fafc] via-[#eef2ff] to-white shadow-2xl rounded-3xl overflow-hidden">

@@ -148,6 +148,7 @@ const Public_Accueil = () => {
                 transition={{ duration: 0.8, delay: 0.9 }}
                 className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8"
               >
+                
                 <button className="group relative bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white px-10 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-orange-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[200px] cursor-pointer">
                   <span className="relative z-10 flex items-center justify-center gap-3">
                     <svg className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="currentColor" viewBox="0 0 20 20">
