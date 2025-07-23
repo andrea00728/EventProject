@@ -79,7 +79,7 @@ export class AuthController {
       isInPersonnel:req.user.isInPersonnel  || false,
     };
 
-  
+    await this.authService.status(user);
   
     const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}&isInPersonnel=${encodeURIComponent(user.isInPersonnel)}`;
 

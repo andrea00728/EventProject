@@ -1,5 +1,6 @@
 import { useStateContext } from "../../context/ContextProvider";
 import { Navigate } from "react-router-dom";
+import DashboardpersCuisine from "../../pages/PersonnelCuisine/Dashboard";
 
 export default function PersonnelCuisine() {
   const { token, role } = useStateContext();
@@ -23,8 +24,7 @@ export default function PersonnelCuisine() {
 
   return (
     <>
-      <h1>Bienvenue sur la page d'accueil de la cuisine</h1>
-      <p>Voici les informations importantes pour le personnel de la cuisine.</p>
+      <DashboardpersCuisine />
     </>
   );
 }

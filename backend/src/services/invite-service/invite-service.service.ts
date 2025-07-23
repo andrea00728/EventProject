@@ -501,4 +501,25 @@ async countCheckinByPersonnel(userEmail: string) {
     notCheckedIn,
 }
 }
+
+async findEventIdByEmail(userEmail: string): Promise<any> {
+  if (!userEmail) {
+    throw new BadRequestException("Email de l'utilisateur manquant");
+  }
+
+  const personnel = await this.personnelService.findOneByUserEmail(userEmail);
+
+  if (!personnel || personnel.role !== 'cuisinier' && personnel.role !== 'caissier') {
+    throw new BadRequestException("Vous n'avez pas accès à cet événement !!!");
+  }
+
+  const eventId = Number(personnel?.evenement?.id);
+
+  if (!eventId || isNaN(eventId)) {
+    throw new BadRequestException("Aucun événement valide trouvé pour ce cuisinier");
+  }
+
+  return { eventId };
+
+}
 }

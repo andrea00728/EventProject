@@ -50,4 +50,15 @@ export const createInvitation = async (eventId, token) => {
   return response.data;
 };
 
+export const getEventIdByEmail = async (token) => {
+  const response = await axiosClient.get("/guests/geteventid/000", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+};
+
+
 

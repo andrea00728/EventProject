@@ -323,6 +323,14 @@ async getCheckinStats(@Req() req) {
   const userEmail = req.user.email;
   return this.guestService.countCheckinByPersonnel(userEmail);
 }
+
+@Get('geteventid/:id')
+@UseGuards(AuthGuard('jwt'))
+async getEventIdByEmail(@Req() req : any): Promise<any> {
+  console.log('Récupération de l\'email d\'événement : ', req.user.email);
+  const userEmail = req.user.email;
+  return this.guestService.findEventIdByEmail(userEmail);
+}
 }
 
 

@@ -110,7 +110,18 @@ async validateUser(profile: any): Promise<any> {
 }
 
 
+async status(user : any) {
+  let userLogIn = await this.userRepository.findOne({ where: { id : user.id } });
+  if (!userLogIn) {
+    throw new NotFoundException(`Non identifié`);
+  }
 
+  userLogIn.isOnline = true;
+  userLogIn.lastLogin = new Date();
+
+  await this.userRepository.save(userLogIn)
+
+}
 
   async login(user: any) {
   const payload = { 
