@@ -19,26 +19,23 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl
+  IconButton
 } from "@mui/material";
 
-export default function MenuRestauration () {
+export default function MenuRestauration() {
   const { token } = useStateContext();
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [allMenus, setAllMenus] = useState([]);
   const [selectedMenuId, setSelectedMenuId] = useState("all");
   const [menuItems, setMenuItems] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [menuFormOpen, setMenuFormOpen] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', price: '', category: '', stock: '', photo: null });
   const [menuForm, setMenuForm] = useState({ name: '' });
   const [editingItem, setEditingItem] = useState(null);
   const [editingMenu, setEditingMenu] = useState(null);
+  const [hoveredMenuId, setHoveredMenuId] = useState(null);
 
   axios.defaults.baseURL = "http://localhost:3000";
 
@@ -55,12 +52,16 @@ export default function MenuRestauration () {
   }, [selectedEvent]);
 
   const reloadMenus = async () => {
-    const res = await axios.get(`/menus/event/${selectedEvent.id}`);
-    setAllMenus(res.data);
-    const items = res.data.flatMap(menu =>
-      Array.isArray(menu.items) ? menu.items.map(item => ({ ...item, menuId: menu.id, menuName: menu.name })) : []
-    );
-    setMenuItems(items);
+    try {
+      const res = await axios.get(`/menus/event/${selectedEvent.id}`);
+      setAllMenus(res.data);
+      const items = res.data.flatMap(menu =>
+        Array.isArray(menu.items) ? menu.items.map(item => ({ ...item, menuId: menu.id, menuName: menu.name })) : []
+      );
+      setMenuItems(items);
+    } catch (err) {
+      console.error("Erreur lors du chargement des menus :", err);
+    }
   };
 
   const filteredItems = selectedMenuId === "all"
@@ -69,8 +70,18 @@ export default function MenuRestauration () {
 
   const handleOpenForm = (item = null) => {
     setEditingItem(item);
-    if (item) setForm(item);
-    else setForm({ name: '', description: '', price: '', category: '', stock: '', photo: null });
+    if (item) {
+      setForm({
+        name: item.name || '',
+        description: item.description || '',
+        price: item.price || '',
+        category: item.category || '',
+        stock: item.stock || '',
+        photo: item.photo || null
+      });
+    } else {
+      setForm({ name: '', description: '', price: '', category: '', stock: '', photo: null });
+    }
     setFormOpen(true);
   };
 
@@ -93,20 +104,36 @@ export default function MenuRestauration () {
 
   const handleSave = async () => {
     const menuId = selectedMenuId !== "all" ? selectedMenuId : allMenus[0]?.id;
-    if (!menuId) return;
+    if (!menuId || !selectedEvent?.id) return;
 
     const formData = new FormData();
     Object.entries(form).forEach(([key, val]) => {
-      if (val !== null) formData.append(key, val);
+      if (val !== null) {
+        if (key === 'photo' && val instanceof File) {
+          formData.append(key, val, val.name);
+        } else if (val !== '') {
+          formData.append(key, val);
+        }
+      }
     });
 
-    if (editingItem) {
-      await axios.patch(`/menus/items/${editingItem.id}`, formData);
-    } else {
-      await axios.post(`/menus/${menuId}/items`, formData);
+    try {
+      if (editingItem && editingItem.id) {
+        console.log("Patching item with ID:", editingItem.id, formData); // Debug log
+        await axios.patch(`/menus/items/${editingItem.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      } else {
+        await axios.post(`/menus/${menuId}/items`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      }
+      handleCloseForm();
+      await reloadMenus();
+    } catch (err) {
+      console.error("Erreur lors de l'enregistrement de l'élément :", err);
+      alert("Erreur lors de l'enregistrement de l'élément.");
     }
-    handleCloseForm();
-    await reloadMenus();
   };
 
   const handleSaveMenu = async () => {
@@ -134,6 +161,7 @@ export default function MenuRestauration () {
     if (!selectedMenuId || selectedMenuId === "all") return;
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce menu ?")) return;
     try {
+      console.log("Deleting menu with ID:", selectedMenuId); // Debug log
       await axios.delete(`/menus/${selectedMenuId}`);
       await reloadMenus();
       setSelectedMenuId("all");
@@ -161,100 +189,141 @@ export default function MenuRestauration () {
       headerName: "Actions",
       type: "actions",
       getActions: (params) => [
-        <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={() => handleOpenForm(params.row)} />,
-        <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => handleDelete(params.row.id)} />
+        <GridActionsCellItem
+          icon={<EditIcon />}
+          label="Edit"
+          onClick={() => handleOpenForm(params.row)}
+        />,
+        <GridActionsCellItem
+          icon={<DeleteIcon />}
+          label="Delete"
+          onClick={() => handleDelete(params.row.id)}
+        />
       ]
     }
   ];
 
   return (
-    <Box p={4}>
-      <h2 className="text-2xl font-bold text-center mb-6">Menus</h2>
+    <>
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-4">Sélectionner un événement</h1>
 
-      <div className="mb-6">
-        <label className="block text-sm font-medium mb-2">Sélectionner un événement</label>
-        <button onClick={() => setModalOpen(true)} className="border px-4 py-2 rounded-md">
-          {selectedEvent ? `${selectedEvent.nom} (${new Date(selectedEvent.date).toLocaleDateString()})` : "Choisir un événement"}
-        </button>
+        {events.length === 0 ? (
+          <p className="text-gray-600">Aucun événement trouvé. Créez un événement d’abord.</p>
+        ) : (
+          <div className="flex gap-4 flex-wrap mb-6">
+            {events.map((event) => (
+              <button
+                key={event.id}
+                onClick={() => setSelectedEvent(event)}
+                className={`py-2 px-4 rounded ${selectedEvent?.id === event.id ? "bg-purple-600 text-white" : "bg-gray-200 cursor-pointer text-gray-700"}`}
+              >
+                {event.nom}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {selectedEvent && (
+          <>
+            {allMenus.length > 0 && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2 text-gray-700">Filtrer par Menu</label>
+                <div className="flex gap-4 flex-wrap">
+                  <button
+                    onClick={() => setSelectedMenuId("all")}
+                    className={`py-2 px-4 rounded ${
+                      selectedMenuId === "all" ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    Tous
+                  </button>
+                  {allMenus.map((menu) => (
+                    <div key={menu.id} className="relative inline-block">
+                      <div
+                        onMouseEnter={() => setHoveredMenuId(menu.id)}
+                        onMouseLeave={() => setHoveredMenuId(null)}
+                        className="relative"
+                      >
+                        {hoveredMenuId === menu.id && (
+                          <div className="absolute -top-6 left-0 flex gap-1">
+                            <IconButton
+                              onClick={() => {
+                                const menuToEdit = allMenus.find(m => m.id === menu.id);
+                                if (menuToEdit) {
+                                  setEditingMenu(menuToEdit);
+                                  setMenuForm({ name: menuToEdit.name });
+                                  setMenuFormOpen(true);
+                                }
+                              }}
+                              sx={{ color: '#6b48ff' }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                            <IconButton
+                              onClick={() => {
+                                setSelectedMenuId(menu.id);
+                                handleDeleteMenu();
+                              }}
+                              sx={{ color: '#e74c3c' }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </div>
+                        )}
+                        <button
+                          onClick={() => setSelectedMenuId(menu.id)}
+                          className={`py-2 px-4 rounded ${
+                            selectedMenuId === menu.id ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-700"
+                          }`}
+                        >
+                          {menu.name}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => handleOpenMenuForm()}
+                    className="py-2 px-4 rounded bg-green-500 text-white hover:bg-green-600"
+                  >
+                    + Nouveau Menu...
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {allMenus.length === 0 && (
+              <Box className="mb-4">
+                <Button variant="outlined" startIcon={<AddIcon />} sx={{ borderColor: '#e67e22', color: '#e67e22' }} onClick={() => handleOpenMenuForm()}>Nouveau Menu</Button>
+              </Box>
+            )}
+
+            {selectedMenuId !== "all" && (
+              <Box className="my-4 text-right">
+                <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#6b48ff', color: 'white', '&:hover': { backgroundColor: '#5a38dd' } }} onClick={() => handleOpenForm()}>{`Ajouter un ${allMenus.find(m => m.id === selectedMenuId)?.name || 'élément'}`}</Button>
+              </Box>
+            )}
+
+            <DataGrid
+              rows={filteredItems}
+              columns={columns}
+              autoHeight
+              getRowId={(row) => row.id}
+              pageSize={5}
+              rowsPerPageOptions={[5, 10]}
+              sx={{
+                border: 'none',
+                '& .MuiDataGrid-cell': { borderBottom: 'none', border: 'none' },
+                '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f0f4f8', border: 'none' },
+                '& .MuiDataGrid-root': { border: 'none' }
+              }}
+            />
+          </>
+        )}
       </div>
 
-      {modalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-md w-[90%] max-w-3xl">
-            <h3 className="text-lg font-bold mb-4">Sélectionner un événement</h3>
-            <div className="grid grid-cols-2 gap-4 max-h-[400px] overflow-y-auto">
-              {events.map(event => (
-                <div key={event.id} className="p-4 border rounded-lg cursor-pointer hover:bg-gray-100" onClick={() => { setSelectedEvent(event); setModalOpen(false); }}>
-                  <strong>{event.nom}</strong><br />
-                  <span>{new Date(event.date).toLocaleDateString()}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {selectedEvent && (
-        <>
-          {allMenus.length > 0 && (
-            <FormControl fullWidth className="mb-4">
-              <InputLabel>Filtrer par Menu</InputLabel>
-              <Select
-                value={selectedMenuId}
-                label="Filtrer par Menu"
-                onChange={(e) => {
-                  if (e.target.value === 'new') handleOpenMenuForm();
-                  else setSelectedMenuId(e.target.value);
-                }}
-              >
-                <MenuItem value="all">Tous</MenuItem>
-                {allMenus.map(menu => (
-                  <MenuItem key={menu.id} value={menu.id}>{menu.name}</MenuItem>
-                ))}
-                <MenuItem value="new" sx={{ fontStyle: 'italic', color: 'primary.main' }}>+ Nouveau Menu...</MenuItem>
-              </Select>
-            </FormControl>
-          )}
-
-          {selectedMenuId !== "all" && selectedMenuId !== "new" && (
-            <div className="flex justify-end gap-2 mb-4">
-              <Button variant="outlined" startIcon={<EditIcon />} onClick={() => {
-                const menu = allMenus.find(m => m.id === selectedMenuId);
-                if (menu) {
-                  setEditingMenu(menu);
-                  setMenuForm({ name: menu.name });
-                  setMenuFormOpen(true);
-                }
-              }}>Modifier ce menu</Button>
-              <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={handleDeleteMenu}>Supprimer ce menu</Button>
-            </div>
-          )}
-
-          {allMenus.length === 0 && (
-            <Box className="mb-4">
-              <Button variant="outlined" startIcon={<AddIcon />} onClick={() => handleOpenMenuForm()}>Nouveau Menu</Button>
-            </Box>
-          )}
-
-          {selectedMenuId !== "all" && (
-            <Box className="my-4 text-right">
-              <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenForm()}>{`Ajouter un ${allMenus.find(m => m.id === selectedMenuId)?.name || 'element'}`}</Button>
-            </Box>
-          )}
-
-          <DataGrid
-            rows={filteredItems}
-            columns={columns}
-            autoHeight
-            getRowId={(row) => row.id}
-            pageSize={5}
-            rowsPerPageOptions={[5, 10]}
-          />
-        </>
-      )}
-
-      {/* Formulaire d'ajout/modification d'item */}
-      <Dialog open={formOpen} onClose={handleCloseForm}>
+      {/* Dialogs */}
+      <Dialog open={formOpen} onClose={handleCloseForm} PaperProps={{ sx: { borderRadius: 2 } }}>
         <DialogTitle>{editingItem ? `Modifier un élément de ${allMenus.find(m => m.id === selectedMenuId)?.name || ''}` : `Ajouter un ${allMenus.find(m => m.id === selectedMenuId)?.name || ''}`}</DialogTitle>
         <DialogContent>
           {['name', 'description', 'price', 'category', 'stock'].map((field) => (
@@ -265,6 +334,8 @@ export default function MenuRestauration () {
               type={field === 'price' || field === 'stock' ? 'number' : 'text'}
               fullWidth
               margin="dense"
+              variant="outlined"
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
               onChange={(e) => setForm({ ...form, [field]: e.target.value })}
             />
           ))}
@@ -272,17 +343,18 @@ export default function MenuRestauration () {
             type="file"
             fullWidth
             margin="dense"
+            variant="outlined"
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
             onChange={(e) => setForm({ ...form, photo: e.target.files[0] })}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseForm}>Annuler</Button>
-          <Button variant="contained" onClick={handleSave}>Enregistrer</Button>
+          <Button onClick={handleCloseForm} sx={{ color: '#34495e' }}>Annuler</Button>
+          <Button variant="contained" onClick={handleSave} sx={{ backgroundColor: '#6b48ff', color: 'white', '&:hover': { backgroundColor: '#5a38dd' } }}>Enregistrer</Button>
         </DialogActions>
       </Dialog>
 
-      {/* Formulaire d'ajout/modification de menu */}
-      <Dialog open={menuFormOpen} onClose={handleCloseMenuForm}>
+      <Dialog open={menuFormOpen} onClose={handleCloseMenuForm} PaperProps={{ sx: { borderRadius: 2 } }}>
         <DialogTitle>{editingMenu ? 'Modifier' : 'Ajouter'} un Menu</DialogTitle>
         <DialogContent>
           <TextField
@@ -290,14 +362,16 @@ export default function MenuRestauration () {
             value={menuForm.name}
             fullWidth
             margin="dense"
+            variant="outlined"
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
             onChange={(e) => setMenuForm({ ...menuForm, name: e.target.value })}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseMenuForm}>Annuler</Button>
-          <Button variant="contained" onClick={handleSaveMenu}>Enregistrer</Button>
+          <Button onClick={handleCloseMenuForm} sx={{ color: '#34495e' }}>Annuler</Button>
+          <Button variant="contained" onClick={handleSaveMenu} sx={{ backgroundColor: '#6b48ff', color: 'white', '&:hover': { backgroundColor: '#5a38dd' } }}>Enregistrer</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
-};
+}
