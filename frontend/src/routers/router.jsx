@@ -61,6 +61,13 @@ import RestaurationPage from "../pages/restauration/RestaurationPage.jsx";
 import MenuRestauration from "../pages/restauration/MenuRestauration.jsx";
 import RoleSelector from "../pages/RoleSelector.jsx";
 import Public_Accueil from "../pages/public_Accueil.jsx";
+import Caisse from "../pages/DashbordCaisse/DashboardCaisse.jsx";
+import GestionCommandesPage from "../pages/DashbordCaisse/GestionCommandes.jsx";
+import PaiementPage from "../pages/DashbordCaisse/PaiementPage.jsx";
+import DashboardCard from "../pages/DashbordCaisse/DashboardCaisse.jsx"
+import StockPage from "../pages/DashbordCaisse/StockPage.jsx";
+import StatistiquesPage from "../pages/DashbordCaisse/StatistiquesPage.jsx";
+import FacturesHistoriquePage from "../pages/DashbordCaisse/FacturesHistoriquePage.jsx";
 
 const router=createBrowserRouter([
    
@@ -159,6 +166,10 @@ const router=createBrowserRouter([
           path: "organigramme",
           element: <PersonnelOrganigrammeDashboard/>
         },
+        {
+          path:"dashboardCaisse",
+          element:<DashboardCard />
+        },
       ]
     },
     {
@@ -187,6 +198,36 @@ const router=createBrowserRouter([
     },
   ]
 },
+// route caissier
+{
+    path: "/",
+    children: [
+      {
+        path: "/caisse",
+        element: < Caisse/>,
+      },
+      {
+        path: "/gestion-commandes",
+        element: <GestionCommandesPage />,
+      },
+      {
+        path: "/paiement",
+        element: <PaiementPage />,
+      },
+      {
+        path: "/stock",
+        element: <StockPage />,
+      },
+      {
+        path: "/statistiques",
+        element: <StatistiquesPage />,
+      },
+      {
+        path: "/factures-historique",
+        element: <FacturesHistoriquePage />,
+      },
+    ],
+  },
 
 
     /**
@@ -240,7 +281,7 @@ const router=createBrowserRouter([
       path: "/personnelCaisse",
       element: (
         <ProtectedRoute allowedRoles={["caissier", "organisateur", "accueil","cuisinier"]}>
-          <DashboardpersCaisse />
+          <DashboardCard />
         </ProtectedRoute>
       )
     }
