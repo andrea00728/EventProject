@@ -1,97 +1,84 @@
 import React from "react";
-import { FaPhone, FaFacebook, FaInstagram } from "react-icons/fa"; // Pour les icônes Font Awesome
-import { MdEmail } from "react-icons/md"; // Pour les icônes Material Design
+import { FaPhone, FaFacebook, FaInstagram } from "react-icons/fa";
+import { MdEmail } from "react-icons/md";
 
 function Footer() {
   return (
-    <footer className="bg-gray-900 text-white py-12 px-4 shadow-md">
-      <div className="container mx-auto max-w-7xl">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center md:text-left">
-          {/* Section Nos Services */}
-          <div className="mb-6 md:mb-0 animate-fadeIn">
-            <h3 className="text-xl font-semibold text-[#E5E7EB] mb-4">Nos Services</h3>
-            <p className="text-base leading-relaxed text-[#D1D5DB]">
-              Services de gestion d'événements : simplicité, excellence, succès.
-            </p>
+    <footer className="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 text-white py-10 overflow-hidden">
+      {/* Décorations de fond - même style que tes sections */}
+      <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-r from-[#FB9E3A]/10 to-orange-400/10 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-10 right-10 w-64 h-64 bg-gradient-to-l from-indigo-400/15 to-purple-400/10 rounded-full blur-2xl animate-pulse delay-1000" />
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-violet-300/5 to-fuchsia-300/5 rounded-full blur-3xl" />
+
+      <div className="container mx-auto max-w-7xl relative z-10">
+        {/* En-tête du footer */}
+        <div className="text-center mb-16 space-y-6">
+          {/* Badge - même style que tes autres sections */}
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 text-sm font-medium text-white/90 shadow-sm">
+            <div className="w-2 h-2 bg-[#FB9E3A] rounded-full animate-pulse"></div>
+            Restons connectés
           </div>
 
-          {/* Section Événement */}
-          <div className="mb-6 md:mb-0 animate-fadeIn">
-            <h3 className="text-xl font-semibold text-[#E5E7EB] mb-4">Événement</h3>
-            <ul className="space-y-3">
-              <li>
-                <a
-                  href="#"
-                  className="text-[#D1D5DB] hover:text-[#3B82F6] transition-all duration-200 text-base"
-                >
-                  Nos événements passés
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-[#D1D5DB] hover:text-[#3B82F6] transition-all duration-200 text-base"
-                >
-                  À propos
-                </a>
-              </li>
-            </ul>
-          </div>
+          <h2 className="text-4xl lg:text-5xl font-black text-white leading-[1.1] tracking-tight">
+            Prêt à organiser votre
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#FB9E3A] via-orange-400 to-amber-400 drop-shadow-sm">
+              prochain événement ?
+            </span>
+          </h2>
+        </div>
 
-          {/* Section Contactez Nous */}
-          <div className="animate-fadeIn">
-            <h3 className="text-xl font-semibold text-[#E5E7EB] mb-4">Contactez Nous</h3>
-            <p className="text-base mb-4 leading-relaxed text-[#D1D5DB]">
-              S'il y a un problème, vous pouvez nous joindre sur :
+        {/* Newsletter - Nouveau ajout */}
+        <div className="bg-gradient-to-r from-[#FB9E3A]/10 to-orange-400/10 backdrop-blur-sm rounded-3xl p-8 border border-orange-400/20 mb-16">
+          <div className="text-center space-y-6">
+            <h3 className="text-2xl font-black text-white">
+              Restez informé de nos dernières actualités
+            </h3>
+            <p className="text-slate-300 xl:text-lg">
+              Recevez nos conseils d'organisation et les dernières tendances événementielles
             </p>
-            <div className="flex justify-center md:justify-start space-x-6">
-              {/* Icône Téléphone */}
-              <a
-                href="tel:+"
-                className="text-[#D1D5DB] hover:text-green-400 transition-all duration-200"
-              >
-                <FaPhone className="w-6 h-6" />
-              </a>
-              {/* Icône Gmail */}
-              <a
-                href="mailto:example@example.com"
-                className="text-[#D1D5DB] hover:text-red-400 transition-all duration-200"
-              >
-                <MdEmail className="w-6 h-6" />
-              </a>
-              {/* Icône Facebook */}
-              <a
-                href="https://www.facebook.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#D1D5DB] hover:text-blue-400 transition-all duration-200"
-              >
-                <FaFacebook className="w-6 h-6" />
-              </a>
-              {/* Icône Instagram */}
-              <a
-                href="https://www.instagram.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#D1D5DB] hover:text-pink-400 transition-all duration-200"
-              >
-                <FaInstagram className="w-6 h-6" />
-              </a>
-            </div>
           </div>
         </div>
 
-        {/* Section Copyright */}
-        <div className="border-t border-gray-800 mt-8 pt-6 text-center text-sm text-[#D1D5DB] animate-fadeIn">
-          <p className="mb-2">
-            © 2025. Tous droits réservés{" "}
-            <a
-              href="#"
-              className="hover:underline text-[#D1D5DB] hover:text-[#3B82F6] transition-all duration-200"
-            >
-              Confidentialité ?
-            </a>
-          </p>
+        {/* Section Copyright - Amélirorée */}
+        <div className="border-t border-white/10 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-4">
+              {/* Logo/Nom */}
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-[#FB9E3A] to-orange-400 rounded-xl flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <span className="text-xl font-black text-white">Rapex group</span>
+              </div>
+              
+              <p className="text-slate-400 text-sm">
+                © 2025. Tous droits réservés
+              </p>
+            </div>
+
+            <div className="flex items-center gap-6 text-sm">
+              <a
+                href="#"
+                className="text-slate-400 hover:text-white transition-colors hover:underline"
+              >
+                Politique de confidentialité
+              </a>
+              <a
+                href="#"
+                className="text-slate-400 hover:text-white transition-colors hover:underline"
+              >
+                Conditions d'utilisation
+              </a>
+              <a
+                href="#"
+                className="text-slate-400 hover:text-white transition-colors hover:underline"
+              >
+                Support
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

@@ -178,7 +178,7 @@ export default function DefaultLayout() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-24">
+      <main className="max-w-screen mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-24">
         <NotificationListener/>
         <ToastContainer position="top-right"/>
         <Outlet />
