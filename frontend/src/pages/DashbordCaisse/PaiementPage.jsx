@@ -117,7 +117,7 @@ const PaiementPage = () => {
   });
 
   const columns = [
-    { field: "id", headerName: "ID", width: 70 },
+    { field: "id", headerName: "ID", width: 70 },  
     { field: "nom", headerName: "Nom", width: 150 },
     { field: "email", headerName: "Email", width: 200 },
     { field: "table", headerName: "Table", width: 100 },
