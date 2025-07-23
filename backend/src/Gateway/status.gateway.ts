@@ -17,6 +17,8 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleConnection(client: Socket) {
     const userId = client.handshake.query.userId as string;
 
+    console.log("Status du l'utilisateur : ", userId);
+
     if (userId) {
     //   await this.userService.setOnlineStatus(userId, true);
       this.server.emit('organizer_connected', { userId });
@@ -25,7 +27,7 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleDisconnect(client: Socket) {
     const userId = client.handshake.query.userId as string;
-
+    console.log("Status du l'utilisateur : ", userId);
     if (userId) {
     //   await this.userService.setOnlineStatus(userId, false);
       this.server.emit('organizer_disconnected', { userId });
