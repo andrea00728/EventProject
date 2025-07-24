@@ -4,6 +4,10 @@ import NosService from "../util/nosService";
 import Testimonials from "../util/testimony";
 import Contact from "../util/contact";
 import ButtonConnexion from "../util/buttonconnexion";
+import {  getCountEvents } from "../services/evenementServ";
+import { FormaNumber } from "../services/controll_champs/controll_limite";
+import { getUserCount } from "../services/userService";
+
 
 const images = [
   "/images/music-7238254_1280.jpg",
@@ -21,7 +25,8 @@ const Public_Accueil = () => {
   const serviceRef = useRef(null);
   const contactRef = useRef(null);
   const testimonyRef = useRef(null);
-
+  const [eventCount,setEventCount] = useState(0);
+  const [organisateurCount,setOrganisateurCount] = useState(0);
   useEffect(() => {
     const hash = window.location.hash;
     if (hash === "#service" && serviceRef.current) {
@@ -70,6 +75,30 @@ const Public_Accueil = () => {
     else if (delta < -50) next();
   };
 
+  useEffect(()=>{
+    const fetchData = async () => {
+      try{
+         const count = await getCountEvents();
+      setEventCount(count);
+      }catch(err){
+        console.log(err)
+      } 
+    };
+    fetchData();
+  },[]);
+
+  useEffect(()=>{
+    const fetchDataUserCount= async () =>{
+     try{
+
+      const count =await getUserCount();
+      setOrganisateurCount(count);
+     }catch(err){
+      console.log(err)
+     }
+    };
+    fetchDataUserCount();
+    },[]);
   return (
     <>
       <section id="pagepublic" ref={accueilRef}>
@@ -148,8 +177,7 @@ const Public_Accueil = () => {
                 transition={{ duration: 0.8, delay: 0.9 }}
                 className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8"
               >
-                
-                <button className="group relative bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white px-10 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-orange-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[200px] cursor-pointer">
+                <button className="tutorial-inscription group relative bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white px-10 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-orange-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[200px] cursor-pointer">
                   <span className="relative z-10 flex items-center justify-center gap-3">
                     <svg className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clipRule="evenodd" />
@@ -159,7 +187,7 @@ const Public_Accueil = () => {
                   <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-amber-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </button>
                 
-                <div className="transform hover:-translate-y-2 transition-all duration-300 cursor-pointer">
+                <div className="tutorial-connexion transform hover:-translate-y-2 transition-all duration-300 cursor-pointer">
                   <ButtonConnexion />
                 </div>
               </motion.div>
@@ -172,11 +200,11 @@ const Public_Accueil = () => {
                 className="flex flex-col sm:flex-row gap-8 justify-center items-center pt-12"
               >
                 <div className="text-center group">
-                  <div className="text-3xl font-bold text-white group-hover:text-orange-400 transition-colors duration-300">10K+</div>
+                  <div className="text-3xl font-bold text-white group-hover:text-orange-400 transition-colors duration-300"><strong>{FormaNumber(eventCount)}</strong></div>
                   <div className="text-white/70 text-sm font-medium">Événements créés</div>
                 </div>
                 <div className="text-center group">
-                  <div className="text-3xl font-bold text-white group-hover:text-blue-400 transition-colors duration-300">50K+</div>
+                  <div className="text-3xl font-bold text-white group-hover:text-blue-400 transition-colors duration-300"><strong>{FormaNumber(organisateurCount)}</strong></div>
                   <div className="text-white/70 text-sm font-medium">Participants actifs</div>
                 </div>
                 <div className="text-center group">

@@ -165,7 +165,7 @@ export default function Testimonials() {
         </div>
       </section>
 
-      <style jsx>{`
+      <style >{`
         @keyframes fadeIn {
           from {
             opacity: 0;

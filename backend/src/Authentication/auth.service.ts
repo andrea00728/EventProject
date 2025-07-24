@@ -165,4 +165,20 @@ async validateUser(profile: any): Promise<any> {
     return { message: 'Organisateur supprimé avec succès' };
   }
 
+
+  /**
+   * 
+   * @returns 
+   * 
+   * nombre totale d'organisateur
+   */
+
+  async findCountUsers():Promise<number>{
+    const count= this.userRepository.count({
+      where: {
+        role: 'organisateur',
+      },
+    });
+    return count;
+  }
 }
