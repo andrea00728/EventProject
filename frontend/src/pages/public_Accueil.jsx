@@ -4,6 +4,7 @@ import NosService from "../util/nosService";
 import Testimonials from "../util/testimony";
 import Contact from "../util/contact";
 import ButtonConnexion from "../util/buttonconnexion";
+import { AuthModal } from "../components/Modal/authModal";
 
 const images = [
   "/images/music-7238254_1280.jpg",
@@ -15,6 +16,7 @@ const images = [
 
 const Public_Accueil = () => {
   const [current, setCurrent] = useState(0);
+  const [isModalOpen, setModalOpen] = useState(false); // État pour le authModal
   const intervalRef = useRef(null);
   const touchStartX = useRef(0);
   const accueilRef = useRef(null);
@@ -72,6 +74,8 @@ const Public_Accueil = () => {
 
   return (
     <>
+
+      <AuthModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
       <section id="pagepublic" ref={accueilRef}>
         <div
           className="relative w-full h-screen overflow-hidden"
@@ -82,7 +86,7 @@ const Public_Accueil = () => {
         >
           {/* Background avec overlay gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/60 z-10" />
-          
+
           <div className="relative h-full rounded-lg">
             <AnimatePresence>
               <motion.img
@@ -102,7 +106,7 @@ const Public_Accueil = () => {
           <div className="absolute inset-0 flex items-center justify-center z-20">
             <div className="text-center space-y-8 max-w-4xl px-6">
               {/* Badge animé */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
@@ -114,7 +118,7 @@ const Public_Accueil = () => {
               </motion.div>
 
               {/* Titre principal */}
-              <motion.h1 
+              <motion.h1
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
@@ -131,40 +135,41 @@ const Public_Accueil = () => {
               </motion.h1>
 
               {/* Sous-titre */}
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.7 }}
                 className="text-white/90 text-xl sm:text-2xl font-light leading-relaxed max-w-2xl mx-auto"
               >
-                Créez, organisez et participez à des événements qui marquent les esprits. 
+                Créez, organisez et participez à des événements qui marquent les esprits.
                 <span className="font-semibold text-orange-300"> Votre expérience commence ici.</span>
               </motion.p>
 
               {/* Boutons d'action */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.9 }}
                 className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8"
               >
-                <button className="group relative bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white px-10 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-orange-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[200px] cursor-pointer">
+
+                <button
+                  onClick={() => setModalOpen(true)} // Ouvrir le modal à la cliqué
+                  className="group relative bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white px-10 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-orange-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[200px] cursor-pointer"
+                >
                   <span className="relative z-10 flex items-center justify-center gap-3">
-                    <svg className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clipRule="evenodd" />
-                    </svg>
                     Inscription
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-amber-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </button>
-                
+
                 <div className="transform hover:-translate-y-2 transition-all duration-300 cursor-pointer">
                   <ButtonConnexion />
                 </div>
               </motion.div>
 
               {/* Statistiques */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 1.1 }}
@@ -225,7 +230,7 @@ const Public_Accueil = () => {
           </button>
 
           {/* Effet de scroll vers le bas */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 1.3, repeat: Infinity, repeatType: "reverse" }}
@@ -241,19 +246,19 @@ const Public_Accueil = () => {
         </div>
       </section>
 
-      <section id="service" ref={serviceRef}> 
+      <section id="service" ref={serviceRef}>
         <div className="bg-gradient-to-b from-gray-50 to-white">
           <NosService />
         </div>
       </section>
 
-      <section id="testimony" ref={testimonyRef} > 
+      <section id="testimony" ref={testimonyRef} >
         <div className="bg-gradient-to-b from-gray-50 to-white">
           <Testimonials />
         </div>
       </section>
 
-      <section id="contact" ref={contactRef}> 
+      <section id="contact" ref={contactRef}>
         <div className="bg-gradient-to-b from-gray-50 to-white">
           <Contact />
         </div>

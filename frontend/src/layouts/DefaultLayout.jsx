@@ -9,6 +9,8 @@ import { getUserForfait } from "../services/forfaitService";
 import NotificationListener from "../util/Notification/notification";
 import { ToastContainer } from "react-toastify";
 import Logo from "../assets/LogoMaster.png"
+import { Bell } from "lucide-react";
+import NotificationComponent from "../util/notification";
 
 export default function DefaultLayout() {
   const { token, role, isLoading } = useStateContext();
@@ -318,6 +320,11 @@ export default function DefaultLayout() {
                   <span className="text-sm">Forfaits</span>
                 </div>
               </motion.button>
+
+              {/* notification  */}
+              <div>
+                <NotificationComponent/>
+              </div>
 
               <div className="">
                 <Profil />

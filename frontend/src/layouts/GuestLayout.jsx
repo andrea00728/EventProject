@@ -11,8 +11,8 @@ export default function GuestLayout() {
   const navItems = [
     { path: "#pagepublic", name: "Accueil" },
     { path: "#service", name: "Service" },
-    { path: "#contact", name: "Contact" },
-    { path: "#testimony", name: "Testimony" }
+    { path: "#testimony", name: "Testimony" },
+    { path: "#contact", name: "Contact" }
   ];
   // if (token) {
   //   if(role==="organisateur"){
@@ -51,7 +51,7 @@ export default function GuestLayout() {
   return (
     <>
       {/* Header Moderne avec Design Cohérent */}
-      <header className="w-screen bg-gradient-to-r from-white/50 via-blue-50/20 to-purple-50/10 backdrop-blur-xl shadow-xl border-b border-gray-100/50 fixed top-0 z-50 ">
+      <header className="w-screen bg-gradient-to-r from-white via-blue-50/20 to-purple-50/10 backdrop-blur-xl shadow-xl border-b border-gray-100/50 fixed top-0 z-50 ">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
 
           {/* Logo Section */}
@@ -64,8 +64,8 @@ export default function GuestLayout() {
               />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-2xl  font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent tracking-wide">
-                Master Table
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent tracking-wide">
+                EventPro
               </h1>
               <p className="text-xs text-gray-500 font-medium -mt-1">Créateurs d'événements</p>
             </div>
@@ -85,7 +85,7 @@ export default function GuestLayout() {
                   <a
                     href={item.path}
                     onClick={(e) => handleSmoothScroll(e, item.path)}
-                    className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2"
+                    className="px-4 py-2 text-gray-700 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2"
                   >
                     {item.name}
                     <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300"></span>
