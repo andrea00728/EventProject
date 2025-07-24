@@ -126,7 +126,7 @@ export default function DefaultLayout() {
 
             </motion.div>
 
-            <nav className="hidden md:flex items-center justify-center py-3 ">
+            <nav className="hidden md:flex items-center justify-center py-3 relative">
               <div className="flex items-center gap-1">
                 {navItems.map((item, index) => (
                   <motion.div
@@ -140,11 +140,11 @@ export default function DefaultLayout() {
                   >
                     <Link
                       to={item.path}
-                      className="relative px-6 py-3 text-violet-500 hover:text-white font-medium transition-all duration-300 rounded-xl hover:bg-violet-700/50"
-                    >
+                      className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2">
                       <span className="relative z-10">{item.name}</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300"></span>
                       <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-[#6B46C1]/20 to-indigo-600/20 rounded-xl opacity-0 group-hover:opacity-100"
+                        className="absolute inset-0 bg-gradient-to-r rounded-xl opacity-0 group-hover:opacity-100"
                         transition={{ duration: 0.3 }}
                       />
                       <motion.div
@@ -335,7 +335,7 @@ export default function DefaultLayout() {
             </div>
 
           </div>
-          
+
 
         </div>
 

@@ -76,7 +76,7 @@ export default function Profil() {
     sessionStorage.removeItem("ACCES_TOKEN");
     window.location.href = "/pagepublic";
   };
-  
+
   return (
     <>
       <div className="flex items-center gap-4 cursor-pointer hover:scale-105 duration-300" onClick={() => setIsOpenProfil(true)}>
@@ -124,8 +124,8 @@ export default function Profil() {
                     </div>
 
                     {/* Camera Icon Overlay */}
-                    <div className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-gray-100 group-hover:bg-blue-50 transition-colors duration-200">
-                      <Camera className="w-4 h-4 text-gray-600" />
+                    <div className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-gray-100 group-hover:bg-blue-50 transition-colors duration-200 cursor-pointer">
+                      <Camera className="w-4 h-4 text-gray-600 " />
                     </div>
                   </div>
                 </div>
@@ -149,17 +149,17 @@ export default function Profil() {
 
                 {/* Action Buttons */}
                 <div className="space-y-3">
-                  <button className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 transform hover:-translate-y-0.5">
+                  <button className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 transform hover:-translate-y-0.5 cursor-pointer">
                     <Settings className="w-5 h-5" />
                     Paramètres
                   </button>
 
-                  <button className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 rounded-xl font-semibold border-2 border-gray-200 hover:border-gray-300 transition-all duration-300 transform hover:-translate-y-0.5">
+                  <button className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 rounded-xl font-semibold border-2 border-gray-200 hover:border-gray-300 transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer">
                     <User className="w-5 h-5" />
                     Mon Profil
                   </button>
 
-                  <button className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white rounded-xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-red-500/25 transform hover:-translate-y-0.5"
+                  <button className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white rounded-xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-red-500/25 transform hover:-translate-y-0.5 cursor-pointer"
                     onClick={() => setConfirmLogOut(true)}
                   >
                     <LogOut className="w-5 h-5" />
