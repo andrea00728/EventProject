@@ -11,8 +11,8 @@ export default function GuestLayout() {
   const navItems = [
     { path: "#pagepublic", name: "Accueil" },
     { path: "#service", name: "Service" },
-    { path: "#testimony", name: "Testimony" },
-    { path: "#contact", name: "Contact" }
+    { path: "#contact", name: "Contact" },
+    { path: "#testimony", name: "Testimony" }
   ];
   // if (token) {
   //   if(role==="organisateur"){
