@@ -120,7 +120,7 @@ export default function DefaultLayout() {
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-[#6B46C1] to-indigo-500 bg-clip-text text-transparent">
-                  EventMaster
+                  Master Table
                 </h1>
                 <p className="text-xs text-slate-400 -mt-1">Management Platform</p>
               </div>
@@ -179,7 +179,7 @@ export default function DefaultLayout() {
                               </h3>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-6">
+                            <div className="grid grid-cols-4 gap-1">
                               {item.subMenus.map((subItem, subIndex) => (
                                 <motion.div
                                   key={subItem.path}
@@ -272,16 +272,16 @@ export default function DefaultLayout() {
                   exit="closed"
                 >
                   {navItems.map((item) => (
-                    <div key={item.name} className="py-2">
-                      <Link
+                    <div key={item.name} className=" bg-white/95 backdrop-blur-xl shadow-2xl shadow-purple-200/50 rounded-3xl py-2 absolute top-20 right-10">
+                      {/* <Link
                         to={item.path}
                         className="block px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         {item.name}
-                      </Link>
+                      </Link> */}
                       {item.subMenus && (
-                        <div className="ml-4 mt-2 space-y-1">
+                        <div className=" ml-4 mt-2 space-y-1">
                           {item.subMenus.map((subItem) => (
                             <Link
                               key={subItem.path}
@@ -320,7 +320,9 @@ export default function DefaultLayout() {
                 </div>
               </motion.button>
 
-              <Profil />
+              <div className="">
+                <Profil />
+              </div>
 
               {/* Mobile Menu Button */}
               <button
@@ -334,7 +336,7 @@ export default function DefaultLayout() {
             </div>
 
           </div>
-          {/* Navigation Bar */}
+          
 
         </div>
 
