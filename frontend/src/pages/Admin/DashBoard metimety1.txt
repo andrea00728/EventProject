@@ -40,6 +40,7 @@ export default function Dashboard() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  
   const payments = [
     { user: "Alice", amount: 250, date: "20/07/2025" },
     { user: "Bob", amount: 100, date: "18/07/2025" },
@@ -81,11 +82,15 @@ export default function Dashboard() {
     { name: "Sophie Lemoine", email: "sophie.lemoine@mail.com" },
   ];
 
+  
   const engagementStats = [
     { label: "Taux d'ouverture", value: "75%", progress: 75 },
+    // { label: "Taux de clics", value: "40%", progress: 40 },
+    // { label: "Nouveaux abonnés", value: "120", progress: 60 },
     { label: "Taux de participation aux événements", value: "50%", progress: 50 },
     { label: "Taux de réponse aux notifications/messages", value: "60%", progress: 60 },
     { label: "Temps moyen passé par utilisateur (min)", value: "35 min", progress: 58 },
+    // { label: "Nombre d’interactions", value: "1200", progress: 80 },
   ];
 
   const gradientTitle =
@@ -98,48 +103,53 @@ export default function Dashboard() {
     : "bg-gradient-to-r from-white to-gray-50 text-gray-800";
 
   return (
-    <div className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${pageBg}`}>
+    <div className={`min-h-screen p-8 w-full max-w-100% mx-auto transition duration-500 ${pageBg}`}>
+      
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
-          <MdDashboard className="mr-2 sm:mr-3" /> Tableau de bord
+        <h2 className={`text-3xl font-bold flex items-center ${gradientTitle}`}>
+          <MdDashboard className="mr-3" /> Tableau de bord
         </h2>
 
-        <div className="flex items-center gap-3 sm:gap-6 relative">
+        <div className="flex items-center gap-6 relative">
+          
           <Dropdown
             ref={notifRef}
             show={showNotifications}
             setShow={setShowNotifications}
-            icon={<FaBell className="text-lg sm:text-xl" />}
+            icon={<FaBell className="text-xl" />}
             label="Notifications"
             count={notifications.length}
             items={notifications}
             noScroll={true}
           />
 
+          
           <Dropdown
             ref={msgRef}
             show={showMessages}
             setShow={setShowMessages}
-            icon={<FaEnvelope className="text-lg sm:text-xl" />}
+            icon={<FaEnvelope className="text-xl" />}
             label="Messages"
             count={messages.length}
             items={messages.map((msg) => `${msg.from} : ${msg.text}`)}
             noScroll={true}
           />
 
+          
           <div ref={profileRef} className="relative">
             <button
               onClick={() => setShowProfile(!showProfile)}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center gap-1 sm:gap-2"
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center gap-2"
               aria-label="Profil"
             >
-              <FaUser className="text-lg sm:text-xl" />
+              <FaUser className="text-xl" />
               <span className="hidden md:inline">Admin</span>
             </button>
             {showProfile && (
               <div
-                className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-                  } z-50`}
+                className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg ${
+                  darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+                } z-50`}
               >
                 <ul>
                   <li className="p-3 border-b border-gray-300 dark:border-gray-600 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -153,9 +163,10 @@ export default function Dashboard() {
             )}
           </div>
 
+          
           <button
             onClick={toggleDarkMode}
-            className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border font-semibold shadow-md hover:shadow-lg transition duration-300 bg-transparent text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+            className="px-4 py-2 rounded-lg border font-semibold shadow-md hover:shadow-lg transition duration-300 bg-transparent text-gray-800 dark:bg-gray-700 dark:text-gray-200"
             aria-label="Toggle dark mode"
           >
             {darkMode ? "☀️" : "🌙"}
@@ -163,39 +174,46 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+      
+      <div className="flex flex-col lg:flex-row gap-8">
+        
         <div className="flex-1 flex flex-col gap-6">
-          <div className="flex flex-wrap gap-4 sm:gap-5 justify-center">
+          
+          <div className="flex flex-wrap gap-5 justify-center">
             {stats.map((stat, index) => (
               <motion.div
                 key={index}
                 whileHover={{ scale: 1.05 }}
-                className={`flex-1 min-w-[150px] sm:min-w-[180px] max-w-[230px] pt-5 px-6 rounded-2xl shadow-xl transition duration-300 cursor-pointer ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-                  }`}
+                className={`flex-1 min-w-[180px] max-w-[230px] pt-5 px-6 rounded-2xl shadow-xl transition duration-300 cursor-pointer ${
+                  darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+                }`}
               >
                 <h3 className={`font-semibold ${gradientTitle}`}>{stat.label}</h3>
                 <div className="flex justify-between items-center pt-8 pb-3">
-                  <span className="text-[20px] sm:text-[22px] font-bold">{stat.value}</span>
-                  <span className="text-[24px] sm:text-[26px] text-gray-500 dark:text-gray-400">{stat.icon}</span>
+                  <span className="text-[22px] font-bold">{stat.value}</span>
+                  <span className="text-[26px] text-gray-500 dark:text-gray-400">{stat.icon}</span>
                 </div>
               </motion.div>
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-6 justify-center">
+          
+          <div className="flex flex-wrap gap-8 justify-center">
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px] ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-                }`}
+              className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[300px] max-w-[550px] ${
+                darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+              }`}
             >
-              <EventChart darkMode={darkMode} />
+              <EventChart />
             </motion.div>
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px] ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-                }`}
+              className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[300px] max-w-[550px] ${
+                darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+              }`}
             >
-              <MoneyChart darkMode={darkMode} />
+              <MoneyChart />
             </motion.div>
           </div>
 
@@ -216,7 +234,9 @@ export default function Dashboard() {
           </SectionWrapper>
         </div>
 
-        <div className="flex flex-col gap-6 lg:gap-8 flex-shrink-0 w-full lg:max-w-md">
+        
+        <div className="flex flex-col gap-8 flex-shrink-0 max-w-md w-full">
+          
           <SectionWrapper title="Organisateurs récents" darkMode={darkMode} gradientTitle={gradientTitle}>
             <ul>
               {recentOrganizers.map(({ name, email }, i) => (
@@ -224,9 +244,9 @@ export default function Dashboard() {
                   key={i}
                   className="flex items-center gap-3 p-3 border-b border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded-md"
                 >
-                  <FaUserCircle className="text-2xl sm:text-3xl text-purple-500" />
+                  <FaUserCircle className="text-3xl text-purple-500" />
                   <div>
-                    <p className="font-semibold text-base sm:text-lg">{name}</p>
+                    <p className="font-semibold">{name}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">{email}</p>
                   </div>
                 </li>
@@ -234,38 +254,38 @@ export default function Dashboard() {
             </ul>
           </SectionWrapper>
 
+          
           <SectionWrapper title="Derniers paiements" darkMode={darkMode} gradientTitle={gradientTitle}>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[300px]">
-                <thead>
-                  <tr className="border-b border-gray-300 dark:border-gray-700">
-                    <th className="p-3">Utilisateur</th>
-                    <th className="p-3">Montant</th>
-                    <th className="p-3">Date</th>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-gray-300 dark:border-gray-700">
+                  <th className="p-3">Utilisateur</th>
+                  <th className="p-3">Montant</th>
+                  <th className="p-3">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payments.map(({ user, amount, date }, i) => (
+                  <tr
+                    key={i}
+                    className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded"
+                  >
+                    <td className="p-3">{user}</td>
+                    <td className="p-3">${amount}</td>
+                    <td className="p-3">{date}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {payments.map(({ user, amount, date }, i) => (
-                    <tr
-                      key={i}
-                      className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded"
-                    >
-                      <td className="p-3">{user}</td>
-                      <td className="p-3">${amount}</td>
-                      <td className="p-3">{date}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </SectionWrapper>
 
+          
           <div className="flex flex-col gap-4">
             {quickActions.map((action, i) => (
               <motion.button
                 key={i}
                 whileHover={{ scale: 1.05 }}
-                className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-3 font-semibold rounded-xl shadow-md hover:scale-105 transition ${gradientButton}`}
+                className={`flex items-center gap-2 px-5 py-3 font-semibold rounded-xl shadow-md hover:scale-105 transition ${gradientButton}`}
               >
                 {action.icon}
                 {action.label}
@@ -277,6 +297,7 @@ export default function Dashboard() {
     </div>
   );
 }
+
 
 const Dropdown = React.forwardRef(({ show, setShow, icon, label, count, items, noScroll }, ref) => {
   const { darkMode } = useDarkMode();
@@ -297,8 +318,9 @@ const Dropdown = React.forwardRef(({ show, setShow, icon, label, count, items, n
       </button>
       {show && (
         <div
-          className={`absolute right-0 mt-2 w-56 sm:w-64 max-h-64 overflow-y-auto rounded-lg shadow-lg ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-            } z-50`}
+          className={`absolute right-0 mt-2 w-64 max-h-64 overflow-y-auto rounded-lg shadow-lg ${
+            darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+          } z-50`}
           style={noScroll ? { maxHeight: "auto", overflowY: "visible" } : {}}
         >
           <h4 className="font-semibold p-3 border-b border-gray-300 dark:border-gray-600">{label}</h4>
@@ -307,13 +329,13 @@ const Dropdown = React.forwardRef(({ show, setShow, icon, label, count, items, n
               items.map((item, i) => (
                 <li
                   key={i}
-                  className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm sm:text-base"
+                  className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                 >
                   {item}
                 </li>
               ))
             ) : (
-              <li className="p-3 text-center text-gray-500 text-sm">Aucun {label.toLowerCase()}</li>
+              <li className="p-3 text-center text-gray-500">Aucun {label.toLowerCase()}</li>
             )}
           </ul>
         </div>
@@ -322,11 +344,13 @@ const Dropdown = React.forwardRef(({ show, setShow, icon, label, count, items, n
   );
 });
 
+
 function SectionWrapper({ children, title, darkMode, gradientTitle }) {
   return (
     <section
-      className={`p-5 sm:p-6 rounded-2xl shadow-xl ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-        }`}
+      className={`p-6 rounded-2xl shadow-xl ${
+        darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+      }`}
     >
       <h3 className={`text-xl font-semibold mb-4 ${gradientTitle}`}>{title}</h3>
       {children}
@@ -334,14 +358,15 @@ function SectionWrapper({ children, title, darkMode, gradientTitle }) {
   );
 }
 
-function EventChart({ darkMode }) {
+
+function EventChart() {
   const data2020 = [10, 15, 20, 12, 17];
   const data2021 = [14, 18, 25, 22, 20];
   const months = ["Jan", "Feb", "Mar", "Apr", "May"];
 
   return (
     <div>
-      <h3 className="text-base sm:text-lg font-semibold mb-2 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+      <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
         Événements par mois
       </h3>
       <BarChart
@@ -349,40 +374,17 @@ function EventChart({ darkMode }) {
           { data: data2020, label: "2020" },
           { data: data2021, label: "2021" },
         ]}
-        xAxis={[
-          {
-            data: months,
-            tickLabelStyle: {
-              fill: darkMode ? '#ffffff' : '#000000', // Color of X-axis numbers
-            },
-            // If you also have an axis label (e.g., "Months"), you can style it like this:
-            // axisLabelStyle: {
-            //   fill: darkMode ? '#ffffff' : '#000000',
-            // },
-          },
-        ]}
-        yAxis={[
-          {
-            tickLabelStyle: {
-              fill: darkMode ? '#ffffff' : '#000000', // Color of Y-axis numbers
-            },
-            // If you also have an axis label (e.g., "Values"), you can style it like this:
-            // axisLabelStyle: {
-            //   fill: darkMode ? '#ffffff' : '#000000',
-            // },
-          },
-        ]}
+        xAxis={[{ data: months }]}
         height={270}
         margin={{ top: 20, right: 30, bottom: 40, left: 50 }}
         width={480}
-        className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px]${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-          }`}
       />
     </div>
   );
 }
 
-function MoneyChart({ darkMode }) {
+
+function MoneyChart() {
   const margin = { right: 24 };
   const uData = [4000, 3000, 2000, 2780, 1890, 2390, 3490];
   const pData = [2400, 1398, 9800, 3908, 4800, 3800, 4300];
@@ -395,43 +397,19 @@ function MoneyChart({ darkMode }) {
     "Page F",
     "Page G",
   ];
-
   return (
     <div>
-      <h3 className="text-base sm:text-lg font-semibold text-start my-3">Paiements</h3>
+      <h3 className="text-lg font-semibold text-start my-3">Paiements</h3>
       <LineChart
         height={280}
         series={[
           { data: pData, label: "PV" },
           { data: uData, label: "UV" },
         ]}
-        xAxis={[
-          {
-            scaleType: "point",
-            data: xLabels,
-            tickLabelStyle: {
-              fill: darkMode ? '#ffffff' : '#000000', // Couleur des chiffres de l'axe X
-            },
-            // axisLabelStyle: {
-            //   fill: darkMode ? '#ffffff' : '#000000', // Couleur du libellé de l'axe X
-            // },
-          },
-        ]}
-        yAxis={[
-          {
-            width: 50,
-            tickLabelStyle: {
-              fill: darkMode ? '#ffffff' : '#000000', // Couleur des chiffres de l'axe Y
-            },
-            // axisLabelStyle: {
-            //   fill: darkMode ? '#ffffff' : '#000000', // Couleur du libellé de l'axe Y
-            // },
-          },
-        ]}
+        xAxis={[{ scaleType: "point", data: xLabels }]}
+        yAxis={[{ width: 50 }]}
         margin={margin}
         width={450}
-        className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px] ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-          }`}
       />
     </div>
   );

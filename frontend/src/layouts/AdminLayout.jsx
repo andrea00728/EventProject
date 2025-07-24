@@ -1,122 +1,129 @@
 import React, { useState } from "react";
-import { Outlet, Link } from "react-router-dom";
-import { FaGears, FaUsers, FaUser } from "react-icons/fa6";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import {
-  MdDashboard,
-  MdCalendarToday,
-  MdOutlineCalendarMonth,
-  MdOutlineCalendarToday,
-  MdVerifiedUser,
-  MdAttachMoney,
-  MdSearch,
-  MdRoom,
-} from "react-icons/md";
-import { delay, motion, AnimatePresence } from "framer-motion";
+  FaCogs,
+  FaUsers,
+  FaSignOutAlt,
+  FaBars,
+  FaTimes,
+  FaMoon,
+  FaSun,
+} from "react-icons/fa";
+import { MdDashboard, MdCalendarToday, MdRoom } from "react-icons/md";
+import { useDarkMode } from "../context/DarkModeContext"; // ✅ useDarkMode context
 
 export default function AdminLayout() {
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { darkMode, toggleDarkMode } = useDarkMode(); // ✅ Context utilisé ici
+
   const choixItems = [
     { path: "/AdminAccueil", name: "Tableau de bord", icon: <MdDashboard /> },
     { path: "/AdminEvenement", name: "Evénements", icon: <MdCalendarToday /> },
     { path: "/AdminOrganisateur", name: "Organisateurs", icon: <FaUsers /> },
-    { path: "/LocationSalle", name: "Gérer salles et localitsation", icon: <MdRoom /> },
-    { path: "/AdminParametre", name: "Paramètres", icon: <FaGears /> },
+    { path: "/LocationSalle", name: "Salles & Localisation", icon: <MdRoom /> },
+    { path: "/AdminParametre", name: "Paramètres", icon: <FaCogs /> },
   ];
-  const navVariants = {
-    closed: {
-      // Compact state: only icons
-      transition: {
-        type: "spring", // Use spring physics for a more natural feel
-        duration: 3,
-        bounce:0.4
-      },
-      scale: 0.8,  
-    },
-    open: {
-      scale: 1,
-      transition: {
-        type: "spring",
-        duration: 3,
-        bounce:0.4,
-      },
-    },
+
+  const handleLogout = () => {
+    console.log("Déconnexion");
   };
 
-  const [isHover, setIsHover] = useState(false);
-  return (
-    <>
-      <div className="flex justify-center items-center overflow-hidden">
-        <AnimatePresence>
-          <motion.header
-            className=" text-black h-[99vh] bg-[#cfc6c4]  rounded-4xl items-start ml-2 p-4"
-            onMouseLeave={() => {
-              setIsHover(false);
-            }}
-            onMouseEnter={() => {
-              setIsHover(true);
-            }}
-            initial={isHover && "closed"}
-            animate={isHover && "open"}
-            variants={navVariants}
-            exit={!isHover && "closed"}
-          >
-            <motion.h1
-              initial={isHover && {
-                  opacity: 0,
-                  transition: { duration: 3,x:-100, type: "spring" },
-                }}
-              animate={
-                isHover && {
-                  opacity: 1,
-                  transition: { duration: 3,x:0, type: "spring" },
-                }
-              }
+  const gradientTitle =
+    "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";
+  const gradientButton =
+    "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-400 text-white";
 
-              className="text-2xl text-center transition-all duration-500"
-              style={{ fontFamily: "cursive", fontStyle: "italic" }}
-            >
-              {isHover ? "Master Table" : "MT"}
-            </motion.h1>
+  const pageBg = darkMode
+    ? "bg-gray-900 text-gray-100"
+    : "bg-gradient-to-r from-white to-gray-50 text-gray-800";
+
+  return (
+    <div className="flex h-screen transition duration-300 dark:bg-gray-900">
+      <aside
+        className={`fixed z-50 top-0 left-0 h-full w-72 shadow-lg transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static md:block ${
+          darkMode ? "bg-gray-800" : "bg-white"
+        }`}
+      >
+        <div
+          className={`flex flex-col h-full justify-between ${
+            darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+          }`}
+        >
+          <div>
+            <img src="../../public/images/logo_4.png" alt="Logo" className="w-16 h-16 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-center mb-6 text-indigo-600 dark:text-white">
+              Master Table
+            </h1>
+
             <nav>
-              <ul>
-                {choixItems.map((value, key) => (
-                  <li key={key}>
+              <ul className="space-y-2">
+                {choixItems.map((item, index) => (
+                  <li key={index}>
                     <Link
-                      to={value.path}
-                      className={`flex ${
-                        isHover ? "hover:justify-start" : "justify-center"
-                      }  ease-in text-[16px] font-semibold items-center gap-3  text-start mt-6 hover:underline cursor-pointer`}
+                      to={item.path}
+                      className={`flex items-center gap-3 px-4 py-2 rounded-0.5g font-medium transition-all duration-200 transform
+                      ${
+                        location.pathname === item.path
+                          ? "bg-indigo-500 text-white shadow-md dark:bg-indigo-600"
+                          : "text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105"
+                      }`}
+                      onClick={() => setSidebarOpen(false)}
                     >
-                      <span>{value.icon}</span>
-                      {isHover && (
-                        <motion.span
-                          className="transition-all duration-500 ease-in"
-                          initial={{ opacity: 0 }}
-                          animate={
-                            isHover && {
-                              opacity: 1,
-                              transition: {
-                                duration: 1,
-                                ease: "easeIn",
-                                type: "spring",
-                              },
-                            }
-                          }
-                          exit={{ opacity: 0 }}
-                        >
-                          {value.name}
-                        </motion.span>
-                      )}
+                      <span className="text-xl">{item.icon}</span>
+                      {item.name}
                     </Link>
                   </li>
                 ))}
               </ul>
             </nav>
-          </motion.header>
-        </AnimatePresence>
-        <div className={`flex-1 overflow-auto bg-white rounded-2xl shadow-2xl ml-4`}>
-          <Outlet/>
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 mt-6 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg transition-colors"
+            >
+              <FaSignOutAlt />
+              Déconnexion
+            </button>
+          </div>
+
+          <div className="flex flex-col items-center gap-2 mb-4">
+            <button
+              onClick={toggleDarkMode}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gray-200 dark:bg-gray-700 rounded-lg text-gray-800 dark:text-gray-100 hover:scale-105 transition"
+            >
+              {darkMode ? <FaSun /> : <FaMoon />}
+              {darkMode ? "Mode Jour" : "Mode Nuit"}
+            </button>
+
+            <footer className="text-xs text-center text-gray-400 dark:text-gray-500">
+              © {new Date().getFullYear()} Master Table. Tous droits réservés.
+            </footer>
+          </div>
         </div>
+      </aside>
+
+      <div className={`flex-1 flex flex-col overflow-auto ${darkMode ? "bg-gray-800" : "bg-white"}`}>
+        <header
+          className={`flex items-center justify-between px-6 py-4 border-b dark:border-gray-700 shadow-md md:hidden ${
+            darkMode ? "bg-gray-800" : "bg-white"
+          }`}
+        >
+          <button
+            className="text-2xl text-gray-700 dark:text-gray-300"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {sidebarOpen ? <FaTimes /> : <FaBars />}
+          </button>
+        </header>
+
+        <main className="flex-1 bg-gray-100 dark:bg-gray-900">
+          <div className="bg-gray-100 dark:bg-gray-800 rounded-xl shadow pl-1 h-full text-gray-900 dark:text-gray-100">
+            <Outlet />
+          </div>
+        </main>
       </div>
-    </>
+    </div>
   );
 }
