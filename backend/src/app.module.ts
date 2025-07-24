@@ -59,6 +59,10 @@ import { ShortLink } from './entities/ShortLink';
 import { NotificationService } from './services/notification/notification.service';
 import { NotificationModule } from './modules/notification/notification.module';
 import { ShortLinkModule } from './modules/short-link/short-link.module';
+import { CommentaireModule } from './modules/commentaire/commentaire.module';
+import { CommentaireService } from './services/commentaire/commentaire.service';
+import { CommentaireController } from './controllers/commentaire/commentaire.controller';
+import { Commentaire } from './entities/Commentaire';
 
 
 @Module({
@@ -91,7 +95,7 @@ import { ShortLinkModule } from './modules/short-link/short-link.module';
           username: dbUsername,
           password: dbPassword,
           database: dbDatabase,
-          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, Forfait, SystemPrompt, ShortLink],
+          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, Forfait, SystemPrompt, ShortLink, Commentaire],
      
           synchronize: true, 
         };
@@ -146,6 +150,7 @@ import { ShortLinkModule } from './modules/short-link/short-link.module';
     PaypalModule,
     NotificationModule,
     ShortLinkModule,
+    CommentaireModule,
 
   ],
   controllers: [ProfileController,],
