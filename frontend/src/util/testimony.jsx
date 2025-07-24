@@ -1,4 +1,21 @@
+import { useEffect,useState } from "react";
+import { getUserCount } from "../services/userService";
+import { FormaNumber } from "../services/controll_champs/controll_limite";
+
 export default function Testimonials() {
+  const [organisateurCount, setOrganisateurCount] = useState(0);
+
+  useEffect(()=>{
+    const fetchOrganisateurCount = async () => {
+      try{
+        const count=await getUserCount();
+        setOrganisateurCount(count);
+      }catch(error){
+        console.log(error);
+      }
+    };
+    fetchOrganisateurCount();
+  },[]);
   return (
     <>
       {/* Section Témoignages - Design Pro et Moderne */}
@@ -25,7 +42,7 @@ export default function Testimonials() {
               TÉMOIGNAGES
             </h2>
             <p className="text-gray-700 text-xl sm:text-2xl font-light leading-relaxed max-w-3xl mx-auto">
-              Découvrez pourquoi plus de <span className="font-semibold text-orange-600">10,000+ organisateurs</span> nous font confiance pour leurs 
+              Découvrez pourquoi plus de <span className="font-semibold text-orange-600"><strong>{FormaNumber(organisateurCount)}</strong>+ organisateurs</span> nous font confiance pour leurs 
               <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent font-semibold"> événements inoubliables</span>
             </p>
           </div>
