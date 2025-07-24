@@ -66,6 +66,7 @@ const RestaurationPage = () => {
         display: "flex",
         width: "100vw",
         minHeight: "100vh",
+        position: "fixed",
         height: "100%", // Ensure full height inheritance
       }}
     >

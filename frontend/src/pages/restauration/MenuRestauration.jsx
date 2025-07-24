@@ -17,7 +17,8 @@ import {
   TextField,
   IconButton,
   Tabs,
-  Tab
+  Tab,
+  Typography
 } from "@mui/material";
 
 export default function MenuRestauration() {
@@ -29,6 +30,10 @@ export default function MenuRestauration() {
   const [menuItems, setMenuItems] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
   const [menuFormOpen, setMenuFormOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteMenuConfirmOpen, setDeleteMenuConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [menuToDelete, setMenuToDelete] = useState(null);
   const [form, setForm] = useState({ name: '', description: '', price: '', category: '', stock: '', photo: null });
   const [menuForm, setMenuForm] = useState({ name: '' });
   const [editingItem, setEditingItem] = useState(null);
@@ -117,7 +122,6 @@ export default function MenuRestauration() {
 
     try {
       if (editingItem && editingItem.id) {
-        console.log("Mise à jour de l'élément avec ID :", editingItem.id, formData);
         await axios.patch(`/menus/items/${editingItem.id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
@@ -150,19 +154,45 @@ export default function MenuRestauration() {
     }
   };
 
-  const handleDelete = async (id) => {
-    await axios.delete(`/menus/items/${id}`);
-    setMenuItems(prev => prev.filter(item => item.id !== id));
+  const handleOpenDeleteConfirm = (item) => {
+    setItemToDelete(item);
+    setDeleteConfirmOpen(true);
   };
 
-  const handleDeleteMenu = async () => {
-    if (!selectedMenuId || selectedMenuId === "all") return;
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce menu ?")) return;
+  const handleCloseDeleteConfirm = () => {
+    setDeleteConfirmOpen(false);
+    setItemToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
     try {
-      console.log("Suppression du menu avec ID :", selectedMenuId);
-      await axios.delete(`/menus/${selectedMenuId}`);
+      await axios.delete(`/menus/items/${itemToDelete.id}`);
+      setMenuItems(prev => prev.filter(item => item.id !== itemToDelete.id));
+      handleCloseDeleteConfirm();
+    } catch (err) {
+      console.error("Erreur lors de la suppression de l'élément :", err);
+      alert("Erreur lors de la suppression de l'élément.");
+    }
+  };
+
+  const handleOpenDeleteMenuConfirm = (menuId) => {
+    setMenuToDelete(menuId);
+    setDeleteMenuConfirmOpen(true);
+  };
+
+  const handleCloseDeleteMenuConfirm = () => {
+    setDeleteMenuConfirmOpen(false);
+    setMenuToDelete(null);
+  };
+
+  const handleConfirmDeleteMenu = async () => {
+    if (!menuToDelete) return;
+    try {
+      await axios.delete(`/menus/${menuToDelete}`);
       await reloadMenus();
       setSelectedMenuId("all");
+      handleCloseDeleteMenuConfirm();
     } catch (err) {
       console.error("Erreur suppression menu :", err);
       alert("Erreur lors de la suppression.");
@@ -238,10 +268,7 @@ export default function MenuRestauration() {
                             <EditIcon />
                           </IconButton>
                           <IconButton
-                            onClick={() => {
-                              setSelectedMenuId(menu.id);
-                              handleDeleteMenu();
-                            }}
+                            onClick={() => handleOpenDeleteMenuConfirm(menu.id)}
                             sx={{ color: '#e74c3c' }}
                           >
                             <DeleteIcon />
@@ -298,7 +325,7 @@ export default function MenuRestauration() {
                     <IconButton onClick={() => handleOpenForm(item)} sx={{ color: '#6b48ff' }}>
                       <EditIcon />
                     </IconButton>
-                    <IconButton onClick={() => handleDelete(item.id)} sx={{ color: '#e74c3c' }}>
+                    <IconButton onClick={() => handleOpenDeleteConfirm(item)} sx={{ color: '#e74c3c' }}>
                       <DeleteIcon />
                     </IconButton>
                   </div>
@@ -354,6 +381,28 @@ export default function MenuRestauration() {
       <DialogActions>
         <Button onClick={handleCloseMenuForm} sx={{ color: '#34495e' }}>Annuler</Button>
         <Button variant="contained" onClick={handleSaveMenu} sx={{ backgroundColor: '#6b48ff', color: 'white', '&:hover': { backgroundColor: '#5a38dd' } }}>Enregistrer</Button>
+      </DialogActions>
+    </Dialog>
+
+    <Dialog open={deleteConfirmOpen} onClose={handleCloseDeleteConfirm} PaperProps={{ sx: { borderRadius: 2 } }}>
+      <DialogTitle>Confirmer la suppression</DialogTitle>
+      <DialogContent>
+        <Typography>Êtes-vous sûr de vouloir supprimer l'élément "{itemToDelete?.name}" ?</Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleCloseDeleteConfirm} sx={{ color: '#34495e' }}>Annuler</Button>
+        <Button variant="contained" onClick={handleConfirmDelete} sx={{ backgroundColor: '#e74c3c', color: 'white', '&:hover': { backgroundColor: '#c0392b' } }}>Supprimer</Button>
+      </DialogActions>
+    </Dialog>
+
+    <Dialog open={deleteMenuConfirmOpen} onClose={handleCloseDeleteMenuConfirm} PaperProps={{ sx: { borderRadius: 2 } }}>
+      <DialogTitle>Confirmer la suppression du menu</DialogTitle>
+      <DialogContent>
+        <Typography>Êtes-vous sûr de vouloir supprimer le menu "{allMenus.find(m => m.id === menuToDelete)?.name}" ?</Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleCloseDeleteMenuConfirm} sx={{ color: '#34495e' }}>Annuler</Button>
+        <Button variant="contained" onClick={handleConfirmDeleteMenu} sx={{ backgroundColor: '#e74c3c', color: 'white', '&:hover': { backgroundColor: '#c0392b' } }}>Supprimer</Button>
       </DialogActions>
     </Dialog>
     </>
