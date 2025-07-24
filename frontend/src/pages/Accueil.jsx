@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import Footer from "./footer";
 import { FaAward, FaMapMarkerAlt, FaUsers } from "react-icons/fa";
 
