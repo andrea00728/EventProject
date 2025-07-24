@@ -5,7 +5,6 @@ import { Commentaire } from 'src/entities/Commentaire';
 import { CreateCommentaireDto } from 'src/dto/create-commentaire.dto';
 import { UpdateCommentaireDto } from 'src/dto/update-commentaire.dto';
 
-
 @Injectable()
 export class CommentaireService {
   constructor(
@@ -17,6 +16,8 @@ export class CommentaireService {
     const commentaire = new Commentaire();
     commentaire.contenu = createCommentaireDto.contenu;
     commentaire.userEmail = user.email;
+    commentaire.userName = user.name || null; // Nullable
+    commentaire.userPhoto = user.photo || null; // Nullable
 
     return this.commentaireRepository.save(commentaire);
   }

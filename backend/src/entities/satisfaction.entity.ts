@@ -1,12 +1,12 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 
 @Entity()
-export class Commentaire {
+export class Satisfaction {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  contenu: string;
+  @Column({ type: 'boolean', default: false })
+  isSatisfied: boolean;
 
   @Column()
   userEmail: string;
