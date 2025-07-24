@@ -1,7 +1,7 @@
 import React from "react";
 import Footer from "./footer";
 import { FaAward, FaMapMarkerAlt, FaUsers } from "react-icons/fa";
-
+import { Link} from "react-router-dom";
 export default function Accueil() {
   const eventItem=[
     {path:'/evenement',name:'Commencer gratuitement'}

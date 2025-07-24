@@ -26,6 +26,17 @@ export class CommentaireController {
   findAll() {
     return this.commentaireService.findAll();
   }
+  
+
+  /**
+   * Récupération du dernier commentaire
+   */
+  @Get('recent')
+  @ApiOperation({ summary: 'Récupérer le dernier commentaire' })
+  @ApiResponse({ status: 200, description: 'Dernier commentaire.' })  
+  async findOneRecent(){
+    return this.commentaireService.findOneRecent();
+  }
 
   @Get(':id')
   @ApiOperation({ summary: 'Récupérer un commentaire par ID' })
@@ -56,4 +67,10 @@ export class CommentaireController {
   remove(@Param('id') id: string, @Request() req) {
     return this.commentaireService.remove(+id, req.user);
   }
+
+  /**
+   * 
+   * recupere du commentaire recent
+   * 
+   */
 }
