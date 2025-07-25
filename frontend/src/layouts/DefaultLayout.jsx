@@ -37,7 +37,6 @@ export default function DefaultLayout() {
       return <Navigate to="/pagepublic" replace />;
   }
 
-
   useEffect(() => {
     const fetchAndSetForfait = async () => {
       try {
@@ -120,14 +119,14 @@ export default function DefaultLayout() {
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-[#6B46C1] to-indigo-500 bg-clip-text text-transparent">
-                  EventMaster
+                  Master Table
                 </h1>
                 <p className="text-xs text-slate-400 -mt-1">Management Platform</p>
               </div>
 
             </motion.div>
 
-            <nav className="hidden md:flex items-center justify-center py-3 ">
+            <nav className="hidden md:flex items-center justify-center py-3 relative">
               <div className="flex items-center gap-1">
                 {navItems.map((item, index) => (
                   <motion.div
@@ -141,11 +140,11 @@ export default function DefaultLayout() {
                   >
                     <Link
                       to={item.path}
-                      className="relative px-6 py-3 text-violet-500 hover:text-white font-medium transition-all duration-300 rounded-xl hover:bg-violet-700/50"
-                    >
+                      className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2">
                       <span className="relative z-10">{item.name}</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300"></span>
                       <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-[#6B46C1]/20 to-indigo-600/20 rounded-xl opacity-0 group-hover:opacity-100"
+                        className="absolute inset-0 bg-gradient-to-r rounded-xl opacity-0 group-hover:opacity-100"
                         transition={{ duration: 0.3 }}
                       />
                       <motion.div
@@ -179,7 +178,7 @@ export default function DefaultLayout() {
                               </h3>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-6">
+                            <div className="grid grid-cols-4 gap-1">
                               {item.subMenus.map((subItem, subIndex) => (
                                 <motion.div
                                   key={subItem.path}
@@ -272,16 +271,16 @@ export default function DefaultLayout() {
                   exit="closed"
                 >
                   {navItems.map((item) => (
-                    <div key={item.name} className="py-2">
-                      <Link
+                    <div key={item.name} className=" bg-white/95 backdrop-blur-xl shadow-2xl shadow-purple-200/50 rounded-3xl py-2 absolute top-20 right-10">
+                      {/* <Link
                         to={item.path}
                         className="block px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         {item.name}
-                      </Link>
+                      </Link> */}
                       {item.subMenus && (
-                        <div className="ml-4 mt-2 space-y-1">
+                        <div className=" ml-4 mt-2 space-y-1">
                           {item.subMenus.map((subItem) => (
                             <Link
                               key={subItem.path}
@@ -320,7 +319,9 @@ export default function DefaultLayout() {
                 </div>
               </motion.button>
 
-              <Profil />
+              <div className="">
+                <Profil />
+              </div>
 
               {/* Mobile Menu Button */}
               <button
@@ -334,7 +335,7 @@ export default function DefaultLayout() {
             </div>
 
           </div>
-          {/* Navigation Bar */}
+
 
         </div>
 
@@ -348,12 +349,10 @@ export default function DefaultLayout() {
       <main className="max-w-screen mx-auto mt-24">
         <NotificationListener />
         <ToastContainer position="top-right" />
-      <main className="max-w-screen mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-24">
-        <NotificationListener/>
-        <ToastContainer position="top-right"/>
         <Outlet />
         <ChatWidget />
       </main>
+
     </>
   );
 }
