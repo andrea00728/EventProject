@@ -46,7 +46,7 @@ export class InvitationService {
       JSON.stringify({
         guestId: guest.id,
         eventId,
-        tableNumber: guest.table?.numero,
+        tableNumber: guest.table?.nom,
         nombre_place: guest.place,
       }),
     );
@@ -72,7 +72,7 @@ export class InvitationService {
       doc.moveDown();
       doc.fontSize(14).text(`Vous êtes invité à notre événement :${guest.event?.nom}`);
       doc.moveDown();
-      doc.text(`Table : ${guest.table?.numero} | Place : ${guest.place}`);
+      doc.text(`Table : ${guest.table?.nom} | Place : ${guest.place}`);
       doc.moveDown();
      doc.fontSize(14).text(`le ${formatter.format(dateDebut)} jusque ${formatter.format(dateFin)}`);
       doc.moveDown();

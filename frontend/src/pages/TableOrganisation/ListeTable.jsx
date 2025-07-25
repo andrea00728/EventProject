@@ -233,11 +233,11 @@ export default function ListeTable() {
         <Checkbox
           checked={selectedTableIds.includes(params.row.id)}
           onChange={() => handleCheckboxChange(params.row.id)}
-          aria-label={`Sélectionner la table ${params.row.numero}`}
+          aria-label={`Sélectionner la table ${params.row.nom}`}
         />
       ),
     },
-    { field: "numero", headerName: "Numéro", width: 150 },
+    { field: "nom", headerName: "nom", width: 150 },
     { field: "capacite", headerName: "Capacité", width: 150 },
     { field: "type", headerName: "Type", width: 150 },
     {

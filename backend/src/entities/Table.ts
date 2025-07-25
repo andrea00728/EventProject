@@ -4,14 +4,14 @@ import { Evenement } from './Evenement';
 import { Place } from './Place';
 import { Order } from './order.entity';
 
-@Unique(['numero','event'])
+@Unique(['nom','event'])
 @Entity()
 export class TableEvent {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
-  numero: number;
+  nom: string;
 
   @Column()
   capacite: number;
