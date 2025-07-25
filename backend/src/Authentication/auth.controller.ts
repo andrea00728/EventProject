@@ -78,8 +78,6 @@ export class AuthController {
       role: req.user.role || 'organisateur', 
       isInPersonnel:req.user.isInPersonnel  || false,
     };
-
-    await this.authService.status(user);
   
     const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}&isInPersonnel=${encodeURIComponent(user.isInPersonnel)}`;
 
@@ -107,5 +105,13 @@ export class AuthController {
   @Delete('deleteManager/:id')
   async deleteAManager(@Param('id') id: string): Promise<{ message: string }> {
     return this.authService.deleteManager(id);
+  }
+
+
+  @Get('getId')
+  @UseGuards(AuthGuard('jwt'))
+  async getIdForToken(@Req() req : any): Promise<any> {
+    
+    return this.authService.getIdForToken(req.user.email);
   }
 }

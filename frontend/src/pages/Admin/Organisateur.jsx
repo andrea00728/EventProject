@@ -36,19 +36,41 @@ export default function Organisateur() {
         const data = await getManagerList();
         setData(data);
       } catch (error) {
-        console.error("Erreur lors de la récupération des organisateurs :", error);
+        console.error(
+          "Erreur lors de la récupération des organisateurs :",
+          error
+        );
       } finally {
         setLoading(false);
       }
     };
     fetchData();
 
-    const socket = io("http://localhost:3000");
+    const socket = io("http://localhost:3000", {
+      auth: {
+        userId: 'b101b3b2-880b-47c2-a1ad-31ebbf61aa6d', // Remplace par un ID réel, ex: "admin-1"
+      },
+    });
+
+    socket.on("connect", () => {
+      console.log("🟢 SuperAdmin connecté au WebSocket !");
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("❌ Erreur WebSocket SuperAdmin :", err.message);
+    });
 
     socket.on("organizer_connected", ({ userId }) => {
-      setData((prev) =>
-        prev.map((m) => (m.id === userId ? { ...m, isOnline: true } : m))
-      );
+      console.log("📡 SuperAdmin reçoit organizer_connected :", userId);
+
+      setData((prev) => {
+        const match = prev.find((m) => m.id === userId);
+        console.log("Correspondance trouvée :", !!match);
+        return prev.map((m) =>
+          m.id === userId ? { ...m, isOnline: true } : m,
+          m.id === lastLogin ? { ...m, lastLogin: formatDate(new Date) } : m,
+        );
+      });
     });
 
     socket.on("organizer_disconnected", ({ userId }) => {
@@ -177,9 +199,24 @@ export default function Organisateur() {
               columns={[
                 { field: "name", headerName: "Nom", flex: 1, minWidth: 150 },
                 { field: "email", headerName: "Email", flex: 1, minWidth: 200 },
-                { field: "nameForfait", headerName: "Forfait", flex: 1, minWidth: 150 },
-                { field: "createdAt", headerName: "Date de création", flex: 1, minWidth: 150 },
-                { field: "forfaitexpirationdate", headerName: "Date d'expiration", flex: 1, minWidth: 170 },
+                {
+                  field: "nameForfait",
+                  headerName: "Forfait",
+                  flex: 1,
+                  minWidth: 150,
+                },
+                {
+                  field: "createdAt",
+                  headerName: "Date de création",
+                  flex: 1,
+                  minWidth: 150,
+                },
+                {
+                  field: "forfaitexpirationdate",
+                  headerName: "Date d'expiration",
+                  flex: 1,
+                  minWidth: 170,
+                },
                 {
                   field: "status",
                   headerName: "Statut",

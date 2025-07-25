@@ -8,7 +8,9 @@ import ChatWidget from "../pages/ChatWidget";
 import { getUserForfait } from "../services/forfaitService";
 import NotificationListener from "../util/Notification/notification";
 import { ToastContainer } from "react-toastify";
-import Logo from "../assets/LogoMaster.png"
+import Logo from "../assets/LogoMaster.png";
+import { getUserIdForToken } from "../services/userService";
+import { io } from "socket.io-client";
 export default function DefaultLayout() {
   const { token, role, isLoading } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -36,8 +38,32 @@ export default function DefaultLayout() {
       return <Navigate to="/pagepublic" replace />;
   }
 
-
   useEffect(() => {
+    /********   Statut en ligne ou non   **********/
+
+    const changeStatus = async () => {
+      const userId = await getUserIdForToken(token);
+
+      console.log("Id récupèré : ", userId);
+
+      const socket = io("http://localhost:3000", {
+        auth: {
+          userId: userId, // très important : doit être l’ID réel de l’organisateur
+        },
+      });
+
+      socket.on("connect", () => {
+        console.log("Socket connecté !");
+      });
+
+      socket.on("connect_error", (err) => {
+        console.error("Erreur de connexion WebSocket :", err.message);
+      });
+    };
+
+    changeStatus();
+
+    /**************************************** */
     const fetchAndSetForfait = async () => {
       try {
         const data = await getUserForfait(token);
@@ -71,31 +97,49 @@ export default function DefaultLayout() {
         { path: "/evenement/evenement", name: "evenement", icon: "/file.png" },
         { path: "/evenement/tables", name: "Tables", icon: "/chair.png" },
         { path: "/evenement/invites", name: "Invités", icon: "/guest.png" },
-        { path: "/evenement/invitation", name: "Invitation", icon: "/invitation.png" },
-        { path: "/evenement/personnel", name: "Personnel", icon: "/community-center.png" },
+        {
+          path: "/evenement/invitation",
+          name: "Invitation",
+          icon: "/invitation.png",
+        },
+        {
+          path: "/evenement/personnel",
+          name: "Personnel",
+          icon: "/community-center.png",
+        },
         //  Afficher seulement pour les forfaits premium
-        ...(
-          ["pro", "premium", "gold"].includes(forfait?.nom)
-            ? [{
+        ...(["pro", "premium", "gold"].includes(forfait?.nom)
+          ? [
+              {
                 path: "/evenement/restauration",
                 name: "restauration",
-                icon: "/payment-method.png"
-              }]
-            : []
-        ),
-      ]
+                icon: "/payment-method.png",
+              },
+            ]
+          : []),
+      ],
     },
-    { path: "/apropos", name: "A propos" }
+    { path: "/apropos", name: "A propos" },
   ];
 
   const subMenuVariants = {
-    hidden: { opacity: 0, y: -10, pointerEvents: "none", transition: { duration: 0.4 } },
-    visible: { opacity: 1, y: 0, pointerEvents: "auto", transition: { duration: 0.4 } }
+    hidden: {
+      opacity: 0,
+      y: -10,
+      pointerEvents: "none",
+      transition: { duration: 0.4 },
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      pointerEvents: "auto",
+      transition: { duration: 0.4 },
+    },
   };
 
   const menuVariants = {
     open: { opacity: 1, height: "auto", transition: { duration: 0.9 } },
-    closed: { opacity: 0, height: 0, transition: { duration: 0.9 } }
+    closed: { opacity: 0, height: 0, transition: { duration: 0.9 } },
   };
 
   return (
@@ -104,7 +148,10 @@ export default function DefaultLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-16 h-16 bg-indigo-100 flex items-center justify-center rounded-xl shadow-lg border-4 border-indigo-200">
-              <img src={Logo} className="text-3xl font-extrabold text-indigo-700 tracking-tight"/>
+              <img
+                src={Logo}
+                className="text-3xl font-extrabold text-indigo-700 tracking-tight"
+              />
             </div>
             <span className="ml-2 text-2xl font-bold text-indigo-700 tracking-wide hidden sm:block"></span>
           </div>
@@ -116,10 +163,17 @@ export default function DefaultLayout() {
                 className="relative group"
                 initial="rest"
                 whileHover="hover"
-                onMouseEnter={() => item.name === "Evenement" && setIsEvenementHovered(true)}
-                onMouseLeave={() => item.name === "Evenement" && setIsEvenementHovered(false)}
+                onMouseEnter={() =>
+                  item.name === "Evenement" && setIsEvenementHovered(true)
+                }
+                onMouseLeave={() =>
+                  item.name === "Evenement" && setIsEvenementHovered(false)
+                }
               >
-                <Link to={item.path} className="px-4 py-2 hover:text-indigo-600 transition-colors duration-300 relative z-10 font-semibold tracking-wide">
+                <Link
+                  to={item.path}
+                  className="px-4 py-2 hover:text-indigo-600 transition-colors duration-300 relative z-10 font-semibold tracking-wide"
+                >
                   {item.name}
                 </Link>
                 <motion.div
@@ -132,7 +186,11 @@ export default function DefaultLayout() {
                     {isEvenementHovered && (
                       <motion.div
                         className="absolute top-[1] left-1/2 -translate-x-1/2 mt-3  bg-white shadow-2xl rounded-2xl py-10 px-16 z-40 grid grid-cols-2 md:grid-cols-3 gap-x-1 gap-y-8 border-2 border-indigo-100"
-                        style={{ minWidth: "33cm", maxWidth: "50cm", height: "400px" }}
+                        style={{
+                          minWidth: "33cm",
+                          maxWidth: "50cm",
+                          height: "400px",
+                        }}
                         variants={subMenuVariants}
                         initial="hidden"
                         animate="visible"
@@ -146,9 +204,15 @@ export default function DefaultLayout() {
                             onClick={() => setIsEvenementHovered(false)}
                           >
                             {subItem.icon && (
-                              <img src={subItem.icon} alt={subItem.name} className="w-12 h-12 mb-3 drop-shadow" />
+                              <img
+                                src={subItem.icon}
+                                alt={subItem.name}
+                                className="w-12 h-12 mb-3 drop-shadow"
+                              />
                             )}
-                            <span className="text-lg font-semibold text-center">{subItem.name}</span>
+                            <span className="text-lg font-semibold text-center">
+                              {subItem.name}
+                            </span>
                           </Link>
                         ))}
                       </motion.div>
@@ -164,14 +228,28 @@ export default function DefaultLayout() {
               onClick={() => setShowForfaitModal(true)}
               className="inline-flex items-center gap-2 cursor-pointer bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold px-6 py-3 rounded-xl shadow-md hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg transition-all duration-300"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               forfaits
             </button>
 
             <div className="min-h-screen bg-gray-100">
-              <ForfaitPage open={showForfaitModal} onClose={() => setShowForfaitModal(false)} />
+              <ForfaitPage
+                open={showForfaitModal}
+                onClose={() => setShowForfaitModal(false)}
+              />
             </div>
 
             <Profil />
@@ -180,8 +258,8 @@ export default function DefaultLayout() {
       </header>
 
       <main className="max-w-screen mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-24">
-        <NotificationListener/>
-        <ToastContainer position="top-right"/>
+        <NotificationListener />
+        <ToastContainer position="top-right" />
         <Outlet />
         <ChatWidget />
       </main>

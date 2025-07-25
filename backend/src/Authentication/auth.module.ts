@@ -11,7 +11,7 @@ import { User } from './entities/auth.entity';
 import { Personnel } from 'src/entities/Personnel';
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
-import { StatusGateway } from 'src/gateway/status.gateway';
+import { PresenceGateway } from 'src/gateway/presence.gateway';
 
 
 @Module({
@@ -24,6 +24,6 @@ import { StatusGateway } from 'src/gateway/status.gateway';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy,JwtStrategy, StatusGateway],
+  providers: [AuthService, GoogleStrategy,JwtStrategy, PresenceGateway],
 })
 export class AuthModule {}

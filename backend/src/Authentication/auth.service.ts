@@ -110,19 +110,6 @@ async validateUser(profile: any): Promise<any> {
 }
 
 
-async status(user : any) {
-  let userLogIn = await this.userRepository.findOne({ where: { id : user.id } });
-  if (!userLogIn) {
-    throw new NotFoundException(`Non identifié`);
-  }
-
-  userLogIn.isOnline = true;
-  userLogIn.lastLogin = new Date();
-
-  await this.userRepository.save(userLogIn)
-
-}
-
   async login(user: any) {
   const payload = { 
     email: user.email,
@@ -174,6 +161,29 @@ async status(user : any) {
     await this.userRepository.delete(manager.id);
 
     return { message: 'Organisateur supprimé avec succès' };
+  }
+
+  async updateStatus(userId: string, isOnline: boolean) {
+  await this.userRepository.update(userId, {
+    isOnline,
+    ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
+  });
+}
+
+  async getIdForToken(userEmail) {
+    if(!userEmail) {
+      return "Id non trouvé";
+    }
+
+    const user = await this.userRepository.findOne({
+      where : {
+        email : userEmail
+      }
+    })
+
+    if ( ! user) return "Organisateur non trouvé"
+
+    return user.id;
   }
 
 }
