@@ -13,10 +13,10 @@ export class CommentaireController {
 
   @Post("commentaire")
   @UseGuards(JwtAuthGuard)
-  // @ApiBearerAuth('jwt')
-  // @ApiOperation({ summary: 'Créer un nouveau commentaire' })
-  // @ApiResponse({ status: 201, description: 'Commentaire créé avec succès.' })
-  // @ApiResponse({ status: 401, description: 'Non autorisé.' })
+  @ApiBearerAuth('jwt')
+  @ApiOperation({ summary: 'Créer un nouveau commentaire' })
+  @ApiResponse({ status: 201, description: 'Commentaire créé avec succès.' })
+  @ApiResponse({ status: 401, description: 'Non autorisé.' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
