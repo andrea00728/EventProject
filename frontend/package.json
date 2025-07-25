@@ -32,7 +32,7 @@
     "email-existence": "^0.1.6",
     "flowbite": "^3.1.2",
     "flowbite-react": "^0.11.9",
-    "framer-motion": "^12.4.5",
+    "framer-motion": "^12.23.7",
     "gsap": "^3.12.7",
     "html5-qrcode": "^2.3.8",
     "instascan": "^1.0.0",

@@ -53,7 +53,7 @@ export class OrderController {
     if (!userId) {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
-    return this.orderService.validatePayment(id, userId);
+    return this.orderService.validatePayment(id, req.user.email);
   }
 
   @Get('balance/:eventId')

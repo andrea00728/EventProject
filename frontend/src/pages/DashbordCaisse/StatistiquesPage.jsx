@@ -13,6 +13,7 @@ import {
 } from "chart.js";
 import { useStateContext } from "../../context/ContextProvider";
 import { useNavigate } from "react-router-dom";
+import { getEventIdByEmail } from "../../services/invitationService";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, LineElement, PointElement);
 
@@ -23,7 +24,8 @@ const StatistiquesPage = () => {
     stock: { critical: 0, low: 0, ok: 0 },
   });
   const [loading, setLoading] = useState(true);
-  const [eventId] = useState(33);
+  const [eventId, setEventId] = useState(null);
+  const [eventDetails, setEventDetails] = useState(null);
   const { token } = useStateContext();
   const navigate = useNavigate();
 
@@ -45,9 +47,25 @@ const StatistiquesPage = () => {
     },
   };
 
+  const fetchEventDetails = async (eventId) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/events/${eventId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setEventDetails(response.data)
+    } catch (error) {
+      console.error("Erreur lors de la récupération des détails de l'événement :", error);
+    }
+  };
+
   const fetchStatistics = async () => {
     try {
       setLoading(true);
+      const event = await getEventIdByEmail(token);
+      const eventId = event.eventId;
+      setEventId(eventId);
+      await fetchEventDetails(eventId);
+
       const ordersRes = await axios.get(`http://localhost:3000/orders/event/${eventId}`);
       const ordersData = ordersRes.data;
 
@@ -86,8 +104,10 @@ const StatistiquesPage = () => {
   };
 
   useEffect(() => {
-    fetchStatistics();
-  }, []);
+    if (token) {
+      fetchStatistics();
+    }
+  }, [token]);
 
   const totals = {
     orders: Object.values(stats.orders).reduce((a, b) => a + b, 0),
@@ -220,118 +240,75 @@ const StatistiquesPage = () => {
   ];
 
   return (
-    <div className="h-screen bg-gray-100 p-4 flex flex-col">
-      {/* En-tête */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="px-3 py-1 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm transition-colors duration-200"
-          >
-            ← Retour
-          </button>
-          <h1 className="text-xl font-bold text-gray-900">Tableau de bord</h1>
+    <div
+      className="min-h-screen bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: "url('https://images.unsplash.com/photo-1556742044-3c52d6e88c62?auto=format&fit=crop&w=1950&q=80')" }}
+    >
+      <div className="absolute inset-0 bg-black/40 z-0"></div>
+      <div className="relative z-10 p-6 text-white backdrop-blur-sm">
+        {/* En-tête */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="px-4 py-2 bg-white/20 border border-white rounded-lg hover:bg-white/30 text-sm transition"
+            >
+              ← Retour
+            </button>
+            <h1 className="text-2xl font-bold">
+              Tableau de bord – {eventDetails ? eventDetails.name : "Chargement..."}
+            </h1>
+          </div>
+          <span className="text-sm opacity-80">
+            Mis à jour: {new Date().toLocaleString()}
+          </span>
         </div>
-        <span className="text-xs text-gray-600">
-          Mis à jour: {new Date().toLocaleString()}
-        </span>
-      </div>
 
-      {/* Contenu principal */}
-      <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-        {/* Cartes KPI */}
-        <div className="grid grid-cols-4 gap-4">
+        {/* KPI */}
+        <div className="grid md:grid-cols-4 sm:grid-cols-2 gap-6 mb-6">
           {kpis.map((kpi, index) => (
             <div
               key={index}
-              className="bg-white rounded-lg shadow-sm p-4 transform hover:scale-105 transition-all duration-300"
+              className="bg-white/20 backdrop-blur-md rounded-2xl p-5 hover:scale-105 transition-all duration-300 shadow-lg"
             >
-              <div className="flex justify-between items-start">
+              <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-gray-600 text-xs font-medium">{kpi.title}</p>
-                  <p className="text-xl font-bold text-gray-900 mt-1">{kpi.value}</p>
+                  <p className="text-sm opacity-80">{kpi.title}</p>
+                  <h2 className="text-xl font-semibold">{kpi.value}</h2>
                 </div>
-                <span className="text-xl">{kpi.icon}</span>
+                <span className="text-2xl">{kpi.icon}</span>
               </div>
               <div
-                className={`mt-2 text-xs font-medium flex items-center ${
-                  kpi.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                className={`mt-3 text-xs font-medium flex items-center ${
+                  kpi.trend === "up" ? "text-green-400" : "text-red-400"
                 }`}
               >
-                {kpi.trend === 'up' ? (
-                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                  </svg>
-                ) : (
-                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                  </svg>
-                )}
-                {kpi.change}
+                <span>{kpi.change}</span>
               </div>
             </div>
           ))}
         </div>
 
         {/* Graphiques */}
-        {loading ? (
-          <div className="flex-1 flex justify-center items-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
-        ) : (
-          <div className="flex-1 grid grid-cols-2 gap-4">
-            {/* Graphique des commandes */}
-            <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col">
-              <h2 className="text-sm font-semibold text-gray-900 mb-1">Commandes</h2>
-              <p className="text-xs text-gray-600 mb-2">Total: {totals.orders}</p>
-              <div className="flex-1 relative min-h-[150px]">
-                <Pie data={charts.orders.data} options={chartOptions} />
-              </div>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {charts.orders.data.labels.map((label, index) => (
-                  <div key={index} className="flex items-center">
-                    <div
-                      className="w-2 h-2 rounded-full mr-1"
-                      style={{ backgroundColor: charts.orders.data.datasets[0].backgroundColor[index] }}
-                    />
-                    <span className="text-xs text-gray-700">
-                      {label}: {stats.orders[Object.keys(stats.orders)[index]]}
-                    </span>
-                  </div>
-                ))}
-              </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-white/20 rounded-2xl p-5 backdrop-blur-md shadow-lg">
+            <h3 className="text-sm font-semibold mb-1">Commandes</h3>
+            <p className="text-xs opacity-80 mb-3">Total : {totals.orders}</p>
+            <div className="h-56 relative">
+              <Pie data={charts.orders.data} options={chartOptions} />
             </div>
+          </div>
 
-            {/* Graphique combiné (Paiements et Stock) */}
-            <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col">
-              <h2 className="text-sm font-semibold text-gray-900 mb-1">Paiements & Stock</h2>
-              <p className="text-xs text-gray-600 mb-2">
-                Total: {totals.payments} paiements, {totals.stock} articles
-              </p>
-              <div className="flex-1 relative min-h-[150px]">
-                <Line data={charts.combined.data} options={lineOptions} />
-              </div>
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                {charts.combined.data.labels.map((label, index) => (
-                  <div key={index} className="flex items-center">
-                    <div
-                      className="w-2 h-2 rounded-full mr-1"
-                      style={{
-                        backgroundColor:
-                          index < 2
-                            ? charts.combined.data.datasets[0].borderColor
-                            : charts.combined.data.datasets[1].borderColor,
-                      }}
-                    />
-                    <span className="text-xs text-gray-700">
-                      {label}: {index < 2 ? stats.payments[Object.keys(stats.payments)[index]] || 0 : stats.stock[Object.keys(stats.stock)[index - 2]] || 0}
-                    </span>
-                  </div>
-                ))}
-              </div>
+          <div className="bg-white/20 rounded-2xl p-5 backdrop-blur-md shadow-lg">
+            <h3 className="text-sm font-semibold mb-1">Paiements & Stock</h3>
+            <p className="text-xs opacity-80 mb-3">
+              {totals.payments} paiements – {totals.stock} articles
+            </p>
+            <div className="h-56 relative">
+              <Line data={charts.combined.data} options={lineOptions} />
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
