@@ -17,7 +17,6 @@ import {
 } from "@mui/material";
 
 const drawerWidth = 256;
-import { Box } from "@mui/material";
 
 const RestaurationPage = () => {
   const { pathname } = useLocation();
