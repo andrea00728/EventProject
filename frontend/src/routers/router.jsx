@@ -222,10 +222,6 @@ const router=createBrowserRouter([
         path: "/statistiques",
         element: <StatistiquesPage />,
       },
-      {
-        path: "/factures-historique",
-        element: <FacturesHistoriquePage />,
-      },
     ],
   },
 
