@@ -27,7 +27,19 @@ export class CommentaireController {
     return this.commentaireService.findAll();
   }
   
+   /**
+   * 
+   * @returns 
+   * Recuperation des 3 derniers commentaire ajouter par les differents organisateur
+   */
 
+  @Get('diff-commentaire')
+  @ApiOperation({summary:'recuperation des 3 dernier commentaire avec les differents user'})
+  @ApiResponse({status:200,description:'3 Dernier commentaire'})
+  async findDiffCommentaireByUser(){
+    return this.commentaireService.findDifferentCommentaireFromUser();
+  }
+  
   /**
    * Récupération du dernier commentaire
    */
@@ -37,6 +49,9 @@ export class CommentaireController {
   async findOneRecent(){
     return this.commentaireService.findOneRecent();
   }
+  
+
+ 
 
   @Get(':id')
   @ApiOperation({ summary: 'Récupérer un commentaire par ID' })
