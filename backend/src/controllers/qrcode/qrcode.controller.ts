@@ -38,7 +38,7 @@ export class QrCodeController {
         const qrCode = await this.qrCodeService.generateQrCodeForTable(eventId, table.id);
         return {
           tableId: table.id,
-          tableNumber: table.numero,
+          tableNumber: table.nom,
           url: qrCode.split('data:image/png;base64,')[0], // Simplification
           qrCode,
         };

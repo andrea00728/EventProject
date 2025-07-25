@@ -248,7 +248,7 @@ export default function ListeTable() {
         />
       ),
     },
-    { field: "numero", headerName: "Numéro", width: 150 },
+    { field: "nom", headerName: "nom", width: 150 },
     { field: "capacite", headerName: "Capacité", width: 150 },
     { field: "type", headerName: "Type", width: 150 },
     {

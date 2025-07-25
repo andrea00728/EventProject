@@ -6,7 +6,7 @@ import { chiffreControll } from "../../services/controll_champs/controll_champs"
 
 export default function Tablecreation() {
   const { token } = useStateContext();
-  const [form, setForm] = useState({ numero: "", capacite: "", type: "ronde", eventId: 0 });
+  const [form, setForm] = useState({ nom: "", capacite: "", type: "ronde", eventId: 0 });
   const [error, setError] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
@@ -63,7 +63,7 @@ export default function Tablecreation() {
     try {
       await createTableByIdevent(
         {
-          numero: parseInt(form.numero),
+          nom:form.nom,
           capacite: parseInt(form.capacite),
           eventId: form.eventId,
           type: form.type,
@@ -71,7 +71,7 @@ export default function Tablecreation() {
         },
         token
       );
-      setForm({ numero: "", capacite: "", type: "ronde", eventId: 0 });
+      setForm({ nom: "", capacite: "", type: "ronde", eventId: 0 });
       setSelectedEvent(null);
       setSuccessMessage("Table créée avec succès");
     } catch (err) {
@@ -112,15 +112,13 @@ export default function Tablecreation() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col">
             <label htmlFor="numero" className="text-gray-700 font-medium mb-2 text-sm">
-              Numéro de Table
+              Nom de Table
             </label>
             <input
-              id="numero"
-              name="numero"
-              value={form.numero}
-              onChange={(e)=>{
-                setForm({...form,numero:chiffreControll(e.target.value)})
-              }}
+              id="nom"
+              name="nom"
+              value={form.nom}
+              onChange={handleChange}
               placeholder="Ex: 1, 2, G1, G2..."
               required
               className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
