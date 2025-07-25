@@ -71,3 +71,16 @@ export const getAllManagerEvents = async (id) => {
   const response = await axiosClient.get(`/evenements/${id}/managerEvents`);
   return response.data;
 };
+
+
+/**
+ * 
+ * @returns 
+ * nombre total des événements creer par tout les organisateur
+ * 
+ */
+export const getCountEvents = async () => {
+  const response =  await axiosClient.get('/evenements/countEvent');
+  return response.data;
+};
+

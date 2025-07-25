@@ -55,6 +55,7 @@ export default function DashboardpersCuisine() {
         setLoading(true);
         setError(null);
         const data = await getAllOrdersForOnEvent(idEvent);
+        console.log(data)
         setCommandes(data);
       } catch (error) {
         console.error("Erreur lors de la récupération des commandes :", error);

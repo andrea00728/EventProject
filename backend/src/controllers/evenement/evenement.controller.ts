@@ -67,6 +67,17 @@ async create(@Body() dto: CreateEventDto, @Req() req: any): Promise<Evenement> {
     return this.evenementService.findAll();
   }
 
+    /**
+   * 
+   * @returns 
+   * 
+   * recuretation nombre total d'evenement
+   */
+  @Get('/countEvent')
+  async findCountEvents():Promise<number>{
+    return this.evenementService.findCountEvents();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.evenementService.findOne(+id);
@@ -90,6 +101,10 @@ async create(@Body() dto: CreateEventDto, @Req() req: any): Promise<Evenement> {
   findManagerEvents(@Param('id') id: string) {
     return this.evenementService.findManagerEvents(id);   
   }
+ 
+  
+
+
 }
 
 

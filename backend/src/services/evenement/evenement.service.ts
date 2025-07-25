@@ -96,6 +96,10 @@ async findOneById(eventId: number): Promise<Evenement> {
   }
 
   async findOne(id: number): Promise<Evenement> {
+    if(!id || isNaN(id)){
+      throw new BadRequestException('ID non valide');
+    }
+    console.log('ID reçu:', id);
     const evenement = await this.evenementRepository.findOne({
       where: { id },
       relations: ['location', 'salle', 'tables', 'invites'],
@@ -153,4 +157,17 @@ async findManagerEvents(utilisateur_id: string): Promise<Evenement[]> {
   });
 }
 
+
+/**
+ * 
+ * @returns 
+ * 
+ * Total Nombre d'evenement creer dans le platform
+ */
+
+async findCountEvents(): Promise<number> {
+  return this.evenementRepository.count();
 }
+
+}
+
