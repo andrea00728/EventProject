@@ -67,7 +67,7 @@ import PaiementPage from "../pages/DashbordCaisse/PaiementPage.jsx";
 import DashboardCard from "../pages/DashbordCaisse/DashboardCaisse.jsx"
 import StockPage from "../pages/DashbordCaisse/StockPage.jsx";
 import StatistiquesPage from "../pages/DashbordCaisse/StatistiquesPage.jsx";
-import FacturesHistoriquePage from "../pages/DashbordCaisse/FacturesHistoriquePage.jsx";
+import RevenuPage from "../pages/DashbordCaisse/RevenuPage.jsx";
 
 const router=createBrowserRouter([
    
@@ -222,6 +222,11 @@ const router=createBrowserRouter([
         path: "/statistiques",
         element: <StatistiquesPage />,
       },
+      {
+          path: "/revenu",
+          element: <RevenuPage />,
+      }
+
     ],
   },
 

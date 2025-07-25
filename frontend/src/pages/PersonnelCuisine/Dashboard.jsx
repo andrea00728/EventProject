@@ -91,7 +91,7 @@ export default function DashboardpersCuisine() {
     await updateOrderStatus(id, status, token);
   };
 
-  const changerStatut = async (id, direction = "next") => {
+  const changerStatut = async (id, direction = "next") => { 
     const updatedOrder = commandes.find((c) => c.id === id);
     let newStatus = updatedOrder.status;
 
