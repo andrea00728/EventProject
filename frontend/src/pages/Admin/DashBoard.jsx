@@ -20,6 +20,8 @@ export default function Dashboard() {
   const [showMessages, setShowMessages] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
+  const [engagementChartType, setEngagementChartType] = useState('progress');
+
   const notifRef = useRef(null);
   const msgRef = useRef(null);
   const profileRef = useRef(null);
@@ -86,6 +88,13 @@ export default function Dashboard() {
     { label: "Taux de participation aux événements", value: "50%", progress: 50 },
     { label: "Taux de réponse aux notifications/messages", value: "60%", progress: 60 },
     { label: "Temps moyen passé par utilisateur (min)", value: "35 min", progress: 58 },
+  ];
+
+  const engagementGradientColors = [
+      "bg-gradient-to-r from-blue-400 to-blue-600",     
+      "bg-gradient-to-r from-green-400 to-green-600",   
+      "bg-gradient-to-r from-purple-400 to-purple-600", 
+      "bg-gradient-to-r from-yellow-400 to-yellow-600"  
   ];
 
   const gradientTitle =
@@ -200,19 +209,19 @@ export default function Dashboard() {
           </div>
 
           <SectionWrapper title="Statistiques d’engagement" darkMode={darkMode} gradientTitle={gradientTitle}>
-            {engagementStats.map(({ label, value, progress }, i) => (
-              <div key={i} className="mb-4">
-                <div className="flex justify-between font-semibold mb-1">
-                  {label} : {value}
-                </div>
-                <div className="w-full bg-gray-300 rounded-full h-3 dark:bg-gray-700">
-                  <div
-                    className="bg-purple-600 h-3 rounded-full transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
+              {engagementStats.map(({ label, value, progress }, i) => (
+                  <div key={i} className="mb-4">
+                      <div className="flex justify-between font-semibold mb-1">
+                          {label} : {value}
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700"> 
+                          <div
+                              className={`${engagementGradientColors[i % engagementGradientColors.length]} h-3 rounded-full transition-all duration-500`}
+                              style={{ width: `${progress}%` }}
+                          ></div>
+                      </div>
+                  </div>
+              ))}
           </SectionWrapper>
         </div>
 
@@ -353,27 +362,21 @@ function EventChart({ darkMode }) {
           {
             data: months,
             tickLabelStyle: {
-              fill: darkMode ? '#ffffff' : '#000000', // Color of X-axis numbers
+              fill: darkMode ? '#ffffff' : '#000000', 
             },
-            // If you also have an axis label (e.g., "Months"), you can style it like this:
-            // axisLabelStyle: {
-            //   fill: darkMode ? '#ffffff' : '#000000',
-            // },
+            
           },
         ]}
         yAxis={[
           {
             tickLabelStyle: {
-              fill: darkMode ? '#ffffff' : '#000000', // Color of Y-axis numbers
+              fill: darkMode ? '#ffffff' : '#000000', 
             },
-            // If you also have an axis label (e.g., "Values"), you can style it like this:
-            // axisLabelStyle: {
-            //   fill: darkMode ? '#ffffff' : '#000000',
-            // },
+            
           },
         ]}
         height={270}
-        margin={{ top: 20, right: 30, bottom: 40, left: 50 }}
+        margin={{ top: 20, right: 10, bottom: 20, left: 5 }}
         width={480}
         className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px]${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
           }`}
