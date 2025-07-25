@@ -9,3 +9,13 @@ export const getUserIdForToken = async (token) => {
   });
   return response.data;
 };
+
+/**
+ * 
+ * @returns 
+ * service pour recupere le nombre total des organisateur enregistrer
+ */
+export const getUserCount = async ()    =>{
+    const response  = await axiosClient.get('/auth/count-users');
+    return response.data;
+}

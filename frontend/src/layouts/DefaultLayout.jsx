@@ -8,9 +8,13 @@ import ChatWidget from "../pages/ChatWidget";
 import { getUserForfait } from "../services/forfaitService";
 import NotificationListener from "../util/Notification/notification";
 import { ToastContainer } from "react-toastify";
-import Logo from "../assets/LogoMaster.png";
+import Logo from "../assets/LogoMaster.png"
+import { Bell } from "lucide-react";
+import NotificationComponent from "../util/notification";
+
 import { getUserIdForToken } from "../services/userService";
 import { io } from "socket.io-client";
+
 export default function DefaultLayout() {
   const { token, role, isLoading } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -108,16 +112,16 @@ export default function DefaultLayout() {
           icon: "/community-center.png",
         },
         //  Afficher seulement pour les forfaits premium
-        ...(["pro", "premium", "gold"].includes(forfait?.nom)
-          ? [
-              {
-                path: "/evenement/restauration",
-                name: "restauration",
-                icon: "/payment-method.png",
-              },
-            ]
-          : []),
-      ],
+        ...(
+          ["pro", "premium", "gold"].includes(forfait?.nom)
+            ? [{
+              path: "/evenement/restauration",
+              name: "restauration",
+              icon: "/payment-method.png"
+            }]
+            : []
+        ),
+      ]
     },
     { path: "/apropos", name: "A propos" },
   ];
@@ -144,125 +148,264 @@ export default function DefaultLayout() {
 
   return (
     <>
-      <header className="w-full bg-white shadow-2xl fixed top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 bg-indigo-100 flex items-center justify-center rounded-xl shadow-lg border-4 border-indigo-200">
-              <img
-                src={Logo}
-                className="text-3xl font-extrabold text-indigo-700 tracking-tight"
-              />
-            </div>
-            <span className="ml-2 text-2xl font-bold text-indigo-700 tracking-wide hidden sm:block"></span>
-          </div>
-
-          <nav className="hidden md:flex flex-1 items-center justify-center gap-8 text-indigo-900 font-medium text-base">
-            {navItems.map((item) => (
-              <motion.div
-                key={item.name}
-                className="relative group"
-                initial="rest"
-                whileHover="hover"
-                onMouseEnter={() =>
-                  item.name === "Evenement" && setIsEvenementHovered(true)
-                }
-                onMouseLeave={() =>
-                  item.name === "Evenement" && setIsEvenementHovered(false)
-                }
-              >
-                <Link
-                  to={item.path}
-                  className="px-4 py-2 hover:text-indigo-600 transition-colors duration-300 relative z-10 font-semibold tracking-wide"
-                >
-                  {item.name}
-                </Link>
-                <motion.div
-                  className="absolute bottom-0 left-0 h-0.5 bg-indigo-600"
-                  variants={{ rest: { width: 0 }, hover: { width: "100%" } }}
-                  transition={{ duration: 0.6 }}
-                />
-                {item.subMenus && (
-                  <AnimatePresence>
-                    {isEvenementHovered && (
-                      <motion.div
-                        className="absolute top-[1] left-1/2 -translate-x-1/2 mt-3  bg-white shadow-2xl rounded-2xl py-10 px-16 z-40 grid grid-cols-2 md:grid-cols-3 gap-x-1 gap-y-8 border-2 border-indigo-100"
-                        style={{
-                          minWidth: "33cm",
-                          maxWidth: "50cm",
-                          height: "400px",
-                        }}
-                        variants={subMenuVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="hidden"
-                      >
-                        {item.subMenus.map((subItem) => (
-                          <Link
-                            key={subItem.path}
-                            to={subItem.path}
-                            className="flex flex-col items-center p-1 hover:bg-indigo-50 rounded-xl transition-colors duration-200 cursor-pointer text-indigo-800 hover:text-indigo-900"
-                            onClick={() => setIsEvenementHovered(false)}
-                          >
-                            {subItem.icon && (
-                              <img
-                                src={subItem.icon}
-                                alt={subItem.name}
-                                className="w-12 h-12 mb-3 drop-shadow"
-                              />
-                            )}
-                            <span className="text-lg font-semibold text-center">
-                              {subItem.name}
-                            </span>
-                          </Link>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                )}
-              </motion.div>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setShowForfaitModal(true)}
-              className="inline-flex items-center gap-2 cursor-pointer bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold px-6 py-3 rounded-xl shadow-md hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg transition-all duration-300"
+      <header className="w-screen backdrop-blur-md fixed top-0 z-50 ">
+        <div className="max-w-screen mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Top Bar avec logo et actions */}
+          <div className="h-18 px-10 pt-5 flex items-center justify-between">
+            {/* Logo Section */}
+            <motion.div
+              className="flex items-center gap-4"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6 0a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              forfaits
-            </button>
+              <div className="relative">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#6B46C1] to-indigo-600 flex items-center justify-center rounded-2xl shadow-xl border border-purple-300/30">
+                  <img src={Logo} className="w-8 h-8 drop-shadow-lg" alt="Logo" />
+                </div>
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full animate-pulse"></div>
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-[#6B46C1] to-indigo-500 bg-clip-text text-transparent">
+                  Master Table
+                </h1>
+                <p className="text-xs text-slate-400 -mt-1">Management Platform</p>
+              </div>
 
-            <div className="min-h-screen bg-gray-100">
-              <ForfaitPage
-                open={showForfaitModal}
-                onClose={() => setShowForfaitModal(false)}
-              />
+            </motion.div>
+
+            <nav className="hidden md:flex items-center justify-center py-3 relative">
+              <div className="flex items-center gap-1">
+                {navItems.map((item, index) => (
+                  <motion.div
+                    key={item.name}
+                    className="relative group"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    onMouseEnter={() => item.name === "Evenement" && setIsEvenementHovered(true)}
+                    onMouseLeave={() => item.name === "Evenement" && setIsEvenementHovered(false)}
+                  >
+                    <Link
+                      to={item.path}
+                      className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2">
+                      <span className="relative z-10">{item.name}</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300"></span>
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r rounded-xl opacity-0 group-hover:opacity-100"
+                        transition={{ duration: 0.3 }}
+                      />
+                      <motion.div
+                        className="absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 bg-gradient-to-r from-[#6B46C1] to-indigo-500 rounded-full"
+                        initial={{ width: 0 }}
+                        whileHover={{ width: "70%" }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    </Link>
+
+
+                    {item.subMenus && (
+                      <AnimatePresence>
+                        {isEvenementHovered && (
+                          <motion.div
+                            className="absolute top-full left-1/2 -translate-x-1/2 mt-3 bg-white/95 backdrop-blur-xl shadow-2xl shadow-purple-200/50 rounded-3xl p-8 z-40 border border-purple-200/60"
+                            style={{ minWidth: "800px", maxWidth: "1000px" }}
+                            variants={subMenuVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="hidden"
+                          >
+                            {/* En-tête du sous-menu */}
+                            <div className="text-center mb-8">
+                              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-[#6B46C1]/10 via-purple-600/10 to-indigo-600/10 backdrop-blur-sm border border-purple-200 rounded-full px-4 py-2 text-sm font-medium text-purple-700 shadow-sm mb-3">
+                                <div className="w-2 h-2 bg-gradient-to-r from-[#6B46C1] to-purple-600 rounded-full animate-pulse"></div>
+                                Gestion d'événements
+                              </div>
+                              <h3 className="text-xl font-bold text-slate-800">
+                                Organisez et gérez tous vos événements en un clic
+                              </h3>
+                            </div>
+
+                            <div className="grid grid-cols-4 gap-1">
+                              {item.subMenus.map((subItem, subIndex) => (
+                                <motion.div
+                                  key={subItem.path}
+                                  initial={{ opacity: 0, y: 20 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ duration: 0.4, delay: subIndex * 0.1 }}
+                                >
+                                  <Link
+                                    to={subItem.path}
+                                    className="group flex flex-col items-center p-6 hover:bg-gradient-to-br hover:from-purple-50 hover:to-indigo-50 rounded-2xl transition-all duration-300 cursor-pointer border border-transparent hover:border-purple-200 hover:shadow-lg hover:shadow-purple-100"
+                                    onClick={() => setIsEvenementHovered(false)}
+                                  >
+                                    {/* Container de l'icône avec effet glassmorphism */}
+                                    <div className="relative mb-4 p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-slate-200 group-hover:border-purple-300 group-hover:shadow-lg group-hover:shadow-purple-100 transition-all duration-300">
+                                      {subItem.icon && (
+                                        <img
+                                          src={subItem.icon}
+                                          alt={subItem.name}
+                                          className="w-8 h-8 group-hover:scale-110 transition-transform duration-300"
+                                        />
+                                      )}
+
+                                      {/* Effet de fond animé */}
+                                      <div className="absolute inset-0 bg-gradient-to-br from-[#6B46C1]/10 via-purple-600/10 to-indigo-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                                      {/* Point lumineux */}
+                                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-[#6B46C1] via-purple-600 to-indigo-600 rounded-full opacity-0 group-hover:opacity-100 animate-pulse transition-opacity duration-300"></div>
+                                    </div>
+
+                                    {/* Titre avec gradient au hover */}
+                                    <span className="text-sm font-bold text-slate-700 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-[#6B46C1] group-hover:via-purple-600 group-hover:to-indigo-600 text-center transition-all duration-300 leading-tight">
+                                      {subItem.name}
+                                    </span>
+
+                                    {/* Description pour organisateur */}
+                                    <p className="text-xs text-slate-500 text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                      Créer et gérer vos {subItem.name.toLowerCase()}
+                                    </p>
+
+                                    {/* Flèche indicatrice */}
+                                    <div className="mt-3 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                                      <svg className="w-4 h-4 text-[#6B46C1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                      </svg>
+                                    </div>
+                                  </Link>
+                                </motion.div>
+                              ))}
+                            </div>
+
+                            {/* Footer du sous-menu pour organisateurs */}
+                            <div className="mt-8 pt-6 border-t border-purple-200">
+                              <div className="text-center">
+                                <p className="text-xs text-slate-500 mb-3">
+                                  Tableau de bord complet pour organiser, suivre et analyser vos événements
+                                </p>
+                                <div className="flex justify-center gap-3">
+                                  <button className="text-xs bg-gradient-to-r from-[#6B46C1] via-purple-600 to-indigo-600 text-white px-4 py-2 rounded-full hover:shadow-lg hover:shadow-purple-200 transition-all duration-300 font-medium hover:from-[#553C9A] hover:via-purple-700 hover:to-indigo-700">
+                                    Créer un événement
+                                  </button>
+                                  <button className="text-xs bg-white border border-purple-200 text-purple-700 px-4 py-2 rounded-full hover:border-purple-300 hover:shadow-md hover:bg-purple-50 transition-all duration-300 font-medium">
+                                    Voir mes événements
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Décorations de fond */}
+                            <div className="absolute top-4 right-6 w-20 h-20 bg-gradient-to-r from-[#6B46C1]/5 via-purple-600/5 to-indigo-600/5 rounded-full blur-xl animate-pulse" />
+                            <div className="absolute bottom-4 left-6 w-16 h-16 bg-gradient-to-l from-indigo-600/8 to-purple-600/5 rounded-full blur-lg animate-pulse delay-1000" />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    )}
+
+
+                  </motion.div>
+                ))}
+              </div>
+            </nav>
+
+            {/* Mobile Navigation */}
+            <AnimatePresence>
+              {isMenuOpen && (
+                <motion.nav
+                  className="md:hidden border-t border-slate-700/30 py-4"
+                  variants={menuVariants}
+                  initial="closed"
+                  animate="open"
+                  exit="closed"
+                >
+                  {navItems.map((item) => (
+                    <div key={item.name} className=" bg-white/95 backdrop-blur-xl shadow-2xl shadow-purple-200/50 rounded-3xl py-2 absolute top-20 right-10">
+                      {/* <Link
+                        to={item.path}
+                        className="block px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors duration-200"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {item.name}
+                      </Link> */}
+                      {item.subMenus && (
+                        <div className=" ml-4 mt-2 space-y-1">
+                          {item.subMenus.map((subItem) => (
+                            <Link
+                              key={subItem.path}
+                              to={subItem.path}
+                              className="flex items-center gap-3 px-4 py-2 text-sm text-slate-400 hover:text-slate-300 hover:bg-slate-800/30 rounded-lg transition-colors duration-200"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              {subItem.icon && (
+                                <img src={subItem.icon} alt={subItem.name} className="w-5 h-5" />
+                              )}
+                              {subItem.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </motion.nav>
+              )}
+            </AnimatePresence>
+
+            {/* Actions Section */}
+            <div className="flex items-center gap-3">
+              <motion.button
+                onClick={() => setShowForfaitModal(true)}
+                className="group relative overflow-hidden bg-gradient-to-r from-[#6B46C1] via-purple-600 to-indigo-600 text-white font-medium px-5 py-2.5 rounded-xl shadow-lg hover:shadow-purple-500/25 transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span className="text-sm">Forfaits</span>
+                </div>
+              </motion.button>
+
+              {/* notification  */}
+              <div>
+                <NotificationComponent/>
+              </div>
+
+              <div className="">
+                <Profil />
+              </div>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="md:hidden p-2 rounded-lg bg-gradient-to-r from-[#6B46C1]/10 to-indigo-600/10 border border-purple-200 text-purple-700 hover:text-white hover:bg-gradient-to-r hover:from-[#6B46C1] hover:via-purple-600 hover:to-indigo-600 hover:border-transparent transition-all duration-300"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
             </div>
 
-            <Profil />
           </div>
+
+
         </div>
+
+
       </header>
 
-      <main className="max-w-screen mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-24">
+      <div className="">
+        <ForfaitPage open={showForfaitModal} onClose={() => setShowForfaitModal(false)} />
+      </div>
+
+      <main className="max-w-screen mx-auto mt-24">
         <NotificationListener />
         <ToastContainer position="top-right" />
         <Outlet />
         <ChatWidget />
       </main>
+
     </>
   );
 }

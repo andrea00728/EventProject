@@ -10,6 +10,20 @@ export class AuthController {
   constructor(private readonly authService: AuthService
   
   ) {}
+
+    
+  /**
+   * 
+   * @returns 
+   * nombre total d'organisateur active
+   */
+
+  @Get('/count-users')
+  async findCountUsers():Promise<number>{
+    return this.authService.findCountUsers();
+  }
+
+
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth(@Req() req) {

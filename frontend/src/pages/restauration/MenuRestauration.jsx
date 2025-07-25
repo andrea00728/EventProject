@@ -3,10 +3,6 @@ import axios from "axios";
 import { getMyEvents } from "../../services/evenementServ";
 import { useStateContext } from "../../context/ContextProvider";
 import {
-  DataGrid,
-  GridActionsCellItem
-} from "@mui/x-data-grid";
-import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Edit as EditIcon
@@ -31,6 +27,10 @@ export default function MenuRestauration() {
   const [menuItems, setMenuItems] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
   const [menuFormOpen, setMenuFormOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteMenuConfirmOpen, setDeleteMenuConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [menuToDelete, setMenuToDelete] = useState(null);
   const [form, setForm] = useState({ name: '', description: '', price: '', category: '', stock: '', photo: null });
   const [menuForm, setMenuForm] = useState({ name: '' });
   const [editingItem, setEditingItem] = useState(null);
@@ -152,19 +152,24 @@ export default function MenuRestauration() {
     }
   };
 
-  const handleDelete = async (id) => {
-    await axios.delete(`/menus/items/${id}`);
-    setMenuItems(prev => prev.filter(item => item.id !== id));
+  const handleOpenDeleteConfirm = (item) => {
+    setItemToDelete(item);
+    setDeleteConfirmOpen(true);
   };
 
-  const handleDeleteMenu = async () => {
-    if (!selectedMenuId || selectedMenuId === "all") return;
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce menu ?")) return;
+  const handleCloseDeleteConfirm = () => {
+    setDeleteConfirmOpen(false);
+    setItemToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
     try {
       console.log("Deleting menu with ID:", selectedMenuId); // Debug log
       await axios.delete(`/menus/${selectedMenuId}`);
       await reloadMenus();
       setSelectedMenuId("all");
+      handleCloseDeleteMenuConfirm();
     } catch (err) {
       console.error("Erreur suppression menu :", err);
       alert("Erreur lors de la suppression.");
@@ -340,7 +345,10 @@ export default function MenuRestauration() {
             />
           ))}
           <TextField
-            type="file"
+            key={field}
+            label={field === 'name' ? 'Nom' : field === 'description' ? 'Description' : field === 'price' ? 'Prix' : field === 'category' ? 'Catégorie' : 'Stock'}
+            value={form[field] || ''}
+            type={field === 'price' || field === 'stock' ? 'number' : 'text'}
             fullWidth
             margin="dense"
             variant="outlined"

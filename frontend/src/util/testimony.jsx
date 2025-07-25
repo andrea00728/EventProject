@@ -1,4 +1,38 @@
+import { useEffect,useState } from "react";
+import { getUserCount } from "../services/userService";
+import { FormaNumber } from "../services/controll_champs/controll_limite";
+import { findOneRecent } from "../services/testimonyService";
+
 export default function Testimonials() {
+  const [organisateurCount, setOrganisateurCount] = useState(0);
+  const [istestimonialsRecent, setTestimonialsRecent] = useState(null);
+
+  useEffect(()=>{
+    const fetchOrganisateurCount = async () => {
+      try{
+        const count=await getUserCount();
+        setOrganisateurCount(count);
+      }catch(error){
+        console.log(error);
+      }
+    };
+    fetchOrganisateurCount();
+  },[]);
+  
+  useEffect(()=>{
+    const testamonialRecent=async()=>{
+      try{
+        const response =  await findOneRecent();
+        setTestimonialsRecent(response);
+      }catch(error){
+        console.log(error);
+      }
+    };
+    testamonialRecent();
+  },[]);
+
+  if(!istestimonialsRecent) return <p>Chargement....</p>
+
   return (
     <>
       {/* Section Témoignages - Design Pro et Moderne */}
@@ -25,7 +59,7 @@ export default function Testimonials() {
               TÉMOIGNAGES
             </h2>
             <p className="text-gray-700 text-xl sm:text-2xl font-light leading-relaxed max-w-3xl mx-auto">
-              Découvrez pourquoi plus de <span className="font-semibold text-orange-600">10,000+ organisateurs</span> nous font confiance pour leurs 
+              Découvrez pourquoi plus de <span className="font-semibold text-orange-600"><strong>{FormaNumber(organisateurCount)}</strong>+ organisateurs</span> nous font confiance pour leurs 
               <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent font-semibold"> événements inoubliables</span>
             </p>
           </div>
@@ -135,9 +169,11 @@ export default function Testimonials() {
             
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="flex-shrink-0">
-                <div className="w-24 h-24 bg-gradient-to-r from-orange-400 via-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-2xl">
+                {/* <div className="w-24 h-24 bg-gradient-to-r from-orange-400 via-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-2xl">
                   A
-                </div>
+                </div> */}
+                  <img src={istestimonialsRecent.userPhoto}  className="w-24 h-24 bg-gradient-to-r from-orange-400 via-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-2xl"/>
+                
               </div>
               
               <div className="flex-1 text-center md:text-left">
@@ -150,14 +186,22 @@ export default function Testimonials() {
                 </div>
                 
                 <blockquote className="text-gray-800 text-2xl font-light leading-relaxed mb-6 italic">
-                  "Après avoir testé plusieurs plateformes, celle-ci se démarque vraiment par sa simplicité et ses fonctionnalités avancées. 
+                  {/* "Après avoir testé plusieurs plateformes, celle-ci se démarque vraiment par sa simplicité et ses fonctionnalités avancées.  */}
+                  {istestimonialsRecent.contenu}
                   <span className="bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent font-semibold"> Un vrai game-changer</span> pour l'organisation d'événements !"
                 </blockquote>
                 
                 <div>
-                  <p className="font-bold text-xl text-gray-900">Alexandre Petit</p>
-                  <p className="text-gray-600">Wedding Planner Professionnel - Nice</p>
-                  <p className="text-sm text-gray-500 mt-1">Plus de 200 événements organisés avec notre plateforme</p>
+                  <p className="font-bold text-xl text-gray-900">{istestimonialsRecent.userName}</p>
+                  <p className="text-gray-600">Humeur:{istestimonialsRecent.satisfaction}</p>
+                  {/* <p className="text-sm text-gray-500 mt-1">Plus de 200 événements organisés avec notre plateforme</p> */}
+                   <p className="text-sm text-gray-500 mt-1"> 
+                    {new Date(istestimonialsRecent.createdAt).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                    
+                    })}</p>
                 </div>
               </div>
             </div>
@@ -165,7 +209,7 @@ export default function Testimonials() {
         </div>
       </section>
 
-      <style jsx>{`
+      <style >{`
         @keyframes fadeIn {
           from {
             opacity: 0;
