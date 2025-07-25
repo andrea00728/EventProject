@@ -373,6 +373,7 @@ export default function MenuRestauration() {
           label="Nom du menu"
           value={menuForm.name}
           fullWidth
+          placeholder="Ex: Plats, Dessert..."
           margin="dense"
           variant="outlined"
           onChange={(e) => setMenuForm({ ...menuForm, name: e.target.value })}

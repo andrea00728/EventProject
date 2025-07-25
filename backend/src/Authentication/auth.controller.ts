@@ -100,6 +100,32 @@ export class AuthController {
     return res.redirect(redirectUrl);
   }
 
+   //register manuel dans formumaire
+  //  @Post('register')
+  //  @ApiConsumes('multipart/form-data')
+  //  @ApiBody({
+  //    schema: {
+  //      type: 'object',
+  //      properties: {
+  //        name: { type: 'string' },
+  //        email: { type: 'string' },
+  //        password: { type: 'string' },
+  //        photo: { type: 'string', format: 'binary' },
+  //      },
+  //    },
+  //  })
+  //  @UseInterceptors(FileInterceptor('photo', {
+  //    storage: diskStorage({
+  //      destination: './uploads',  // dossier de stockage
+  //      filename: (req, file, callback) => {
+  //        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+  //        const ext = extname(file.originalname);
+  //        const filename = `${file.fieldname}-${uniqueSuffix}${ext}`;
+  //        callback(null, filename);
+  //      },
+  //    }),
+  //  }))
+
 
 @Post('logout')
   async logout(@Req() req, @Res() res) {
