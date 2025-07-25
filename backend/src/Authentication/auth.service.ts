@@ -121,8 +121,30 @@ export class AuthService {
     return { message: 'Organisateur supprimé avec succès' };
   }
 
+  async updateStatus(userId: string, isOnline: boolean) {
+  await this.userRepository.update(userId, {
+    isOnline,
+    ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
+  });
+}
 
-  /**
+  async getIdForToken(userEmail) {
+    if(!userEmail) {
+      return "Id non trouvé";
+    }
+
+    const user = await this.userRepository.findOne({
+      where : {
+        email : userEmail
+      }
+    })
+
+    if ( ! user) return "Organisateur non trouvé"
+
+    return user.id;
+  }
+
+    /**
    * 
    * @returns 
    * 
@@ -137,4 +159,5 @@ export class AuthService {
     });
     return count;
   }
+
 }

@@ -2,7 +2,6 @@ import { useStateContext } from "../../context/ContextProvider";
 import { Navigate } from "react-router-dom";
 import DashboardpersCuisine from "../../pages/PersonnelCuisine/Dashboard";
 
-
 export default function PersonnelCuisine() {
   const { token, role } = useStateContext();
 

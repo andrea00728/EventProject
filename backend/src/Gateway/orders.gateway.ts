@@ -1,4 +1,3 @@
-// src/orders/orders.gateway.ts
 import {
   SubscribeMessage,
   WebSocketGateway,
@@ -8,23 +7,27 @@ import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
-    origin: '*', // autoriser tous les domaines (ajuste selon besoin)
+    origin: ['http://localhost:3000', 'http://localhost:5173'], // Inclure le port de votre front-end (par exemple, Vite)
+    methods: ['GET', 'POST'],
+    credentials: true,
   },
 })
 export class OrdersGateway {
   @WebSocketServer()
   server: Server;
 
-  // Pour écouter un changement de statut
-  @SubscribeMessage('changeStatus')
-  handleChangeStatus(client: Socket, payload: any) {
-    console.log('Changement reçu:', payload);
-    // Diffusion à tous les clients
-    this.server.emit('updateOrderStatus', payload);
-  }
-
-  // Si tu veux un message de bienvenue
   handleConnection(client: Socket) {
     console.log(`Client connecté: ${client.id}`);
+  }
+
+  handleDisconnect(client: Socket) {
+    console.log(`Client déconnecté: ${client.id}`);
+  }
+
+  @SubscribeMessage('changeStatus')
+  handleChangeStatus(client: Socket, payload: { id: number; status: string }) {
+    console.log('Événement changeStatus reçu:', payload);
+    this.server.emit('updateOrderStatus', payload);
+    return { status: 'success', data: payload };
   }
 }

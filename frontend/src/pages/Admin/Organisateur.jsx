@@ -15,7 +15,7 @@ import { FaUsers } from "react-icons/fa6";
 import { handleDownloadXLSX } from "../../services/downloadXLSX";
 import { DataGrid } from "@mui/x-data-grid";
 import { motion } from "framer-motion";
-import ForfaitModal from "../../components/Modal/ForfaitModal";
+import { io } from "socket.io-client";
 
 export default function Organisateur() {
   const [data, setData] = useState([]);
@@ -34,7 +34,6 @@ export default function Organisateur() {
       try {
         setLoading(true);
         const data = await getManagerList();
-        console.log(data);
         setData(data);
       } catch (error) {
         console.error(
@@ -46,10 +45,47 @@ export default function Organisateur() {
       }
     };
     fetchData();
+
+    const socket = io("http://localhost:3000", {
+      auth: {
+        userId: 'b101b3b2-880b-47c2-a1ad-31ebbf61aa6d', // Remplace par un ID réel, ex: "admin-1"
+      },
+    });
+
+    socket.on("connect", () => {
+      console.log("🟢 SuperAdmin connecté au WebSocket !");
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("❌ Erreur WebSocket SuperAdmin :", err.message);
+    });
+
+    socket.on("organizer_connected", ({ userId }) => {
+      console.log("📡 SuperAdmin reçoit organizer_connected :", userId);
+
+      setData((prev) => {
+        const match = prev.find((m) => m.id === userId);
+        console.log("Correspondance trouvée :", !!match);
+        return prev.map((m) =>
+          m.id === userId ? { ...m, isOnline: true } : m,
+          m.id === lastLogin ? { ...m, lastLogin: formatDate(new Date) } : m,
+        );
+      });
+    });
+
+    socket.on("organizer_disconnected", ({ userId }) => {
+      setData((prev) =>
+        prev.map((m) => (m.id === userId ? { ...m, isOnline: false } : m))
+      );
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const filteredData = data.filter((organisateur) =>
-    organisateur[filterType].toLowerCase().includes(searchTerm.toLowerCase())
+    organisateur[filterType]?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleTakeManagerEvents = async (id) => {
@@ -92,6 +128,8 @@ export default function Organisateur() {
       Nom: p.name,
       Email: p.email,
       Date_creation: formatDate(p.createdAt),
+      Statut: p.isOnline ? "En ligne" : "Hors ligne",
+      Derniere_connexion: formatDate(p.lastLogin),
     }));
     handleDownloadXLSX(page, "liste_organisateurs");
   };
@@ -104,7 +142,6 @@ export default function Organisateur() {
         </h2>
       </div>
 
-      {/* Zone de recherche */}
       <div className="flex justify-end mb-4">
         <button
           onClick={handleDownload}
@@ -113,6 +150,7 @@ export default function Organisateur() {
           Exporter en CSV <MdFileDownload className="inline ml-2" />
         </button>
       </div>
+
       <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
         <div className="flex items-center gap-2">
           <MdFilterList className="text-gray-500" />
@@ -154,6 +192,8 @@ export default function Organisateur() {
                 nameForfait: org.forfait?.nom || "Aucun forfait",
                 createdAt: formatDate(org.createdAt),
                 forfaitexpirationdate: formatDate(org.forfaitexpirationdate),
+                status: org.isOnline ? "En ligne" : "Hors ligne",
+                lastLogin: formatDate(org.lastLogin),
                 fullData: org,
               }))}
               columns={[
@@ -174,6 +214,29 @@ export default function Organisateur() {
                 {
                   field: "forfaitexpirationdate",
                   headerName: "Date d'expiration",
+                  flex: 1,
+                  minWidth: 170,
+                },
+                {
+                  field: "status",
+                  headerName: "Statut",
+                  flex: 1,
+                  minWidth: 120,
+                  renderCell: (params) => (
+                    <span
+                      className={`px-2 py-1 rounded-full text-center text-sm font-semibold ${
+                        params.value === "En ligne"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {params.value}
+                    </span>
+                  ),
+                },
+                {
+                  field: "lastLogin",
+                  headerName: "Dernière connexion",
                   flex: 1,
                   minWidth: 170,
                 },
@@ -215,11 +278,22 @@ export default function Organisateur() {
               rowsPerPageOptions={[5, 10, 20]}
               disableSelectionOnClick
               autoHeight
+              sx={{
+                "& .MuiDataGrid-columnHeaders": {
+                  backgroundColor: "#f5f5f5",
+                  fontWeight: "bold",
+                },
+                "& .MuiDataGrid-cell": {
+                  borderBottom: "1px solid #e0e0e0",
+                },
+                "& .MuiDataGrid-row:hover": {
+                  backgroundColor: "#f9f9f9",
+                },
+              }}
             />
           </div>
         )}
 
-        {/* Modals */}
         <ModalManager
           isOpen={isModalOpen}
           onClose={() => {
@@ -230,6 +304,7 @@ export default function Organisateur() {
           data={modalData}
           managerName={managerName || "Organisateur"}
         />
+
         <DeleteModal
           isOpen={isDeleteModalOpen}
           onClose={closeDeleteModal}

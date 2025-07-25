@@ -51,12 +51,6 @@ const dashboardItems = [
     path: "/statistiques",
     description: "Voir les performances de vente et les données clés.",
   },
-  {
-    name: "Factures et Historiques",
-    icon: <LucideReceipt className="w-10 h-10 text-teal-500" />,
-    path: "/factures-historique",
-    description: "Accéder aux anciennes factures et à l'historique des ventes.",
-  },
 ];
 
 const Caisse = () => {

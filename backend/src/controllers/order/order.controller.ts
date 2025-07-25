@@ -32,8 +32,8 @@ export class OrderController {
   }
 
   @Patch(':id/status')
-  // @UseGuards(AuthGuard('jwt'))
-  // @UsePipes(new ValidationPipe())
+  @UseGuards(AuthGuard('jwt'))
+  @UsePipes(new ValidationPipe())
   async updateOrderStatus(
     @Param('id') id: number,
     @Body() body: UpdateOrderStatusDto,

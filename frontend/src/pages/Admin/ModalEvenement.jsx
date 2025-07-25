@@ -14,7 +14,7 @@ import {
   MdRoom,
   MdQrCode,
   MdStarBorderPurple500,
-  MdFilterList 
+  MdFilterList,
 } from "react-icons/md";
 import { formatDate } from "./Evenement";
 import PlanSalle from "../../components/planTable/PlanSalle";
@@ -23,13 +23,12 @@ import { handleDownloadXLSX } from "../../services/downloadXLSX";
 import { getPersonnelListByEventId } from "../../services/personnel_service";
 import { motion, AnimatePresence } from "framer-motion";
 import { DataGrid } from "@mui/x-data-grid";
-
+import NotFound403 from "../../layouts/NotFound403";
 
 const ModalEvenement = ({ isOpen, onClose, data }) => {
   const [activeTab, setActiveTab] = useState("invites");
 
   if (!isOpen) return null;
-  
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -51,12 +50,13 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
 
   return (
     <AnimatePresence>
-      <motion.div 
-      initial={{opacity:0}}
-      animate={{opacity:1}}
-      exit={{opacity:0}}
-      transition={{ type: "spring", stiffness: 300, damping: 25 }}
-      className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"
+      >
         <div className="bg-white rounded-lg shadow-xl p-6 w-full h-screen mx-4 relative overflow-auto">
           {/* En-tête */}
           <div className="flex justify-between items-center pb-3 border-gray-200">
@@ -233,11 +233,11 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
 
 export default ModalEvenement;
 
-function Invites({data}){
+function Invites({ data }) {
   const [filterField, setFilterField] = useState("nom");
   const [searchValue, setSearchValue] = useState("");
 
-  console.log('Les invités : ',data)
+  console.log("Les invités : ", data);
 
   const handleExportExcel = () => {
     const exportData = filteredRows.map((p) => ({
@@ -245,7 +245,6 @@ function Invites({data}){
       Prénom: p.prenom,
       Email: p.email,
       Sexe: p.sex,
-      Place: p.place,
       QrCode: "https://example.com/qrcode", // ou p.qrCode
     }));
     handleDownloadXLSX(exportData, "liste_invites");
@@ -256,7 +255,6 @@ function Invites({data}){
     { field: "prenom", headerName: "Prénom", flex: 1 },
     { field: "email", headerName: "Email", flex: 1 },
     { field: "sex", headerName: "Sexe", flex: 0.7 },
-    { field: "place", headerName: "Place", flex: 0.7 },
     {
       field: "qrCode",
       headerName: "QR Code",
@@ -272,8 +270,13 @@ function Invites({data}){
   }));
 
   const filteredRows = rows.filter((row) =>
-    row[filterField]?.toString().toLowerCase().includes(searchValue.toLowerCase())
+    row[filterField]
+      ?.toString()
+      .toLowerCase()
+      .includes(searchValue.toLowerCase())
   );
+
+  console.log(data.invites.length, data.invites);
 
   return (
     <div className="p-4">
@@ -318,19 +321,22 @@ function Invites({data}){
         </div>
       </div>
 
-      <div className="py-4 overflow-y-auto h-[600px]">
-        <DataGrid
-          rows={filteredRows}
-          columns={columns}
-          pageSize={10}
-          rowsPerPageOptions={[]}
-          autoHeight
-        />
-      </div>
+      {data.invites.length == 0 ? (
+        <NotFound403 />
+      ) : (
+        <div className="py-4 overflow-y-auto max-h-[400px]">
+          <DataGrid
+            rows={filteredRows}
+            columns={columns}
+            pageSize={10}
+            rowsPerPageOptions={[]}
+            autoHeight
+          />
+        </div>
+      )}
     </div>
   );
 }
-
 
 function TablePlace({ data }) {
   const [tables, setTables] = useState([]);
@@ -374,13 +380,13 @@ function Personnels({ data }) {
         console.log("Liste des personnels : ", response);
       } catch (error) {
         console.error(
-          "Erreur lors de la récupération des événements : ",
+          "Erreur lors de la récupération des personnels : ",
           error
         );
       }
     };
     fetchEvents();
-  }, []);
+  }, [data.id]);
 
   const handleExportExcel = () => {
     const page = personnelList.map((p) => ({
@@ -388,10 +394,22 @@ function Personnels({ data }) {
       Email: p.email,
       Status: p.status,
       Role: p.role,
-      // QrCode: "https://example.com/qrcode", // Placeholder for QR code URL
     }));
-    handleDownloadXLSX(page, "liste_invites");
+    handleDownloadXLSX(page, "liste_personnels");
   };
+
+  const columns = [
+    { field: "nom", headerName: "Nom", flex: 1 },
+    { field: "email", headerName: "Email", flex: 1.5 },
+    { field: "role", headerName: "Rôle", flex: 1 },
+    { field: "status", headerName: "Status", flex: 1 },
+  ];
+
+  const rows = personnelList.map((item, index) => ({
+    id: index, // Obligatoire pour le DataGrid
+    ...item,
+  }));
+
   return (
     <>
       <div className="flex justify-end mb-4">
@@ -406,28 +424,19 @@ function Personnels({ data }) {
         <h3 className="text-2xl ml-5 my-3 font-semibold text-gray-800">
           Liste de personnels
         </h3>
-        <div className="overflow-y-auto flex justify-center">
-          <table>
-            <thead>
-              <tr>
-                <th className="p-3 text-start">Nom</th>
-                <th className="p-3 text-start">Email</th>
-                <th className="p-3 text-start">Rôle</th>
-                <th className="p-3 text-start">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {personnelList.map((value, key) => (
-                <tr key={key}>
-                  <td className="p-3 text-start">{value.nom}</td>
-                  <td className="p-3 text-start">{value.email}</td>
-                  <td className="p-3 text-start">{value.role}</td>
-                  <td className="p-3 text-start">{value.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {personnelList.length == 0 ? (
+          <NotFound403 />
+        ) : (
+          <div className="py-4 overflow-y-auto max-h-[400px]">
+            <DataGrid
+              rows={rows}
+              columns={columns}
+              pageSize={10}
+              rowsPerPageOptions={[]}
+              autoHeight
+            />
+          </div>
+        )}
       </div>
     </>
   );

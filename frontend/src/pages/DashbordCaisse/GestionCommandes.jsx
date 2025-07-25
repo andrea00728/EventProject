@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
 
+
 const backgroundImageUrl = "https://images.unsplash.com/photo-1542744095-291d1f67b221";
 
 const GestionCommandesPage = () => {
@@ -94,7 +95,7 @@ const GestionCommandesPage = () => {
 
   useEffect(() => {
     fetchCommandes();
-    socket.on("updateStatus", (updatedOrder) => {
+    socket.on("updateOrderStatus", (updatedOrder) => {
       setCommandes((prev) =>
         prev.map((cmd) =>
           cmd.id === updatedOrder.id
@@ -106,7 +107,19 @@ const GestionCommandesPage = () => {
         )
       );
     });
-    return () => socket.off("updateStatus");
+
+    socket.on('connect', () => {
+      console.log('Connecté au serveur WebSocket');
+    });
+
+    socket.on('updateOrderStatus', (data) => {
+      console.log('Mise à jour reçue', data);
+    });
+    return () => {
+      socket.off('connect');
+      socket.off('updateStatus');
+      socket.off('updateOrderStatus');
+    };
   }, []);
 
   const filteredCommandes = commandes.filter((cmd) => {
