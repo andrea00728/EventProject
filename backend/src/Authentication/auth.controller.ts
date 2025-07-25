@@ -1,5 +1,5 @@
 // auth.controller.ts
-import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param, UseInterceptors, UploadedFile, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-auth.dto';
@@ -8,6 +8,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { LoginDto } from './loginDto/login-auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -108,7 +109,6 @@ export class AuthController {
     storage: diskStorage({
       destination: './uploads',  // dossier de stockage
       filename: (req, file, callback) => {
-        // Personnaliser le nom du fichier pour éviter les conflits
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
         const ext = extname(file.originalname);
         const filename = `${file.fieldname}-${uniqueSuffix}${ext}`;
@@ -124,10 +124,31 @@ export class AuthController {
       createUserDto.photo = photo.filename;
     }
 
-    return this.authService.registerUser({
-      ...createUserDto,
-      role: 'organisateur',
-    });
+    try {
+      const newUser = await this.authService.registerUser({
+        ...createUserDto,
+        role: 'organisateur',
+      });
+
+      return {
+        message: 'User registered successfully',
+        user: newUser,
+      };
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+
+  // Route pour la connexion
+  @Post('login')
+  async login(@Body() loginDto: LoginDto) {
+    try {
+      const user = await this.authService.login(loginDto);
+      return user;
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
+    }
   }
 
 
