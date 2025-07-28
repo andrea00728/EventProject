@@ -5,6 +5,7 @@ export default function OrganisationPersonnelLayout() {
         { path: "", name: "Dashboard Personnel" },
          { path: "organigramme", name: "Organigramme" },
         { path: "createPersonnel", name: "Creer un Personnel" },
+        { path: "dashboardCaisse", name: "Dashboard Caisse" },
         
     ];
 

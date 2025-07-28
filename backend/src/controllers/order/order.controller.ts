@@ -32,8 +32,8 @@ export class OrderController {
   }
 
   @Patch(':id/status')
-  // @UseGuards(AuthGuard('jwt'))
-  // @UsePipes(new ValidationPipe())
+  @UseGuards(AuthGuard('jwt'))
+  @UsePipes(new ValidationPipe())
   async updateOrderStatus(
     @Param('id') id: number,
     @Body() body: UpdateOrderStatusDto,
@@ -43,7 +43,7 @@ export class OrderController {
     if (!userId) {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
-    return this.orderService.updateOrderStatus(id, body.status, userId);
+    return this.orderService.updateOrderStatus(id, body.status, req.user.email);
   }
 
   @Patch(':id/payment')
@@ -53,7 +53,7 @@ export class OrderController {
     if (!userId) {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
-    return this.orderService.validatePayment(id, userId);
+    return this.orderService.validatePayment(id, req.user.email);
   }
 
   @Get('balance/:eventId')

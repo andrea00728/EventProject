@@ -12,6 +12,9 @@ import Logo from "../assets/LogoMaster.png"
 import { Bell } from "lucide-react";
 import NotificationComponent from "../util/notification";
 
+import { getUserIdForToken } from "../services/userService";
+import { io } from "socket.io-client";
+
 export default function DefaultLayout() {
   const { token, role, isLoading } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -39,8 +42,32 @@ export default function DefaultLayout() {
       return <Navigate to="/pagepublic" replace />;
   }
 
-
   useEffect(() => {
+    /********   Statut en ligne ou non   **********/
+
+    const changeStatus = async () => {
+      const userId = await getUserIdForToken(token);
+
+      console.log("Id récupèré : ", userId);
+
+      const socket = io("http://localhost:3000", {
+        auth: {
+          userId: userId, // très important : doit être l’ID réel de l’organisateur
+        },
+      });
+
+      socket.on("connect", () => {
+        console.log("Socket connecté !");
+      });
+
+      socket.on("connect_error", (err) => {
+        console.error("Erreur de connexion WebSocket :", err.message);
+      });
+    };
+
+    changeStatus();
+
+    /**************************************** */
     const fetchAndSetForfait = async () => {
       try {
         const data = await getUserForfait(token);
@@ -74,8 +101,16 @@ export default function DefaultLayout() {
         { path: "/evenement/evenement", name: "evenement", icon: "/file.png" },
         { path: "/evenement/tables", name: "Tables", icon: "/chair.png" },
         { path: "/evenement/invites", name: "Invités", icon: "/guest.png" },
-        { path: "/evenement/invitation", name: "Invitation", icon: "/invitation.png" },
-        { path: "/evenement/personnel", name: "Personnel", icon: "/community-center.png" },
+        {
+          path: "/evenement/invitation",
+          name: "Invitation",
+          icon: "/invitation.png",
+        },
+        {
+          path: "/evenement/personnel",
+          name: "Personnel",
+          icon: "/community-center.png",
+        },
         //  Afficher seulement pour les forfaits premium
         ...(
           ["pro", "premium", "gold"].includes(forfait?.nom)
@@ -88,17 +123,27 @@ export default function DefaultLayout() {
         ),
       ]
     },
-    { path: "/apropos", name: "A propos" }
+    { path: "/apropos", name: "A propos" },
   ];
 
   const subMenuVariants = {
-    hidden: { opacity: 0, y: -10, pointerEvents: "none", transition: { duration: 0.4 } },
-    visible: { opacity: 1, y: 0, pointerEvents: "auto", transition: { duration: 0.4 } }
+    hidden: {
+      opacity: 0,
+      y: -10,
+      pointerEvents: "none",
+      transition: { duration: 0.4 },
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      pointerEvents: "auto",
+      transition: { duration: 0.4 },
+    },
   };
 
   const menuVariants = {
     open: { opacity: 1, height: "auto", transition: { duration: 0.9 } },
-    closed: { opacity: 0, height: 0, transition: { duration: 0.9 } }
+    closed: { opacity: 0, height: 0, transition: { duration: 0.9 } },
   };
 
   return (

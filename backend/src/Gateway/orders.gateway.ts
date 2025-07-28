@@ -1,30 +1,31 @@
-// src/orders/orders.gateway.ts
 import {
-  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  SubscribeMessage,
+  MessageBody,
+  ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
-    origin: '*', // autoriser tous les domaines (ajuste selon besoin)
+    origin: 'http://localhost:5173',
   },
 })
 export class OrdersGateway {
   @WebSocketServer()
   server: Server;
 
-  // Pour écouter un changement de statut
-  @SubscribeMessage('changeStatus')
-  handleChangeStatus(client: Socket, payload: any) {
-    console.log('Changement reçu:', payload);
-    // Diffusion à tous les clients
-    this.server.emit('updateOrderStatus', payload);
+  handleConnection(client: Socket) {
+    console.log(`✅ Client connecté : ${client.id}`);
   }
 
-  // Si tu veux un message de bienvenue
-  handleConnection(client: Socket) {
-    console.log(`Client connecté: ${client.id}`);
+  @SubscribeMessage('update_order_status')
+  handleStatusUpdate(
+    @MessageBody() data: any,
+    @ConnectedSocket() client: Socket,
+  ) {
+    console.log(`🍽️ Mise à jour reçue :`, data);
+    this.server.emit('order_status_updated', data); // Envoie à tous
   }
 }
