@@ -16,7 +16,8 @@ import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { getUserIdForToken } from "../../services/userService";
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
+import socket from "../../socket";
 
 const backgroundImageUrl =
   "https://images.unsplash.com/photo-1542744095-291d1f67b221";
@@ -26,6 +27,7 @@ const GestionCommandesPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [userId, setUserId] = useState(null)
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -80,7 +82,7 @@ const GestionCommandesPage = () => {
 
       const userId = await getUserIdForToken(token);
 
-      const socket = io('http://localhost:3000')
+      const socket = io("http://localhost:3000");
 
       socket.on("order_status_updated", (data) => {
         console.log("Mise à jour : ", data);
@@ -126,7 +128,29 @@ const GestionCommandesPage = () => {
     }
   };
 
+  const fetchData = async () => {
+    const UserId = await getUserIdForToken(token);
+
+    console.log("Id récupèré : ", UserId);
+    setUserId(UserId);
+
+    const socket = io("http://localhost:3000", {
+      auth: {
+        userId: UserId, // très important : doit être l’ID réel de l’organisateur
+      },
+    });
+    socket.on("connect", () => {
+      console.log("✅ Connecté au serveur WebSocket");
+    });
+
+    // Pour écouter les mises à jour
+    socket.on("order_status_updated", (data) => {
+      console.log("📦 Statut mis à jour :", data);
+    });
+  };
+
   useEffect(() => {
+    fetchData();
     fetchCommandes();
     socket.on("updateOrderStatus", (updatedOrder) => {
       setCommandes((prev) =>

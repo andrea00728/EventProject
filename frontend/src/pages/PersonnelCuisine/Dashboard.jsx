@@ -22,9 +22,9 @@ import {
 } from "../../services/orders";
 import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
-import { io } from 'socket.io-client';
-import socket from "../../socket";
+import { io } from "socket.io-client";
 
+import { getUserIdForToken } from "../../services/userService";
 
 const formatDateTime = (dateString) => {
   const date = new Date(dateString);
@@ -52,7 +52,7 @@ export default function DashboardpersCuisine() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-
+  const [userId, setUserId] = useState(null)
   const { user, token, setToken, setUser } = useStateContext();
 
   useEffect(() => {
@@ -74,6 +74,17 @@ export default function DashboardpersCuisine() {
       }
     };
 
+    const fetchData = async () => {
+      const UserId = await getUserIdForToken(token);
+
+      console.log("Id récupèré : ", UserId);
+      setUserId(UserId)
+
+      const socket = io("http://localhost:3000", {
+        auth: {
+          userId: UserId, // très important : doit être l’ID réel de l’organisateur
+        },
+      });
       socket.on("connect", () => {
         console.log("✅ Connecté au serveur WebSocket");
       });
@@ -82,11 +93,10 @@ export default function DashboardpersCuisine() {
       socket.on("order_status_updated", (data) => {
         console.log("📦 Statut mis à jour :", data);
       });
+    };
 
-
-    fetchOrders()
-
-
+    fetchOrders();
+    fetchData()
   }, [token]);
 
   const changeDataBaseStatus = async (id, status) => {
@@ -94,6 +104,12 @@ export default function DashboardpersCuisine() {
   };
 
   const changerStatut = async (id, direction = "next") => {
+
+    const socket = io("http://localhost:3000", {
+      auth: {
+        userId: userId, 
+      },
+    });
     const updatedOrder = commandes.find((c) => c.id === id);
     let newStatus = updatedOrder.status;
 
