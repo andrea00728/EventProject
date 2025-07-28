@@ -4,6 +4,10 @@ import NosService from "../util/nosService";
 import Testimonials from "../util/testimony";
 import Contact from "../util/contact";
 import ButtonConnexion from "../util/buttonconnexion";
+import { getCountEvents } from "../services/evenementServ";
+import { FormaNumber } from "../services/controll_champs/controll_limite";
+import { getUserCount } from "../services/userService";
+
 import { AuthModal } from "../components/Modal/authModal";
 
 const images = [
@@ -23,7 +27,8 @@ const Public_Accueil = () => {
   const serviceRef = useRef(null);
   const contactRef = useRef(null);
   const testimonyRef = useRef(null);
-
+  const [eventCount, setEventCount] = useState(0);
+  const [organisateurCount, setOrganisateurCount] = useState(0);
   useEffect(() => {
     const hash = window.location.hash;
     if (hash === "#service" && serviceRef.current) {
@@ -72,6 +77,30 @@ const Public_Accueil = () => {
     else if (delta < -50) next();
   };
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const count = await getCountEvents();
+        setEventCount(count);
+      } catch (err) {
+        console.log(err)
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchDataUserCount = async () => {
+      try {
+
+        const count = await getUserCount();
+        setOrganisateurCount(count);
+      } catch (err) {
+        console.log(err)
+      }
+    };
+    fetchDataUserCount();
+  }, []);
   return (
     <>
 
@@ -176,11 +205,11 @@ const Public_Accueil = () => {
                 className="flex flex-col sm:flex-row gap-8 justify-center items-center pt-12"
               >
                 <div className="text-center group">
-                  <div className="text-3xl font-bold text-white group-hover:text-orange-400 transition-colors duration-300">10K+</div>
+                  <div className="text-3xl font-bold text-white group-hover:text-orange-400 transition-colors duration-300"><strong>{FormaNumber(eventCount)}</strong></div>
                   <div className="text-white/70 text-sm font-medium">Événements créés</div>
                 </div>
                 <div className="text-center group">
-                  <div className="text-3xl font-bold text-white group-hover:text-blue-400 transition-colors duration-300">50K+</div>
+                  <div className="text-3xl font-bold text-white group-hover:text-blue-400 transition-colors duration-300"><strong>{FormaNumber(organisateurCount)}</strong></div>
                   <div className="text-white/70 text-sm font-medium">Participants actifs</div>
                 </div>
                 <div className="text-center group">

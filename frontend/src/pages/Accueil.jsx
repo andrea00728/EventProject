@@ -2,6 +2,7 @@ import React from "react";
 import Footer from "./footer";
 import { FaAward, FaMapMarkerAlt, FaUsers } from "react-icons/fa";
 import EventsSection from "../util/eventSection";
+import TestimonialsSection from "../util/testimonialsSection";
 
 export default function Accueil() {
   return (
@@ -85,10 +86,10 @@ export default function Accueil() {
 
       {/* Section Événements Récents */}
       <section>
-        <EventsSection/>
+        <EventsSection />
       </section>
-      {/* Section À Propos */}
 
+      {/* Section À Propos */}
       <section className="bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-800 py-24">
         {/* Décorations de fond light */}
         <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-r from-[#FB9E3A]/10 to-orange-400/10 rounded-full blur-3xl animate-pulse" />
@@ -194,7 +195,9 @@ export default function Accueil() {
         </div>
       </section>
 
-
+      <section className="testimony">
+        <TestimonialsSection />
+      </section>
 
       <section>
         <Footer />
