@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import socket from "../../socket";
 import { DataGrid } from "@mui/x-data-grid";
 import {
   Button,
@@ -9,7 +10,6 @@ import {
   Snackbar,
   Alert,
   TextField,
-  CircularProgress,
   Chip,
 } from "@mui/material";
 import { motion } from "framer-motion";
@@ -17,7 +17,6 @@ import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { getUserIdForToken } from "../../services/userService";
 import { io } from "socket.io-client";
-import socket from "../../socket";
 
 const backgroundImageUrl =
   "https://images.unsplash.com/photo-1542744095-291d1f67b221";
@@ -27,7 +26,6 @@ const GestionCommandesPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [userId, setUserId] = useState(null)
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -79,22 +77,6 @@ const GestionCommandesPage = () => {
       }));
 
       setCommandes(formatted);
-
-      const userId = await getUserIdForToken(token);
-
-      const socket = io("http://localhost:3000");
-
-      socket.on("order_status_updated", (data) => {
-        console.log("Mise à jour : ", data);
-        // setCommandes((prev) => {
-        //   const updated = prev.filter((cmd) => cmd.id !== data.id);
-        //   return [...updated, data];
-        // });
-      });
-
-      return () => {
-        socket.off("order_status_updated");
-      };
     } catch (err) {
       console.error("Erreur:", err);
       setSnackbar({
@@ -107,32 +89,8 @@ const GestionCommandesPage = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Supprimer cette commande ?")) return;
-
-    try {
-      await axios.delete(`http://localhost:3000/orders/${id}`);
-      setCommandes((prev) => prev.filter((cmd) => cmd.id !== id));
-      setSnackbar({
-        open: true,
-        message: "Commande supprimée.",
-        severity: "success",
-      });
-    } catch (err) {
-      console.error("Erreur suppression:", err);
-      setSnackbar({
-        open: true,
-        message: "Erreur lors de la suppression.",
-        severity: "error",
-      });
-    }
-  };
-
   const fetchData = async () => {
     const UserId = await getUserIdForToken(token);
-
-    console.log("Id récupèré : ", UserId);
-    setUserId(UserId);
 
     const socket = io("http://localhost:3000", {
       auth: {
@@ -145,14 +103,56 @@ const GestionCommandesPage = () => {
 
     // Pour écouter les mises à jour
     socket.on("order_status_updated", (data) => {
-      console.log("📦 Statut mis à jour :", data);
+      updateCommande(data)
     });
   };
 
+  const updateCommande = (update) => {
+    setCommandes((prevCommandes) =>
+      prevCommandes.map((cmd) =>
+        cmd.id === update.id
+          ? {
+              ...cmd,
+              ...update, // mise à jour partielle des champs
+              status: STATUS_MAPPING.backToFront[update.status] || update.status,
+            }
+          : cmd
+      )
+    );
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Supprimer cette commande ?")) return;
+
+    try {
+      await axios.delete(`http://localhost:3000/orders/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCommandes((prev) => prev.filter((cmd) => cmd.id !== id));
+      setSnackbar({
+        open: true,
+        message: "Commande supprimée.",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error(
+        "Erreur suppression:",
+        error.response?.data || error.message
+      );
+      setSnackbar({
+        open: true,
+        message:
+          error.response?.data?.message ||
+          "Erreur serveur lors de la suppression",
+        severity: "error",
+      });
+    }
+  };
+
   useEffect(() => {
-    fetchData();
     fetchCommandes();
-    socket.on("updateOrderStatus", (updatedOrder) => {
+    fetchData();
+    const onUpdateOrderStatus = (updatedOrder) => {
       setCommandes((prev) =>
         prev.map((cmd) =>
           cmd.id === updatedOrder.id
@@ -165,21 +165,8 @@ const GestionCommandesPage = () => {
             : cmd
         )
       );
-    });
-
-    socket.on("connect", () => {
-      console.log("Connecté au serveur WebSocket");
-    });
-
-    socket.on("updateOrderStatus", (data) => {
-      console.log("Mise à jour reçue", data);
-    });
-    return () => {
-      socket.off("connect");
-      socket.off("updateStatus");
-      socket.off("updateOrderStatus");
     };
-  }, []);
+  }, [token]); // on refresh si token change
 
   const filteredCommandes = commandes.filter((cmd) => {
     const matchStatus =
