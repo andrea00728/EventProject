@@ -16,7 +16,7 @@ const StockPage = () => {
   const [editedItem, setEditedItem] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [events, setEvents] = useState([]);
-  const [selectedEvent, setSelectedEvent] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState(''); 
   const [assignedEventId, setAssignedEventId] = useState(null);
 
   const { token } = useStateContext();
