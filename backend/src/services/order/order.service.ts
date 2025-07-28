@@ -10,6 +10,7 @@ import { Balance } from 'src/entities/balance.entity';
 import { Evenement } from 'src/entities/Evenement';
 import { Payment } from 'src/entities/payment.entity';
 import { Personnel } from 'src/entities/Personnel';
+import { OrdersGateway } from 'src/gateway/orders.gateway';
 
 @Injectable()
 export class OrderService {
@@ -32,7 +33,7 @@ export class OrderService {
     private paymentRepository: Repository<Payment>,
     @InjectRepository(Personnel)
     private personnelRepository: Repository<Personnel>,
-    
+    private ordersGateway: OrdersGateway
     
   ) {}
 
@@ -209,12 +210,7 @@ export class OrderService {
   }
 
 
-
-
-
-
-
-  async validatePayment(orderId: number, email: string): Promise<Order> {
+ async validatePayment(orderId: number, email: string): Promise<Order> {
     const personnel = await this.personnelRepository.findOne({ where: { email: email } });
     if (!personnel || personnel.role !== 'caissier') {
       throw new UnauthorizedException('Only caissier can validate payment');

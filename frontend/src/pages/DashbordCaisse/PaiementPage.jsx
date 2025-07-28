@@ -5,8 +5,7 @@ import socket from "../../socket";
 import { useStateContext } from "../../context/ContextProvider";
 import { Link } from "react-router-dom";
 import { getEventIdByEmail } from "../../services/invitationService";
-
-// --- Icons ---
+ 
 const CashIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

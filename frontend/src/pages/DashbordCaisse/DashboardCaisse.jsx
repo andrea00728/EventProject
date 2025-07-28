@@ -51,6 +51,12 @@ const dashboardItems = [
     path: "/statistiques",
     description: "Voir les performances de vente et les données clés.",
   },
+  {
+    name: "Revenu",
+    icon: <LucideBarChart className="w-10 h-10 text-purple-500" />,
+    path: "/revenu",
+    description: "Voir les performances de vente et les données clés.",
+  },
 ];
 
 const Caisse = () => {
