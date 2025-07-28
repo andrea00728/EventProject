@@ -12,6 +12,7 @@ import {
   MdEventAvailable,
   MdEventNote,
 } from "react-icons/md";
+import { ChevronDown } from "lucide-react";
 
 export default function Dashboard() {
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -139,32 +140,81 @@ export default function Dashboard() {
           <div ref={profileRef} className="relative">
             <button
               onClick={() => setShowProfile(!showProfile)}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center gap-1 sm:gap-2"
-              aria-label="Profil"
+              className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
+                darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+              }`}
+              aria-label="Menu profil"
             >
-              <FaUser className="text-lg sm:text-xl" />
-              <span className="hidden md:inline">Admin</span>
+              <div className="relative">
+                <FaUser className="w-5 h-5" />
+              </div>
+              <span className="hidden sm:inline text-sm font-medium">Admin</span>
+              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
+                showProfile ? 'rotate-180' : ''
+              }`} />
             </button>
             {showProfile && (
               <div
-                className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-                  } z-50`}
+                className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
+                  darkMode 
+                    ? 'bg-gray-800 border-gray-700' 
+                    : 'bg-white border-gray-200'
+                } z-50 transition-all duration-200 ${
+                  window.innerWidth < 640 ? 'left-4 right-4' : 'right-0'
+                }`}
               >
-                <ul>
-                  <li className="p-3 border-b border-gray-300 dark:border-gray-600 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Profil
-                  </li>
-                  <li className="p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
+                <div className="p-2">
+                  <div className={`px-3 py-2 text-sm ${
+                    darkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    <p className="font-medium">Connecté en tant que</p>
+                    <p className="truncate">admin@example.com</p>
+                  </div>
+                  <div className={`border-t ${
+                    darkMode ? 'border-gray-700' : 'border-gray-200'
+                  }`}></div>
+                  <button
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      darkMode 
+                        ? 'hover:bg-gray-700 text-gray-200' 
+                        : 'hover:bg-gray-100 text-gray-800'
+                    } transition-colors duration-150`}
+                  >
+                    Mon profil
+                  </button>
+                  <button
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      darkMode 
+                        ? 'hover:bg-gray-700 text-gray-200' 
+                        : 'hover:bg-gray-100 text-gray-800'
+                    } transition-colors duration-150`}
+                  >
+                    Paramètres
+                  </button>
+                  <div className={`border-t ${
+                    darkMode ? 'border-gray-700' : 'border-gray-200'
+                  }`}></div>
+                  <button
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      darkMode 
+                        ? 'hover:bg-gray-700 text-red-400' 
+                        : 'hover:bg-gray-100 text-red-600'
+                    } transition-colors duration-150`}
+                  >
                     Déconnexion
-                  </li>
-                </ul>
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
           <button
             onClick={toggleDarkMode}
-            className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border font-semibold shadow-md hover:shadow-lg transition duration-300 bg-transparent text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+            className={`p-2 rounded-full ${
+              darkMode 
+                ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' 
+                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+            } transition-colors duration-200`}
             aria-label="Toggle dark mode"
           >
             {darkMode ? "☀️" : "🌙"}
@@ -287,44 +337,86 @@ export default function Dashboard() {
   );
 }
 
-const Dropdown = React.forwardRef(({ show, setShow, icon, label, count, items, noScroll }, ref) => {
+const Dropdown = React.forwardRef(({ show, setShow, icon, label, count, items }, ref) => {
   const { darkMode } = useDarkMode();
+  const [isMobile, setIsMobile] = useState(false);
+  
+    useEffect(() => {
+      const checkMobile = () => setIsMobile(window.innerWidth < 640);
+      checkMobile();
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={() => setShow(!show)}
-        className="relative p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+        className={`relative p-2 rounded-full transition-all duration-200 ${
+          darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+        }`}
         aria-label={label}
       >
-        {icon}
-        {count > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1.5">
-            {count}
-          </span>
-        )}
+        <div className="relative">
+          {React.cloneElement(icon, { className: 'w-5 h-5' })}
+          {count > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+              {count > 9 ? '9+' : count}
+            </span>
+          )}
+        </div>
       </button>
       {show && (
         <div
-          className={`absolute right-0 mt-2 w-56 sm:w-64 max-h-64 overflow-y-auto rounded-lg shadow-lg ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-            } z-50`}
-          style={noScroll ? { maxHeight: "auto", overflowY: "visible" } : {}}
+          className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] overflow-y-auto rounded-xl shadow-xl border ${
+            darkMode 
+              ? 'bg-gray-800 border-gray-700 text-gray-200' 
+              : 'bg-white border-gray-200 text-gray-900'
+          } z-50 transition-all duration-200 ${
+            isMobile ? 'left-4 right-4' : 'right-0'
+          }`}
         >
-          <h4 className="font-semibold p-3 border-b border-gray-300 dark:border-gray-600">{label}</h4>
-          <ul>
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+            {React.cloneElement(icon, { className: 'w-5 h-5' })}
+            <h4 className="font-semibold text-sm sm:text-base">{label}</h4>
+            {count > 0 && (
+              <span className="ml-auto bg-blue-500 text-white text-xs rounded-full px-2 py-1">
+                {count > 99 ? '99+' : count}
+              </span>
+            )}
+          </div>
+          
+          <div className="max-h-[60vh] overflow-y-auto">
             {items.length ? (
               items.map((item, i) => (
-                <li
+                <div
                   key={i}
-                  className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm sm:text-base"
+                  className={`p-3 transition-colors duration-150 border-b ${
+                    darkMode 
+                      ? 'border-gray-700 hover:bg-gray-700' 
+                      : 'border-gray-200 hover:bg-gray-50'
+                  } cursor-pointer`}
                 >
-                  {item}
-                </li>
+                  <p className="text-sm line-clamp-2">
+                    {typeof item === 'object' ? `${item.from}: ${item.text}` : item}
+                  </p>
+                  <p className={`text-xs mt-1 ${
+                    darkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    Il y a {Math.floor(Math.random() * 60)} min
+                  </p>
+                </div>
               ))
             ) : (
-              <li className="p-3 text-center text-gray-500 text-sm">Aucun {label.toLowerCase()}</li>
+              <div className="p-4 text-center">
+                <p className={`text-sm ${
+                  darkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}>
+                  Aucun {label.toLowerCase()}
+                </p>
+              </div>
             )}
-          </ul>
+          </div>
         </div>
       )}
     </div>

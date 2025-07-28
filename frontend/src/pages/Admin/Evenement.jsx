@@ -53,7 +53,7 @@ const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
       <div className="flex items-center justify-between">
         <div>
           <p className={`text-sm font-medium ${
-            darkMode ? "text-gray-400" : "text-gray-600"
+            darkMode ? "text-blue-300" : "text-blue-600"  // Changé en bleu clair
           } mb-1`}>{title}</p>
           <p className={`text-2xl font-bold ${
             darkMode ? "text-white" : "text-gray-900"
@@ -124,7 +124,9 @@ const Dropdown = React.forwardRef(({ show, setShow, icon, label, count, items },
         >
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
             {React.cloneElement(icon, { className: 'w-5 h-5' })}
-            <h4 className="font-semibold text-sm sm:text-base">{label}</h4>
+            <h4 className={`font-semibold text-sm sm:text-base ${
+              darkMode ? "text-purple-300" : "text-purple-600"  // Changé en violet
+            }`}>{label}</h4>
             {count > 0 && (
               <span className="ml-auto bg-blue-500 text-white text-xs rounded-full px-2 py-1">
                 {count > 99 ? '99+' : count}
@@ -168,6 +170,107 @@ const Dropdown = React.forwardRef(({ show, setShow, icon, label, count, items },
     </div>
   );
 });
+
+// Composant EventCard pour l'affichage mobile
+const EventCard = ({ event, darkMode, onViewDetails }) => {
+  return (
+    <div className={`p-4 mb-4 rounded-xl shadow-sm border transition-all duration-300 ${
+      darkMode ? "bg-gray-800 border-gray-700 hover:border-gray-600" : "bg-white border-gray-200 hover:border-gray-300"
+    }`}>
+      <div className="flex justify-between items-start mb-2">
+        <h3 className={`text-lg font-semibold ${
+          darkMode ? "text-blue-300" : "text-blue-600"  // Changé en bleu clair
+        }`}>
+          {event.nom}
+        </h3>
+        <span className={`px-2 py-1 rounded-full text-xs ${
+          event.status === 'active'
+            ? darkMode
+              ? 'bg-green-900/50 text-green-300'
+              : 'bg-green-100 text-green-800'
+            : darkMode
+              ? 'bg-gray-700/50 text-gray-400'
+              : 'bg-gray-100 text-gray-600'
+        }`}>
+          {event.status === 'active' ? 'Actif' : 'Inactif'}
+        </span>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="flex items-center gap-2">
+          <MdEvent className={`text-sm ${
+            darkMode ? "text-blue-400" : "text-blue-600"
+          }`} />
+          <span className={`text-sm ${
+            darkMode ? "text-gray-300" : "text-gray-600"
+          }`}>
+            {event.type}
+          </span>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <MdPeople className={`text-sm ${
+            darkMode ? "text-purple-400" : "text-purple-600"
+          }`} />
+          <span className={`text-sm ${
+            darkMode ? "text-gray-300" : "text-gray-600"
+          }`}>
+            {event.participants || 0} participants
+          </span>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <MdCalendarToday className={`text-sm ${
+            darkMode ? "text-cyan-400" : "text-cyan-600"
+          }`} />
+          <span className={`text-sm ${
+            darkMode ? "text-gray-300" : "text-gray-600"
+          }`}>
+            {event.date.split(' ')[0]}
+          </span>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <MdLocationOn className={`text-sm ${
+            darkMode ? "text-orange-400" : "text-orange-600"
+          }`} />
+          <span className={`text-sm ${
+            darkMode ? "text-gray-300" : "text-gray-600"
+          }`}>
+            {event.localisation}
+          </span>
+        </div>
+      </div>
+      
+      <div className="flex justify-between items-center mt-3">
+        <div>
+          <p className={`text-xs ${
+            darkMode ? "text-gray-400" : "text-gray-500"
+          }`}>
+            Organisé par
+          </p>
+          <p className={`text-sm ${
+            darkMode ? "text-gray-200" : "text-gray-700"
+          }`}>
+            {event.organisateur}
+          </p>
+        </div>
+        
+        <button
+          onClick={() => onViewDetails(event.action)}
+          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm ${
+            darkMode
+              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              : 'bg-blue-500 hover:bg-blue-600 text-white'
+          } transition-colors duration-200`}
+        >
+          <FaEye className="text-sm" />
+          <span>Détails</span>
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default function EvenementAd() {
   const [data, setData] = useState([]);
@@ -309,7 +412,7 @@ export default function EvenementAd() {
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${
           darkMode 
-            ? 'text-white' 
+            ? 'text-blue-300'  // Bleu clair en mode nuit
             : 'bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent'
         }`}>
           <MdCalendarToday className="mr-3" /> Liste des événements
@@ -347,7 +450,9 @@ export default function EvenementAd() {
               <div className="relative">
                 <FaUser className="w-5 h-5" />
               </div>
-              <span className="hidden sm:inline text-sm font-medium">Admin</span>
+              <span className={`hidden sm:inline text-sm font-medium ${
+                darkMode ? "text-purple-300" : "text-purple-600"  // Violet
+              }`}>Admin</span>
               <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
                 showProfile ? 'rotate-180' : ''
               }`} />
@@ -454,55 +559,60 @@ export default function EvenementAd() {
         />
       </div>
 
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={handleExportExcel}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl ${
-            darkMode 
-              ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-              : 'bg-blue-500 hover:bg-blue-600 text-white'
-          } transition-colors duration-200 shadow-md hover:shadow-lg`}
-        >
-          <MdFileDownload className="text-lg" />
-          <span>Exporter en CSV</span>
-        </button>
-      </div>
-
       {/* Filtrage dynamique amélioré */}
-      <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
-        <div className={`flex items-center gap-2 p-2 rounded-lg ${
-          darkMode ? 'bg-gray-800' : 'bg-gray-100'
-        }`}>
-          <MdFilterList className="text-gray-500" />
-          <select
-            className={`p-2 bg-transparent focus:outline-none ${
-              darkMode ? 'text-gray-200' : 'text-gray-800'
-            }`}
-            value={filterField}
-            onChange={(e) => setFilterField(e.target.value)}
-          >
-            <option value="nom">Nom</option>
-            <option value="type">Type</option>
-            <option value="theme">Thème</option>
-            <option value="localisation">Localisation</option>
-            <option value="organisateur">Organisateur</option>
-          </select>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        {/* Conteneur pour les éléments de filtre (select + input) */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+          <div className={`flex items-center gap-2 px-5 py-0.5 rounded-lg ${
+            darkMode ? 'bg-gray-800' : 'bg-gray-100'
+          }`}>
+            <MdFilterList className="text-gray-500" />
+            <select
+              className={`p-2 bg-transparent focus:outline-none ${
+                darkMode ? 'text-blue-300' : 'text-blue-600'  // Bleu clair
+              }`}
+              value={filterField}
+              onChange={(e) => setFilterField(e.target.value)}
+            >
+              <option value="nom">Nom</option>
+              <option value="type">Type</option>
+              <option value="theme">Thème</option>
+              <option value="localisation">Localisation</option>
+              <option value="organisateur">Organisateur</option>
+            </select>
+          </div>
+          
+          <div className={`relative w-full sm:w-64 flex items-center ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          } rounded-lg shadow-sm border ${
+            darkMode ? 'border-gray-700' : 'border-gray-200'
+          }`}>
+            <MdSearch className="absolute left-3 text-gray-400" />
+            <input
+              type="text"
+              placeholder={`Rechercher par ${filterField}...`}
+              className={`w-full pl-10 pr-4 py-2 bg-transparent focus:outline-none ${
+                darkMode ? 'text-blue-300 placeholder-gray-400' : 'text-blue-600 placeholder-gray-500'  // Bleu clair
+              }`}
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+            />
+          </div>
         </div>
-        <div className={`relative w-full md:w-1/3 flex items-center ${
-          darkMode ? 'bg-gray-800' : 'bg-white'
-        } rounded-lg shadow-sm border ${
-          darkMode ? 'border-gray-700' : 'border-gray-200'
-        }`}>
-          <MdSearch className="absolute left-3 text-gray-400" />
-          <input
-            type="text"
-            placeholder={`Rechercher par ${filterField}...`}
-            className={`w-full pl-10 pr-4 py-2 bg-transparent focus:outline-none ${
-              darkMode ? 'text-gray-200 placeholder-gray-400' : 'text-gray-800 placeholder-gray-500'
-            }`}
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-          />
+
+        {/* Bouton d'export avec marge à gauche sur desktop */}
+        <div className="w-full sm:w-auto sm:ml-auto">
+          <button
+            onClick={handleExportExcel}
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl w-full ${
+              darkMode 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            } transition-colors duration-200 shadow-md hover:shadow-lg`}
+          >
+            <MdFileDownload className="text-lg" />
+            <span>Exporter en CSV</span>
+          </button>
         </div>
       </div>
 
@@ -523,76 +633,270 @@ export default function EvenementAd() {
               darkMode ? 'text-gray-600' : 'text-gray-300'
             }`} />
             <p className={`text-lg ${
-              darkMode ? 'text-gray-400' : 'text-gray-500'
+              darkMode ? 'text-purple-300' : 'text-purple-600'  // Violet
             }`}>
               Aucun événement trouvé
             </p>
           </div>
         ) : (
-          <div className="h-[600px] w-full overflow-auto">
-            <DataGrid
-              rows={filteredData.map((event, index) => ({
-                id: index,
-                nom: event.nom,
-                type: event.type,
-                theme: event.theme,
-                date: formatDate(event.date),
-                date_fin: formatDate(event.date_fin),
-                localisation: event.location.nom,
-                organisateur: event.user.name,
-                action: index,
-              }))}
-              columns={[
-                { field: "nom", headerName: "Nom", flex: 1 },
-                { field: "type", headerName: "Type", flex: 1 },
-                { field: "theme", headerName: "Thème", flex: 1 },
-                { field: "date", headerName: "Date début", flex: 1 },
-                { field: "date_fin", headerName: "Date fin", flex: 1 },
-                { field: "localisation", headerName: "Localisation", flex: 1 },
-                { field: "organisateur", headerName: "Organisateur", flex: 1 },
-                {
-                  field: "action",
-                  headerName: "Action",
-                  flex: 1,
-                  sortable: false,
-                  renderCell: (params) => (
-                    <button
-                      onClick={() => openModal(params.value)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm ${
-                        darkMode
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                          : 'bg-blue-500 hover:bg-blue-600 text-white'
-                      } transition-colors duration-200`}
-                    >
-                      <FaEye />
-                      <span>Voir détail</span>
-                    </button>
-                  ),
-                },
-              ]}
-              pageSize={5}
-              rowsPerPageOptions={[5, 10, 20]}
-              disableSelectionOnClick
-              autoHeight
-              sx={{
-                '& .MuiDataGrid-root': {
-                  border: 'none',
-                  color: darkMode ? '#e2e8f0' : '#1e293b',
-                },
-                '& .MuiDataGrid-cell': {
-                  borderBottom: darkMode ? '1px solid #374151' : '1px solid #e2e8f0',
-                },
-                '& .MuiDataGrid-columnHeaders': {
-                  backgroundColor: darkMode ? '#1f2937' : '#f1f5f9',
-                  borderBottom: darkMode ? '1px solid #374151' : '1px solid #e2e8f0',
-                },
-                '& .MuiDataGrid-footerContainer': {
-                  backgroundColor: darkMode ? '#1f2937' : '#f1f5f9',
-                  borderTop: darkMode ? '1px solid #374151' : '1px solid #e2e8f0',
-                },
-              }}
-            />
-          </div>
+          <>
+            {/* Version mobile - Cards */}
+            <div className="block md:hidden space-y-4">
+              {filteredData.map((event, index) => (
+                <EventCard 
+                  key={index}
+                  event={{
+                    ...event,
+                    action: index,
+                    date: formatDate(event.date),
+                    localisation: event.location.nom,
+                    organisateur: event.user.name,
+                    status: event.status,
+                    participants: event.participants || 0
+                  }}
+                  darkMode={darkMode}
+                  onViewDetails={openModal}
+                />
+              ))}
+            </div>
+
+            {/* Version desktop - DataGrid */}
+            <div className="hidden md:block h-[auto] w-full overflow-hidden rounded-xl shadow-sm">
+              <DataGrid
+                rows={filteredData.map((event, index) => ({
+                  id: index,
+                  nom: event.nom,
+                  type: event.type,
+                  theme: event.theme,
+                  date: formatDate(event.date),
+                  date_fin: formatDate(event.date_fin),
+                  localisation: event.location.nom,
+                  organisateur: event.user.name,
+                  participants: event.participants || 0,
+                  status: event.status,
+                  action: index,
+                }))}
+                columns={[
+                  { 
+                    field: "nom", 
+                    headerName: "ÉVÉNEMENT", 
+                    flex: 1.5,
+                    renderCell: (params) => (
+                      <div className={`font-medium ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
+                        {params.value}
+                      </div>
+                    )
+                  },
+                  { 
+                    field: "type", 
+                    headerName: "TYPE", 
+                    flex: 1,
+                    renderCell: (params) => (
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        darkMode 
+                          ? 'bg-gray-700 text-blue-300' 
+                          : 'bg-blue-50 text-blue-600'
+                      }`}>
+                        {params.value}
+                      </span>
+                    )
+                  },
+                  { 
+                    field: "theme", 
+                    headerName: "THÈME", 
+                    flex: 1,
+                    renderCell: (params) => (
+                      <span className={`truncate ${darkMode ? 'text-purple-300' : 'text-purple-600'}`}>
+                        {params.value}
+                      </span>
+                    )
+                  },
+                  { 
+                    field: "date", 
+                    headerName: "DATE DÉBUT", 
+                    flex: 1,
+                    renderCell: (params) => (
+                      <div className={`text-sm ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
+                        {params.value}
+                      </div>
+                    )
+                  },
+                  { 
+                    field: "participants", 
+                    headerName: "PARTICIPANTS", 
+                    width: 140,
+                    headerAlign: 'center',
+                    align: 'center',
+                    renderCell: (params) => (
+                      <div className={`flex items-center justify-center gap-1 ${
+                        darkMode ? 'text-blue-300' : 'text-blue-600'
+                      }`}>
+                        <MdPeople className="text-lg" />
+                        <span>{params.value}</span>
+                      </div>
+                    )
+                  },
+                  { 
+                    field: "status", 
+                    headerName: "STATUT", 
+                    width: 120,
+                    renderCell: (params) => (
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        params.value === 'active'
+                          ? darkMode
+                            ? 'bg-green-900/50 text-green-300'
+                            : 'bg-green-100 text-green-800'
+                          : darkMode
+                            ? 'bg-gray-700/50 text-gray-400'
+                            : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {params.value === 'active' ? 'Actif' : 'Inactif'}
+                      </span>
+                    )
+                  },
+                  {
+                    field: "action",
+                    headerName: "",
+                    width: 120,
+                    sortable: false,
+                    filterable: false,
+                    disableColumnMenu: true,
+                    renderCell: (params) => (
+                      <button
+                        onClick={() => openModal(params.value)}
+                        className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-sm ${
+                          darkMode
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                            : 'bg-blue-500 hover:bg-blue-600 text-white'
+                        } transition-colors duration-200`}
+                      >
+                        <FaEye className="text-sm" />
+                        <span>Détails</span>
+                      </button>
+                    ),
+                  },
+                ]}
+                pageSize={10}
+                rowsPerPageOptions={[5, 10, 20]}
+                disableSelectionOnClick
+                disableRowSelectionOnClick
+                checkboxSelection={false}
+                autoHeight
+                sx={{
+                  '& .MuiDataGrid-root': {
+                    border: 'none',
+                    fontFamily: 'inherit',
+                  },
+                  '& .MuiDataGrid-cell': {
+                    borderBottom: darkMode 
+                      ? '1px solid rgba(31, 41, 55, 0.5)' 
+                      : '1px solid rgba(226, 232, 240, 0.8)',
+                    '&:focus': {
+                      outline: 'none',
+                    },
+                  },
+                  '& .MuiDataGrid-columnHeaders': {
+                    backgroundColor: darkMode ? 'rgb(17, 24, 39)' : 'rgb(248, 250, 252)',
+                    borderBottom: darkMode 
+                      ? '1px solid rgba(31, 41, 55, 0.8)' 
+                      : '1px solid rgba(226, 232, 240, 0.8)',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
+                  },
+                  '& .MuiDataGrid-columnHeader': {
+                    '&:focus': {
+                      outline: 'none',
+                    },
+                  },
+                  '& .MuiDataGrid-footerContainer': {
+                    backgroundColor: darkMode ? 'rgb(17, 24, 39)' : 'rgb(248, 250, 252)',
+                    borderTop: darkMode 
+                      ? '1px solid rgba(31, 41, 55, 0.8)' 
+                      : '1px solid rgba(226, 232, 240, 0.8)',
+                  },
+                  '& .MuiDataGrid-row': {
+                    backgroundColor: darkMode ? 'rgb(31, 41, 55)' : 'rgb(255, 255, 255)',
+                    '&:hover': {
+                      backgroundColor: darkMode 
+                        ? 'rgba(55, 65, 81, 0.4)' 
+                        : 'rgba(241, 245, 249, 0.8)',
+                    },
+                    '&.Mui-selected': {
+                      backgroundColor: 'transparent',
+                      '&:hover': {
+                        backgroundColor: darkMode 
+                          ? 'rgba(55, 65, 81, 0.4)' 
+                          : 'rgba(241, 245, 249, 0.8)',
+                      },
+                    },
+                  },
+                  '& .MuiTablePagination-root': {
+                    color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
+                  },
+                  '& .MuiDataGrid-virtualScroller': {
+                    scrollbarWidth: 'thin',
+                    '&::-webkit-scrollbar': {
+                      height: '8px',
+                      width: '8px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      background: darkMode ? 'rgb(31, 41, 55)' : 'rgb(241, 245, 249)',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: darkMode ? 'rgb(75, 85, 99)' : 'rgb(203, 213, 225)',
+                      borderRadius: '4px',
+                      '&:hover': {
+                        background: darkMode ? 'rgb(107, 114, 128)' : 'rgb(148, 163, 184)',
+                      },
+                    },
+                  },
+                  '& .MuiDataGrid-menuIcon': {
+                    color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
+                  },
+                  '& .MuiDataGrid-sortIcon': {
+                    color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
+                  },
+                  '& .MuiDataGrid-iconButtonContainer': {
+                    visibility: 'visible !important',
+                  },
+                }}
+                componentsProps={{
+                  pagination: {
+                    sx: {
+                      '& .MuiTablePagination-selectLabel': {
+                        color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
+                      },
+                      '& .MuiTablePagination-displayedRows': {
+                        color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
+                      },
+                      '& .MuiSelect-icon': {
+                        color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
+                      },
+                    },
+                  },
+                }}
+                localeText={{
+                  noRowsLabel: 'Aucun événement trouvé',
+                  footerRowSelected: (count) =>
+                    count > 1
+                      ? `${count.toLocaleString()} événements sélectionnés`
+                      : `${count.toLocaleString()} événement sélectionné`,
+                  columnMenuSortAsc: 'Trier par ordre croissant',
+                  columnMenuSortDesc: 'Trier par ordre décroissant',
+                  columnMenuFilter: 'Filtrer',
+                  columnMenuHideColumn: 'Masquer',
+                  columnMenuManageColumns: 'Gérer les colonnes',
+                  columnsPanelTextFieldLabel: 'Rechercher colonne',
+                  columnsPanelTextFieldPlaceholder: 'Titre de colonne',
+                  columnsPanelShowAllButton: 'Tout afficher',
+                  columnsPanelHideAllButton: 'Tout masquer',
+                }}
+              />
+            </div>
+          </>
         )}
       </div>
 
