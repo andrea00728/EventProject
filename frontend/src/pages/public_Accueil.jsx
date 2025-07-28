@@ -28,6 +28,7 @@ const Public_Accueil = () => {
   const contactRef = useRef(null);
   const testimonyRef = useRef(null);
   const [eventCount,setEventCount] = useState(0);
+  
   const [organisateurCount,setOrganisateurCount] = useState(0);
   useEffect(() => {
     const hash = window.location.hash;
@@ -101,6 +102,23 @@ const Public_Accueil = () => {
     };
     fetchDataUserCount();
     },[]);
+
+    const renderStars= (currentRating, interactive = false) => {
+      return [...Array(5)].map((_, index) => (
+        <FaStar
+          key={index}
+          onClick={interactive ? () => setRating(index + 1) : undefined}
+          onMouseEnter={interactive ? () => setHoverRating(index + 1) : undefined}
+          onMouseLeave={interactive ? () => setHoverRating(0) : undefined}
+          className={`${interactive ? "cursor-pointer" : ""} transition-all duration-300 transform ${
+            index < (interactive ? hoverRating || rating : currentRating)
+              ? "text-yellow-400 scale-110 drop-shadow-lg"
+              : "text-gray-300"
+          } ${interactive && index < (hoverRating || rating) ? "hover:scale-125" : ""}`}
+          size={interactive ? 32 : 20}
+        />
+      ));
+    };
   return (
     <>
 
