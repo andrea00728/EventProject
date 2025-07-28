@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import socket from "../../socket";
@@ -11,31 +11,19 @@ import {
   Alert,
   TextField,
   Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
 } from "@mui/material";
 import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
-import { debounce } from "lodash";
-
 
 const backgroundImageUrl = "https://images.unsplash.com/photo-1542744095-291d1f67b221";
 
 const GestionCommandesPage = () => {
   const [commandes, setCommandes] = useState([]);
-  const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
-  const [openDialog, setOpenDialog] = useState(false);
-  const [deleteId, setDeleteId] = useState(null);
-  const [deleteType, setDeleteType] = useState(null); // "order" or "table"
   const { token } = useStateContext();
 
   const STATUS_MAPPING = {
@@ -63,91 +51,54 @@ const GestionCommandesPage = () => {
   const fetchCommandes = async () => {
     try {
       setLoading(true);
-      if (!token) throw new Error("Veuillez vous connecter.");
-      const eventId = await getEventIdByEmail(token).catch((err) => {
-        throw new Error("Erreur lors de la récupération de l'événement: " + err.message);
-      });
-      const { data } = await axios.get(`${API_URL}/orders/event/${eventId.eventId}`, {
-        params: { include: "table,items,items.menuItem" },
-      });
+      if (!token) throw new Error("Token manquant");
+      const eventId = await getEventIdByEmail(token);
+      const { data } = await axios.get(
+        `http://localhost:3000/orders/event/${eventId.eventId}`,
+        { params: { include: "table,items,items.menuItem" } }
+      );
 
       const formatted = data.map((c) => ({
         id: c.id,
         nom: c.nom || "Anonyme",
         email: c.email || "-",
-        table: c.table ? `Table ${c.table.nom}` : "N/A", // Changé de numero à nom
-        tableId: c.table?.id || null, // Ajout de l'ID de la table
+        table: c.table ? `Table ${c.table.numero}` : "N/A",
         total: c.total ? `€${c.total.toFixed(2)}` : "€0.00",
         itemsCount: c.items?.length || 0,
         date: new Date(c.orderDate).toLocaleString(),
-        status: STATUS_MAPPING.backToFront[c.status] || "inconnu",
+        status: STATUS_MAPPING.backToFront[c.status] || c.status,
       }));
 
       setCommandes(formatted);
     } catch (err) {
-      setSnackbar({ open: true, message: err.message, severity: "error" });
+      console.error("Erreur:", err);
+      setSnackbar({ open: true, message: "Erreur lors du chargement des commandes.", severity: "error" });
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchTables = async () => {
+  const handleDelete = async (id) => {
+    if (!window.confirm("Supprimer cette commande ?")) return;
+
     try {
-      if (!token) throw new Error("Veuillez vous connecter.");
-      const eventId = await getEventIdByEmail(token).catch((err) => {
-        throw new Error("Erreur lors de la récupération de l'événement: " + err.message);
-      });
-      const { data } = await axios.get(`${API_URL}/tables/event/${eventId.eventId}`, {
+      await axios.delete(`http://localhost:3000/orders/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setTables(data);
-    } catch (err) {
-      setSnackbar({ open: true, message: "Erreur lors de la récupération des tables: " + err.message, severity: "error" });
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      if (deleteType === "order") {
-        await axios.delete(`${API_URL}/orders/${deleteId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setCommandes((prev) => prev.filter((cmd) => cmd.id !== deleteId));
-        setSnackbar({ open: true, message: "Commande supprimée.", severity: "success" });
-      } else if (deleteType === "table") {
-        await axios.delete(`${API_URL}/tables/${deleteId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setTables((prev) => prev.filter((table) => table.id !== deleteId));
-        setCommandes((prev) =>
-          prev.map((cmd) =>
-            cmd.tableId === deleteId ? { ...cmd, table: "N/A", tableId: null } : cmd
-          )
-        );
-        setSnackbar({ open: true, message: "Table supprimée.", severity: "success" });
-      }
+      setCommandes((prev) => prev.filter((cmd) => cmd.id !== id));
+      setSnackbar({ open: true, message: "Commande supprimée.", severity: "success" });
     } catch (error) {
+      console.error("Erreur suppression:", error.response?.data || error.message);
       setSnackbar({
         open: true,
-        message: error.response?.data?.message || `Erreur serveur lors de la suppression ${deleteType === "order" ? "de la commande" : "de la table"}`,
+        message: error.response?.data?.message || "Erreur serveur lors de la suppression",
         severity: "error",
       });
-    } finally {
-      setOpenDialog(false);
-      setDeleteId(null);
-      setDeleteType(null);
     }
-  };
-
-  const handleDeleteClick = (id, type) => {
-    setDeleteId(id);
-    setDeleteType(type);
-    setOpenDialog(true);
   };
 
   useEffect(() => {
     fetchCommandes();
-    fetchTables();
 
     const onUpdateOrderStatus = (updatedOrder) => {
       setCommandes((prev) =>
@@ -155,39 +106,32 @@ const GestionCommandesPage = () => {
           cmd.id === updatedOrder.id
             ? {
                 ...cmd,
-                status: STATUS_MAPPING.backToFront[updatedOrder.status] || "inconnu",
+                status: STATUS_MAPPING.backToFront[updatedOrder.status] || updatedOrder.status,
               }
             : cmd
         )
       );
     };
 
-    socket.on("connect", () => console.log("Connecté au serveur WebSocket"));
-    socket.on("connect_error", () => {
-      setSnackbar({ open: true, message: "Connexion WebSocket perdue.", severity: "warning" });
+    socket.on("connect", () => {
+      console.log("Connecté au serveur WebSocket");
     });
+
     socket.on("updateOrderStatus", onUpdateOrderStatus);
 
     return () => {
       socket.off("connect");
-      socket.off("connect_error");
       socket.off("updateOrderStatus", onUpdateOrderStatus);
     };
-  }, [token]);
+  }, [token]); // on refresh si token change
 
-  const filteredCommandes = useMemo(() => {
-    return commandes.filter((cmd) => {
-      const matchStatus = selectedStatus === "all" || cmd.status === selectedStatus;
-      const search = searchTerm.toLowerCase();
-      const matchSearch =
-        cmd.nom.toLowerCase().includes(search) || cmd.email.toLowerCase().includes(search);
-      return matchStatus && matchSearch;
-    });
-  }, [commandes, selectedStatus, searchTerm]);
-
-  const handleSearchChange = debounce((value) => {
-    setSearchTerm(value);
-  }, 300);
+  const filteredCommandes = commandes.filter((cmd) => {
+    const matchStatus = selectedStatus === "all" || cmd.status === selectedStatus;
+    const search = searchTerm.toLowerCase();
+    const matchSearch =
+      cmd.nom.toLowerCase().includes(search) || cmd.email.toLowerCase().includes(search);
+    return matchStatus && matchSearch;
+  });
 
   const columns = [
     { field: "id", headerName: "ID", width: 70, sortable: true },
@@ -215,31 +159,17 @@ const GestionCommandesPage = () => {
     {
       field: "actions",
       headerName: "Actions",
-      width: 200,
+      width: 130,
       renderCell: (params) => (
-        <div className="flex gap-2">
-          <Button
-            variant="outlined"
-            color="error"
-            size="small"
-            onClick={() => handleDeleteClick(params.row.id, "order")}
-            disabled={params.row.status === "annuler"}
-            aria-label={`Supprimer la commande ${params.row.id}`}
-          >
-            Supprimer Commande
-          </Button>
-          {params.row.tableId && (
-            <Button
-              variant="outlined"
-              color="error"
-              size="small"
-              onClick={() => handleDeleteClick(params.row.tableId, "table")}
-              aria-label={`Supprimer la table ${params.row.tableId}`}
-            >
-              Supprimer Table
-            </Button>
-          )}
-        </div>
+        <Button
+          variant="outlined"
+          color="error"
+          size="small"
+          onClick={() => handleDelete(params.row.id)}
+          disabled={params.row.status === "annuler"}
+        >
+          Supprimer
+        </Button>
       ),
     },
   ];
@@ -268,17 +198,26 @@ const GestionCommandesPage = () => {
           <TextField
             size="small"
             placeholder="Rechercher client ou email..."
-            onChange={(e) => handleSearchChange(e.target.value)}
-            aria-label="Rechercher des commandes par client ou email"
-            sx={{ bgcolor: "white", borderRadius: 2, boxShadow: 1, minWidth: 250 }}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{
+              bgcolor: "white",
+              borderRadius: 2,
+              boxShadow: 1,
+              minWidth: 250,
+            }}
           />
 
           <Select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
             size="small"
-            sx={{ bgcolor: "white", borderRadius: 2, boxShadow: 1, minWidth: 160 }}
-            aria-label="Filtrer par statut"
+            sx={{
+              bgcolor: "white",
+              borderRadius: 2,
+              boxShadow: 1,
+              minWidth: 160,
+            }}
           >
             <MenuItem value="all">Toutes les commandes</MenuItem>
             {STATUS_OPTIONS.map((s) => (
@@ -289,14 +228,10 @@ const GestionCommandesPage = () => {
           </Select>
 
           <Button
-            onClick={() => {
-              fetchCommandes();
-              fetchTables();
-            }}
+            onClick={fetchCommandes}
             variant="contained"
             size="small"
             sx={{ bgcolor: "#6b21a8", ":hover": { bgcolor: "#581c87" } }}
-            aria-label="Actualiser les commandes et tables"
           >
             Actualiser
           </Button>
@@ -304,17 +239,10 @@ const GestionCommandesPage = () => {
           <Link
             to="/caisse"
             className="text-white underline hover:text-gray-200 text-sm whitespace-nowrap"
-            aria-label="Retour au tableau de bord"
           >
             ← Retour au Tableau de Bord
           </Link>
         </motion.div>
-
-        {loading && (
-          <div className="flex justify-center my-4">
-            <CircularProgress />
-          </div>
-        )}
 
         <motion.div
           initial={{ opacity: 0 }}
@@ -331,30 +259,13 @@ const GestionCommandesPage = () => {
             disableSelectionOnClick
             sx={{
               border: "none",
-              "& .MuiDataGrid-cell": { fontSize: "0.875rem" },
-              minWidth: 0,
-              width: "100%",
+              "& .MuiDataGrid-cell": {
+                fontSize: "0.875rem",
+              },
             }}
-            autoHeight
           />
         </motion.div>
       </motion.div>
-
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>Confirmer la suppression</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Êtes-vous sûr de vouloir supprimer {deleteType === "order" ? "cette commande" : "cette table"} ?
-            {deleteType === "table" && " Cela affectera toutes les commandes associées."}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Annuler</Button>
-          <Button onClick={handleDelete} color="error">
-            Supprimer
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <Snackbar
         open={snackbar.open}
