@@ -28,4 +28,10 @@ export class OrdersGateway {
     console.log(`🍽️ Mise à jour reçue :`, data);
     this.server.emit('order_status_updated', data); // Envoie à tous
   }
+
+  // Nouvelle méthode pour gérer l'ajout d'une commande
+  notifyNewOrder(order: any) {
+    console.log(`📦 Nouvelle commande ajoutée :`, order);
+    this.server.emit('new_order', order); // Émet l'événement à tous les clients
+  }
 }
