@@ -16,12 +16,12 @@ export class OrdersGateway {
   @WebSocketServer()
   server: Server;
 
-  handleConnection(client: Socket) {
+  async handleConnection(client: Socket) {
     console.log(`✅ Client connecté : ${client.id}`);
   }
 
   @SubscribeMessage('update_order_status')
-  handleStatusUpdate(
+  async handleStatusUpdate(
     @MessageBody() data: any,
     @ConnectedSocket() client: Socket,
   ) {
