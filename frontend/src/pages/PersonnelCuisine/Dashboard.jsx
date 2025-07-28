@@ -20,11 +20,11 @@ import {
   getAllOrdersForOnEvent,
   updateOrderStatus,
 } from "../../services/orders";
-import { io } from "socket.io-client";
 import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
+import { io } from 'socket.io-client';
+import socket from "../../socket";
 
-const socket = io("http://localhost:3000");
 
 const formatDateTime = (dateString) => {
   const date = new Date(dateString);
@@ -73,18 +73,20 @@ export default function DashboardpersCuisine() {
         setLoading(false);
       }
     };
-    fetchOrders();
-    socket.on("connect", () => {
-      console.log("Connecté au WebSocket serveur");
-    });
-    socket.on("connect_error", (error) => {
-      console.error("Erreur de connexion WebSocket:", error);
-    });
-    return () => {
-      socket.off("connect");
-      socket.off("connect_error");
-    };
-    
+
+      socket.on("connect", () => {
+        console.log("✅ Connecté au serveur WebSocket");
+      });
+
+      // Pour écouter les mises à jour
+      socket.on("order_status_updated", (data) => {
+        console.log("📦 Statut mis à jour :", data);
+      });
+
+
+    fetchOrders()
+
+
   }, [token]);
 
   const changeDataBaseStatus = async (id, status) => {
@@ -103,8 +105,7 @@ export default function DashboardpersCuisine() {
     }
 
     if (newStatus !== updatedOrder.status) {
-      console.log("Émission de changeStatus:", { id, status: newStatus });
-      socket.emit("changeStatus", { id, status: newStatus });
+      socket.emit("update_order_status", { id, status: newStatus });
       await changeDataBaseStatus(id, newStatus);
       setCommandes((prev) =>
         prev.map((c) => (c.id === id ? { ...c, status: newStatus } : c))

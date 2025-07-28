@@ -1,7 +1,7 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import Footer from "./footer";
 import { FaAward, FaMapMarkerAlt, FaUsers } from "react-icons/fa";
-import { Link} from "react-router-dom";
 import EventsSection from "../util/eventSection";
 
 export default function Accueil() {

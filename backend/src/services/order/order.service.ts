@@ -193,8 +193,8 @@ export class OrderService {
     return this.orderRepository.save(order);
   }
 
-  async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served', userId: string): Promise<Order> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+  async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served', email: string): Promise<Order> {
+    const user = await this.personnelRepository.findOne({ where: { email: email } });
     if (!user || user.role !== 'cuisinier') {
       throw new UnauthorizedException('Only cuisinier can update order status');
     }
