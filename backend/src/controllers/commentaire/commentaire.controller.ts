@@ -3,30 +3,29 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { CommentaireService } from 'src/services/commentaire/commentaire.service';
 import { CreateCommentaireDto } from 'src/dto/create-commentaire.dto';
 import { UpdateCommentaireDto } from 'src/dto/update-commentaire.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { NoFilesInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('commentaires')
 @Controller('commentaire')
 export class CommentaireController {
   constructor(private readonly commentaireService: CommentaireService) { }
 
-  @Post("commentaire")
+
+  /**
+   * 
+   * @returns
+   * 
+   * aza ataon'laisany forma Data ilay,izy dia aza kitiana tsony fa zavatra efa mande tsara io 
+   * manotania iany refa misy zavatra ts mazava fa ts tonga dia manova an'ilay code 
+   * 
+   * 
+   */
+  @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('jwt')
   @ApiOperation({ summary: 'Créer un nouveau commentaire' })
   @ApiResponse({ status: 201, description: 'Commentaire créé avec succès.' })
   @ApiResponse({ status: 401, description: 'Non autorisé.' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        contenu: { type: 'string' }
-      },
-    },
-  })
-  @UseInterceptors(NoFilesInterceptor())
   create(@Body() createCommentaireDto: CreateCommentaireDto, @Request() req) {
     return this.commentaireService.create(createCommentaireDto, req.user);
   }
@@ -38,6 +37,7 @@ export class CommentaireController {
     return this.commentaireService.findAll();
   }
   
+
    /**
    * 
    * @returns 
@@ -49,6 +49,47 @@ export class CommentaireController {
   @ApiResponse({status:200,description:'3 Dernier commentaire'})
   async findDiffCommentaireByUser(){
     return this.commentaireService.findDifferentCommentaireFromUser();
+  }
+
+
+
+  /**
+   * 
+   * @returns 
+   * recuperation du commentaire recente avant le premier commentaire recent
+   */
+  @Get('second-commentaire')
+  @ApiOperation({summary:'recuperation du commentaire recente avant le premier commentaire recent'})
+  @ApiResponse({status:200,description:'commentaire recent'})
+  async findSecondToLastCommentaireFromUser(){
+    return this.commentaireService.findSecondToLastCommentaireFromUser();
+  }
+
+
+  /**
+   * 
+   * @returns 
+   * recuperation du commentaire recente avant les deux dernier commentaire recent
+   */
+  @Get('third-commentaire')
+  @ApiOperation({summary:'recuperation du commentaire recente avant les deux dernier commentaire recent'})
+  @ApiResponse({status:200,description:'commentaire recent'})
+  async findThirdToLastCommentaireFromUser(){
+    return this.commentaireService.findThirdToLastCommentaireFromUser();
+  }
+
+  /**
+   * 
+   * @returns 
+   * 
+   * recuperation du commentaire recente avant les trois dernier commentaire recent
+   */
+
+  @Get('fourth-commentaire')
+  @ApiOperation({summary:'recuperation du commentaire recente avant les trois dernier commentaire recent'})
+  @ApiResponse({status:200,description:'commentaire recent'})
+  findFourthToLastCommentaireFromUser(){
+    return this.commentaireService.findFourthToLastCommentaireFromUser();
   }
   
   /**

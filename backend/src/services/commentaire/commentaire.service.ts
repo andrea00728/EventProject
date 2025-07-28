@@ -17,9 +17,9 @@ export class CommentaireService {
     commentaire.contenu = createCommentaireDto.contenu;
     commentaire.userEmail = user.email;
     commentaire.satisfaction=createCommentaireDto.satisfaction;
-    commentaire.userName = user.name || null; // Nullable
-    commentaire.userPhoto = user.photo || null; // Nullable
-    commentaire.satisfaction=createCommentaireDto.satisfaction  || SatisfactionLevel.SATISFAIT;
+    commentaire.userName = user.name || null; 
+    commentaire.userPhoto = user.photo || null;
+    commentaire.satisfaction=createCommentaireDto.satisfaction  || SatisfactionLevel.DECEVANT;
 
     return this.commentaireRepository.save(commentaire);
   }
@@ -83,6 +83,8 @@ export class CommentaireService {
    * @returns 
    * 
    * recuperation des 3 dernieres commentaire avec des different user
+   * 
+   * 
    */
 
   async findDifferentCommentaireFromUser  () {
@@ -96,4 +98,56 @@ export class CommentaireService {
   }
 
 
+  /**
+   * 
+   * @returns 
+   * 
+   * commentaire recent avant le dernier commentaire
+   * 
+   * 
+   */
+
+  async findSecondToLastCommentaireFromUser  () {
+    return this.commentaireRepository
+    .createQueryBuilder('commentaire')
+    .orderBy('commentaire.createdAt', 'DESC')
+     .offset(1)
+    .limit(1)
+    .getOne();
+  }
+
+  /**
+   * 
+   * @returns 
+   * commentaire recent avant les 2 dernier commentaire
+   * 
+   * 
+   */
+  async findThirdToLastCommentaireFromUser  () {
+    return this.commentaireRepository
+    .createQueryBuilder('commentaire')
+    .orderBy('commentaire.createdAt', 'DESC')
+     .offset(2)
+    .limit(1)
+    .getOne();
+  }
+
+
+  /**
+   * 
+   * @returns 
+   * commentaire recent avant les 3 derner commentaire
+   * 
+   * 
+   */
+
+  async findFourthToLastCommentaireFromUser  () {
+    return this.commentaireRepository
+   .createQueryBuilder('commentaire')
+    .orderBy('commentaire.createdAt', 'DESC')
+     .offset(3)
+    .limit(1)
+    .getOne();
+  
+  }
 }

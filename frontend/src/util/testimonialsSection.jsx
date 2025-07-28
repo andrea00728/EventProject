@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { FaStar, FaQuoteLeft } from "react-icons/fa";
 import axios from "axios";
 import { useStateContext } from "../context/ContextProvider";
+import { createTestimony, findthreeRecent } from "../services/testimonyService";
+import { getSatisfactionLevel, mapSatisfactionToStars, satisfactionDisplay } from "./SatisfactionEtoils/SatisfactionLevel";
 
 const TestimonialsSection = () => {
   const [rating, setRating] = useState(0);
@@ -19,8 +21,8 @@ const TestimonialsSection = () => {
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/commentaire/diff-commentaire");
-        setTestimonials(response.data);
+        const response = await findthreeRecent();
+        setTestimonials(response);
       } catch (err) {
         console.error("Error fetching testimonials:", err);
       }
@@ -28,71 +30,27 @@ const TestimonialsSection = () => {
     fetchTestimonials();
   }, []);
 
-  // Map rating to SatisfactionLevel
-  const mapRatingToSatisfaction = (rating) => {
-    if (rating === 5) return "tres_satisfait";
-    if (rating >= 3) return "satisfait";
-    return "pas_satisfait";
-  };
-
-  // Map SatisfactionLevel to star count for display
-  const mapSatisfactionToStars = (satisfaction) => {
-    switch (satisfaction) {
-      case "tres_satisfait":
-        return 5;
-      case "satisfait":
-        return 3;
-      case "pas_satisfait":
-        return 1;
-      default:
-        return 3; // Default to satisfait
-    }
-  };
-
-  // Map SatisfactionLevel to display text
-  const satisfactionDisplay = {
-    tres_satisfait: "Excellent",
-    satisfait: "Bien",
-    pas_satisfait: "Décevant",
-  };
-
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (rating === 0 || comment.trim().length < 10 || !user || !token) {
-      setError("Veuillez vous connecter et compléter tous les champs requis.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const response = await axios.post(
-        "http://localhost:3000/commentaire/commentaire",
-        {
-          contenu: comment.trim(),
-          satisfaction: mapRatingToSatisfaction(rating),
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setSuccess("Témoignage publié avec succès !");
-      setComment("");
+    const payload ={
+      contenu:comment,
+      satisfaction:getSatisfactionLevel(rating),
+    };
+    try{
+      await createTestimony(payload,token);
+      console.log("commentaire cree avec success");
+      setSuccess('commentaire cree avec success');
       setRating(0);
       setHoverRating(0);
-
-      // Refresh testimonials
-      const updatedTestimonials = await axios.get("http://localhost:3000/commentaire/diff-commentaire");
-      setTestimonials(updatedTestimonials.data);
-    } catch (err) {
-      setError("Erreur lors de la publication du témoignage. Veuillez réessayer.");
-      console.error(err);
-    } finally {
-      setIsSubmitting(false);
+      const updatedTestimonials = await findthreeRecent();
+      setTestimonials(updatedTestimonials);
+    }catch(err){
+      
+      console.log('une erreur est survenue lors de la creation');
+      console.log(err)
+      setError('une erreur est survenue lors de la creation');
     }
-  };
-
+  }
   // Render star ratings
   const renderStars = (currentRating, interactive = false) => {
     return [...Array(5)].map((_, index) => (
