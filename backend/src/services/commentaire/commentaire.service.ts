@@ -70,11 +70,30 @@ export class CommentaireService {
    * recuperation du dernier commentaire ajouter par des organisateur active
    */
   
-  findOneRecent(){
+  async findOneRecent(){
     return this.commentaireRepository.findOne({
     where:{},
      order:{createdAt:'DESC'},
     })
   }
+
+
+  /**
+   * 
+   * @returns 
+   * 
+   * recuperation des 3 dernieres commentaire avec des different user
+   */
+
+  async findDifferentCommentaireFromUser  () {
+    return this.commentaireRepository
+    .createQueryBuilder('commentaire')
+   .distinctOn(['commentaire.userEmail'])
+   .orderBy('commentaire.userEmail','ASC') 
+    .addOrderBy('commentaire.userEmail','DESC')
+    .limit(3)
+    .getMany();
+  }
+
 
 }

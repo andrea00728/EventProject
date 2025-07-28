@@ -248,7 +248,7 @@ export default function ListeTable() {
         />
       ),
     },
-    { field: "numero", headerName: "Numéro", width: 150 },
+    { field: "nom", headerName: "nom", width: 150 },
     { field: "capacite", headerName: "Capacité", width: 150 },
     { field: "type", headerName: "Type", width: 150 },
     {
@@ -322,6 +322,27 @@ export default function ListeTable() {
       )}
       {!loading && tables.length > 0 && (
         <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+          {/* Checkbox Tout Sélectionner */}
+          <div className="flex items-center mb-4">
+            <Checkbox
+              checked={selectedTableIds.length === tables.length}
+              indeterminate={selectedTableIds.length > 0 && selectedTableIds.length < tables.length}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setSelectedTableIds(tables.map((table) => table.id));
+                } else {
+                  setSelectedTableIds([]);
+                }
+              }}
+              sx={{
+                color: '#6b48ff',
+                '&.Mui-checked': {
+                  color: '#6b48ff',
+                },
+              }}
+            />
+            <span className="text-sm text-gray-700">Tout sélectionner</span>
+          </div>
           <DataGrid
             rows={tables}
             columns={columns}
@@ -377,21 +398,14 @@ export default function ListeTable() {
             </Link>
             <button
               onClick={handlePrintSelected}
-              className="py-2 px-4 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200"
-              aria-label="Imprimer les tables sélectionnées"
+              className="py-2 px-4 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-200 cursor-pointer"
+              aria-label="Imprimer toutes les tables"
             >
               🖨️ Imprimer
             </button>
             <button
-              onClick={handlePrintAll}
-              className="py-2 px-4 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-200"
-              aria-label="Imprimer toutes les tables"
-            >
-              🖨️ Imprimer tous
-            </button>
-            <button
               onClick={handleOpenDeleteConfirm}
-              className="py-2 px-4 rounded-lg bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-200"
+              className="py-2 px-4 rounded-lg bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-200 cursor-pointer"
               aria-label="Supprimer les tables sélectionnées"
             >
               🗑️ Supprimer

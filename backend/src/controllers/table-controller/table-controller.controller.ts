@@ -52,7 +52,7 @@ export class TableController {
       throw new BadRequestException("Aucun événement trouvé pour cet utilisateur");
     }
     return this.tableService.createTable({
-      numero: dto.numero,
+      nom: dto.nom,
       capacite: dto.capacite,
       eventId: lastEvent.id,
       type:dto.type,

@@ -316,7 +316,7 @@ async importGuests(file: Express.Multer.File, eventId: number,userId:string): Pr
       place: true,
       table: {
         id: true,
-        numero: true,
+        nom: true,
       },
     },
   });

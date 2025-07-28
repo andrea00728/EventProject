@@ -56,7 +56,7 @@ function getPlacePositions(type, capacity) {
   return positions;
 }
 
-// Snap to grid 40x40
+
 function snapToGrid(value, gridSize = 40) {
   return Math.round(value / gridSize) * gridSize;
 }
@@ -172,7 +172,7 @@ function Table({ table, onMove, onRotate, onDelete, onDuplicate, onPlaceClick, s
             ${dragging ? "opacity-60 ring-4 ring-indigo-300" : ""}
             hover:scale-105 hover:ring-2 hover:ring-indigo-500 backdrop-blur-sm bg-opacity-70`}
         >
-          <span className="text-xs font-bold text-indigo-700">Table {table.numero}</span>
+          <span className="text-xs font-bold text-indigo-700">Table {table.nom}</span>
         </div>
       </div>
     </div>
