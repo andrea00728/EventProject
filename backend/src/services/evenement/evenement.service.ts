@@ -169,5 +169,34 @@ async findCountEvents(): Promise<number> {
   return this.evenementRepository.count();
 }
 
+async findCountForAllEventStats(): Promise<{
+  total: number;
+  passes: number;
+  avenir: number;
+}> {
+  const now = new Date();
+
+  const total = await this.evenementRepository.count();
+
+  const passes = await this.evenementRepository.count({
+    where: {
+      date_fin: LessThanOrEqual(now),
+    },
+  });
+
+  const avenir = await this.evenementRepository.count({
+    where: {
+      date_fin: MoreThanOrEqual(now),
+    },
+  });
+
+  return {
+    total,
+    passes,
+    avenir,
+  };
+}
+
+
 }
 

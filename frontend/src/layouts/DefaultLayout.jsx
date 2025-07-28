@@ -48,8 +48,6 @@ export default function DefaultLayout() {
     const changeStatus = async () => {
       const userId = await getUserIdForToken(token);
 
-      console.log("Id récupèré : ", userId);
-
       const socket = io("http://localhost:3000", {
         auth: {
           userId: userId, // très important : doit être l’ID réel de l’organisateur

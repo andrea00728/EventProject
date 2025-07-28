@@ -82,6 +82,7 @@ export default function DashboardpersCuisine() {
           userId: UserId, // très important : doit être l’ID réel de l’organisateur
         },
       });
+
       socket.on("connect", () => {
         console.log("✅ Connecté au serveur WebSocket");
       });
@@ -109,6 +110,9 @@ export default function DashboardpersCuisine() {
     });
     const updatedOrder = commandes.find((c) => c.id === id);
     let newStatus = updatedOrder.status;
+
+
+    
 
     if (direction === "next") {
       if (newStatus === "pending") newStatus = "preparing";

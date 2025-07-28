@@ -125,7 +125,7 @@ export class AuthController {
   //  }))
 
 
-@Post('logout')
+  @Post('logout')
   async logout(@Req() req, @Res() res) {
     const user = req.user;
     await this.authService.logout(user);

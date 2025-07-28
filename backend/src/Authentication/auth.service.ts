@@ -122,11 +122,19 @@ export class AuthService {
   }
 
   async updateStatus(userId: string, isOnline: boolean) {
-  await this.userRepository.update(userId, {
-    isOnline,
-    ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
-  });
-}
+    const manager = await this.userRepository.findOne({
+      where: { id : userId },
+    });
+
+    if (!manager) {
+      throw new NotFoundException(`Manager avec ID ${userId} non trouvé`);
+    }
+
+    await this.userRepository.update(userId, {
+      isOnline,
+      ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
+    });
+  }
 
   async getIdForToken(userEmail) {
     if(!userEmail) {

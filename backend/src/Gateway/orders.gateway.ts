@@ -28,4 +28,5 @@ export class OrdersGateway {
     console.log(`🍽️ Mise à jour reçue :`, data);
     this.server.emit('order_status_updated', data); // Envoie à tous
   }
+
 }

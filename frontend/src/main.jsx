@@ -1,14 +1,17 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { ContextProvider } from './context/ContextProvider.jsx'
-import { RouterProvider } from 'react-router-dom'
-import router from './routers/router.jsx'
-import './App.css'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { ContextProvider } from "./context/ContextProvider.jsx";
+import { RouterProvider } from "react-router-dom";
+import router from "./routers/router.jsx";
+import "./App.css";
+import { DarkModeProvider } from "./context/DarkModeContext.jsx";
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ContextProvider>
-      <RouterProvider router={router}/>
+      <DarkModeProvider>
+        <RouterProvider router={router} />
+      </DarkModeProvider>
     </ContextProvider>
-  </StrictMode>,
-)
+  </StrictMode>
+);

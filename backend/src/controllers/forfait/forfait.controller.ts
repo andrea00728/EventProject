@@ -20,6 +20,7 @@ import { Request, Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { addDays } from 'date-fns';
 import { NotificationService } from 'src/services/notification/notification.service';
+import { ForfaitService } from 'src/services/forfait/forfait.service';
 @Controller('forfait')
 export class ForfaitController {
   constructor(
@@ -30,6 +31,7 @@ export class ForfaitController {
     @InjectRepository(Forfait)
     private forfaitRepository: Repository<Forfait>,
     private readonly notificationService:NotificationService,
+    private readonly forfaitService: ForfaitService,
   ) {}
 
   @Post('upgrade')
@@ -169,5 +171,10 @@ async getUserForfait(@Req() req: any) {
     forfaitExpirationDate: user.forfaitexpirationdate,
   };
 }
+
+  @Get('sumAllUsers')
+  async getSumForUsersForfait(): Promise<any> {
+    return this.forfaitService.getSumForUsersForfait()
+  }
 
 }

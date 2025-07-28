@@ -103,4 +103,21 @@ export class ForfaitService {
     console.log(`Utilisateur ${userId} rétrogradé à freemium car le forfait a expiré.`);
   }
 }
+
+  /*************************************************************************************
+   * ***************  Pour la page Super Admin dans son dashboard *********************
+   * ********************************************************************************
+   */
+
+  /*************   Total des revenus des forfaits ********************** */
+
+  async getSumForUsersForfait(): Promise<number> {
+    const result = await this.userRepo
+      .createQueryBuilder('users')
+      .leftJoin('users.forfait', 'forfait')
+      .select('SUM(forfait.price)', 'sum')
+      .getRawOne();
+
+    return Number(result.sum); // conversion en number
+  }
 }

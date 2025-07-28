@@ -59,3 +59,18 @@ export const getUserForfait = async (token) => {
     throw new Error('Erreur lors de la récupération du forfait actif', { cause: error });
   }
 };
+
+export const getSumForUsersForfait = async (/*token*/) => {
+  // if (!token) throw new Error('Utilisateur non authentifié');
+  try {
+    const response = await axiosClient.get('/forfait/sumAllUsers', /*{
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }*/);
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération de la somme des forfaits', error);
+    throw new Error('Erreur lors de la récupération de la somme des forfaits', { cause: error });
+  }
+}

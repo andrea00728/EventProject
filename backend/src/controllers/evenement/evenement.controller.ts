@@ -51,7 +51,7 @@ async create(@Body() dto: CreateEventDto, @Req() req: any): Promise<Evenement> {
   //recuperation par compte connecte
    */
 
-   @Get('/me')
+  @Get('/me')
   @UseGuards(AuthGuard('jwt'))
   async findUserEvenement(@Req() req: any): Promise<Evenement[]> {
     const userIdFromToken = req.user?.sub;
@@ -63,7 +63,7 @@ async create(@Body() dto: CreateEventDto, @Req() req: any): Promise<Evenement> {
   }
 
   @Get()
-  findAll() {
+  async findAll() {
     return this.evenementService.findAll();
   }
 
@@ -79,7 +79,7 @@ async create(@Body() dto: CreateEventDto, @Req() req: any): Promise<Evenement> {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string) {
     return this.evenementService.findOne(+id);
   }
 
@@ -98,11 +98,16 @@ async create(@Body() dto: CreateEventDto, @Req() req: any): Promise<Evenement> {
   }
   /****************************** ******************** */
   @Get(':id/managerEvents')
-  findManagerEvents(@Param('id') id: string) {
+  async findManagerEvents(@Param('id') id: string) {
     return this.evenementService.findManagerEvents(id);   
   }
  
-  
+
+  @Get('/events/statistics')
+  //@UseGuards(AuthGuard('jwt'))  
+  async findCountForAllEventStats() : Promise<any> {
+    return this.evenementService.findCountForAllEventStats();   
+  }
 
 
 }

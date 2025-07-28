@@ -46,9 +46,16 @@ export default function Organisateur() {
     };
     fetchData();
 
+    // const userId = await getUserIdForToken(token);
+    // const socket = io("http://localhost:3000", {
+    //   auth: {
+    //     userId: userId, // très important : doit être l’ID réel de l’organisateur
+    //   },
+    // });
+
     const socket = io("http://localhost:3000", {
       auth: {
-        userId: 'b101b3b2-880b-47c2-a1ad-31ebbf61aa6d', // Remplace par un ID réel, ex: "admin-1"
+        userId: '00ec368b-aae5-4975-84d9-becd234b0a9c', // Remplace par un ID réel, ex: "admin-1"
       },
     });
 
@@ -67,14 +74,14 @@ export default function Organisateur() {
         const match = prev.find((m) => m.id === userId);
         console.log("Correspondance trouvée :", !!match);
         return prev.map((m) =>
-          m.id === userId ? { ...m, isOnline: true } : m,
+          m.id === userId ? { ...m, isOnline: true, lastLogin: new Date().toISOString(), } : m,
         );
       });
     });
 
     socket.on("organizer_disconnected", ({ userId }) => {
       setData((prev) =>
-        prev.map((m) => (m.id === userId ? { ...m, isOnline: false } : m))
+        prev.map((m) => (m.id === userId ? { ...m, isOnline: false , lastLogin: new Date().toISOString(), } : m))
       );
     });
 
