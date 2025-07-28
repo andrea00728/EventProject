@@ -1,13 +1,10 @@
 import React from "react";
 import Footer from "./footer";
 import { FaAward, FaMapMarkerAlt, FaUsers } from "react-icons/fa";
-import { Link} from "react-router-dom";
 import EventsSection from "../util/eventSection";
+import TestimonialsSection from "../util/testimonialsSection";
 
 export default function Accueil() {
-  const eventItem=[
-    {path:'/evenement',name:'Commencer gratuitement'}
-  ];
   return (
     <>
       {/* Section Hero */}
@@ -45,12 +42,11 @@ export default function Accueil() {
 
             {/* Boutons d'action */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              {eventItem.map((item)=>(
-                <Link key={item.name} to={item.path} className="group relative bg-gradient-to-r from-[#6B46C1] via-purple-600 to-indigo-600 text-white px-8 py-4 rounded-2xl font-bold text-lg tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25 active:scale-95">
-                <span className="relative z-10">{item.name}</span>
+              <button className="group relative bg-gradient-to-r from-[#6B46C1] via-purple-600 to-indigo-600 text-white px-8 py-4 rounded-2xl font-bold text-lg tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25 active:scale-95">
+                <span className="relative z-10">Commencer gratuitement</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-700 to-indigo-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </Link>
-              ))}
+              </button>
+
               <button className="group bg-white/80 backdrop-blur-sm text-slate-700 border-2 border-slate-200 px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-white hover:border-slate-300 hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95">
                 <span className="flex items-center gap-2">
                   Voir la démo
@@ -90,10 +86,10 @@ export default function Accueil() {
 
       {/* Section Événements Récents */}
       <section>
-        <EventsSection/>
+        <EventsSection />
       </section>
-      {/* Section À Propos */}
 
+      {/* Section À Propos */}
       <section className="bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-800 py-24">
         {/* Décorations de fond light */}
         <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-r from-[#FB9E3A]/10 to-orange-400/10 rounded-full blur-3xl animate-pulse" />
@@ -199,7 +195,9 @@ export default function Accueil() {
         </div>
       </section>
 
-
+      <section className="testimony">
+        <TestimonialsSection />
+      </section>
 
       <section>
         <Footer />

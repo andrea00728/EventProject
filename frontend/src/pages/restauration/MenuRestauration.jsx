@@ -17,6 +17,8 @@ import {
   TextField,
   IconButton
 } from "@mui/material";
+import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
+
 
 export default function MenuRestauration() {
   const { token } = useStateContext();
@@ -344,17 +346,6 @@ export default function MenuRestauration() {
               onChange={(e) => setForm({ ...form, [field]: e.target.value })}
             />
           ))}
-          <TextField
-            key={field}
-            label={field === 'name' ? 'Nom' : field === 'description' ? 'Description' : field === 'price' ? 'Prix' : field === 'category' ? 'Catégorie' : 'Stock'}
-            value={form[field] || ''}
-            type={field === 'price' || field === 'stock' ? 'number' : 'text'}
-            fullWidth
-            margin="dense"
-            variant="outlined"
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
-            onChange={(e) => setForm({ ...form, photo: e.target.files[0] })}
-          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseForm} sx={{ color: '#34495e' }}>Annuler</Button>

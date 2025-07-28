@@ -31,7 +31,27 @@ export default function Testimonials() {
     testamonialRecent();
   },[]);
 
-  if(!istestimonialsRecent) return <p>Chargement....</p>
+  if(!istestimonialsRecent) 
+  return    <div className="bg-gradient-to-r from-orange-50 via-purple-50 to-pink-50 rounded-3xl p-12 shadow-2xl border border-gray-200/50 mb-16 relative overflow-hidden animate-fadeIn" style={{animationDelay: '0.6s'}}>
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-400 via-purple-400 to-pink-400"></div>
+            
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="flex-shrink-0">
+                  <img src=""  className="w-24 h-24 bg-gradient-to-r from-orange-400 via-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-2xl"/>
+                
+              </div>
+              
+              <div className="flex-1 text-center md:text-left">
+                <div className="flex justify-center md:justify-start mb-4">
+                </div>
+                
+                <blockquote className="text-gray-800 text-2xl font-light leading-relaxed mb-6 italic">
+                  <span className="bg-gradient-to-r from-orange-600 to-pink-600 px-20 bg-clip-text text-transparent font-semibold"> pas encors de commentaire en ce moment </span>
+                </blockquote>
+              </div>
+            </div>
+          </div>
+  
 
   return (
     <>

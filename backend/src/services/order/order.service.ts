@@ -10,6 +10,7 @@ import { Balance } from 'src/entities/balance.entity';
 import { Evenement } from 'src/entities/Evenement';
 import { Payment } from 'src/entities/payment.entity';
 import { Personnel } from 'src/entities/Personnel';
+import { OrdersGateway } from 'src/gateway/orders.gateway';
 
 @Injectable()
 export class OrderService {
@@ -32,7 +33,7 @@ export class OrderService {
     private paymentRepository: Repository<Payment>,
     @InjectRepository(Personnel)
     private personnelRepository: Repository<Personnel>,
-    
+    private ordersGateway: OrdersGateway
     
   ) {}
 
@@ -194,27 +195,31 @@ export class OrderService {
   }
 
   async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served', userId: string): Promise<Order> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user || user.role !== 'cuisinier') {
-      throw new UnauthorizedException('Only cuisinier can update order status');
-    }
-    const order = await this.orderRepository.findOne({
-      where: { id: orderId },
-      relations: ['items', 'items.menuItem', 'table', 'table.event'],
-    });
-
-    if (!order) throw new NotFoundException('Order not found');
-    order.status = status;
-    return this.orderRepository.save(order);
+  const user = await this.userRepository.findOne({ where: { id: userId } });
+  if (!user || user.role !== 'cuisinier') {
+    throw new UnauthorizedException('Only cuisinier can update order status');
   }
+  
+  const order = await this.orderRepository.findOne({
+    where: { id: orderId },
+    relations: ['items', 'items.menuItem', 'table', 'table.event'],
+  });
+
+  if (!order) throw new NotFoundException('Order not found');
+
+  order.status = status;
+  const savedOrder = await this.orderRepository.save(order);
+
+  this.ordersGateway.server.emit('updateOrderStatus', {
+    id: savedOrder.id,
+    status: savedOrder.status,
+  });
+
+  return savedOrder;
+}
 
 
-
-
-
-
-
-  async validatePayment(orderId: number, email: string): Promise<Order> {
+ async validatePayment(orderId: number, email: string): Promise<Order> {
     const personnel = await this.personnelRepository.findOne({ where: { email: email } });
     if (!personnel || personnel.role !== 'caissier') {
       throw new UnauthorizedException('Only caissier can validate payment');
