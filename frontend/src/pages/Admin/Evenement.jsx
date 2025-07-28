@@ -403,19 +403,27 @@ export default function EvenementAd() {
     };
   }, [data]);
 
+  const gradientTitle =
+    "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";
+  const gradientButton =
+    "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-400 text-white";
+
+  const gradientsEvent = {
+    eventButton: "bg-gradient-to-r from-indigo-600 via-blue-500 to-indigo-700 text-white"
+  };
+
   const pageBg = darkMode
     ? "bg-gray-900 text-gray-200"
     : "bg-gradient-to-r from-white to-gray-50 text-gray-800";
 
+  const [currentPage, setCurrentPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   return (
     <div className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${pageBg}`}>
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${
-          darkMode 
-            ? 'text-blue-300'  // Bleu clair en mode nuit
-            : 'bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent'
-        }`}>
-          <MdCalendarToday className="mr-3" /> Liste des événements
+        <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${ gradientTitle }`}>
+          <MdCalendarToday className="mr-2 sm:mr-3 text-blue-700" /> Liste des événements
         </h2>
 
         <div className="flex items-center gap-2 sm:gap-4">
@@ -605,9 +613,7 @@ export default function EvenementAd() {
           <button
             onClick={handleExportExcel}
             className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl w-full ${
-              darkMode 
-                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
+              gradientButton
             } transition-colors duration-200 shadow-md hover:shadow-lg`}
           >
             <MdFileDownload className="text-lg" />
@@ -661,240 +667,147 @@ export default function EvenementAd() {
             </div>
 
             {/* Version desktop - DataGrid */}
-            <div className="hidden md:block h-[auto] w-full overflow-hidden rounded-xl shadow-sm">
-              <DataGrid
-                rows={filteredData.map((event, index) => ({
-                  id: index,
-                  nom: event.nom,
-                  type: event.type,
-                  theme: event.theme,
-                  date: formatDate(event.date),
-                  date_fin: formatDate(event.date_fin),
-                  localisation: event.location.nom,
-                  organisateur: event.user.name,
-                  participants: event.participants || 0,
-                  status: event.status,
-                  action: index,
-                }))}
-                columns={[
-                  { 
-                    field: "nom", 
-                    headerName: "ÉVÉNEMENT", 
-                    flex: 1.5,
-                    renderCell: (params) => (
-                      <div className={`font-medium ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
-                        {params.value}
+            <div className="hidden md:block overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800">
+              {/* En-têtes du tableau */}
+              <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                <div className="col-span-3">ÉVÉNEMENT</div>
+                <div className="col-span-1">TYPE</div>
+                <div className="col-span-2">THÈME</div>
+                <div className="col-span-2">DATE DÉBUT</div>
+                <div className="col-span-1 text-center">PARTICIPANTS</div>
+                <div className="col-span-1 text-center">STATUT</div>
+                <div className="col-span-2 text-center">ACTIONS</div>
+              </div>
+
+              {/* Contenu du tableau */}
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {filteredData
+                  .slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage)
+                  .map((event, index) => (
+                    <div 
+                      key={index}
+                      className="grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"
+                    >
+                      {/* Nom Événement */}
+                      <div className="col-span-3">
+                        <div className={`font-medium truncate ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
+                          {event.nom}
+                        </div>
                       </div>
-                    )
-                  },
-                  { 
-                    field: "type", 
-                    headerName: "TYPE", 
-                    flex: 1,
-                    renderCell: (params) => (
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        darkMode 
-                          ? 'bg-gray-700 text-blue-300' 
-                          : 'bg-blue-50 text-blue-600'
-                      }`}>
-                        {params.value}
-                      </span>
-                    )
-                  },
-                  { 
-                    field: "theme", 
-                    headerName: "THÈME", 
-                    flex: 1,
-                    renderCell: (params) => (
-                      <span className={`truncate ${darkMode ? 'text-purple-300' : 'text-purple-600'}`}>
-                        {params.value}
-                      </span>
-                    )
-                  },
-                  { 
-                    field: "date", 
-                    headerName: "DATE DÉBUT", 
-                    flex: 1,
-                    renderCell: (params) => (
-                      <div className={`text-sm ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
-                        {params.value}
+
+                      {/* Type */}
+                      <div className="col-span-1">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          darkMode ? 'bg-gray-700 text-blue-300' : 'bg-blue-50 text-blue-600'
+                        }`}>
+                          {event.type}
+                        </span>
                       </div>
-                    )
-                  },
-                  { 
-                    field: "participants", 
-                    headerName: "PARTICIPANTS", 
-                    width: 140,
-                    headerAlign: 'center',
-                    align: 'center',
-                    renderCell: (params) => (
-                      <div className={`flex items-center justify-center gap-1 ${
-                        darkMode ? 'text-blue-300' : 'text-blue-600'
-                      }`}>
-                        <MdPeople className="text-lg" />
-                        <span>{params.value}</span>
+
+                      {/* Thème */}
+                      <div className="col-span-2">
+                        <span className={`truncate ${darkMode ? 'text-purple-300' : 'text-purple-600'}`}>
+                          {event.theme}
+                        </span>
                       </div>
-                    )
-                  },
-                  { 
-                    field: "status", 
-                    headerName: "STATUT", 
-                    width: 120,
-                    renderCell: (params) => (
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        params.value === 'active'
-                          ? darkMode
-                            ? 'bg-green-900/50 text-green-300'
-                            : 'bg-green-100 text-green-800'
-                          : darkMode
-                            ? 'bg-gray-700/50 text-gray-400'
-                            : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {params.value === 'active' ? 'Actif' : 'Inactif'}
-                      </span>
-                    )
-                  },
-                  {
-                    field: "action",
-                    headerName: "",
-                    width: 120,
-                    sortable: false,
-                    filterable: false,
-                    disableColumnMenu: true,
-                    renderCell: (params) => (
-                      <button
-                        onClick={() => openModal(params.value)}
-                        className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-sm ${
-                          darkMode
-                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                            : 'bg-blue-500 hover:bg-blue-600 text-white'
-                        } transition-colors duration-200`}
-                      >
-                        <FaEye className="text-sm" />
-                        <span>Détails</span>
-                      </button>
-                    ),
-                  },
-                ]}
-                pageSize={10}
-                rowsPerPageOptions={[5, 10, 20]}
-                disableSelectionOnClick
-                disableRowSelectionOnClick
-                checkboxSelection={false}
-                autoHeight
-                sx={{
-                  '& .MuiDataGrid-root': {
-                    border: 'none',
-                    fontFamily: 'inherit',
-                  },
-                  '& .MuiDataGrid-cell': {
-                    borderBottom: darkMode 
-                      ? '1px solid rgba(31, 41, 55, 0.5)' 
-                      : '1px solid rgba(226, 232, 240, 0.8)',
-                    '&:focus': {
-                      outline: 'none',
-                    },
-                  },
-                  '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: darkMode ? 'rgb(17, 24, 39)' : 'rgb(248, 250, 252)',
-                    borderBottom: darkMode 
-                      ? '1px solid rgba(31, 41, 55, 0.8)' 
-                      : '1px solid rgba(226, 232, 240, 0.8)',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
-                  },
-                  '& .MuiDataGrid-columnHeader': {
-                    '&:focus': {
-                      outline: 'none',
-                    },
-                  },
-                  '& .MuiDataGrid-footerContainer': {
-                    backgroundColor: darkMode ? 'rgb(17, 24, 39)' : 'rgb(248, 250, 252)',
-                    borderTop: darkMode 
-                      ? '1px solid rgba(31, 41, 55, 0.8)' 
-                      : '1px solid rgba(226, 232, 240, 0.8)',
-                  },
-                  '& .MuiDataGrid-row': {
-                    backgroundColor: darkMode ? 'rgb(31, 41, 55)' : 'rgb(255, 255, 255)',
-                    '&:hover': {
-                      backgroundColor: darkMode 
-                        ? 'rgba(55, 65, 81, 0.4)' 
-                        : 'rgba(241, 245, 249, 0.8)',
-                    },
-                    '&.Mui-selected': {
-                      backgroundColor: 'transparent',
-                      '&:hover': {
-                        backgroundColor: darkMode 
-                          ? 'rgba(55, 65, 81, 0.4)' 
-                          : 'rgba(241, 245, 249, 0.8)',
-                      },
-                    },
-                  },
-                  '& .MuiTablePagination-root': {
-                    color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
-                  },
-                  '& .MuiDataGrid-virtualScroller': {
-                    scrollbarWidth: 'thin',
-                    '&::-webkit-scrollbar': {
-                      height: '8px',
-                      width: '8px',
-                    },
-                    '&::-webkit-scrollbar-track': {
-                      background: darkMode ? 'rgb(31, 41, 55)' : 'rgb(241, 245, 249)',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                      background: darkMode ? 'rgb(75, 85, 99)' : 'rgb(203, 213, 225)',
-                      borderRadius: '4px',
-                      '&:hover': {
-                        background: darkMode ? 'rgb(107, 114, 128)' : 'rgb(148, 163, 184)',
-                      },
-                    },
-                  },
-                  '& .MuiDataGrid-menuIcon': {
-                    color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
-                  },
-                  '& .MuiDataGrid-sortIcon': {
-                    color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
-                  },
-                  '& .MuiDataGrid-iconButtonContainer': {
-                    visibility: 'visible !important',
-                  },
-                }}
-                componentsProps={{
-                  pagination: {
-                    sx: {
-                      '& .MuiTablePagination-selectLabel': {
-                        color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
-                      },
-                      '& .MuiTablePagination-displayedRows': {
-                        color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
-                      },
-                      '& .MuiSelect-icon': {
-                        color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
-                      },
-                    },
-                  },
-                }}
-                localeText={{
-                  noRowsLabel: 'Aucun événement trouvé',
-                  footerRowSelected: (count) =>
-                    count > 1
-                      ? `${count.toLocaleString()} événements sélectionnés`
-                      : `${count.toLocaleString()} événement sélectionné`,
-                  columnMenuSortAsc: 'Trier par ordre croissant',
-                  columnMenuSortDesc: 'Trier par ordre décroissant',
-                  columnMenuFilter: 'Filtrer',
-                  columnMenuHideColumn: 'Masquer',
-                  columnMenuManageColumns: 'Gérer les colonnes',
-                  columnsPanelTextFieldLabel: 'Rechercher colonne',
-                  columnsPanelTextFieldPlaceholder: 'Titre de colonne',
-                  columnsPanelShowAllButton: 'Tout afficher',
-                  columnsPanelHideAllButton: 'Tout masquer',
-                }}
-              />
+
+                      {/* Date Début */}
+                      <div className="col-span-2">
+                        <div className={`text-sm ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
+                          {formatDate(event.date)}
+                        </div>
+                      </div>
+
+                      {/* Participants */}
+                      <div className="col-span-1 flex items-center justify-center">
+                        <div className={`flex items-center gap-1 ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
+                          <MdPeople className="text-lg" />
+                          <span>{event.participants || 0}</span>
+                        </div>
+                      </div>
+
+                      {/* Statut */}
+                      <div className="col-span-1 flex items-center justify-center">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          event.status === 'active'
+                            ? darkMode
+                              ? 'bg-green-900/50 text-green-300'
+                              : 'bg-green-100 text-green-800'
+                            : darkMode
+                              ? 'bg-gray-700/50 text-gray-400'
+                              : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {event.status === 'active' ? 'Actif' : 'Inactif'}
+                        </span>
+                      </div>
+
+                      {/* Bouton d'action */}
+                      <div className="col-span-2 flex items-center justify-center">
+                        <button
+                          onClick={() => openModal(index)}
+                          className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-sm ${
+                            gradientsEvent.eventButton
+                          } transition-colors duration-200 shadow-sm hover:shadow-md text-xs`}
+                        >
+                          <FaEye className="text-sm" />
+                          <span>Détails</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+
+              {/* Pagination et sélection de lignes */}
+              {filteredData.length > 0 && (
+                <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-600 dark:text-gray-300">
+                  {/* Sélection du nombre de lignes */}
+                  <div className="flex items-center space-x-2">
+                    <span>Lignes par page:</span>
+                    <select 
+                      value={rowsPerPage}
+                      onChange={(e) => {
+                        setRowsPerPage(Number(e.target.value));
+                        setCurrentPage(0); // Reset à la première page quand on change le nombre d'éléments
+                      }}
+                      className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700"
+                    >
+                      {[5, 10, 20].map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Info de pagination */}
+                  <div>
+                    Affichage de {(currentPage * rowsPerPage) + 1} à {Math.min((currentPage + 1) * rowsPerPage, filteredData.length)} sur {filteredData.length} événements
+                  </div>
+
+                  {/* Boutons de navigation */}
+                  <div className="flex space-x-2">
+                    <button 
+                      className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                      disabled={currentPage === 0}
+                      onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                    >
+                      Précédent
+                    </button>
+                    <button 
+                      className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                      disabled={(currentPage + 1) * rowsPerPage >= filteredData.length}
+                      onClick={() => setCurrentPage(prev => prev + 1)}
+                    >
+                      Suivant
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Aucun résultat */}
+              {filteredData.length === 0 && (
+                <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                  Aucun événement trouvé
+                </div>
+              )}
             </div>
           </>
         )}

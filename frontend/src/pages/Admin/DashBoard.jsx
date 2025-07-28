@@ -100,8 +100,29 @@ export default function Dashboard() {
 
   const gradientTitle =
     "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";
-  const gradientButton =
-    "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-400 text-white";
+  // const gradientButton =
+  //   "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-400 text-white";
+  // const gradientButton1 = 
+  //   "bg_gradient-to-r from-red-500 via-orange-500 to-yellow-400 text-white";
+
+  // const gradients = [
+  //   "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-400 text-white",
+  //   // "bg-gradient-to-r from-red-500 via-orange-500 to-yellow-400 text-white",
+  //   "bg-gradient-to-r from-red-500 via-pink-500 to-rose-400 text-white",
+  //   // "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-400 text-white",
+  //   "bg-gradient-to-r from-lime-400 via-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/30",
+  // ];
+
+  const gradients = [
+    "bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-500 text-white shadow-lg shadow-blue-500/30", 
+    "bg-gradient-to-r from-red-500 via-pink-600 to-rose-500 text-white shadow-lg shadow-rose-500/30",    
+    "bg-gradient-to-r from-lime-400 via-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/30" 
+  ];
+  const glowEffects = [
+    "0 0 15px rgba(59, 130, 246, 0.6)", 
+    "0 0 15px rgba(244, 63, 94, 0.6)",  
+    "0 0 15px rgba(74, 222, 128, 0.6)"   
+  ];
 
   const pageBg = darkMode
     ? "bg-gray-900 text-gray-200"
@@ -111,7 +132,7 @@ export default function Dashboard() {
     <div className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${pageBg}`}>
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
-          <MdDashboard className="mr-2 sm:mr-3" /> Tableau de bord
+          <MdDashboard className="mr-2 sm:mr-3 text-blue-700" /> Tableau de bord
         </h2>
 
         <div className="flex items-center gap-3 sm:gap-6 relative">
@@ -323,8 +344,8 @@ export default function Dashboard() {
             {quickActions.map((action, i) => (
               <motion.button
                 key={i}
-                whileHover={{ scale: 1.05 }}
-                className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-3 font-semibold rounded-xl shadow-md hover:scale-105 transition ${gradientButton}`}
+                whileHover={{ scale: 1, boxShadow: glowEffects[i] }}
+                className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-3 font-semibold rounded-xl shadow-md hover:scale-105 transition ${gradients[i]}`}
               >
                 {action.icon}
                 {action.label}

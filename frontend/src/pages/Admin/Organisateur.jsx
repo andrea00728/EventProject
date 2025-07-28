@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { deleteManager, getManagerList } from "../../services/inviteService";
 import { formatDate } from "./Evenement";
 import {
@@ -16,10 +16,14 @@ import { TbTrashXFilled } from "react-icons/tb";
 import { getAllManagerEvents } from "../../services/evenementServ";
 import ModalManager from "./ModalManager";
 import DeleteModal from "./DeleteModal";
-import { FaUsers, FaEye } from "react-icons/fa";
+import { FaUsers, FaEye, FaUser } from "react-icons/fa";
 import { handleDownloadXLSX } from "../../services/downloadXLSX";
 import { DataGrid } from "@mui/x-data-grid";
 import { useDarkMode } from "../../context/DarkModeContext";
+import { FaBell, FaEnvelope } from "react-icons/fa6";
+import { ChevronDown } from "lucide-react";
+
+
 
 // Composant StatsCard
 const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
@@ -70,6 +74,95 @@ const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
     </div>
   );
 };
+
+const Dropdown = React.forwardRef(({ show, setShow, icon, label, count, items }, ref) => {
+  const { darkMode } = useDarkMode();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setShow(!show)}
+        className={`relative p-2 rounded-full transition-all duration-200 ${
+          darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+        }`}
+        aria-label={label}
+      >
+        <div className="relative">
+          {React.cloneElement(icon, { className: 'w-5 h-5' })}
+          {count > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+              {count > 9 ? '9+' : count}
+            </span>
+          )}
+        </div>
+      </button>
+      
+      {show && (
+        <div
+          className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] overflow-y-auto rounded-xl shadow-xl border ${
+            darkMode 
+              ? 'bg-gray-800 border-gray-700 text-gray-200' 
+              : 'bg-white border-gray-200 text-gray-900'
+          } z-50 transition-all duration-200 ${
+            isMobile ? 'left-4 right-4' : 'right-0'
+          }`}
+        >
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+            {React.cloneElement(icon, { className: 'w-5 h-5' })}
+            <h4 className={`font-semibold text-sm sm:text-base ${
+              darkMode ? "text-purple-300" : "text-purple-600"  // Changé en violet
+            }`}>{label}</h4>
+            {count > 0 && (
+              <span className="ml-auto bg-blue-500 text-white text-xs rounded-full px-2 py-1">
+                {count > 99 ? '99+' : count}
+              </span>
+            )}
+          </div>
+          
+          <div className="max-h-[60vh] overflow-y-auto">
+            {items.length ? (
+              items.map((item, i) => (
+                <div
+                  key={i}
+                  className={`p-3 transition-colors duration-150 border-b ${
+                    darkMode 
+                      ? 'border-gray-700 hover:bg-gray-700' 
+                      : 'border-gray-200 hover:bg-gray-50'
+                  } cursor-pointer`}
+                >
+                  <p className="text-sm line-clamp-2">
+                    {typeof item === 'object' ? `${item.from}: ${item.text}` : item}
+                  </p>
+                  <p className={`text-xs mt-1 ${
+                    darkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    Il y a {Math.floor(Math.random() * 60)} min
+                  </p>
+                </div>
+              ))
+            ) : (
+              <div className="p-4 text-center">
+                <p className={`text-sm ${
+                  darkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}>
+                  Aucun {label.toLowerCase()}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
 
 // Composant OrganisateurCard pour la version mobile
 const OrganisateurCard = ({ organisateur, darkMode, onViewEvents, onDelete }) => {
@@ -180,7 +273,33 @@ export default function Organisateur() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedManager, setSelectedManager] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { darkMode } = useDarkMode();
+  // const { darkMode } = useDarkMode();
+
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+
+  const { darkMode, toggleDarkMode } = useDarkMode();
+
+  const notifRef = useRef(null);
+  const msgRef = useRef(null);
+  const profileRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+      if (msgRef.current && !msgRef.current.contains(event.target)) {
+        setShowMessages(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowProfile(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     document.title = "Organisateur - Admin";
@@ -190,7 +309,7 @@ export default function Organisateur() {
         const data = await getManagerList();
         setData(data.map(org => ({
           ...org,
-          forfait: org.forfait || null, // Garantit que forfait existe
+          forfait: org.forfait || null, 
           createdAt: formatDate(org.createdAt),
           forfaitexpirationdate: org.forfaitexpirationdate 
             ? formatDate(org.forfaitexpirationdate) 
@@ -244,6 +363,29 @@ export default function Organisateur() {
     }
   };
 
+  const openModal = (key) => {
+    setModalData(data[key]);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalData({});
+    setIsModalOpen(false);
+  };
+
+  const notifications = [
+    "Nouvel organisateur inscrit",
+    "Événement 'Conférence Tech' mis à jour",
+    "Paiement reçu pour 'Atelier React'",
+    "Nouveau message de support",
+  ];
+
+  const messages = [
+    { from: "Alice", text: "Bonjour, j'ai une question sur l'événement." },
+    { from: "Bob", text: "Le planning a été modifié." },
+    { from: "Charlie", text: "Merci pour la confirmation." },
+  ];
+
   const handleDownload = () => {
     const page = data.map((p) => ({
       Nom: p.name,
@@ -270,19 +412,135 @@ export default function Organisateur() {
     };
   }, [data]);
 
+  const gradientTitle =
+    "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";
+  const gradientButton =
+    "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-400 text-white";
+
+  const gradientsEvent = {
+    eventButton: "bg-gradient-to-r from-indigo-600 via-blue-500 to-indigo-700 text-white"
+  };
+
   const bgClass = darkMode 
     ? "bg-gray-900 text-gray-200" 
     : "bg-gradient-to-r from-white to-gray-50 text-gray-800";
 
+  const [currentPage, setCurrentPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   return (
     <div className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${bgClass}`}>
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${
-          darkMode ? "text-blue-300" : "text-blue-600"
-        }`}>
-          <FaUsers className="mr-3" /> Liste des organisateurs
+        <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${ gradientTitle }`}>
+          <FaUsers className="mr-2 sm:mr-3 text-blue-700" /> Liste des organisateurs
         </h2>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Dropdown
+            ref={notifRef}
+            show={showNotifications}
+            setShow={setShowNotifications}
+            icon={<FaBell />}
+            label="Notifications"
+            count={notifications.length}
+            items={notifications}
+          />
 
+          <Dropdown
+            ref={msgRef}
+            show={showMessages}
+            setShow={setShowMessages}
+            icon={<FaEnvelope />}
+            label="Messages"
+            count={messages.length}
+            items={messages}
+          />
+
+          <div ref={profileRef} className="relative">
+            <button
+              onClick={() => setShowProfile(!showProfile)}
+              className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
+                darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+              }`}
+              aria-label="Menu profil"
+            >
+              <div className="relative">
+                <FaUser className="w-5 h-5" />
+              </div>
+              <span className={`hidden sm:inline text-sm font-medium ${
+                darkMode ? "text-purple-300" : "text-purple-600"  // Violet
+              }`}>Admin</span>
+              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
+                showProfile ? 'rotate-180' : ''
+              }`} />
+            </button>
+
+            {showProfile && (
+              <div
+                className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
+                  darkMode 
+                    ? 'bg-gray-800 border-gray-700' 
+                    : 'bg-white border-gray-200'
+                } z-50 transition-all duration-200 ${
+                  window.innerWidth < 640 ? 'left-4 right-4' : 'right-0'
+                }`}
+              >
+                <div className="p-2">
+                  <div className={`px-3 py-2 text-sm ${
+                    darkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    <p className="font-medium">Connecté en tant que</p>
+                    <p className="truncate">admin@example.com</p>
+                  </div>
+                  <div className={`border-t ${
+                    darkMode ? 'border-gray-700' : 'border-gray-200'
+                  }`}></div>
+                  <button
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      darkMode 
+                        ? 'hover:bg-gray-700 text-gray-200' 
+                        : 'hover:bg-gray-100 text-gray-800'
+                    } transition-colors duration-150`}
+                  >
+                    Mon profil
+                  </button>
+                  <button
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      darkMode 
+                        ? 'hover:bg-gray-700 text-gray-200' 
+                        : 'hover:bg-gray-100 text-gray-800'
+                    } transition-colors duration-150`}
+                  >
+                    Paramètres
+                  </button>
+                  <div className={`border-t ${
+                    darkMode ? 'border-gray-700' : 'border-gray-200'
+                  }`}></div>
+                  <button
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      darkMode 
+                        ? 'hover:bg-gray-700 text-red-400' 
+                        : 'hover:bg-gray-100 text-red-600'
+                    } transition-colors duration-150`}
+                  >
+                    Déconnexion
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={toggleDarkMode}
+            className={`p-2 rounded-full ${
+              darkMode 
+                ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' 
+                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+            } transition-colors duration-200`}
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? "☀️" : "🌙"}
+          </button>
+        </div>
         
       </div>
 
@@ -356,11 +614,7 @@ export default function Organisateur() {
         <div className="w-full sm:w-auto sm:ml-auto">
           <button
             onClick={handleDownload}
-            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl w-full ${
-              darkMode 
-                ? "bg-blue-600 hover:bg-blue-700 text-white" 
-                : "bg-blue-500 hover:bg-blue-600 text-white"
-            } transition-colors duration-200 shadow-md hover:shadow-lg`}
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl w-full ${ gradientButton } transition-colors duration-200 shadow-md hover:shadow-lg`}
           >
             <MdFileDownload className="text-lg" />
             <span>Exporter en CSV</span>
@@ -403,144 +657,131 @@ export default function Organisateur() {
             </div>
 
             {/* Version desktop - DataGrid */}
-            <div className="hidden md:block h-[600px] w-full overflow-hidden rounded-xl shadow-sm">
-              <DataGrid
-                rows={filteredData}
-                columns={[
-                  { 
-                    field: "name", 
-                    headerName: "NOM", 
-                    flex: 1.5,
-                    renderCell: (params) => (
-                      <div className={`font-medium ${darkMode ? "text-blue-300" : "text-blue-600"}`}>
-                        {params.value}
+            <div className="hidden md:block rounded-tl-xl rounded-br-xl rounded-tr-none rounded-bl-none border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800 w-full">
+              {/* En-têtes du tableau - Modifié pour l'ajustement automatique */}
+              <div className="grid grid-cols-[minmax(150px,1fr)_minmax(200px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(140px,1fr)] gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                <div className="truncate">NOM</div>
+                <div className="truncate">EMAIL</div>
+                <div className="truncate">FORFAIT</div>
+                <div className="truncate">DATE CRÉATION</div>
+                <div className="truncate">EXPIRATION</div>
+                <div className="truncate text-center">ACTIONS</div>
+              </div>
+
+              {/* Contenu du tableau - Structure identique mais avec ajustement automatique */}
+              <div className="divide-y divide-gray-200 dark:divide-gray-700" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+                {filteredData
+                  .slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage)
+                  .map((manager, index) => (
+                    <div 
+                      key={index}
+                      className="grid grid-cols-[minmax(150px,1fr)_minmax(200px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(140px,1fr)] gap-2 px-4 py-3 items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"
+                    >
+                      {/* Nom */}
+                      <div className="truncate font-medium dark:text-blue-300 text-blue-600">
+                        {manager.name}
                       </div>
-                    )
-                  },
-                  { 
-                    field: "email", 
-                    headerName: "EMAIL", 
-                    flex: 1.5,
-                    renderCell: (params) => (
-                      <div className={`${darkMode ? "text-blue-300" : "text-blue-600"}`}>
-                        {params.value}
+
+                      {/* Email */}
+                      <div className="truncate dark:text-blue-300 text-blue-600">
+                        {manager.email}
                       </div>
-                    )
-                  },
-                  {
-                    field: "forfait",
-                    headerName: "FORFAIT",
-                    flex: 1,
-                    valueGetter: (params) => {
-                      if (!params.nom) return "Aucun forfait";
-                      return params.nom || "Aucun forfait";
-                    },
-                    renderCell: (params) => (
-                      <span className={`${darkMode ? "text-purple-300" : "text-purple-600"}`}>
-                        {params.value}
-                      </span>
-                    )
-                  },
-                  {
-                    field: "createdAt",
-                    headerName: "DATE CRÉATION",
-                    flex: 1,
-                    renderCell: (params) => (
-                      <div className={`text-sm ${darkMode ? "text-blue-300" : "text-blue-600"}`}>
-                        {params.value}
+
+                      {/* Forfait */}
+                      <div className="truncate dark:text-purple-300 text-purple-600">
+                        {manager.forfait?.nom || "Aucun forfait"}
                       </div>
-                    )
-                  },
-                  {
-                    field: "forfaitexpirationdate",
-                    headerName: "EXPIRATION",
-                    flex: 1,
-                    renderCell: (params) => (
-                      <div className={`text-sm ${darkMode ? "text-blue-300" : "text-blue-600"}`}>
-                        {params.value}
+
+                      {/* Date Création */}
+                      <div className="truncate text-sm dark:text-blue-300 text-blue-600">
+                        {manager.createdAt}
                       </div>
-                    )
-                  },
-                  {
-                    field: "actions",
-                    headerName: "ACTIONS",
-                    flex: 1,
-                    sortable: false,
-                    renderCell: (params) => (
-                      <div className="flex gap-2">
+
+                      {/* Expiration */}
+                      <div className="truncate text-sm dark:text-blue-300 text-blue-600">
+                        {manager.forfaitexpirationdate}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => {
-                            handleTakeManagerEvents(params.row.id);
-                            setManagerName(params.row.name);
+                            handleTakeManagerEvents(manager.id);
+                            setManagerName(manager.name);
                           }}
-                          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm ${
-                            darkMode
-                              ? "bg-blue-600 hover:bg-blue-700 text-white"
-                              : "bg-blue-500 hover:bg-blue-600 text-white"
-                          } transition-colors duration-200`}
+                          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs ${
+                            gradientsEvent.eventButton
+                          } transition-colors duration-200 shadow-sm hover:shadow-md truncate`}
                         >
-                          <FaEye className="text-sm" />
+                          <FaEye className="text-xs" />
                           <span>Événements</span>
                         </button>
 
                         <button
-                          onClick={() => openDeleteModal(params.row)}
-                          className={`p-2 rounded-lg ${
+                          onClick={() => openDeleteModal(manager)}
+                          className={`p-1.5 rounded-lg ${
                             darkMode
-                              ? "text-red-400 hover:text-red-300"
-                              : "text-red-600 hover:text-red-800"
+                              ? 'text-red-400 hover:text-red-300'
+                              : 'text-red-600 hover:text-red-800'
                           } transition-colors duration-200`}
                         >
                           <TbTrashXFilled className="text-lg" />
                         </button>
                       </div>
-                    ),
-                  },
-                ]}
-                pageSize={10}
-                rowsPerPageOptions={[5, 10, 20]}
-                disableSelectionOnClick
-                autoHeight
-                sx={{
-                  '& .MuiDataGrid-root': {
-                    border: 'none',
-                    fontFamily: 'inherit',
-                  },
-                  '& .MuiDataGrid-cell': {
-                    borderBottom: darkMode 
-                      ? '1px solid rgba(31, 41, 55, 0.5)' 
-                      : '1px solid rgba(226, 232, 240, 0.8)',
-                    '&:focus': {
-                      outline: 'none',
-                    },
-                  },
-                  '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: darkMode ? 'rgb(17, 24, 39)' : 'rgb(248, 250, 252)',
-                    borderBottom: darkMode 
-                      ? '1px solid rgba(31, 41, 55, 0.8)' 
-                      : '1px solid rgba(226, 232, 240, 0.8)',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    color: darkMode ? 'rgb(156, 163, 175)' : 'rgb(71, 85, 105)',
-                  },
-                  '& .MuiDataGrid-footerContainer': {
-                    backgroundColor: darkMode ? 'rgb(17, 24, 39)' : 'rgb(248, 250, 252)',
-                    borderTop: darkMode 
-                      ? '1px solid rgba(31, 41, 55, 0.8)' 
-                      : '1px solid rgba(226, 232, 240, 0.8)',
-                  },
-                  '& .MuiDataGrid-row': {
-                    backgroundColor: darkMode ? 'rgb(31, 41, 55)' : 'rgb(255, 255, 255)',
-                    '&:hover': {
-                      backgroundColor: darkMode 
-                        ? 'rgba(55, 65, 81, 0.4)' 
-                        : 'rgba(241, 245, 249, 0.8)',
-                    },
-                  },
-                }}
-              />
+                    </div>
+                  ))}
+              </div>
+
+              {/* Pagination - Inchangé */}
+              {filteredData.length > 0 && (
+                <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-600 dark:text-gray-300">
+                  {/* Sélection du nombre de lignes */}
+                  <div className="flex items-center space-x-2">
+                    <span>Lignes par page:</span>
+                    <select 
+                      value={rowsPerPage}
+                      onChange={(e) => {
+                        setRowsPerPage(Number(e.target.value));
+                        setCurrentPage(0);
+                      }}
+                      className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700"
+                    >
+                      {[5, 10, 20].map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Info de pagination */}
+                  <div>
+                    Affichage de {(currentPage * rowsPerPage) + 1} à {Math.min((currentPage + 1) * rowsPerPage, filteredData.length)} sur {filteredData.length} gestionnaires
+                  </div>
+
+                  {/* Boutons de navigation */}
+                  <div className="flex space-x-2">
+                    <button 
+                      className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                      disabled={currentPage === 0}
+                      onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                    >
+                      Précédent
+                    </button>
+                    <button 
+                      className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                      disabled={(currentPage + 1) * rowsPerPage >= filteredData.length}
+                      onClick={() => setCurrentPage(prev => prev + 1)}
+                    >
+                      Suivant
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {filteredData.length === 0 && (
+                <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                  Aucun gestionnaire trouvé
+                </div>
+              )}
             </div>
           </>
         )}
