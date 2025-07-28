@@ -4,6 +4,8 @@ import { getMyEvents } from "../../services/evenementServ";
 import { useStateContext } from "../../context/ContextProvider";
 import { DataGrid } from "@mui/x-data-grid";
 import Checkbox from "@mui/material/Checkbox";
+import { Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from "@mui/material";
+import { Link } from "react-router-dom";
 
 export default function ListeTable() {
   const { token } = useStateContext();
@@ -13,10 +15,11 @@ export default function ListeTable() {
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [eventError, setEventError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [noSelectionModalOpen, setNoSelectionModalOpen] = useState(false);
 
   // Configure Axios base URL
   axios.defaults.baseURL = "http://localhost:3000"; // Adjust to your backend URL
@@ -58,7 +61,7 @@ export default function ListeTable() {
     const fetchTables = async () => {
       if (!selectedEvent || !selectedEvent.id) {
         setTables([]);
-        setError("Veuillez sélectionner un événement valide.");
+        setError(null);
         setLoading(false);
         return;
       }
@@ -157,16 +160,23 @@ export default function ListeTable() {
     printWindow.print();
   };
 
-  const handleDeleteSelected = async () => {
+  const handleOpenDeleteConfirm = () => {
     if (selectedTableIds.length === 0) {
-      alert("Veuillez sélectionner au moins une table à supprimer.");
+      setNoSelectionModalOpen(true);
       return;
     }
+    setDeleteConfirmOpen(true);
+  };
 
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer les tables sélectionnées ?")) {
-      return;
-    }
+  const handleCloseDeleteConfirm = () => {
+    setDeleteConfirmOpen(false);
+  };
 
+  const handleCloseNoSelectionModal = () => {
+    setNoSelectionModalOpen(false);
+  };
+
+  const handleConfirmDelete = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -210,13 +220,8 @@ export default function ListeTable() {
       }
     } finally {
       setLoading(false);
+      setDeleteConfirmOpen(false);
     }
-  };
-
-  const selectEvent = (event) => {
-    setSelectedEvent(event);
-    setIsModalOpen(false);
-    setSelectedTableIds([]);
   };
 
   const closeSuccess = () => {
@@ -233,7 +238,13 @@ export default function ListeTable() {
         <Checkbox
           checked={selectedTableIds.includes(params.row.id)}
           onChange={() => handleCheckboxChange(params.row.id)}
-          aria-label={`Sélectionner la table ${params.row.nom}`}
+          aria-label={`Sélectionner la table ${params.row.numero}`}
+          sx={{
+            color: '#6b48ff',
+            '&.Mui-checked': {
+              color: '#6b48ff',
+            },
+          }}
         />
       ),
     },
@@ -249,130 +260,89 @@ export default function ListeTable() {
           <img
             src={params.row.qrCode}
             alt={`QR Code pour la table ${params.row.numero}`}
-            width="60"
+            className="w-16 h-16 object-contain rounded-md"
             onError={(e) => (e.target.src = "/path/to/fallback-image.png")}
           />
         ) : (
-          "Pas de QR"
+          <span className="text-gray-500">Pas de QR</span>
         ),
     },
   ];
 
   return (
-    <div style={{ padding: "20px" }} className="max-w-4xl mx-auto">
+    <div className="p-6 max-w-4xl mx-auto">
       <h2 className="text-2xl font-bold text-center mb-8 text-gray-900">Liste des Tables</h2>
 
       {/* Event Selection */}
       <div className="flex flex-col mb-6">
-        <label className="text-gray-700 font-medium mb-2 text-sm">Événement Associé</label>
-        <div
-          className="flex items-center border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 focus-within:ring-2 focus-within:ring-indigo-600 cursor-pointer transition-all duration-200"
-          onClick={() => setIsModalOpen(true)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === "Enter" && setIsModalOpen(true)}
-        >
-          <input
-            type="text"
-            value={
-              selectedEvent
-                ? `${selectedEvent.nom} (${new Date(selectedEvent.date).toLocaleDateString("fr-FR")})`
-                : "Sélectionner un événement"
-            }
-            readOnly
-            placeholder="Cliquez pour sélectionner un événement"
-            className="flex-grow bg-transparent outline-none cursor-pointer text-gray-900 placeholder-gray-400"
-          />
-          <button
-            type="button"
-            className="ml-2 text-gray-500 hover:text-indigo-600 focus:outline-none transition-colors duration-200"
+        <h2 className="text-sm font-medium text-gray-600 mb-2">Sélectionner un événement</h2>
+        {isLoadingEvents ? (
+          <p className="text-gray-600">Chargement des événements...</p>
+        ) : eventError ? (
+          <p className="text-red-500">{eventError}</p>
+        ) : events.length === 0 ? (
+          <p className="text-gray-600">Aucun événement trouvé. Créez un événement d’abord.</p>
+        ) : (
+          <Tabs
+            value={selectedEvent ? events.findIndex(event => event.id === selectedEvent.id) : false}
+            onChange={(e, newValue) => setSelectedEvent(events[newValue])}
+            variant="scrollable"
+            className="mb-6 border-b border-gray-200"
+            TabIndicatorProps={{ style: { backgroundColor: '#6b48ff' } }}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                clipRule="evenodd"
+            {events.map((event) => (
+              <Tab
+                key={event.id}
+                label={event.nom}
+                className={`text-sm font-medium ${selectedEvent?.id === event.id ? 'text-purple-600' : 'text-gray-600 hover:text-gray-800'}`}
+                sx={{
+                  minWidth: 'auto',
+                  padding: '8px 16px',
+                  '&.Mui-selected': { backgroundColor: '#f0f0ff', borderRadius: '4px 4px 0 0' },
+                  '&:hover': { backgroundColor: '#e0e0ff' },
+                }}
               />
-            </svg>
-          </button>
-        </div>
+            ))}
+          </Tabs>
+        )}
       </div>
 
-      {/* Event Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl mx-auto transform transition-all duration-300 ease-out scale-100 animate-fadeIn">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 text-xl font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-600 rounded-full p-2 transition-colors duration-200 cursor-pointer"
-            >
-              ×
-            </button>
-            <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center font-sans">
-              Sélectionner un événement
-            </h3>
-            <div className="w-[100%] h-[400px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-              {isLoadingEvents ? (
-                <p className="p-6 text-center text-gray-500 bg-gray-50 rounded-xl">
-                  Chargement des événements...
-                </p>
-              ) : eventError ? (
-                <p className="p-6 text-center text-red-500 bg-red-50 rounded-xl">
-                  {eventError}
-                </p>
-              ) : events.length === 0 ? (
-                <p className="p-6 text-center text-gray-500 bg-gray-50 rounded-xl">
-                  Aucun événement disponible.
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {events.map((event) => (
-                    <div
-                      key={event.id}
-                      className="bg-gradient-to-br from-gray-800 to-gray-900 text-white p-6 rounded-xl shadow-lg hover:shadow-xl hover:from-gray-700 hover:to-gray-800 cursor-pointer transition-all duration-300 transform hover:-translate-y-1"
-                      onClick={() => selectEvent(event)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => e.key === "Enter" && selectEvent(event)}
-                    >
-                      <p className="font-semibold text-lg mb-2">{event.nom}</p>
-                      <p className="text-sm text-gray-200">
-                        Date: {new Date(event.date).toLocaleDateString("fr-FR")}
-                      </p>
-                      {event.description && (
-                        <p className="text-xs text-gray-300 mt-2 line-clamp-2">
-                          {event.description}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Table Display with DataGrid */}
-      {loading && <p className="text-center text-gray-500">Chargement des tables...</p>}
+      {loading && <p className="text-center text-gray-600 bg-gray-50 py-3 rounded-xl">Chargement des tables...</p>}
       {error && <p className="text-red-500 text-center bg-red-50 py-3 rounded-xl">{error}</p>}
       {!loading && !error && !selectedEvent && (
-        <p className="text-center text-gray-500 bg-gray-50 py-3 rounded-xl">
+        <p className="text-center text-gray-600 bg-gray-50 py-3 rounded-xl">
           Veuillez sélectionner un événement pour voir les tables.
         </p>
       )}
       {!loading && !error && selectedEvent && tables.length === 0 && (
-        <p className="text-center text-gray-500 bg-gray-50 py-3 rounded-xl">
+        <p className="text-center text-gray-600 bg-gray-50 py-3 rounded-xl">
           Aucune table disponible pour cet événement.
         </p>
       )}
       {!loading && tables.length > 0 && (
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+          {/* Checkbox Tout Sélectionner */}
+          <div className="flex items-center mb-4">
+            <Checkbox
+              checked={selectedTableIds.length === tables.length}
+              indeterminate={selectedTableIds.length > 0 && selectedTableIds.length < tables.length}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setSelectedTableIds(tables.map((table) => table.id));
+                } else {
+                  setSelectedTableIds([]);
+                }
+              }}
+              sx={{
+                color: '#6b48ff',
+                '&.Mui-checked': {
+                  color: '#6b48ff',
+                },
+              }}
+            />
+            <span className="text-sm text-gray-700">Tout sélectionner</span>
+          </div>
           <DataGrid
             rows={tables}
             columns={columns}
@@ -385,39 +355,57 @@ export default function ListeTable() {
             sx={{
               "& .MuiDataGrid-root": {
                 border: "none",
+                borderRadius: '8px',
               },
               "& .MuiDataGrid-cell": {
                 borderBottom: "1px solid #e5e7eb",
+                padding: '12px',
+                color: '#1f2937',
+                fontSize: '0.875rem',
               },
               "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "#f3f4f6",
-                borderBottom: "2px solid #e5e7eb",
-                color: "#1f2937",
-                fontWeight: "600",
+                backgroundColor: '#f0f0ff',
+                borderBottom: "2px solid #6b48ff",
+                color: '#6b48ff',
+                fontWeight: '600',
+                fontSize: '0.9rem',
+                borderRadius: '8px 8px 0 0',
               },
-              "& .MuiDataGrid-row:hover": {
-                backgroundColor: "#f9fafb",
+              "& .MuiDataGrid-row": {
+                backgroundColor: '#fff',
+                '&:hover': {
+                  backgroundColor: '#f9fafb',
+                  transition: 'background-color 0.2s ease-in-out',
+                },
+              },
+              "& .MuiDataGrid-columnHeaderTitle": {
+                fontWeight: '600',
+              },
+              "& .MuiDataGrid-footerContainer": {
+                backgroundColor: '#f0f0ff',
+                borderTop: '1px solid #e5e7eb',
+                borderRadius: '0 0 8px 8px',
               },
             }}
           />
-          <div className="flex justify-end p-4 gap-4">
-          <button
-            onClick={handlePrintSelected}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-2 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 cursor-pointer"
-            aria-label="Imprimer les tables sélectionnées"
-          >
-            🖨️ Imprimer
-          </button>
-          <button
-            onClick={handlePrintAll}
-            className="bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold py-2 px-4 rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 cursor-pointer"
-            aria-label="Imprimer toutes les tables"
-          >
-            🖨️ Imprimer tous
-          </button>
+          <div className="flex justify-end gap-4 mt-4">
+            <Link
+              to="/evenement/tables/creationTable"
+              className="py-2 px-4 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200"
+              aria-label="Ajouter une nouvelle table"
+            >
+              ➕ Nouveau
+            </Link>
             <button
-              onClick={handleDeleteSelected}
-              className="bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold py-2 px-4 rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 cursor-pointer"
+              onClick={handlePrintSelected}
+              className="py-2 px-4 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-200 cursor-pointer"
+              aria-label="Imprimer toutes les tables"
+            >
+              🖨️ Imprimer
+            </button>
+            <button
+              onClick={handleOpenDeleteConfirm}
+              className="py-2 px-4 rounded-lg bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-200 cursor-pointer"
               aria-label="Supprimer les tables sélectionnées"
             >
               🗑️ Supprimer
@@ -425,6 +413,31 @@ export default function ListeTable() {
           </div>
         </div>
       )}
+
+      {/* No Selection Modal */}
+      <Dialog open={noSelectionModalOpen} onClose={handleCloseNoSelectionModal} PaperProps={{ sx: { borderRadius: 2 } }}>
+        <DialogTitle>Attention</DialogTitle>
+        <DialogContent>
+          <Typography>Veuillez sélectionner au moins une table à supprimer.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseNoSelectionModal} sx={{ backgroundColor: '#6b48ff', color: 'white', '&:hover': { backgroundColor: '#5a38dd' } }}>
+            Fermer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Deletion Confirmation Modal */}
+      <Dialog open={deleteConfirmOpen} onClose={handleCloseDeleteConfirm} PaperProps={{ sx: { borderRadius: 2 } }}>
+        <DialogTitle>Confirmer la suppression</DialogTitle>
+        <DialogContent>
+          <Typography>Êtes-vous sûr de vouloir supprimer {selectedTableIds.length} table{selectedTableIds.length > 1 ? "s" : ""} sélectionnée{selectedTableIds.length > 1 ? "s" : ""} ?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteConfirm} sx={{ color: '#34495e' }}>Annuler</Button>
+          <Button variant="contained" onClick={handleConfirmDelete} sx={{ backgroundColor: '#e74c3c', color: 'white', '&:hover': { backgroundColor: '#c0392b' } }}>Supprimer</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Success Message */}
       {successMessage && (
@@ -446,7 +459,7 @@ export default function ListeTable() {
                 </svg>
               </button>
             </div>
-            <p className="text-gray-900 mb-4">{successMessage}</p>
+            <p className="m-4 text-gray-900">{successMessage}</p>
             <button
               onClick={closeSuccess}
               className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold py-2 rounded-lg hover:from-green-600 hover:to-green-700 transition-colors duration-200"

@@ -1,261 +1,660 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
+import { Bar, Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  BarElement,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import socket from "../../socket";
-import { CurrencyEuroIcon, ChartBarIcon, CalendarIcon, ArrowTrendingUpIcon } from "@heroicons/react/24/outline";
+
+ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 const RevenuPage = () => {
-  const [commandes, setCommandes] = useState([]);
-  const [periode, setPeriode] = useState("jour");
+  const [revenus, setRevenus] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterPeriod, setFilterPeriod] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalPending, setTotalPending] = useState(0);
+  const [totalRefunded, setTotalRefunded] = useState(0);
+  const [categoryBreakdown, setCategoryBreakdown] = useState({});
+  const [timeSeriesData, setTimeSeriesData] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  const [showDetailsModal, setShowDetailsModal] = useState(null);
+  const [chartType, setChartType] = useState("bar");
   const { token } = useStateContext();
   const navigate = useNavigate();
 
-  const fetchCommandes = async () => {
+  
+  const fetchRevenus = async () => {
     try {
       setLoading(true);
       if (!token) throw new Error("Token manquant");
+      const eventId = await getEventIdByEmail(token);
+      const { data } = await axios.get(
+        `http://localhost:3000/orders/event/${eventId.eventId}`,
+        { params: { include: "table,items,items.menuItem" } }
+      );
 
-      console.log("Token utilisé :", token);
-      const event = await getEventIdByEmail(token);
-      console.log("Réponse de getEventIdByEmail :", event);
-      const eventId = event?.eventId;
+      const formattedRevenus = data.map((order) => ({
+        id: order.id,
+        nom: order.nom || "Anonyme",
+        email: order.email || "-",
+        total: parseFloat(order.total || 0).toFixed(2),
+        amountPaid: parseFloat(order.amountPaid || 0).toFixed(2),
+        paymentStatus:
+          order.paymentStatus === "paid"
+            ? "Payé"
+            : order.paymentStatus === "refunded"
+            ? "Remboursé"
+            : "Non payé",
+        paymentMethod: order.paymentMethod || "Inconnu",
+        date: new Date(order.orderDate).toLocaleString("fr-FR", {
+          dateStyle: "short",
+          timeStyle: "short",
+        }),
+        items: order.items || [],
+      }));
 
-      if (!eventId) {
-        throw new Error("ID de l'événement non défini");
-      }
+      setRevenus(formattedRevenus);
+      
+      const total = formattedRevenus.reduce(
+        (sum, order) => sum + parseFloat(order.total),
+        0
+      );
+      const pending = formattedRevenus
+        .filter((order) => order.paymentStatus === "Non payé")
+        .reduce((sum, order) => sum + parseFloat(order.total), 0);
+      const refunded = formattedRevenus
+        .filter((order) => order.paymentStatus === "Remboursé")
+        .reduce((sum, order) => sum + parseFloat(order.total), 0);
 
-      const response = await axios.get(`http://localhost:3000/orders/event/${eventId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { include: "table,items,items.menuItem" },
+      const categories = {};
+      formattedRevenus.forEach((order) => {
+        order.items.forEach((item) => {
+          const category = item.menuItem?.category || "Autres";
+          const price = parseFloat(item.price) || 0;
+          const quantity = parseInt(item.quantity) || 0;
+          if (price && quantity) {
+            categories[category] = (categories[category] || 0) + (quantity * price);
+          }
+        });
       });
-      console.log("Données de l'API :", response.data);
-      console.log("Valeurs brutes de amountPaid :", response.data.map((cmd) => ({
-        id: cmd.id,
-        amountPaid: cmd.amountPaid,
-        paymentStatus: cmd.paymentStatus,
-      })));
+      const formattedCategories = {};
+      Object.entries(categories).forEach(([category, revenue]) => {
+        formattedCategories[category] = parseFloat(revenue).toFixed(2);
+      });
 
-      const formatted = response.data
-        .filter((cmd) => cmd.paymentStatus === "paid")
-        .map((c) => ({
-          id: c.id,
-          total: parseFloat(c.total || 0).toFixed(2),
-          amountPaid: parseFloat(c.amountPaid || 0).toFixed(2),
-          orderDate: c.orderDate,
-          paymentStatus: c.paymentStatus,
-          email: c.email || "N/A",
-          nom: c.nom || "Anonyme",
-        }));
-      console.log("Commandes formatées :", formatted);
+      const timeSeries = {};
+      formattedRevenus.forEach((order) => {
+        const date = new Date(order.orderDate).toLocaleDateString("fr-FR");
+        timeSeries[date] = (timeSeries[date] || 0) + parseFloat(order.amountPaid);
+      });
+      const timeSeriesArray = Object.entries(timeSeries)
+        .map(([date, revenue]) => ({ date, revenue }))
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      setCommandes(formatted);
+      setTotalRevenue(total.toFixed(2));
+      setTotalPending(pending.toFixed(2));
+      setTotalRefunded(refunded.toFixed(2));
+      setCategoryBreakdown(formattedCategories);
+      setTimeSeriesData(timeSeriesArray);
     } catch (error) {
-      console.error("Erreur lors de la récupération des données :", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
+      console.error("Erreur lors de la récupération des revenus:", error);
+      toast.error("Erreur lors du chargement des données");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchCommandes();
-    socket.on("orderUpdated", () => {
-      console.log("Événement orderUpdated reçu, rafraîchissement des données...");
-      fetchCommandes();
-    });
-    socket.on("paymentStatusChanged", () => {
-      console.log("Événement paymentStatusChanged reçu, rafraîchissement...");
-      fetchCommandes();
-    });
-    return () => {
-      socket.off("orderUpdated", fetchCommandes);
-      socket.off("paymentStatusChanged", fetchCommandes);
-    };
-  }, [token]);
-
-  const groupKey = (dateStr) => {
-    const date = new Date(dateStr);
-    if (periode === "jour") return date.toLocaleDateString("fr-FR");
-    if (periode === "mois") return `${date.getMonth() + 1}/${date.getFullYear()}`;
-    if (periode === "année") return date.getFullYear();
+  const handleRefund = async (id) => {
+    if (!window.confirm("Confirmer le remboursement de cette commande ?")) return;
+    try {
+      await axios.patch(
+        `http://localhost:3000/orders/${id}/refund`,
+        { paymentStatus: "refunded" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setRevenus((prev) =>
+        prev.map((cmd) => (cmd.id === id ? { ...cmd, paymentStatus: "Remboursé" } : cmd))
+      );
+      socket.emit("paymentStatusChanged", { id, paymentStatus: "refunded" });
+      toast.success("Commande remboursée avec succès");
+      fetchRevenus();
+    } catch (error) {
+      console.error("Erreur lors du remboursement:", error);
+      toast.error("Erreur lors du remboursement");
+    }
   };
 
-  const groupedByDate = Object.entries(
-    commandes.reduce((acc, curr) => {
-      const key = groupKey(curr.orderDate);
-      acc[key] = (acc[key] || 0) + parseFloat(curr.amountPaid || 0);
-      return acc;
-    }, {})
-  ).map(([date, amountPaid]) => ({
-    date,
-    amountPaid,
-  }));
-  console.log("Données du graphique :", groupedByDate);
-
-  const totalEncaisse = commandes.reduce((acc, curr) => acc + parseFloat(curr.amountPaid || 0), 0).toFixed(2);
-  const moyenne =
-    groupedByDate.length > 0
-    ? (groupedByDate.reduce((acc, item) => acc + item.amountPaid, 0) / groupedByDate.length).toFixed(2)
-    : 0;
-  const max =
-    groupedByDate.length > 0
-    ? Math.max(...groupedByDate.map((item) => item.amountPaid)).toFixed(2)
-    : 0;
-
-  const dataCommandesIndividuelles = commandes.map((cmd) => ({
-    commande: `CMD #${cmd.id}`,
-    amountPaid: parseFloat(cmd.amountPaid || 0),
-  }));
-
-  if (loading)
-    return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-indigo-50 to-blue-500">
-        <div className="text-xl font-medium text-indigo-700 animate-pulse">
-          Chargement des données...
-        </div>
-      </div>
+  // Exporter en CSV
+  const exportToCSV = () => {
+    const headers = ["ID,Client,Email,Total (€),Payé (€),Statut,Méthode,Date"];
+    const rows = filteredRevenus.map((rev) =>
+      `${rev.id},${rev.nom},${rev.email},${rev.total},${rev.amountPaid},${rev.paymentStatus},${rev.paymentMethod},${rev.date}`
     );
+    const csvContent = [headers, ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `revenus_${new Date().toISOString()}.csv`);
+    link.click();
+    toast.success("Exportation CSV réussie");
+  };
+
+  // Exporter en PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Rapport des Revenus", 20, 20);
+    doc.setFontSize(10);
+    doc.text(`Total des revenus: €${totalRevenue}`, 20, 30);
+    doc.text(`Reste à encaisser: €${totalPending}`, 20, 36);
+    doc.text(`Total remboursé: €${totalRefunded}`, 20, 42);
+
+    // Tableau des revenus
+    autoTable(doc, {
+      startY: 50,
+      head: [["ID", "Client", "Email", "Total (€)", "Payé (€)", "Statut", "Méthode", "Date"]],
+      body: filteredRevenus.map((rev) => [
+        rev.id,
+        rev.nom,
+        rev.email,
+        rev.total,
+        rev.amountPaid,
+        rev.paymentStatus,
+        rev.paymentMethod,
+        rev.date,
+      ]),
+      theme: "striped",
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [107, 33, 168], textColor: [255, 255, 255] },
+    });
+
+    // Répartition par catégorie
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.text("Répartition par catégorie", 20, finalY);
+    autoTable(doc, {
+      startY: finalY + 5,
+      head: [["Catégorie", "Revenu (€)"]],
+      body: Object.entries(categoryBreakdown).map(([category, revenue]) => [
+        category,
+        revenue,
+      ]),
+      theme: "striped",
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [107, 33, 168], textColor: [255, 255, 255] },
+    });
+
+    doc.save(`revenus_${new Date().toISOString()}.pdf`);
+    toast.success("Exportation PDF réussie");
+  };
+
+  // Filtrer les revenus
+  const filteredRevenus = revenus.filter((rev) => {
+    const matchSearch =
+      rev.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      rev.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchPeriod =
+      filterPeriod === "all" ||
+      (filterPeriod === "today" &&
+        new Date(rev.date).toDateString() === new Date().toDateString()) ||
+      (filterPeriod === "week" &&
+        new Date(rev.date) >=
+          new Date(new Date().setDate(new Date().getDate() - 7))) ||
+      (filterPeriod === "month" &&
+        new Date(rev.date) >=
+          new Date(new Date().setMonth(new Date().getMonth() - 1)));
+    const matchStatus =
+      filterStatus === "all" || rev.paymentStatus === filterStatus;
+    return matchSearch && matchPeriod && matchStatus;
+  });
+
+  // Pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredRevenus.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredRevenus.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Données du graphique à barres
+  const barChartData = {
+    labels: ["Payé", "Non payé"],
+    datasets: [
+      {
+        label: "Revenus",
+        data: [totalRevenue - totalPending, totalPending],
+        backgroundColor: ["#22C55E", "#EF4444"],
+        borderColor: ["#ffffff", "#ffffff"],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Données du graphique temporel
+  const timeSeriesChartData = {
+    labels: timeSeriesData.map((item) => item.date),
+    datasets: [
+      {
+        label: "Revenus (€)",
+        data: timeSeriesData.map((item) => item.revenue),
+        borderColor: "#6b21a8",
+        backgroundColor: "rgba(107, 33, 168, 0.2)",
+        fill: true,
+        tension: 0.4,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom",
+        labels: { font: { size: 10 }, color: "#1F2937" },
+      },
+      tooltip: {
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        padding: 6,
+        callbacks: {
+          label: (context) => `€${context.raw.toFixed(2)}`,
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 100,
+          callback: (value) => `€${value}`,
+          color: "#6B7280",
+          font: { size: 10 },
+        },
+        grid: { color: "rgba(0, 0, 0, 0.05)" },
+      },
+      x: {
+        ticks: { color: "#6B7280", font: { size: 10 } },
+        grid: { display: false },
+      },
+    },
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchRevenus();
+      socket.on("paymentStatusChanged", fetchRevenus);
+      return () => socket.off("paymentStatusChanged", fetchRevenus);
+    }
+  }, [token]);
 
   return (
-    <div
-      className="h-screen overflow-hidden bg-cover bg-center bg-fixed flex flex-col"
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="h-screen bg-cover bg-center bg-fixed flex flex-col"
       style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')`,
-        backgroundColor: '#f3f4f6',
+        backgroundImage:
+          "url('https://images.unsplash.com/photo-1542744095-291d1f67b221')",
       }}
     >
-      <div className="container mx-auto p-6 max-w-6xl flex flex-col flex-1">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-4xl font-semibold text-white drop-shadow-md">
-            Statistiques des revenus
+      <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-0" />
+      <div className="relative z-10 max-w-7xl mx-auto px-2 sm:px-4 py-4 flex-1 flex flex-col">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 drop-shadow-md">
+            Gestion des Revenus
           </h1>
-          <button
-            onClick={() => navigate("/caisse")}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition focus:ring-2 focus:ring-indigo-300"
+          <Link
+            to="/caisse"
+            className="text-indigo-600 hover:text-indigo-800 font-medium underline transition text-sm"
           >
-            Retour
-          </button>
+            ← Retour
+          </Link>
         </div>
 
-        {/* Choix de la période */}
-        <div className="mb-6 flex items-center space-x-4 bg-white bg-opacity-90 p-4 rounded-xl shadow-lg backdrop-blur-sm">
-          <label className="text-lg font-medium text-gray-800">Afficher par :</label>
-          <select
-            className="border-0 bg-indigo-50 text-indigo-700 font-semibold rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-300 transition"
-            value={periode}
-            onChange={(e) => setPeriode(e.target.value)}
-          >
-            <option value="jour">Par jour</option>
-            <option value="mois">Par mois</option>
-            <option value="année">Par année</option>
-          </select>
-        </div>
+        {/* Contenu principal */}
+        <div className="flex flex-col flex-1 gap-4">
+          {/* Statistiques et Filtres */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-1 grid grid-cols-3 gap-4">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="bg-white/90 backdrop-blur-md rounded-lg p-4 shadow-md"
+              >
+                <h3 className="text-sm font-semibold text-gray-700">Total</h3>
+                <p className="text-xl font-bold text-gray-900">€{totalRevenue}</p>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="bg-white/90 backdrop-blur-md rounded-lg p-4 shadow-md"
+              >
+                <h3 className="text-sm font-semibold text-gray-700">En attente</h3>
+                <p className="text-xl font-bold text-gray-900">€{totalPending}</p>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="bg-white/90 backdrop-blur-md rounded-lg p-4 shadow-md"
+              >
+                <h3 className="text-sm font-semibold text-gray-700">Remboursé</h3>
+                <p className="text-xl font-bold text-gray-900">€{totalRefunded}</p>
+              </motion.div>
+            </div>
+            <div className="lg:col-span-2 flex flex-col sm:flex-row gap-2 items-center">
+              <input
+                type="text"
+                placeholder="Rechercher client ou email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full sm:w-2/5 px-3 py-1.5 rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm text-gray-700 placeholder-gray-400"
+              />
+              <select
+                value={filterPeriod}
+                onChange={(e) => setFilterPeriod(e.target.value)}
+                className="w-full sm:w-1/5 px-3 py-1.5 rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm text-gray-700"
+              >
+                <option value="all">Toutes</option>
+                <option value="today">Aujourd'hui</option>
+                <option value="week">Semaine</option>
+                <option value="month">Mois</option>
+              </select>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full sm:w-1/5 px-3 py-1.5 rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm text-gray-700"
+              >
+                <option value="all">Tous statuts</option>
+                <option value="Payé">Payé</option>
+                <option value="Non payé">Non payé</option>
+                <option value="Remboursé">Remboursé</option>
+              </select>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={fetchRevenus}
+                className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm"
+              >
+                Actualiser
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={exportToCSV}
+                className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
+              >
+                CSV
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={exportToPDF}
+                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
+              >
+                PDF
+              </motion.button>
+            </div>
+          </div>
 
-        {/* Résumé statistiques */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white bg-opacity-90 p-4 rounded-xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 backdrop-blur-sm">
-            <div className="flex items-center space-x-3">
-              <CurrencyEuroIcon className="h-6 w-6 text-indigo-600" />
-              <div>
-                <p className="text-sm text-gray-600">Total encaissé</p>
-                <p className="text-xl font-bold text-gray-900">{totalEncaisse} €</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white bg-opacity-90 p-4 rounded-xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 backdrop-blur-sm">
-            <div className="flex items-center space-x-3">
-              <ChartBarIcon className="h-6 w-6 text-indigo-600" />
-              <div>
-                <p className="text-sm text-gray-600">Nombre de paiements</p>
-                <p className="text-xl font-bold text-gray-900">{commandes.length}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white bg-opacity-90 p-4 rounded-xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 backdrop-blur-sm">
-            <div className="flex items-center space-x-3">
-              <CalendarIcon className="h-6 w-6 text-indigo-600" />
-              <div>
-                <p className="text-sm text-gray-600">Moyenne {periode}</p>
-                <p className="text-xl font-bold text-gray-900">{moyenne} €</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white bg-opacity-90 p-4 rounded-xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 backdrop-blur-sm">
-            <div className="flex items-center space-x-3">
-              <ArrowTrendingUpIcon className="h-6 w-6 text-indigo-600" />
-              <div>
-                <p className="text-sm text-gray-600">Pic {periode}</p>
-                <p className="text-xl font-bold text-gray-900">{max} €</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Liste des montants payés par commande */}
-        <div className="bg-white bg-opacity-90 p-4 rounded-xl shadow-lg mb-6 backdrop-blur-sm flex-1 max-h-64 overflow-y-auto">
-          <h2 className="text-xl font-bold mb-3 text-gray-800">Montants payés par commande</h2>
-          {commandes.length > 0 ? (
-            <ul className="space-y-2">
-              {commandes.map((cmd) => (
-                <li
-                  key={cmd.id}
-                  className="flex justify-between items-center bg-indigo-50 p-3 rounded-lg hover:bg-indigo-100 transition"
+          {/* Graphique et Tableau */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="lg:col-span-1 bg-white/90 backdrop-blur-md rounded-lg p-4 shadow-md flex flex-col"
+            >
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-sm font-semibold text-gray-700">
+                  {chartType === "bar" ? "Répartition des revenus" : "Revenus par période"}
+                </h3>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setChartType(chartType === "bar" ? "line" : "bar")}
+                  className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition"
                 >
-                  <span className="text-sm font-medium text-gray-700">
-                    Commande #{cmd.id} ({cmd.nom}, {cmd.email})
+                  {chartType === "bar" ? "Graphique temporel" : "Graphique à barres"}
+                </motion.button>
+              </div>
+              <div className="flex-1 h-32">
+                {chartType === "bar" ? (
+                  <Bar data={barChartData} options={chartOptions} />
+                ) : (
+                  <Line data={timeSeriesChartData} options={chartOptions} />
+                )}
+              </div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="lg:col-span-2 bg-white/90 backdrop-blur-md rounded-lg shadow-md flex flex-col"
+            >
+              <div className="p-4 flex-1">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                  Détails des revenus
+                </h3>
+                <table className="w-full text-sm text-left text-gray-700">
+                  <thead className="text-xs uppercase bg-gray-100">
+                    <tr>
+                      <th className="px-3 py-2 w-16">ID</th>
+                      <th className="px-3 py-2 w-1/5 truncate">Client</th>
+                      <th className="px-3 py-2 w-2/5 truncate">Email</th>
+                      <th className="px-3 py-2 w-20 text-right">Total (€)</th>
+                      <th className="px-3 py-2 w-20 text-right">Payé (€)</th>
+                      <th className="px-3 py-2 w-24">Statut</th>
+                      <th className="px-3 py-2 w-1/4 truncate">Date</th>
+                      <th className="px-3 py-2 w-24">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      <tr>
+                        <td colSpan="8" className="px-3 py-2 text-center">
+                          Chargement...
+                        </td>
+                      </tr>
+                    ) : currentItems.length === 0 ? (
+                      <tr>
+                        <td colSpan="8" className="px-3 py-2 text-center">
+                          Aucune donnée
+                        </td>
+                      </tr>
+                    ) : (
+                      currentItems.map((rev) => (
+                        <tr
+                          key={rev.id}
+                          className="border-b hover:bg-gray-50"
+                        >
+                          <td className="px-3 py-2">{rev.id}</td>
+                          <td className="px-3 py-2 truncate" title={rev.nom}>
+                            {rev.nom}
+                          </td>
+                          <td className="px-3 py-2 truncate" title={rev.email}>
+                            {rev.email}
+                          </td>
+                          <td className="px-3 py-2 text-right">{rev.total}</td>
+                          <td className="px-3 py-2 text-right">{rev.amountPaid}</td>
+                          <td className="px-3 py-2">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                rev.paymentStatus === "Payé"
+                                  ? "bg-green-100 text-green-800"
+                                  : rev.paymentStatus === "Remboursé"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                              }`}
+                            >
+                              {rev.paymentStatus}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 truncate" title={rev.date}>
+                            {rev.date}
+                          </td>
+                          <td className="px-3 py-2 flex gap-1">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setShowDetailsModal(rev)}
+                              className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition"
+                            >
+                              Détails
+                            </motion.button>
+                            {rev.paymentStatus !== "Remboursé" && (
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => handleRefund(rev.id)}
+                                className="px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition"
+                              >
+                                Rembourser
+                              </motion.button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+                {/* Pagination */}
+                <div className="flex justify-center gap-2 mt-2">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs disabled:opacity-50"
+                  >
+                    Précédent
+                  </motion.button>
+                  <span className="text-xs text-gray-700">
+                    Page {currentPage} sur {totalPages}
                   </span>
-                  <span className="text-sm font-semibold text-indigo-600">
-                    {cmd.amountPaid} €
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-500 text-center">Aucune commande payée trouvée.</p>
-          )}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs disabled:opacity-50"
+                  >
+                    Suivant
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Répartition par catégorie */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white/90 backdrop-blur-md rounded-lg shadow-md"
+          >
+            <div className="p-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                Répartition par catégorie
+              </h3>
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="text-xs uppercase bg-gray-100">
+                  <tr>
+                    <th className="px-3 py-2 w-3/4">Catégorie</th>
+                    <th className="px-3 py-2 w-1/4 text-right">Revenu (€)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.keys(categoryBreakdown).length === 0 ? (
+                    <tr>
+                      <td colSpan="2" className="px-3 py-2 text-center">
+                        Aucune donnée de catégorie disponible
+                      </td>
+                    </tr>
+                  ) : (
+                    Object.entries(categoryBreakdown).map(([category, revenue]) => (
+                      <tr key={category} className="border-b hover:bg-gray-50">
+                        <td className="px-3 py-2 truncate">{category}</td>
+                        <td className="px-3 py-2 text-right">{revenue}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
         </div>
 
-        {/* Graphique par période */}
-        <div className="bg-white bg-opacity-90 p-4 rounded-xl shadow-lg mb-6 backdrop-blur-sm flex-1">
-          <h2 className="text-xl font-bold mb-3 text-gray-800">Revenus par période</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={groupedByDate} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <XAxis dataKey="date" stroke="#4B5563" />
-              <YAxis stroke="#4B5563" />
-              <Tooltip formatter={(value) => `${value.toFixed(2)} €`} />
-              <Bar dataKey="amountPaid" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Graphique par commande individuelle */}
-        <div className="bg-white bg-opacity-90 p-4 rounded-xl shadow-lg backdrop-blur-sm flex-1">
-          <h2 className="text-xl font-bold mb-3 text-gray-800">Montants payés par commande</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={dataCommandesIndividuelles} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <XAxis dataKey="commande" stroke="#4B5563" />
-              <YAxis stroke="#4B5563" />
-              <Tooltip formatter={(value) => `${value.toFixed(2)} €`} />
-              <Bar dataKey="amountPaid" fill="#10b981" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {/* Modale des détails */}
+        {showDetailsModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.8, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-white rounded-lg p-6 max-w-lg w-full mx-4"
+            >
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                Détails de la commande #{showDetailsModal.id}
+              </h3>
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="text-xs uppercase bg-gray-100">
+                  <tr>
+                    <th className="px-3 py-2">Article</th>
+                    <th className="px-3 py-2 text-right">Quantité</th>
+                    <th className="px-3 py-2 text-right">Prix (€)</th>
+                    <th className="px-3 py-2 text-right">Total (€)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {showDetailsModal.items.map((item, index) => (
+                    <tr key={index} className="border-b">
+                      <td className="px-3 py-2 truncate">{item.menuItem?.name || "Inconnu"}</td>
+                      <td className="px-3 py-2 text-right">{item.quantity || 0}</td>
+                      <td className="px-3 py-2 text-right">{parseFloat(item.price || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right">{(item.quantity * item.price || 0).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="flex justify-end mt-4">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowDetailsModal(null)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
+                >
+                  Fermer
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </div>
-    </div>
+      <ToastContainer position="top-right" autoClose={3000} />
+    </motion.div>
   );
 };
 

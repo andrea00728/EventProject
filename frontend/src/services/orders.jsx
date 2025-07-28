@@ -14,8 +14,7 @@ export const updateOrderStatus = async (orderId, status, token) => {
       Authorization: `Bearer ${token}`,
     },
   }
-    );
-    console.log('Mise à jour réussie:', response.data);
+  );
   } catch (error) {
     console.error('Erreur lors de la mise à jour:', error);
   }

@@ -43,7 +43,7 @@ export class OrderController {
     if (!userId) {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
-    return this.orderService.updateOrderStatus(id, body.status, userId);
+    return this.orderService.updateOrderStatus(id, body.status, req.user.email);
   }
 
   @Patch(':id/payment')

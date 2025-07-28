@@ -1,21 +1,32 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, UseInterceptors } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { CommentaireService } from 'src/services/commentaire/commentaire.service';
 import { CreateCommentaireDto } from 'src/dto/create-commentaire.dto';
 import { UpdateCommentaireDto } from 'src/dto/update-commentaire.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { NoFilesInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('commentaires')
 @Controller('commentaire')
 export class CommentaireController {
-  constructor(private readonly commentaireService: CommentaireService) {}
+  constructor(private readonly commentaireService: CommentaireService) { }
 
-  @Post()
+  @Post("commentaire")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('jwt')
   @ApiOperation({ summary: 'Créer un nouveau commentaire' })
   @ApiResponse({ status: 201, description: 'Commentaire créé avec succès.' })
   @ApiResponse({ status: 401, description: 'Non autorisé.' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        contenu: { type: 'string' }
+      },
+    },
+  })
+  @UseInterceptors(NoFilesInterceptor())
   create(@Body() createCommentaireDto: CreateCommentaireDto, @Request() req) {
     return this.commentaireService.create(createCommentaireDto, req.user);
   }

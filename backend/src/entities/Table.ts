@@ -10,7 +10,7 @@ export class TableEvent {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ nullable: true }) 
+  @Column({nullable: true})
   nom: string;
 
 

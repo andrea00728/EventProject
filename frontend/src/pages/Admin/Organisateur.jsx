@@ -68,7 +68,6 @@ export default function Organisateur() {
         console.log("Correspondance trouvée :", !!match);
         return prev.map((m) =>
           m.id === userId ? { ...m, isOnline: true } : m,
-          m.id === lastLogin ? { ...m, lastLogin: formatDate(new Date) } : m,
         );
       });
     });

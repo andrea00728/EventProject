@@ -1,23 +1,32 @@
-import { useEffect } from 'react';
+// src/pages/CaissierPage.jsx
+import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 
-const socket = io('http://localhost:3000');  // Crée une seule instance ici
+const socket = io('http://localhost:3000');
 
 export default function MyComponent() {
-  useEffect(() => {
-    socket.on('connect', () => {
-      console.log('Connecté au serveur WebSocket');
-    });
+  const [commandes, setCommandes] = useState([]);
 
-    socket.on('updateOrderStatus', (data) => {
-      console.log('Mise à jour reçue', data);
+  useEffect(() => {
+    socket.on('order_status_updated', (data) => {
+      console.log('Mise à jour : ', data)
+      setCommandes((prev) => {
+        const updated = prev.filter(cmd => cmd.id !== data.id);
+        return [...updated, data];
+      });
     });
 
     return () => {
-      socket.off('connect');
-      socket.off('updateOrderStatus');
+      socket.off('order_status_updated');
     };
   }, []);
 
-  return <div>Mon composant connecté</div>;
+  return (
+    <div>
+      <h1>Caissier</h1>
+      {commandes.map(cmd => (
+        <p key={cmd.id}>{cmd.plat} - Statut : {cmd.statut}</p>
+      ))}
+    </div>
+  );
 }

@@ -20,11 +20,10 @@ import {
   getAllOrdersForOnEvent,
   updateOrderStatus,
 } from "../../services/orders";
-import { io } from "socket.io-client";
 import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
-
-
+import { io } from "socket.io-client";
+import { getUserIdForToken } from "../../services/userService";
 
 const formatDateTime = (dateString) => {
   const date = new Date(dateString);
@@ -52,8 +51,7 @@ export default function DashboardpersCuisine() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-   const [userId, setUserId] = useState(null);
-
+  const [userId, setUserId] = useState(null)
   const { user, token, setToken, setUser } = useStateContext();
 
     useEffect(() => {
@@ -62,13 +60,13 @@ export default function DashboardpersCuisine() {
         if (!token) throw new Error("Token manquant");
 
         const eventId = await getEventIdByEmail(token);
-        console.log("Id evenement", eventId);
         const data = await getAllOrdersForOnEvent(eventId.eventId);
+        
         setLoading(true);
         setError(null);
         setCommandes(data);
       } catch (error) {
-        console.error("Erreur azo : ", error);
+        console.error("Erreur : ", error);
         setError("Impossible de charger les commandes.");
       } finally {
         setLoading(false);
@@ -77,8 +75,6 @@ export default function DashboardpersCuisine() {
 
     const fetchData = async () => {
       const UserId = await getUserIdForToken(token);
-
-      console.log("Id récupèré : ", UserId);
       setUserId(UserId)
 
       const socket = io("http://localhost:3000", {
@@ -91,9 +87,9 @@ export default function DashboardpersCuisine() {
       });
 
       // Pour écouter les mises à jour
-      socket.on("order_status_updated", (data) => {
-        console.log("📦 Statut mis à jour :", data);
-      });
+      // socket.on("order_status_updated", (data) => {
+      //   console.log("📦 Statut mis à jour :", data);
+      // });
     };
 
     fetchOrders();
@@ -104,7 +100,7 @@ export default function DashboardpersCuisine() {
     await updateOrderStatus(id, status, token);
   };
 
-    const changerStatut = async (id, direction = "next") => {
+  const changerStatut = async (id, direction = "next") => {
 
     const socket = io("http://localhost:3000", {
       auth: {

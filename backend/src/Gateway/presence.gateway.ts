@@ -42,4 +42,5 @@ export class PresenceGateway implements OnGatewayConnection, OnGatewayDisconnect
     await this.usersService.updateStatus(userId, false);
     this.server.emit('organizer_disconnected', { userId });
   }
+  
 }

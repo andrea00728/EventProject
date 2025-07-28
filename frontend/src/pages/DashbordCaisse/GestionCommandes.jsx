@@ -15,15 +15,22 @@ import {
 import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
+import { getUserIdForToken } from "../../services/userService";
+import { io } from "socket.io-client";
 
-const backgroundImageUrl = "https://images.unsplash.com/photo-1542744095-291d1f67b221";
+const backgroundImageUrl =
+  "https://images.unsplash.com/photo-1542744095-291d1f67b221";
 
 const GestionCommandesPage = () => {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
   const { token } = useStateContext();
 
   const STATUS_MAPPING = {
@@ -72,10 +79,46 @@ const GestionCommandesPage = () => {
       setCommandes(formatted);
     } catch (err) {
       console.error("Erreur:", err);
-      setSnackbar({ open: true, message: "Erreur lors du chargement des commandes.", severity: "error" });
+      setSnackbar({
+        open: true,
+        message: "Erreur lors du chargement des commandes.",
+        severity: "error",
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchData = async () => {
+    const UserId = await getUserIdForToken(token);
+
+    const socket = io("http://localhost:3000", {
+      auth: {
+        userId: UserId, // très important : doit être l’ID réel de l’organisateur
+      },
+    });
+    socket.on("connect", () => {
+      console.log("✅ Connecté au serveur WebSocket");
+    });
+
+    // Pour écouter les mises à jour
+    socket.on("order_status_updated", (data) => {
+      updateCommande(data)
+    });
+  };
+
+  const updateCommande = (update) => {
+    setCommandes((prevCommandes) =>
+      prevCommandes.map((cmd) =>
+        cmd.id === update.id
+          ? {
+              ...cmd,
+              ...update, // mise à jour partielle des champs
+              status: STATUS_MAPPING.backToFront[update.status] || update.status,
+            }
+          : cmd
+      )
+    );
   };
 
   const handleDelete = async (id) => {
@@ -86,12 +129,21 @@ const GestionCommandesPage = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCommandes((prev) => prev.filter((cmd) => cmd.id !== id));
-      setSnackbar({ open: true, message: "Commande supprimée.", severity: "success" });
-    } catch (error) {
-      console.error("Erreur suppression:", error.response?.data || error.message);
       setSnackbar({
         open: true,
-        message: error.response?.data?.message || "Erreur serveur lors de la suppression",
+        message: "Commande supprimée.",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error(
+        "Erreur suppression:",
+        error.response?.data || error.message
+      );
+      setSnackbar({
+        open: true,
+        message:
+          error.response?.data?.message ||
+          "Erreur serveur lors de la suppression",
         severity: "error",
       });
     }
@@ -99,37 +151,30 @@ const GestionCommandesPage = () => {
 
   useEffect(() => {
     fetchCommandes();
-
+    fetchData();
     const onUpdateOrderStatus = (updatedOrder) => {
       setCommandes((prev) =>
         prev.map((cmd) =>
           cmd.id === updatedOrder.id
             ? {
                 ...cmd,
-                status: STATUS_MAPPING.backToFront[updatedOrder.status] || updatedOrder.status,
+                status:
+                  STATUS_MAPPING.backToFront[updatedOrder.status] ||
+                  updatedOrder.status,
               }
             : cmd
         )
       );
     };
-
-    socket.on("connect", () => {
-      console.log("Connecté au serveur WebSocket");
-    });
-
-    socket.on("updateOrderStatus", onUpdateOrderStatus);
-
-    return () => {
-      socket.off("connect");
-      socket.off("updateOrderStatus", onUpdateOrderStatus);
-    };
   }, [token]); // on refresh si token change
 
   const filteredCommandes = commandes.filter((cmd) => {
-    const matchStatus = selectedStatus === "all" || cmd.status === selectedStatus;
+    const matchStatus =
+      selectedStatus === "all" || cmd.status === selectedStatus;
     const search = searchTerm.toLowerCase();
     const matchSearch =
-      cmd.nom.toLowerCase().includes(search) || cmd.email.toLowerCase().includes(search);
+      cmd.nom.toLowerCase().includes(search) ||
+      cmd.email.toLowerCase().includes(search);
     return matchStatus && matchSearch;
   });
 
@@ -146,7 +191,9 @@ const GestionCommandesPage = () => {
       headerName: "Statut",
       width: 160,
       renderCell: (params) => {
-        const statusInfo = STATUS_OPTIONS.find((s) => s.value === params.row.status);
+        const statusInfo = STATUS_OPTIONS.find(
+          (s) => s.value === params.row.status
+        );
         return (
           <Chip
             label={statusInfo?.label || params.row.status}
