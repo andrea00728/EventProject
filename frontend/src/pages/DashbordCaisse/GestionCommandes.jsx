@@ -112,10 +112,10 @@ const GestionCommandesPage = () => {
       prevCommandes.map((cmd) =>
         cmd.id === update.id
           ? {
-              ...cmd,
-              ...update, // mise à jour partielle des champs
-              status: STATUS_MAPPING.backToFront[update.status] || update.status,
-            }
+            ...cmd,
+            ...update, // mise à jour partielle des champs
+            status: STATUS_MAPPING.backToFront[update.status] || update.status,
+          }
           : cmd
       )
     );
@@ -149,24 +149,87 @@ const GestionCommandesPage = () => {
     }
   };
 
+  // useEffect(() => {
+  //   fetchCommandes();
+  //   fetchData();
+  //   const onUpdateOrderStatus = (updatedOrder) => {
+  //     setCommandes((prev) =>
+  //       prev.map((cmd) =>
+  //         cmd.id === updatedOrder.id
+  //           ? {
+  //               ...cmd,
+  //               status:
+  //                 STATUS_MAPPING.backToFront[updatedOrder.status] ||
+  //                 updatedOrder.status,
+  //             }
+  //           : cmd
+  //       )
+  //     );
+  //   };
+  // }, [token]);
+
   useEffect(() => {
-    fetchCommandes();
-    fetchData();
-    const onUpdateOrderStatus = (updatedOrder) => {
-      setCommandes((prev) =>
-        prev.map((cmd) =>
-          cmd.id === updatedOrder.id
-            ? {
-                ...cmd,
-                status:
-                  STATUS_MAPPING.backToFront[updatedOrder.status] ||
-                  updatedOrder.status,
-              }
-            : cmd
-        )
-      );
+    let socket;
+
+    const initializeSocket = async () => {
+      try {
+        const UserId = await getUserIdForToken(token);
+        socket = io("http://localhost:3000", {
+          auth: { userId: UserId },
+        });
+
+        socket.on("connect", () => {
+          console.log("✅ Connecté au serveur WebSocket");
+        });
+
+        socket.on("order_status_updated", (data) => {
+          updateCommande(data);
+        });
+
+        socket.on("new_order", (order) => {
+          console.log("Nouvelle commande reçue:", order);
+          setCommandes((prevCommandes) => {
+            if (prevCommandes.some((cmd) => cmd.id === order.id)) {
+              console.log(`Commande ${order.id} déjà présente, ignorée.`);
+              return prevCommandes;
+            }
+            const formattedOrder = {
+              id: order.id,
+              nom: order.nom || "Anonyme",
+              email: order.email || "-",
+              table: order.table ? `Table ${order.table.numero}` : "N/A",
+              total: order.total ? `€${order.total.toFixed(2)}` : "€0.00",
+              itemsCount: order.items?.length || 0,
+              date: new Date(order.orderDate).toLocaleString(),
+              status: STATUS_MAPPING.backToFront[order.status] || order.status,
+            };
+            return [...prevCommandes, formattedOrder];
+          });
+        });
+
+        socket.on("connect_error", (error) => {
+          console.error("WebSocket connection error:", error);
+          setSnackbar({
+            open: true,
+            message: "Erreur de connexion WebSocket.",
+            severity: "error",
+          });
+        });
+      } catch (err) {
+        console.error("Erreur lors de l'initialisation du socket:", err);
+      }
     };
-  }, [token]); // on refresh si token change
+
+    fetchCommandes();
+    initializeSocket();
+
+    return () => {
+      if (socket) {
+        socket.disconnect();
+        console.log("🔌 WebSocket déconnecté");
+      }
+    };
+  }, [token]);
 
   const filteredCommandes = commandes.filter((cmd) => {
     const matchStatus =
