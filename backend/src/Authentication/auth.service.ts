@@ -1,4 +1,3 @@
-
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,8 +8,6 @@ import { CreateUserDto } from './dto/create-auth.dto';
 import { Personnel } from 'src/entities/Personnel';
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
-import * as bcrypt from 'bcrypt';
-
 
 @Injectable()
 export class AuthService {
@@ -23,62 +20,18 @@ export class AuthService {
     @InjectRepository(Evenement)
     private readonly eventRepository: Repository<Evenement>,
     @InjectRepository(Forfait)
-    private readonly forfaitRepository: Repository<Forfait>
-  ) { }
-
-
-
-  /***
-   * 
-   * natoko commentaire lony satria ito efa mande fa anao test  na role ao
-   */
-  // async validateUser(profile: any): Promise<any> {
-  //   const { emails, displayName, photos } = profile;
-  //   const email = emails[0].value;
-
-  //   // Vérifie si l'email existe dans `personnel`
-  //   const personnel = await this.personnelRepository.findOne({
-  //     where: { email },
-  //     relations: ['evenement'],
-  //   });
-
-  //   const role = personnel?.role || 'organisateur';
-  //   // Vérifie si déjà dans users
-  //   let user = await this.userRepository.findOne({ where: { email } });
-
-  //   if (!user) {
-  //     //  Trouve le forfait freemium (id 11)
-  //     const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
-
-  //     if (!freemium) {
-  //       throw new Error('Forfait freemium non trouvé'); // Sécurité
-  //     }
-
-  //     user = this.userRepository.create({
-  //       id: uuidv4(),
-  //       email,
-  //       name: displayName,
-  //       photo: photos?.[0]?.value || '',
-  //       role,
-  //       forfait: {id:11} as Forfait, //  Lien vers le forfait freemium
-  //     });
-
-  //     await this.userRepository.save(user);
-  //   }
-
-  //   return user;
-  // }
-
+    private readonly forfaitRepository: Repository<Forfait>,
+  ) {}
 
   async validateUser(profile: any): Promise<any> {
     const { emails, displayName, photos } = profile;
     const email = emails[0].value;
+    console.log('Google Profile Data:', { email, displayName, photos }); // Log pour déboguer
+
     const personnel = await this.personnelRepository.findOne({
       where: { email },
       relations: ['evenement'],
     });
-
-    // const role = personnel?.role || 'organisateur';
 
     const isInPersonnel = !!personnel;
     const isdetectedRole = isInPersonnel ? personnel.role : 'organisateur';
@@ -89,68 +42,48 @@ export class AuthService {
       const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
 
       if (!freemium) {
-        throw new Error('Forfait freemium non trouvé'); // Sécurité
+        throw new Error('Forfait freemium non trouvé');
       }
 
       user = this.userRepository.create({
         id: uuidv4(),
         email,
-        name: displayName,
-        photo: photos?.[0]?.value || '',
+        name: displayName || null,
+        photo: photos?.[0]?.value || null,
         role: isdetectedRole,
         forfait: { id: 11 } as Forfait,
       });
 
       await this.userRepository.save(user);
+    } else {
+      // Mettre à jour name et photo si nécessaire
+      if (user.name !== displayName || user.photo !== (photos?.[0]?.value || null)) {
+        user.name = displayName || null;
+        user.photo = photos?.[0]?.value || null;
+        await this.userRepository.save(user);
+      }
     }
 
     return {
       ...user,
       role: isdetectedRole,
       isInPersonnel,
-    }
+    };
   }
-
-
-  //regitre d'un user organisateur
-  async registerUser(dto: CreateUserDto) {
-    const existing = await this.userRepository.findOne({ where: { email: dto.email } });
-    if (existing) throw new Error('Email déjà utilisé');
-
-    if (!dto.password) {
-      throw new Error("Mot de passe requis !");
-    }
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    const user = this.userRepository.create({
-      id: uuidv4(),
-      email: dto.email,
-      name: dto.name,
-      role: 'organisateur', // par défaut
-      photo: dto.photo || '',
-      password: hashedPassword,
-    });
-
-    return this.userRepository.save(user);
-  }
-
 
   async login(user: any) {
-    
-  const payload = { 
-    email: user.email,
-    sub: user.id,
-    role: user.role,
-  };
-
-  return {
-    access_token: this.jwtService.sign(payload),
-  };
-}
-
-
-
-
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+      name: user.name,
+      photo: user.photo,
+    };
+    console.log('JWT Payload:', payload); // Log pour déboguer
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
+  }
 
   async createUser(dto: CreateUserDto) {
     const user = this.userRepository.create(dto);
@@ -161,6 +94,7 @@ export class AuthService {
     const token = this.jwtService.sign({}, { expiresIn: '1s' });
     return { message: 'Déconnexion réussie' };
   }
+
   async getManagerList(): Promise<any> {
     return this.userRepository.find({
       where: { role: 'organisateur' },
@@ -169,7 +103,6 @@ export class AuthService {
   }
 
   async deleteManager(id: string): Promise<{ message: string }> {
-    // Récupérer le manager avec ses relations si nécessaire
     const manager = await this.userRepository.findOne({
       where: { id },
     });
@@ -178,16 +111,53 @@ export class AuthService {
       throw new NotFoundException(`Manager avec ID ${id} non trouvé`);
     }
 
-    // Vérifier que l'utilisateur est bien un organisateur
     if (manager.role !== 'organisateur') {
       throw new UnauthorizedException('Vous n\'êtes pas autorisé à supprimer ce manager');
     }
 
-    // Supprimer le manager lui-même
     await this.eventRepository.delete({ user: { id: manager.id } });
     await this.userRepository.delete(manager.id);
 
     return { message: 'Organisateur supprimé avec succès' };
+  }
+
+  async updateStatus(userId: string, isOnline: boolean) {
+  await this.userRepository.update(userId, {
+    isOnline,
+    ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
+  });
+}
+
+  async getIdForToken(userEmail) {
+    if(!userEmail) {
+      return "Id non trouvé";
+    }
+
+    const user = await this.userRepository.findOne({
+      where : {
+        email : userEmail
+      }
+    })
+
+    if ( ! user) return "Organisateur non trouvé"
+
+    return user.id;
+  }
+
+    /**
+   * 
+   * @returns 
+   * 
+   * nombre totale d'organisateur
+   */
+
+  async findCountUsers():Promise<number>{
+    const count= this.userRepository.count({
+      where: {
+        role: 'organisateur',
+      },
+    });
+    return count;
   }
 
 }

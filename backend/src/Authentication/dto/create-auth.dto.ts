@@ -1,4 +1,3 @@
-import { IsOptional } from "class-validator";
 import { UserRole } from "../entities/auth.entity";
 
 export class CreateUserDto {
@@ -7,7 +6,4 @@ export class CreateUserDto {
   name: string;
   role: UserRole;
   expirationdate:Date;
-  password : string ;
-  @IsOptional()
-  photo?: string
 }

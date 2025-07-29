@@ -1,6 +1,6 @@
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
-import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryColumn, ManyToMany, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
 export type UserRole = 'organisateur' | 'accueil' | 'caissier' | 'cuisinier';
 
@@ -25,10 +25,6 @@ export class User {
   })
   role: UserRole;
 
-  @Column({ type: 'varchar', nullable: true })
-  password: string;
-
-
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
@@ -37,17 +33,28 @@ export class User {
    */
   // @ManyToMany(()=>Evenement,evenement=>evenement.user)
   // evenement:Evenement[];
-  @OneToMany(() => Evenement, evenement => evenement.user)
-  evenement: Evenement[];
+  @OneToMany(()=>Evenement,evenement=>evenement.user)
+  evenement:Evenement[];
 
-  @ManyToOne(() => Forfait, { nullable: true })
-  @JoinColumn({ name: 'forfait_id' })
-  forfait: Forfait;
+  @ManyToOne(()=>Forfait,{nullable:true})
+  @JoinColumn({name:'forfait_id'})
+  forfait:Forfait;
+
+  @Column({type:'timestamp',nullable:true})
+  datedowngraded:Date|null;
+
+  @Column({type:'timestamp',nullable:true})
+  forfaitexpirationdate:Date|null;
+
+  // gestion de status 
+  @Column({ type: 'boolean', default: false })
+  isOnline: boolean;
 
   @Column({ type: 'timestamp', nullable: true })
-  datedowngraded: Date | null;
+  lastLogin: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  forfaitexpirationdate: Date | null;
+  lastLogout: Date;
+
 }
 

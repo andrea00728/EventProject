@@ -3,10 +3,6 @@ import axios from "axios";
 import { getMyEvents } from "../../services/evenementServ";
 import { useStateContext } from "../../context/ContextProvider";
 import {
-  DataGrid,
-  GridActionsCellItem
-} from "@mui/x-data-grid";
-import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Edit as EditIcon
@@ -19,8 +15,13 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
-  IconButton
+  IconButton,
+  Tabs,
+  Tab,
+  Typography
 } from "@mui/material";
+import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
+
 
 export default function MenuRestauration() {
   const { token } = useStateContext();
@@ -31,6 +32,10 @@ export default function MenuRestauration() {
   const [menuItems, setMenuItems] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
   const [menuFormOpen, setMenuFormOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteMenuConfirmOpen, setDeleteMenuConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [menuToDelete, setMenuToDelete] = useState(null);
   const [form, setForm] = useState({ name: '', description: '', price: '', category: '', stock: '', photo: null });
   const [menuForm, setMenuForm] = useState({ name: '' });
   const [editingItem, setEditingItem] = useState(null);
@@ -119,7 +124,6 @@ export default function MenuRestauration() {
 
     try {
       if (editingItem && editingItem.id) {
-        console.log("Patching item with ID:", editingItem.id, formData); // Debug log
         await axios.patch(`/menus/items/${editingItem.id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
@@ -152,76 +156,81 @@ export default function MenuRestauration() {
     }
   };
 
-  const handleDelete = async (id) => {
-    await axios.delete(`/menus/items/${id}`);
-    setMenuItems(prev => prev.filter(item => item.id !== id));
+  const handleOpenDeleteConfirm = (item) => {
+    setItemToDelete(item);
+    setDeleteConfirmOpen(true);
   };
 
-  const handleDeleteMenu = async () => {
-    if (!selectedMenuId || selectedMenuId === "all") return;
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce menu ?")) return;
+  const handleCloseDeleteConfirm = () => {
+    setDeleteConfirmOpen(false);
+    setItemToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
     try {
-      console.log("Deleting menu with ID:", selectedMenuId); // Debug log
-      await axios.delete(`/menus/${selectedMenuId}`);
+      await axios.delete(`/menus/items/${itemToDelete.id}`);
+      setMenuItems(prev => prev.filter(item => item.id !== itemToDelete.id));
+      handleCloseDeleteConfirm();
+    } catch (err) {
+      console.error("Erreur lors de la suppression de l'élément :", err);
+      alert("Erreur lors de la suppression de l'élément.");
+    }
+  };
+
+  const handleOpenDeleteMenuConfirm = (menuId) => {
+    setMenuToDelete(menuId);
+    setDeleteMenuConfirmOpen(true);
+  };
+
+  const handleCloseDeleteMenuConfirm = () => {
+    setDeleteMenuConfirmOpen(false);
+    setMenuToDelete(null);
+  };
+
+  const handleConfirmDeleteMenu = async () => {
+    if (!menuToDelete) return;
+    try {
+      await axios.delete(`/menus/${menuToDelete}`);
       await reloadMenus();
       setSelectedMenuId("all");
+      handleCloseDeleteMenuConfirm();
     } catch (err) {
       console.error("Erreur suppression menu :", err);
       alert("Erreur lors de la suppression.");
     }
   };
 
-  const columns = [
-    { field: "name", headerName: "Nom", flex: 1 },
-    { field: "description", headerName: "Description", flex: 2 },
-    { field: "price", headerName: "Prix", flex: 1 },
-    { field: "category", headerName: "Catégorie", flex: 1 },
-    { field: "stock", headerName: "Stock", flex: 1 },
-    { field: "menuName", headerName: "Menu", flex: 1 },
-    {
-      field: "photo",
-      headerName: "Image",
-      renderCell: (params) => params.row.photo ? <img src={`http://localhost:3000${params.row.photo}`} width={60} alt="menu" /> : "",
-      width: 100
-    },
-    {
-      field: "actions",
-      headerName: "Actions",
-      type: "actions",
-      getActions: (params) => [
-        <GridActionsCellItem
-          icon={<EditIcon />}
-          label="Edit"
-          onClick={() => handleOpenForm(params.row)}
-        />,
-        <GridActionsCellItem
-          icon={<DeleteIcon />}
-          label="Delete"
-          onClick={() => handleDelete(params.row.id)}
-        />
-      ]
-    }
-  ];
-
   return (
     <>
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Sélectionner un événement</h1>
+        <h1 className="text-2xl font-bold mb-4 text-center">Menu</h1>
 
+        <h2 className="text-sm font-medium text-gray-600 mb-2">Sélectionner un événement</h2>
         {events.length === 0 ? (
           <p className="text-gray-600">Aucun événement trouvé. Créez un événement d’abord.</p>
         ) : (
-          <div className="flex gap-4 flex-wrap mb-6">
+          <Tabs
+            value={selectedEvent ? events.findIndex(event => event.id === selectedEvent.id) : false}
+            onChange={(e, newValue) => setSelectedEvent(events[newValue])}
+            variant="scrollable"
+            className="mb-6 border-b border-gray-200"
+            TabIndicatorProps={{ style: { backgroundColor: '#6b48ff' } }}
+          >
             {events.map((event) => (
-              <button
+              <Tab
                 key={event.id}
-                onClick={() => setSelectedEvent(event)}
-                className={`py-2 px-4 rounded ${selectedEvent?.id === event.id ? "bg-purple-600 text-white" : "bg-gray-200 cursor-pointer text-gray-700"}`}
-              >
-                {event.nom}
-              </button>
+                label={event.nom}
+                className={`text-sm font-medium ${selectedEvent?.id === event.id ? 'text-purple-600' : 'text-gray-600 hover:text-gray-800'}`}
+                sx={{
+                  minWidth: 'auto',
+                  padding: '8px 16px',
+                  '&.Mui-selected': { backgroundColor: '#f0f0ff', borderRadius: '4px 4px 0 0' },
+                  '&:hover': { backgroundColor: '#e0e0ff' },
+                }}
+              />
             ))}
-          </div>
+          </Tabs>
         )}
 
         {selectedEvent && (
@@ -261,10 +270,7 @@ export default function MenuRestauration() {
                               <EditIcon />
                             </IconButton>
                             <IconButton
-                              onClick={() => {
-                                setSelectedMenuId(menu.id);
-                                handleDeleteMenu();
-                              }}
+                              onClick={() => handleOpenDeleteMenuConfirm(menu.id)}
                               sx={{ color: '#e74c3c' }}
                             >
                               <DeleteIcon />
@@ -304,32 +310,42 @@ export default function MenuRestauration() {
               </Box>
             )}
 
-            <DataGrid
-              rows={filteredItems}
-              columns={columns}
-              autoHeight
-              getRowId={(row) => row.id}
-              pageSize={5}
-              rowsPerPageOptions={[5, 10]}
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': { borderBottom: 'none', border: 'none' },
-                '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f0f4f8', border: 'none' },
-                '& .MuiDataGrid-root': { border: 'none' }
-              }}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredItems.map((item) => (
+                <div key={item.id} className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+                  <div className="flex flex-col h-full">
+                    {item.photo && (
+                      <img src={`http://localhost:3000${item.photo}`} alt={item.name} className="w-full h-40 object-cover mb-4 rounded-lg" />
+                    )}
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{item.name}</h3>
+                    <p className="text-gray-700 mb-2"><strong>Description :</strong> {item.description || 'N/A'}</p>
+                    <p className="text-gray-700 mb-2"><strong>Prix :</strong> <span className="text-purple-600 font-medium">{item.price ? `${item.price} €` : 'N/A'}</span></p>
+                    <p className="text-gray-700 mb-2"><strong>Catégorie :</strong> {item.category || 'N/A'}</p>
+                    <p className="text-gray-700 mb-2"><strong>Stock :</strong> {item.stock || 'N/A'}</p>
+                    <p className="text-gray-700 mb-4"><strong>Menu :</strong> {item.menuName || 'N/A'}</p>
+                    <div className="mt-auto flex justify-end gap-3">
+                      <IconButton onClick={() => handleOpenForm(item)} sx={{ color: '#6b48ff' }}>
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton onClick={() => handleOpenDeleteConfirm(item)} sx={{ color: '#e74c3c' }}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </>
         )}
       </div>
 
-      {/* Dialogs */}
       <Dialog open={formOpen} onClose={handleCloseForm} PaperProps={{ sx: { borderRadius: 2 } }}>
         <DialogTitle>{editingItem ? `Modifier un élément de ${allMenus.find(m => m.id === selectedMenuId)?.name || ''}` : `Ajouter un ${allMenus.find(m => m.id === selectedMenuId)?.name || ''}`}</DialogTitle>
         <DialogContent>
           {['name', 'description', 'price', 'category', 'stock'].map((field) => (
             <TextField
               key={field}
-              label={field.charAt(0).toUpperCase() + field.slice(1)}
+              label={field === 'name' ? 'Nom' : field === 'description' ? 'Description' : field === 'price' ? 'Prix' : field === 'category' ? 'Catégorie' : 'Stock'}
               value={form[field] || ''}
               type={field === 'price' || field === 'stock' ? 'number' : 'text'}
               fullWidth
@@ -340,7 +356,10 @@ export default function MenuRestauration() {
             />
           ))}
           <TextField
-            type="file"
+            key={field}
+            label={field === 'name' ? 'Nom' : field === 'description' ? 'Description' : field === 'price' ? 'Prix' : field === 'category' ? 'Catégorie' : 'Stock'}
+            value={form[field] || ''}
+            type={field === 'price' || field === 'stock' ? 'number' : 'text'}
             fullWidth
             margin="dense"
             variant="outlined"
@@ -361,15 +380,37 @@ export default function MenuRestauration() {
             label="Nom du menu"
             value={menuForm.name}
             fullWidth
+            placeholder="Ex: Plats, Dessert..."
             margin="dense"
             variant="outlined"
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
             onChange={(e) => setMenuForm({ ...menuForm, name: e.target.value })}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseMenuForm} sx={{ color: '#34495e' }}>Annuler</Button>
           <Button variant="contained" onClick={handleSaveMenu} sx={{ backgroundColor: '#6b48ff', color: 'white', '&:hover': { backgroundColor: '#5a38dd' } }}>Enregistrer</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deleteConfirmOpen} onClose={handleCloseDeleteConfirm} PaperProps={{ sx: { borderRadius: 2 } }}>
+        <DialogTitle>Confirmer la suppression</DialogTitle>
+        <DialogContent>
+          <Typography>Êtes-vous sûr de vouloir supprimer l'élément "{itemToDelete?.name}" ?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteConfirm} sx={{ color: '#34495e' }}>Annuler</Button>
+          <Button variant="contained" onClick={handleConfirmDelete} sx={{ backgroundColor: '#e74c3c', color: 'white', '&:hover': { backgroundColor: '#c0392b' } }}>Supprimer</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deleteMenuConfirmOpen} onClose={handleCloseDeleteMenuConfirm} PaperProps={{ sx: { borderRadius: 2 } }}>
+        <DialogTitle>Confirmer la suppression du menu</DialogTitle>
+        <DialogContent>
+          <Typography>Êtes-vous sûr de vouloir supprimer le menu "{allMenus.find(m => m.id === menuToDelete)?.name}" ?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteMenuConfirm} sx={{ color: '#34495e' }}>Annuler</Button>
+          <Button variant="contained" onClick={handleConfirmDeleteMenu} sx={{ backgroundColor: '#e74c3c', color: 'white', '&:hover': { backgroundColor: '#c0392b' } }}>Supprimer</Button>
         </DialogActions>
       </Dialog>
     </>

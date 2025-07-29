@@ -1,21 +1,33 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation, Outlet } from "react-router-dom";
 import {
   Utensils,
-  Users,
-  LayoutDashboard
+  LayoutDashboard,
+  Menu as MenuIcon
 } from "lucide-react";
-import { Box } from "@mui/material";
+import {
+  Box,
+  Drawer,
+  IconButton,
+  AppBar,
+  Toolbar,
+  Typography,
+  useTheme,
+  useMediaQuery
+} from "@mui/material";
+
+const drawerWidth = 256;
 
 const RestaurationPage = () => {
   const { pathname } = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  // Liste des sous-routes relatives à "/evenement/restauration"
   const choixItems = [
     { path: "", name: "Gestion des Menus", icon: <Utensils className="w-5 h-5" /> },
   ];
 
-  // Fonction pour définir le style actif
   const linkClass = (path) =>
     `flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
       pathname === `/evenement/restauration/${path}` ||

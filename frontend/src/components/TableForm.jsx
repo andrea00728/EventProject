@@ -41,7 +41,7 @@ const TABLE_TYPES = [
 ];
 
 export default function CreateTable({ onSubmitTable }) {
-  const [form, setForm] = useState({ numero: "", capacite: "" });
+  const [form, setForm] = useState({ nom: "", capacite: "" });
   const [selectedType, setSelectedType] = useState(TABLE_TYPES[0].value);
   const [modalTypeOpen, setModalTypeOpen] = useState(false);
   const [error, setError] = useState(null);
@@ -60,7 +60,7 @@ export default function CreateTable({ onSubmitTable }) {
         ...form,
         type: selectedType,
       });
-      setForm({ numero: "", capacite: "" });
+      setForm({ nom: "", capacite: "" });
     } catch (err) {
       if (err.message && err.message.includes("déjà utilisé")) {
         setShowAlert(true);
@@ -80,11 +80,11 @@ export default function CreateTable({ onSubmitTable }) {
         <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">Créer une Table</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col">
-            <label htmlFor="numero" className="block text-sm font-medium text-gray-700 mb-2">Numéro de Table</label>
+            <label htmlFor="nom" className="block text-sm font-medium text-gray-700 mb-2">Nom de la table</label>
             <input
-              id="numero"
-              name="numero"
-              value={form.numero}
+              id="nom"
+              name="nom"
+              value={form.nom}
               onChange={handleChange}
               placeholder="Ex: 1, 2, A, B..."
               required

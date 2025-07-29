@@ -146,7 +146,7 @@ export default function Table({ eventId, onNext, onBack }) {
                   className="rounded-xl border-2 border-indigo-100 bg-indigo-50 p-6 flex flex-col items-center shadow hover:shadow-lg transition"
                 >
                   <div className="w-16 h-16 flex items-center justify-center rounded-full bg-indigo-200 mb-3 text-2xl font-bold text-indigo-800 shadow">
-                    {table.numero}
+                    {table.nom}
                   </div>
                   <div className="text-lg font-semibold text-indigo-900 mb-2">
                     Capacité : {table.capacite}

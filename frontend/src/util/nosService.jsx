@@ -142,7 +142,7 @@ export default function NosService() {
         </div>
       </section>
 
-      <style jsx>{`
+      <style >{`
         @keyframes fadeIn {
           from {
             opacity: 0;
