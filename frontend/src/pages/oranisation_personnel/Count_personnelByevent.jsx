@@ -4,7 +4,6 @@ import { getMyEvents } from '../../services/evenementServ';
 import { useStateContext } from '../../context/ContextProvider';
 import ListePersonnel from './Listepersonnel';
 
-
 export default function PersonnelCountDashboard() {
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [selectedEventName, setSelectedEventName] = useState('');
@@ -35,20 +34,22 @@ export default function PersonnelCountDashboard() {
   const handleEventClick = async (event) => {
     setSelectedEventId(event.id);
     setSelectedEventName(event.nom || `Événement ${event.id}`);
-    setCount(null);
     setError('');
   };
 
   return (
-    <div className="p-6 bg-gray-50  h-screen rounded-lg shadow-md overflow-y-auto">
+    <div className="h-full flex flex-col">
+      {/* Header avec sélection d'événements */}
+      <div className="flex-shrink-0 p-6 bg-white border-b border-gray-200">
+        <h1 className="text-3xl font-bold text-indigo-700 mb-6">Dashboard Personnel</h1>
+        
+        {error && (
+          <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
-      {error && (
-        <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-center">
-          {error}
-        </div>
-      )}
-      <div className="overflow-x-auto mb-8">
-        <div className="flex gap-4 w-max">
+        <div className="flex gap-3 overflow-x-auto pb-2">
           {loadingEvents ? (
             <div className="text-gray-500">Chargement des événements...</div>
           ) : (
@@ -56,10 +57,10 @@ export default function PersonnelCountDashboard() {
               <button
                 key={event.id}
                 onClick={() => handleEventClick(event)}
-                className={`min-w-[180px] px-4 py-3 rounded-lg shadow text-sm font-medium transition whitespace-nowrap ${
+                className={`flex-shrink-0 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                   selectedEventId === event.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-800 hover:bg-gray-100'
+                    ? 'bg-indigo-600 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                 }`}
               >
                 {event.nom || `Événement ${event.id}`}
@@ -68,12 +69,15 @@ export default function PersonnelCountDashboard() {
           )}
         </div>
       </div>
-      {/* Liste du personnel */}
-      {selectedEventId && (
-        <>
-          <ListePersonnel eventId={selectedEventId} token={token} />
-        </>
-      )}
+
+      {/* Contenu principal */}
+      <div className="flex-1 overflow-y-auto">
+        {selectedEventId && (
+          <div className="p-6">
+            <ListePersonnel eventId={selectedEventId} token={token} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

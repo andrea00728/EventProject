@@ -246,12 +246,6 @@ export default function ListeTable() {
           checked={selectedTableIds.includes(params.row.id)}
           onChange={() => handleCheckboxChange(params.row.id)}
           aria-label={`Sélectionner la table ${params.row.nom}`}
-          sx={{
-            color: '#6b48ff',
-            '&.Mui-checked': {
-              color: '#6b48ff',
-            },
-          }}
         />
       ),
     },

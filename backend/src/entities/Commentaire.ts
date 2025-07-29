@@ -1,34 +1,36 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+  import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 
-export enum SatisfactionLevel{
-  TRES_SATISFAIT="tres_satisfait",
-  SATISFAIT="satisfait",
-  PAS_SATISFAIT="pas_satisfait",
-}
-@Entity()
-export class Commentaire {
-  @PrimaryGeneratedColumn()
-  id: number;
+  export enum SatisfactionLevel{
+    DECEVANT="decevant",
+    MOYEN="moyen",
+    BIEN="bien",
+    TRES_BIEN="tres_bien",
+    EXELLENT="excellent",
+  }
+  @Entity()
+  export class Commentaire {
+    @PrimaryGeneratedColumn()
+    id: number;
 
-  @Column()
-  contenu: string;
+    @Column()
+    contenu: string;
 
-  @Column()
-  userEmail: string;
+    @Column()
+    userEmail: string;
 
-  @Column({ nullable: true })
-  userName: string;
+    @Column({ nullable: true })
+    userName: string;
 
-  @Column({ nullable: true })
-  userPhoto: string;
+    @Column({ nullable: true })
+    userPhoto: string;
 
-  @Column({ 
-    type: 'enum',
-    enum: SatisfactionLevel,
-    default: SatisfactionLevel.SATISFAIT,
-  })
-  satisfaction: SatisfactionLevel;
+    @Column({ 
+      type: 'enum',
+      enum: SatisfactionLevel,
+      default: SatisfactionLevel.DECEVANT,
+    })
+    satisfaction: SatisfactionLevel;
 
-  @CreateDateColumn()
-  createdAt: Date;
-}
+    @CreateDateColumn()
+    createdAt: Date;
+  }
