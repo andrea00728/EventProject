@@ -154,4 +154,11 @@ export class AuthController {
     
     return this.authService.getIdForToken(req.user.email);
   }
+
+  @Get('/org/stats')
+  // @UseGuards(AuthGuard('jwt'))
+  async getOrgStats(/*@Req() req : any*/): Promise<any> {
+    
+    return this.authService.findOrgStats();
+  }
 }

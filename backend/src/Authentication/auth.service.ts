@@ -168,4 +168,18 @@ export class AuthService {
     return count;
   }
 
+  async findOrgStats():Promise<any>{
+
+    const [count]=await Promise.all([
+      this.userRepository.count({
+      where: {
+        role: 'organisateur',
+      },
+    })
+    ]);
+    return {
+      count 
+    };
+  }
+
 }

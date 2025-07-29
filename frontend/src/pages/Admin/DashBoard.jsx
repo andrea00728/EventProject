@@ -22,6 +22,7 @@ import {
 import { ChevronDown } from "lucide-react";
 import { getSumForUsersForfait } from "../../services/forfaitService";
 import { getCountForAllEventStats } from "../../services/evenementServ";
+import { getOrgStats, getUserCount } from "../../services/userService";
 
 export default function Dashboard() {
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -43,6 +44,7 @@ export default function Dashboard() {
     passes : 0,
     avenir : 0
   })
+  const [orgStats, setOrgStats] = useState({})
   /*************** */
 
   useEffect(() => {
@@ -51,8 +53,11 @@ export default function Dashboard() {
       try {
         const SumForUsersForfait = await getSumForUsersForfait();
         const CountForAllEventStats = await getCountForAllEventStats();
+        const orgaStat = await getOrgStats()
+        console.log(orgaStat)
         setStatEvent(CountForAllEventStats)
         setTotalRevenu(SumForUsersForfait);
+        setOrgStats(orgaStat)
       } catch (error) {
         console.error("Erreur lors de la récupération des données :", error);
       }
@@ -94,7 +99,7 @@ export default function Dashboard() {
       icon: <MdOutlineCalendarMonth />,
     },
     { label: "Événements actifs", value: statEvent.avenir, icon: <MdEventAvailable /> },
-    { label: "Organisateurs", value: "20", icon: <FaUsers /> },
+    { label: "Organisateurs", value: orgStats.count, icon: <FaUsers /> },
   ];
 
   const quickActions = [
