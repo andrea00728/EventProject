@@ -51,18 +51,17 @@ export default function DashboardpersCuisine() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [userId, setUserId] = useState(null);
-  const [socket, setSocket] = useState(null); // Ajout pour gérer une seule connexion WebSocket
+  const [userId, setUserId] = useState(null)
   const { user, token, setToken, setUser } = useStateContext();
 
-  useEffect(() => {
+    useEffect(() => {
     const fetchOrders = async () => {
       try {
         if (!token) throw new Error("Token manquant");
 
         const eventId = await getEventIdByEmail(token);
         const data = await getAllOrdersForOnEvent(eventId.eventId);
-
+        
         setLoading(true);
         setError(null);
         setCommandes(data);
@@ -75,56 +74,27 @@ export default function DashboardpersCuisine() {
     };
 
     const fetchData = async () => {
-      try {
-        const UserId = await getUserIdForToken(token);
-        setUserId(UserId);
+      const UserId = await getUserIdForToken(token);
+      setUserId(UserId)
 
-        // Créer une seule connexion WebSocket
-        const newSocket = io("http://localhost:3000", {
-          auth: {
-            userId: UserId,
-          },
-          transports: ["websocket"],
-          cors: { origin: "http://localhost:5173" },
-        });
+      const socket = io("http://localhost:3000", {
+        auth: {
+          userId: UserId, // très important : doit être l’ID réel de l’organisateur
+        },
+      });
 
-        newSocket.on("connect", () => {
-          console.log("✅ Connecté au serveur WebSocket");
-        });
+      socket.on("connect", () => {
+        console.log("✅ Connecté au serveur WebSocket");
+      });
 
-        // Écouter les nouvelles commandes et éviter les doublons
-        newSocket.on("new_order", (order) => {
-          console.log("Nouvelle commande reçue:", order);
-          setCommandes((prevCommandes) => {
-            // Vérifier si la commande existe déjà
-            if (prevCommandes.some((cmd) => cmd.id === order.id)) {
-              console.log(`Commande ${order.id} déjà présente, ignorée.`);
-              return prevCommandes;
-            }
-            return [...prevCommandes, order];
-          });
-        });
-
-        newSocket.on("error", (error) => {
-          console.log("Erreur WebSocket:", error);
-        });
-
-        // Stocker le socket dans l'état
-        setSocket(newSocket);
-
-        // Nettoyage
-        return () => {
-          newSocket.disconnect();
-          console.log("WebSocket déconnecté");
-          setSocket(null);
-        };
-      } catch (error) {
-        console.error("Erreur lors de la récupération de l'userId:", error);
-      }
+      // Pour écouter les mises à jour
+      // socket.on("order_status_updated", (data) => {
+      //   console.log("📦 Statut mis à jour :", data);
+      // });
     };
 
     fetchOrders();
-    fetchData();
+    fetchData()
   }, [token]);
 
   const changeDataBaseStatus = async (id, status) => {
@@ -132,13 +102,17 @@ export default function DashboardpersCuisine() {
   };
 
   const changerStatut = async (id, direction = "next") => {
-    if (!socket) {
-      console.error("Socket non disponible");
-      return;
-    }
 
+    const socket = io("http://localhost:3000", {
+      auth: {
+        userId: userId, 
+      },
+    });
     const updatedOrder = commandes.find((c) => c.id === id);
     let newStatus = updatedOrder.status;
+
+
+    
 
     if (direction === "next") {
       if (newStatus === "pending") newStatus = "preparing";
@@ -214,7 +188,9 @@ export default function DashboardpersCuisine() {
                 {user.name}
               </p>
               <MdKeyboardArrowDown
-                className={`text-xl text-gray-600 transition-transform ${menuOpen ? "rotate-180" : ""}`}
+                className={`text-xl text-gray-600 transition-transform ${
+                  menuOpen ? "rotate-180" : ""
+                }`}
               />
             </div>
           </button>
@@ -283,7 +259,7 @@ export default function DashboardpersCuisine() {
               </h1>
 
               {loading ? (
-                <Spinner />
+                <Spinner /> // Replaced animate-pulse with Spinner component
               ) : error ? (
                 <div className="flex flex-col items-center justify-center py-10 bg-red-50 rounded-xl shadow-md border border-red-300">
                   <div className="flex items-center space-x-3">
@@ -391,6 +367,7 @@ export default function DashboardpersCuisine() {
             </motion.div>
           )}
 
+          {/* Statistiques */}
           {activeTab === "stats" && (
             <motion.div
               key="stats"

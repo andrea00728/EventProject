@@ -113,13 +113,14 @@ const GestionCommandesPage = () => {
         cmd.id === update.id
           ? {
             ...cmd,
-            ...update, // mise à jour partielle des champs
+            ...update,
             status: STATUS_MAPPING.backToFront[update.status] || update.status,
           }
           : cmd
       )
     );
   };
+
 
   const handleDelete = async (id) => {
     if (!window.confirm("Supprimer cette commande ?")) return;
@@ -230,6 +231,24 @@ const GestionCommandesPage = () => {
       }
     };
   }, [token]);
+  useEffect(() => {
+    fetchCommandes();
+    fetchData();
+    const onUpdateOrderStatus = (updatedOrder) => {
+      setCommandes((prev) =>
+        prev.map((cmd) =>
+          cmd.id === updatedOrder.id
+            ? {
+              ...cmd,
+              status:
+                STATUS_MAPPING.backToFront[updatedOrder.status] ||
+                updatedOrder.status,
+            }
+            : cmd
+        )
+      );
+    };
+  }, [token]); // on refresh si token change
 
   const filteredCommandes = commandes.filter((cmd) => {
     const matchStatus =
