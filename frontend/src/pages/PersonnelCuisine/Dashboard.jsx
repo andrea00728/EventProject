@@ -91,6 +91,8 @@ export default function DashboardpersCuisine() {
       // socket.on("order_status_updated", (data) => {
       //   console.log("📦 Statut mis à jour :", data);
       // });
+
+      // Écouter les nouvelles commandes
     };
 
     fetchOrders();
@@ -105,7 +107,7 @@ export default function DashboardpersCuisine() {
 
     const socket = io("http://localhost:3000", {
       auth: {
-        userId: userId, 
+        userId: userId,
       },
     });
     const updatedOrder = commandes.find((c) => c.id === id);
@@ -157,6 +159,16 @@ export default function DashboardpersCuisine() {
     setToken(null);
     setUser(null);
   };
+
+  const socket = io('http://localhost:3000', {
+    transports: ['websocket'],
+    cors: { origin: 'http://localhost:5173' }
+  });
+  socket.on('connect', () => console.log('Connecté au WebSocket'));
+  socket.on('new_order', (order) => {
+    console.log('Nouvelle commande reçue:', order);
+  });
+  socket.on('error', (error) => console.log('Erreur WebSocket:', error));
 
   const handleLogoutCancel = () => {
     setShowLogoutModal(false);

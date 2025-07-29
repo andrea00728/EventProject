@@ -1,0 +1,75 @@
+import React from "react";
+import { Outlet, Link, useLocation } from "react-router-dom";
+import { FaGears, FaUsers } from "react-icons/fa6";
+import {
+  MdDashboard,
+  MdCalendarToday,
+  MdRoom,
+} from "react-icons/md";
+
+export default function AdminLayout() {
+  const location = useLocation();
+
+  const choixItems = [
+    { path: "/AdminAccueil", name: "Tableau de bord", icon: <MdDashboard /> },
+    { path: "/AdminEvenement", name: "Evénements", icon: <MdCalendarToday /> },
+    { path: "/AdminOrganisateur", name: "Organisateurs", icon: <FaUsers /> },
+    { path: "/LocationSalle", name: "Gérer salles et localisation", icon: <MdRoom /> },
+    { path: "/AdminParametre", name: "Paramètres", icon: <FaGears /> },
+  ];
+
+  const isActive = choixItems.some(item => item.path === location.pathname);
+
+  return (
+    <div className="flex justify-center items-center overflow-hidden h-[100vh]">
+      <header
+        className={`text-black h-[99vh] rounded-2xl items-start ml-2 p-4 w-64 shadow-md
+          ${isActive ? "bg-gradient-to-b from-blue-200 to-violet-300" : "bg-[#cfc6c4]"}
+        `}
+      >
+        
+        <img
+          src="/logo.png" 
+          alt="Logo"
+          className="w-16 h-16 mx-auto mb-2"
+        />
+
+        
+        <h1
+          className="text-2xl text-center font-bold italic mb-6"
+          style={{ fontFamily: "cursive" }}
+        >
+          Master Table
+        </h1>
+
+        
+        <nav>
+          <ul>
+            {choixItems.map((value, key) => (
+              <li key={key}>
+                <Link
+                  to={value.path}
+                  className={`flex items-center gap-3 mt-4 px-4 py-2 rounded-lg text-sm font-semibold transition-all
+                    ${
+                      location.pathname === value.path
+                        ? "bg-gradient-to-r from-blue-300 to-violet-500 text-white shadow-md"
+                        : "text-black hover:bg-gray-200"
+                    }
+                  `}
+                >
+                  <span className="text-lg">{value.icon}</span>
+                  <span>{value.name}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </header>
+
+     
+      <div className="flex-1 overflow-auto bg-white rounded-2xl shadow-2xl ml-4 p-6">
+        <Outlet />
+      </div>
+    </div>
+  );
+}

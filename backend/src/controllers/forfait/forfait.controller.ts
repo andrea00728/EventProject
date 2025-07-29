@@ -177,4 +177,14 @@ async getUserForfait(@Req() req: any) {
     return this.forfaitService.getSumForUsersForfait()
   }
 
+  
+  @Get('get/lastTransactions')
+  //@UseGuards(AuthGuard('jwt'))
+  async getLastTransactions(): Promise<
+    { name: string; photo: string; nameForfait : string; amount: number; date: Date }[]
+  > {
+    return this.forfaitService.findLastTransactions();
+  }
+
+
 }

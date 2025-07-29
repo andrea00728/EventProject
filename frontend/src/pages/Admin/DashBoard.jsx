@@ -21,10 +21,16 @@ import {
   MdEventNote,
 } from "react-icons/md";
 import { ChevronDown } from "lucide-react";
-import { getSumForUsersForfait } from "../../services/forfaitService";
+import {
+  getLastTransactions,
+  getSumForUsersForfait,
+} from "../../services/forfaitService";
 import { getCountForAllEventStats } from "../../services/evenementServ";
 import { getOrgStats, getUserCount } from "../../services/userService";
 import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { io } from "socket.io-client";
+import { FaRegMoneyBill1 } from "react-icons/fa6";
 
 export default function Dashboard() {
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -47,6 +53,7 @@ export default function Dashboard() {
     avenir: 0,
   });
   const [orgStats, setOrgStats] = useState({});
+  const [transactions, setTransactions] = useState([]);
   /*************** */
 
   useEffect(() => {
@@ -56,8 +63,9 @@ export default function Dashboard() {
         const SumForUsersForfait = await getSumForUsersForfait();
         const CountForAllEventStats = await getCountForAllEventStats();
         const orgaStat = await getOrgStats();
-        console.log(orgaStat.lastOrganizers[0].email);
-        console.log(orgaStat);
+        const transaction = await getLastTransactions();
+        console.log("Dernières Transactions : ", transaction);
+        setTransactions(transaction);
         setOrgStats(orgaStat);
         setStatEvent(CountForAllEventStats);
         setTotalRevenu(SumForUsersForfait);
@@ -407,7 +415,7 @@ export default function Dashboard() {
           >
             {Array.isArray(orgStats?.lastOrganizers) &&
             orgStats.lastOrganizers.length > 0 ? (
-              <ul>
+              <ul className="space-y-3">
                 {orgStats.lastOrganizers.map(
                   ({ name, email, photo, createdAt }, i) => (
                     <li
@@ -418,21 +426,24 @@ export default function Dashboard() {
                         <img
                           src={photo}
                           alt={name}
-                          className="w-10 h-10 rounded-full object-cover"
+                          className="w-12 h-12 rounded-full object-cover"
                         />
                       ) : (
-                        <FaUserCircle className="text-2xl sm:text-3xl text-purple-500" />
+                        <FaUserCircle className="text-4xl text-purple-500" />
                       )}
 
-                      <div>
-                        <p className="font-semibold text-base sm:text-lg">
-                          {name}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm sm:text-base">
+                          <p className="font-semibold text-base sm:text-lg text-gray-800 dark:text-gray-100">
+                            {name}
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1 sm:mt-0">
+                            Inscrit le{" "}
+                            {format(new Date(createdAt), "dd/MM/yyyy")}
+                          </p>
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
                           {email}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">
-                          Inscrit le {format(new Date(createdAt), "dd/MM/yyyy")}
                         </p>
                       </div>
                     </li>
@@ -458,29 +469,55 @@ export default function Dashboard() {
             darkMode={darkMode}
             gradientTitle={gradientTitle}
           >
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[300px]">
-                <thead>
-                  <tr className="border-b border-gray-300 dark:border-gray-700">
-                    <th className="p-3">Utilisateur</th>
-                    <th className="p-3">Montant</th>
-                    <th className="p-3">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {payments.map(({ user, amount, date }, i) => (
-                    <tr
-                      key={i}
-                      className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded"
-                    >
-                      <td className="p-3">{user}</td>
-                      <td className="p-3">${amount}</td>
-                      <td className="p-3">{date}</td>
+            {transactions && transactions.length > 0 ? (
+              <div className="overflow-x-auto scrollable">
+                <table className="w-full text-left border-collapse min-w-[450px]">
+                  <thead>
+                    <tr className="border-b border-gray-300 dark:border-gray-700 text-sm sm:text-base">
+                      <th className="p-3">Utilisateur</th>
+                      <th className="p-3">Montant</th>
+                      <th className="p-3">Date d'expiration</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {transactions.map(({ name, amount, date, photo }, i) => (
+                      <tr
+                        key={i}
+                        className="hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150"
+                      >
+                        <td className="p-3 flex items-center gap-3">
+                          {photo ? (
+                            <img
+                              src={photo}
+                              alt={name}
+                              className="w-9 h-9 rounded-full object-cover"
+                            />
+                          ) : (
+                            <FaUserCircle className="text-2xl text-purple-500" />
+                          )}
+                          <span className="font-medium text-sm sm:text-base">
+                            {name}
+                          </span>
+                        </td>
+                        <td className="p-3 font-semibold text-green-600 dark:text-green-400">
+                          ${Number(amount).toFixed(2)}
+                        </td>
+                        <td className="p-3 text-sm text-gray-600 dark:text-gray-400">
+                          {format(new Date(date), "dd MMM yyyy, HH:mm", {
+                            locale: fr,
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center p-6 text-gray-500 dark:text-gray-400">
+                <FaRegMoneyBill1 className="text-5xl mb-2 text-purple-400" />
+                <p className="text-lg font-semibold">Aucun paiement récent</p>
+              </div>
+            )}
           </SectionWrapper>
 
           <div className="flex flex-col gap-4">
@@ -650,6 +687,7 @@ function EventChart({ darkMode }) {
 }
 
 function MoneyChart({ darkMode }) {
+  const margin = { right: 24 };
   const uData = [4000, 3000, 2000, 2780, 1890, 2390, 3490];
   const pData = [2400, 1398, 9800, 3908, 4800, 3800, 4300];
   const xLabels = [

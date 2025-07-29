@@ -38,6 +38,22 @@ export class CommentaireController {
   }
   
 
+  
+  /**
+   * 
+   * @returns 
+   * recuperation du nombre de commentaire satisfaisante
+   */
+  @Get('count-satisfaction')
+  @ApiOperation({summary:'recuperation du nombre de commentaire satisfait'})
+  @ApiResponse({status:200,description:'nombre de commentaire satisfait'})
+  async findCountSatisfaction(){
+    return this.commentaireService.findCountSatisfaction();
+  }
+  
+
+  
+
    /**
    * 
    * @returns 
@@ -135,9 +151,4 @@ export class CommentaireController {
     return this.commentaireService.remove(+id, req.user);
   }
 
-  /**
-   * 
-   * recupere du commentaire recent
-   * 
-   */
 }

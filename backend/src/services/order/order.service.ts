@@ -17,6 +17,7 @@ export class OrderService {
   constructor(
     @InjectRepository(Order)
     private orderRepository: Repository<Order>,
+    private ordersGateway: OrdersGateway,
     @InjectRepository(OrderItem)
     private orderItemRepository: Repository<OrderItem>,
     @InjectRepository(TableEvent)
@@ -33,7 +34,7 @@ export class OrderService {
     private paymentRepository: Repository<Payment>,
     @InjectRepository(Personnel)
     private personnelRepository: Repository<Personnel>,
-    private ordersGateway: OrdersGateway
+    
     
   ) {}
 
@@ -95,7 +96,9 @@ export class OrderService {
     savedOrder.total = total;
 
     savedOrder.items = await this.orderItemRepository.save(orderItems);
-    return this.orderRepository.save(savedOrder);
+    const finalOrder = await this.orderRepository.save(savedOrder);
+    this.ordersGateway.notifyNewOrder(finalOrder);
+    return finalOrder;
   }
 
   async findOrdersByTable(tableId: number): Promise<(Order & { total: number })[]> {

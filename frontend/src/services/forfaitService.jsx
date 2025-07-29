@@ -70,7 +70,22 @@ export const getSumForUsersForfait = async (/*token*/) => {
     }*/);
     return response.data;
   } catch (error) {
-    console.error('Erreur lors de la récupération de la somme des forfaits', error);
+
     throw new Error('Erreur lors de la récupération de la somme des forfaits', { cause: error });
+  }
+}
+
+export const getLastTransactions = async (/*token*/) => {
+  // if (!token) throw new Error('Utilisateur non authentifié');
+  try {
+    const response = await axiosClient.get('/forfait/get/lastTransactions', /*{
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }*/);
+    return response.data;
+  } catch (error) {
+    
+    throw new Error('Erreur lors de la récupération des forfaits', { cause: error });
   }
 }

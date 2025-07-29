@@ -121,8 +121,35 @@ export class ForfaitService {
     return Number(result.sum); // conversion en number
   }
 
-  async findLastTransaction(): Promise<any> {
+// user.service.ts
+  async findLastTransactions(limit: number = 5): Promise<
+    { name: string; photo: string; nameForfait : string; amount: number; date: Date }[]
+  > {
+    const results = await this.userRepo
+      .createQueryBuilder('user')
+      .leftJoin('user.forfait', 'forfait')
+      .select([
+        'user.name AS name',
+        'user.photo AS photo',
+        'forfait.nom AS nameForfait',
+        'forfait.price AS amount',
+        'user.forfaitexpirationdate AS date',
+      ])
+      .where('forfait.price > 0')
+      .andWhere('user.forfaitexpirationdate IS NOT NULL')
+      .orderBy('user.forfaitexpirationdate', 'DESC')
+      .limit(limit)
+      .getRawMany();
 
+    return results.map(r => ({
+      name: r.name,
+      photo: r.photo,
+      nameForfait : r.nameforfait,
+      amount: Number(r.amount),
+      date: new Date(r.date),
+    }));
   }
-  
+
+
+
 }

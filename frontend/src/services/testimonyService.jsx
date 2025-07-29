@@ -72,4 +72,14 @@ export const findFourthLastCommentaireRecent =async ()=>{
     return response.data;
 }
 
+/**
+ * 
+ * @returns
+ * 
+ * api pour recupere le nombre des satisfaction 
+ */
 
+export const findCountSatisfied =async ()=>{
+    const response  = await  axiosClient.get('/commentaire/count-satisfaction');
+    return response.data;
+}
