@@ -88,6 +88,24 @@ const GestionCommandesPage = () => {
     }
   };
 
+  const fetchData = async () => {
+    const UserId = await getUserIdForToken(token);
+
+    const socket = io("http://localhost:3000", {
+      auth: {
+        userId: UserId,
+      },
+    });
+
+    socket.on("connect", () => {
+      console.log("✅ Connecté au serveur WebSocket");
+    });
+
+    socket.on("order_status_updated", (data) => {
+      updateCommande(data);
+    });
+  };
+
   const updateCommande = (update) => {
     setCommandes((prev) =>
       prev.map((cmd) =>
@@ -95,8 +113,7 @@ const GestionCommandesPage = () => {
           ? {
               ...cmd,
               ...update,
-              status:
-                STATUS_MAPPING.backToFront[update.status] || update.status,
+              status: STATUS_MAPPING.backToFront[update.status] || update.status,
             }
           : cmd
       )
@@ -194,28 +211,6 @@ const GestionCommandesPage = () => {
           />
         );
       },
-    },
-    {
-      field: "actions",
-      headerName: "Changer Statut",
-      width: 180,
-      sortable: false,
-      renderCell: (params) => (
-        <Select
-          value={params.row.status}
-          onChange={(e) =>
-            handleStatusChange(params.row.id, e.target.value)
-          }
-          size="small"
-          sx={{ minWidth: 140, bgcolor: "#f3f4f6", borderRadius: 2 }}
-        >
-          {STATUS_OPTIONS.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </Select>
-      ),
     },
   ];
 
