@@ -26,10 +26,10 @@ ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearSca
 const RevenuPage = () => {
   const [revenus, setRevenus] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isRefunding, setIsRefunding] = useState(false); 
+  const [isRefunding, setIsRefunding] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPeriod, setFilterPeriod] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");c
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalPending, setTotalPending] = useState(0);
   const [totalRefunded, setTotalRefunded] = useState(0);
@@ -39,18 +39,28 @@ const RevenuPage = () => {
   const [itemsPerPage] = useState(5);
   const [showDetailsModal, setShowDetailsModal] = useState(null);
   const [chartType, setChartType] = useState("bar");
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
   const { token } = useStateContext();
   const navigate = useNavigate();
 
   const fetchRevenus = async () => {
     try {
       setLoading(true);
-      if (!token) throw new Error("Token manquant");
+      if (!token) {
+        toast.error("Veuillez vous connecter pour accéder aux revenus");
+        navigate("/login");
+        return;
+      }
+      console.log("Vérification du token avant requête:", token); // Log
       const eventId = await getEventIdByEmail(token);
+      if (!eventId?.eventId) {
+        throw new Error("ID d'événement non trouvé");
+      }
+      console.log("Récupération des revenus pour eventId:", eventId.eventId); // Log
       const { data } = await axios.get(
         `http://localhost:3000/orders/event/${eventId.eventId}`,
         {
-          headers: { Authorization: `Bearer ${token}` }, // Ajout du token pour l'authentification
+          headers: { Authorization: `Bearer ${token}` },
           params: { include: "table,items,items.menuItem" },
         }
       );
@@ -60,14 +70,14 @@ const RevenuPage = () => {
         nom: order.nom || "Anonyme",
         email: order.email || "-",
         total: parseFloat(order.total || 0).toFixed(2),
-        amountPaid: order.paymentStatus === "paid" ? parseFloat(order.total || 0).toFixed(2) : "0.00", // Calcul basé sur paymentStatus
+        amountPaid: order.paymentStatus === "paid" ? parseFloat(order.total || 0).toFixed(2) : "0.00",
         paymentStatus:
           order.paymentStatus === "paid"
             ? "Payé"
             : order.paymentStatus === "refunded"
             ? "Remboursé"
             : "Non payé",
-        paymentMethod: "Inconnu", // Champ non présent dans l'entité Order, défini comme "Inconnu"
+        paymentMethod: "Inconnu",
         date: new Date(order.orderDate).toLocaleString("fr-FR", {
           dateStyle: "short",
           timeStyle: "short",
@@ -92,7 +102,7 @@ const RevenuPage = () => {
       formattedRevenus.forEach((order) => {
         order.items.forEach((item) => {
           const category = item.menuItem?.category || "Autres";
-          const subtotal = parseFloat(item.subtotal) || 0; // Utiliser subtotal au lieu de price
+          const subtotal = parseFloat(item.subtotal) || 0;
           const quantity = parseInt(item.quantity) || 0;
           if (subtotal && quantity) {
             categories[category] = (categories[category] || 0) + subtotal;
@@ -120,31 +130,65 @@ const RevenuPage = () => {
       setTimeSeriesData(timeSeriesArray);
     } catch (error) {
       console.error("Erreur lors de la récupération des revenus:", error);
-      toast.error(error.response?.data?.message || "Erreur lors du chargement des données");
+      const message =
+        error.response?.status === 401
+          ? "Session expirée. Veuillez vous reconnecter."
+          : error.response?.status === 404
+          ? "Aucune commande trouvée pour cet événement."
+          : error.response?.data?.message || "Erreur lors du chargement des données";
+      toast.error(message);
+      if (error.response?.status === 401) {
+        navigate("/login");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleRefund = async (id) => {
-    if (!window.confirm("Confirmer la suppression de cette commande remboursée ?")) return;
+    if (!window.confirm("Confirmer le remboursement et la suppression de cette commande ?")) return;
     try {
-      setIsRefunding(true); // Activer l'indicateur de chargement
-      await axios.delete(`http://localhost:3000/orders/${id}`, {
+      setIsRefunding(true);
+      if (!token) {
+        throw new Error("Token manquant");
+      }
+      console.log("Tentative de suppression de la commande ID:", id); // Log
+      console.log("Token utilisé:", token); // Log
+
+      const response = await axios.delete(`http://localhost:3000/orders/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("Réponse DELETE:", response.status, response.data); // Log
 
+      // Mettre à jour l'état local après une suppression réussie
       setRevenus((prev) => prev.filter((cmd) => cmd.id !== id));
-      socket.emit("orderDeleted", { id });
+      if (isSocketConnected) {
+        socket.emit("orderDeleted", { id });
+        console.log("Événement orderDeleted émis pour ID:", id); // Log
+      } else {
+        console.warn("Socket non connecté, événement orderDeleted non émis"); // Log
+      }
       toast.success("Commande remboursée et supprimée avec succès");
-      await fetchRevenus();
+      await fetchRevenus(); // Rafraîchir les données
     } catch (error) {
       console.error("Erreur lors du remboursement et suppression:", error);
-      toast.error(
-        error.response?.data?.message || "Erreur lors du remboursement et suppression"
-      );
+      let message = "Erreur lors du remboursement et de la suppression";
+      if (error.response) {
+        if (error.response.status === 401) {
+          message = "Session expirée. Veuillez vous reconnecter.";
+          navigate("/login");
+        } else if (error.response.status === 404) {
+          message = "Commande non trouvée.";
+        } else if (error.response.status === 500) {
+          message = "Erreur serveur interne. Veuillez vérifier la commande ou réessayer plus tard.";
+          console.error("Détails de l'erreur 500:", error.response.data); // Log
+        } else {
+          message = error.response.data?.message || message;
+        }
+      }
+      toast.error(message);
     } finally {
-      setIsRefunding(false); // Désactiver l'indicateur de chargement
+      setIsRefunding(false);
     }
   };
 
@@ -300,12 +344,28 @@ const RevenuPage = () => {
   useEffect(() => {
     if (token) {
       fetchRevenus();
-      socket.on("orderDeleted", fetchRevenus);
+      socket.on("connect", () => {
+        console.log("Socket.IO connecté"); // Log
+        setIsSocketConnected(true);
+      });
+      socket.on("connect_error", (error) => {
+        console.error("Erreur de connexion Socket.IO:", error.message); // Log
+        setIsSocketConnected(false);
+        toast.error("Impossible de se connecter au serveur en temps réel");
+      });
+      socket.on("orderDeleted", (data) => {
+        console.log("Événement orderDeleted reçu:", data); // Log
+        fetchRevenus();
+      });
       return () => {
-        socket.off("orderDeleted", fetchRevenus);
+        socket.off("connect");
+        socket.off("connect_error");
+        socket.off("orderDeleted");
       };
+    } else {
+      navigate("/login");
     }
-  }, [token]);
+  }, [token, navigate]);
 
   return (
     <motion.div

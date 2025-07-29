@@ -329,7 +329,7 @@ export class OrderService {
   }
 
 
-  async findOrdersByEvent(eventId: number): Promise<(Order & { total: number })[]> {
+  async findOrdersByEvent(eventId: number, includeRelations?: string[]): Promise<(Order & { total: number })[]> {
     const orders = await this.orderRepository.find({
       where: { table: { event: { id: eventId } } },
       relations: ['items', 'items.menuItem', 'table', 'table.event'],
