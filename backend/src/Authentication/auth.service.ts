@@ -168,18 +168,28 @@ export class AuthService {
     return count;
   }
 
-  async findOrgStats():Promise<any>{
+  async findOrgStats(): Promise<any> {
+    const countOrg = this.userRepository.count({
+      where: { role: 'organisateur' },
+    });
 
-    const [count]=await Promise.all([
-      this.userRepository.count({
-      where: {
-        role: 'organisateur',
-      },
-    })
+    const lastFiveOrganizers = this.userRepository.find({
+      where: { role: 'organisateur' },
+      order: { createdAt: 'DESC' }, // Assure-toi que la colonne `createdAt` existe bien
+      take: 5,
+      relations: ['forfait'], // optionnel, selon ce que tu veux afficher
+    });
+
+    const [count, lastOrganizers] = await Promise.all([
+      countOrg,
+      lastFiveOrganizers,
     ]);
+
     return {
-      count 
+      count,
+      lastOrganizers,
     };
   }
+
 
 }

@@ -7,6 +7,7 @@ import {
   FaBell,
   FaEnvelope,
   FaUserCircle,
+  FaRegUserCircle,
 } from "react-icons/fa";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { LineChart } from "@mui/x-charts/LineChart";
@@ -23,6 +24,7 @@ import { ChevronDown } from "lucide-react";
 import { getSumForUsersForfait } from "../../services/forfaitService";
 import { getCountForAllEventStats } from "../../services/evenementServ";
 import { getOrgStats, getUserCount } from "../../services/userService";
+import { format } from "date-fns";
 
 export default function Dashboard() {
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -38,13 +40,13 @@ export default function Dashboard() {
   const profileRef = useRef(null);
 
   /************** */
-  const [totalRevenu, setTotalRevenu] = useState(0); 
+  const [totalRevenu, setTotalRevenu] = useState(0);
   const [statEvent, setStatEvent] = useState({
-    total : 0,
-    passes : 0,
-    avenir : 0
-  })
-  const [orgStats, setOrgStats] = useState({})
+    total: 0,
+    passes: 0,
+    avenir: 0,
+  });
+  const [orgStats, setOrgStats] = useState({});
   /*************** */
 
   useEffect(() => {
@@ -53,11 +55,12 @@ export default function Dashboard() {
       try {
         const SumForUsersForfait = await getSumForUsersForfait();
         const CountForAllEventStats = await getCountForAllEventStats();
-        const orgaStat = await getOrgStats()
-        console.log(orgaStat)
-        setStatEvent(CountForAllEventStats)
+        const orgaStat = await getOrgStats();
+        console.log(orgaStat.lastOrganizers[0].email);
+        console.log(orgaStat);
+        setOrgStats(orgaStat);
+        setStatEvent(CountForAllEventStats);
         setTotalRevenu(SumForUsersForfait);
-        setOrgStats(orgaStat)
       } catch (error) {
         console.error("Erreur lors de la récupération des données :", error);
       }
@@ -87,7 +90,11 @@ export default function Dashboard() {
   const totalRevenue = payments.reduce((acc, p) => acc + p.amount, 0);
 
   const stats = [
-    { label: "Nombre d'événements", value: statEvent.total, icon: <MdCalendarToday /> },
+    {
+      label: "Nombre d'événements",
+      value: statEvent.total,
+      icon: <MdCalendarToday />,
+    },
     {
       label: "Total des revenus",
       value: `$${totalRevenu}`,
@@ -98,7 +105,11 @@ export default function Dashboard() {
       value: statEvent.passes,
       icon: <MdOutlineCalendarMonth />,
     },
-    { label: "Événements actifs", value: statEvent.avenir, icon: <MdEventAvailable /> },
+    {
+      label: "Événements actifs",
+      value: statEvent.avenir,
+      icon: <MdEventAvailable />,
+    },
     { label: "Organisateurs", value: orgStats.count, icon: <FaUsers /> },
   ];
 
@@ -394,22 +405,52 @@ export default function Dashboard() {
             darkMode={darkMode}
             gradientTitle={gradientTitle}
           >
-            <ul>
-              {recentOrganizers.map(({ name, email }, i) => (
-                <li
-                  key={i}
-                  className="flex items-center gap-3 p-3 border-b border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded-md"
-                >
-                  <FaUserCircle className="text-2xl sm:text-3xl text-purple-500" />
-                  <div>
-                    <p className="font-semibold text-base sm:text-lg">{name}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {email}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {Array.isArray(orgStats?.lastOrganizers) &&
+            orgStats.lastOrganizers.length > 0 ? (
+              <ul>
+                {orgStats.lastOrganizers.map(
+                  ({ name, email, photo, createdAt }, i) => (
+                    <li
+                      key={i}
+                      className="flex items-center gap-4 p-3 border-b border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded-md"
+                    >
+                      {photo ? (
+                        <img
+                          src={photo}
+                          alt={name}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <FaUserCircle className="text-2xl sm:text-3xl text-purple-500" />
+                      )}
+
+                      <div>
+                        <p className="font-semibold text-base sm:text-lg">
+                          {name}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {email}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                          Inscrit le {format(new Date(createdAt), "dd/MM/yyyy")}
+                        </p>
+                      </div>
+                    </li>
+                  )
+                )}
+              </ul>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center p-6 text-gray-500 dark:text-gray-400">
+                <FaRegUserCircle className="text-5xl mb-2 text-purple-400" />
+                <p className="text-lg font-semibold">
+                  Aucun organisateur récemment inscrit
+                </p>
+                <p className="text-sm">
+                  Les nouveaux organisateurs s’afficheront ici dès leur
+                  inscription.
+                </p>
+              </div>
+            )}
           </SectionWrapper>
 
           <SectionWrapper
@@ -609,7 +650,6 @@ function EventChart({ darkMode }) {
 }
 
 function MoneyChart({ darkMode }) {
-  
   const uData = [4000, 3000, 2000, 2780, 1890, 2390, 3490];
   const pData = [2400, 1398, 9800, 3908, 4800, 3800, 4300];
   const xLabels = [

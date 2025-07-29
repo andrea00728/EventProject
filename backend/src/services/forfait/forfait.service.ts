@@ -120,4 +120,9 @@ export class ForfaitService {
 
     return Number(result.sum); // conversion en number
   }
+
+  async findLastTransaction(): Promise<any> {
+
+  }
+  
 }
