@@ -390,7 +390,7 @@ export default function Organisateur() {
 
     const socket = io("http://localhost:3000", {
       auth: {
-        userId: "00ec368b-aae5-4975-84d9-becd234b0a9c", // Remplace par un ID réel, ex: "admin-1"
+        userId: "455b0bed-dd7f-4214-a5dd-5a1ebb66de67", // Remplace par un ID réel, ex: "admin-1"
       },
     });
 

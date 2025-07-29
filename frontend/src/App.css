@@ -61,7 +61,7 @@ button.btn-primary:hover {
 
 /* Style de la scrollbar */
 .scrollable::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
   height: 8px;
 }
 

@@ -173,7 +173,7 @@ export default function AdminLayout() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-auto p-0 bg-gray-50 dark:bg-gray-900">
+        <main className="flex-1 overflow-auto scrollable p-0 bg-gray-50 dark:bg-gray-900">
           <div className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
             <Outlet />
           </div>
