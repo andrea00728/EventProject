@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import socket from "../../socket";
 import { DataGrid } from "@mui/x-data-grid";
 import {
   Button,
@@ -89,32 +88,15 @@ const GestionCommandesPage = () => {
     }
   };
 
-  const fetchData = async () => {
-    const UserId = await getUserIdForToken(token);
-
-    const socket = io("http://localhost:3000", {
-      auth: {
-        userId: UserId,
-      },
-    });
-
-    socket.on("connect", () => {
-      console.log("✅ Connecté au serveur WebSocket");
-    });
-
-    socket.on("order_status_updated", (data) => {
-      updateCommande(data);
-    });
-  };
-
   const updateCommande = (update) => {
-    setCommandes((prevCommandes) =>
-      prevCommandes.map((cmd) =>
+    setCommandes((prev) =>
+      prev.map((cmd) =>
         cmd.id === update.id
           ? {
               ...cmd,
               ...update,
-              status: STATUS_MAPPING.backToFront[update.status] || update.status,
+              status:
+                STATUS_MAPPING.backToFront[update.status] || update.status,
             }
           : cmd
       )
@@ -122,28 +104,80 @@ const GestionCommandesPage = () => {
   };
 
   useEffect(() => {
+    let socketInstance;
+
+    const initWebSocket = async () => {
+      const userId = await getUserIdForToken(token);
+      socketInstance = io("http://localhost:3000", {
+        auth: { userId },
+      });
+
+      socketInstance.on("connect", () => {
+        console.log("✅ Connecté au serveur WebSocket");
+      });
+
+      socketInstance.on("order_status_updated", (data) => {
+        updateCommande(data);
+      });
+    };
+
     fetchCommandes();
-    fetchData();
+    initWebSocket();
+
+    return () => {
+      if (socketInstance) {
+        socketInstance.disconnect();
+        console.log("❌ Socket déconnecté");
+      }
+    };
   }, [token]);
+
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      await axios.put(`http://localhost:3000/orders/${orderId}`, {
+        status: STATUS_MAPPING.frontToBack[newStatus],
+      });
+
+      setCommandes((prev) =>
+        prev.map((cmd) =>
+          cmd.id === orderId ? { ...cmd, status: newStatus } : cmd
+        )
+      );
+
+      setSnackbar({
+        open: true,
+        message: "Statut mis à jour.",
+        severity: "success",
+      });
+    } catch (err) {
+      console.error("Erreur mise à jour du statut :", err);
+      setSnackbar({
+        open: true,
+        message: "Échec de la mise à jour du statut.",
+        severity: "error",
+      });
+    }
+  };
 
   const filteredCommandes = commandes.filter((cmd) => {
     const matchStatus =
       selectedStatus === "all" || cmd.status === selectedStatus;
     const search = searchTerm.toLowerCase();
-    const matchSearch =
-      cmd.nom.toLowerCase().includes(search) ||
-      cmd.email.toLowerCase().includes(search);
-    return matchStatus && matchSearch;
+    return (
+      matchStatus &&
+      (cmd.nom.toLowerCase().includes(search) ||
+        cmd.email.toLowerCase().includes(search))
+    );
   });
 
   const columns = [
-    { field: "id", headerName: "ID", width: 70, sortable: true },
-    { field: "nom", headerName: "Client", width: 150, sortable: true },
-    { field: "email", headerName: "Email", width: 180, sortable: true },
+    { field: "id", headerName: "ID", width: 70 },
+    { field: "nom", headerName: "Client", width: 150 },
+    { field: "email", headerName: "Email", width: 180 },
     { field: "table", headerName: "Table", width: 100 },
-    { field: "itemsCount", headerName: "Articles", width: 100, type: "number" },
+    { field: "itemsCount", headerName: "Articles", width: 100 },
     { field: "total", headerName: "Total", width: 100 },
-    { field: "date", headerName: "Date", width: 180, sortable: true },
+    { field: "date", headerName: "Date", width: 180 },
     {
       field: "status",
       headerName: "Statut",
@@ -160,6 +194,28 @@ const GestionCommandesPage = () => {
           />
         );
       },
+    },
+    {
+      field: "actions",
+      headerName: "Changer Statut",
+      width: 180,
+      sortable: false,
+      renderCell: (params) => (
+        <Select
+          value={params.row.status}
+          onChange={(e) =>
+            handleStatusChange(params.row.id, e.target.value)
+          }
+          size="small"
+          sx={{ minWidth: 140, bgcolor: "#f3f4f6", borderRadius: 2 }}
+        >
+          {STATUS_OPTIONS.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </Select>
+      ),
     },
   ];
 

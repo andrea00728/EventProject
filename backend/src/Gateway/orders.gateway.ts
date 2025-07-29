@@ -13,6 +13,9 @@ import { Server, Socket } from 'socket.io';
   },
 })
 export class OrdersGateway {
+  handleOrderDeleted(arg0: { id: number; }) {
+    throw new Error('Method not implemented.');
+  }
   @WebSocketServer()
   server: Server;
 

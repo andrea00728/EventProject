@@ -14,22 +14,24 @@ import {
   LinearScale,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import socket from "../../socket";
+import { debounce } from "lodash";
 
-ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend);
+ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler);
 
 const RevenuPage = () => {
   const [revenus, setRevenus] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isRefunding, setIsRefunding] = useState(false);
+  const [isRefunding, setIsRefunding] = useState({}); // Objet pour suivre l'état par ID
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPeriod, setFilterPeriod] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");c
+  const [filterStatus, setFilterStatus] = useState("all");
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalPending, setTotalPending] = useState(0);
   const [totalRefunded, setTotalRefunded] = useState(0);
@@ -40,27 +42,64 @@ const RevenuPage = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(null);
   const [chartType, setChartType] = useState("bar");
   const [isSocketConnected, setIsSocketConnected] = useState(false);
-  const { token } = useStateContext();
+  const { token, setToken } = useStateContext(); // Assurez-vous que setToken est disponible
   const navigate = useNavigate();
+
+  const refreshToken = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/auth/refresh",
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const newToken = response.data.access_token;
+      setToken(newToken);
+      return newToken;
+    } catch (error) {
+      console.error("Erreur lors du rafraîchissement du token:", {
+        message: error.message,
+        status: error.response?.status,
+      });
+      toast.error("Session expirée. Veuillez vous reconnecter.");
+      navigate("/login");
+      throw error;
+    }
+  };
 
   const fetchRevenus = async () => {
     try {
       setLoading(true);
       if (!token) {
+        console.error("Token manquant");
         toast.error("Veuillez vous connecter pour accéder aux revenus");
         navigate("/login");
         return;
       }
-      console.log("Vérification du token avant requête:", token); // Log
-      const eventId = await getEventIdByEmail(token);
+      console.log("Vérification du token avant requête:", token.slice(0, 10) + "...");
+      let currentToken = token;
+
+      // Vérifier si le token est valide
+      try {
+        await axios.get("http://localhost:3000/orders/event/1", {
+          headers: { Authorization: `Bearer ${currentToken}` },
+        });
+      } catch (error) {
+        if (error.response?.status === 401) {
+          currentToken = await refreshToken();
+        }
+      }
+
+      const eventId = await getEventIdByEmail(currentToken);
       if (!eventId?.eventId) {
         throw new Error("ID d'événement non trouvé");
       }
-      console.log("Récupération des revenus pour eventId:", eventId.eventId); // Log
+      console.log("Récupération des revenus pour eventId:", eventId.eventId);
       const { data } = await axios.get(
         `http://localhost:3000/orders/event/${eventId.eventId}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${currentToken}` },
           params: { include: "table,items,items.menuItem" },
         }
       );
@@ -120,7 +159,7 @@ const RevenuPage = () => {
         timeSeries[date] = (timeSeries[date] || 0) + parseFloat(order.amountPaid);
       });
       const timeSeriesArray = Object.entries(timeSeries)
-        .map(([date, revenue]) => ({ date, revenue }))
+        .map(([date, revenue]) => ({ date, revenue: parseFloat(revenue) }))
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
       setTotalRevenue(total.toFixed(2));
@@ -129,7 +168,11 @@ const RevenuPage = () => {
       setCategoryBreakdown(formattedCategories);
       setTimeSeriesData(timeSeriesArray);
     } catch (error) {
-      console.error("Erreur lors de la récupération des revenus:", error);
+      console.error("Erreur lors de la récupération des revenus:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
       const message =
         error.response?.status === 401
           ? "Session expirée. Veuillez vous reconnecter."
@@ -146,32 +189,53 @@ const RevenuPage = () => {
   };
 
   const handleRefund = async (id) => {
+    if (!id) {
+      console.error("ID de commande manquant");
+      toast.error("ID de commande manquant");
+      return;
+    }
     if (!window.confirm("Confirmer le remboursement et la suppression de cette commande ?")) return;
     try {
-      setIsRefunding(true);
-      if (!token) {
+      setIsRefunding((prev) => ({ ...prev, [id]: true }));
+      let currentToken = token;
+      if (!currentToken) {
         throw new Error("Token manquant");
       }
-      console.log("Tentative de suppression de la commande ID:", id); // Log
-      console.log("Token utilisé:", token); // Log
+
+      // Vérifier si le token est valide
+      try {
+        await axios.get("http://localhost:3000/orders/event/1", {
+          headers: { Authorization: `Bearer ${currentToken}` },
+        });
+      } catch (error) {
+        if (error.response?.status === 401) {
+          currentToken = await refreshToken();
+        }
+      }
+
+      console.log("Tentative de suppression de la commande ID:", id);
+      console.log("Token utilisé:", currentToken.slice(0, 10) + "...");
 
       const response = await axios.delete(`http://localhost:3000/orders/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${currentToken}` },
       });
-      console.log("Réponse DELETE:", response.status, response.data); // Log
+      console.log("Réponse DELETE:", response.status, response.data);
 
-      // Mettre à jour l'état local après une suppression réussie
       setRevenus((prev) => prev.filter((cmd) => cmd.id !== id));
       if (isSocketConnected) {
         socket.emit("orderDeleted", { id });
-        console.log("Événement orderDeleted émis pour ID:", id); // Log
+        console.log("Événement orderDeleted émis pour ID:", id);
       } else {
-        console.warn("Socket non connecté, événement orderDeleted non émis"); // Log
+        console.warn("Socket non connecté, événement orderDeleted non émis");
       }
       toast.success("Commande remboursée et supprimée avec succès");
-      await fetchRevenus(); // Rafraîchir les données
+      await fetchRevenus();
     } catch (error) {
-      console.error("Erreur lors du remboursement et suppression:", error);
+      console.error("Erreur lors du remboursement et suppression:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
       let message = "Erreur lors du remboursement et de la suppression";
       if (error.response) {
         if (error.response.status === 401) {
@@ -179,18 +243,19 @@ const RevenuPage = () => {
           navigate("/login");
         } else if (error.response.status === 404) {
           message = "Commande non trouvée.";
-        } else if (error.response.status === 500) {
-          message = "Erreur serveur interne. Veuillez vérifier la commande ou réessayer plus tard.";
-          console.error("Détails de l'erreur 500:", error.response.data); // Log
+        } else if (error.response.status === 400) {
+          message = error.response.data?.message || "Requête invalide.";
         } else {
-          message = error.response.data?.message || message;
+          message = error.response.data?.message || "Erreur serveur interne.";
         }
       }
       toast.error(message);
     } finally {
-      setIsRefunding(false);
+      setIsRefunding((prev) => ({ ...prev, [id]: false }));
     }
   };
+
+  const handleRefundDebounced = debounce(handleRefund, 1000);
 
   const exportToCSV = () => {
     const headers = ["ID,Client,Email,Total (€),Payé (€),Statut,Méthode,Date"];
@@ -319,7 +384,10 @@ const RevenuPage = () => {
         backgroundColor: "rgba(0, 0, 0, 0.8)",
         padding: 6,
         callbacks: {
-          label: (context) => `€${context.raw.toFixed(2)}`,
+          label: (context) => {
+            const value = Number(context.raw);
+            return isNaN(value) ? context.raw : `€${value.toFixed(2)}`;
+          },
         },
       },
     },
@@ -345,16 +413,19 @@ const RevenuPage = () => {
     if (token) {
       fetchRevenus();
       socket.on("connect", () => {
-        console.log("Socket.IO connecté"); // Log
+        console.log("Socket.IO connecté");
         setIsSocketConnected(true);
       });
       socket.on("connect_error", (error) => {
-        console.error("Erreur de connexion Socket.IO:", error.message); // Log
+        console.error("Erreur de connexion Socket.IO:", {
+          message: error.message,
+          cause: error.cause,
+        });
         setIsSocketConnected(false);
         toast.error("Impossible de se connecter au serveur en temps réel");
       });
       socket.on("orderDeleted", (data) => {
-        console.log("Événement orderDeleted reçu:", data); // Log
+        console.log("Événement orderDeleted reçu:", data);
         fetchRevenus();
       });
       return () => {
@@ -573,19 +644,17 @@ const RevenuPage = () => {
                             >
                               Détails
                             </motion.button>
-                            {rev.paymentStatus !== "Remboursé" && (
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => handleRefund(rev.id)}
-                                disabled={isRefunding}
-                                className={`px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition ${
-                                  isRefunding ? "opacity-50 cursor-not-allowed" : ""
-                                }`}
-                              >
-                                {isRefunding ? "En cours..." : "Rembourser"}
-                              </motion.button>
-                            )}
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleRefundDebounced(rev.id)}
+                              disabled={isRefunding[rev.id]}
+                              className={`px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition ${
+                                isRefunding[rev.id] ? "opacity-50 cursor-not-allowed" : ""
+                              }`}
+                            >
+                              {isRefunding[rev.id] ? "En cours..." : "Rembourser"}
+                            </motion.button>
                           </td>
                         </tr>
                       ))
@@ -686,7 +755,7 @@ const RevenuPage = () => {
                       <td className="px-3 py-2 truncate">{item.menuItem?.name || "Inconnu"}</td>
                       <td className="px-3 py-2 text-right">{item.quantity || 0}</td>
                       <td className="px-3 py-2 text-right">
-                        {parseFloat(item.subtotal / item.quantity || 0).toFixed(2)}
+                        {parseFloat(item.subtotal / (item.quantity || 1)).toFixed(2)}
                       </td>
                       <td className="px-3 py-2 text-right">{parseFloat(item.subtotal || 0).toFixed(2)}</td>
                     </tr>

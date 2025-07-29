@@ -30,7 +30,7 @@ async create(dto: CreateEventDto): Promise<Evenement> {
   const parsedDateFin = new Date(dto.date_fin);
   if (isNaN(parsedDate.getTime()) || isNaN(parsedDateFin.getTime())) {
     throw new BadRequestException('La date ou la date de fin est invalide');
-  }
+  }  
   // Vérifie s'il y a chevauchement d’événements dans cette salle
   const existingEvent = await this.evenementRepository.findOne({
     where: {
