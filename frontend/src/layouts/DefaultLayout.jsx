@@ -42,6 +42,7 @@ export default function DefaultLayout() {
       return <Navigate to="/pagepublic" replace />;
   }
 
+
   useEffect(() => {
     /********   Statut en ligne ou non   **********/
 
@@ -385,7 +386,7 @@ export default function DefaultLayout() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-            </div>
+            </div> 
 
           </div>
 
