@@ -161,7 +161,7 @@ export default function DashboardpersCuisine() {
       commandes.map((commande) => ({
         ID: commande.id,
         "Nom du client": commande.nom,
-        Table: commande.table.numero,
+        Table: commande.table.nom,
         "Date de commande": formatDateTime(commande.orderDate),
         Plats: commande.items
           .map((p) => `${p.menuItem.name} (x${p.quantity})`)
@@ -324,7 +324,7 @@ export default function DashboardpersCuisine() {
                             </td>
                             <td className="p-4">
                               <MdTableRestaurant className="inline mr-2 text-xl" />
-                              {commande.table.numero}
+                              {commande.table.nom}
                             </td>
                             <td className="p-4">
                               {commande.items
