@@ -13,6 +13,7 @@ export class TableEvent {
   @Column({nullable: true})
   nom: string;
 
+
   @Column()
   capacite: number;
 

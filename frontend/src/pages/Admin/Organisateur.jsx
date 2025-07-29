@@ -322,10 +322,46 @@ export default function Organisateur() {
       }
     };
     fetchData();
+
+    const socket = io("http://localhost:3000", {
+      auth: {
+        userId: 'b101b3b2-880b-47c2-a1ad-31ebbf61aa6d', // Remplace par un ID réel, ex: "admin-1"
+      },
+    });
+
+    socket.on("connect", () => {
+      console.log("🟢 SuperAdmin connecté au WebSocket !");
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("❌ Erreur WebSocket SuperAdmin :", err.message);
+    });
+
+    socket.on("organizer_connected", ({ userId }) => {
+      console.log("📡 SuperAdmin reçoit organizer_connected :", userId);
+
+      setData((prev) => {
+        const match = prev.find((m) => m.id === userId);
+        console.log("Correspondance trouvée :", !!match);
+        return prev.map((m) =>
+          m.id === userId ? { ...m, isOnline: true } : m,
+        );
+      });
+    });
+
+    socket.on("organizer_disconnected", ({ userId }) => {
+      setData((prev) =>
+        prev.map((m) => (m.id === userId ? { ...m, isOnline: false } : m))
+      );
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const filteredData = data.filter((organisateur) =>
-    organisateur[filterType].toLowerCase().includes(searchTerm.toLowerCase())
+    organisateur[filterType]?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleTakeManagerEvents = async (id) => {
@@ -796,6 +832,7 @@ export default function Organisateur() {
           data={modalData}
           managerName={managerName || "Organisateur"}
         />
+
         <DeleteModal
           isOpen={isDeleteModalOpen}
           onClose={closeDeleteModal}

@@ -9,12 +9,15 @@ import { User } from 'src/Authentication/entities/auth.entity';
 import { Balance } from 'src/entities/balance.entity';
 import { Evenement } from 'src/entities/Evenement';
 import { Payment } from 'src/entities/payment.entity';
+import { Personnel } from 'src/entities/Personnel';
+import { OrdersGateway } from 'src/gateway/orders.gateway';
 
 @Injectable()
 export class OrderService {
   constructor(
     @InjectRepository(Order)
     private orderRepository: Repository<Order>,
+    private ordersGateway: OrdersGateway,
     @InjectRepository(OrderItem)
     private orderItemRepository: Repository<OrderItem>,
     @InjectRepository(TableEvent)
@@ -29,6 +32,9 @@ export class OrderService {
     private eventRepository: Repository<Evenement>,
     @InjectRepository(Payment)
     private paymentRepository: Repository<Payment>,
+    @InjectRepository(Personnel)
+    private personnelRepository: Repository<Personnel>,
+    
     
   ) {}
 
@@ -90,7 +96,9 @@ export class OrderService {
     savedOrder.total = total;
 
     savedOrder.items = await this.orderItemRepository.save(orderItems);
-    return this.orderRepository.save(savedOrder);
+    const finalOrder = await this.orderRepository.save(savedOrder);
+    this.ordersGateway.notifyNewOrder(finalOrder);
+    return finalOrder;
   }
 
   async findOrdersByTable(tableId: number): Promise<(Order & { total: number })[]> {
@@ -189,8 +197,8 @@ export class OrderService {
     return this.orderRepository.save(order);
   }
 
-  async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served', userId: string): Promise<Order> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+  async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served', email: string): Promise<Order> {
+    const user = await this.personnelRepository.findOne({ where: { email: email } });
     if (!user || user.role !== 'cuisinier') {
       throw new UnauthorizedException('Only cuisinier can update order status');
     }
@@ -205,16 +213,13 @@ export class OrderService {
   }
 
 
-
-
-
-
-
-  async validatePayment(orderId: number, userId: string): Promise<Order> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user || user.role !== 'caissier') {
+ async validatePayment(orderId: number, email: string): Promise<Order> {
+    const personnel = await this.personnelRepository.findOne({ where: { email: email } });
+    if (!personnel || personnel.role !== 'caissier') {
       throw new UnauthorizedException('Only caissier can validate payment');
     }
+
+    const userId = personnel.id;
     const order = await this.orderRepository.findOne({
       where: { id: orderId },
       relations: ['items', 'table', 'table.event', 'invite'],
@@ -230,8 +235,7 @@ export class OrderService {
     const payment = this.paymentRepository.create({
       order,
       orderId,
-      user,
-      userId,
+      personnel,
       amount: total,
       event: order.table.event,
       eventId,

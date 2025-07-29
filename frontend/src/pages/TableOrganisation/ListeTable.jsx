@@ -106,12 +106,16 @@ export default function ListeTable() {
       prev.includes(id) ? prev.filter((tid) => tid !== id) : [...prev, id]
     );
   };
+  const [noSelectionMessage, setNoSelectionMessage] = useState("");
+
 
   const handlePrintSelected = () => {
     if (selectedTableIds.length === 0) {
-      alert("Veuillez sélectionner au moins une table.");
+      setNoSelectionMessage("Veuillez sélectionner au moins une table à imprimer."); // nouveau message
+      setNoSelectionModalOpen(true); // ouverture du modal
       return;
     }
+  
     const printWindow = window.open("", "_blank");
     printWindow.document.write(`
       <style>
@@ -124,8 +128,8 @@ export default function ListeTable() {
     selected.forEach((table) => {
       printWindow.document.write(`
         <div class="table-container">
-          <strong>Table ${table.numero}</strong><br/>
-          <img src="${table.qrCode}" alt="QR Code Table ${table.numero}" />
+          <strong>Table ${table.nom}</strong><br/>
+          <img src="${table.qrCode}" alt="QR Code Table ${table.nom}" />
         </div>
       `);
     });
@@ -133,6 +137,7 @@ export default function ListeTable() {
     printWindow.focus();
     printWindow.print();
   };
+  
 
   const handlePrintAll = () => {
     if (tables.length === 0) {
@@ -162,11 +167,13 @@ export default function ListeTable() {
 
   const handleOpenDeleteConfirm = () => {
     if (selectedTableIds.length === 0) {
+      setNoSelectionMessage("Veuillez sélectionner au moins une table à supprimer."); // ici aussi
       setNoSelectionModalOpen(true);
       return;
     }
     setDeleteConfirmOpen(true);
   };
+  
 
   const handleCloseDeleteConfirm = () => {
     setDeleteConfirmOpen(false);
@@ -238,7 +245,7 @@ export default function ListeTable() {
         <Checkbox
           checked={selectedTableIds.includes(params.row.id)}
           onChange={() => handleCheckboxChange(params.row.id)}
-          aria-label={`Sélectionner la table ${params.row.numero}`}
+          aria-label={`Sélectionner la table ${params.row.nom}`}
           sx={{
             color: '#6b48ff',
             '&.Mui-checked': {
@@ -259,7 +266,7 @@ export default function ListeTable() {
         params.row.qrCode ? (
           <img
             src={params.row.qrCode}
-            alt={`QR Code pour la table ${params.row.numero}`}
+            alt={`QR Code pour la table ${params.row.nom}`}
             className="w-16 h-16 object-contain rounded-md"
             onError={(e) => (e.target.src = "/path/to/fallback-image.png")}
           />
@@ -414,11 +421,10 @@ export default function ListeTable() {
         </div>
       )}
 
-      {/* No Selection Modal */}
       <Dialog open={noSelectionModalOpen} onClose={handleCloseNoSelectionModal} PaperProps={{ sx: { borderRadius: 2 } }}>
         <DialogTitle>Attention</DialogTitle>
         <DialogContent>
-          <Typography>Veuillez sélectionner au moins une table à supprimer.</Typography>
+          <Typography>{noSelectionMessage}</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseNoSelectionModal} sx={{ backgroundColor: '#6b48ff', color: 'white', '&:hover': { backgroundColor: '#5a38dd' } }}>

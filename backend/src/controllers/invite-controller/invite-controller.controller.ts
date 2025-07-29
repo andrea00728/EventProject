@@ -1,4 +1,4 @@
-import {Controller,Post, Body,Param, Get, UploadedFile, UseInterceptors, ParseIntPipe, Put, HttpException, HttpStatus, Req, UseGuards, Delete, BadRequestException, Patch,
+import {Controller,Post, Body,Param, Get, UploadedFile, UseInterceptors, ParseIntPipe, Put, HttpException, HttpStatus, Req, UseGuards, Delete, BadRequestException, Patch, Query,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -323,6 +323,44 @@ async getCheckinStats(@Req() req) {
   const userEmail = req.user.email;
   return this.guestService.countCheckinByPersonnel(userEmail);
 }
+
+
+//nampiko farany 
+@Get('check/:eventId')
+// @UseGuards(AuthGuard('jwt'))
+async checkInviteByEmail(
+  @Param('eventId', ParseIntPipe) eventId: number,
+  @Query('email') email: string,
+  // @Req() req
+): Promise<{ exists: boolean }> {
+  // const userId = req.user?.sub;
+  // if (!userId) {
+  //   throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
+  // }
+
+  if (!email) {
+    throw new BadRequestException('Email requis dans la requête.');
+  }
+
+  const invite = await this.guestService['guestRepository'].findOne({
+    where: {
+      email,
+      event: { id: eventId },
+    },
+  });
+
+  return { exists: !!invite };
+}
+
+@Get('/geteventid/:id')
+@UseGuards(AuthGuard('jwt'))
+async getEventIdByEmail(@Req() req) : Promise<any>{
+  console.log('Récupération de l\'ID d\'événement par email : ', req.user.email);
+  const userEmail = req.user.email;
+  return this.guestService.findEventIdByEmail(userEmail);
+}
+
+
 }
 
 
