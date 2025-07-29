@@ -65,6 +65,7 @@ export default function DashboardpersCuisine() {
         setLoading(true);
         setError(null);
         setCommandes(data);
+        console.log(data)
       } catch (error) {
         console.error("Erreur : ", error);
         setError("Impossible de charger les commandes.");
