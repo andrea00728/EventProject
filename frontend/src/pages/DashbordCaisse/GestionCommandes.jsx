@@ -94,16 +94,16 @@ const GestionCommandesPage = () => {
 
     const socket = io("http://localhost:3000", {
       auth: {
-        userId: UserId, // très important : doit être l’ID réel de l’organisateur
+        userId: UserId,
       },
     });
+
     socket.on("connect", () => {
       console.log("✅ Connecté au serveur WebSocket");
     });
 
-    // Pour écouter les mises à jour
     socket.on("order_status_updated", (data) => {
-      updateCommande(data)
+      updateCommande(data);
     });
   };
 
@@ -113,7 +113,7 @@ const GestionCommandesPage = () => {
         cmd.id === update.id
           ? {
               ...cmd,
-              ...update, // mise à jour partielle des champs
+              ...update,
               status: STATUS_MAPPING.backToFront[update.status] || update.status,
             }
           : cmd
@@ -121,52 +121,10 @@ const GestionCommandesPage = () => {
     );
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Supprimer cette commande ?")) return;
-
-    try {
-      await axios.delete(`http://localhost:3000/orders/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setCommandes((prev) => prev.filter((cmd) => cmd.id !== id));
-      setSnackbar({
-        open: true,
-        message: "Commande supprimée.",
-        severity: "success",
-      });
-    } catch (error) {
-      console.error(
-        "Erreur suppression:",
-        error.response?.data || error.message
-      );
-      setSnackbar({
-        open: true,
-        message:
-          error.response?.data?.message ||
-          "Erreur serveur lors de la suppression",
-        severity: "error",
-      });
-    }
-  };
-
   useEffect(() => {
     fetchCommandes();
     fetchData();
-    const onUpdateOrderStatus = (updatedOrder) => {
-      setCommandes((prev) =>
-        prev.map((cmd) =>
-          cmd.id === updatedOrder.id
-            ? {
-                ...cmd,
-                status:
-                  STATUS_MAPPING.backToFront[updatedOrder.status] ||
-                  updatedOrder.status,
-              }
-            : cmd
-        )
-      );
-    };
-  }, [token]); // on refresh si token change
+  }, [token]);
 
   const filteredCommandes = commandes.filter((cmd) => {
     const matchStatus =
@@ -202,22 +160,6 @@ const GestionCommandesPage = () => {
           />
         );
       },
-    },
-    {
-      field: "actions",
-      headerName: "Actions",
-      width: 130,
-      renderCell: (params) => (
-        <Button
-          variant="outlined"
-          color="error"
-          size="small"
-          onClick={() => handleDelete(params.row.id)}
-          disabled={params.row.status === "annuler"}
-        >
-          Supprimer
-        </Button>
-      ),
     },
   ];
 

@@ -26,6 +26,7 @@ ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearSca
 const RevenuPage = () => {
   const [revenus, setRevenus] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefunding, setIsRefunding] = useState(false); 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPeriod, setFilterPeriod] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -41,7 +42,6 @@ const RevenuPage = () => {
   const { token } = useStateContext();
   const navigate = useNavigate();
 
-  
   const fetchRevenus = async () => {
     try {
       setLoading(true);
@@ -49,7 +49,10 @@ const RevenuPage = () => {
       const eventId = await getEventIdByEmail(token);
       const { data } = await axios.get(
         `http://localhost:3000/orders/event/${eventId.eventId}`,
-        { params: { include: "table,items,items.menuItem" } }
+        {
+          headers: { Authorization: `Bearer ${token}` }, // Ajout du token pour l'authentification
+          params: { include: "table,items,items.menuItem" },
+        }
       );
 
       const formattedRevenus = data.map((order) => ({
@@ -57,14 +60,14 @@ const RevenuPage = () => {
         nom: order.nom || "Anonyme",
         email: order.email || "-",
         total: parseFloat(order.total || 0).toFixed(2),
-        amountPaid: parseFloat(order.amountPaid || 0).toFixed(2),
+        amountPaid: order.paymentStatus === "paid" ? parseFloat(order.total || 0).toFixed(2) : "0.00", // Calcul basé sur paymentStatus
         paymentStatus:
           order.paymentStatus === "paid"
             ? "Payé"
             : order.paymentStatus === "refunded"
             ? "Remboursé"
             : "Non payé",
-        paymentMethod: order.paymentMethod || "Inconnu",
+        paymentMethod: "Inconnu", // Champ non présent dans l'entité Order, défini comme "Inconnu"
         date: new Date(order.orderDate).toLocaleString("fr-FR", {
           dateStyle: "short",
           timeStyle: "short",
@@ -73,7 +76,7 @@ const RevenuPage = () => {
       }));
 
       setRevenus(formattedRevenus);
-      
+
       const total = formattedRevenus.reduce(
         (sum, order) => sum + parseFloat(order.total),
         0
@@ -89,10 +92,10 @@ const RevenuPage = () => {
       formattedRevenus.forEach((order) => {
         order.items.forEach((item) => {
           const category = item.menuItem?.category || "Autres";
-          const price = parseFloat(item.price) || 0;
+          const subtotal = parseFloat(item.subtotal) || 0; // Utiliser subtotal au lieu de price
           const quantity = parseInt(item.quantity) || 0;
-          if (price && quantity) {
-            categories[category] = (categories[category] || 0) + (quantity * price);
+          if (subtotal && quantity) {
+            categories[category] = (categories[category] || 0) + subtotal;
           }
         });
       });
@@ -117,33 +120,34 @@ const RevenuPage = () => {
       setTimeSeriesData(timeSeriesArray);
     } catch (error) {
       console.error("Erreur lors de la récupération des revenus:", error);
-      toast.error("Erreur lors du chargement des données");
+      toast.error(error.response?.data?.message || "Erreur lors du chargement des données");
     } finally {
       setLoading(false);
     }
   };
 
   const handleRefund = async (id) => {
-    if (!window.confirm("Confirmer le remboursement de cette commande ?")) return;
+    if (!window.confirm("Confirmer la suppression de cette commande remboursée ?")) return;
     try {
-      await axios.patch(
-        `http://localhost:3000/orders/${id}/refund`,
-        { paymentStatus: "refunded" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setRevenus((prev) =>
-        prev.map((cmd) => (cmd.id === id ? { ...cmd, paymentStatus: "Remboursé" } : cmd))
-      );
-      socket.emit("paymentStatusChanged", { id, paymentStatus: "refunded" });
-      toast.success("Commande remboursée avec succès");
-      fetchRevenus();
+      setIsRefunding(true); // Activer l'indicateur de chargement
+      await axios.delete(`http://localhost:3000/orders/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setRevenus((prev) => prev.filter((cmd) => cmd.id !== id));
+      socket.emit("orderDeleted", { id });
+      toast.success("Commande remboursée et supprimée avec succès");
+      await fetchRevenus();
     } catch (error) {
-      console.error("Erreur lors du remboursement:", error);
-      toast.error("Erreur lors du remboursement");
+      console.error("Erreur lors du remboursement et suppression:", error);
+      toast.error(
+        error.response?.data?.message || "Erreur lors du remboursement et suppression"
+      );
+    } finally {
+      setIsRefunding(false); // Désactiver l'indicateur de chargement
     }
   };
 
-  // Exporter en CSV
   const exportToCSV = () => {
     const headers = ["ID,Client,Email,Total (€),Payé (€),Statut,Méthode,Date"];
     const rows = filteredRevenus.map((rev) =>
@@ -159,7 +163,6 @@ const RevenuPage = () => {
     toast.success("Exportation CSV réussie");
   };
 
-  // Exporter en PDF
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(16);
@@ -169,7 +172,6 @@ const RevenuPage = () => {
     doc.text(`Reste à encaisser: €${totalPending}`, 20, 36);
     doc.text(`Total remboursé: €${totalRefunded}`, 20, 42);
 
-    // Tableau des revenus
     autoTable(doc, {
       startY: 50,
       head: [["ID", "Client", "Email", "Total (€)", "Payé (€)", "Statut", "Méthode", "Date"]],
@@ -188,7 +190,6 @@ const RevenuPage = () => {
       headStyles: { fillColor: [107, 33, 168], textColor: [255, 255, 255] },
     });
 
-    // Répartition par catégorie
     const finalY = doc.lastAutoTable.finalY + 10;
     doc.text("Répartition par catégorie", 20, finalY);
     autoTable(doc, {
@@ -207,7 +208,6 @@ const RevenuPage = () => {
     toast.success("Exportation PDF réussie");
   };
 
-  // Filtrer les revenus
   const filteredRevenus = revenus.filter((rev) => {
     const matchSearch =
       rev.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -227,7 +227,6 @@ const RevenuPage = () => {
     return matchSearch && matchPeriod && matchStatus;
   });
 
-  // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredRevenus.slice(indexOfFirstItem, indexOfLastItem);
@@ -235,7 +234,6 @@ const RevenuPage = () => {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Données du graphique à barres
   const barChartData = {
     labels: ["Payé", "Non payé"],
     datasets: [
@@ -249,7 +247,6 @@ const RevenuPage = () => {
     ],
   };
 
-  // Données du graphique temporel
   const timeSeriesChartData = {
     labels: timeSeriesData.map((item) => item.date),
     datasets: [
@@ -303,8 +300,10 @@ const RevenuPage = () => {
   useEffect(() => {
     if (token) {
       fetchRevenus();
-      socket.on("paymentStatusChanged", fetchRevenus);
-      return () => socket.off("paymentStatusChanged", fetchRevenus);
+      socket.on("orderDeleted", fetchRevenus);
+      return () => {
+        socket.off("orderDeleted", fetchRevenus);
+      };
     }
   }, [token]);
 
@@ -321,7 +320,6 @@ const RevenuPage = () => {
     >
       <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-0" />
       <div className="relative z-10 max-w-7xl mx-auto px-2 sm:px-4 py-4 flex-1 flex flex-col">
-        {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 drop-shadow-md">
             Gestion des Revenus
@@ -334,9 +332,7 @@ const RevenuPage = () => {
           </Link>
         </div>
 
-        {/* Contenu principal */}
         <div className="flex flex-col flex-1 gap-4">
-          {/* Statistiques et Filtres */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-1 grid grid-cols-3 gap-4">
               <motion.div
@@ -416,7 +412,6 @@ const RevenuPage = () => {
             </div>
           </div>
 
-          {/* Graphique et Tableau */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -483,10 +478,7 @@ const RevenuPage = () => {
                       </tr>
                     ) : (
                       currentItems.map((rev) => (
-                        <tr
-                          key={rev.id}
-                          className="border-b hover:bg-gray-50"
-                        >
+                        <tr key={rev.id} className="border-b hover:bg-gray-50">
                           <td className="px-3 py-2">{rev.id}</td>
                           <td className="px-3 py-2 truncate" title={rev.nom}>
                             {rev.nom}
@@ -526,9 +518,12 @@ const RevenuPage = () => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => handleRefund(rev.id)}
-                                className="px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition"
+                                disabled={isRefunding}
+                                className={`px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition ${
+                                  isRefunding ? "opacity-50 cursor-not-allowed" : ""
+                                }`}
                               >
-                                Rembourser
+                                {isRefunding ? "En cours..." : "Rembourser"}
                               </motion.button>
                             )}
                           </td>
@@ -537,7 +532,6 @@ const RevenuPage = () => {
                     )}
                   </tbody>
                 </table>
-                {/* Pagination */}
                 <div className="flex justify-center gap-2 mt-2">
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -565,7 +559,6 @@ const RevenuPage = () => {
             </motion.div>
           </div>
 
-          {/* Répartition par catégorie */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -604,7 +597,6 @@ const RevenuPage = () => {
           </motion.div>
         </div>
 
-        {/* Modale des détails */}
         {showDetailsModal && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -633,8 +625,10 @@ const RevenuPage = () => {
                     <tr key={index} className="border-b">
                       <td className="px-3 py-2 truncate">{item.menuItem?.name || "Inconnu"}</td>
                       <td className="px-3 py-2 text-right">{item.quantity || 0}</td>
-                      <td className="px-3 py-2 text-right">{parseFloat(item.price || 0).toFixed(2)}</td>
-                      <td className="px-3 py-2 text-right">{(item.quantity * item.price || 0).toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right">
+                        {parseFloat(item.subtotal / item.quantity || 0).toFixed(2)}
+                      </td>
+                      <td className="px-3 py-2 text-right">{parseFloat(item.subtotal || 0).toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
