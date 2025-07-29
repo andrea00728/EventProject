@@ -1,122 +1,184 @@
-import React, { useState } from "react";
-import { Outlet, Link } from "react-router-dom";
-import { FaGears, FaUsers, FaUser } from "react-icons/fa6";
+import React, { useState, useEffect } from "react";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import {
-  MdDashboard,
-  MdCalendarToday,
-  MdOutlineCalendarMonth,
-  MdOutlineCalendarToday,
-  MdVerifiedUser,
-  MdAttachMoney,
-  MdSearch,
-  MdRoom,
-} from "react-icons/md";
-import { delay, motion, AnimatePresence } from "framer-motion";
+  FaCogs,
+  FaUsers,
+  FaSignOutAlt,
+  FaBars,
+  FaTimes,
+  FaMoon,
+  FaSun,
+  FaUserCircle
+} from "react-icons/fa";
+import { FiLayout } from "react-icons/fi";
+import { MdCalendarToday, MdRoom } from "react-icons/md";
+import { useDarkMode } from "../context/DarkModeContext";
 
 export default function AdminLayout() {
-  const choixItems = [
-    { path: "/AdminAccueil", name: "Tableau de bord", icon: <MdDashboard /> },
-    { path: "/AdminEvenement", name: "Evénements", icon: <MdCalendarToday /> },
-    { path: "/AdminOrganisateur", name: "Organisateurs", icon: <FaUsers /> },
-    { path: "/LocationSalle", name: "Gérer salles et localitsation", icon: <MdRoom /> },
-    { path: "/AdminParametre", name: "Paramètres", icon: <FaGears /> },
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const { darkMode, toggleDarkMode } = useDarkMode();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) setSidebarOpen(false);
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const menuItems = [
+    { path: "/AdminAccueil", name: "Tableau de bord", icon: <FiLayout className="text-lg" /> },
+    { path: "/AdminEvenement", name: "Événements", icon: <MdCalendarToday className="text-lg" /> },
+    { path: "/AdminOrganisateur", name: "Organisateurs", icon: <FaUsers className="text-lg" /> },
+    { path: "/LocationSalle", name: "Salles & Localisation", icon: <MdRoom className="text-lg" /> },
+    { path: "/AdminParametre", name: "Paramètres", icon: <FaCogs className="text-lg" /> },
   ];
-  const navVariants = {
-    closed: {
-      // Compact state: only icons
-      transition: {
-        type: "spring", // Use spring physics for a more natural feel
-        duration: 3,
-        bounce:0.4
-      },
-      scale: 0.8,  
-    },
-    open: {
-      scale: 1,
-      transition: {
-        type: "spring",
-        duration: 3,
-        bounce:0.4,
-      },
-    },
+
+  const handleLogout = () => {
+    console.log("Déconnexion");
   };
 
-  const [isHover, setIsHover] = useState(false);
   return (
-    <>
-      <div className="flex justify-center items-center overflow-hidden">
-        <AnimatePresence>
-          <motion.header
-            className=" text-black h-[99vh] bg-[#cfc6c4]  rounded-4xl items-start ml-2 p-4"
-            onMouseLeave={() => {
-              setIsHover(false);
-            }}
-            onMouseEnter={() => {
-              setIsHover(true);
-            }}
-            initial={isHover && "closed"}
-            animate={isHover && "open"}
-            variants={navVariants}
-            exit={!isHover && "closed"}
-          >
-            <motion.h1
-              initial={isHover && {
-                  opacity: 0,
-                  transition: { duration: 3,x:-100, type: "spring" },
-                }}
-              animate={
-                isHover && {
-                  opacity: 1,
-                  transition: { duration: 3,x:0, type: "spring" },
-                }
-              }
+    <div className={`flex h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+      {/* Overlay pour mobile */}
+      {sidebarOpen && isMobile && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-              className="text-2xl text-center transition-all duration-500"
-              style={{ fontFamily: "cursive", fontStyle: "italic" }}
+      {/* Bouton Burger flottant */}
+      <button
+        className={`fixed z-30 top-4 left-4 p-2 rounded-lg transition-all duration-300 md:hidden
+          ${darkMode 
+            ? "bg-gray-700 text-gray-200 hover:bg-gray-600" 
+            : "bg-white text-gray-600 hover:bg-gray-100"} shadow-md hover:scale-105`}
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+      >
+        {sidebarOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
+      </button>
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed z-50 top-0 left-0 h-full w-64 transition-all duration-300 ease-in-out
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+          md:translate-x-0 md:relative md:w-72
+          ${darkMode ? "bg-gray-800" : "bg-gray-200"}`}
+      >
+        <div className="flex flex-col h-full">
+          {/* Header Sidebar */}
+          <div className="p-5 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <img 
+                src="../../public/images/logo_4.png" 
+                alt="Logo" 
+                className="w-10 h-10 rounded-lg object-cover transition-transform duration-300 hover:scale-110"
+              />
+              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                Master Table
+              </h1>
+            </div>
+            <button 
+              className="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-all duration-300 hover:rotate-90"
+              onClick={() => setSidebarOpen(false)}
             >
-              {isHover ? "Master Table" : "MT"}
-            </motion.h1>
-            <nav>
-              <ul>
-                {choixItems.map((value, key) => (
-                  <li key={key}>
-                    <Link
-                      to={value.path}
-                      className={`flex ${
-                        isHover ? "hover:justify-start" : "justify-center"
-                      }  ease-in text-[16px] font-semibold items-center gap-3  text-start mt-6 hover:underline cursor-pointer`}
-                    >
-                      <span>{value.icon}</span>
-                      {isHover && (
-                        <motion.span
-                          className="transition-all duration-500 ease-in"
-                          initial={{ opacity: 0 }}
-                          animate={
-                            isHover && {
-                              opacity: 1,
-                              transition: {
-                                duration: 1,
-                                ease: "easeIn",
-                                type: "spring",
-                              },
-                            }
-                          }
-                          exit={{ opacity: 0 }}
-                        >
-                          {value.name}
-                        </motion.span>
-                      )}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </motion.header>
-        </AnimatePresence>
-        <div className={`flex-1 overflow-auto bg-white rounded-2xl shadow-2xl ml-4`}>
-          <Outlet/>
+              <FaTimes className="text-lg" />
+            </button>
+          </div>
+
+          {/* Menu Navigation avec animations */}
+          <nav className="flex-1 overflow-y-auto py-4 px-3">
+            <ul className="space-y-2">
+              {menuItems.map((item, index) => (
+                <li key={index}>
+                  <Link
+                    to={item.path}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 transform
+                    ${
+                      location.pathname === item.path
+                        ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg scale-[1.02]"
+                        : `${
+                            darkMode 
+                              ? "text-gray-200 hover:bg-gray-700 hover:text-white" 
+                              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                          } hover:translate-x-1 hover:scale-[1.02]`
+                    }`}
+                    onClick={() => isMobile && setSidebarOpen(false)}
+                  >
+                    <span className={`text-lg transition-transform duration-300 ${
+                      location.pathname === item.path ? "text-white scale-110" : 
+                      darkMode ? "text-gray-300 group-hover:scale-110" : "text-gray-500 group-hover:scale-110"
+                    }`}>
+                      {item.icon}
+                    </span>
+                    <span className="transition-all duration-300">{item.name}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Footer Sidebar avec animations */}
+          <div className="p-4">
+            <div className="flex flex-col space-y-3 mb-4">
+              <button
+                onClick={toggleDarkMode}
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 transform
+                ${
+                  darkMode 
+                    ? "bg-gray-700 text-blue-300 hover:bg-gray-600 hover:scale-[1.02]" 
+                    : "bg-gray-100 text-blue-600 hover:bg-gray-200 hover:scale-[1.02]"
+                }`}
+              >
+                {darkMode ? (
+                  <>
+                    <FaSun className="text-lg transition-transform duration-300 hover:rotate-12" />
+                    <span className="text-sm font-medium">Mode Clair</span>
+                  </>
+                ) : (
+                  <>
+                    <FaMoon className="text-lg transition-transform duration-300 hover:rotate-12" />
+                    <span className="text-sm font-medium">Mode Sombre</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 transform
+                ${
+                  darkMode
+                    ? "text-red-300 hover:bg-gray-700 hover:bg-opacity-50 hover:scale-[1.02]"
+                    : "text-red-500 hover:bg-red-50 hover:scale-[1.02]"
+                }`}
+              >
+                <FaSignOutAlt className="text-lg transition-transform duration-300 hover:translate-x-1" />
+                <span className="text-sm font-medium">Déconnexion</span>
+              </button>
+            </div>
+            <p className={`text-xs text-center transition-colors duration-300 ${
+              darkMode ? "text-gray-400" : "text-gray-500"
+            }`}>
+              © {new Date().getFullYear()} Master Table
+            </p>
+          </div>
         </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 overflow-auto p-0 bg-gray-50 dark:bg-gray-900">
+          <div className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+            <Outlet />
+          </div>
+        </main>
       </div>
-    </>
+    </div>
   );
 }

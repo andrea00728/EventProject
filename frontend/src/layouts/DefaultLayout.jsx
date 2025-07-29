@@ -344,7 +344,6 @@ export default function DefaultLayout() {
 
           </div>
 
-
         </div>
 
 
