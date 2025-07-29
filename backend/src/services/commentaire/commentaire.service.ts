@@ -1,9 +1,10 @@
 import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { Commentaire, SatisfactionLevel } from 'src/entities/Commentaire';
 import { CreateCommentaireDto } from 'src/dto/create-commentaire.dto';
 import { UpdateCommentaireDto } from 'src/dto/update-commentaire.dto';
+import { IsNotIn } from 'class-validator';
 
 @Injectable()
 export class CommentaireService {
@@ -149,5 +150,23 @@ export class CommentaireService {
     .limit(1)
     .getOne();
   
+  }
+
+
+  /**
+   * 
+   * @returns 
+   * 
+   * recuperation du nombre de commentaire satisfait
+   * 
+   * 
+   */
+  async findCountSatisfaction(){
+    const count= this.commentaireRepository.count({
+      where:{
+        satisfaction:Not(SatisfactionLevel.DECEVANT),
+      }
+    });
+    return count;
   }
 }
