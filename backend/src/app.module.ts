@@ -9,7 +9,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { ScheduleModule } from '@nestjs/schedule'; // Gardons ScheduleModule à sa place habituelle
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { Evenement } from './entities/Evenement';
 import { Localisation } from './entities/Location';
@@ -49,24 +49,18 @@ import { ForfaitService } from './services/forfait/forfait.service';
 import { ForfaitCronService } from './services/forfait-cron/forfait-cron.service';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
-import { PaypalService } from './services/paypal/paypal.service';
-import { PaypalWebhookService } from './services/paypal-webhook/paypal-webhook.service';
 import { PaypalModule } from './modules/paypal/paypal.module';
 import { SystemPrompt } from './entities/system-prompt.entity';
 import { SystemPromptModule } from './modules/system-prompt/system-prompt.module';
-import { ShortLinkController } from './controllers/short-link/short-link.controller';
 import { ShortLink } from './entities/ShortLink';
-import { NotificationService } from './services/notification/notification.service';
 import { NotificationModule } from './modules/notification/notification.module';
 import { ShortLinkModule } from './modules/short-link/short-link.module';
 import { CommentaireModule } from './modules/commentaire/commentaire.module';
-import { CommentaireService } from './services/commentaire/commentaire.service';
-import { CommentaireController } from './controllers/commentaire/commentaire.controller';
 import { Commentaire } from './entities/Commentaire';
-import { SatisfactionService } from './services/satisfaction/satisfaction.service';
-import { SatisfactionController } from './controllers/satisfaction/satisfaction.controller';
 import { SatisfactionModule } from './modules/satisfaction/satisfaction.module';
 import { Satisfaction } from './entities/satisfaction.entity';
+import { FavoriteModule } from './modules/favorite/favorite.module';
+import { Favorite } from './entities/Favorite';
 
 
 @Module({
@@ -99,9 +93,9 @@ import { Satisfaction } from './entities/satisfaction.entity';
           username: dbUsername,
           password: dbPassword,
           database: dbDatabase,
-          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, Forfait, SystemPrompt, ShortLink, Commentaire, Satisfaction],
+          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, Forfait, SystemPrompt, ShortLink, Commentaire, Satisfaction, Favorite],
      
-          synchronize: true, 
+          synchronize: true,
         };
       },
       inject: [ConfigService],
@@ -156,6 +150,7 @@ import { Satisfaction } from './entities/satisfaction.entity';
     ShortLinkModule,
     CommentaireModule,
     SatisfactionModule,
+    FavoriteModule,
 
   ],
   controllers: [ProfileController,],
