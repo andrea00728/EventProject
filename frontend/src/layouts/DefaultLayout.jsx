@@ -15,7 +15,6 @@ import { Bell } from "lucide-react";
 import { getUserIdForToken } from "../services/userService";
 // import { io } from "socket.io-client";
 
-import { getUserIdForToken } from "../services/userService";
 import { io } from "socket.io-client";
 
 export default function DefaultLayout() {
