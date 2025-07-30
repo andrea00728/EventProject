@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
@@ -28,7 +28,7 @@ ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearSca
 const RevenuPage = () => {
   const [revenus, setRevenus] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isRefunding, setIsRefunding] = useState({}); // Objet pour suivre l'état par ID
+  const [isRefunding, setIsRefunding] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPeriod, setFilterPeriod] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -42,47 +42,38 @@ const RevenuPage = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(null);
   const [chartType, setChartType] = useState("bar");
   const [isSocketConnected, setIsSocketConnected] = useState(false);
-  const { token, setToken } = useStateContext(); // Assurez-vous que setToken est disponible
+  const { token, setToken } = useStateContext();
   const navigate = useNavigate();
 
-  const refreshToken = async () => {
+  const refreshToken = useCallback(async () => {
     try {
       const response = await axios.post(
         "http://localhost:3000/auth/refresh",
         {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       const newToken = response.data.access_token;
       setToken(newToken);
       return newToken;
     } catch (error) {
-      console.error("Erreur lors du rafraîchissement du token:", {
-        message: error.message,
-        status: error.response?.status,
-      });
       toast.error("Session expirée. Veuillez vous reconnecter.");
       navigate("/login");
       throw error;
     }
-  };
+  }, [token, setToken, navigate]);
 
-  const fetchRevenus = async () => {
+  const fetchRevenus = useCallback(async () => {
     try {
       setLoading(true);
       if (!token) {
-        console.error("Token manquant");
         toast.error("Veuillez vous connecter pour accéder aux revenus");
         navigate("/login");
         return;
       }
-      console.log("Vérification du token avant requête:", token.slice(0, 10) + "...");
-      let currentToken = token;
 
-      // Vérifier si le token est valide
+      let currentToken = token;
       try {
-        await axios.get("http://localhost:3000/orders/event/1", {
+        await axios.get("http://localhost:3000/auth/validate", {
           headers: { Authorization: `Bearer ${currentToken}` },
         });
       } catch (error) {
@@ -95,14 +86,20 @@ const RevenuPage = () => {
       if (!eventId?.eventId) {
         throw new Error("ID d'événement non trouvé");
       }
-      console.log("Récupération des revenus pour eventId:", eventId.eventId);
+
       const { data } = await axios.get(
         `http://localhost:3000/orders/event/${eventId.eventId}`,
         {
-          headers: { Authorization: `Bearer ${token}` }, // Ajout du token pour l'authentification
+          headers: { Authorization: `Bearer ${currentToken}` },
           params: { include: "table,items,items.menuItem" },
         }
       );
+
+      if (!data || data.length === 0) {
+        toast.warn("Aucune commande trouvée pour cet événement");
+        setRevenus([]);
+        return;
+      }
 
       const formattedRevenus = data.map((order) => ({
         id: order.id,
@@ -116,52 +113,58 @@ const RevenuPage = () => {
             : order.paymentStatus === "refunded"
             ? "Remboursé"
             : "Non payé",
-        paymentMethod: "Inconnu", // Champ non présent dans l'entité Order, défini comme "Inconnu"
-        date: new Date(order.orderDate).toLocaleString("fr-FR", {
-          dateStyle: "short",
-          timeStyle: "short",
-        }),
-        items: order.items || [],
+        paymentMethod: order.paymentMethod || "Inconnu",
+        date: order.orderDate
+          ? new Date(order.orderDate).toLocaleString("fr-FR", {
+              dateStyle: "short",
+              timeStyle: "short",
+            })
+          : "-",
+        orderDate: order.orderDate || null,
+        items: Array.isArray(order.items) ? order.items : [],
       }));
 
-      setRevenus(formattedRevenus);
-
       const total = formattedRevenus.reduce(
-        (sum, order) => sum + parseFloat(order.total),
+        (sum, order) => sum + parseFloat(order.total || 0),
         0
       );
       const pending = formattedRevenus
         .filter((order) => order.paymentStatus === "Non payé")
-        .reduce((sum, order) => sum + parseFloat(order.total), 0);
+        .reduce((sum, order) => sum + parseFloat(order.total || 0), 0);
       const refunded = formattedRevenus
         .filter((order) => order.paymentStatus === "Remboursé")
-        .reduce((sum, order) => sum + parseFloat(order.total), 0);
+        .reduce((sum, order) => sum + parseFloat(order.total || 0), 0);
 
       const categories = {};
       formattedRevenus.forEach((order) => {
         order.items.forEach((item) => {
           const category = item.menuItem?.category || "Autres";
-          const subtotal = parseFloat(item.subtotal) || 0;
-          const quantity = parseInt(item.quantity) || 0;
+          const subtotal = parseFloat(item.subtotal || 0);
+          const quantity = parseInt(item.quantity || 0);
           if (subtotal && quantity) {
             categories[category] = (categories[category] || 0) + subtotal;
           }
         });
       });
-      const formattedCategories = {};
-      Object.entries(categories).forEach(([category, revenue]) => {
-        formattedCategories[category] = parseFloat(revenue).toFixed(2);
-      });
+      const formattedCategories = Object.fromEntries(
+        Object.entries(categories).map(([category, revenue]) => [
+          category,
+          parseFloat(revenue).toFixed(2),
+        ])
+      );
 
       const timeSeries = {};
       formattedRevenus.forEach((order) => {
-        const date = new Date(order.orderDate).toLocaleDateString("fr-FR");
-        timeSeries[date] = (timeSeries[date] || 0) + parseFloat(order.amountPaid);
+        if (order.orderDate) {
+          const date = new Date(order.orderDate).toLocaleDateString("fr-FR");
+          timeSeries[date] = (timeSeries[date] || 0) + parseFloat(order.amountPaid || 0);
+        }
       });
       const timeSeriesArray = Object.entries(timeSeries)
         .map(([date, revenue]) => ({ date, revenue: parseFloat(revenue) }))
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
+      setRevenus(formattedRevenus);
       setTotalRevenue(total.toFixed(2));
       setTotalPending(pending.toFixed(2));
       setTotalRefunded(refunded.toFixed(2));
@@ -170,34 +173,89 @@ const RevenuPage = () => {
     } catch (error) {
       console.error("Erreur lors de la récupération des revenus:", error);
       toast.error(error.response?.data?.message || "Erreur lors du chargement des données");
+      if (error.response?.status === 404) {
+        toast.error("Événement ou commandes non trouvés.");
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, refreshToken, navigate]);
 
-  const handleRefund = async (id) => {
-    if (!window.confirm("Confirmer la suppression de cette commande remboursée ?")) return;
-    try {
-      setIsRefunding(true); // Activer l'indicateur de chargement
-      await axios.delete(`http://localhost:3000/orders/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+  const handleRefund = useCallback(
+    async (id) => {
+      if (!window.confirm("Confirmer le remboursement de cette commande ?")) return;
+      try {
+        setIsRefunding((prev) => ({ ...prev, [id]: true }));
+
+        // Vérifier l'existence et l'état de la commande
+        const { data: order } = await axios.get(`http://localhost:3000/orders/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!order) {
+          toast.error("Commande non trouvée");
+          return;
+        }
+        if (order.paymentStatus === "refunded") {
+          toast.error("La commande est déjà remboursée");
+          return;
+        }
+        if (order.paymentStatus !== "paid") {
+          toast.error("La commande n'est pas payée, remboursement impossible");
+          return;
+        }
+
+        // Effectuer le remboursement
+        await axios.patch(
+          `http://localhost:3000/orders/${id}/refunded`,
+          { paymentStatus: "refunded" },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // Supprimer la commande du state local
+        setRevenus((prev) => prev.filter((cmd) => cmd.id !== id));
+        socket.emit("orderRefunded", { id, paymentStatus: "refunded" });
+        socket.emit("orderDeleted", { id });
+        toast.success("Commande remboursée et supprimée avec succès");
+        await fetchRevenus();
+      } catch (error) {
+        console.error("Erreur lors du remboursement:", {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data,
+          stack: error.stack,
+        });
+        toast.error(error.response?.data?.message || "Erreur lors du remboursement");
+      } finally {
+        setIsRefunding((prev) => ({ ...prev, [id]: false }));
+      }
+    },
+    [token, fetchRevenus]
+  );
+
+  const handleRefundDebounced = useMemo(() => debounce(handleRefund, 300), [handleRefund]);
+
+  const filteredRevenus = useMemo(() => {
+    return revenus
+      .filter((rev) => rev.paymentStatus !== "Remboursé") // Exclure les commandes remboursées
+      .filter((rev) => {
+        const matchSearch = rev.email.toLowerCase().includes(searchTerm.toLowerCase());
+        const orderDate = rev.orderDate ? new Date(rev.orderDate) : null;
+        const today = new Date();
+        const matchPeriod =
+          filterPeriod === "all" ||
+          (orderDate &&
+            (filterPeriod === "today" && orderDate.toDateString() === today.toDateString()) ||
+            (filterPeriod === "week" &&
+              orderDate >= new Date(new Date().setDate(today.getDate() - 7))) ||
+            (filterPeriod === "month" &&
+              orderDate >= new Date(new Date().setMonth(today.getMonth() - 1))));
+        const matchStatus = filterStatus === "all" || rev.paymentStatus === filterStatus;
+        return matchSearch && matchPeriod && matchStatus;
       });
+  }, [revenus, searchTerm, filterPeriod, filterStatus]);
 
-      setRevenus((prev) => prev.filter((cmd) => cmd.id !== id));
-      socket.emit("orderDeleted", { id });
-      toast.success("Commande remboursée et supprimée avec succès");
-      await fetchRevenus();
-    } catch (error) {
-      console.error("Erreur lors du remboursement et suppression:", error);
-      toast.error(
-        error.response?.data?.message || "Erreur lors du remboursement et suppression"
-      );
-    } finally {
-      setIsRefunding(false); // Désactiver l'indicateur de chargement
-    }
-  };
-
-  const exportToCSV = () => {
+  const exportToCSV = useCallback(() => {
     const headers = ["ID,Client,Email,Total (€),Payé (€),Statut,Méthode,Date"];
     const rows = filteredRevenus.map((rev) =>
       `${rev.id},${rev.nom},${rev.email},${rev.total},${rev.amountPaid},${rev.paymentStatus},${rev.paymentMethod},${rev.date}`
@@ -209,10 +267,11 @@ const RevenuPage = () => {
     link.setAttribute("href", url);
     link.setAttribute("download", `revenus_${new Date().toISOString()}.csv`);
     link.click();
+    URL.revokeObjectURL(url);
     toast.success("Exportation CSV réussie");
-  };
+  }, [filteredRevenus]);
 
-  const exportToPDF = () => {
+  const exportToPDF = useCallback(() => {
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text("Rapport des Revenus", 20, 20);
@@ -244,10 +303,7 @@ const RevenuPage = () => {
     autoTable(doc, {
       startY: finalY + 5,
       head: [["Catégorie", "Revenu (€)"]],
-      body: Object.entries(categoryBreakdown).map(([category, revenue]) => [
-        category,
-        revenue,
-      ]),
+      body: Object.entries(categoryBreakdown).map(([category, revenue]) => [category, revenue]),
       theme: "striped",
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [107, 33, 168], textColor: [255, 255, 255] },
@@ -255,128 +311,112 @@ const RevenuPage = () => {
 
     doc.save(`revenus_${new Date().toISOString()}.pdf`);
     toast.success("Exportation PDF réussie");
-  };
-
-  const filteredRevenus = revenus.filter((rev) => {
-    const matchSearch =
-      rev.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rev.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchPeriod =
-      filterPeriod === "all" ||
-      (filterPeriod === "today" &&
-        new Date(rev.date).toDateString() === new Date().toDateString()) ||
-      (filterPeriod === "week" &&
-        new Date(rev.date) >=
-          new Date(new Date().setDate(new Date().getDate() - 7))) ||
-      (filterPeriod === "month" &&
-        new Date(rev.date) >=
-          new Date(new Date().setMonth(new Date().getMonth() - 1)));
-    const matchStatus =
-      filterStatus === "all" || rev.paymentStatus === filterStatus;
-    return matchSearch && matchPeriod && matchStatus;
-  });
+  }, [filteredRevenus, totalRevenue, totalPending, totalRefunded, categoryBreakdown]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredRevenus.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredRevenus.length / itemsPerPage);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const paginate = useCallback((pageNumber) => setCurrentPage(pageNumber), []);
 
-  const barChartData = {
-    labels: ["Payé", "Non payé"],
-    datasets: [
-      {
-        label: "Revenus",
-        data: [totalRevenue - totalPending, totalPending],
-        backgroundColor: ["#22C55E", "#EF4444"],
-        borderColor: ["#ffffff", "#ffffff"],
-        borderWidth: 1,
-      },
-    ],
-  };
+  const barChartData = useMemo(
+    () => ({
+      labels: ["Payé", "Non payé"],
+      datasets: [
+        {
+          label: "Revenus",
+          data: [totalRevenue - totalPending, totalPending],
+          backgroundColor: ["#22C55E", "#EF4444"],
+          borderColor: ["#ffffff", "#ffffff"],
+          borderWidth: 1,
+        },
+      ],
+    }),
+    [totalRevenue, totalPending]
+  );
 
-  const timeSeriesChartData = {
-    labels: timeSeriesData.map((item) => item.date),
-    datasets: [
-      {
-        label: "Revenus (€)",
-        data: timeSeriesData.map((item) => item.revenue),
-        borderColor: "#6b21a8",
-        backgroundColor: "rgba(107, 33, 168, 0.2)",
-        fill: true,
-        tension: 0.4,
-        pointRadius: 3,
-        pointHoverRadius: 5,
-      },
-    ],
-  };
+  const timeSeriesChartData = useMemo(
+    () => ({
+      labels: timeSeriesData.map((item) => item.date),
+      datasets: [
+        {
+          label: "Revenus (€)",
+          data: timeSeriesData.map((item) => item.revenue),
+          borderColor: "#6b21a8",
+          backgroundColor: "rgba(107, 33, 168, 0.2)",
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+        },
+      ],
+    }),
+    [timeSeriesData]
+  );
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom",
-        labels: { font: { size: 10 }, color: "#1F2937" },
-      },
-      tooltip: {
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        padding: 6,
-        callbacks: {
-          label: (context) => {
-            const value = Number(context.raw);
-            return isNaN(value) ? context.raw : `€${value.toFixed(2)}`;
+  const chartOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { font: { size: 10 }, color: "#1F2937" },
+        },
+        tooltip: {
+          backgroundColor: "rgba(0, 0, 0, 0.8)",
+          padding: 6,
+          callbacks: {
+            label: (context) => {
+              const value = Number(context.raw);
+              return isNaN(value) ? context.raw : `€${value.toFixed(2)}`;
+            },
           },
         },
       },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 100,
-          callback: (value) => `€${value}`,
-          color: "#6B7280",
-          font: { size: 10 },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 100,
+            callback: (value) => `€${value}`,
+            color: "#6B7280",
+            font: { size: 10 },
+          },
+          grid: { color: "rgba(0, 0, 0, 0.05)" },
         },
-        grid: { color: "rgba(0, 0, 0, 0.05)" },
+        x: {
+          ticks: { color: "#6B7280", font: { size: 10 } },
+          grid: { display: false },
+        },
       },
-      x: {
-        ticks: { color: "#6B7280", font: { size: 10 } },
-        grid: { display: false },
-      },
-    },
-  };
+    }),
+    []
+  );
 
   useEffect(() => {
     if (token) {
       fetchRevenus();
       socket.on("connect", () => {
-        console.log("Socket.IO connecté");
         setIsSocketConnected(true);
       });
       socket.on("connect_error", (error) => {
-        console.error("Erreur de connexion Socket.IO:", {
-          message: error.message,
-          cause: error.cause,
-        });
         setIsSocketConnected(false);
         toast.error("Impossible de se connecter au serveur en temps réel");
       });
-      socket.on("orderDeleted", (data) => {
-        console.log("Événement orderDeleted reçu:", data);
-        fetchRevenus();
-      });
+      socket.on("orderDeleted", () => fetchRevenus());
+      socket.on("orderRefunded", () => fetchRevenus());
       return () => {
         socket.off("connect");
         socket.off("connect_error");
         socket.off("orderDeleted");
+        socket.off("orderRefunded");
       };
     } else {
       navigate("/login");
     }
-  }, [token, navigate]);
+  }, [token, navigate, fetchRevenus]);
 
   return (
     <motion.div
@@ -431,7 +471,7 @@ const RevenuPage = () => {
             <div className="lg:col-span-2 flex flex-col sm:flex-row gap-2 items-center">
               <input
                 type="text"
-                placeholder="Rechercher client ou email..."
+                placeholder="Rechercher par email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full sm:w-2/5 px-3 py-1.5 rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm text-gray-700 placeholder-gray-400"
@@ -588,9 +628,11 @@ const RevenuPage = () => {
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => handleRefundDebounced(rev.id)}
-                              disabled={isRefunding[rev.id]}
+                              disabled={isRefunding[rev.id] || rev.paymentStatus !== "Payé"}
                               className={`px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition ${
-                                isRefunding[rev.id] ? "opacity-50 cursor-not-allowed" : ""
+                                isRefunding[rev.id] || rev.paymentStatus !== "Payé"
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
                               }`}
                             >
                               {isRefunding[rev.id] ? "En cours..." : "Rembourser"}
@@ -627,7 +669,7 @@ const RevenuPage = () => {
               </div>
             </motion.div>
           </div>
-
+        
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -690,16 +732,26 @@ const RevenuPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {showDetailsModal.items.map((item, index) => (
-                    <tr key={index} className="border-b">
-                      <td className="px-3 py-2 truncate">{item.menuItem?.name || "Inconnu"}</td>
-                      <td className="px-3 py-2 text-right">{item.quantity || 0}</td>
-                      <td className="px-3 py-2 text-right">
-                        {parseFloat(item.subtotal / (item.quantity || 1)).toFixed(2)}
+                  {showDetailsModal.items.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="px-3 py-2 text-center">
+                        Aucun article
                       </td>
-                      <td className="px-3 py-2 text-right">{parseFloat(item.subtotal || 0).toFixed(2)}</td>
                     </tr>
-                  ))}
+                  ) : (
+                    showDetailsModal.items.map((item, index) => (
+                      <tr key={index} className="border-b">
+                        <td className="px-3 py-2 truncate">{item.menuItem?.name || "Inconnu"}</td>
+                        <td className="px-3 py-2 text-right">{item.quantity || 0}</td>
+                        <td className="px-3 py-2 text-right">
+                          {parseFloat(item.subtotal / (item.quantity || 1)).toFixed(2)}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          {parseFloat(item.subtotal || 0).toFixed(2)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
               <div className="flex justify-end mt-4">

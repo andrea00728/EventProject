@@ -17,14 +17,13 @@ export class OrdersGateway {
   @WebSocketServer()
   server: Server;
 
-  async handleConnection(client: Socket) {
-    console.log(`✅ Client connecté : ${client.id}, auth: ${JSON.stringify(client.handshake.auth)}`);
+  handleOrderRefunded(data: { id: number; paymentStatus: string }) {
+    console.log(`Émission de l'événement orderRefunded: ${JSON.stringify(data)}`);
+    this.server.emit('orderRefunded', data);
   }
 
   handleOrderDeleted(data: { id: number }) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`Émission de l'événement orderDeleted pour orderId: ${data.id}`);
-    }
+    console.log(`Émission de l'événement orderDeleted: ${JSON.stringify(data)}`);
     this.server.emit('orderDeleted', data);
   }
 
@@ -38,4 +37,5 @@ export class OrdersGateway {
     }
     this.server.emit('order_status_updated', data); // Émettre à tous les clients
   }
+  
 }

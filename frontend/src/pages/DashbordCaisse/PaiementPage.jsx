@@ -53,34 +53,42 @@ const PaiementPage = () => {
   };
 
   const fetchCommandes = async () => {
-    try {
-      setLoading(true);
-      if (!token) throw new Error("Token manquant");
+  try {
+    setLoading(true);
+    if (!token) throw new Error("Token manquant");
 
-      const eventId = await getEventIdByEmail(token);
-      const { data } = await axios.get(`http://localhost:3000/orders/event/${eventId.eventId}`, {
-        params: { include: "table,items,items.menuItem" },
-      });
+    const eventId = await getEventIdByEmail(token);
+    const { data } = await axios.get(`http://localhost:3000/orders/event/${eventId.eventId}`, {
+      params: { include: "table,items,items.menuItem" },
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      const formatted = data.map((c) => ({
-        id: c.id,
-        nom: c.nom || "Anonyme",
-        email: c.email || "-",
-        table: c.table ? `Table ${c.table.numero}` : "N/A",
-        total: parseFloat(c.total || 0).toFixed(2),
-        amountPaid: parseFloat(c.amountPaid || 0).toFixed(2),
-        createdAt: new Date(c.orderDate).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }),
-        paymentStatus: PAYMENT_STATUS_MAPPING.backToFront[c.paymentStatus] || "non_paye",
-        items: c.items || [],
-      }));
+    
+    const filteredData = data.filter((c) => c.status !== "canceled");
 
-      setCommandes(formatted);
-    } catch (err) {
-      console.error("Erreur:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const formatted = filteredData.map((c) => ({
+      id: c.id,
+      nom: c.nom || "Anonyme",
+      email: c.email || "-",
+      table: c.table ? `Table ${c.table.numero}` : "N/A",
+      total: parseFloat(c.total || 0).toFixed(2),
+      amountPaid: parseFloat(c.amountPaid || 0).toFixed(2),
+      createdAt: new Date(c.orderDate).toLocaleString("fr-FR", {
+        dateStyle: "short",
+        timeStyle: "short",
+      }),
+      paymentStatus: PAYMENT_STATUS_MAPPING.backToFront[c.paymentStatus] || "non_paye",
+      items: c.items || [],
+    }));
+
+    setCommandes(formatted);
+  } catch (err) {
+    console.error("Erreur:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     if (token) fetchCommandes();
