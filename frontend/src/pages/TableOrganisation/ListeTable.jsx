@@ -113,7 +113,7 @@ export default function ListeTable() {
       setNoSelectionModalOpen(true);
       return;
     }
-  
+
     const printWindow = window.open("", "_blank");
     printWindow.document.write(`
       <style>
@@ -248,15 +248,15 @@ export default function ListeTable() {
         />
       ),
     },
-    { 
-      field: "nom", 
-      headerName: "Nom", 
+    {
+      field: "nom",
+      headerName: "Nom",
       width: 150,
       cellClassName: 'font-medium text-gray-800'
     },
-    { 
-      field: "capacite", 
-      headerName: "Capacité", 
+    {
+      field: "capacite",
+      headerName: "Capacité",
       width: 150,
       renderCell: (params) => (
         <span className="bg-indigo-100 text-indigo-800 py-1 px-3 rounded-full text-xs font-medium">
@@ -264,9 +264,9 @@ export default function ListeTable() {
         </span>
       )
     },
-    { 
-      field: "type", 
-      headerName: "Type", 
+    {
+      field: "type",
+      headerName: "Type",
       width: 150,
       renderCell: (params) => (
         <span className="capitalize">{params.row.type}</span>
@@ -305,7 +305,7 @@ export default function ListeTable() {
           <span className="w-2 h-6 bg-indigo-600 rounded-full mr-3"></span>
           Sélectionnez un événement
         </h3>
-        
+
         {isLoadingEvents ? (
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
@@ -334,7 +334,7 @@ export default function ListeTable() {
               <Tab
                 key={event.id}
                 label={
-                  <div className="flex flex-col items-start px-4 py-2">
+                  <div className="flex flex-col items-start px-4 py-2 transition-all duration-300 ease-in-out  hover:bg-white rounded-lg hover:shadow-md hover:scale-[1.1] hover:border-red-500 hover:pl-3 group">
                     <span className={`text-sm font-medium ${selectedEvent?.id === event.id ? 'text-indigo-600' : 'text-gray-600'}`}>
                       {event.nom}
                     </span>
@@ -362,7 +362,7 @@ export default function ListeTable() {
             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
           </div>
         )}
-        
+
         {error && (
           <div className="bg-red-50 border-l-4 border-red-500 p-4 m-4 rounded">
             <div className="flex items-center">
@@ -371,7 +371,7 @@ export default function ListeTable() {
             </div>
           </div>
         )}
-        
+
         {!loading && !error && !selectedEvent && (
           <div className="text-center py-12">
             <div className="mx-auto w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
@@ -383,7 +383,7 @@ export default function ListeTable() {
             <p className="text-gray-500">Veuillez sélectionner un événement pour voir les tables associées</p>
           </div>
         )}
-        
+
         {!loading && !error && selectedEvent && tables.length === 0 && (
           <div className="text-center py-12">
             <div className="mx-auto w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
@@ -402,7 +402,7 @@ export default function ListeTable() {
             </Link>
           </div>
         )}
-        
+
         {!loading && tables.length > 0 && (
           <>
             {/* Table Actions */}
@@ -426,12 +426,12 @@ export default function ListeTable() {
                   }}
                 />
                 <span className="text-sm text-gray-700">
-                  {selectedTableIds.length > 0 
+                  {selectedTableIds.length > 0
                     ? `${selectedTableIds.length} table${selectedTableIds.length > 1 ? 's' : ''} sélectionnée${selectedTableIds.length > 1 ? 's' : ''}`
                     : 'Tout sélectionner'}
                 </span>
               </div>
-              
+
               <div className="flex flex-wrap gap-2">
                 <Link
                   to="/evenement/tables/creationTable"
@@ -440,7 +440,7 @@ export default function ListeTable() {
                   <FiPlus className="mr-2" />
                   Nouvelle table
                 </Link>
-                
+
                 <button
                   onClick={handlePrintSelected}
                   className="flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
@@ -449,7 +449,7 @@ export default function ListeTable() {
                   <FiPrinter className="mr-2" />
                   Imprimer sélection
                 </button>
-                
+
                 <button
                   onClick={handleOpenDeleteConfirm}
                   className="flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
@@ -460,7 +460,7 @@ export default function ListeTable() {
                 </button>
               </div>
             </div>
-            
+
             {/* DataGrid */}
             <div className="p-4">
               <DataGrid
@@ -512,15 +512,15 @@ export default function ListeTable() {
       </div>
 
       {/* No Selection Modal */}
-      <Dialog 
-        open={noSelectionModalOpen} 
-        onClose={handleCloseNoSelectionModal} 
-        PaperProps={{ 
-          sx: { 
+      <Dialog
+        open={noSelectionModalOpen}
+        onClose={handleCloseNoSelectionModal}
+        PaperProps={{
+          sx: {
             borderRadius: '12px',
             maxWidth: '500px',
             width: '100%'
-          } 
+          }
         }}
       >
         <DialogTitle className="flex items-center">
@@ -531,7 +531,7 @@ export default function ListeTable() {
           <Typography className="text-gray-700">{noSelectionMessage}</Typography>
         </DialogContent>
         <DialogActions className="px-6 py-4 border-t border-gray-200">
-          <Button 
+          <Button
             onClick={handleCloseNoSelectionModal}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             startIcon={<FiCheck />}
@@ -542,15 +542,15 @@ export default function ListeTable() {
       </Dialog>
 
       {/* Deletion Confirmation Modal */}
-      <Dialog 
-        open={deleteConfirmOpen} 
-        onClose={handleCloseDeleteConfirm} 
-        PaperProps={{ 
-          sx: { 
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={handleCloseDeleteConfirm}
+        PaperProps={{
+          sx: {
             borderRadius: '12px',
             maxWidth: '500px',
             width: '100%'
-          } 
+          }
         }}
       >
         <DialogTitle className="flex items-center">
@@ -563,14 +563,14 @@ export default function ListeTable() {
           </Typography>
         </DialogContent>
         <DialogActions className="px-6 py-4 border-t border-gray-200">
-          <Button 
+          <Button
             onClick={handleCloseDeleteConfirm}
             className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors mr-2"
             startIcon={<FiX />}
           >
             Annuler
           </Button>
-          <Button 
+          <Button
             onClick={handleConfirmDelete}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             startIcon={<FiTrash2 />}
