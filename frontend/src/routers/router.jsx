@@ -421,7 +421,7 @@ const router=createBrowserRouter([
       },
     ],
   },
-  ,
+  
   /************************* Page pour les cuisiniers (poue le test) ************** */
   {
     path: "/Cuisine",
@@ -475,7 +475,7 @@ const router=createBrowserRouter([
     path: "/menutitemform",
     element: <MenuItemForm />,
   },
-  ,
+
   {
     path: "/systemprompt",
     element: <SystemPromptManager />,

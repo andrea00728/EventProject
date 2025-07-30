@@ -241,9 +241,8 @@ export default function MenuRestauration() {
                 <div className="flex gap-4 flex-wrap">
                   <button
                     onClick={() => setSelectedMenuId("all")}
-                    className={`py-2 px-4 rounded ${
-                      selectedMenuId === "all" ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-700"
-                    }`}
+                    className={`py-2 px-4 rounded ${selectedMenuId === "all" ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-700"
+                      }`}
                   >
                     Tous
                   </button>
@@ -279,9 +278,8 @@ export default function MenuRestauration() {
                         )}
                         <button
                           onClick={() => setSelectedMenuId(menu.id)}
-                          className={`py-2 px-4 rounded ${
-                            selectedMenuId === menu.id ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-700"
-                          }`}
+                          className={`py-2 px-4 rounded ${selectedMenuId === menu.id ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-700"
+                            }`}
                         >
                           {menu.name}
                         </button>
@@ -355,6 +353,17 @@ export default function MenuRestauration() {
               onChange={(e) => setForm({ ...form, [field]: e.target.value })}
             />
           ))}
+          {/* <TextField
+            key={field}
+            label={field === 'name' ? 'Nom' : field === 'description' ? 'Description' : field === 'price' ? 'Prix' : field === 'category' ? 'Catégorie' : 'Stock'}
+            value={form[field] || ''}
+            type={field === 'price' || field === 'stock' ? 'number' : 'text'}
+            fullWidth
+            margin="dense"
+            variant="outlined"
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+            onChange={(e) => setForm({ ...form, photo: e.target.files[0] })}
+          /> */}
           <TextField
             key={field}
             label={field === 'name' ? 'Nom' : field === 'description' ? 'Description' : field === 'price' ? 'Prix' : field === 'category' ? 'Catégorie' : 'Stock'}
@@ -366,6 +375,7 @@ export default function MenuRestauration() {
             sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
             onChange={(e) => setForm({ ...form, photo: e.target.files[0] })}
           />
+
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseForm} sx={{ color: '#34495e' }}>Annuler</Button>

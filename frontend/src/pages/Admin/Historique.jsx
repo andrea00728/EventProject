@@ -331,28 +331,6 @@ const ActivityHistory = () => {
   return (
     <div className={`min-h-screen p-4 sm:p-6 md:p-8 w-full transition duration-500 ${bgClass}`}>
       
-      {/* <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
-          <MdHistory className="mr-2 sm:mr-3 text-blue-700" /> Historique d'Activité
-        </h2>
-        
-        <div className="flex items-center gap-2 sm:gap-4">
-          
-          <button
-            onClick={() => {  }}
-            className={`p-2 rounded-full ${
-              darkMode
-                ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600'
-                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-            } transition-colors duration-200`}
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? "☀️" : "🌙"}
-          </button>
-        </div>
-      </div> */}
-
-      
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatsCard
           title="Activités du jour"

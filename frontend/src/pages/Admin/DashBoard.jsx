@@ -207,130 +207,6 @@ export default function Dashboard() {
     <div
       className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${pageBg}`}
     >
-      {/* <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <h2
-          className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}
-        >
-          <MdDashboard className="mr-2 sm:mr-3 text-blue-700" /> Tableau de bord
-        </h2>
-
-        <div className="flex items-center gap-3 sm:gap-6 relative">
-          <Dropdown
-            ref={notifRef}
-            show={showNotifications}
-            setShow={setShowNotifications}
-            icon={<FaBell className="text-lg sm:text-xl" />}
-            label="Notifications"
-            count={notifications.length}
-            items={notifications}
-            noScroll={true}
-          />
-
-          <Dropdown
-            ref={msgRef}
-            show={showMessages}
-            setShow={setShowMessages}
-            icon={<FaEnvelope className="text-lg sm:text-xl" />}
-            label="Messages"
-            count={messages.length}
-            items={messages.map((msg) => `${msg.from} : ${msg.text}`)}
-            noScroll={true}
-          />
-
-          <div ref={profileRef} className="relative">
-            <button
-              onClick={() => setShowProfile(!showProfile)}
-              className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
-                darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-              }`}
-              aria-label="Menu profil"
-            >
-              <div className="relative">
-                <FaUser className="w-5 h-5" />
-              </div>
-              <span className="hidden sm:inline text-sm font-medium">
-                Admin
-              </span>
-              <ChevronDown
-                className={`w-4 h-4 transition-transform duration-200 ${
-                  showProfile ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-            {showProfile && (
-              <div
-                className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
-                  darkMode
-                    ? "bg-gray-800 border-gray-700"
-                    : "bg-white border-gray-200"
-                } z-50 transition-all duration-200 ${
-                  window.innerWidth < 640 ? "left-4 right-4" : "right-0"
-                }`}
-              >
-                <div className="p-2">
-                  <div
-                    className={`px-3 py-2 text-sm ${
-                      darkMode ? "text-gray-300" : "text-gray-700"
-                    }`}
-                  >
-                    <p className="font-medium">Connecté en tant que</p>
-                    <p className="truncate">admin@example.com</p>
-                  </div>
-                  <div
-                    className={`border-t ${
-                      darkMode ? "border-gray-700" : "border-gray-200"
-                    }`}
-                  ></div>
-                  <button
-                    className={`w-full text-left px-3 py-2 text-sm ${
-                      darkMode
-                        ? "hover:bg-gray-700 text-gray-200"
-                        : "hover:bg-gray-100 text-gray-800"
-                    } transition-colors duration-150`}
-                  >
-                    Mon profil
-                  </button>
-                  <button
-                    className={`w-full text-left px-3 py-2 text-sm ${
-                      darkMode
-                        ? "hover:bg-gray-700 text-gray-200"
-                        : "hover:bg-gray-100 text-gray-800"
-                    } transition-colors duration-150`}
-                  >
-                    Paramètres
-                  </button>
-                  <div
-                    className={`border-t ${
-                      darkMode ? "border-gray-700" : "border-gray-200"
-                    }`}
-                  ></div>
-                  <button
-                    className={`w-full text-left px-3 py-2 text-sm ${
-                      darkMode
-                        ? "hover:bg-gray-700 text-red-400"
-                        : "hover:bg-gray-100 text-red-600"
-                    } transition-colors duration-150`}
-                  >
-                    Déconnexion
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={toggleDarkMode}
-            className={`p-2 rounded-full ${
-              darkMode
-                ? "bg-gray-700 text-yellow-300 hover:bg-gray-600"
-                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-            } transition-colors duration-200`}
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? "☀️" : "🌙"}
-          </button>
-        </div>
-      </div> */}
 
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         <div className="flex-1 flex flex-col gap-6">
@@ -717,7 +593,7 @@ function MoneyChart({ darkMode }) {
         series={[
           {
             data: revenus,
-            label: "Affichage de revenus par poucentage (€)",
+            label: "Affichage de revenus par poucentage",
             color: "#a855f7",
           },
         ]}

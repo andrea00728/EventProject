@@ -283,14 +283,6 @@ const LocationSalle = () => {
         <div className={`shadow-sm border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
           {/* Panel Header */}
           <div className={`px-6 py-4 border-b ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-none"}`}>
-            {/* <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="flex items-center">
-                <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
-                  <MdLocationCity className={`mr-2 sm:mr-3 ${darkMode ? "text-blue-400" : "text-blue-700"}`} /> 
-                  Gestion des Lieux & Salles
-                </h2>
-              </div>
-            </div> */}
 
             {/* Tabs */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-2 mb-1">
