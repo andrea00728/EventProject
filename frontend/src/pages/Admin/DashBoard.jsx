@@ -696,10 +696,7 @@ function MoneyChart({ darkMode }) {
     try {
       const res = await getRevenuMensuel();
       const xLabels = res.map((item) => item.name);
-      const yData = res.map((item) => item.total);
-
-      console.log(xLabels, yData);
-
+      const yData = res.map((item) => item.percentage);
       setLabels(xLabels);
       setRevenus(yData);
     } catch (err) {
@@ -717,7 +714,13 @@ function MoneyChart({ darkMode }) {
         Revenus par Forfait
       </h3>
       <BarChart
-        series={[{ data: revenus, label: "Total (€)", color: "#a855f7" }]}
+        series={[
+          {
+            data: revenus,
+            label: "Affichage de revenus par poucentage (€)",
+            color: "#a855f7",
+          },
+        ]}
         xAxis={[
           {
             scaleType: "band",
@@ -729,9 +732,12 @@ function MoneyChart({ darkMode }) {
         ]}
         yAxis={[
           {
+            min: 0,
+            max: 100,
             tickLabelStyle: {
               fill: darkMode ? "#ffffff" : "#000000",
             },
+            valueFormatter: (value) => `${value} %`,
           },
         ]}
         height={270}

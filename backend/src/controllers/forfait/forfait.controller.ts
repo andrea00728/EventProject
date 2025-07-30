@@ -190,8 +190,8 @@ async getUserForfait(@Req() req: any) {
 
   @Get('/revenu-mensuel')
   //@UseGuards(AuthGuard('jwt'))
-  getRevenuMensuel() {
-    return this.forfaitService.getRevenusParForfait();
+  getRevenuMensuel(): Promise<{ name: string; total: number; percentage: number }[]> {
+    return this.forfaitService.getRevenusPourcentagesParForfait();
   }
 
 

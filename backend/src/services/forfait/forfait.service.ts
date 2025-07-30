@@ -172,7 +172,24 @@ export class ForfaitService {
   //   }));
   // }
 
-  async getRevenusParForfait(): Promise<{ name: string; total: number }[]> {
+  // async getRevenusParForfait(): Promise<{ name: string; total: number }[]> {
+  //   const results = await this.userRepo
+  //     .createQueryBuilder('user')
+  //     .leftJoin('user.forfait', 'forfait')
+  //     .select('forfait.nom', 'name')
+  //     .addSelect('SUM(forfait.price)', 'total')
+  //     .where('forfait.price > 0')
+  //     .groupBy('forfait.nom')
+  //     .getRawMany();
+
+  //   return results.map(r => ({
+  //     name: r.name,
+  //     total: parseFloat(r.total),
+  //   }));
+  // }
+
+  async getRevenusPourcentagesParForfait(): Promise<{ name: string; total: number; percentage: number }[]> {
+    // Étape 1 : récupérer les revenus groupés par forfait depuis userRepo
     const results = await this.userRepo
       .createQueryBuilder('user')
       .leftJoin('user.forfait', 'forfait')
@@ -182,11 +199,28 @@ export class ForfaitService {
       .groupBy('forfait.nom')
       .getRawMany();
 
-    return results.map(r => ({
-      name: r.name,
-      total: parseFloat(r.total),
-    }));
+    // Étape 2 : somme totale des revenus
+    const totalRevenu = results.reduce((acc, curr) => acc + parseFloat(curr.total), 0);
+
+    // Étape 3 : formater les résultats avec pourcentage
+    const allForfaits = await this.forfaitRepository.find();
+
+    return allForfaits.map(forfait => {
+      
+      const revenu = results.find(r => r.name === forfait.nom);
+      const total = revenu ? parseFloat(revenu.total) : 0;
+      const percentage = totalRevenu > 0 ? (total / totalRevenu) * 100 : 0;
+
+      return {
+        name: forfait.nom,
+        total,
+        percentage: parseFloat(percentage.toFixed(2)),
+      };
+
+    });
+
   }
+
 
 
 
