@@ -9,6 +9,11 @@ import { getUserForfait } from "../services/forfaitService";
 import NotificationListener from "../util/Notification/notification";
 import { ToastContainer } from "react-toastify";
 import Logo from "../assets/LogoMaster.png"
+import { Bell } from "lucide-react";
+import NotificationComponent from "../util/notification";
+
+import { getUserIdForToken } from "../services/userService";
+import { io } from "socket.io-client";
 
 export default function DefaultLayout() {
   const { token, role, isLoading } = useStateContext();
@@ -37,7 +42,33 @@ export default function DefaultLayout() {
       return <Navigate to="/pagepublic" replace />;
   }
 
+
   useEffect(() => {
+    /********   Statut en ligne ou non   **********/
+
+    const changeStatus = async () => {
+      const userId = await getUserIdForToken(token);
+
+      console.log("Id récupèré : ", userId);
+
+      const socket = io("http://localhost:3000", {
+        auth: {
+          userId: userId, // très important : doit être l’ID réel de l’organisateur
+        },
+      });
+
+      socket.on("connect", () => {
+        console.log("Socket connecté !");
+      });
+
+      socket.on("connect_error", (err) => {
+        console.error("Erreur de connexion WebSocket :", err.message);
+      });
+    };
+
+    changeStatus();
+
+    /**************************************** */
     const fetchAndSetForfait = async () => {
       try {
         const data = await getUserForfait(token);
@@ -71,8 +102,16 @@ export default function DefaultLayout() {
         { path: "/evenement/evenement", name: "evenement", icon: "/file.png" },
         { path: "/evenement/tables", name: "Tables", icon: "/chair.png" },
         { path: "/evenement/invites", name: "Invités", icon: "/guest.png" },
-        { path: "/evenement/invitation", name: "Invitation", icon: "/invitation.png" },
-        { path: "/evenement/personnel", name: "Personnel", icon: "/community-center.png" },
+        {
+          path: "/evenement/invitation",
+          name: "Invitation",
+          icon: "/invitation.png",
+        },
+        {
+          path: "/evenement/personnel",
+          name: "Personnel",
+          icon: "/community-center.png",
+        },
         //  Afficher seulement pour les forfaits premium
         ...(
           ["pro", "premium", "gold"].includes(forfait?.nom)
@@ -85,17 +124,27 @@ export default function DefaultLayout() {
         ),
       ]
     },
-    { path: "/apropos", name: "A propos" }
+    { path: "/apropos", name: "A propos" },
   ];
 
   const subMenuVariants = {
-    hidden: { opacity: 0, y: -10, pointerEvents: "none", transition: { duration: 0.4 } },
-    visible: { opacity: 1, y: 0, pointerEvents: "auto", transition: { duration: 0.4 } }
+    hidden: {
+      opacity: 0,
+      y: -10,
+      pointerEvents: "none",
+      transition: { duration: 0.4 },
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      pointerEvents: "auto",
+      transition: { duration: 0.4 },
+    },
   };
 
   const menuVariants = {
     open: { opacity: 1, height: "auto", transition: { duration: 0.9 } },
-    closed: { opacity: 0, height: 0, transition: { duration: 0.9 } }
+    closed: { opacity: 0, height: 0, transition: { duration: 0.9 } },
   };
 
   return (
@@ -126,7 +175,7 @@ export default function DefaultLayout() {
 
             </motion.div>
 
-            <nav className="hidden md:flex items-center justify-center py-3 ">
+            <nav className="hidden md:flex items-center justify-center py-3 relative">
               <div className="flex items-center gap-1">
                 {navItems.map((item, index) => (
                   <motion.div
@@ -140,11 +189,11 @@ export default function DefaultLayout() {
                   >
                     <Link
                       to={item.path}
-                      className="relative px-6 py-3 text-violet-500 hover:text-white font-medium transition-all duration-300 rounded-xl hover:bg-violet-700/50"
-                    >
+                      className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2">
                       <span className="relative z-10">{item.name}</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300"></span>
                       <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-[#6B46C1]/20 to-indigo-600/20 rounded-xl opacity-0 group-hover:opacity-100"
+                        className="absolute inset-0 bg-gradient-to-r rounded-xl opacity-0 group-hover:opacity-100"
                         transition={{ duration: 0.3 }}
                       />
                       <motion.div
@@ -319,6 +368,11 @@ export default function DefaultLayout() {
                 </div>
               </motion.button>
 
+              {/* notification  */}
+              <div>
+                <NotificationComponent/>
+              </div>
+
               <div className="">
                 <Profil />
               </div>
@@ -332,10 +386,9 @@ export default function DefaultLayout() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-            </div>
+            </div> 
 
           </div>
-          
 
         </div>
 

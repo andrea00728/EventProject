@@ -126,11 +126,11 @@ export default function Dashboard() {
 
   const pageBg = darkMode
     ? "bg-gray-900 text-gray-200"
-    : "bg-gradient-to-r from-white to-gray-50 text-gray-800";
+    : "bg-gray-50 text-gray-800";
 
   return (
     <div className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${pageBg}`}>
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+      {/* <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
           <MdDashboard className="mr-2 sm:mr-3 text-blue-700" /> Tableau de bord
         </h2>
@@ -241,7 +241,7 @@ export default function Dashboard() {
             {darkMode ? "☀️" : "🌙"}
           </button>
         </div>
-      </div>
+      </div> */}
 
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         <div className="flex-1 flex flex-col gap-6">

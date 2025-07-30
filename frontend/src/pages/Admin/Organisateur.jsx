@@ -22,7 +22,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { useDarkMode } from "../../context/DarkModeContext";
 import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { ChevronDown } from "lucide-react";
-
+import { io } from "socket.io-client";
 
 
 // Composant StatsCard
@@ -322,10 +322,46 @@ export default function Organisateur() {
       }
     };
     fetchData();
+
+    const socket = io("http://localhost:3000", {
+      auth: {
+        userId: 'b101b3b2-880b-47c2-a1ad-31ebbf61aa6d', // Remplace par un ID réel, ex: "admin-1"
+      },
+    });
+
+    socket.on("connect", () => {
+      console.log("🟢 SuperAdmin connecté au WebSocket !");
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("❌ Erreur WebSocket SuperAdmin :", err.message);
+    });
+
+    socket.on("organizer_connected", ({ userId }) => {
+      console.log("📡 SuperAdmin reçoit organizer_connected :", userId);
+
+      setData((prev) => {
+        const match = prev.find((m) => m.id === userId);
+        console.log("Correspondance trouvée :", !!match);
+        return prev.map((m) =>
+          m.id === userId ? { ...m, isOnline: true } : m,
+        );
+      });
+    });
+
+    socket.on("organizer_disconnected", ({ userId }) => {
+      setData((prev) =>
+        prev.map((m) => (m.id === userId ? { ...m, isOnline: false } : m))
+      );
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const filteredData = data.filter((organisateur) =>
-    organisateur[filterType].toLowerCase().includes(searchTerm.toLowerCase())
+    organisateur[filterType]?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleTakeManagerEvents = async (id) => {
@@ -423,14 +459,14 @@ export default function Organisateur() {
 
   const bgClass = darkMode 
     ? "bg-gray-900 text-gray-200" 
-    : "bg-gradient-to-r from-white to-gray-50 text-gray-800";
+    : "bg-gray-50 text-gray-800";
 
   const [currentPage, setCurrentPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   return (
     <div className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${bgClass}`}>
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+      {/* <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${ gradientTitle }`}>
           <FaUsers className="mr-2 sm:mr-3 text-blue-700" /> Liste des organisateurs
         </h2>
@@ -542,7 +578,7 @@ export default function Organisateur() {
           </button>
         </div>
         
-      </div>
+      </div> */}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatsCard
@@ -796,6 +832,7 @@ export default function Organisateur() {
           data={modalData}
           managerName={managerName || "Organisateur"}
         />
+
         <DeleteModal
           isOpen={isDeleteModalOpen}
           onClose={closeDeleteModal}

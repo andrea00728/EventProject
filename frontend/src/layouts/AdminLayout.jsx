@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
   FaCogs,
@@ -8,10 +8,14 @@ import {
   FaTimes,
   FaMoon,
   FaSun,
-  FaUserCircle
+  FaUser,
+  // FaUserCircle
 } from "react-icons/fa";
+import { FaBell, FaEnvelope } from "react-icons/fa6";
+
 import { FiLayout } from "react-icons/fi";
-import { MdCalendarToday, MdRoom } from "react-icons/md";
+import { ChevronDown } from "lucide-react";
+import { MdCalendarToday, MdHistory, MdQueryStats, MdRoom } from "react-icons/md";
 import { useDarkMode } from "../context/DarkModeContext";
 
 export default function AdminLayout() {
@@ -19,6 +23,8 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
+
+  
 
   useEffect(() => {
     const handleResize = () => {
@@ -36,11 +42,273 @@ export default function AdminLayout() {
     { path: "/AdminEvenement", name: "Événements", icon: <MdCalendarToday className="text-lg" /> },
     { path: "/AdminOrganisateur", name: "Organisateurs", icon: <FaUsers className="text-lg" /> },
     { path: "/LocationSalle", name: "Salles & Localisation", icon: <MdRoom className="text-lg" /> },
+    { path: "/AdminHistorique", name: "Historique d'activité", icon: <MdHistory className="text-lg" /> },
+    { path: "/AdminStats", name: "Statistique", icon: <MdQueryStats className="text-lg" /> },
     { path: "/AdminParametre", name: "Paramètres", icon: <FaCogs className="text-lg" /> },
   ];
 
   const handleLogout = () => {
     console.log("Déconnexion");
+  };
+
+  const gradientTitle =
+    "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";
+  const gradientButton =
+    "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-400 text-white";
+
+  const bgClass = darkMode
+    ? "bg-gray-900 text-gray-200"
+    : "bg-gradient-to-r from-white to-gray-50 text-gray-800";
+
+  const currentPage = menuItems.find(item => item.path === location.pathname);
+  const currentPageName = currentPage ? currentPage.name : "Page Inconnue";
+  const currentPageIcon = currentPage ? currentPage.icon : null;
+
+  const Dropdown = React.forwardRef(({ show, setShow, icon, label, count, items }, ref) => {
+    const { darkMode } = useDarkMode();
+    const [isMobile, setIsMobile] = useState(false);
+  
+    useEffect(() => {
+      const checkMobile = () => setIsMobile(window.innerWidth < 640);
+      checkMobile();
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+  
+    return (
+      <div className="relative" ref={ref}>
+        <button
+          onClick={() => setShow(!show)}
+          className={`relative p-2 rounded-full transition-all duration-200 ${
+            darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+          }`}
+          aria-label={label}
+        >
+          <div className="relative">
+            {React.cloneElement(icon, { className: 'w-5 h-5' })}
+            {count > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                {count > 9 ? '9+' : count}
+              </span>
+            )}
+          </div>
+        </button>
+        
+        {show && (
+          <div
+            className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] overflow-y-auto rounded-xl shadow-xl border ${
+              darkMode 
+                ? 'bg-gray-800 border-gray-700 text-gray-200' 
+                : 'bg-white border-gray-200 text-gray-900'
+            } z-50 transition-all duration-200 ${
+              isMobile ? 'left-4 right-4' : 'right-0'
+            }`}
+          >
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+              {React.cloneElement(icon, { className: 'w-5 h-5' })}
+              <h4 className={`font-semibold text-sm sm:text-base ${
+                darkMode ? "text-purple-300" : "text-purple-600"  // Changé en violet
+              }`}>{label}</h4>
+              {count > 0 && (
+                <span className="ml-auto bg-blue-500 text-white text-xs rounded-full px-2 py-1">
+                  {count > 99 ? '99+' : count}
+                </span>
+              )}
+            </div>
+            
+            <div className="max-h-[60vh] overflow-y-auto">
+              {items.length ? (
+                items.map((item, i) => (
+                  <div
+                    key={i}
+                    className={`p-3 transition-colors duration-150 border-b ${
+                      darkMode 
+                        ? 'border-gray-700 hover:bg-gray-700' 
+                        : 'border-gray-200 hover:bg-gray-50'
+                    } cursor-pointer`}
+                  >
+                    <p className="text-sm line-clamp-2">
+                      {typeof item === 'object' ? `${item.from}: ${item.text}` : item}
+                    </p>
+                    <p className={`text-xs mt-1 ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      Il y a {Math.floor(Math.random() * 60)} min
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-center">
+                  <p className={`text-sm ${
+                    darkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    Aucun {label.toLowerCase()}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  });
+
+  const AdminHeader = ({ currentPageName, darkMode }) => {
+
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [showMessages, setShowMessages] = useState(false);
+    const [showProfile, setShowProfile] = useState(false);
+
+    const notifRef = useRef(null);
+    const msgRef = useRef(null);
+    const profileRef = useRef(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (notifRef.current && !notifRef.current.contains(event.target)) {
+          setShowNotifications(false);
+        }
+        if (msgRef.current && !msgRef.current.contains(event.target)) {
+          setShowMessages(false);
+        }
+        if (profileRef.current && !profileRef.current.contains(event.target)) {
+          setShowProfile(false);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+
+    const notifications = [
+      "Nouvel organisateur inscrit",
+      "Événement 'Conférence Tech' mis à jour",
+      "Paiement reçu pour 'Atelier React'",
+      "Nouveau message de support",
+    ];
+
+    const messages = [
+      { from: "Alice", text: "Bonjour, j'ai une question sur l'événement." },
+      { from: "Bob", text: "Le planning a été modifié." },
+      { from: "Charlie", text: "Merci pour la confirmation." },
+    ];
+
+    return (
+      <header className="flex flex-col md:flex-row justify-between items-center gap-4 pt-8 pl-8 pr-8"
+      >
+        <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
+          {currentPageIcon && <span className="mr-2 sm:mr-3 text-blue-700">{currentPageIcon}</span>}
+          {currentPageName}
+        </h2>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Dropdown
+            ref={notifRef}
+            show={showNotifications}
+            setShow={setShowNotifications}
+            icon={<FaBell />}
+            label="Notifications"
+            count={notifications.length}
+            items={notifications}
+          />
+
+          <Dropdown
+            ref={msgRef}
+            show={showMessages}
+            setShow={setShowMessages}
+            icon={<FaEnvelope />}
+            label="Messages"
+            count={messages.length}
+            items={messages}
+          />
+
+          <div ref={profileRef} className="relative">
+            <button
+              onClick={() => setShowProfile(!showProfile)}
+              className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
+                darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+              }`}
+              aria-label="Menu profil"
+            >
+              <div className="relative">
+                <FaUser className="w-5 h-5" />
+              </div>
+              <span className={`hidden sm:inline text-sm font-medium ${
+                darkMode ? "text-purple-300" : "text-purple-600"  // Violet
+              }`}>Admin</span>
+              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
+                showProfile ? 'rotate-180' : ''
+              }`} />
+            </button>
+
+            {showProfile && (
+              <div
+                className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
+                  darkMode 
+                    ? 'bg-gray-800 border-gray-700' 
+                    : 'bg-white border-gray-200'
+                } z-50 transition-all duration-200 ${
+                  window.innerWidth < 640 ? 'left-4 right-4' : 'right-0'
+                }`}
+              >
+                <div className="p-2">
+                  <div className={`px-3 py-2 text-sm ${
+                    darkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    <p className="font-medium">Connecté en tant que</p>
+                    <p className="truncate">admin@example.com</p>
+                  </div>
+                  <div className={`border-t ${
+                    darkMode ? 'border-gray-700' : 'border-gray-200'
+                  }`}></div>
+                  <button
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      darkMode 
+                        ? 'hover:bg-gray-700 text-gray-200' 
+                        : 'hover:bg-gray-100 text-gray-800'
+                    } transition-colors duration-150`}
+                  >
+                    Mon profil
+                  </button>
+                  <button
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      darkMode 
+                        ? 'hover:bg-gray-700 text-gray-200' 
+                        : 'hover:bg-gray-100 text-gray-800'
+                    } transition-colors duration-150`}
+                  >
+                    Paramètres
+                  </button>
+                  <div className={`border-t ${
+                    darkMode ? 'border-gray-700' : 'border-gray-200'
+                  }`}></div>
+                  <button
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      darkMode 
+                        ? 'hover:bg-gray-700 text-red-400' 
+                        : 'hover:bg-gray-100 text-red-600'
+                    } transition-colors duration-150`}
+                  >
+                    Déconnexion
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={toggleDarkMode}
+            className={`p-2 rounded-full ${
+              darkMode 
+                ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' 
+                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+            } transition-colors duration-200`}
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? "☀️" : "🌙"}
+          </button>
+        </div>
+      </header>
+    );
   };
 
   return (
@@ -173,6 +441,7 @@ export default function AdminLayout() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
+        <AdminHeader currentPageName={currentPageName} darkMode={darkMode} />
         <main className="flex-1 overflow-auto p-0 bg-gray-50 dark:bg-gray-900">
           <div className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
             <Outlet />

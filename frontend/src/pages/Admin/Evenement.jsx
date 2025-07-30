@@ -414,14 +414,14 @@ export default function EvenementAd() {
 
   const pageBg = darkMode
     ? "bg-gray-900 text-gray-200"
-    : "bg-gradient-to-r from-white to-gray-50 text-gray-800";
+    : "bg-gray-50 text-gray-800";
 
   const [currentPage, setCurrentPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   return (
     <div className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${pageBg}`}>
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+      {/* <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${ gradientTitle }`}>
           <MdCalendarToday className="mr-2 sm:mr-3 text-blue-700" /> Liste des événements
         </h2>
@@ -533,7 +533,7 @@ export default function EvenementAd() {
             {darkMode ? "☀️" : "🌙"}
           </button>
         </div>
-      </div>
+      </div> */}
 
       {/* Section Statistiques */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
