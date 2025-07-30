@@ -129,7 +129,7 @@ export default function MenuRestauration() {
           size="small"
           sx={{
             bgcolor: theme.success,
-            color: 'white',
+            color: 'gray',
             fontWeight: 'bold'
           }}
         />
@@ -424,7 +424,7 @@ export default function MenuRestauration() {
           borderRadius: 4,
           p: 4,
           mb: 4,
-          color: 'white',
+          color: 'gray',
           position: 'relative',
           overflow: 'hidden',
           '&::before': {
@@ -461,7 +461,7 @@ export default function MenuRestauration() {
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <EventIcon sx={{ color: 'white' }} />
-            <Typography variant="h6" sx={{ color: 'white', fontWeight: 'medium' }}>
+            <Typography variant="h6" sx={{ color: 'white  ', fontWeight: 'medium' }}>
               Sélectionner un événement
             </Typography>
           </Box>
@@ -492,7 +492,8 @@ export default function MenuRestauration() {
                 transition: 'all 0.3s ease',
                 '&:hover': {
                   bgcolor: theme.neutral,
-                  transform: 'translateY(-2px)'
+                  background:'#3b83f61c',
+                  // transform: 'translateY(-2px)'
                 },
                 '&.Mui-selected': {
                   bgcolor: theme.neutral,
@@ -878,7 +879,7 @@ export default function MenuRestauration() {
                                         color: theme.primary,
                                         '&:hover': {
                                           bgcolor: theme.primary,
-                                          color: 'white',
+                                          color: 'gray',
                                           transform: 'scale(1.1)'
                                         },
                                         transition: 'all 0.3s ease'
@@ -893,7 +894,7 @@ export default function MenuRestauration() {
                                         color: theme.danger,
                                         '&:hover': {
                                           bgcolor: theme.danger,
-                                          color: 'white',
+                                          color: 'gray',
                                           transform: 'scale(1.1)'
                                         },
                                         transition: 'all 0.3s ease'
@@ -937,13 +938,10 @@ export default function MenuRestauration() {
                     border: 'none',
                     '& .MuiDataGrid-columnHeaders': {
                       background: theme.gradientCard,
-                      color: 'white',
+                      color: 'gray',
                       fontWeight: 'bold',
                       fontSize: '1rem',
                       '& .MuiDataGrid-columnHeader': {
-                        '&:hover': {
-                          bgcolor: 'rgba(255,255,255,0.1)'
-                        }
                       }
                     },
                     '& .MuiDataGrid-cell': {
@@ -989,7 +987,7 @@ export default function MenuRestauration() {
       >
         <DialogTitle sx={{
           background: theme.gradientCard,
-          color: 'white',
+          color: 'gray',
           display: 'flex',
           alignItems: 'center',
           gap: 2,
