@@ -6,13 +6,15 @@ import Profil from "../util/profils";
 import ForfaitPage from "../pages/forfaitpage/forfaitpage";
 import ChatWidget from "../pages/ChatWidget";
 import { getUserForfait } from "../services/forfaitService";
-import NotificationListener from "../util/Notification/notification";
+// import NotificationListener from "../util/Notification/notification";
 import { ToastContainer } from "react-toastify";
 import Logo from "../assets/LogoMaster.png"
 import { Bell } from "lucide-react";
-import NotificationComponent from "../util/notification";
+ import NotificationComponent from "../util/notification";
 
 import { getUserIdForToken } from "../services/userService";
+// import { io } from "socket.io-client";
+
 import { io } from "socket.io-client";
 
 export default function DefaultLayout() {
@@ -46,27 +48,27 @@ export default function DefaultLayout() {
   useEffect(() => {
     /********   Statut en ligne ou non   **********/
 
-    const changeStatus = async () => {
-      const userId = await getUserIdForToken(token);
+    // const changeStatus = async () => {
+    //   const userId = await getUserIdForToken(token);
 
-      console.log("Id récupèré : ", userId);
+    //   console.log("Id récupèré : ", userId);
 
-      const socket = io("http://localhost:3000", {
-        auth: {
-          userId: userId, // très important : doit être l'ID réel de l'organisateur
-        },
-      });
+    //   const socket = io("http://localhost:3000", {
+    //     auth: {
+    //       userId: userId, // très important : doit être l’ID réel de l’organisateur
+    //     },
+    //   });
 
-      socket.on("connect", () => {
-        console.log("Socket connecté !");
-      });
+    //   socket.on("connect", () => {
+    //     console.log("Socket connecté !");
+    //   });
 
-      socket.on("connect_error", (err) => {
-        console.error("Erreur de connexion WebSocket :", err.message);
-      });
-    };
+    //   socket.on("connect_error", (err) => {
+    //     console.error("Erreur de connexion WebSocket :", err.message);
+    //   });
+    // };
 
-    changeStatus();
+    // changeStatus();
 
     /**************************************** */
     const fetchAndSetForfait = async () => {
@@ -429,7 +431,7 @@ export default function DefaultLayout() {
       </div>
 
       <main className="max-w-screen mx-auto mt-24">
-        <NotificationListener />
+        {/* <NotificationListener /> */}
         <ToastContainer position="top-right" />
         <Outlet />
         <ChatWidget />

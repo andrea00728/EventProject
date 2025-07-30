@@ -11,6 +11,9 @@ import Inscription from "../pages/Inscription";
 import Connnexiongoogle from "../services/connexiongoogl.jsx";
 import Evenemenpage from "../pages/Evenementpage";
 import Apropos from "../pages/apropos";
+import PublicEvents from "../pages/PublicEvents"; // adapte le chemin si besoin
+// import PagePublic from "../pages/PagePublic";
+import PageEvenementDetail from "../pages/PageEvenementDetail";
 
 // import Table3DScene from "../components/table3D";
 import ChoixModeInvite from "../layouts/ChoixModeInvite";
@@ -20,7 +23,6 @@ import AffichageInvite from "../pages/choixModInvite/affichageInvite";
 import InviteformWithId from "../pages/choixModInvite/InviteFormparId";
 import TableLayout from "../layouts/TableLayout.jsx";
 import EventLayout from "../layouts/eventLayout.jsx";
-import Tablecreation from "../pages/TableOrganisation/Tablecreation";
 import Listetable from "../pages/TableOrganisation/ListeTable";
 import Affichage3dTable from "../pages/TableOrganisation/Affichage3dTable";
 import EventPending from "../pages/dashboardEvenement/Eventpadding.jsx";
@@ -44,7 +46,6 @@ import Organisateur from "../pages/Admin/Organisateur.jsx";
 import Parametre from "../pages/Admin/Parametre.jsx";
 import LocationSalle from "../pages/Admin/LocationSalle.jsx";
 import MyComponent from "../pages/PersonnelCuisine/OrderGateway.jsx";
-import Test from "../layouts/test.jsx";
 import MenuListWithCart from "../pages/Menu/MenuListWithCart.jsx";
 import SystemPromptManager from "../pages/Admin/SystemPromptManager.jsx";
 import MenuForm from "../pages/menu.jsx";
@@ -68,6 +69,8 @@ import DashboardCard from "../pages/DashbordCaisse/DashboardCaisse.jsx"
 import StockPage from "../pages/DashbordCaisse/StockPage.jsx";
 import StatistiquesPage from "../pages/DashbordCaisse/StatistiquesPage.jsx";
 import RevenuPage from "../pages/DashbordCaisse/RevenuPage.jsx";
+import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Event.jsx";
+
 
 const router=createBrowserRouter([
    
@@ -124,7 +127,7 @@ const router=createBrowserRouter([
       children: [
         {
           path: "creationTable",
-          element: <Tablecreation />
+          element: <TableToCreateBy_Event/>
         },
         {
           path: "",
@@ -447,6 +450,15 @@ const router=createBrowserRouter([
         path: "/inscription",
         element: <Inscription />,
       },
+      {
+      path: "/evenements-publics",
+      element: <PublicEvents />,
+      },
+      {
+        path: "/evenement/:slug",
+        element: <PageEvenementDetail />,
+      },
+
     ],
   },
   {

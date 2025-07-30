@@ -104,10 +104,10 @@ export default function MenuRestauration() {
 
   // Colonnes pour la vue en liste (DataGrid)
   const columns = [
-    { 
-      field: "name", 
-      headerName: "Nom", 
-      flex: 1, 
+    {
+      field: "name",
+      headerName: "Nom",
+      flex: 1,
       minWidth: 150,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -129,16 +129,16 @@ export default function MenuRestauration() {
           size="small"
           sx={{
             bgcolor: theme.success,
-            color: 'white',
+            color: 'gray',
             fontWeight: 'bold'
           }}
         />
       ),
     },
-    { 
-      field: "category", 
-      headerName: "Catégorie", 
-      flex: 1, 
+    {
+      field: "category",
+      headerName: "Catégorie",
+      flex: 1,
       minWidth: 120,
       renderCell: (params) => (
         <Chip
@@ -150,10 +150,10 @@ export default function MenuRestauration() {
         />
       )
     },
-    { 
-      field: "stock", 
-      headerName: "Stock", 
-      flex: 1, 
+    {
+      field: "stock",
+      headerName: "Stock",
+      flex: 1,
       minWidth: 100,
       renderCell: (params) => (
         <Chip
@@ -218,7 +218,7 @@ export default function MenuRestauration() {
           icon={<EditIcon />}
           label="Modifier"
           onClick={() => handleOpenForm(params.row)}
-          sx={{ 
+          sx={{
             color: theme.primary,
             '&:hover': {
               bgcolor: theme.neutral,
@@ -230,7 +230,7 @@ export default function MenuRestauration() {
           icon={<DeleteIcon />}
           label="Supprimer"
           onClick={() => handleOpenDeleteConfirm(params.row)}
-          sx={{ 
+          sx={{
             color: theme.danger,
             '&:hover': {
               bgcolor: '#fef2f2',
@@ -411,7 +411,7 @@ export default function MenuRestauration() {
   };
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       minHeight: '100vh',
       background: `linear-gradient(135deg, ${theme.neutral} 0%, #e0e7ff 100%)`,
       p: 3
@@ -424,7 +424,7 @@ export default function MenuRestauration() {
           borderRadius: 4,
           p: 4,
           mb: 4,
-          color: 'white',
+          color: 'gray',
           position: 'relative',
           overflow: 'hidden',
           '&::before': {
@@ -455,13 +455,13 @@ export default function MenuRestauration() {
 
       {/* Sélection d'événement */}
       <Paper elevation={2} sx={{ borderRadius: 3, mb: 4, overflow: 'hidden' }}>
-        <Box sx={{ 
+        <Box sx={{
           background: `linear-gradient(90deg, ${theme.primary} 0%, ${theme.secondary} 100%)`,
           p: 2
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <EventIcon sx={{ color: 'white' }} />
-            <Typography variant="h6" sx={{ color: 'white', fontWeight: 'medium' }}>
+            <Typography variant="h6" sx={{ color: 'white  ', fontWeight: 'medium' }}>
               Sélectionner un événement
             </Typography>
           </Box>
@@ -492,7 +492,8 @@ export default function MenuRestauration() {
                 transition: 'all 0.3s ease',
                 '&:hover': {
                   bgcolor: theme.neutral,
-                  transform: 'translateY(-2px)'
+                  background:'#3b83f61c',
+                  // transform: 'translateY(-2px)'
                 },
                 '&.Mui-selected': {
                   bgcolor: theme.neutral,
@@ -556,6 +557,7 @@ export default function MenuRestauration() {
                     </Button>
                   </Zoom>
                   
+
                   {allMenus.map((menu, index) => (
                     <Zoom in timeout={300 + index * 100} key={menu.id}>
                       <Button
@@ -582,6 +584,7 @@ export default function MenuRestauration() {
                     </Zoom>
                   ))}
                   
+
                   <Zoom in timeout={300 + allMenus.length * 100}>
                     <Button
                       onClick={() => handleOpenMenuForm()}
@@ -624,8 +627,8 @@ export default function MenuRestauration() {
                     fontWeight: 'bold',
                     fontSize: '1.1rem',
                     background: theme.gradientCard,
-                    '&:hover': { 
-                      background: theme.gradientCard, 
+                    '&:hover': {
+                      background: theme.gradientCard,
                       opacity: 0.9,
                       transform: 'translateY(-2px)'
                     },
@@ -644,7 +647,6 @@ export default function MenuRestauration() {
                   <Typography variant="h6" sx={{ color: theme.text, fontWeight: 'bold' }}>
                     {allMenus.find((m) => m.id === selectedMenuId)?.name || "Menu"}
                   </Typography>
-                  
                   <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
                     <Button
                       variant="contained"
@@ -657,20 +659,20 @@ export default function MenuRestauration() {
                         textTransform: "none",
                         fontWeight: "medium",
                         background: theme.gradientCard,
-                        '&:hover': { 
-                          background: theme.gradientCard, 
+                        '&:hover': {
+                          background: theme.gradientCard,
                           opacity: 0.9,
                           transform: 'translateY(-1px)'
                         },
                         transition: 'all 0.3s ease'
                       }}
                     >
-                      Ajouter un plat
+                      Ajouter un {allMenus.find((m) => m.id === selectedMenuId)?.name}
                     </Button>
-                    
+
                     <IconButton
                       onClick={handleOpenMenu}
-                      sx={{ 
+                      sx={{
                         bgcolor: theme.neutral,
                         '&:hover': { bgcolor: theme.neutralDark, transform: 'scale(1.1)' },
                         transition: 'all 0.3s ease'
@@ -678,9 +680,9 @@ export default function MenuRestauration() {
                     >
                       <MoreVertIcon />
                     </IconButton>
-                    
+
                     <Divider orientation="vertical" flexItem />
-                    
+
                     <Box sx={{ display: "flex", gap: 1 }}>
                       <IconButton
                         onClick={() => setViewMode("card")}
@@ -707,14 +709,13 @@ export default function MenuRestauration() {
                     </Box>
                   </Box>
                 </Box>
-                
                 <Menu
                   anchorEl={anchorEl}
                   open={Boolean(anchorEl)}
                   onClose={handleCloseMenu}
                   PaperProps={{
-                    sx: { 
-                      borderRadius: 3, 
+                    sx: {
+                      borderRadius: 3,
                       boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
                       border: `1px solid ${theme.neutralDark}`,
                       mt: 1
@@ -731,7 +732,7 @@ export default function MenuRestauration() {
                         handleCloseMenu();
                       }
                     }}
-                    sx={{ 
+                    sx={{
                       py: 1.5,
                       px: 3,
                       '&:hover': { bgcolor: theme.neutral }
@@ -745,7 +746,7 @@ export default function MenuRestauration() {
                       handleOpenDeleteMenuConfirm(selectedMenuId);
                       handleCloseMenu();
                     }}
-                    sx={{ 
+                    sx={{
                       py: 1.5,
                       px: 3,
                       '&:hover': { bgcolor: '#fef2f2' }
@@ -766,17 +767,17 @@ export default function MenuRestauration() {
                   .map((category, categoryIndex) => (
                     <Fade in timeout={400 + categoryIndex * 200} key={category}>
                       <Paper elevation={2} sx={{ borderRadius: 3, p: 4, mb: 4 }}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: 2, 
+                        <Box sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 2,
                           mb: 3,
                           pb: 2,
                           borderBottom: `3px solid ${theme.primary}`
                         }}>
                           <CategoryIcon sx={{ color: theme.primary, fontSize: 30 }} />
-                          <Typography variant="h4" sx={{ 
-                            fontWeight: 'bold', 
+                          <Typography variant="h4" sx={{
+                            fontWeight: 'bold',
                             color: theme.text,
                             background: theme.gradientCard,
                             WebkitBackgroundClip: 'text',
@@ -785,11 +786,11 @@ export default function MenuRestauration() {
                             {category}
                           </Typography>
                         </Box>
-                        
-                        <Box sx={{ 
-                          display: 'grid', 
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', 
-                          gap: 3 
+
+                        <Box sx={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                          gap: 3
                         }}>
                           {groupByCategory(filteredItems)[category].map((item, itemIndex) => (
                             <Zoom in timeout={200 + itemIndex * 100} key={item.id}>
@@ -819,11 +820,11 @@ export default function MenuRestauration() {
                                     }}
                                   />
                                 )}
-                                
+
                                 <CardContent sx={{ p: 3 }}>
-                                  <Typography variant="h6" sx={{ 
-                                    fontWeight: 'bold', 
-                                    color: theme.text, 
+                                  <Typography variant="h6" sx={{
+                                    fontWeight: 'bold',
+                                    color: theme.text,
                                     mb: 2,
                                     display: 'flex',
                                     alignItems: 'center',
@@ -832,11 +833,11 @@ export default function MenuRestauration() {
                                     <RestaurantIcon sx={{ color: theme.primary, fontSize: 20 }} />
                                     {item.name}
                                   </Typography>
-                                  
+
                                   <Typography variant="body2" sx={{ color: theme.textLight, mb: 3, lineHeight: 1.6 }}>
                                     {item.description || "Aucune description disponible"}
                                   </Typography>
-                                  
+
                                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
                                     <Chip
                                       icon={<EuroIcon sx={{ fontSize: 16 }} />}
@@ -862,23 +863,23 @@ export default function MenuRestauration() {
                                       label={item.menuName || "N/A"}
                                       size="small"
                                       variant="outlined"
-                                      sx={{ 
+                                      sx={{
                                         borderColor: theme.secondary,
                                         color: theme.secondary,
                                         fontWeight: 'medium'
                                       }}
                                     />
                                   </Box>
-                                  
+
                                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 'auto' }}>
-                                    <IconButton 
+                                    <IconButton
                                       onClick={() => handleOpenForm(item)}
-                                      sx={{ 
+                                      sx={{
                                         bgcolor: theme.neutral,
                                         color: theme.primary,
-                                        '&:hover': { 
+                                        '&:hover': {
                                           bgcolor: theme.primary,
-                                          color: 'white',
+                                          color: 'gray',
                                           transform: 'scale(1.1)'
                                         },
                                         transition: 'all 0.3s ease'
@@ -886,14 +887,14 @@ export default function MenuRestauration() {
                                     >
                                       <EditIcon />
                                     </IconButton>
-                                    <IconButton 
+                                    <IconButton
                                       onClick={() => handleOpenDeleteConfirm(item)}
-                                      sx={{ 
+                                      sx={{
                                         bgcolor: theme.neutral,
                                         color: theme.danger,
-                                        '&:hover': { 
+                                        '&:hover': {
                                           bgcolor: theme.danger,
-                                          color: 'white',
+                                          color: 'gray',
                                           transform: 'scale(1.1)'
                                         },
                                         transition: 'all 0.3s ease'
@@ -910,13 +911,13 @@ export default function MenuRestauration() {
                       </Paper>
                     </Fade>
                   ))}
-                
+
                 {filteredItems.length === 0 && (
                   <Fade in timeout={600}>
                     <Paper elevation={2} sx={{ borderRadius: 3, p: 6, textAlign: 'center' }}>
                       <RestaurantIcon sx={{ fontSize: 80, color: theme.textLight, mb: 3 }} />
                       <Typography variant="h5" sx={{ color: theme.text, mb: 2, fontWeight: 'bold' }}>
-                        Aucun plat disponible
+                        Aucun {allMenus.find((m) => m.id === selectedMenuId)?.name} disponible
                       </Typography>
                       <Typography variant="body1" sx={{ color: theme.textLight }}>
                         Commencez par ajouter des plats à votre menu
@@ -937,13 +938,10 @@ export default function MenuRestauration() {
                     border: 'none',
                     '& .MuiDataGrid-columnHeaders': {
                       background: theme.gradientCard,
-                      color: 'white',
+                      color: 'gray',
                       fontWeight: 'bold',
                       fontSize: '1rem',
                       '& .MuiDataGrid-columnHeader': {
-                        '&:hover': {
-                          bgcolor: 'rgba(255,255,255,0.1)'
-                        }
                       }
                     },
                     '& .MuiDataGrid-cell': {
@@ -975,21 +973,21 @@ export default function MenuRestauration() {
       )}
 
       {/* Dialog d'ajout/modification d'item */}
-      <Dialog 
-        open={formOpen} 
+      <Dialog
+        open={formOpen}
         onClose={handleCloseForm}
         maxWidth="md"
         fullWidth
-        PaperProps={{ 
-          sx: { 
+        PaperProps={{
+          sx: {
             borderRadius: 4,
             background: `linear-gradient(135deg, ${theme.background} 0%, ${theme.neutral} 100%)`
-          } 
+          }
         }}
       >
         <DialogTitle sx={{
           background: theme.gradientCard,
-          color: 'white',
+          color: 'gray',
           display: 'flex',
           alignItems: 'center',
           gap: 2,
@@ -999,7 +997,7 @@ export default function MenuRestauration() {
           <RestaurantIcon />
           {editingItem
             ? `Modifier - ${allMenus.find((m) => m.id === selectedMenuId)?.name || ""}`
-            : `Ajouter un plat - ${allMenus.find((m) => m.id === selectedMenuId)?.name || ""}`}
+            : `Ajouter un - ${allMenus.find((m) => m.id === selectedMenuId)?.name || ""}`}
         </DialogTitle>
         <DialogContent sx={{ p: 4 }}>
           <Box sx={{ display: 'grid', gap: 3, mt: 2 }}>
@@ -1051,10 +1049,10 @@ export default function MenuRestauration() {
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 3, gap: 2 }}>
-          <Button 
-            onClick={handleCloseMenuForm}
+          <Button
+            onClick={handleCloseForm}
             variant="outlined"
-            sx={{ 
+            sx={{
               borderRadius: 3,
               px: 3,
               py: 1.5,
@@ -1066,14 +1064,14 @@ export default function MenuRestauration() {
           </Button>
           <Button
             variant="contained"
-            onClick={handleSaveMenu}
+            onClick={handleSave}
             sx={{
               borderRadius: 3,
               px: 4,
               py: 1.5,
               background: theme.gradientCard,
               fontWeight: 'bold',
-              '&:hover': { 
+              '&:hover': {
                 background: theme.gradientCard,
                 opacity: 0.9
               }
@@ -1084,9 +1082,29 @@ export default function MenuRestauration() {
         </DialogActions>
       </Dialog>
 
+      {/* Formulaire d'ajout/modification de menu */}
+      <Dialog open={menuFormOpen} onClose={handleCloseMenuForm}>
+        <DialogTitle>{editingMenu ? 'Modifier' : 'Ajouter'} un Menu</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Nom du menu"
+            value={menuForm.name}
+            fullWidth
+            placeholder="Ex: Plats, Dessert..."
+            margin="dense"
+            onChange={(e) => setMenuForm({ ...menuForm, name: e.target.value })}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseMenuForm}>Annuler</Button>
+          <Button variant="contained" onClick={handleSaveMenu}>Enregistrer</Button>
+        </DialogActions>
+      </Dialog>
+
+
       {/* Dialog de confirmation de suppression d'item */}
-      <Dialog 
-        open={deleteConfirmOpen} 
+      <Dialog
+        open={deleteConfirmOpen}
         onClose={handleCloseDeleteConfirm}
         maxWidth="sm"
         PaperProps={{ sx: { borderRadius: 4 } }}
@@ -1110,10 +1128,10 @@ export default function MenuRestauration() {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 3, gap: 2 }}>
-          <Button 
+          <Button
             onClick={handleCloseDeleteConfirm}
             variant="outlined"
-            sx={{ 
+            sx={{
               borderRadius: 3,
               px: 3,
               py: 1.5
@@ -1130,7 +1148,7 @@ export default function MenuRestauration() {
               py: 1.5,
               bgcolor: theme.danger,
               fontWeight: 'bold',
-              '&:hover': { 
+              '&:hover': {
                 bgcolor: theme.dangerHover,
                 transform: 'translateY(-1px)'
               },
@@ -1143,8 +1161,8 @@ export default function MenuRestauration() {
       </Dialog>
 
       {/* Dialog de confirmation de suppression de menu */}
-      <Dialog 
-        open={deleteMenuConfirmOpen} 
+      <Dialog
+        open={deleteMenuConfirmOpen}
         onClose={handleCloseDeleteMenuConfirm}
         maxWidth="sm"
         PaperProps={{ sx: { borderRadius: 4 } }}
@@ -1168,10 +1186,10 @@ export default function MenuRestauration() {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 3, gap: 2 }}>
-          <Button 
+          <Button
             onClick={handleCloseDeleteMenuConfirm}
             variant="outlined"
-            sx={{ 
+            sx={{
               borderRadius: 3,
               px: 3,
               py: 1.5
@@ -1188,7 +1206,7 @@ export default function MenuRestauration() {
               py: 1.5,
               bgcolor: theme.danger,
               fontWeight: 'bold',
-              '&:hover': { 
+              '&:hover': {
                 bgcolor: theme.dangerHover,
                 transform: 'translateY(-1px)'
               },

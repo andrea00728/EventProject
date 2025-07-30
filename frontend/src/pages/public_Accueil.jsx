@@ -310,6 +310,47 @@ const Public_Accueil = () => {
           <Contact />
         </div>
       </section>
+      <footer className="bg-gray-700 p-5">
+        <div className="">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-4">
+              {/* Logo/Nom */}
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-[#FB9E3A] to-orange-400 rounded-xl flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <span className="text-xl font-black text-white">Rapex group</span>
+              </div>
+              <p className="text-slate-400 text-sm">
+                © 2025. Tous droits réservés
+              </p>
+            </div>
+
+            <div className="flex items-center gap-6 text-sm">
+              <a
+                href="#"
+                className="text-slate-400 hover:text-white transition-colors hover:underline"
+              >
+                Politique de confidentialité
+              </a>
+              <a
+                href="#"
+                className="text-slate-400 hover:text-white transition-colors hover:underline"
+              >
+                Conditions d'utilisation
+              </a>
+              <a
+                href="#"
+                className="text-slate-400 hover:text-white transition-colors hover:underline"
+              >
+                Support
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </>
   );
 };
