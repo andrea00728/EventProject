@@ -1,4 +1,3 @@
-// src/entities/order.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 import { TableEvent } from './Table';
 import { Evenement } from './Evenement';
@@ -38,9 +37,9 @@ export class Order {
   @Column('float')
   total: number;
 
-  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, {onDelete:"CASCADE"})
   items: OrderItem[];
 
-  @OneToMany(() => Payment, (payment) => payment.order)
+  @OneToMany(() => Payment, (payment) => payment.order,{onDelete:"CASCADE"})
   payments: Payment[];
 }

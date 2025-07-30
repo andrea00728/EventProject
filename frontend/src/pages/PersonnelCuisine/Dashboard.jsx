@@ -114,6 +114,10 @@ export default function DashboardpersCuisine() {
           console.log("Erreur WebSocket:", error);
         });
 
+        newSocket.on("order_status_updated", (data) => {
+          console.log(`Commande annulée ${data}`);
+        });
+
         setSocket(newSocket);
 
         return () => {
