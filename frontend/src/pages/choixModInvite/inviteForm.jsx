@@ -22,23 +22,34 @@ export default function Inviteform({ onBack }) {
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const emailValid = await checkEmail(form.email.trim());
+    setError(null);
 
+    const emailValid = await checkEmail(form.email.trim());
     if (!emailValid) {
-      setError("l'adresse email saisi n'existe pas");
+      setError("L'adresse email saisie n'existe pas");
       setLoading(false);
       return;
     }
+
+    if (!token) {
+      setError("Vous devez être connecté pour ajouter un invité");
+      setLoading(false);
+      return;
+    }
+
     try {
       await createInvite(form, token);
       setForm({ nom: "", prenom: "", email: "", sex: "" });
       setError(null);
     } catch (err) {
       setError(err.response?.data?.message || "Erreur lors de la création de l'invité");
-    }finally{
+    } finally {
       setLoading(false);
     }
   };
+
+
+
 
   return (
     <form
@@ -147,7 +158,7 @@ export default function Inviteform({ onBack }) {
                : "bg-indigo-600 hover:bg-indigo-700 text-white"
                 }`}
                 >
-                {loading ? "Création..." : "Créer le personnel"}
+                {loading ? "Création..." : "Ajouter un invité"}
                 </button>
       </div>
     </form>

@@ -35,7 +35,8 @@ export class GuestService {
       throw new BadRequestException('Événement non trouvé');
     }
 
-    await this.checkInviteLimit(eventId,userId,1)
+    await this.checkInviteLimit(eventId, userId ?? 'public-guest', 1);
+
 
     const existing = await this.guestRepository.findOne({
        where: { 
@@ -191,28 +192,34 @@ async importGuests(file: Express.Multer.File, eventId: number,userId:string): Pr
 /***
  * methode central pour les limites de cretion et importation d'invite
  */
-  async checkInviteLimit(eventId: number,userId: string,newInviteCount:number): Promise<void> {
-    const user= await this.userRepository.findOne({
-      where:{id:userId},
-      relations:['forfait'],
-    });
-    if(!user){
-      throw new BadRequestException('Utilisateur non trouvé');
-    }
+  async checkInviteLimit(eventId: number, userId: string, newInviteCount: number): Promise<void> {
+  // Si userId est "public", ignorer la vérification de limite
+  if (userId === 'public') return;
 
-    const maxinvites=user.forfait?.maxinvites;
-    /**
-     * applique pour forfait gold parce que l'rganisateur n'a pas de limite si fait une abonnement gold
-     */
-    if(!maxinvites) return;
+  const user = await this.userRepository.findOne({
+    where: { id: userId },
+    relations: ['forfait'],
+  });
 
-    const currentCount=await this.guestRepository.count({
-      where:{event:{id:eventId}},
-    });
-    if(currentCount+newInviteCount>maxinvites){
-    throw new BadRequestException(`Vous avez atteint la limite gratuite de ${maxinvites} invités. Veuillez effectuer un abonnement pour continuer.`);
-    }
+  if (!user) {
+    throw new BadRequestException('Utilisateur non trouvé');
   }
+
+  const maxinvites = user.forfait?.maxinvites;
+
+  if (!maxinvites) return;
+
+  const currentCount = await this.guestRepository.count({
+    where: { event: { id: eventId } },
+  });
+
+  if (currentCount + newInviteCount > maxinvites) {
+    throw new BadRequestException(
+      `Vous avez atteint la limite gratuite de ${maxinvites} invités. Veuillez effectuer un abonnement pour continuer.`,
+    );
+  }
+}
+
 
 
 /**

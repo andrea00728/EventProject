@@ -66,7 +66,7 @@ const PaiementPage = () => {
         id: c.id,
         nom: c.nom || "Anonyme",
         email: c.email || "-",
-        table: c.table ? `Table ${c.table.numero}` : "N/A",
+        table: c.table ? `Table ${c.table.nom}` : "N/A",
         total: parseFloat(c.total || 0).toFixed(2),
         amountPaid: parseFloat(c.amountPaid || 0).toFixed(2),
         createdAt: new Date(c.orderDate).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }),
