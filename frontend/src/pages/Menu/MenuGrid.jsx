@@ -81,7 +81,7 @@ const MenuGrid = ({ menus, addToCart, formatPrice = (val) => formatter.format(va
                               </div>
                               <div className="flex items-center space-x-3">
                                 <span className="text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                                  {formatPrice(item.price)}
+                                  {formatPrice(item.price)} €
                                 </span>
                                 <span className={`px-3 py-1 text-xs font-medium rounded-full ${
                                   item.stock > 0 
@@ -167,7 +167,7 @@ const MenuGrid = ({ menus, addToCart, formatPrice = (val) => formatter.format(va
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-500">Prix</span>
                         <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                          {formatPrice(selectedItem.price)}
+                          {formatPrice(selectedItem.price)} €
                         </span>
                       </div>
                       

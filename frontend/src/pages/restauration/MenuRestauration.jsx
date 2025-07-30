@@ -417,7 +417,7 @@ export default function MenuRestauration() {
       p: 3
     }}>
       {/* Header avec gradient */}
-      <Paper
+      {/* <Paper
         elevation={0}
         sx={{
           background: theme.gradientCard,
@@ -451,7 +451,7 @@ export default function MenuRestauration() {
             </Typography>
           </Box>
         </Box>
-      </Paper>
+      </Paper> */}
 
       {/* Sélection d'événement */}
       <Paper elevation={2} sx={{ borderRadius: 3, mb: 4, overflow: 'hidden' }}>
