@@ -9,26 +9,33 @@ import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
-    origin: 'http://localhost:5173',
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    credentials: true,
   },
 })
 export class OrdersGateway {
-  handleOrderDeleted(arg0: { id: number; }) {
-    throw new Error('Method not implemented.');
-  }
   @WebSocketServer()
   server: Server;
 
   async handleConnection(client: Socket) {
-    console.log(`✅ Client connecté : ${client.id}`);
+    console.log(`✅ Client connecté : ${client.id}, auth: ${JSON.stringify(client.handshake.auth)}`);
+  }
+
+  handleOrderDeleted(data: { id: number }) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`Émission de l'événement orderDeleted pour orderId: ${data.id}`);
+    }
+    this.server.emit('orderDeleted', data);
   }
 
   @SubscribeMessage('update_order_status')
   async handleStatusUpdate(
     @MessageBody() data: any,
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client?: Socket, // Rendre client facultatif
   ) {
-    console.log(`🍽️ Mise à jour reçue :`, data);
-    this.server.emit('order_status_updated', data); // Envoie à tous
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`🍽️ Mise à jour reçue :`, data);
+    }
+    this.server.emit('order_status_updated', data); // Émettre à tous les clients
   }
 }

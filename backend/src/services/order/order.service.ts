@@ -280,12 +280,12 @@ export class OrderService {
     return this.orderRepository.save(order);
   }
 
-  async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served', email: string): Promise<Order> {
+  async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served' | 'canceled', email: string): Promise<Order> {
     console.log(`Mise à jour du statut pour orderId: ${orderId}, status: ${status}`);
     const user = await this.personnelRepository.findOne({ where: { email: email } });
-    if (!user || user.role !== 'cuisinier') {
-      console.error(`Accès non autorisé pour email: ${email}`);
-      throw new UnauthorizedException('Seul un cuisinier peut mettre à jour le statut de la commande');
+    if (!user || !['cuisinier', 'caissier'].includes(user.role)) {
+      console.error(`Accès non autorisé pour email: ${email}, rôle: ${user?.role}`);
+      throw new UnauthorizedException('Seul un cuisinier ou un caissier peut mettre à jour le statut de la commande');
     }
     const order = await this.orderRepository.findOne({
       where: { id: orderId },
@@ -298,6 +298,10 @@ export class OrderService {
     }
     order.status = status;
     console.log(`Statut mis à jour pour orderId: ${orderId}, nouveau statut: ${status}`);
+    
+    // Émettre un événement WebSocket pour notifier les clients
+    this.ordersGateway.handleStatusUpdate({ id: orderId, status });
+    
     return this.orderRepository.save(order);
   }
 
@@ -445,6 +449,24 @@ export class OrderService {
       where: { table: { event: { nom: Like(`%${eventName}%`) } } },
       relations: ['items', 'items.menuItem', 'table', 'table.event'],
     });
+    return orders.map((order) => ({
+      ...order,
+    }));
+  }
+
+  async getRefundedOrders(eventId: number, userId: string): Promise<(Order & { total: number })[]> {
+    console.log(`Recherche des commandes remboursées pour eventId: ${eventId}, userId: ${userId}`);
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user || user.role !== 'caissier') {
+      throw new UnauthorizedException('Seul un caissier peut voir les commandes remboursées');
+    }
+    const orders = await this.orderRepository.find({
+      where: { table: { event: { id: eventId } }, paymentStatus: 'refunded' },
+      relations: ['items', 'items.menuItem', 'table', 'table.event'],
+    });
+    if (!orders || orders.length === 0) {
+      throw new NotFoundException(`Aucune commande remboursée trouvée pour l'événement avec l'id ${eventId}`);
+    }
     return orders.map((order) => ({
       ...order,
     }));

@@ -141,11 +141,7 @@ const RevenuPage = () => {
       formattedRevenus.forEach((order) => {
         order.items.forEach((item) => {
           const category = item.menuItem?.category || "Autres";
-<<<<<<< HEAD
           const subtotal = parseFloat(item.subtotal) || 0;
-=======
-          const subtotal = parseFloat(item.subtotal) || 0; // Utiliser subtotal au lieu de price
->>>>>>> 4fbe0cd (mise 29)
           const quantity = parseInt(item.quantity) || 0;
           if (subtotal && quantity) {
             categories[category] = (categories[category] || 0) + subtotal;
@@ -172,102 +168,14 @@ const RevenuPage = () => {
       setCategoryBreakdown(formattedCategories);
       setTimeSeriesData(timeSeriesArray);
     } catch (error) {
-<<<<<<< HEAD
-      console.error("Erreur lors de la récupération des revenus:", {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
-      const message =
-        error.response?.status === 401
-          ? "Session expirée. Veuillez vous reconnecter."
-          : error.response?.status === 404
-          ? "Aucune commande trouvée pour cet événement."
-          : error.response?.data?.message || "Erreur lors du chargement des données";
-      toast.error(message);
-      if (error.response?.status === 401) {
-        navigate("/login");
-      }
-=======
       console.error("Erreur lors de la récupération des revenus:", error);
       toast.error(error.response?.data?.message || "Erreur lors du chargement des données");
->>>>>>> 4fbe0cd (mise 29)
     } finally {
       setLoading(false);
     }
   };
 
   const handleRefund = async (id) => {
-<<<<<<< HEAD
-    if (!id) {
-      console.error("ID de commande manquant");
-      toast.error("ID de commande manquant");
-      return;
-    }
-    if (!window.confirm("Confirmer le remboursement et la suppression de cette commande ?")) return;
-    try {
-      setIsRefunding((prev) => ({ ...prev, [id]: true }));
-      let currentToken = token;
-      if (!currentToken) {
-        throw new Error("Token manquant");
-      }
-
-      // Vérifier si le token est valide
-      try {
-        await axios.get("http://localhost:3000/orders/event/1", {
-          headers: { Authorization: `Bearer ${currentToken}` },
-        });
-      } catch (error) {
-        if (error.response?.status === 401) {
-          currentToken = await refreshToken();
-        }
-      }
-
-      console.log("Tentative de suppression de la commande ID:", id);
-      console.log("Token utilisé:", currentToken.slice(0, 10) + "...");
-
-      const response = await axios.delete(`http://localhost:3000/orders/${id}`, {
-        headers: { Authorization: `Bearer ${currentToken}` },
-      });
-      console.log("Réponse DELETE:", response.status, response.data);
-
-      setRevenus((prev) => prev.filter((cmd) => cmd.id !== id));
-      if (isSocketConnected) {
-        socket.emit("orderDeleted", { id });
-        console.log("Événement orderDeleted émis pour ID:", id);
-      } else {
-        console.warn("Socket non connecté, événement orderDeleted non émis");
-      }
-      toast.success("Commande remboursée et supprimée avec succès");
-      await fetchRevenus();
-    } catch (error) {
-      console.error("Erreur lors du remboursement et suppression:", {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
-      let message = "Erreur lors du remboursement et de la suppression";
-      if (error.response) {
-        if (error.response.status === 401) {
-          message = "Session expirée. Veuillez vous reconnecter.";
-          navigate("/login");
-        } else if (error.response.status === 404) {
-          message = "Commande non trouvée.";
-        } else if (error.response.status === 400) {
-          message = error.response.data?.message || "Requête invalide.";
-        } else {
-          message = error.response.data?.message || "Erreur serveur interne.";
-        }
-      }
-      toast.error(message);
-    } finally {
-      setIsRefunding((prev) => ({ ...prev, [id]: false }));
-    }
-  };
-
-  const handleRefundDebounced = debounce(handleRefund, 1000);
-
-=======
     if (!window.confirm("Confirmer la suppression de cette commande remboursée ?")) return;
     try {
       setIsRefunding(true); // Activer l'indicateur de chargement
@@ -289,7 +197,6 @@ const RevenuPage = () => {
     }
   };
 
->>>>>>> 4fbe0cd (mise 29)
   const exportToCSV = () => {
     const headers = ["ID,Client,Email,Total (€),Payé (€),Statut,Méthode,Date"];
     const rows = filteredRevenus.map((rev) =>
@@ -445,7 +352,6 @@ const RevenuPage = () => {
   useEffect(() => {
     if (token) {
       fetchRevenus();
-<<<<<<< HEAD
       socket.on("connect", () => {
         console.log("Socket.IO connecté");
         setIsSocketConnected(true);
@@ -469,12 +375,6 @@ const RevenuPage = () => {
       };
     } else {
       navigate("/login");
-=======
-      socket.on("orderDeleted", fetchRevenus);
-      return () => {
-        socket.off("orderDeleted", fetchRevenus);
-      };
->>>>>>> 4fbe0cd (mise 29)
     }
   }, [token, navigate]);
 
@@ -684,7 +584,6 @@ const RevenuPage = () => {
                             >
                               Détails
                             </motion.button>
-<<<<<<< HEAD
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
@@ -696,21 +595,6 @@ const RevenuPage = () => {
                             >
                               {isRefunding[rev.id] ? "En cours..." : "Rembourser"}
                             </motion.button>
-=======
-                            {rev.paymentStatus !== "Remboursé" && (
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => handleRefund(rev.id)}
-                                disabled={isRefunding}
-                                className={`px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition ${
-                                  isRefunding ? "opacity-50 cursor-not-allowed" : ""
-                                }`}
-                              >
-                                {isRefunding ? "En cours..." : "Rembourser"}
-                              </motion.button>
-                            )}
->>>>>>> 4fbe0cd (mise 29)
                           </td>
                         </tr>
                       ))
@@ -811,11 +695,7 @@ const RevenuPage = () => {
                       <td className="px-3 py-2 truncate">{item.menuItem?.name || "Inconnu"}</td>
                       <td className="px-3 py-2 text-right">{item.quantity || 0}</td>
                       <td className="px-3 py-2 text-right">
-<<<<<<< HEAD
                         {parseFloat(item.subtotal / (item.quantity || 1)).toFixed(2)}
-=======
-                        {parseFloat(item.subtotal / item.quantity || 0).toFixed(2)}
->>>>>>> 4fbe0cd (mise 29)
                       </td>
                       <td className="px-3 py-2 text-right">{parseFloat(item.subtotal || 0).toFixed(2)}</td>
                     </tr>

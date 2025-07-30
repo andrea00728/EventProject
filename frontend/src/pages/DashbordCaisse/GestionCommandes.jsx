@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { io } from "socket.io-client";
 import { DataGrid } from "@mui/x-data-grid";
 import {
   Button,
@@ -15,10 +16,8 @@ import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { getUserIdForToken } from "../../services/userService";
-import { io } from "socket.io-client";
 
-const backgroundImageUrl =
-  "https://images.unsplash.com/photo-1542744095-291d1f67b221";
+const backgroundImageUrl = "https://images.unsplash.com/photo-1542744095-291d1f67b221";
 
 const GestionCommandesPage = () => {
   const [commandes, setCommandes] = useState([]);
@@ -54,21 +53,25 @@ const GestionCommandesPage = () => {
     { value: "annuler", label: "Annulée", color: "error" },
   ];
 
-  const fetchCommandes = async () => {
+  const fetchCommandes = useCallback(async () => {
     try {
       setLoading(true);
       if (!token) throw new Error("Token manquant");
+      
       const eventId = await getEventIdByEmail(token);
       const { data } = await axios.get(
         `http://localhost:3000/orders/event/${eventId.eventId}`,
-        { params: { include: "table,items,items.menuItem" } }
+        { 
+          params: { include: "table,items,items.menuItem" },
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
 
       const formatted = data.map((c) => ({
         id: c.id,
         nom: c.nom || "Anonyme",
         email: c.email || "-",
-        table: c.table ? `Table ${c.table.numero}` : "N/A",
+        table: c.table ? `Table ${c.table.nom}` : "N/A",
         total: c.total ? `€${c.total.toFixed(2)}` : "€0.00",
         itemsCount: c.items?.length || 0,
         date: new Date(c.orderDate).toLocaleString(),
@@ -86,29 +89,11 @@ const GestionCommandesPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
-  const fetchData = async () => {
-    const UserId = await getUserIdForToken(token);
-
-    const socket = io("http://localhost:3000", {
-      auth: {
-        userId: UserId,
-      },
-    });
-
-    socket.on("connect", () => {
-      console.log("✅ Connecté au serveur WebSocket");
-    });
-
-    socket.on("order_status_updated", (data) => {
-      updateCommande(data);
-    });
-  };
-
-  const updateCommande = (update) => {
-    setCommandes((prev) =>
-      prev.map((cmd) =>
+  const updateCommande = useCallback((update) => {
+    setCommandes((prevCommandes) =>
+      prevCommandes.map((cmd) =>
         cmd.id === update.id
           ? {
               ...cmd,
@@ -118,83 +103,165 @@ const GestionCommandesPage = () => {
           : cmd
       )
     );
-  };
+  }, []);
 
-  useEffect(() => {
-    let socketInstance;
-
-    const initWebSocket = async () => {
-      const userId = await getUserIdForToken(token);
-      socketInstance = io("http://localhost:3000", {
-        auth: { userId },
-      });
-
-      socketInstance.on("connect", () => {
-        console.log("✅ Connecté au serveur WebSocket");
-      });
-
-      socketInstance.on("order_status_updated", (data) => {
-        updateCommande(data);
-      });
-    };
-
-    fetchCommandes();
-    initWebSocket();
-
-    return () => {
-      if (socketInstance) {
-        socketInstance.disconnect();
-        console.log("❌ Socket déconnecté");
-      }
-    };
-  }, [token]);
-
-  const handleStatusChange = async (orderId, newStatus) => {
+  const handleStatusChange = useCallback(async (orderId, newStatus) => {
     try {
-      await axios.put(`http://localhost:3000/orders/${orderId}`, {
-        status: STATUS_MAPPING.frontToBack[newStatus],
-      });
-
-      setCommandes((prev) =>
-        prev.map((cmd) =>
-          cmd.id === orderId ? { ...cmd, status: newStatus } : cmd
-        )
+      const response = await axios.patch(
+        `http://localhost:3000/orders/${orderId}/status`,
+        { status: STATUS_MAPPING.frontToBack[newStatus] },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
 
       setSnackbar({
         open: true,
-        message: "Statut mis à jour.",
+        message: response.data?.message || "Statut mis à jour avec succès.",
         severity: "success",
       });
-    } catch (err) {
-      console.error("Erreur mise à jour du statut :", err);
+      // Mettre à jour localement pour refléter le changement immédiatement
+      updateCommande({ id: orderId, status: STATUS_MAPPING.frontToBack[newStatus] });
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du statut:", error);
       setSnackbar({
         open: true,
-        message: "Échec de la mise à jour du statut.",
+        message: error.response?.data?.message || "Erreur lors de la mise à jour du statut.",
         severity: "error",
       });
     }
-  };
+  }, [token, updateCommande]);
+
+  const handleCancel = useCallback(async (orderId) => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:3000/orders/${orderId}/status`,
+        { status: STATUS_MAPPING.frontToBack.annuler },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setSnackbar({
+        open: true,
+        message: response.data?.message || "Commande annulée avec succès.",
+        severity: "success",
+      });
+      // Mettre à jour localement pour refléter le changement immédiatement
+      updateCommande({ id: orderId, status: STATUS_MAPPING.frontToBack.annuler });
+    } catch (error) {
+      console.error("Erreur lors de l'annulation:", error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || "Erreur lors de l'annulation de la commande.",
+        severity: "error",
+      });
+    }
+  }, [token, updateCommande]);
+
+  useEffect(() => {
+    // Gestion des WebSockets
+    let socket;
+    
+    const setupWebSocket = async () => {
+      try {
+        const userId = await getUserIdForToken(token);
+        socket = io("http://localhost:3000", {
+          auth: { userId },
+          transports: ['websocket', 'polling'], // Ajouter polling comme secours
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000,
+        });
+
+        socket.on("connect", () => {
+          console.log("✅ Connecté au serveur WebSocket");
+        });
+
+        socket.on("connect_error", (error) => {
+          console.error("Erreur de connexion WebSocket:", error);
+          setSnackbar({
+            open: true,
+            message: "Erreur de connexion WebSocket.",
+            severity: "error",
+          });
+        });
+
+        socket.on("order_status_updated", (data) => {
+          console.log("Mise à jour du statut reçue via WebSocket:", data);
+          updateCommande(data);
+        });
+
+        socket.on("order_deleted", (data) => {
+          console.log("Commande supprimée via WebSocket:", data);
+          setCommandes((prev) => prev.filter((cmd) => cmd.id !== data.id));
+          setSnackbar({
+            open: true,
+            message: `Commande ${data.id} supprimée`,
+            severity: "info",
+          });
+        });
+      } catch (error) {
+        console.error("Erreur WebSocket:", error);
+        setSnackbar({
+          open: true,
+          message: "Erreur lors de l'initialisation WebSocket.",
+          severity: "error",
+        });
+      }
+    };
+
+    // Chargement initial des données
+    const loadData = async () => {
+      await fetchCommandes();
+      await setupWebSocket();
+    };
+
+    loadData();
+
+    // Fonction de nettoyage
+    return () => {
+      if (socket) {
+        socket.disconnect();
+        console.log("🔌 WebSocket déconnecté");
+      }
+    };
+  }, [token, fetchCommandes, updateCommande]);
 
   const filteredCommandes = commandes.filter((cmd) => {
-    const matchStatus =
-      selectedStatus === "all" || cmd.status === selectedStatus;
+    const matchStatus = selectedStatus === "all" || cmd.status === selectedStatus;
     const search = searchTerm.toLowerCase();
-    return (
-      matchStatus &&
-      (cmd.nom.toLowerCase().includes(search) ||
-        cmd.email.toLowerCase().includes(search))
-    );
+    const matchSearch =
+      cmd.nom.toLowerCase().includes(search) || cmd.email.toLowerCase().includes(search);
+    return matchStatus && matchSearch;
   });
 
   const columns = [
-    { field: "id", headerName: "ID", width: 70 },
-    { field: "nom", headerName: "Client", width: 150 },
-    { field: "email", headerName: "Email", width: 180 },
-    { field: "table", headerName: "Table", width: 100 },
-    { field: "itemsCount", headerName: "Articles", width: 100 },
+    { field: "id", headerName: "ID", width: 70, sortable: true },
+    { field: "nom", headerName: "Client", width: 150, sortable: true },
+    { field: "email", headerName: "Email", width: 180, sortable: true },
+    {
+      field: "table",
+      headerName: "Table",
+      width: 120,
+      renderCell: (params) => (
+        <Chip
+          label={params.value}
+          color={params.value === "N/A" ? "default" : "primary"}
+          size="small"
+          sx={{ fontWeight: "bold" }}
+        />
+      ),
+    },
+    { field: "itemsCount", headerName: "Articles", width: 100, type: "number" },
     { field: "total", headerName: "Total", width: 100 },
-    { field: "date", headerName: "Date", width: 180 },
+    { field: "date", headerName: "Date", width: 180, sortable: true },
     {
       field: "status",
       headerName: "Statut",
@@ -209,6 +276,41 @@ const GestionCommandesPage = () => {
             color={statusInfo?.color || "default"}
             sx={{ fontWeight: "medium" }}
           />
+        );
+      },
+    },
+    {
+      field: "action",
+      headerName: "Action",
+      width: 200,
+      sortable: false,
+      renderCell: (params) => {
+        const isCanceled = params.row.status === "annuler";
+        return (
+          <div style={{ display: "flex", gap: "8px" }}>
+            <Select
+              value={params.row.status}
+              onChange={(e) => handleStatusChange(params.row.id, e.target.value)}
+              size="small"
+              disabled={isCanceled}
+              sx={{ minWidth: 120 }}
+            >
+              {STATUS_OPTIONS.map((s) => (
+                <MenuItem key={s.value} value={s.value}>
+                  {s.label}
+                </MenuItem>
+              ))}
+            </Select>
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              disabled={isCanceled}
+              onClick={() => handleCancel(params.row.id)}
+            >
+              Annuler
+            </Button>
+          </div>
         );
       },
     },
