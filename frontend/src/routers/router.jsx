@@ -11,6 +11,9 @@ import Inscription from "../pages/Inscription";
 import Connnexiongoogle from "../services/connexiongoogl.jsx";
 import Evenemenpage from "../pages/Evenementpage";
 import Apropos from "../pages/apropos";
+import PublicEvents from "../pages/PublicEvents"; // adapte le chemin si besoin
+// import PagePublic from "../pages/PagePublic";
+import PageEvenementDetail from "../pages/PageEvenementDetail";
 
 // import Table3DScene from "../components/table3D";
 import ChoixModeInvite from "../layouts/ChoixModeInvite";
@@ -68,6 +71,7 @@ import DashboardCard from "../pages/DashbordCaisse/DashboardCaisse.jsx"
 import StockPage from "../pages/DashbordCaisse/StockPage.jsx";
 import StatistiquesPage from "../pages/DashbordCaisse/StatistiquesPage.jsx";
 import RevenuPage from "../pages/DashbordCaisse/RevenuPage.jsx";
+
 
 const router=createBrowserRouter([
    
@@ -447,6 +451,15 @@ const router=createBrowserRouter([
         path: "/inscription",
         element: <Inscription />,
       },
+      {
+      path: "/evenements-publics",
+      element: <PublicEvents />,
+      },
+      {
+        path: "/evenement/:slug",
+        element: <PageEvenementDetail />,
+      },
+
     ],
   },
   {

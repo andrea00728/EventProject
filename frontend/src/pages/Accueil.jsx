@@ -27,7 +27,7 @@ export default function Accueil() {
             {/* Titre principal */}
             <h1 className="text-5xl lg:text-7xl font-black text-slate-800 leading-[1.1] tracking-tight">
               Organisez vos
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#FB9E3A] via-orange-500 to-amber-500 drop-shadow-sm">
+              <span className="block text- 7xl bg-clip-text bg-gradient-to-r from-[#FB9E3A] via-orange-500 to-amber-500 drop-shadow-sm">
                 événements
               </span>
               <span className="text-4xl lg:text-5xl font-bold text-indigo-600">
