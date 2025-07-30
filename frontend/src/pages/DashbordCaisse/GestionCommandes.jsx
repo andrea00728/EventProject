@@ -120,43 +120,13 @@ const GestionCommandesPage = () => {
 
       setSnackbar({
         open: true,
-        message: response.data?.message || "Statut mis à jour avec succès.",
+        message: response.data?.message || "Commande annulée avec succès.",
         severity: "success",
       });
       // Mettre à jour localement pour refléter le changement immédiatement
       updateCommande({ id: orderId, status: STATUS_MAPPING.frontToBack[newStatus] });
     } catch (error) {
       console.error("Erreur lors de la mise à jour du statut:", error);
-      setSnackbar({
-        open: true,
-        message: error.response?.data?.message || "Erreur lors de la mise à jour du statut.",
-        severity: "error",
-      });
-    }
-  }, [token, updateCommande]);
-
-  const handleCancel = useCallback(async (orderId) => {
-    try {
-      const response = await axios.patch(
-        `http://localhost:3000/orders/${orderId}/status`,
-        { status: STATUS_MAPPING.frontToBack.annuler },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      setSnackbar({
-        open: true,
-        message: response.data?.message || "Commande annulée avec succès.",
-        severity: "success",
-      });
-      // Mettre à jour localement pour refléter le changement immédiatement
-      updateCommande({ id: orderId, status: STATUS_MAPPING.frontToBack.annuler });
-    } catch (error) {
-      console.error("Erreur lors de l'annulation:", error);
       setSnackbar({
         open: true,
         message: error.response?.data?.message || "Erreur lors de l'annulation de la commande.",
@@ -174,7 +144,7 @@ const GestionCommandesPage = () => {
         const userId = await getUserIdForToken(token);
         socket = io("http://localhost:3000", {
           auth: { userId },
-          transports: ['websocket', 'polling'], // Ajouter polling comme secours
+          transports: ['websocket', 'polling'],
           reconnection: true,
           reconnectionAttempts: 5,
           reconnectionDelay: 1000,
@@ -289,27 +259,18 @@ const GestionCommandesPage = () => {
         return (
           <div style={{ display: "flex", gap: "8px" }}>
             <Select
-              value={params.row.status}
+              value={isCanceled ? "annuler" : ""}
               onChange={(e) => handleStatusChange(params.row.id, e.target.value)}
               size="small"
               disabled={isCanceled}
+              displayEmpty
               sx={{ minWidth: 120 }}
             >
-              {STATUS_OPTIONS.map((s) => (
-                <MenuItem key={s.value} value={s.value}>
-                  {s.label}
-                </MenuItem>
-              ))}
+              <MenuItem value="" disabled>
+                Sélectionner une action
+              </MenuItem>
+              <MenuItem value="annuler">Annuler</MenuItem>
             </Select>
-            <Button
-              variant="outlined"
-              color="error"
-              size="small"
-              disabled={isCanceled}
-              onClick={() => handleCancel(params.row.id)}
-            >
-              Annuler
-            </Button>
           </div>
         );
       },
