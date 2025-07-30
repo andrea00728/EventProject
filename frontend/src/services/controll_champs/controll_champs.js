@@ -1,7 +1,13 @@
     import axios from "axios";
     
     const API_KEY=import.meta.env.VITE_APP_MAILBOXLAYER_KEY;
+
+    const emailCache = {};
+
     export const checkEmail = async (email) => {
+        if(emailCache[email]){
+            return emailCache[email];
+        }
         try{
             const response=await axios.get('https://apilayer.net/api/check',{
                 params:{
@@ -9,7 +15,9 @@
                     email,
                 }
             });
-            return response.data.smtp_check===true;
+            const isValid = response.data.smtp_check===true;
+            emailCache[email]=isValid;
+            return isValid;
         } catch (error) {
                 console.error('Erreur vérification email:', error);
                 return false; // En cas d’erreur, considérer comme invalide

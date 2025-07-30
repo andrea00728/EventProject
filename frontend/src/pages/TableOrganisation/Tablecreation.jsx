@@ -4,9 +4,9 @@ import { createTableByIdevent } from "../../services/tableService";
 import { useStateContext } from "../../context/ContextProvider";
 import { chiffreControll } from "../../services/controll_champs/controll_champs";
 
-export default function Tablecreation() {
+export default function Tablecreation({onSubmitTable}) {
   const { token } = useStateContext();
-  const [form, setForm] = useState({ nom: "", capacite: "", type: "ronde", eventId: 0 });
+  const [form, setForm] = useState({ nom: "", capacite: "", type: "ronde",nombre:"", eventId: 0 });
   const [error, setError] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
@@ -39,6 +39,7 @@ export default function Tablecreation() {
     }
   }, [token]);
 
+  
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -61,17 +62,15 @@ export default function Tablecreation() {
     }
 
     try {
-      await createTableByIdevent(
-        {
-          nom:form.nom,
-          capacite: parseInt(form.capacite),
-          eventId: form.eventId,
-          type: form.type,
-          position: { left: 100, top: 200 },
-        },
-        token
-      );
-      setForm({ nom: "", capacite: "", type: "ronde", eventId: 0 });
+      const formDataArray=[];
+      for (let i=0; i<Number(form.nombre);i++){
+        formDataArray.push({
+          ...form,
+          nombre:i+1,
+        })
+      }
+      await onSubmitTable(formDataArray);
+      setForm({ nom: "", capacite: "", type: "ronde",nombre:"", eventId: 0 });
       setSelectedEvent(null);
       setSuccessMessage("Table créée avec succès");
     } catch (err) {
@@ -133,6 +132,22 @@ export default function Tablecreation() {
               name="capacite"
               type="number"
               value={form.capacite}
+              onChange={handleChange}
+              placeholder="Ex: 4, 6, 8"
+              required
+              min="1"
+              className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
+            />
+          </div>
+           <div className="flex flex-col">
+            <label htmlFor="nombre" className="text-gray-700 font-medium mb-2 text-sm">
+              nombre
+            </label>
+            <input
+              id="nombre"
+              name="nombre"
+              type="number"
+              value={form.nombre}
               onChange={handleChange}
               placeholder="Ex: 4, 6, 8"
               required
