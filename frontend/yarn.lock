@@ -779,10 +779,10 @@
     prop-types "^15.8.1"
     react-is "^19.0.0"
 
-"@mui/x-charts-vendor@8.5.3":
-  version "8.5.3"
-  resolved "https://registry.npmjs.org/@mui/x-charts-vendor/-/x-charts-vendor-8.5.3.tgz"
-  integrity sha512-H05cb0c2qfRhWLPcwtiIU8BOcKTrMNvhgmRAvJJXpmlirOA1km8dUlR71VeUvJiCthhVIHKyFkPPzFYKgHAfng==
+"@mui/x-charts-vendor@8.6.0":
+  version "8.6.0"
+  resolved "https://registry.npmjs.org/@mui/x-charts-vendor/-/x-charts-vendor-8.6.0.tgz"
+  integrity sha512-TTtfhxXuwtoZfyno7+4y3ZhZeFqavFJecWbteLEby0lFqALWB9GGJpkc1TIHWr3GkWE5UHEbdADZ0pfrPenezA==
   dependencies:
     "@babel/runtime" "^7.27.6"
     "@types/d3-color" "^3.1.3"
@@ -802,14 +802,14 @@
     delaunator "^5.0.1"
     robust-predicates "^3.0.2"
 
-"@mui/x-charts@^8.8.0":
-  version "8.8.0"
-  resolved "https://registry.npmjs.org/@mui/x-charts/-/x-charts-8.8.0.tgz"
-  integrity sha512-tqdwKoUpo8u+KZdEWO4C21Q0P3HOL/DadAZSMmTdtO1LDCO/m4S8UtHFpj2B0pZuikdiBJ5bz49I+nfBfK1Xng==
+"@mui/x-charts@^8.9.0":
+  version "8.9.0"
+  resolved "https://registry.npmjs.org/@mui/x-charts/-/x-charts-8.9.0.tgz"
+  integrity sha512-FQEjlVa285/WUTTuS84v4Nvj0OXQz1oxOl1ommhn6xbIilQXMOesAA4iFFYVz1ZBsywopVsWqwPSLgmkpWrzHg==
   dependencies:
     "@babel/runtime" "^7.27.6"
     "@mui/utils" "^7.2.0"
-    "@mui/x-charts-vendor" "8.5.3"
+    "@mui/x-charts-vendor" "8.6.0"
     "@mui/x-internal-gestures" "0.2.1"
     "@mui/x-internals" "8.8.0"
     bezier-easing "^2.1.0"

@@ -105,7 +105,7 @@ export class ForfaitService {
 }
 
   /*************************************************************************************
-   * ***************  Pour la page Super Admin dans son dashboard *********************
+   * ***************  Pour la page Super Admin dans le dashboard *********************
    * ********************************************************************************
    */
 
@@ -147,6 +147,44 @@ export class ForfaitService {
       nameForfait : r.nameforfait,
       amount: Number(r.amount),
       date: new Date(r.date),
+    }));
+  }
+
+  //
+
+  // async getMonthlyForfaitRevenue(): Promise<{ month: string; total: number }[]> {
+  //   const result = await this.userRepo
+  //     .createQueryBuilder('user')
+  //     .leftJoin('user.forfait', 'forfait')
+  //     .select([
+  //       "TO_CHAR(user.forfaitexpirationdate, 'YYYY-MM') as month",
+  //       'SUM(forfait.price) as total',
+  //     ])
+  //     .where('forfait.price > 0')
+  //     .andWhere('user.forfaitexpirationdate IS NOT NULL')
+  //     .groupBy("TO_CHAR(user.forfaitexpirationdate, 'YYYY-MM')")
+  //     .orderBy("month", "ASC")
+  //     .getRawMany();
+
+  //   return result.map(r => ({
+  //     month: r.month,
+  //     total: parseFloat(r.total),
+  //   }));
+  // }
+
+  async getRevenusParForfait(): Promise<{ name: string; total: number }[]> {
+    const results = await this.userRepo
+      .createQueryBuilder('user')
+      .leftJoin('user.forfait', 'forfait')
+      .select('forfait.nom', 'name')
+      .addSelect('SUM(forfait.price)', 'total')
+      .where('forfait.price > 0')
+      .groupBy('forfait.nom')
+      .getRawMany();
+
+    return results.map(r => ({
+      name: r.name,
+      total: parseFloat(r.total),
     }));
   }
 

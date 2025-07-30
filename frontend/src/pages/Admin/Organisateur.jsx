@@ -224,7 +224,7 @@ const OrganisateurCard = ({
         </div>
         <span
           className={`px-2 py-1 rounded-full text-xs ${
-            organisateur.status === "active"
+            organisateur.isOnline
               ? darkMode
                 ? "bg-green-900/50 text-green-300"
                 : "bg-green-100 text-green-800"
@@ -233,7 +233,7 @@ const OrganisateurCard = ({
               : "bg-gray-100 text-gray-600"
           }`}
         >
-          {organisateur.status === "active" ? "Actif" : "Inactif"}
+          {organisateur.isOnline ? "Actif" : "Inactif"}
         </span>
       </div>
 

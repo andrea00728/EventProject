@@ -23,6 +23,7 @@ import {
 import { ChevronDown } from "lucide-react";
 import {
   getLastTransactions,
+  getRevenuMensuel,
   getSumForUsersForfait,
 } from "../../services/forfaitService";
 import { getCountForAllEventStats } from "../../services/evenementServ";
@@ -688,49 +689,49 @@ function EventChart({ darkMode }) {
 
 function MoneyChart({ darkMode }) {
   const margin = { right: 24 };
-  const uData = [4000, 3000, 2000, 2780, 1890, 2390, 3490];
-  const pData = [2400, 1398, 9800, 3908, 4800, 3800, 4300];
-  const xLabels = [
-    "Page A",
-    "Page B",
-    "Page C",
-    "Page D",
-    "Page E",
-    "Page F",
-    "Page G",
-  ];
+  const [revenus, setRevenus] = useState([]);
+  const [labels, setLabels] = useState([]);
+
+  const fetchData = async () => {
+    try {
+      const res = await getRevenuMensuel();
+      const xLabels = res.map((item) => item.name);
+      const yData = res.map((item) => item.total);
+
+      console.log(xLabels, yData);
+
+      setLabels(xLabels);
+      setRevenus(yData);
+    } catch (err) {
+      console.error("Erreur lors du chargement des revenus", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   return (
     <div>
       <h3 className="text-base sm:text-lg font-semibold mb-2 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-        Paiements
+        Revenus par Forfait
       </h3>
-      <LineChart
-        series={[
-          { data: pData, label: "PV" },
-          { data: uData, label: "UV" },
-        ]}
+      <BarChart
+        series={[{ data: revenus, label: "Total (€)", color: "#a855f7" }]}
         xAxis={[
           {
-            scaleType: "point",
-            data: xLabels,
+            scaleType: "band",
+            data: labels,
             tickLabelStyle: {
-              fill: darkMode ? "#ffffff" : "#000000", // Couleur des chiffres de l'axe X
+              fill: darkMode ? "#ffffff" : "#000000",
             },
-            // axisLabelStyle: {
-            //   fill: darkMode ? '#ffffff' : '#000000', // Couleur du libellé de l'axe X
-            // },
           },
         ]}
         yAxis={[
           {
-            width: 50,
             tickLabelStyle: {
-              fill: darkMode ? "#ffffff" : "#000000", // Couleur des chiffres de l'axe Y
+              fill: darkMode ? "#ffffff" : "#000000",
             },
-            // axisLabelStyle: {
-            //   fill: darkMode ? '#ffffff' : '#000000', // Couleur du libellé de l'axe Y
-            // },
           },
         ]}
         height={270}

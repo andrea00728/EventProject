@@ -177,6 +177,8 @@ async getUserForfait(@Req() req: any) {
     return this.forfaitService.getSumForUsersForfait()
   }
 
+
+  // Pour le super Admin 
   
   @Get('get/lastTransactions')
   //@UseGuards(AuthGuard('jwt'))
@@ -184,6 +186,12 @@ async getUserForfait(@Req() req: any) {
     { name: string; photo: string; nameForfait : string; amount: number; date: Date }[]
   > {
     return this.forfaitService.findLastTransactions();
+  }
+
+  @Get('/revenu-mensuel')
+  //@UseGuards(AuthGuard('jwt'))
+  getRevenuMensuel() {
+    return this.forfaitService.getRevenusParForfait();
   }
 
 
