@@ -10,6 +10,20 @@ export class AuthController {
   constructor(private readonly authService: AuthService
   
   ) {}
+
+    
+  /**
+   * 
+   * @returns 
+   * nombre total d'organisateur active
+   */
+
+  @Get('/count-users')
+  async findCountUsers():Promise<number>{
+    return this.authService.findCountUsers();
+  }
+
+
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth(@Req() req) {
@@ -78,13 +92,37 @@ export class AuthController {
       role: req.user.role || 'organisateur', 
       isInPersonnel:req.user.isInPersonnel  || false,
     };
-
-  
   
     const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}&isInPersonnel=${encodeURIComponent(user.isInPersonnel)}`;
 
     return res.redirect(redirectUrl);
   }
+
+   //register manuel dans formumaire
+  //  @Post('register')
+  //  @ApiConsumes('multipart/form-data')
+  //  @ApiBody({
+  //    schema: {
+  //      type: 'object',
+  //      properties: {
+  //        name: { type: 'string' },
+  //        email: { type: 'string' },
+  //        password: { type: 'string' },
+  //        photo: { type: 'string', format: 'binary' },
+  //      },
+  //    },
+  //  })
+  //  @UseInterceptors(FileInterceptor('photo', {
+  //    storage: diskStorage({
+  //      destination: './uploads',  // dossier de stockage
+  //      filename: (req, file, callback) => {
+  //        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+  //        const ext = extname(file.originalname);
+  //        const filename = `${file.fieldname}-${uniqueSuffix}${ext}`;
+  //        callback(null, filename);
+  //      },
+  //    }),
+  //  }))
 
 
 @Post('logout')
@@ -107,5 +145,13 @@ export class AuthController {
   @Delete('deleteManager/:id')
   async deleteAManager(@Param('id') id: string): Promise<{ message: string }> {
     return this.authService.deleteManager(id);
+  }
+
+
+  @Get('getId')
+  @UseGuards(AuthGuard('jwt'))
+  async getIdForToken(@Req() req : any): Promise<any> {
+    
+    return this.authService.getIdForToken(req.user.email);
   }
 }

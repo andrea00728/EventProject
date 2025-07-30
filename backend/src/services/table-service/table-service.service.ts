@@ -22,7 +22,7 @@ export class TableService {
   ) {}
 
 async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEvent> {
-  if (!dto || dto.numero === undefined || dto.capacite === undefined || !dto.eventId) {
+  if (!dto || dto.nom === undefined || dto.capacite === undefined || !dto.eventId) {
     throw new BadRequestException('Données de création de table incomplètes');
   }
   // Vérifier que l'événement existe et appartient bien à l'utilisateur
@@ -41,7 +41,7 @@ async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEven
   // Vérification du numéro de table déjà utilisé
   const existingTable = await this.tableRepository.findOne({
     where: {
-      numero: dto.numero,
+      nom: dto.nom,
       event: { id: dto.eventId }
     }
   });
@@ -50,7 +50,7 @@ async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEven
   }
 
   const table = this.tableRepository.create({
-    numero: dto.numero,
+    nom: dto.nom,
     capacite: dto.capacite,
     type: dto.type,
     position: dto.position || { left: 0, top: 0 },
@@ -66,7 +66,7 @@ async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEven
   const table_event=await this.tableRepository.save(table);
   await this.notificationService.notifyAll(
     'Nouvelle table ajoutée',
-    `Une nouvelle table numero ${table_event.numero} a été ajouté pour l'événement ${event.nom}.`,
+    `Une nouvelle table numero ${table_event.nom  } a été ajouté pour l'événement ${event.nom}.`,
   );
 
   return table_event;

@@ -193,32 +193,38 @@ export default function AdminLayout() {
       { from: "Charlie", text: "Merci pour la confirmation." },
     ];
 
+    const pageBg = darkMode
+      ? "bg-gray-900 text-gray-200"
+      : "bg-gray-50 text-gray-800";
+
     return (
-      <header className="flex flex-col md:flex-row justify-between items-center gap-4 pt-8 pl-8 pr-8"
+      <header className={`flex flex-col md:flex-row justify-between items-center gap-4 pt-8 pl-8 pr-8 ${pageBg}`}
       >
         <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
           {currentPageIcon && <span className="mr-2 sm:mr-3 text-blue-700">{currentPageIcon}</span>}
           {currentPageName}
         </h2>
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-3 sm:gap-6 relative">
           <Dropdown
             ref={notifRef}
             show={showNotifications}
             setShow={setShowNotifications}
-            icon={<FaBell />}
+            icon={<FaBell className="text-lg sm:text-xl" />}
             label="Notifications"
             count={notifications.length}
             items={notifications}
+            noScroll={true}
           />
 
           <Dropdown
             ref={msgRef}
             show={showMessages}
             setShow={setShowMessages}
-            icon={<FaEnvelope />}
+            icon={<FaEnvelope className="text-lg sm:text-xl" />}
             label="Messages"
             count={messages.length}
-            items={messages}
+            items={messages.map((msg) => `${msg.from} : ${msg.text}`)}
+            noScroll={true}
           />
 
           <div ref={profileRef} className="relative">
@@ -232,14 +238,11 @@ export default function AdminLayout() {
               <div className="relative">
                 <FaUser className="w-5 h-5" />
               </div>
-              <span className={`hidden sm:inline text-sm font-medium ${
-                darkMode ? "text-purple-300" : "text-purple-600"  // Violet
-              }`}>Admin</span>
+              <span className="hidden sm:inline text-sm font-medium">Admin</span>
               <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
                 showProfile ? 'rotate-180' : ''
               }`} />
             </button>
-
             {showProfile && (
               <div
                 className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${

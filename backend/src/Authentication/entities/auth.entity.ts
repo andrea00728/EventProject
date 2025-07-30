@@ -43,7 +43,18 @@ export class User {
   @Column({type:'timestamp',nullable:true})
   datedowngraded:Date|null;
 
-   @Column({type:'timestamp',nullable:true})
-    forfaitexpirationdate:Date|null;
+  @Column({type:'timestamp',nullable:true})
+  forfaitexpirationdate:Date|null;
+
+  // gestion de status 
+  @Column({ type: 'boolean', default: false })
+  isOnline: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastLogin: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastLogout: Date;
+
 }
 

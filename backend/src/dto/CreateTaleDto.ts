@@ -1,5 +1,5 @@
 export class CreateTableDto {
-  numero: number;
+  nom:string;
   capacite: number;
   eventId: number;
   type: 'ronde' | 'carree' | 'rectangle' | 'ovale';

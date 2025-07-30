@@ -316,7 +316,7 @@ async importGuests(file: Express.Multer.File, eventId: number,userId:string): Pr
       place: true,
       table: {
         id: true,
-        numero: true,
+        nom: true,
       },
     },
   });
@@ -501,4 +501,27 @@ async countCheckinByPersonnel(userEmail: string) {
     notCheckedIn,
 }
 }
+
+async findEventIdByEmail(userEmail: string) : Promise<any> {
+
+  if (!userEmail) {
+    throw new BadRequestException('Email de l\'utilisateur manquant');
+  }
+
+  const personnel = await this.personnelService.findOneByUserEmail(userEmail);
+
+  if (!personnel ||  personnel.role !=='cuisinier' &&  personnel.role !=='caissier' ) {
+    throw new BadRequestException('Vous n\'avez pas accès à cet événement !!!');
+  }
+
+  const [eventId]=await Promise.all([
+     personnel?.evenement.id
+  ]);
+
+  return {
+    eventId
+  };
+}
+
+
 }
