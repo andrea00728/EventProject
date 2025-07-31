@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { DataGrid } from "@mui/x-data-grid";
-import socket from "../../socket";
 import { useStateContext } from "../../context/ContextProvider";
 import { Link } from "react-router-dom";
 import { getEventIdByEmail } from "../../services/invitationService";
@@ -66,7 +65,7 @@ const PaiementPage = () => {
         id: c.id,
         nom: c.nom || "Anonyme",
         email: c.email || "-",
-        table: c.table ? `Table ${c.table.numero}` : "N/A",
+        table: c.table ? `Table ${c.table.nom}` : "N/A",
         total: parseFloat(c.total || 0).toFixed(2),
         amountPaid: parseFloat(c.amountPaid || 0).toFixed(2),
         createdAt: new Date(c.orderDate).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }),

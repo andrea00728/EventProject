@@ -45,7 +45,7 @@ import EvenementAd from "../pages/Admin/Evenement.jsx";
 import Organisateur from "../pages/Admin/Organisateur.jsx";
 import Parametre from "../pages/Admin/Parametre.jsx";
 import LocationSalle from "../pages/Admin/LocationSalle.jsx";
-import MyComponent from "../pages/PersonnelCuisine/OrderGateway.jsx";
+import Test from "../layouts/test.jsx";
 import MenuListWithCart from "../pages/Menu/MenuListWithCart.jsx";
 import SystemPromptManager from "../pages/Admin/SystemPromptManager.jsx";
 import MenuForm from "../pages/menu.jsx";
@@ -69,7 +69,8 @@ import DashboardCard from "../pages/DashbordCaisse/DashboardCaisse.jsx"
 import StockPage from "../pages/DashbordCaisse/StockPage.jsx";
 import StatistiquesPage from "../pages/DashbordCaisse/StatistiquesPage.jsx";
 import RevenuPage from "../pages/DashbordCaisse/RevenuPage.jsx";
-import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Event.jsx";
+import ActivityHistory from "../pages/Admin/Historique.jsx";
+import Statique from "../pages/Admin/statistique.jsx";
 
 
 const router=createBrowserRouter([
@@ -407,6 +408,14 @@ const router=createBrowserRouter([
         path: "/AdminParametre",
         element: <Parametre />,
       },
+      {
+        path: "/AdminHistorique",
+        element: <ActivityHistory />,
+      },
+      {
+        path: "/AdminStats",
+        element: <Statique />
+      },
 
       {
         path: "/LocationSalle",
@@ -414,17 +423,6 @@ const router=createBrowserRouter([
       },
     ],
   },
-  ,
-  /************************* Page pour les cuisiniers (poue le test) ************** */
-  {
-    path: "/Cuisine",
-    element: <DashboardpersCuisine />,
-  },
-  {
-    path: "/exemple",
-    element: <MyComponent />,
-  },
-  /*********************************************************** */
   {
     path: "/",
     element: <GuestLayout />,
@@ -477,7 +475,7 @@ const router=createBrowserRouter([
     path: "/menutitemform",
     element: <MenuItemForm />,
   },
-  ,
+
   {
     path: "/systemprompt",
     element: <SystemPromptManager />,

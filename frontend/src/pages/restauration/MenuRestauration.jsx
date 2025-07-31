@@ -492,7 +492,7 @@ export default function MenuRestauration() {
                 transition: 'all 0.3s ease',
                 '&:hover': {
                   bgcolor: theme.neutral,
-                  background: '#3b83f61c',
+                  background:'#3b83f61c',
                   // transform: 'translateY(-2px)'
                 },
                 '&.Mui-selected': {
@@ -556,7 +556,7 @@ export default function MenuRestauration() {
                       Tous les menus
                     </Button>
                   </Zoom>
-
+                  
 
                   {allMenus.map((menu, index) => (
                     <Zoom in timeout={300 + index * 100} key={menu.id}>
@@ -583,7 +583,7 @@ export default function MenuRestauration() {
                       </Button>
                     </Zoom>
                   ))}
-
+                  
 
                   <Zoom in timeout={300 + allMenus.length * 100}>
                     <Button
@@ -987,7 +987,7 @@ export default function MenuRestauration() {
       >
         <DialogTitle sx={{
           background: theme.gradientCard,
-          color: 'white',
+          color: 'gray',
           display: 'flex',
           alignItems: 'center',
           gap: 2,
@@ -996,8 +996,8 @@ export default function MenuRestauration() {
         }}>
           <RestaurantIcon />
           {editingItem
-            ? `Modifier ${allMenus.find((m) => m.id === selectedMenuId)?.name || "menu"}`
-            : `Ajouter un(e) ${allMenus.find((m) => m.id === selectedMenuId)?.name || ""}`}
+            ? `Modifier - ${allMenus.find((m) => m.id === selectedMenuId)?.name || ""}`
+            : `Ajouter un - ${allMenus.find((m) => m.id === selectedMenuId)?.name || ""}`}
         </DialogTitle>
         <DialogContent sx={{ p: 4 }}>
           <Box sx={{ display: 'grid', gap: 3, mt: 2 }}>

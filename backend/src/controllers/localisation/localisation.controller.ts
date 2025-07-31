@@ -1,6 +1,7 @@
 // src/location/location.controller.ts
 import { Controller, Post, Body, Get, Param, BadRequestException, Put, Delete } from '@nestjs/common';
 import { LocationService } from 'src/services/localisation-service/localisation-service.service';
+import { Query } from '@nestjs/common';
 
 
 @Controller('locations')
@@ -14,6 +15,14 @@ export class LocationController {
       throw new BadRequestException('Le nom du lieu est requis');
     }
     return this.locationService.createLocation(nom);
+  }
+
+  @Get()
+  findLocations(@Query('search') search?: string) {
+    if (search) {
+      return this.locationService.findLocationsBySearch(search);
+    }
+    return this.locationService.findAllLocations();
   }
 
   // Récupérer tous les lieux

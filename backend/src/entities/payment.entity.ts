@@ -1,4 +1,3 @@
-// src/entities/payment.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { Order } from './order.entity';
 import { Evenement } from './Evenement';
@@ -9,7 +8,7 @@ export class Payment {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Order, (order) => order.payments)
+  @ManyToOne(() => Order, (order) => order.payments, { onDelete: 'CASCADE' })
   order: Order;
 
   @Column()

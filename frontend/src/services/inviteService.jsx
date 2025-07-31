@@ -1,22 +1,32 @@
 // inviteService.js
 
 import axiosClient from "../api/axios-client"; // Assurez-vous que le chemin est correct
+import axios from 'axios';
 
-export const createInvite = async (inviteData, token) => {
-  if (!token) throw new Error("Utilisateur non authentifié");
+const API_URL = 'http://localhost:3000/public-invites/add'; // backend public route
+const PUBLIC_API = 'http://localhost:3000/public-guest/create';
 
-  try {
-    const response = await axiosClient.post("/guests/create", inviteData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Erreur lors de la création de l'invité:", error);
-    throw error;
-  }
+export const createInvite = async (inviteData) => {
+  const token = localStorage.getItem("token");
+
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }), // seulement si token présent
+  };
+
+  const response = await fetch('http://localhost:3000/public-guest/create', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(inviteData),
+  });
+
+  if (!response.ok) throw new Error('Erreur lors de l’ajout de l’invité');
+  return response.json();
+
 };
+
+
+
 
 export const createInviteForSpecificEvent = async (inviteData, token) => {
   if (!token) throw new Error("Utilisateur non authentifié");
@@ -70,6 +80,29 @@ export const getGuestsByEventId = async (eventId, token) => {
     throw error;
   }
 };
+
+export const createGuestPublicly = async (inviteData) => {
+  try {
+    const response = await axios.post(PUBLIC_API, inviteData);
+    return response.data;
+  } catch (error) {
+    console.error('Erreur création invité public :', error);
+    throw error;
+  }
+};
+
+export const createPublicInvite = async (inviteData) => {
+  try {
+    const response = await axios.post('http://localhost:3000/public-guest/create', inviteData);
+    return response.data;
+  } catch (error) {
+    console.error('Erreur création invité public :', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Création d'un invité pour un événement spécifique (authentifié)
+
 
 // NOUVEAU : Fonction pour importer des invités depuis un fichier CSV pour le DERNIER événement de l'utilisateur
 export const importGuestsToLastEvent = async (file, token) => {

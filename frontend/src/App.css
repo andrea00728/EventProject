@@ -62,3 +62,24 @@ button.btn-primary:hover {
   background-color: #1b5fc4;
 }
 
+/* Style de la scrollbar */
+.scrollable::-webkit-scrollbar {
+  width: 10px;
+  height: 8px;
+}
+
+/* Fond de la scrollbar */
+.scrollable::-webkit-scrollbar-track {
+  background: none;
+}
+
+/* Curseur de la scrollbar */
+.scrollable::-webkit-scrollbar-thumb {
+  background-color: #c4c4c4; /* violet */
+  border-radius: 6px;
+}
+
+/* Curseur au hover */
+.scrollable::-webkit-scrollbar-thumb:hover {
+  background-color: #9e9d9e;
+}
