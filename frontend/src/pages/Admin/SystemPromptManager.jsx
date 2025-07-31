@@ -69,8 +69,8 @@ export default function SystemPromptManager() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-full mx-auto">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
