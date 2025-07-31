@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from "react";
+// Importation des dépendances nécessaires
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import { io } from "socket.io-client"; // Added socket.io-client import
 import { DataGrid } from "@mui/x-data-grid";
 
 import { useStateContext } from "../../context/ContextProvider";
@@ -24,6 +26,7 @@ const CashIcon = () => (
   </svg>
 );
 
+// Icône pour le reste à encaisser
 const CreditCardIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -41,7 +44,9 @@ const CreditCardIcon = () => (
   </svg>
 );
 
+// Composant principal pour la gestion des paiements
 const PaiementPage = () => {
+  // Déclaration des états
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
   const { token } = useStateContext();
@@ -53,6 +58,7 @@ const PaiementPage = () => {
     backToFront: { paid: "paye", unpaid: "non_paye" },
   };
 
+  // Récupération des commandes depuis le backend
   const fetchCommandes = async () => {
     try {
       setLoading(true);
@@ -61,16 +67,22 @@ const PaiementPage = () => {
       const eventId = await getEventIdByEmail(token);
       const { data } = await axios.get(`http://localhost:3000/orders/event/${eventId.eventId}`, {
         params: { include: "table,items,items.menuItem" },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      const formatted = data.map((c) => ({
+      const filteredData = data.filter((c) => c.status !== "canceled");
+
+      const formatted = filteredData.map((c) => ({
         id: c.id,
         nom: c.nom || "Anonyme",
         email: c.email || "-",
-        table: c.table ? `Table ${c.table.numero}` : "N/A",
+        table: c.table ? `Table ${c.table.nom}` : "N/A",
         total: parseFloat(c.total || 0).toFixed(2),
         amountPaid: parseFloat(c.amountPaid || 0).toFixed(2),
-        createdAt: new Date(c.orderDate).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }),
+        createdAt: new Date(c.orderDate).toLocaleString("fr-FR", {
+          dateStyle: "short",
+          timeStyle: "short",
+        }),
         paymentStatus: PAYMENT_STATUS_MAPPING.backToFront[c.paymentStatus] || "non_paye",
         items: c.items || [],
       }));
@@ -83,12 +95,57 @@ const PaiementPage = () => {
     }
   };
 
+  // Effet pour charger les données et configurer WebSocket
   useEffect(() => {
-    if (token) fetchCommandes();
-    socket.on("orderUpdated", fetchCommandes);
-    return () => socket.off("orderUpdated", fetchCommandes);
+    const setupWebSocket = async () => {
+      try {
+        const fetchedUserId = await getUserIdForToken(token);
+        setUserId(fetchedUserId);
+
+        socketRef.current = io("http://localhost:3000", {
+          auth: { userId: fetchedUserId },
+          transports: ["websocket", "polling"],
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000,
+        });
+
+        socketRef.current.on("connect", () => {
+          console.log("✅ Connecté au serveur WebSocket (PaiementPage)");
+        });
+
+        socketRef.current.on("orderUpdated", () => {
+          console.log("Mise à jour de commande reçue via WebSocket");
+          fetchCommandes();
+        });
+
+        socketRef.current.on("connect_error", (error) => {
+          console.error("WebSocket connection error:", error);
+        });
+      } catch (err) {
+        console.error("Erreur lors de l'initialisation du socket:", err);
+      }
+    };
+
+    const loadData = async () => {
+      await fetchCommandes();
+      await setupWebSocket();
+    };
+
+    if (token) {
+      loadData();
+    }
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.off("orderUpdated", fetchCommandes);
+        socketRef.current.disconnect();
+        console.log("🔌 WebSocket déconnecté (PaiementPage)");
+      }
+    };
   }, [token]);
 
+  // Gestion du changement de statut de paiement
   const handlePaymentStatusChange = async (id, newStatus) => {
     try {
       const backendStatus = PAYMENT_STATUS_MAPPING.frontToBack[newStatus];
@@ -100,12 +157,17 @@ const PaiementPage = () => {
       setCommandes((prev) =>
         prev.map((cmd) => (cmd.id === id ? { ...cmd, paymentStatus: newStatus } : cmd))
       );
-      socket.emit("paymentStatusChanged", { id, paymentStatus: backendStatus });
+      if (socketRef.current) {
+        socketRef.current.emit("paymentStatusChanged", { id, paymentStatus: backendStatus });
+      } else {
+        console.warn("Socket non connecté, impossible d'émettre l'événement paymentStatusChanged.");
+      }
     } catch (error) {
       console.error("Erreur lors du changement de statut :", error);
     }
   };
 
+  // Traitement du paiement d'une commande
   const handleProcessPayment = async (id) => {
     const row = commandes.find((c) => c.id === id);
     if (row) {
@@ -116,13 +178,16 @@ const PaiementPage = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         fetchCommandes();
+        if (socketRef.current) {
+          socketRef.current.emit("paymentProcessed", { id, amount: row.total });
+        }
       } catch (error) {
         console.error("Erreur lors du traitement du paiement :", error);
       }
     }
   };
 
-  // Fonction pour générer le tableau HTML des items de la commande (pour la facture)
+  // Génération du HTML pour les items de la facture
   const getOrderItemsHtml = (items) => {
     if (!items || items.length === 0) return "<tr><td colspan='4'>Aucun produit</td></tr>";
     return items
@@ -139,26 +204,23 @@ const PaiementPage = () => {
       .join("");
   };
 
+  // Impression de la facture
   const handlePrintInvoice = async (row) => {
     const date = new Date(row.createdAt);
     const year = date.getFullYear();
 
-    // Fonction pour formater le numéro séquentiel avec 5 chiffres (ex: 00001)
     const padSequential = (num) => num.toString().padStart(5, "0");
 
-    // Récupérer le prochain numéro séquentiel depuis le backend
-    let sequentialNumber = row.id; // Fallback utilisant l'ID de la commande
+    let sequentialNumber = row.id;
     try {
       const response = await axios.get(`http://localhost:3000/invoices/next-sequence`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      sequentialNumber = response.data.nextSequence; // Supposons que l'API renvoie le prochain numéro
+      sequentialNumber = response.data.nextSequence;
     } catch (error) {
       console.error("Erreur lors de la récupération du numéro séquentiel :", error);
-      // Fallback : utiliser l'ID de la commande si l'API échoue
     }
 
-    // Générer le numéro de facture au format FACT-YYYY-NNNNN
     const invoiceNumber = `FACT-${year}-${padSequential(sequentialNumber)}`;
 
     const invoiceHtml = `
@@ -225,6 +287,7 @@ const PaiementPage = () => {
     }
   };
 
+  // Calcul des totaux
   const totalPaid = commandes
     .reduce((sum, c) => sum + parseFloat(c.amountPaid || 0), 0)
     .toFixed(2);
@@ -232,6 +295,7 @@ const PaiementPage = () => {
     .reduce((sum, c) => sum + (c.paymentStatus === "non_paye" ? parseFloat(c.total || 0) : 0), 0)
     .toFixed(2);
 
+  // Filtrage des commandes
   const filteredCommandes = commandes.filter((c) => {
     const matchSearch =
       c.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -240,6 +304,7 @@ const PaiementPage = () => {
     return matchSearch && matchStatus;
   });
 
+  // Définition des colonnes pour DataGrid
   const columns = [
     { field: "id", headerName: "ID", width: 70 },
     { field: "nom", headerName: "Nom", width: 150 },
@@ -254,16 +319,21 @@ const PaiementPage = () => {
       width: 160,
       renderCell: ({ row }) => {
         const isPaid = row.paymentStatus === "paye";
-        const bgColor = isPaid ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700";
         return (
-          <select
+          <motion.select
+            whileHover={{ scale: 1.05 }}
             value={row.paymentStatus}
             onChange={(e) => handlePaymentStatusChange(row.id, e.target.value)}
-            className={`w-full rounded-md py-1.5 px-3 text-sm font-semibold ${bgColor} border-none`}
+            className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 h-9 ${
+              isPaid
+                ? "bg-green-100 text-green-700 border border-green-300"
+                : "bg-red-100 text-red-700 border border-red-300"
+            } focus:ring-2 focus:ring-indigo-500 focus:outline-none`}
+            aria-label="Changer le statut de paiement"
           >
             <option value="paye">Payé</option>
             <option value="non_paye">Non Payé</option>
-          </select>
+          </motion.select>
         );
       },
     },
@@ -273,86 +343,108 @@ const PaiementPage = () => {
       width: 220,
       sortable: false,
       renderCell: ({ row }) => (
-        <div className="flex gap-2">
-          <button
+        <div className="flex gap-2 items-center">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => handleProcessPayment(row.id)}
             disabled={row.paymentStatus === "paye"}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-3 py-1.5 rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className={`flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+              row.paymentStatus === "paye"
+                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                : "bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            }`}
+            aria-label="Payer la commande"
           >
+            <FaDollarSign className="mr-2" />
             Payer
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => handlePrintInvoice(row)}
-            className="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 text-sm px-3 py-1.5 rounded-md"
+            className="flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            aria-label="Imprimer la facture"
           >
+            <FaPrint className="mr-2" />
             Facture
-          </button>
+          </motion.button>
         </div>
       ),
     },
   ];
 
+  // Rendu de l'interface utilisateur
   return (
-    <div
-      className="min-h-screen bg-cover bg-center relative"
-      style={{ backgroundImage: "url('/pexels-karolina-grabowska-4475523.jpg')" }}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="min-h-screen bg-gray-100 flex flex-col p-4 sm:p-6"
     >
-      {/* Fond plus clair avec overlay blanc semi-transparent */}
-      <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-0" />
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-10">
-          <h1 className="text-4xl font-bold text-gray-900">Gestion des Paiements</h1>
-          <Link to="/caisse" className="text-indigo-600 font-medium hover:underline">
-            ← Retour
+      <div className="relative z-10 max-w-7xl mx-auto flex-1 flex flex-col space-y-6">
+        {/* En-tête */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+            Gestion des Paiements
+          </h1>
+          <Link
+            to="/caisse"
+            className="flex items-center justify-center px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
+            aria-label="Retour à la caisse"
+          >
+            <FaArrowLeft className="mr-2" />
+            Retour
           </Link>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-2xl shadow-md flex justify-between items-center hover:shadow-lg transition">
-            <div>
-              <p className="text-gray-500 text-sm">Total encaissé</p>
-              <p className="text-3xl font-bold text-gray-900">{totalPaid} €</p>
-            </div>
-            <div className="bg-green-100 p-3 rounded-full">
-              <CashIcon />
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-2xl shadow-md flex justify-between items-center hover:shadow-lg transition">
-            <div>
-              <p className="text-gray-500 text-sm">Reste à encaisser</p>
-              <p className="text-3xl font-bold text-gray-900">{totalDue} €</p>
-            </div>
-            <div className="bg-red-100 p-3 rounded-full">
-              <CreditCardIcon />
-            </div>
-          </div>
+        {/* Statistiques */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[
+            { title: "Total Encaissé", value: `${totalPaid} €`, color: "bg-green-100", icon: <CashIcon /> },
+            { title: "Reste à Encaisser", value: `${totalDue} €`, color: "bg-red-100", icon: <CreditCardIcon /> },
+          ].map((stat, index) => (
+            <motion.div
+              key={index}
+              whileHover={{ scale: 1.03 }}
+              className={`${stat.color} rounded-2xl p-6 shadow-lg transition-all duration-300 flex justify-between items-center`}
+            >
+              <div>
+                <p className="text-sm font-semibold text-gray-600">{stat.title}</p>
+                <p className="text-2xl font-bold text-gray-900 mt-2">{stat.value}</p>
+              </div>
+              <div className="p-3 rounded-full bg-white/50">{stat.icon}</div>
+            </motion.div>
+          ))}
         </div>
 
-        {/* Search + Filter */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        {/* Filtres */}
+        <div className="bg-white rounded-2xl shadow-lg p-4 flex flex-col sm:flex-row gap-3 items-center">
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Rechercher par nom ou email..."
-            className="w-full md:w-1/2 px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+            className="w-full sm:w-1/2 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
           />
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full md:w-1/4 px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+            className="w-full sm:w-1/4 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
           >
-            <option value="all">Tous</option>
+            <option value="all">Tous les statuts</option>
             <option value="paye">Payé</option>
             <option value="non_paye">Non Payé</option>
           </select>
         </div>
 
-        {/* DataGrid */}
-        <div className="bg-white rounded-2xl shadow-md p-4" style={{ width: "100%" }}>
+        {/* Tableau des paiements */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-2xl shadow-lg overflow-hidden"
+        >
           <DataGrid
             rows={filteredCommandes}
             columns={columns}
@@ -360,10 +452,16 @@ const PaiementPage = () => {
             disableSelectionOnClick
             getRowId={(row) => row.id}
             autoHeight
+            className="border-none"
+            sx={{
+              "& .MuiDataGrid-cell": { fontSize: "0.875rem" },
+              "& .MuiDataGrid-columnHeaders": { backgroundColor: "#f8fafc", fontWeight: "bold" },
+              "& .MuiDataGrid-row:hover": { backgroundColor: "#f1f5f9" },
+            }}
           />
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
