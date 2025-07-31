@@ -92,4 +92,3 @@ export const getCountForAllEventStats = async () => {
 }*/);
   return response.data;
 }
-

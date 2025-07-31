@@ -365,7 +365,10 @@ export default function MenuRestauration() {
             onChange={(e) => setForm({ ...form, photo: e.target.files[0] })}
           /> */}
           <TextField
-            type="file"
+            key={field}
+            label={field === 'name' ? 'Nom' : field === 'description' ? 'Description' : field === 'price' ? 'Prix' : field === 'category' ? 'Catégorie' : 'Stock'}
+            value={form[field] || ''}
+            type={field === 'price' || field === 'stock' ? 'number' : 'text'}
             fullWidth
             margin="dense"
             variant="outlined"

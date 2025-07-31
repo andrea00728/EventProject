@@ -52,7 +52,6 @@ export default function DashboardpersCuisine() {
   const [error, setError] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [userId, setUserId] = useState(null);
-  const [socket, setSocket] = useState(null); // Ajout pour gérer une seule connexion WebSocket
   const { user, token, setToken, setUser } = useStateContext();
 
   useEffect(() => {
@@ -62,7 +61,6 @@ export default function DashboardpersCuisine() {
 
         const eventId = await getEventIdByEmail(token);
         const data = await getAllOrdersForOnEvent(eventId.eventId);
-
         setLoading(true);
         setError(null);
         setCommandes(data);
@@ -133,6 +131,12 @@ export default function DashboardpersCuisine() {
   };
 
   const changerStatut = async (id, direction = "next") => {
+    const socket = io("http://localhost:3000", {
+      auth: {
+        userId: userId,
+      },
+    });
+    
     if (!socket) {
       console.error("Socket non disponible");
       return;
