@@ -692,6 +692,16 @@ function MoneyChart({ darkMode }) {
   const [revenus, setRevenus] = useState([]);
   const [labels, setLabels] = useState([]);
 
+  const colorsMap = {
+    freemium: "#a3a3a3",
+    starter: "#60a5fa",
+    pro: "#34d399",
+    premium: "#fbbf24",
+    gold: "#f59e0b",
+  };
+
+  // console.log('voalohany',typeof(Object.keys(colorsMap)[0]))
+
   const fetchData = async () => {
     try {
       const res = await getRevenuMensuel();
@@ -699,6 +709,7 @@ function MoneyChart({ darkMode }) {
       const yData = res.map((item) => item.percentage);
       setLabels(xLabels);
       setRevenus(yData);
+      console.log(yData)
     } catch (err) {
       console.error("Erreur lors du chargement des revenus", err);
     }
@@ -717,7 +728,7 @@ function MoneyChart({ darkMode }) {
         series={[
           {
             data: revenus,
-            label: "Affichage de revenus par poucentage (€)",
+            label: "Affichage de revenus par poucentage (%)",
             color: "#a855f7",
           },
         ]}
