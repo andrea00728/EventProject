@@ -30,7 +30,7 @@ import { getCountForAllEventStats } from "../../services/evenementServ";
 import { getOrgStats, getUserCount } from "../../services/userService";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { io } from "socket.io-client";
+// import { io } from "socket.io-client";
 import { FaRegMoneyBill1 } from "react-icons/fa6";
 
 export default function Dashboard() {
@@ -201,7 +201,7 @@ export default function Dashboard() {
 
   const pageBg = darkMode
     ? "bg-gray-900 text-gray-200"
-    : "bg-gradient-to-r from-white to-gray-50 text-gray-800";
+    : "bg-gray-50 text-gray-800";
 
   return (
     <div
