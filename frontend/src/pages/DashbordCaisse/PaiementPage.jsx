@@ -3,14 +3,12 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { io } from "socket.io-client"; // Added socket.io-client import
 import { DataGrid } from "@mui/x-data-grid";
+
 import { useStateContext } from "../../context/ContextProvider";
 import { Link } from "react-router-dom";
 import { getEventIdByEmail } from "../../services/invitationService";
-import { getUserIdForToken } from "../../services/userService"; // Added userService import
-import { motion } from "framer-motion";
-import { FaArrowLeft, FaPrint, FaDollarSign } from "react-icons/fa";
-
-// Icône pour le total encaissé
+import { useSocket } from "../../socket";
+ 
 const CashIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -54,10 +52,7 @@ const PaiementPage = () => {
   const { token } = useStateContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const socketRef = useRef(null); // UseRef to store the socket instance
-  const [userId, setUserId] = useState(null); // State to store userId for WebSocket auth
-
-  // Mappage des statuts de paiement
+  const socket=useSocket();
   const PAYMENT_STATUS_MAPPING = {
     frontToBack: { paye: "paid", non_paye: "unpaid" },
     backToFront: { paid: "paye", unpaid: "non_paye" },

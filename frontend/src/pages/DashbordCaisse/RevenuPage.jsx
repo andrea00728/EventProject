@@ -7,24 +7,9 @@ import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
 import { Bar, Line } from "react-chartjs-2";
 import { getEventIdByEmail } from "../../services/invitationService";
-import { getUserIdForToken } from "../../services/userService";
-import {
-  Chart as ChartJS,
-  BarElement,
-  LineElement,
-  PointElement,
-  CategoryScale,
-  LinearScale,
-  Tooltip,
-  Legend,
-  Filler,
-} from "chart.js";
-import jsPDF from "jspdf";
-// import autoTable from "jspdf-autotable"; // Uncommented for PDF export
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { debounce } from "lodash";
-import { FaArrowLeft, FaSync, FaFileCsv, FaFilePdf, FaEye, FaUndo } from "react-icons/fa";
+
+import { CurrencyEuroIcon, ChartBarIcon, CalendarIcon, ArrowTrendingUpIcon } from "@heroicons/react/24/outline";
+import { useSocket } from "../../socket";
 
 // Enregistrement des composants ChartJS
 ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler);

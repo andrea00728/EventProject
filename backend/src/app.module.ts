@@ -60,6 +60,8 @@ import { SatisfactionModule } from './modules/satisfaction/satisfaction.module';
 
 // Contrôleurs et services globaux
 import { ProfileController } from './controllers/profile/profile.controller';
+import { NotificationController } from './controllers/notification/notification.controller';
+import { NotificationEntity } from './entities/notification.entity';
 
 @Module({
   imports: [
@@ -90,8 +92,30 @@ import { ProfileController } from './controllers/profile/profile.controller';
           username: dbUsername,
           password: dbPassword,
           database: dbDatabase,
-          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, Forfait, SystemPrompt, ShortLink, Commentaire, Satisfaction, Favorite],
-     
+          entities: [
+            User,
+            Evenement,
+            Localisation,
+            Invitation,
+            Invite,
+            Salle,
+            TableEvent,
+            Place,
+            Personnel,
+            Menu,
+            MenuItem,
+            Order,
+            OrderItem,
+            Payment,
+            Balance,
+            Forfait,
+            SystemPrompt,
+            ShortLink,
+            Commentaire,
+            Satisfaction,
+            NotificationEntity,
+            Favorite
+          ],
           synchronize: true,
         };
       },

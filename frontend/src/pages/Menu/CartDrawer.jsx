@@ -131,7 +131,7 @@ const CartDrawer = ({
       {/* Overlay foncé quand le panier est ouvert */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-black/30 z-40"
           onClick={onClose}
           aria-hidden="true"
           tabIndex={-1}

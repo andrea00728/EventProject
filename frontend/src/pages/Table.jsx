@@ -70,9 +70,15 @@ export default function Table({ eventId, onNext, onBack }) {
   }, [eventId, token]);
 
   // Passe le type de table sélectionné au formulaire
-  const handleCreateTable = async (formData) => {
+  const handleCreateTable = async (formDataArray) => {
     try {
-      await createTable({ ...formData, eventId }, token); // NE PAS forcer type: selectedType ici
+      const tables=[];
+      for(const formData of formDataArray){
+        const table = await createTable({ ...formData, eventId }, token);
+        tables.push(table);
+      }
+   
+      setTables((prev) => [...prev, ...tables]);
       await loadTables();
     } catch (err) {
       console.error("Erreur lors de la création d'une table", err);
