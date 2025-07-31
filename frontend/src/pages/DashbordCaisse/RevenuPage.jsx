@@ -1,3 +1,4 @@
+{/* Importation des dépendances nécessaires */}
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -23,9 +24,12 @@ import "react-toastify/dist/ReactToastify.css";
 import socket from "../../socket";
 import { debounce } from "lodash";
 
+// Enregistrement des composants ChartJS
 ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler);
 
+// Composant principal de la page des revenus
 const RevenuPage = () => {
+  // Déclaration des états avec useState
   const [revenus, setRevenus] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefunding, setIsRefunding] = useState({});
@@ -45,6 +49,7 @@ const RevenuPage = () => {
   const { token, setToken } = useStateContext();
   const navigate = useNavigate();
 
+  // Fonction pour rafraîchir le token
   const refreshToken = useCallback(async () => {
     try {
       const response = await axios.post(
@@ -62,6 +67,7 @@ const RevenuPage = () => {
     }
   }, [token, setToken, navigate]);
 
+  // Fonction pour récupérer les données des revenus
   const fetchRevenus = useCallback(async () => {
     try {
       setLoading(true);
@@ -181,13 +187,13 @@ const RevenuPage = () => {
     }
   }, [token, refreshToken, navigate]);
 
+  // Gestion du remboursement des commandes
   const handleRefund = useCallback(
     async (id) => {
       if (!window.confirm("Confirmer le remboursement de cette commande ?")) return;
       try {
         setIsRefunding((prev) => ({ ...prev, [id]: true }));
 
-        // Vérifier l'existence et l'état de la commande
         const { data: order } = await axios.get(`http://localhost:3000/orders/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -205,14 +211,12 @@ const RevenuPage = () => {
           return;
         }
 
-        // Effectuer le remboursement
         await axios.patch(
           `http://localhost:3000/orders/${id}/refunded`,
           { paymentStatus: "refunded" },
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        // Supprimer la commande du state local
         setRevenus((prev) => prev.filter((cmd) => cmd.id !== id));
         socket.emit("orderRefunded", { id, paymentStatus: "refunded" });
         socket.emit("orderDeleted", { id });
@@ -233,11 +237,13 @@ const RevenuPage = () => {
     [token, fetchRevenus]
   );
 
+  // Débouncer la fonction de remboursement
   const handleRefundDebounced = useMemo(() => debounce(handleRefund, 300), [handleRefund]);
 
+  // Filtrage des revenus en fonction des critères de recherche
   const filteredRevenus = useMemo(() => {
     return revenus
-      .filter((rev) => rev.paymentStatus !== "Remboursé") // Exclure les commandes remboursées
+      .filter((rev) => rev.paymentStatus !== "Remboursé")
       .filter((rev) => {
         const matchSearch = rev.email.toLowerCase().includes(searchTerm.toLowerCase());
         const orderDate = rev.orderDate ? new Date(rev.orderDate) : null;
@@ -255,6 +261,7 @@ const RevenuPage = () => {
       });
   }, [revenus, searchTerm, filterPeriod, filterStatus]);
 
+  // Exportation des données en CSV
   const exportToCSV = useCallback(() => {
     const headers = ["ID,Client,Email,Total (€),Payé (€),Statut,Méthode,Date"];
     const rows = filteredRevenus.map((rev) =>
@@ -271,6 +278,7 @@ const RevenuPage = () => {
     toast.success("Exportation CSV réussie");
   }, [filteredRevenus]);
 
+  // Exportation des données en PDF
   const exportToPDF = useCallback(() => {
     const doc = new jsPDF();
     doc.setFontSize(16);
@@ -313,6 +321,7 @@ const RevenuPage = () => {
     toast.success("Exportation PDF réussie");
   }, [filteredRevenus, totalRevenue, totalPending, totalRefunded, categoryBreakdown]);
 
+  // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredRevenus.slice(indexOfFirstItem, indexOfLastItem);
@@ -320,6 +329,7 @@ const RevenuPage = () => {
 
   const paginate = useCallback((pageNumber) => setCurrentPage(pageNumber), []);
 
+  // Données pour le graphique à barres
   const barChartData = useMemo(
     () => ({
       labels: ["Payé", "Non payé"],
@@ -336,6 +346,7 @@ const RevenuPage = () => {
     [totalRevenue, totalPending]
   );
 
+  // Données pour le graphique temporel
   const timeSeriesChartData = useMemo(
     () => ({
       labels: timeSeriesData.map((item) => item.date),
@@ -355,6 +366,7 @@ const RevenuPage = () => {
     [timeSeriesData]
   );
 
+  // Options des graphiques
   const chartOptions = useMemo(
     () => ({
       responsive: true,
@@ -395,6 +407,7 @@ const RevenuPage = () => {
     []
   );
 
+  // Effet pour initialiser la récupération des données et la connexion socket
   useEffect(() => {
     if (token) {
       fetchRevenus();
@@ -418,348 +431,344 @@ const RevenuPage = () => {
     }
   }, [token, navigate, fetchRevenus]);
 
+  // Rendu de l'interface utilisateur
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="h-screen bg-cover bg-center bg-fixed flex flex-col"
-      style={{
-        backgroundImage:
-          "url('https://images.unsplash.com/photo-1542744095-291d1f67b221')",
-      }}
+      className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 flex flex-col p-4 sm:p-6"
     >
-      <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-0" />
-      <div className="relative z-10 max-w-7xl mx-auto px-2 sm:px-4 py-4 flex-1 flex flex-col">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 drop-shadow-md">
-            Gestion des Revenus
+      {/* Conteneur principal */}
+      <div className="relative z-10 max-w-7xl mx-auto flex-1 flex flex-col space-y-6">
+        {/* En-tête avec titre et lien de retour */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+            Tableau de Bord des Revenus
           </h1>
           <Link
             to="/caisse"
-            className="text-indigo-600 hover:text-indigo-800 font-medium underline transition text-sm"
+            className="text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-200 flex items-center gap-2"
           >
-            ← Retour
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Retour
           </Link>
         </div>
 
-        <div className="flex flex-col flex-1 gap-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-1 grid grid-cols-3 gap-4">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="bg-white/90 backdrop-blur-md rounded-lg p-4 shadow-md"
-              >
-                <h3 className="text-sm font-semibold text-gray-700">Total</h3>
-                <p className="text-xl font-bold text-gray-900">€{totalRevenue}</p>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="bg-white/90 backdrop-blur-md rounded-lg p-4 shadow-md"
-              >
-                <h3 className="text-sm font-semibold text-gray-700">En attente</h3>
-                <p className="text-xl font-bold text-gray-900">€{totalPending}</p>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="bg-white/90 backdrop-blur-md rounded-lg p-4 shadow-md"
-              >
-                <h3 className="text-sm font-semibold text-gray-700">Remboursé</h3>
-                <p className="text-xl font-bold text-gray-900">€{totalRefunded}</p>
-              </motion.div>
-            </div>
-            <div className="lg:col-span-2 flex flex-col sm:flex-row gap-2 items-center">
-              <input
-                type="text"
-                placeholder="Rechercher par email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full sm:w-2/5 px-3 py-1.5 rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm text-gray-700 placeholder-gray-400"
-              />
-              <select
-                value={filterPeriod}
-                onChange={(e) => setFilterPeriod(e.target.value)}
-                className="w-full sm:w-1/5 px-3 py-1.5 rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm text-gray-700"
-              >
-                <option value="all">Toutes</option>
-                <option value="today">Aujourd'hui</option>
-                <option value="week">Semaine</option>
-                <option value="month">Mois</option>
-              </select>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full sm:w-1/5 px-3 py-1.5 rounded-lg bg-white border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm text-gray-700"
-              >
-                <option value="all">Tous statuts</option>
-                <option value="Payé">Payé</option>
-                <option value="Non payé">Non payé</option>
-                <option value="Remboursé">Remboursé</option>
-              </select>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={fetchRevenus}
-                className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm"
-              >
-                Actualiser
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={exportToCSV}
-                className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
-              >
-                CSV
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={exportToPDF}
-                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
-              >
-                PDF
-              </motion.button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1">
+        {/* Statistiques principales */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { title: "Total des Revenus", value: `€${totalRevenue}`, color: "bg-green-100" },
+            { title: "En Attente", value: `€${totalPending}`, color: "bg-yellow-100" },
+            { title: "Remboursé", value: `€${totalRefunded}`, color: "bg-red-100" },
+          ].map((stat, index) => (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="lg:col-span-1 bg-white/90 backdrop-blur-md rounded-lg p-4 shadow-md flex flex-col"
+              key={index}
+              whileHover={{ scale: 1.03 }}
+              className={`${stat.color} rounded-2xl p-6 shadow-lg transition-all duration-300`}
             >
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-sm font-semibold text-gray-700">
-                  {chartType === "bar" ? "Répartition des revenus" : "Revenus par période"}
-                </h3>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setChartType(chartType === "bar" ? "line" : "bar")}
-                  className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition"
-                >
-                  {chartType === "bar" ? "Graphique temporel" : "Graphique à barres"}
-                </motion.button>
-              </div>
-              <div className="flex-1 h-32">
-                {chartType === "bar" ? (
-                  <Bar data={barChartData} options={chartOptions} />
-                ) : (
-                  <Line data={timeSeriesChartData} options={chartOptions} />
-                )}
-              </div>
+              <h3 className="text-sm font-semibold text-gray-600">{stat.title}</h3>
+              <p className="text-2xl font-bold text-gray-900 mt-2">{stat.value}</p>
             </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="lg:col-span-2 bg-white/90 backdrop-blur-md rounded-lg shadow-md flex flex-col"
+          ))}
+        </div>
+
+        {/* Filtres et boutons d'action */}
+        <div className="bg-white rounded-2xl shadow-lg p-4 flex flex-col sm:flex-row gap-3 items-center">
+          <input
+            type="text"
+            placeholder="Rechercher par email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full sm:w-1/3 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm placeholder-gray-400 transition-colors duration-200"
+          />
+          <select
+            value={filterPeriod}
+            onChange={(e) => setFilterPeriod(e.target.value)}
+            className="w-full sm:w-1/6 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm transition-colors duration-200"
+          >
+            <option value="all">Toutes les périodes</option>
+            <option value="today">Aujourd'hui</option>
+            <option value="week">Cette semaine</option>
+            <option value="month">Ce mois</option>
+          </select>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="w-full sm:w-1/6 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm transition-colors duration-200"
+          >
+            <option value="all">Tous les statuts</option>
+            <option value="Payé">Payé</option>
+            <option value="Non payé">Non payé</option>
+            <option value="Remboursé">Remboursé</option>
+          </select>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={fetchRevenus}
+              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 text-sm font-medium"
             >
-              <div className="p-4 flex-1">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                  Détails des revenus
-                </h3>
-                <table className="w-full text-sm text-left text-gray-700">
-                  <thead className="text-xs uppercase bg-gray-100">
+              Actualiser
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={exportToCSV}
+              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-medium"
+            >
+              Exporter CSV
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={exportToPDF}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+            >
+              Exporter PDF
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Graphique et tableau des revenus */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-2xl shadow-lg p-6 flex flex-col"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">
+                {chartType === "bar" ? "Répartition des Revenus" : "Revenus par Période"}
+              </h3>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setChartType(chartType === "bar" ? "line" : "bar")}
+                className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors duration-200 text-sm"
+              >
+                {chartType === "bar" ? "Voir Temporel" : "Voir Barres"}
+              </motion.button>
+            </div>
+            <div className="flex-1 h-64">
+              {chartType === "bar" ? (
+                <Bar data={barChartData} options={chartOptions} />
+              ) : (
+                <Line data={timeSeriesChartData} options={chartOptions} />
+              )}
+            </div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6 flex flex-col"
+          >
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Détails des Revenus</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-gray-600">
+                <thead className="text-xs uppercase bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3">ID</th>
+                    <th className="px-4 py-3">Client</th>
+                    <th className="px-4 py-3">Email</th>
+                    <th className="px-4 py-3 text-right">Total (€)</th>
+                    <th className="px-4 py-3 text-right">Payé (€)</th>
+                    <th className="px-4 py-3">Statut</th>
+                    <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
                     <tr>
-                      <th className="px-3 py-2 w-16">ID</th>
-                      <th className="px-3 py-2 w-1/5 truncate">Client</th>
-                      <th className="px-3 py-2 w-2/5 truncate">Email</th>
-                      <th className="px-3 py-2 w-20 text-right">Total (€)</th>
-                      <th className="px-3 py-2 w-20 text-right">Payé (€)</th>
-                      <th className="px-3 py-2 w-24">Statut</th>
-                      <th className="px-3 py-2 w-1/4 truncate">Date</th>
-                      <th className="px-3 py-2 w-24">Actions</th>
+                      <td colSpan="8" className="px-4 py-3 text-center text-gray-500">
+                        Chargement des données...
+                      </td>
+                    </tr>
+                  ) : currentItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="px-4 py-3 text-center text-gray-500">
+                        Aucune donnée disponible
+                      </td>
+                    </tr>
+                  ) : (
+                    currentItems.map((rev) => (
+                      <tr key={rev.id} className="border-b hover:bg-gray-50 transition-colors duration-150">
+                        <td className="px-4 py-3">{rev.id}</td>
+                        <td className="px-4 py-3 truncate max-w-[150px]" title={rev.nom}>
+                          {rev.nom}
+                        </td>
+                        <td className="px-4 py-3 truncate max-w-[200px]" title={rev.email}>
+                          {rev.email}
+                        </td>
+                        <td className="px-4 py-3 text-right">{rev.total}</td>
+                        <td className="px-4 py-3 text-right">{rev.amountPaid}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              rev.paymentStatus === "Payé"
+                                ? "bg-green-100 text-green-800"
+                                : rev.paymentStatus === "Remboursé"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {rev.paymentStatus}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 truncate" title={rev.date}>
+                          {rev.date}
+                        </td>
+                        <td className="px-4 py-3 flex gap-2">
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setShowDetailsModal(rev)}
+                            className="px-3 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 text-xs font-medium"
+                          >
+                            Détails
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleRefundDebounced(rev.id)}
+                            disabled={isRefunding[rev.id] || rev.paymentStatus !== "Payé"}
+                            className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200 ${
+                              isRefunding[rev.id] || rev.paymentStatus !== "Payé"
+                                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                                : "bg-red-600 text-white hover:bg-red-700"
+                            }`}
+                          >
+                            {isRefunding[rev.id] ? "En cours..." : "Rembourser"}
+                          </motion.button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-center items-center gap-3 mt-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
+              >
+                Précédent
+              </motion.button>
+              <span className="text-sm text-gray-600">
+                Page {currentPage} sur {totalPages}
+              </span>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
+              >
+                Suivant
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Répartition par catégorie */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-2xl shadow-lg p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Répartition par Catégorie</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left text-gray-600">
+              <thead className="text-xs uppercase bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3">Catégorie</th>
+                  <th className="px-4 py-3 text-right">Revenu (€)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.keys(categoryBreakdown).length === 0 ? (
+                  <tr>
+                    <td colSpan="2" className="px-4 py-3 text-center text-gray-500">
+                      Aucune donnée de catégorie disponible
+                    </td>
+                  </tr>
+                ) : (
+                  Object.entries(categoryBreakdown).map(([category, revenue]) => (
+                    <tr key={category} className="border-b hover:bg-gray-50 transition-colors duration-150">
+                      <td className="px-4 py-3 truncate">{category}</td>
+                      <td className="px-4 py-3 text-right">{revenue}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+
+        {/* Modal pour les détails de la commande */}
+        {showDetailsModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-white rounded-2xl p-6 max-w-2xl w-full shadow-xl"
+            >
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                Détails de la Commande #{showDetailsModal.id}
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left text-gray-600">
+                  <thead className="text-xs uppercase bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3">Article</th>
+                      <th className="px-4 py-3 text-right">Quantité</th>
+                      <th className="px-4 py-3 text-right">Prix (€)</th>
+                      <th className="px-4 py-3 text-right">Total (€)</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {loading ? (
+                    {showDetailsModal.items.length === 0 ? (
                       <tr>
-                        <td colSpan="8" className="px-3 py-2 text-center">
-                          Chargement...
-                        </td>
-                      </tr>
-                    ) : currentItems.length === 0 ? (
-                      <tr>
-                        <td colSpan="8" className="px-3 py-2 text-center">
-                          Aucune donnée
+                        <td colSpan="4" className="px-4 py-3 text-center text-gray-500">
+                          Aucun article
                         </td>
                       </tr>
                     ) : (
-                      currentItems.map((rev) => (
-                        <tr key={rev.id} className="border-b hover:bg-gray-50">
-                          <td className="px-3 py-2">{rev.id}</td>
-                          <td className="px-3 py-2 truncate" title={rev.nom}>
-                            {rev.nom}
+                      showDetailsModal.items.map((item, index) => (
+                        <tr key={index} className="border-b hover:bg-gray-50 transition-colors duration-150">
+                          <td className="px-4 py-3 truncate">{item.menuItem?.name || "Inconnu"}</td>
+                          <td className="px-4 py-3 text-right">{item.quantity || 0}</td>
+                          <td className="px-4 py-3 text-right">
+                            {parseFloat(item.subtotal / (item.quantity || 1)).toFixed(2)}
                           </td>
-                          <td className="px-3 py-2 truncate" title={rev.email}>
-                            {rev.email}
-                          </td>
-                          <td className="px-3 py-2 text-right">{rev.total}</td>
-                          <td className="px-3 py-2 text-right">{rev.amountPaid}</td>
-                          <td className="px-3 py-2">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                rev.paymentStatus === "Payé"
-                                  ? "bg-green-100 text-green-800"
-                                  : rev.paymentStatus === "Remboursé"
-                                  ? "bg-red-100 text-red-800"
-                                  : "bg-yellow-100 text-yellow-800"
-                              }`}
-                            >
-                              {rev.paymentStatus}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2 truncate" title={rev.date}>
-                            {rev.date}
-                          </td>
-                          <td className="px-3 py-2 flex gap-1">
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => setShowDetailsModal(rev)}
-                              className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition"
-                            >
-                              Détails
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => handleRefundDebounced(rev.id)}
-                              disabled={isRefunding[rev.id] || rev.paymentStatus !== "Payé"}
-                              className={`px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition ${
-                                isRefunding[rev.id] || rev.paymentStatus !== "Payé"
-                                  ? "opacity-50 cursor-not-allowed"
-                                  : ""
-                              }`}
-                            >
-                              {isRefunding[rev.id] ? "En cours..." : "Rembourser"}
-                            </motion.button>
+                          <td className="px-4 py-3 text-right">
+                            {parseFloat(item.subtotal || 0).toFixed(2)}
                           </td>
                         </tr>
                       ))
                     )}
                   </tbody>
                 </table>
-                <div className="flex justify-center gap-2 mt-2">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => paginate(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs disabled:opacity-50"
-                  >
-                    Précédent
-                  </motion.button>
-                  <span className="text-xs text-gray-700">
-                    Page {currentPage} sur {totalPages}
-                  </span>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => paginate(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs disabled:opacity-50"
-                  >
-                    Suivant
-                  </motion.button>
-                </div>
               </div>
-            </motion.div>
-          </div>
-        
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white/90 backdrop-blur-md rounded-lg shadow-md"
-          >
-            <div className="p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                Répartition par catégorie
-              </h3>
-              <table className="w-full text-sm text-left text-gray-700">
-                <thead className="text-xs uppercase bg-gray-100">
-                  <tr>
-                    <th className="px-3 py-2 w-3/4">Catégorie</th>
-                    <th className="px-3 py-2 w-1/4 text-right">Revenu (€)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.keys(categoryBreakdown).length === 0 ? (
-                    <tr>
-                      <td colSpan="2" className="px-3 py-2 text-center">
-                        Aucune donnée de catégorie disponible
-                      </td>
-                    </tr>
-                  ) : (
-                    Object.entries(categoryBreakdown).map(([category, revenue]) => (
-                      <tr key={category} className="border-b hover:bg-gray-50">
-                        <td className="px-3 py-2 truncate">{category}</td>
-                        <td className="px-3 py-2 text-right">{revenue}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </motion.div>
-        </div>
-
-        {showDetailsModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.8, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              className="bg-white rounded-lg p-6 max-w-lg w-full mx-4"
-            >
-              <h3 className="text-lg font-semibold text-gray-700 mb-4">
-                Détails de la commande #{showDetailsModal.id}
-              </h3>
-              <table className="w-full text-sm text-left text-gray-700">
-                <thead className="text-xs uppercase bg-gray-100">
-                  <tr>
-                    <th className="px-3 py-2">Article</th>
-                    <th className="px-3 py-2 text-right">Quantité</th>
-                    <th className="px-3 py-2 text-right">Prix (€)</th>
-                    <th className="px-3 py-2 text-right">Total (€)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {showDetailsModal.items.length === 0 ? (
-                    <tr>
-                      <td colSpan="4" className="px-3 py-2 text-center">
-                        Aucun article
-                      </td>
-                    </tr>
-                  ) : (
-                    showDetailsModal.items.map((item, index) => (
-                      <tr key={index} className="border-b">
-                        <td className="px-3 py-2 truncate">{item.menuItem?.name || "Inconnu"}</td>
-                        <td className="px-3 py-2 text-right">{item.quantity || 0}</td>
-                        <td className="px-3 py-2 text-right">
-                          {parseFloat(item.subtotal / (item.quantity || 1)).toFixed(2)}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          {parseFloat(item.subtotal || 0).toFixed(2)}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
               <div className="flex justify-end mt-4">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setShowDetailsModal(null)}
-                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
                 >
                   Fermer
                 </motion.button>

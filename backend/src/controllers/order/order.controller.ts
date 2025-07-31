@@ -217,6 +217,7 @@ export class OrderController {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
     const user = await this.userRepository.findOne({ where: { id: userId } });
+    console.log('Utilisateur pour getRefundedOrders:', { userId, role: user?.role });
     if (!user || user.role !== 'caissier') {
       throw new UnauthorizedException('Seul un caissier peut voir les commandes remboursées');
     }
@@ -240,8 +241,16 @@ export class OrderController {
     @Request() req: any
   ): Promise<{ message: string }> {
     try {
-      console.log(`Marquer la commande comme remboursée pour orderId: ${id}, userId: ${req.user?.sub}`);
+      console.log('Requête reçue pour markAsRefunded', {
+        orderId: id,
+        user: req.user,
+        userId: req.user?.sub,
+        body,
+      });
+
       const user = await this.userRepository.findOne({ where: { id: req.user?.sub } });
+      console.log('Utilisateur trouvé:', { userId: req.user?.sub, role: user?.role });
+
       if (!user || user.role !== 'caissier') {
         throw new UnauthorizedException('Seul un caissier peut marquer une commande comme remboursée');
       }
