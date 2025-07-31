@@ -11,8 +11,9 @@ import {
 } from "recharts";
 import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
-import socket from "../../socket";
+
 import { CurrencyEuroIcon, ChartBarIcon, CalendarIcon, ArrowTrendingUpIcon } from "@heroicons/react/24/outline";
+import { useSocket } from "../../socket";
 
 const RevenuPage = () => {
   const [commandes, setCommandes] = useState([]);
@@ -20,7 +21,7 @@ const RevenuPage = () => {
   const [loading, setLoading] = useState(true);
   const { token } = useStateContext();
   const navigate = useNavigate();
-
+  const socket = useSocket();
   const fetchCommandes = async () => {
     try {
       setLoading(true);

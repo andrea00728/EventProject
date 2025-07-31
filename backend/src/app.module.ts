@@ -56,6 +56,8 @@ import { SatisfactionModule } from './modules/satisfaction/satisfaction.module';
 
 // Contrôleurs et services globaux
 import { ProfileController } from './controllers/profile/profile.controller';
+import { NotificationController } from './controllers/notification/notification.controller';
+import { NotificationEntity } from './entities/notification.entity';
 
 @Module({
   imports: [
@@ -107,6 +109,7 @@ import { ProfileController } from './controllers/profile/profile.controller';
             ShortLink,
             Commentaire,
             Satisfaction,
+            NotificationEntity,
           ],
           synchronize: true,
         };

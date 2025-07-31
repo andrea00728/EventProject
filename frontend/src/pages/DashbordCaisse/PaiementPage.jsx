@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { DataGrid } from "@mui/x-data-grid";
-import socket from "../../socket";
+
 import { useStateContext } from "../../context/ContextProvider";
 import { Link } from "react-router-dom";
 import { getEventIdByEmail } from "../../services/invitationService";
+import { useSocket } from "../../socket";
  
 const CashIcon = () => (
   <svg
@@ -46,7 +47,7 @@ const PaiementPage = () => {
   const { token } = useStateContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-
+  const socket=useSocket();
   const PAYMENT_STATUS_MAPPING = {
     frontToBack: { paye: "paid", non_paye: "unpaid" },
     backToFront: { paid: "paye", unpaid: "non_paye" },
