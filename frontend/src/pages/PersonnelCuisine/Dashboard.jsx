@@ -91,6 +91,10 @@ export default function DashboardpersCuisine() {
 
         newSocket.on("new_order", (order) => {
           console.log("Nouvelle commande reçue:", order);
+          if (!order || !order.id || !order.nom) {
+            console.warn("Commande reçue avec des données incomplètes:", order);
+            return;
+          }
           if (order.status === "canceled") {
             setCanceledCommandes((prev) => {
               if (prev.some((cmd) => cmd.id === order.id)) {
@@ -115,7 +119,44 @@ export default function DashboardpersCuisine() {
         });
 
         newSocket.on("order_status_updated", (data) => {
-          console.log(`Commande annulée ${data}`);
+          console.log("Mise à jour de statut reçue:", data);
+          if (!data || !data.id || !data.status) {
+            console.warn("Données de mise à jour de statut incomplètes:", data);
+            return;
+          }
+
+          if (data.status === "canceled") {
+            setCommandes((prev) => {
+              const orderToMove = prev.find((c) => c.id === data.id);
+              if (!orderToMove) {
+                console.warn(`Commande ${data.id} non trouvée dans commandes`);
+                return prev;
+              }
+              setCanceledCommandes((prevCanceled) => {
+                if (prevCanceled.some((c) => c.id === data.id)) {
+                  return prevCanceled;
+                }
+                return [...prevCanceled, { ...orderToMove, status: data.status }];
+              });
+              return prev.filter((c) => c.id !== data.id);
+            });
+          } else {
+            setCanceledCommandes((prev) => {
+              const orderToMove = prev.find((c) => c.id === data.id);
+              if (!orderToMove) {
+                return prev;
+              }
+              setCommandes((prevCommandes) => {
+                if (prevCommandes.some((c) => c.id === data.id)) {
+                  return prevCommandes.map((c) =>
+                    c.id === data.id ? { ...c, status: data.status } : c
+                  );
+                }
+                return [...prevCommandes, { ...orderToMove, status: data.status }];
+              });
+              return prev.filter((c) => c.id !== data.id);
+            });
+          }
         });
 
         setSocket(newSocket);
@@ -145,6 +186,10 @@ export default function DashboardpersCuisine() {
     }
 
     const updatedOrder = commandes.find((c) => c.id === id);
+    if (!updatedOrder) {
+      console.error(`Commande ${id} non trouvée`);
+      return;
+    }
     let newStatus = updatedOrder.status;
 
     if (direction === "next") {
@@ -167,12 +212,12 @@ export default function DashboardpersCuisine() {
     const worksheet = XLSX.utils.json_to_sheet(
       [...commandes, ...canceledCommandes].map((commande) => ({
         ID: commande.id,
-        "Nom du client": commande.nom,
-        Table: commande.table.nom,
+        "Nom du client": commande.nom || "Inconnu",
+        Table: commande.table?.nom || "Non spécifié",
         "Date de commande": formatDateTime(commande.orderDate),
         Plats: commande.items
-          .map((p) => `${p.menuItem.name} (x${p.quantity})`)
-          .join(", "),
+          ?.map((p) => `${p.menuItem?.name || "Inconnu"} (x${p.quantity || 1})`)
+          .join(", ") || "Aucun plat",
         Statut: commande.status,
       }))
     );
