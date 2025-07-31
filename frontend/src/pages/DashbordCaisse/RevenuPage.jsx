@@ -71,7 +71,7 @@ const RevenuPage = () => {
       setLoading(false);
     }
   };
-
+ 
   useEffect(() => {
     fetchCommandes();
     socket.on("orderUpdated", () => {
