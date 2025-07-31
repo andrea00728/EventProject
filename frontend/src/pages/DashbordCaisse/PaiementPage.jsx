@@ -7,12 +7,12 @@ import { useStateContext } from "../../context/ContextProvider";
 import { Link } from "react-router-dom";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { motion } from "framer-motion";
-import { FaArrowLeft, FaPrint, FaDollarSign } from "react-icons/fa"; // Importation des icônes
+import { FaArrowLeft, FaPrint, FaDollarSign } from "react-icons/fa";
 
 // Icône pour le total encaissé
 const CashIcon = () => (
   <svg
-    xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"
+    xmlns="http://www.w3.org/2000/svg"
     className="h-8 w-8 text-green-500"
     fill="none"
     viewBox="0 0 24 24"
@@ -30,7 +30,7 @@ const CashIcon = () => (
 // Icône pour le reste à encaisser
 const CreditCardIcon = () => (
   <svg
-    xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"
+    xmlns="http://www.w3.org/2000/svg"
     className="h-8 w-8 text-red-500"
     fill="none"
     viewBox="0 0 24 24"
@@ -281,6 +281,7 @@ const PaiementPage = () => {
                 ? "bg-green-100 text-green-700 border border-green-300"
                 : "bg-red-100 text-red-700 border border-red-300"
             } focus:ring-2 focus:ring-indigo-500 focus:outline-none`}
+            aria-label="Changer le statut de paiement"
           >
             <option value="paye">Payé</option>
             <option value="non_paye">Non Payé</option>
@@ -300,11 +301,12 @@ const PaiementPage = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => handleProcessPayment(row.id)}
             disabled={row.paymentStatus === "paye"}
-            className={`inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 h-9 shadow-md ${
+            className={`flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
               row.paymentStatus === "paye"
                 ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                : "bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                : "bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             }`}
+            aria-label="Payer la commande"
           >
             <FaDollarSign className="mr-2" />
             Payer
@@ -313,7 +315,8 @@ const PaiementPage = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handlePrintInvoice(row)}
-            className="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors duration-200 h-9 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            className="flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            aria-label="Imprimer la facture"
           >
             <FaPrint className="mr-2" />
             Facture
@@ -331,16 +334,16 @@ const PaiementPage = () => {
       transition={{ duration: 0.6 }}
       className="min-h-screen bg-gray-100 flex flex-col p-4 sm:p-6"
     >
-      {/* Conteneur principal */}
       <div className="relative z-10 max-w-7xl mx-auto flex-1 flex flex-col space-y-6">
-        {/* En-tête avec titre et lien de retour */}
+        {/* En-tête */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
             Gestion des Paiements
           </h1>
           <Link
             to="/caisse"
-            className="inline-flex items-center px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-sm font-medium transition-colors duration-200"
+            className="flex items-center justify-center px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
+            aria-label="Retour à la caisse"
           >
             <FaArrowLeft className="mr-2" />
             Retour
@@ -374,12 +377,12 @@ const PaiementPage = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Rechercher par nom ou email..."
-            className="w-full sm:w-1/2 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm placeholder-gray-400 transition-colors duration-200"
+            className="w-full sm:w-1/2 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
           />
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full sm:w-1/4 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm transition-colors duration-200"
+            className="w-full sm:w-1/4 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
           >
             <option value="all">Tous les statuts</option>
             <option value="paye">Payé</option>
@@ -403,16 +406,9 @@ const PaiementPage = () => {
             autoHeight
             className="border-none"
             sx={{
-              "& .MuiDataGrid-cell": {
-                fontSize: "0.875rem",
-              },
-              "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "#f8fafc",
-                fontWeight: "bold",
-              },
-              "& .MuiDataGrid-row:hover": {
-                backgroundColor: "#f1f5f9",
-              },
+              "& .MuiDataGrid-cell": { fontSize: "0.875rem" },
+              "& .MuiDataGrid-columnHeaders": { backgroundColor: "#f8fafc", fontWeight: "bold" },
+              "& .MuiDataGrid-row:hover": { backgroundColor: "#f1f5f9" },
             }}
           />
         </motion.div>
@@ -421,4 +417,4 @@ const PaiementPage = () => {
   );
 };
 
-export default PaiementPage
+export default PaiementPage;

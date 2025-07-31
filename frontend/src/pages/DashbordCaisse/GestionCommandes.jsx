@@ -5,21 +5,11 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { io } from "socket.io-client";
 import { DataGrid } from "@mui/x-data-grid";
-import {
-  Snackbar,
-  Alert,
-  TextField,
-  Chip,
-  MenuItem,
-  Select,
-} from "@mui/material";
+import { Snackbar, Alert, TextField, Chip, MenuItem, Select } from "@mui/material";
 import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { getUserIdForToken } from "../../services/userService";
-import { FaArrowLeft, FaSync } from "react-icons/fa"; // Importation des icônes
-
-// URL de l'image de fond
-const backgroundImageUrl = "https://images.unsplash.com/photo-1542744095-291d1f67b221";
+import { FaArrowLeft, FaSync, FaTimes } from "react-icons/fa";
 
 // Composant principal pour la gestion des commandes
 const GestionCommandesPage = () => {
@@ -64,13 +54,13 @@ const GestionCommandesPage = () => {
     try {
       setLoading(true);
       if (!token) throw new Error("Token manquant");
-      
+
       const eventId = await getEventIdByEmail(token);
       const { data } = await axios.get(
         `http://localhost:3000/orders/event/${eventId.eventId}`,
-        { 
+        {
           params: { include: "table,items,items.menuItem" },
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
@@ -114,45 +104,48 @@ const GestionCommandesPage = () => {
   }, []);
 
   // Gestion du changement de statut
-  const handleStatusChange = useCallback(async (orderId, newStatus) => {
-    try {
-      const response = await axios.patch(
-        `http://localhost:3000/orders/${orderId}/status`,
-        { status: STATUS_MAPPING.frontToBack[newStatus] },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+  const handleStatusChange = useCallback(
+    async (orderId, newStatus) => {
+      try {
+        const response = await axios.patch(
+          `http://localhost:3000/orders/${orderId}/status`,
+          { status: STATUS_MAPPING.frontToBack[newStatus] },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-      setSnackbar({
-        open: true,
-        message: response.data?.message || "Commande annulée avec succès.",
-        severity: "success",
-      });
-      updateCommande({ id: orderId, status: STATUS_MAPPING.frontToBack[newStatus] });
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour du statut:", error);
-      setSnackbar({
-        open: true,
-        message: error.response?.data?.message || "Erreur lors de l'annulation de la commande.",
-        severity: "error",
-      });
-    }
-  }, [token, updateCommande]);
+        setSnackbar({
+          open: true,
+          message: response.data?.message || "Commande annulée avec succès.",
+          severity: "success",
+        });
+        updateCommande({ id: orderId, status: STATUS_MAPPING.frontToBack[newStatus] });
+      } catch (error) {
+        console.error("Erreur lors de la mise à jour du statut:", error);
+        setSnackbar({
+          open: true,
+          message: error.response?.data?.message || "Erreur lors de l'annulation de la commande.",
+          severity: "error",
+        });
+      }
+    },
+    [token, updateCommande]
+  );
 
   // Effet pour l'initialisation des données et WebSocket
   useEffect(() => {
     let socket;
-    
+
     const setupWebSocket = async () => {
       try {
         const userId = await getUserIdForToken(token);
         socket = io("http://localhost:3000", {
           auth: { userId },
-          transports: ['websocket', 'polling'],
+          transports: ["websocket", "polling"],
           reconnection: true,
           reconnectionAttempts: 5,
           reconnectionDelay: 1000,
@@ -245,9 +238,7 @@ const GestionCommandesPage = () => {
       headerName: "Statut",
       width: 160,
       renderCell: (params) => {
-        const statusInfo = STATUS_OPTIONS.find(
-          (s) => s.value === params.row.status
-        );
+        const statusInfo = STATUS_OPTIONS.find((s) => s.value === params.row.status);
         return (
           <Chip
             label={statusInfo?.label || params.row.status}
@@ -270,12 +261,14 @@ const GestionCommandesPage = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => handleStatusChange(params.row.id, "annuler")}
             disabled={isCanceled}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+            className={`flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
               isCanceled
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-red-600 text-white hover:bg-red-700"
+                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                : "bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
             }`}
+            aria-label="Annuler la commande"
           >
+            <FaTimes className="mr-2" />
             Annuler
           </motion.button>
         );
@@ -291,16 +284,16 @@ const GestionCommandesPage = () => {
       transition={{ duration: 0.6 }}
       className="min-h-screen bg-gray-100 flex flex-col p-4 sm:p-6"
     >
-      {/* Conteneur principal */}
       <div className="relative z-10 max-w-7xl mx-auto flex-1 flex flex-col space-y-6">
-        {/* En-tête avec titre et lien de retour */}
+        {/* En-tête */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
             Gestion des Commandes
           </h2>
           <Link
             to="/caisse"
-            className="inline-flex items-center px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-sm font-medium transition-colors duration-200"
+            className="flex items-center justify-center px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
+            aria-label="Retour à la caisse"
           >
             <FaArrowLeft className="mr-2" />
             Retour
@@ -314,9 +307,7 @@ const GestionCommandesPage = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full sm:w-1/3"
-            InputProps={{
-              className: "text-sm",
-            }}
+            InputProps={{ className: "text-sm" }}
           />
           <Select
             value={selectedStatus}
@@ -335,7 +326,8 @@ const GestionCommandesPage = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={fetchCommandes}
-            className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-sm font-medium"
+            className="flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
+            aria-label="Actualiser les commandes"
           >
             <FaSync className="mr-2" />
             Actualiser
@@ -357,16 +349,9 @@ const GestionCommandesPage = () => {
             disableSelectionOnClick
             className="border-none"
             sx={{
-              "& .MuiDataGrid-cell": {
-                fontSize: "0.875rem",
-              },
-              "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "#f8fafc",
-                fontWeight: "bold",
-              },
-              "& .MuiDataGrid-row:hover": {
-                backgroundColor: "#f1f5f9",
-              },
+              "& .MuiDataGrid-cell": { fontSize: "0.875rem" },
+              "& .MuiDataGrid-columnHeaders": { backgroundColor: "#f8fafc", fontWeight: "bold" },
+              "& .MuiDataGrid-row:hover": { backgroundColor: "#f1f5f9" },
             }}
           />
         </motion.div>
