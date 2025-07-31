@@ -1,4 +1,3 @@
-// src/entities/order.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 import { TableEvent } from './Table';
 import { Evenement } from './Evenement';
@@ -11,10 +10,10 @@ export class Order {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => TableEvent, (table) => table.orders, { onDelete: 'CASCADE' })
+  @ManyToOne(() => TableEvent, (table) => table.orders, { onDelete: 'SET NULL' })
   table: TableEvent;
 
-  @ManyToOne(() => Evenement, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Evenement, { onDelete: 'SET NULL' })
   event: Evenement;
 
   @ManyToOne(() => Invite, (invite) => invite.orders, { nullable: true })
@@ -38,9 +37,9 @@ export class Order {
   @Column('float')
   total: number;
 
-  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { onDelete: 'CASCADE' })
   items: OrderItem[];
 
-  @OneToMany(() => Payment, (payment) => payment.order)
+  @OneToMany(() => Payment, (payment) => payment.order, { onDelete: 'CASCADE' })
   payments: Payment[];
 }

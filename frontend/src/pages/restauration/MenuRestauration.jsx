@@ -467,7 +467,6 @@ export default function MenuRestauration() {
           </Box>
         </Box>
 
-        <h2 className="text-sm font-medium text-gray-600 mb-2">Sélectionner un événement</h2>
         {events.length === 0 ? (
           <Box sx={{ p: 4, textAlign: 'center' }}>
             <EventIcon sx={{ fontSize: 60, color: theme.textLight, mb: 2 }} />
@@ -557,6 +556,7 @@ export default function MenuRestauration() {
                       Tous les menus
                     </Button>
                   </Zoom>
+                  
 
                   {allMenus.map((menu, index) => (
                     <Zoom in timeout={300 + index * 100} key={menu.id}>
@@ -583,6 +583,7 @@ export default function MenuRestauration() {
                       </Button>
                     </Zoom>
                   ))}
+                  
 
                   <Zoom in timeout={300 + allMenus.length * 100}>
                     <Button
@@ -646,7 +647,6 @@ export default function MenuRestauration() {
                   <Typography variant="h6" sx={{ color: theme.text, fontWeight: 'bold' }}>
                     {allMenus.find((m) => m.id === selectedMenuId)?.name || "Menu"}
                   </Typography>
-
                   <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
                     <Button
                       variant="contained"
@@ -709,7 +709,6 @@ export default function MenuRestauration() {
                     </Box>
                   </Box>
                 </Box>
-
                 <Menu
                   anchorEl={anchorEl}
                   open={Boolean(anchorEl)}

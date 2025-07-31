@@ -69,6 +69,8 @@ import DashboardCard from "../pages/DashbordCaisse/DashboardCaisse.jsx"
 import StockPage from "../pages/DashbordCaisse/StockPage.jsx";
 import StatistiquesPage from "../pages/DashbordCaisse/StatistiquesPage.jsx";
 import RevenuPage from "../pages/DashbordCaisse/RevenuPage.jsx";
+import ActivityHistory from "../pages/Admin/Historique.jsx";
+import Statique from "../pages/Admin/statistique.jsx";
 import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Event.jsx";
 
 
@@ -407,6 +409,14 @@ const router=createBrowserRouter([
         path: "/AdminParametre",
         element: <Parametre />,
       },
+      {
+        path: "/AdminHistorique",
+        element: <ActivityHistory />,
+      },
+      {
+        path: "/AdminStats",
+        element: <Statique />
+      },
 
       {
         path: "/LocationSalle",
@@ -414,17 +424,6 @@ const router=createBrowserRouter([
       },
     ],
   },
-  ,
-  /************************* Page pour les cuisiniers (poue le test) ************** */
-  {
-    path: "/Cuisine",
-    element: <DashboardpersCuisine />,
-  },
-  {
-    path: "/exemple",
-    element: <MyComponent />,
-  },
-  /*********************************************************** */
   {
     path: "/",
     element: <GuestLayout />,
@@ -477,7 +476,7 @@ const router=createBrowserRouter([
     path: "/menutitemform",
     element: <MenuItemForm />,
   },
-  ,
+
   {
     path: "/systemprompt",
     element: <SystemPromptManager />,
