@@ -33,6 +33,9 @@ export class TableEvent {
   @Column({type:'float',default:0})
   rotation:number;
 
+  @Column({ nullable: true })
+  nombre: number;
+
   @ManyToOne(() => Evenement, (evenement) => evenement.tables,{onDelete: 'CASCADE'})
   @JoinColumn({name:'eventId'})
   event: Evenement;

@@ -17,10 +17,13 @@ export class OrdersGateway {
   @WebSocketServer()
   server: Server;
 
+  handleOrderRefunded(data: { id: number; paymentStatus: string }) {
+    console.log(`Émission de l'événement orderRefunded: ${JSON.stringify(data)}`);
+    this.server.emit('orderRefunded', data);
+  }
+
   handleOrderDeleted(data: { id: number }) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`Émission de l'événement orderDeleted pour orderId: ${data.id}`);
-    }
+    console.log(`Émission de l'événement orderDeleted: ${JSON.stringify(data)}`);
     this.server.emit('orderDeleted', data);
   }
 
@@ -40,4 +43,5 @@ export class OrdersGateway {
     console.log(`📦 Nouvelle commande ajoutée :`, order);
     this.server.emit('new_order', order); // Émet l'événement à tous les clients
   }
+  
 }
