@@ -133,7 +133,7 @@ export class AuthService {
     });
 
     if (!manager) {
-      throw new NotFoundException(`Manager avec ID ${userId} non trouvé`);
+      return
     }
 
     await this.userRepository.update(userId, {
