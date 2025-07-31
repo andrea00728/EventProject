@@ -1,25 +1,27 @@
-// src/pages/CaissierPage.jsx
 import { useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
+import { useSocket } from '../../socket';  // utilise le hook au lieu du socket global
 
-const socket = io('http://localhost:3000');
-
-export default function MyComponent() {
+export default function CaissierPage() {
+  const socket = useSocket();  // récupère la socket connectée
   const [commandes, setCommandes] = useState([]);
 
   useEffect(() => {
-    socket.on('order_status_updated', (data) => {
-      console.log('Mise à jour : ', data)
+    if (!socket) return;  // attendre la connexion
+
+    const handleOrderStatusUpdated = (data) => {
+      console.log('Mise à jour : ', data);
       setCommandes((prev) => {
         const updated = prev.filter(cmd => cmd.id !== data.id);
         return [...updated, data];
       });
-    });
+    };
+
+    socket.on('order_status_updated', handleOrderStatusUpdated);
 
     return () => {
-      socket.off('order_status_updated');
+      socket.off('order_status_updated', handleOrderStatusUpdated);
     };
-  }, []);
+  }, [socket]);
 
   return (
     <div>

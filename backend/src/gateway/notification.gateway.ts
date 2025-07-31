@@ -8,6 +8,7 @@ export class NotificationGateway{
     server:Server;
 
     emitNotification(notification:{title:string;message:string;type?:string;date?:string}){
+        console.log('Envoi notification:', notification);
         this.server.emit('notification',notification);
     }
 }

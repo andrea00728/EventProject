@@ -103,4 +103,125 @@ export class ForfaitService {
     console.log(`Utilisateur ${userId} rétrogradé à freemium car le forfait a expiré.`);
   }
 }
+
+  /*************************************************************************************
+   * ***************  Pour la page Super Admin dans le dashboard *********************
+   * ********************************************************************************
+   */
+
+  /*************   Total des revenus des forfaits ********************** */
+
+  async getSumForUsersForfait(): Promise<number> {
+    const result = await this.userRepo
+      .createQueryBuilder('users')
+      .leftJoin('users.forfait', 'forfait')
+      .select('SUM(forfait.price)', 'sum')
+      .getRawOne();
+
+    return Number(result.sum); // conversion en number
+  }
+
+// user.service.ts
+  async findLastTransactions(limit: number = 5): Promise<
+    { name: string; photo: string; nameForfait : string; amount: number; date: Date }[]
+  > {
+    const results = await this.userRepo
+      .createQueryBuilder('user')
+      .leftJoin('user.forfait', 'forfait')
+      .select([
+        'user.name AS name',
+        'user.photo AS photo',
+        'forfait.nom AS nameForfait',
+        'forfait.price AS amount',
+        'user.forfaitexpirationdate AS date',
+      ])
+      .where('forfait.price > 0')
+      .andWhere('user.forfaitexpirationdate IS NOT NULL')
+      .orderBy('user.forfaitexpirationdate', 'DESC')
+      .limit(limit)
+      .getRawMany();
+
+    return results.map(r => ({
+      name: r.name,
+      photo: r.photo,
+      nameForfait : r.nameforfait,
+      amount: Number(r.amount),
+      date: new Date(r.date),
+    }));
+  }
+
+  //
+
+  // async getMonthlyForfaitRevenue(): Promise<{ month: string; total: number }[]> {
+  //   const result = await this.userRepo
+  //     .createQueryBuilder('user')
+  //     .leftJoin('user.forfait', 'forfait')
+  //     .select([
+  //       "TO_CHAR(user.forfaitexpirationdate, 'YYYY-MM') as month",
+  //       'SUM(forfait.price) as total',
+  //     ])
+  //     .where('forfait.price > 0')
+  //     .andWhere('user.forfaitexpirationdate IS NOT NULL')
+  //     .groupBy("TO_CHAR(user.forfaitexpirationdate, 'YYYY-MM')")
+  //     .orderBy("month", "ASC")
+  //     .getRawMany();
+
+  //   return result.map(r => ({
+  //     month: r.month,
+  //     total: parseFloat(r.total),
+  //   }));
+  // }
+
+  // async getRevenusParForfait(): Promise<{ name: string; total: number }[]> {
+  //   const results = await this.userRepo
+  //     .createQueryBuilder('user')
+  //     .leftJoin('user.forfait', 'forfait')
+  //     .select('forfait.nom', 'name')
+  //     .addSelect('SUM(forfait.price)', 'total')
+  //     .where('forfait.price > 0')
+  //     .groupBy('forfait.nom')
+  //     .getRawMany();
+
+  //   return results.map(r => ({
+  //     name: r.name,
+  //     total: parseFloat(r.total),
+  //   }));
+  // }
+
+  async getRevenusPourcentagesParForfait(): Promise<{ name: string; total: number; percentage: number }[]> {
+    // Étape 1 : récupérer les revenus groupés par forfait depuis userRepo
+    const results = await this.userRepo
+      .createQueryBuilder('user')
+      .leftJoin('user.forfait', 'forfait')
+      .select('forfait.nom', 'name')
+      .addSelect('SUM(forfait.price)', 'total')
+      .where('forfait.price > 0')
+      .groupBy('forfait.nom')
+      .getRawMany();
+
+    // Étape 2 : somme totale des revenus
+    const totalRevenu = results.reduce((acc, curr) => acc + parseFloat(curr.total), 0);
+
+    // Étape 3 : formater les résultats avec pourcentage
+    const allForfaits = await this.forfaitRepository.find();
+
+    return allForfaits.map(forfait => {
+      
+      const revenu = results.find(r => r.name === forfait.nom);
+      const total = revenu ? parseFloat(revenu.total) : 0;
+      const percentage = totalRevenu > 0 ? (total / totalRevenu) * 100 : 0;
+
+      return {
+        name: forfait.nom,
+        total,
+        percentage: parseFloat(percentage.toFixed(2)),
+      };
+
+    });
+
+  }
+
+
+
+
 }

@@ -1,15 +1,13 @@
-// Importation des dépendances nécessaires
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { DataGrid } from "@mui/x-data-grid";
-import socket from "../../socket";
+import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
 import { Link } from "react-router-dom";
 import { getEventIdByEmail } from "../../services/invitationService";
-import { motion } from "framer-motion";
-import { FaArrowLeft, FaPrint, FaDollarSign } from "react-icons/fa";
+import { useSocket } from "../../socket";
+import { FaArrowLeft, FaDollarSign, FaPrint } from "react-icons/fa";
 
-// Icône pour le total encaissé
 const CashIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -27,7 +25,6 @@ const CashIcon = () => (
   </svg>
 );
 
-// Icône pour le reste à encaisser
 const CreditCardIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -45,22 +42,18 @@ const CreditCardIcon = () => (
   </svg>
 );
 
-// Composant principal pour la gestion des paiements
 const PaiementPage = () => {
-  // Déclaration des états
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
   const { token } = useStateContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-
-  // Mappage des statuts de paiement
+  const socket = useSocket(token);
   const PAYMENT_STATUS_MAPPING = {
     frontToBack: { paye: "paid", non_paye: "unpaid" },
     backToFront: { paid: "paye", unpaid: "non_paye" },
   };
 
-  // Récupération des commandes depuis le backend
   const fetchCommandes = async () => {
     try {
       setLoading(true);
@@ -78,7 +71,7 @@ const PaiementPage = () => {
         id: c.id,
         nom: c.nom || "Anonyme",
         email: c.email || "-",
-        table: c.table ? `Table ${c.table.numero}` : "N/A",
+        table: c.table ? `Table ${c.table.nom}` : "N/A",
         total: parseFloat(c.total || 0).toFixed(2),
         amountPaid: parseFloat(c.amountPaid || 0).toFixed(2),
         createdAt: new Date(c.orderDate).toLocaleString("fr-FR", {
@@ -97,14 +90,38 @@ const PaiementPage = () => {
     }
   };
 
-  // Effet pour charger les données et écouter les mises à jour via WebSocket
   useEffect(() => {
-    if (token) fetchCommandes();
-    socket.on("orderUpdated", fetchCommandes);
-    return () => socket.off("orderUpdated", fetchCommandes);
-  }, [token]);
+    const loadData = async () => {
+      await fetchCommandes();
+      if (socket) {
+        socket.on("connect", () => {
+          console.log("✅ Connecté au serveur WebSocket (PaiementPage)");
+        });
 
-  // Gestion du changement de statut de paiement
+        socket.on("orderUpdated", () => {
+          console.log("Mise à jour de commande reçue via WebSocket");
+          fetchCommandes();
+        });
+
+        socket.on("connect_error", (error) => {
+          console.error("WebSocket connection error:", error);
+        });
+      }
+    };
+
+    if (token) {
+      loadData();
+    }
+
+    return () => {
+      if (socket) {
+        socket.off("orderUpdated", fetchCommandes);
+        socket.disconnect();
+        console.log("🔌 WebSocket déconnecté (PaiementPage)");
+      }
+    };
+  }, [token, socket]);
+
   const handlePaymentStatusChange = async (id, newStatus) => {
     try {
       const backendStatus = PAYMENT_STATUS_MAPPING.frontToBack[newStatus];
@@ -116,13 +133,16 @@ const PaiementPage = () => {
       setCommandes((prev) =>
         prev.map((cmd) => (cmd.id === id ? { ...cmd, paymentStatus: newStatus } : cmd))
       );
-      socket.emit("paymentStatusChanged", { id, paymentStatus: backendStatus });
+      if (socket) {
+        socket.emit("paymentStatusChanged", { id, paymentStatus: backendStatus });
+      } else {
+        console.warn("Socket non connecté, impossible d'émettre l'événement paymentStatusChanged.");
+      }
     } catch (error) {
       console.error("Erreur lors du changement de statut :", error);
     }
   };
 
-  // Traitement du paiement d'une commande
   const handleProcessPayment = async (id) => {
     const row = commandes.find((c) => c.id === id);
     if (row) {
@@ -133,30 +153,33 @@ const PaiementPage = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         fetchCommandes();
+        if (socket) {
+          socket.emit("paymentProcessed", { id, amount: row.total });
+        }
       } catch (error) {
         console.error("Erreur lors du traitement du paiement :", error);
       }
     }
   };
 
-  // Génération du HTML pour les items de la facture
   const getOrderItemsHtml = (items) => {
-    if (!items || items.length === 0) return "<tr><td colspan='4'>Aucun produit</td></tr>";
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return "<tr><td colspan='4'>Aucun produit</td></tr>";
+    }
     return items
       .map(
         (item) => `
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;">${item.menuItem?.name || "-"}</td>
-        <td style="padding: 8px; border: 1px solid #ddd; text-align:center;">${item.quantity}</td>
-        <td style="padding: 8px; border: 1px solid #ddd; text-align:right;">${parseFloat(item.price).toFixed(2)} €</td>
-        <td style="padding: 8px; border: 1px solid #ddd; text-align:right;">${(item.quantity * item.price).toFixed(2)} €</td>
-      </tr>
-    `
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;">${item.menuItem?.name || "-"}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align:center;">${item.quantity || 0}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align:right;">${parseFloat(item.price || 0).toFixed(2)} €</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align:right;">${((item.quantity || 0) * (item.price || 0)).toFixed(2)} €</td>
+          </tr>
+        `
       )
       .join("");
   };
 
-  // Impression de la facture
   const handlePrintInvoice = async (row) => {
     const date = new Date(row.createdAt);
     const year = date.getFullYear();
@@ -239,7 +262,6 @@ const PaiementPage = () => {
     }
   };
 
-  // Calcul des totaux
   const totalPaid = commandes
     .reduce((sum, c) => sum + parseFloat(c.amountPaid || 0), 0)
     .toFixed(2);
@@ -247,7 +269,6 @@ const PaiementPage = () => {
     .reduce((sum, c) => sum + (c.paymentStatus === "non_paye" ? parseFloat(c.total || 0) : 0), 0)
     .toFixed(2);
 
-  // Filtrage des commandes
   const filteredCommandes = commandes.filter((c) => {
     const matchSearch =
       c.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -256,7 +277,6 @@ const PaiementPage = () => {
     return matchSearch && matchStatus;
   });
 
-  // Définition des colonnes pour DataGrid
   const columns = [
     { field: "id", headerName: "ID", width: 70 },
     { field: "nom", headerName: "Nom", width: 150 },
@@ -301,6 +321,7 @@ const PaiementPage = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => handleProcessPayment(row.id)}
             disabled={row.paymentStatus === "paye"}
+            title="Payer la commande"
             className={`flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
               row.paymentStatus === "paye"
                 ? "bg-gray-300 text-gray-600 cursor-not-allowed"
@@ -315,6 +336,7 @@ const PaiementPage = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handlePrintInvoice(row)}
+            title="Imprimer la facture"
             className="flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             aria-label="Imprimer la facture"
           >
@@ -326,7 +348,14 @@ const PaiementPage = () => {
     },
   ];
 
-  // Rendu de l'interface utilisateur
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <p className="text-lg font-semibold text-gray-700">Chargement des données...</p>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -335,7 +364,6 @@ const PaiementPage = () => {
       className="min-h-screen bg-gray-100 flex flex-col p-4 sm:p-6"
     >
       <div className="relative z-10 max-w-7xl mx-auto flex-1 flex flex-col space-y-6">
-        {/* En-tête */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
             Gestion des Paiements
@@ -350,7 +378,6 @@ const PaiementPage = () => {
           </Link>
         </div>
 
-        {/* Statistiques */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
             { title: "Total Encaissé", value: `${totalPaid} €`, color: "bg-green-100", icon: <CashIcon /> },
@@ -370,7 +397,6 @@ const PaiementPage = () => {
           ))}
         </div>
 
-        {/* Filtres */}
         <div className="bg-white rounded-2xl shadow-lg p-4 flex flex-col sm:flex-row gap-3 items-center">
           <input
             type="text"
@@ -390,7 +416,6 @@ const PaiementPage = () => {
           </select>
         </div>
 
-        {/* Tableau des paiements */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

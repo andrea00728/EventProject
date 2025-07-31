@@ -23,8 +23,6 @@ export class Personnel {
 
   @Column({ type: 'enum', enum: ['attent', 'accepter'], default: 'attent' })
   status: 'attent' | 'accepter';
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  updatedAt: Date;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

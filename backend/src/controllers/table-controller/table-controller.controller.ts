@@ -61,7 +61,7 @@ export class TableController {
   
   @Post('/create/by_event')
 @UseGuards(AuthGuard('jwt'))
-async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<TableEvent> {
+async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<TableEvent[]> {
   const userId = req.user?.sub;
   if (!userId) {
     throw new UnauthorizedException('Utilisateur non authentifié');
@@ -76,7 +76,9 @@ async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<TableEvent> 
     throw new UnauthorizedException("Cet événement n'appartient pas à l'utilisateur connecté");
   }
 
-  return this.tableService.createTable(dto, userId);
+  const table = await this.tableService.createTable(dto, userId);
+
+  return table;
 }
   /**
    * 

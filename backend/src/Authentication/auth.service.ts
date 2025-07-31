@@ -128,6 +128,14 @@ export class AuthService {
   }
 
   async updateStatus(userId: string, isOnline: boolean) {
+    const manager = await this.userRepository.findOne({
+      where: { id : userId },
+    });
+
+    if (!manager) {
+      throw new NotFoundException(`Manager avec ID ${userId} non trouvé`);
+    }
+
     await this.userRepository.update(userId, {
       isOnline,
       ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
@@ -154,4 +162,29 @@ export class AuthService {
     });
     return count;
   }
+
+  async findOrgStats(): Promise<any> {
+    const countOrg = this.userRepository.count({
+      where: { role: 'organisateur' },
+    });
+
+    const lastFiveOrganizers = this.userRepository.find({
+      where: { role: 'organisateur' },
+      order: { createdAt: 'DESC' }, // Assure-toi que la colonne `createdAt` existe bien
+      take: 5,
+      relations: ['forfait'], // optionnel, selon ce que tu veux afficher
+    });
+
+    const [count, lastOrganizers] = await Promise.all([
+      countOrg,
+      lastFiveOrganizers,
+    ]);
+
+    return {
+      count,
+      lastOrganizers,
+    };
+  }
+
+
 }

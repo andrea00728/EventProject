@@ -125,7 +125,7 @@ export class AuthController {
   //  }))
 
 
-@Post('logout')
+  @Post('logout')
   async logout(@Req() req, @Res() res) {
     const user = req.user;
     await this.authService.logout(user);
@@ -153,5 +153,12 @@ export class AuthController {
   async getIdForToken(@Req() req : any): Promise<any> {
     
     return this.authService.getIdForToken(req.user.email);
+  }
+
+  @Get('/org/stats')
+  // @UseGuards(AuthGuard('jwt'))
+  async getOrgStats(/*@Req() req : any*/): Promise<any> {
+    
+    return this.authService.findOrgStats();
   }
 }

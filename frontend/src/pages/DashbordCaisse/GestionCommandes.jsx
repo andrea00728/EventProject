@@ -18,6 +18,7 @@ const GestionCommandesPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [userId, setUserId] = useState(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -88,7 +89,25 @@ const GestionCommandesPage = () => {
     }
   }, [token]);
 
-  // Fonction pour mettre à jour une commande localement
+  const fetchData = async () => {
+    const UserId = await getUserIdForToken(token);
+    const socket = io("http://localhost:3000", {
+      auth: {
+        userId: UserId, // très important : doit être l’ID réel de l’organisateur
+      },
+    });
+    socket.on("connect", () => {
+      console.log("✅ Connecté au serveur WebSocket");
+    });
+
+    // Pour écouter les mises à jour
+    socket.on("order_status_updated", (data) => {
+      updateCommande(data)
+    });
+  };
+
+
+
   const updateCommande = useCallback((update) => {
     setCommandes((prevCommandes) =>
       prevCommandes.map((cmd) =>
@@ -102,7 +121,6 @@ const GestionCommandesPage = () => {
       )
     );
   }, []);
-
   // Gestion du changement de statut
   const handleStatusChange = useCallback(
     async (orderId, newStatus) => {
@@ -119,7 +137,7 @@ const GestionCommandesPage = () => {
         );
         setSnackbar({
           open: true,
-          message: response.data?.message || "Commande annulée avec succès.",
+          message: response.data?.message || "Commande mise à jour avec succès.",
           severity: "success",
         });
         updateCommande({ id: orderId, status: STATUS_MAPPING.frontToBack[newStatus] });
@@ -127,12 +145,12 @@ const GestionCommandesPage = () => {
         console.error("Erreur lors de la mise à jour du statut:", error);
         setSnackbar({
           open: true,
-          message: error.response?.data?.message || "Erreur lors de l'annulation de la commande.",
+          message: error.response?.data?.message || "Erreur lors de la mise à jour de la commande.",
           severity: "error",
         });
       }
     },
-    [token, updateCommande]
+    [token, updateCommande, userId]
   );
 
   // Effet pour l'initialisation des données et WebSocket
@@ -141,9 +159,11 @@ const GestionCommandesPage = () => {
 
     const setupWebSocket = async () => {
       try {
-        const userId = await getUserIdForToken(token);
+        const fetchedUserId = await getUserIdForToken(token);
+        setUserId(fetchedUserId);
+
         socket = io("http://localhost:3000", {
-          auth: { userId },
+          auth: { userId: fetchedUserId },
           transports: ["websocket", "polling"],
           reconnection: true,
           reconnectionAttempts: 5,
@@ -154,36 +174,41 @@ const GestionCommandesPage = () => {
           console.log("✅ Connecté au serveur WebSocket");
         });
 
+        socket.on("order_status_updated", (data) => {
+          updateCommande(data);
+        });
+
+        socket.on("new_order", (order) => {
+          console.log("Nouvelle commande reçue:", order);
+          setCommandes((prevCommandes) => {
+            if (prevCommandes.some((cmd) => cmd.id === order.id)) {
+              console.log(`Commande ${order.id} déjà présente, ignorée.`);
+              return prevCommandes;
+            }
+            const formattedOrder = {
+              id: order.id,
+              nom: order.nom || "Anonyme",
+              email: order.email || "-",
+              table: order.table ? `Table ${order.table.nom}` : "N/A",
+              total: order.total ? `€${order.total.toFixed(2)}` : "€0.00",
+              itemsCount: order.items?.length || 0,
+              date: new Date(order.orderDate).toLocaleString(),
+              status: STATUS_MAPPING.backToFront[order.status] || order.status,
+            };
+            return [...prevCommandes, formattedOrder];
+          });
+        });
+
         socket.on("connect_error", (error) => {
-          console.error("Erreur de connexion WebSocket:", error);
+          console.error("WebSocket connection error:", error);
           setSnackbar({
             open: true,
             message: "Erreur de connexion WebSocket.",
             severity: "error",
           });
         });
-
-        socket.on("order_status_updated", (data) => {
-          console.log("Mise à jour du statut reçue via WebSocket:", data);
-          updateCommande(data);
-        });
-
-        socket.on("order_deleted", (data) => {
-          console.log("Commande supprimée via WebSocket:", data);
-          setCommandes((prev) => prev.filter((cmd) => cmd.id !== data.id));
-          setSnackbar({
-            open: true,
-            message: `Commande ${data.id} supprimée`,
-            severity: "info",
-          });
-        });
-      } catch (error) {
-        console.error("Erreur WebSocket:", error);
-        setSnackbar({
-          open: true,
-          message: "Erreur lors de l'initialisation WebSocket.",
-          severity: "error",
-        });
+      } catch (err) {
+        console.error("Erreur lors de l'initialisation du socket:", err);
       }
     };
 
