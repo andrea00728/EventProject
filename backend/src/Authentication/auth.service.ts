@@ -133,13 +133,15 @@ export class AuthService {
     });
 
     if (!manager) {
-      return
+      return null
     }
 
     await this.userRepository.update(userId, {
       isOnline,
       ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
     });
+
+    return null
   }
 
   async getIdForToken(userEmail) {
