@@ -81,7 +81,7 @@ export default function Profil() {
     <>
       <div className="flex items-center gap-4 cursor-pointer hover:scale-105 duration-300" onClick={() => setIsOpenProfil(true)}>
         <img
-          src={userPhoto}
+          src={userPhoto || null}
           alt="Profil"
           className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover"
         />

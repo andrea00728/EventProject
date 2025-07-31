@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import socket from "../../socket";
+
 import { DataGrid } from "@mui/x-data-grid";
 import {
   Button,
@@ -91,7 +91,6 @@ const GestionCommandesPage = () => {
 
   const fetchData = async () => {
     const UserId = await getUserIdForToken(token);
-
     const socket = io("http://localhost:3000", {
       auth: {
         userId: UserId, // très important : doit être l’ID réel de l’organisateur
