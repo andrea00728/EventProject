@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { DataGrid } from "@mui/x-data-grid";
-import socket from "../../socket";
 import { useStateContext } from "../../context/ContextProvider";
 import { Link } from "react-router-dom";
 import { getEventIdByEmail } from "../../services/invitationService";

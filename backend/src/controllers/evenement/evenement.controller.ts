@@ -60,7 +60,7 @@ export class EvenementController {
   }
 
   @Get()
-  findAll() {
+  async findAll() {
     return this.evenementService.findAll();
   }
 
@@ -75,7 +75,7 @@ export class EvenementController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string) {
     return this.evenementService.findOne(+id);
   }
 
@@ -90,10 +90,16 @@ export class EvenementController {
   }
 
   @Get(':id/managerEvents')
-  findManagerEvents(@Param('id') id: string) {
-    return this.evenementService.findManagerEvents(id);
+  async findManagerEvents(@Param('id') id: string) {
+    return this.evenementService.findManagerEvents(id);   
+  }
+ 
+
+  @Get('/events/statistics')
+  //@UseGuards(AuthGuard('jwt'))  
+  async findCountForAllEventStats() : Promise<any> {
+    return this.evenementService.findCountForAllEventStats();   
   }
 
-  // *** Nouvelle route pour récupérer les événements publics ***
-  
+
 }
