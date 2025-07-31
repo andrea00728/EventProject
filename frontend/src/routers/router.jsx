@@ -69,6 +69,8 @@ import DashboardCard from "../pages/DashbordCaisse/DashboardCaisse.jsx"
 import StockPage from "../pages/DashbordCaisse/StockPage.jsx";
 import StatistiquesPage from "../pages/DashbordCaisse/StatistiquesPage.jsx";
 import RevenuPage from "../pages/DashbordCaisse/RevenuPage.jsx";
+import ActivityHistory from "../pages/Admin/Historique.jsx";
+import Statique from "../pages/Admin/statistique.jsx";
 import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Event.jsx";
 
 

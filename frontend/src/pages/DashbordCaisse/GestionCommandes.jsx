@@ -1,21 +1,6 @@
 // Importation des dépendances nécessaires
 import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-<<<<<<< HEAD
-=======
-import axios from "axios";
-
-import { DataGrid } from "@mui/x-data-grid";
-import {
-  Button,
-  MenuItem,
-  Select,
-  Snackbar,
-  Alert,
-  TextField,
-  Chip,
-} from "@mui/material";
->>>>>>> main
 import { motion } from "framer-motion";
 import axios from "axios";
 import { io } from "socket.io-client";
@@ -104,10 +89,6 @@ const GestionCommandesPage = () => {
     }
   }, [token]);
 
-<<<<<<< HEAD
-  // Fonction pour mettre à jour une commande localement
-  const updateCommande = useCallback((update) => {
-=======
   const fetchData = async () => {
     const UserId = await getUserIdForToken(token);
     const socket = io("http://localhost:3000", {
@@ -125,8 +106,9 @@ const GestionCommandesPage = () => {
     });
   };
 
-  const updateCommande = (update) => {
->>>>>>> main
+
+
+  const updateCommande = useCallback((update) => {
     setCommandes((prevCommandes) =>
       prevCommandes.map((cmd) =>
         cmd.id === update.id
@@ -139,7 +121,6 @@ const GestionCommandesPage = () => {
       )
     );
   }, []);
-
   // Gestion du changement de statut
   const handleStatusChange = useCallback(
     async (orderId, newStatus) => {
