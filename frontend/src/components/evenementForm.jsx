@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { createEvent, getLocations, getSallesByLocation } from "../services/evenementServ";
 import { textControll } from "../services/controll_champs/controll_champs";
 
@@ -10,6 +10,81 @@ const EVENT_TYPES = [
   { value: "autre", label: "Autre", color: "bg-gray-100 text-gray-700" },
 ];
 
+function LocationAutocomplete({ locations, form, setForm }) {
+  const [inputValue, setInputValue] = useState("");
+  const [filteredLocations, setFilteredLocations] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const containerRef = useRef(null);
+
+  // Met à jour inputValue quand form.locationId change
+  useEffect(() => {
+    const loc = locations.find((l) => l.id === form.locationId);
+    setInputValue(loc ? loc.nom : "");
+  }, [form.locationId, locations]);
+
+  // Filtrer suggestions selon inputValue (non sensible à la casse)
+  useEffect(() => {
+    if (!inputValue.trim()) {
+      setFilteredLocations([]);
+      return;
+    }
+    const filtered = locations.filter((loc) =>
+      loc.nom.toLowerCase().startsWith(inputValue.toLowerCase())
+    );
+    setFilteredLocations(filtered);
+  }, [inputValue, locations]);
+
+  // Fermer suggestions si clic en dehors
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelect = (loc) => {
+    setInputValue(loc.nom);
+    setForm({ ...form, locationId: loc.id, salleId: "" });
+    setShowSuggestions(false);
+  };
+
+  return (
+    <div className="flex flex-col gap-2 relative" ref={containerRef}>
+      <label className="text-sm font-semibold text-gray-700 mb-1">Lieu</label>
+      <input
+        type="text"
+        className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+        value={inputValue}
+        onChange={(e) => {
+          setInputValue(e.target.value);
+          setShowSuggestions(true);
+          setForm({ ...form, locationId: "", salleId: "" }); // reset locationId tant que rien sélectionné
+        }}
+        onFocus={() => inputValue && setShowSuggestions(true)}
+        placeholder="Commencez à taper un lieu..."
+        autoComplete="off"
+        required
+      />
+      {showSuggestions && filteredLocations.length > 0 && (
+        <ul className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-300 rounded-xl shadow max-h-60 overflow-y-auto">
+          {filteredLocations.map((loc) => (
+            <li
+              key={loc.id}
+              className="px-4 py-2 hover:bg-indigo-100 cursor-pointer"
+              onMouseDown={() => handleSelect(loc)}
+            >
+              {loc.nom}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function Evenementform({ onNext }) {
   const [form, setForm] = useState({
     nom: "",
@@ -19,19 +94,18 @@ export default function Evenementform({ onNext }) {
     date_fin: "",
     locationId: "",
     salleId: "",
-    isPublic:false,
+    isPublic: false,
   });
 
   const [locations, setLocations] = useState([]);
   const [salles, setSalles] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
   const [modalSalleOpen, setModalSalleOpen] = useState(false);
   const [modalTypeOpen, setModalTypeOpen] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     getLocations()
-      .then(data => setLocations(Array.isArray(data) ? data : []))
+      .then((data) => setLocations(Array.isArray(data) ? data : []))
       .catch(() => setLocations([]));
   }, []);
 
@@ -40,16 +114,19 @@ export default function Evenementform({ onNext }) {
       getSallesByLocation(form.locationId)
         .then(setSalles)
         .catch(() => setSalles([]));
+    } else {
+      setSalles([]);
+      setForm((prev) => ({ ...prev, salleId: "" }));
     }
   }, [form.locationId]);
 
-  // const handleChange = (e) => {
-  //   setForm({ ...form, [e.target.name]: e.target.value });
-  // };
-
-   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.type === "checkbox" ? e.target.checked : e.target.value });
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.type === "checkbox" ? e.target.checked : e.target.value,
+    });
   };
+
   const onSubmit = async (e) => {
     e.preventDefault();
 
@@ -58,25 +135,27 @@ export default function Evenementform({ onNext }) {
       return;
     }
 
-  try {
-  // const event = await createEvent(form);
-   const event = await createEvent({...form,isPublic:form.isPublic});
-  onNext && onNext({ eventId: event.id });
-} catch (error) {
-  const errorMessage =
-    error?.response?.data?.message || "Erreur lors de la création de l'événement.";
-  setError(errorMessage);
-}
+    try {
+      const event = await createEvent({ ...form, isPublic: form.isPublic });
+      onNext && onNext({ eventId: event.id });
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message || "Erreur lors de la création de l'événement.";
+      setError(errorMessage);
+    }
   };
 
-  const selectedLocationName = () => locations.find(l => l.id === form.locationId)?.nom || "";
-  const selectedSalleName = () => salles.find(s => s.id === form.salleId)?.nom || "";
+  const selectedSalleName = () => salles.find((s) => s.id === form.salleId)?.nom || "";
 
   return (
     <div className="w-400 max-w-3xl mx-auto mt-12 px-6">
       <div className="bg-white rounded-3xl shadow-2xl p-10 border border-gray-100">
-        <h2 className="text-4xl font-extrabold text-center mb-2 text-indigo-800 tracking-tight">Créer un événement</h2>
-        <p className="text-center text-gray-500 mb-8">Décrivez votre événement pour commencer l'organisation.</p>
+        <h2 className="text-4xl font-extrabold text-center mb-2 text-indigo-800 tracking-tight">
+          Créer un événement
+        </h2>
+        <p className="text-center text-gray-500 mb-8">
+          Décrivez votre événement pour commencer l'organisation.
+        </p>
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
@@ -86,19 +165,20 @@ export default function Evenementform({ onNext }) {
             <input
               name="nom"
               value={form.nom}
-              onChange={(e)=>{
-                setForm({...form,nom:textControll(e.target.value)})
+              onChange={(e) => {
+                setForm({ ...form, nom: textControll(e.target.value) });
               }}
               placeholder="Ex: Mariage de Sarah & Paul"
               required
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
             />
           </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700 mb-1">Type d'événement</label>
             <input
               name="type"
-              value={EVENT_TYPES.find(t => t.value === form.type)?.label || "Type d'événement"}
+              value={EVENT_TYPES.find((t) => t.value === form.type)?.label || "Type d'événement"}
               readOnly
               onClick={() => setModalTypeOpen(true)}
               placeholder="Type d'événement"
@@ -106,6 +186,7 @@ export default function Evenementform({ onNext }) {
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 cursor-pointer focus:ring-2 focus:ring-pink-400 transition"
             />
           </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700 mb-1">Thème</label>
             <input
@@ -117,6 +198,7 @@ export default function Evenementform({ onNext }) {
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
             />
           </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700 mb-1">Date de début</label>
             <input
@@ -128,6 +210,7 @@ export default function Evenementform({ onNext }) {
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
             />
           </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700 mb-1">Date de fin</label>
             <input
@@ -139,17 +222,10 @@ export default function Evenementform({ onNext }) {
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
             />
           </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Lieu</label>
-            <input
-              type="text"
-              value={selectedLocationName()}
-              readOnly
-              onClick={() => setModalOpen(true)}
-              placeholder="Où se déroulera l’événement ?"
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 cursor-pointer focus:ring-2 focus:ring-indigo-200 transition"
-            />
-          </div>
+
+          {/* Champ Lieu avec autocomplete */}
+          <LocationAutocomplete locations={locations} form={form} setForm={setForm} />
+
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700 mb-1">Salle</label>
             <input
@@ -159,9 +235,12 @@ export default function Evenementform({ onNext }) {
               disabled={!form.locationId}
               onClick={() => form.locationId && setModalSalleOpen(true)}
               placeholder="Salle"
-              className={`border border-gray-300 rounded-xl px-5 py-3 ${form.locationId ? "cursor-pointer bg-gray-50" : "bg-gray-200"} focus:ring-2 focus:ring-indigo-200 transition`}
+              className={`border border-gray-300 rounded-xl px-5 py-3 ${
+                form.locationId ? "cursor-pointer bg-gray-50" : "bg-gray-200"
+              } focus:ring-2 focus:ring-indigo-200 transition`}
             />
           </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700 mb-1">Événement public ?</label>
             <input
@@ -172,6 +251,7 @@ export default function Evenementform({ onNext }) {
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
             />
           </div>
+
           <div className="col-span-1 md:col-span-2 mt-4">
             <button
               type="submit"
@@ -183,33 +263,6 @@ export default function Evenementform({ onNext }) {
         </form>
       </div>
 
-      {/* Modal lieux */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg bg-white shadow-2xl rounded-2xl p-8">
-            <button
-              className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"
-              onClick={() => setModalOpen(false)}
-            >×</button>
-            <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">Choisissez un lieu</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {locations.map(loc => (
-                <div
-                  key={loc.id}
-                  onClick={() => {
-                    setForm({ ...form, locationId: loc.id, salleId: "" });
-                    setModalOpen(false);
-                  }}
-                  className="border-2 border-indigo-100 rounded-xl px-4 py-3 text-center bg-indigo-50 text-indigo-800 cursor-pointer hover:bg-indigo-100 hover:border-indigo-400 font-semibold transition"
-                >
-                  {loc.nom}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Modal salles */}
       {modalSalleOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -217,10 +270,12 @@ export default function Evenementform({ onNext }) {
             <button
               className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"
               onClick={() => setModalSalleOpen(false)}
-            >×</button>
+            >
+              ×
+            </button>
             <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">Choisissez une salle</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {salles.map(salle => (
+              {salles.map((salle) => (
                 <div
                   key={salle.id}
                   onClick={() => {
@@ -237,17 +292,19 @@ export default function Evenementform({ onNext }) {
         </div>
       )}
 
-      {/* Modal pour le type d'événement */}
+      {/* Modal type d'événement */}
       {modalTypeOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-2xl p-8 w-[90vw] max-w-2xl">
             <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">Choisissez le type d'événement</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-              {EVENT_TYPES.map(type => (
+              {EVENT_TYPES.map((type) => (
                 <button
                   key={type.value}
                   type="button"
-                  className={`flex flex-col items-center justify-center rounded-xl p-6 border-2 border-transparent hover:border-pink-400 transition ${type.color} shadow-md hover:shadow-lg focus:outline-none ${form.type === type.value ? 'ring-2 ring-pink-400' : ''}`}
+                  className={`flex flex-col items-center justify-center rounded-xl p-6 border-2 border-transparent hover:border-pink-400 transition ${type.color} shadow-md hover:shadow-lg focus:outline-none ${
+                    form.type === type.value ? "ring-2 ring-pink-400" : ""
+                  }`}
                   onClick={() => {
                     setForm({ ...form, type: type.value });
                     setModalTypeOpen(false);

@@ -1,6 +1,7 @@
 // inviteService.js
 
 import axiosClient from "../api/axios-client"; // Assurez-vous que le chemin est correct
+import axios from 'axios';
 
 const API_URL = 'http://localhost:3000/public-invites/add'; // backend public route
 const PUBLIC_API = 'http://localhost:3000/public-guest/create';
@@ -21,7 +22,10 @@ export const createInvite = async (inviteData) => {
 
   if (!response.ok) throw new Error('Erreur lors de l’ajout de l’invité');
   return response.json();
+
 };
+
+
 
 
 export const createInviteForSpecificEvent = async (inviteData, token) => {
@@ -86,6 +90,19 @@ export const createGuestPublicly = async (inviteData) => {
     throw error;
   }
 };
+
+export const createPublicInvite = async (inviteData) => {
+  try {
+    const response = await axios.post('http://localhost:3000/public-guest/create', inviteData);
+    return response.data;
+  } catch (error) {
+    console.error('Erreur création invité public :', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Création d'un invité pour un événement spécifique (authentifié)
+
 
 // NOUVEAU : Fonction pour importer des invités depuis un fichier CSV pour le DERNIER événement de l'utilisateur
 export const importGuestsToLastEvent = async (file, token) => {

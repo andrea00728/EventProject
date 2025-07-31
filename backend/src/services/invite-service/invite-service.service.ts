@@ -29,48 +29,117 @@ export class GuestService {
     private readonly personnelService:PersonnelService,
   ) {}
 
-  async createGuest(dto: CreateInviteDto, eventId: number,userId:string): Promise<Invite> {
+  async createGuest(dto: CreateInviteDto, eventId: number, userId?: string | null): Promise<Invite> {
     const evenement = await this.evenementRepository.findOne({ where: { id: eventId } });
     if (!evenement) {
       throw new BadRequestException('Événement non trouvé');
     }
 
-    await this.checkInviteLimit(eventId, userId ?? 'public-guest', 1);
+    const userIdForLimitCheck = userId ?? 'public-guest';
 
+    await this.checkInviteLimit(eventId, userIdForLimitCheck, 1);
 
     const existing = await this.guestRepository.findOne({
-       where: { 
-        email: dto.email,
-        event:{id:eventId}
-      } 
-      
-      });
+      where: { email: dto.email, event: { id: eventId } },
+    });
+
     if (existing) {
       throw new BadRequestException(`L'email ${dto.email} est déjà utilisé.`);
     }
 
     const { table, place } = await this.findNextAvailablePlace(eventId);
-  /**
-   * (nasiko commentaire satry tsy miasa lony)
-   */
-    // await this.ckeckPaymentRequirement(evenement);
+
     const inv = this.guestRepository.create({
       ...dto,
       event: evenement,
       table,
       place,
     });
+
     const saved = await this.guestRepository.save(inv);
+
     await this.notificationservice.notifyAll(
       'invite cree avec success',
-      `${saved.nom} ${saved.prenom} a ete ajoute comme invite de l'evenement ${evenement.nom}`,
-    )
-  
-    // Met à jour le compteur des places réservées dans la table
+      `${saved.nom} ${saved.prenom} a été ajouté comme invité de l'événement ${evenement.nom}`,
+    );
+
     await this.tableService.updatePlaceReserve(table.id);
 
     return this.findById(saved.id);
   }
+
+  // Limite des invités par utilisateur / public
+  async checkInviteLimit(eventId: number, userId: string, newInviteCount: number): Promise<void> {
+    // Bypass pour invités publics (userId = 'public-guest')
+    if (userId === 'public-guest') return;
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['forfait'],
+    });
+
+    if (!user) {
+      throw new BadRequestException('Utilisateur non trouvé');
+    }
+
+    const maxInvites = user.forfait?.maxinvites;
+    if (!maxInvites) return;
+
+    const currentCount = await this.guestRepository.count({
+      where: { event: { id: eventId } },
+    });
+
+    if (currentCount + newInviteCount > maxInvites) {
+      throw new BadRequestException(
+        `Vous avez atteint la limite de ${maxInvites} invités. Veuillez effectuer un abonnement pour continuer.`,
+      );
+    }
+  }
+
+
+  async createPublicGuest(dto: CreateInviteDto): Promise<Invite> {
+  const PUBLIC_EVENT_ID = 9999;
+
+  const evenement = await this.evenementRepository.findOne({ where: { id: PUBLIC_EVENT_ID } });
+  if (!evenement) {
+    throw new BadRequestException("Événement public introuvable");
+  }
+
+  await this.checkInviteLimit(PUBLIC_EVENT_ID, 'public-guest', 1);
+
+  const existing = await this.guestRepository.findOne({
+    where: {
+      email: dto.email,
+      event: { id: PUBLIC_EVENT_ID },
+    },
+  });
+
+  if (existing) {
+    throw new BadRequestException(`L'email ${dto.email} est déjà utilisé pour l'événement public.`);
+  }
+
+  const { table, place } = await this.findNextAvailablePlace(PUBLIC_EVENT_ID);
+
+  const inv = this.guestRepository.create({
+    ...dto,
+    event: evenement,
+    table,
+    place,
+  });
+
+  const saved = await this.guestRepository.save(inv);
+
+  await this.notificationservice.notifyAll(
+    'invité public créé',
+    `${saved.nom} ${saved.prenom} a été ajouté à l'événement public`,
+  );
+
+  await this.tableService.updatePlaceReserve(table.id);
+
+  return this.findById(saved.id);
+}
+
+
   
 
 async importGuests(file: Express.Multer.File, eventId: number,userId:string): Promise<{ imported: Invite[]; errors: string[] }> {
@@ -192,33 +261,6 @@ async importGuests(file: Express.Multer.File, eventId: number,userId:string): Pr
 /***
  * methode central pour les limites de cretion et importation d'invite
  */
-  async checkInviteLimit(eventId: number, userId: string, newInviteCount: number): Promise<void> {
-  // Si userId est "public", ignorer la vérification de limite
-  if (userId === 'public') return;
-
-  const user = await this.userRepository.findOne({
-    where: { id: userId },
-    relations: ['forfait'],
-  });
-
-  if (!user) {
-    throw new BadRequestException('Utilisateur non trouvé');
-  }
-
-  const maxinvites = user.forfait?.maxinvites;
-
-  if (!maxinvites) return;
-
-  const currentCount = await this.guestRepository.count({
-    where: { event: { id: eventId } },
-  });
-
-  if (currentCount + newInviteCount > maxinvites) {
-    throw new BadRequestException(
-      `Vous avez atteint la limite gratuite de ${maxinvites} invités. Veuillez effectuer un abonnement pour continuer.`,
-    );
-  }
-}
 
 
 

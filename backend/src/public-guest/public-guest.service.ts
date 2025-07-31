@@ -14,6 +14,8 @@ export class PublicGuestService {
     throw new Error('eventId invalide');
   }
 
+  
+
   // Adapter ici si les champs sont compatibles
   const adaptedDto: CreateInviteDto = {
       nom: dto.nom,
