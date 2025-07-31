@@ -192,6 +192,9 @@ export default function DashboardpersCuisine() {
     }
     let newStatus = updatedOrder.status;
 
+
+    
+
     if (direction === "next") {
       if (newStatus === "pending") newStatus = "preparing";
       else if (newStatus === "preparing") newStatus = "served";
