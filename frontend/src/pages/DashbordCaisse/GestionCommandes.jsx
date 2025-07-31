@@ -117,7 +117,6 @@ const GestionCommandesPage = () => {
             },
           }
         );
-
         setSnackbar({
           open: true,
           message: response.data?.message || "Commande annulée avec succès.",
@@ -355,7 +354,7 @@ const GestionCommandesPage = () => {
             }}
           />
         </motion.div>
-      </div>
+      </div> 
       {/* Notification Snackbar */}
       <Snackbar
         open={snackbar.open}
