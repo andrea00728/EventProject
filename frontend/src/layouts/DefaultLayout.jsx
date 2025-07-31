@@ -21,6 +21,7 @@ export default function DefaultLayout() {
   const [isEvenementHovered, setIsEvenementHovered] = useState(false);
   const [forfait, setForfait] = useState(null);
   const [showForfaitModal, setShowForfaitModal] = useState(false);
+  const [userId, setUserId] = useState(null)
 
   //  Ne pas continuer si en chargement
   if (isLoading) return <div>Chargement ...</div>;
@@ -47,13 +48,14 @@ export default function DefaultLayout() {
     /********   Statut en ligne ou non   **********/
 
     const changeStatus = async () => {
-      const userId = await getUserIdForToken(token);
+      const UserId = await getUserIdForToken(token);
 
       const socket = io("http://localhost:3000", {
         auth: {
-          userId: userId, // très important : doit être l’ID réel de l’organisateur
+          userId: UserId, // très important : doit être l’ID réel de l’organisateur
         },
       });
+      setUserId(UserId)
 
       socket.on("connect", () => {
         console.log("Socket connecté !");
@@ -398,7 +400,7 @@ export default function DefaultLayout() {
       </div>
 
       <main className="max-w-screen mx-auto mt-24">
-        <NotificationListener />
+        <NotificationListener id={userId} />
         <ToastContainer position="top-right" />
         <Outlet />
         <ChatWidget />
