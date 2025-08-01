@@ -92,7 +92,7 @@ import { NotificationEntity } from './entities/notification.entity';
           username: dbUsername,
           password: dbPassword,
           database: dbDatabase,
-          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, Forfait, SystemPrompt, ShortLink, Commentaire, Satisfaction],
+          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, Forfait, SystemPrompt, ShortLink, Commentaire, Satisfaction,Favorite],
      
           synchronize: false, 
         };
