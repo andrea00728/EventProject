@@ -10,8 +10,9 @@ export class TableEvent {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({nullable: true})
   nom: string;
+
 
   @Column()
   capacite: number;
@@ -31,6 +32,9 @@ export class TableEvent {
 
   @Column({type:'float',default:0})
   rotation:number;
+
+  @Column({ nullable: true })
+  nombre: number;
 
   @ManyToOne(() => Evenement, (evenement) => evenement.tables,{onDelete: 'CASCADE'})
   @JoinColumn({name:'eventId'})

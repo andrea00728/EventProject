@@ -1,23 +1,34 @@
-import { useEffect } from 'react';
-import { io } from 'socket.io-client';
+import { useEffect, useState } from 'react';
+import { useSocket } from '../../socket';  // utilise le hook au lieu du socket global
 
-const socket = io('http://localhost:3000');  // Crée une seule instance ici
+export default function CaissierPage() {
+  const socket = useSocket();  // récupère la socket connectée
+  const [commandes, setCommandes] = useState([]);
 
-export default function MyComponent() {
   useEffect(() => {
-    socket.on('connect', () => {
-      console.log('Connecté au serveur WebSocket');
-    });
+    if (!socket) return;  // attendre la connexion
 
-    socket.on('updateOrderStatus', (data) => {
-      console.log('Mise à jour reçue', data);
-    });
+    const handleOrderStatusUpdated = (data) => {
+      console.log('Mise à jour : ', data);
+      setCommandes((prev) => {
+        const updated = prev.filter(cmd => cmd.id !== data.id);
+        return [...updated, data];
+      });
+    };
+
+    socket.on('order_status_updated', handleOrderStatusUpdated);
 
     return () => {
-      socket.off('connect');
-      socket.off('updateOrderStatus');
+      socket.off('order_status_updated', handleOrderStatusUpdated);
     };
-  }, []);
+  }, [socket]);
 
-  return <div>Mon composant connecté</div>;
+  return (
+    <div>
+      <h1>Caissier</h1>
+      {commandes.map(cmd => (
+        <p key={cmd.id}>{cmd.plat} - Statut : {cmd.statut}</p>
+      ))}
+    </div>
+  );
 }

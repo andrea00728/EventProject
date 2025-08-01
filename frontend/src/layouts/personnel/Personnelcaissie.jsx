@@ -1,5 +1,5 @@
 import { useStateContext } from "../../context/ContextProvider";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
 export default function PersonnelCaisse() {
   const { token, role } = useStateContext();
@@ -21,8 +21,7 @@ export default function PersonnelCaisse() {
   }
   return (
     <>
-      <h1>Bienvenue sur la page d'accueil de la caisse</h1>
-      <p>Voici les informations importantes pour le personnel de la caisse.</p>
+      <Outlet/>
     </>
   );
 }

@@ -35,7 +35,14 @@ export const getCheckinStats = async (token) => {
   return response.data;
 };
 
-
+export const getEventIdByEmail = async (token) => {
+  const response = await axiosClient.get("/guests/geteventid/2", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
 
 export const createInvitation = async (eventId, token) => {
   const response = await axiosClient.post(
@@ -49,5 +56,7 @@ export const createInvitation = async (eventId, token) => {
   );
   return response.data;
 };
+
+
 
 
