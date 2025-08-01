@@ -1,12 +1,10 @@
-import { useState } from "react";
-import { 
-  createPublicInvite, 
-  createInviteForSpecificEvent 
-} from "../../services/inviteService";
+import { useEffect, useState } from "react";
+import { createInvite } from "../../services/inviteService";
 import { useStateContext } from "../../context/ContextProvider";
 import { checkEmail, textControll } from "../../services/controll_champs/controll_champs";
 
-export default function Inviteform({ onBack, eventId }) {
+let debouceTimeout;
+export default function Inviteform({ onBack }) {
   const [form, setForm] = useState({
     nom: "",
     prenom: "",
@@ -14,54 +12,56 @@ export default function Inviteform({ onBack, eventId }) {
     sex: "",
   });
   const [error, setError] = useState(null);
-  const { token, user } = useStateContext(); // suppose que user et token sont accessibles ici
+  const { token } = useStateContext();
   const [loading, setLoading] = useState(false);
-
+  const [isValid, setIsValid] = useState(null);
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
 
-    const emailValid = await checkEmail(form.email.trim());
-    if (!emailValid) {
-      setError("L'adresse email saisie n'existe pas");
-      setLoading(false);
+  /**
+   * 
+   * verification d'email
+   * 
+   */
+
+  useEffect(()=>{
+    clearTimeout(debouceTimeout);
+
+    if(!form.email.trim()){
+      setIsValid(null);
       return;
     }
 
+    debouceTimeout= setTimeout(async()=>{
+      const emailValid = await checkEmail(form.email.trim());
+      setIsValid(emailValid);
+    },800);
+
+    return ()=>clearTimeout(debouceTimeout);
+  },[form.email]);
+
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    // const emailValid = await checkEmail(form.email.trim());
+
+    if (isValid === false) {
+      setError("adresse email incorrecte ou inexistante.");
+      setLoading(false);
+      return;
+    }
     try {
-      let result;
-      if (user && token && eventId) {
-        // Utilisateur connecté avec eventId => création liée à l'événement
-        const dataWithEvent = { ...form, eventId };
-        result = await createInviteForSpecificEvent(dataWithEvent, token);
-      } else {
-        // Invité public / anonyme
-        result = await createPublicInvite(form);
-      }
-      console.log("Invité créé :", result);
+      await createInvite(form, token);
       setForm({ nom: "", prenom: "", email: "", sex: "" });
       setError(null);
     } catch (err) {
-      console.error("Erreur complète lors de la création :", err);
-
-      // Essaie d’extraire un message d’erreur précis côté backend
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.response?.data) {
-        setError(JSON.stringify(err.response.data));
-      } else if (err.message) {
-        setError(err.message);
-      } else {
-        setError("Erreur lors de la création de l'invité");
-      }
+      setError(err.response?.data?.message || "Erreur lors de la création de l'invité");
+    }finally{
+      setLoading(false);
     }
-
-
   };
 
   return (
@@ -85,7 +85,7 @@ export default function Inviteform({ onBack, eventId }) {
             id="nom"
             name="nom"
             type="text"
-            onChange={(e) => setForm({ ...form, nom: textControll(e.target.value) })}
+            onChange={(e)=>{setForm({...form,nom:textControll(e.target.value)})}}
             maxLength="50"
             value={form.nom}
             placeholder="Nom de l'invité"
@@ -103,7 +103,7 @@ export default function Inviteform({ onBack, eventId }) {
             name="prenom"
             type="text"
             value={form.prenom}
-            onChange={(e) => setForm({ ...form, prenom: textControll(e.target.value) })}
+            onChange={(e)=>{setForm({...form,prenom:textControll(e.target.value)})}}
             placeholder="Prénom de l'invité"
             required
             className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
@@ -162,17 +162,17 @@ export default function Inviteform({ onBack, eventId }) {
           </button>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={`px-8 py-3 rounded-xl ${
-            loading
-              ? "bg-gray-300 cursor-not-allowed text-gray-700"
-              : "bg-indigo-700 text-white hover:bg-indigo-800"
-          } font-bold shadow transition`}
-        >
-          {loading ? "Création..." : "Ajouter un invité"}
-        </button>
+         <button
+             type="submit"
+              disabled={loading}
+             className={`px-8 py-3 rounded-xl bg-indigo-700 text-white font-bold shadow hover:bg-indigo-800 transition ${
+              loading
+               ? "bg-gray-300 cursor-not-allowed"
+               : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                }`}
+                >
+                {loading ? "Création..." : "Créer le invité"}
+                </button>
       </div>
     </form>
   );

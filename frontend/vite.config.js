@@ -1,19 +1,20 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import flowbiteReact from "flowbite-react/plugin/vite";
+import flowbiteReact from 'flowbite-react/plugin/vite'
 import history from 'connect-history-api-fallback'
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), flowbiteReact()],
+  plugins: [react(), flowbiteReact()],
   server: {
     port: 5173,
     fs: {
       strict: false,
     },
     middlewareMode: false,
+    hmr: {
+      overlay: false, // facultatif : pour désactiver le message d'erreur visuel
+    }
   },
-  // Redirection fallback pour react-router
   configureServer: (server) => {
     server.middlewares.use(
       history({

@@ -1,16 +1,22 @@
-@import "tailwindcss";
-@plugin "flowbite-react/plugin/tailwindcss";
-@source "../.flowbite-react/class-list.json";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 html, body, #root {
   height: 100%;
 }
 
-
 @layer utilities {
-  .animate-fade-in {
-    animation: fadeIn 0.4s ease-in-out forwards;
+  .delay-100 {
+    animation-delay: 0.1s;
   }
+  .delay-200 {
+    animation-delay: 0.2s;
+  }
+  .delay-300 {
+    animation-delay: 0.3s;
+  }
+
 
   @keyframes fadeIn {
     from {
@@ -23,24 +29,6 @@ html, body, #root {
     }
   }
 }
-
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-
-
 
 .qr-scanner-container {
   display: flex;
@@ -68,18 +56,15 @@ button.btn-primary:hover {
   height: 8px;
 }
 
-/* Fond de la scrollbar */
 .scrollable::-webkit-scrollbar-track {
   background: none;
 }
 
-/* Curseur de la scrollbar */
 .scrollable::-webkit-scrollbar-thumb {
-  background-color: #c4c4c4; /* violet */
+  background-color: #c4c4c4;
   border-radius: 6px;
 }
 
-/* Curseur au hover */
 .scrollable::-webkit-scrollbar-thumb:hover {
   background-color: #9e9d9e;
 }

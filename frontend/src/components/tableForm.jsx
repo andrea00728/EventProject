@@ -41,7 +41,7 @@ const TABLE_TYPES = [
 ];
 
 export default function CreateTable({ onSubmitTable }) {
-  const [form, setForm] = useState({ nom: "", capacite: "" });
+  const [form, setForm] = useState({ nom: "", capacite: "", nombre: "" });
   const [selectedType, setSelectedType] = useState(TABLE_TYPES[0].value);
   const [modalTypeOpen, setModalTypeOpen] = useState(false);
   const [error, setError] = useState(null);
@@ -56,11 +56,16 @@ export default function CreateTable({ onSubmitTable }) {
     setError(null);
     setShowAlert(false);
     try {
-      await onSubmitTable({
-        ...form,
-        type: selectedType,
-      });
-      setForm({ nom: "", capacite: "" });
+      const formDataArray =[];
+      for (let i =0; i<Number(form.nombre); i++){
+        formDataArray.push({
+          ...form,
+          type:selectedType,
+          nombre:i+1,
+        })
+      }
+      await onSubmitTable(formDataArray);
+      setForm({ nom: "", capacite: "" ,nombre: ""});
     } catch (err) {
       if (err.message && err.message.includes("déjà utilisé")) {
         setShowAlert(true);
@@ -98,6 +103,20 @@ export default function CreateTable({ onSubmitTable }) {
               name="capacite"
               type="number"
               value={form.capacite}
+              onChange={handleChange}
+              placeholder="Ex: 4, 6, 8"
+              required
+              min="1"
+              className="border border-gray-200 bg-gray-100 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+            />
+          </div>
+           <div className="flex flex-col">
+            <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-2">nombre</label>
+            <input
+              id="nombre"
+              name="nombre"
+              type="number"
+              value={form.nombre}
               onChange={handleChange}
               placeholder="Ex: 4, 6, 8"
               required
