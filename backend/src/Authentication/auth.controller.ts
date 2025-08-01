@@ -45,31 +45,7 @@ export class AuthController {
     return this.authService.createUser(dto);
   }
 
-  /***
-   * 
-   * 
-   * commentena fotsin alony mba itestena ilay Hybride rol
-   * 
-   */
-  // @Get('google/callback')
-  // @UseGuards(AuthGuard('google'))
-  // async googleAuthRedirect(@Req() req, @Res() res) {
-  //   const tokenResponse = await this.authService.login(req.user);
-  //   const { access_token } = tokenResponse;
-  //   const user = {
-  //     id: req.user.id,
-  //     email: req.user.email,
-  //     name: req.user.name,
-  //     photo: req.user.photo || '', 
-  //     role: req.user.role || 'organisateur', 
-  //   };
-
   
-  // //  const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}`;
-  //   const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}`;
-
-  //   return res.redirect(redirectUrl);
-  // }
 
   /**
    * 
@@ -98,31 +74,6 @@ export class AuthController {
     return res.redirect(redirectUrl);
   }
 
-   //register manuel dans formumaire
-  //  @Post('register')
-  //  @ApiConsumes('multipart/form-data')
-  //  @ApiBody({
-  //    schema: {
-  //      type: 'object',
-  //      properties: {
-  //        name: { type: 'string' },
-  //        email: { type: 'string' },
-  //        password: { type: 'string' },
-  //        photo: { type: 'string', format: 'binary' },
-  //      },
-  //    },
-  //  })
-  //  @UseInterceptors(FileInterceptor('photo', {
-  //    storage: diskStorage({
-  //      destination: './uploads',  // dossier de stockage
-  //      filename: (req, file, callback) => {
-  //        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-  //        const ext = extname(file.originalname);
-  //        const filename = `${file.fieldname}-${uniqueSuffix}${ext}`;
-  //        callback(null, filename);
-  //      },
-  //    }),
-  //  }))
 
 
   @Post('logout')
