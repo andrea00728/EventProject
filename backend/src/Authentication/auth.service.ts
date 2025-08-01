@@ -127,19 +127,7 @@ export class AuthService {
     return { message: 'Organisateur supprimé avec succès' };
   }
 
-  async updateStatus(userId: string, isOnline: boolean) {
-    const manager = await this.userRepository.findOne({
-      where: { id : userId },
-    });
-
-    if (!manager) {
-      throw new NotFoundException(`Manager avec ID ${userId} non trouvé`);
-    }
-
-    await this.userRepository.update(userId, {
-      isOnline,
-      ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
-    });
+   async updateStatus(userId: string, isOnline: boolean): Promise<void> {
   }
 
   async getIdForToken(userEmail) {

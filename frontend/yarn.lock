@@ -211,11 +211,13 @@
     "@babel/helper-string-parser" "^7.27.1"
     "@babel/helper-validator-identifier" "^7.27.1"
 
-"@cesium/engine@^17.0.0":
-  version "17.0.0"
-  resolved "https://registry.npmjs.org/@cesium/engine/-/engine-17.0.0.tgz"
-  integrity sha512-bvLWmWVY4QX9rfcx/zfBzA8R1xR8KzmaCDOVL6pFkNZeYmRtt8JN//IICYR3P45lznlcb0Dklw1iCb37t4tvLA==
+"@cesium/engine@^18.3.0":
+  version "18.3.0"
+  resolved "https://registry.npmjs.org/@cesium/engine/-/engine-18.3.0.tgz"
+  integrity sha512-ILNA1a+RX2gNsQGyF2zq27Ucaj5UMj19paYoJbKxX/U0QtxLuFUhJ2yg6wr2eBtC3X3kd475o7kAx0LpfCZxpg==
   dependencies:
+    "@cesium/wasm-splats" "^0.1.0-alpha.2"
+    "@spz-loader/core" "0.1.0"
     "@tweenjs/tween.js" "^25.0.0"
     "@zip.js/zip.js" "^2.7.34"
     autolinker "^4.0.0"
@@ -229,19 +231,24 @@
     ktx-parse "^1.0.0"
     lerc "^2.0.0"
     mersenne-twister "^1.1.0"
-    meshoptimizer "^0.23.0"
+    meshoptimizer "^0.24.0"
     pako "^2.0.4"
     protobufjs "^7.1.0"
-    rbush "3.0.1"
+    rbush "^4.0.1"
     topojson-client "^3.1.0"
     urijs "^1.19.7"
 
-"@cesium/widgets@^12.0.0":
-  version "12.0.0"
-  resolved "https://registry.npmjs.org/@cesium/widgets/-/widgets-12.0.0.tgz"
-  integrity sha512-5Re06LU8lRPEZInHrpOCGBiLoj9VNJ0JJtPrzdnw1qhIDpf3v1W75OJf59k8CCFvUYkZzuTTi8qTVbpzmcbOuw==
+"@cesium/wasm-splats@^0.1.0-alpha.2":
+  version "0.1.0-alpha.2"
+  resolved "https://registry.npmjs.org/@cesium/wasm-splats/-/wasm-splats-0.1.0-alpha.2.tgz"
+  integrity sha512-t9pMkknv31hhIbLpMa8yPvmqfpvs5UkUjgqlQv9SeO8VerCXOYnyP8/486BDaFrztM0A7FMbRjsXtNeKvqQghA==
+
+"@cesium/widgets@^12.3.0":
+  version "12.3.0"
+  resolved "https://registry.npmjs.org/@cesium/widgets/-/widgets-12.3.0.tgz"
+  integrity sha512-5Aa54lCrdywogY1ypOwRmRrb72LVrPvrOzOrcYeQ50DDZSs5hCxVXWecYYsq3qoeK0buA9wP/5TBWE7RlsV7OA==
   dependencies:
-    "@cesium/engine" "^17.0.0"
+    "@cesium/engine" "^18.3.0"
     nosleep.js "^0.12.0"
 
 "@dnd-kit/accessibility@^3.1.1":
@@ -930,6 +937,18 @@
   resolved "https://registry.npmjs.org/@protobufjs/utf8/-/utf8-1.1.0.tgz"
   integrity sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==
 
+"@reduxjs/toolkit@1.x.x || 2.x.x":
+  version "2.8.2"
+  resolved "https://registry.npmjs.org/@reduxjs/toolkit/-/toolkit-2.8.2.tgz"
+  integrity sha512-MYlOhQ0sLdw4ud48FoC5w0dH9VfWQjtCjreKwYTT3l+r427qYC5Y8PihNutepr8XrNaBUDQo9khWUwQxZaqt5A==
+  dependencies:
+    "@standard-schema/spec" "^1.0.0"
+    "@standard-schema/utils" "^0.3.0"
+    immer "^10.0.3"
+    redux "^5.0.1"
+    redux-thunk "^3.1.0"
+    reselect "^5.1.0"
+
 "@rolldown/pluginutils@1.0.0-beta.19":
   version "1.0.0-beta.19"
   resolved "https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.0.0-beta.19.tgz"
@@ -969,6 +988,11 @@
   version "3.1.2"
   resolved "https://registry.npmjs.org/@socket.io/component-emitter/-/component-emitter-3.1.2.tgz"
   integrity sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA==
+
+"@spz-loader/core@0.1.0":
+  version "0.1.0"
+  resolved "https://registry.npmjs.org/@spz-loader/core/-/core-0.1.0.tgz"
+  integrity sha512-atqn/DLy0xNkqRgz3l/5CD12y1M44JdjTmAFQYDKvzf0pIyj+NlJ/PeCRlSJQfXmZ2JndNOCpcGOFVldANf/EA==
 
 "@standard-schema/spec@^1.0.0":
   version "1.0.0"
@@ -1626,12 +1650,12 @@ canvg@^3.0.11:
     svg-pathdata "^6.0.3"
 
 cesium@1.x:
-  version "1.129.0"
-  resolved "https://registry.npmjs.org/cesium/-/cesium-1.129.0.tgz"
-  integrity sha512-XDEJKLnr8s5/Q/1wcdZVEJCgx+xbgfDzkVKd9OxRZzYttazip6KffusMHexRdExVMPfDcTohuqcuHNxj9CUNFA==
+  version "1.131.0"
+  resolved "https://registry.npmjs.org/cesium/-/cesium-1.131.0.tgz"
+  integrity sha512-4OVlpds2TR6elsHLfVAp5FOqxjNbvKA7Ff5n3yuwDBFKgYgc6JErbpBSjY31pBI2ZJSWhKLknCNjrTR8FlVTFg==
   dependencies:
-    "@cesium/engine" "^17.0.0"
-    "@cesium/widgets" "^12.0.0"
+    "@cesium/engine" "^18.3.0"
+    "@cesium/widgets" "^12.3.0"
 
 cfb@~1.2.1:
   version "1.2.2"
@@ -1748,11 +1772,6 @@ combined-stream@^1.0.8:
   integrity sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==
   dependencies:
     delayed-stream "~1.0.0"
-
-commander@2:
-  version "2.20.3"
-  resolved "https://registry.npmjs.org/commander/-/commander-2.20.3.tgz"
-  integrity sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==
 
 comment-json@4.2.5:
   version "4.2.5"
@@ -3257,12 +3276,7 @@ jiti@*, jiti@^2.4.2, jiti@>=1.21.0:
   resolved "https://registry.npmjs.org/jiti/-/jiti-2.4.2.tgz"
   integrity sha512-rg9zJN+G4n2nfJl5MW3BMygZX56zKPNVEYYqq7adpmMh4Jn2QNEwhvQlFy6jPVdcod7txZtKHWnyZiA3a0zP7A==
 
-"js-tokens@^3.0.0 || ^4.0.0":
-  version "4.0.0"
-  resolved "https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz"
-  integrity sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
-
-js-tokens@^4.0.0:
+"js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
   resolved "https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz"
   integrity sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
@@ -3318,7 +3332,12 @@ jsonfile@^6.0.1:
   optionalDependencies:
     graceful-fs "^4.1.6"
 
-jspdf@^3.0.1:
+jspdf-autotable@^5.0.2:
+  version "5.0.2"
+  resolved "https://registry.npmjs.org/jspdf-autotable/-/jspdf-autotable-5.0.2.tgz"
+  integrity sha512-YNKeB7qmx3pxOLcNeoqAv3qTS7KuvVwkFe5AduCawpop3NOkBUtqDToxNc225MlNecxT4kP2Zy3z/y/yvGdXUQ==
+
+"jspdf@^2 || ^3", jspdf@^3.0.1:
   version "3.0.1"
   resolved "https://registry.npmjs.org/jspdf/-/jspdf-3.0.1.tgz"
   integrity sha512-qaGIxqxetdoNnFQQXxTKUD9/Z7AloLaw94fFsOiJMxbfYdBbrBuhWmbzI8TVjrw7s3jBY1PFHofBKMV/wZPapg==
@@ -3474,10 +3493,10 @@ mersenne-twister@^1.1.0:
   resolved "https://registry.npmjs.org/mersenne-twister/-/mersenne-twister-1.1.0.tgz"
   integrity sha512-mUYWsMKNrm4lfygPkL3OfGzOPTR2DBlTkBNHM//F6hGp8cLThY897crAlk3/Jo17LEOOjQUrNAx6DvgO77QJkA==
 
-meshoptimizer@^0.23.0:
-  version "0.23.0"
-  resolved "https://registry.npmjs.org/meshoptimizer/-/meshoptimizer-0.23.0.tgz"
-  integrity sha512-zAZcfhHE3wBbwEN8MfCMI9PKRyOpz8491wcR2dxkv3IlNwDZrq2hEs5JZVtzfBrmjWhBZZtZZUO0OBSNFq5iUQ==
+meshoptimizer@^0.24.0:
+  version "0.24.0"
+  resolved "https://registry.npmjs.org/meshoptimizer/-/meshoptimizer-0.24.0.tgz"
+  integrity sha512-Iq/8cM5cK2B0P0QdKHexr30zEJn5sQxjXKtQJGp6LO7r1VUPwhgxau18pvybVDnEDsKE49GdlJYwqPX9A/P9Sw==
 
 micromatch@^4.0.8:
   version "4.0.8"
@@ -3889,10 +3908,10 @@ queue-microtask@^1.2.2:
   resolved "https://registry.npmjs.org/queue-microtask/-/queue-microtask-1.2.3.tgz"
   integrity sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==
 
-quickselect@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.npmjs.org/quickselect/-/quickselect-2.0.0.tgz"
-  integrity sha512-RKJ22hX8mHe3Y6wH/N3wCM6BWtjaxIyyUIkpHOvfFnxdI4yD4tBXEBKSbriGujF6jnSVkJrffuo6vxACiSSxIw==
+quickselect@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.npmjs.org/quickselect/-/quickselect-3.0.0.tgz"
+  integrity sha512-XdjUArbK4Bm5fLLvlm5KpTFOiOThgfWWI4axAZDWg4E/0mKdZyI9tNEfds27qCi1ze/vwTR16kvmmGhRra3c2g==
 
 raf@^3.4.1:
   version "3.4.1"
@@ -3901,12 +3920,12 @@ raf@^3.4.1:
   dependencies:
     performance-now "^2.1.0"
 
-rbush@3.0.1:
-  version "3.0.1"
-  resolved "https://registry.npmjs.org/rbush/-/rbush-3.0.1.tgz"
-  integrity sha512-XRaVO0YecOpEuIvbhbpTrZgoiI6xBlz6hnlr6EHhd+0x9ase6EmeN+hdwwUaJvLcsFFQ8iWVF1GAK1yB0BWi0w==
+rbush@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.npmjs.org/rbush/-/rbush-4.0.1.tgz"
+  integrity sha512-IP0UpfeWQujYC8Jg162rMNc01Rf0gWMMAb2Uxus/Q0qOFw4lCcq6ZnQEZwUoJqWyUGJ9th7JjwI4yIWo+uvoAQ==
   dependencies:
-    quickselect "^2.0.0"
+    quickselect "^3.0.0"
 
 react-chartjs-2@^5.3.0:
   version "5.3.0"
