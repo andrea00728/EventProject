@@ -144,7 +144,7 @@ const MenuGrid = ({ menus, addToCart, formatPrice = (val) => formatter.format(va
                   <div className="flex-shrink-0">
                     {selectedItem.photo ? (
                       <img
-                        src={`http://localhost:3000${selectedItem.photo}`}
+                        src={`${import.meta.env.VITE_API_BASE_URL}${selectedItem.photo}`}
                         alt={selectedItem.name}
                         className="w-36 h-36 object-cover rounded-2xl shadow-lg border-2 border-indigo-100"
                       />

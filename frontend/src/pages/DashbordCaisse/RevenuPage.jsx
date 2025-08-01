@@ -25,6 +25,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { debounce } from "lodash";
 import { FaArrowLeft, FaSync, FaFileCsv, FaFilePdf, FaEye, FaUndo } from "react-icons/fa";
+import { SOCKET_URL } from "../../socket";
 
 // Enregistrement des composants ChartJS
 ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler);
@@ -53,7 +54,7 @@ const RevenuPage = () => {
   const fetchCommandes =( async () => {
     try {
       const response = await axios.post(
-        "http://localhost:3000/auth/refresh",
+        `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -79,7 +80,7 @@ const RevenuPage = () => {
     try {
       let currentToken = token;
       try {
-        await axios.get("http://localhost:3000/auth/validate", {
+        await axios.get(`${import.meta.env.VITE_API_BASE_URL}/auth/validate`, {
           headers: { Authorization: `Bearer ${currentToken}` },
         });
       } catch (error) {
@@ -94,7 +95,7 @@ const RevenuPage = () => {
       }
 
       const { data } = await axios.get(
-        `http://localhost:3000/orders/event/${eventId.eventId}`,
+        `${import.meta.env.VITE_API_BASE_URL}/orders/event/${eventId.eventId}`,
         {
           headers: { Authorization: `Bearer ${currentToken}` },
           params: { include: "table,items,items.menuItem" },
@@ -180,7 +181,7 @@ const RevenuPage = () => {
       if (!window.confirm("Confirmer le remboursement de cette commande ?")) return;
       setIsRefunding((prev) => ({ ...prev, [id]: true }));
       try {
-        const response = await axios.get(`http://localhost:3000/orders/${id}`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -196,7 +197,7 @@ const RevenuPage = () => {
         }
 
         await axios.patch(
-          `http://localhost:3000/orders/${id}/refunded`,
+          `${import.meta.env.VITE_API_BASE_URL}/orders/${id}/refunded`,
           { paymentStatus: "refunded" },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -233,7 +234,7 @@ const RevenuPage = () => {
     const setupWebSocket = async () => {
       try {
         const userId = await getUserIdForToken(token);
-        socketRef.current = io("http://localhost:3000", {
+        socketRef.current = io(SOCKET_URL, {
           auth: { userId },
           transports: ["websocket", "polling"],
           reconnection: true,

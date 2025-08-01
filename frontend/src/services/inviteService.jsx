@@ -157,7 +157,7 @@ export const deleteGuest = async (guestId, token) => {
 
 
 // export async function getTablesByEventId(eventId, token) {
-//   const response = await fetch(`http://localhost:3000/guests/tables/${eventId}`, {
+//   const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/guests/tables/${eventId}`, {
 //     method: 'GET',
 //     headers: {
 //       'Content-Type': 'application/json',

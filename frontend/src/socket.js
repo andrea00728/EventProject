@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { getUserIdForToken } from './services/userService';
 
-const SOCKET_URL = 'http://localhost:3000';
+export const SOCKET_URL = import.meta.env.VITE_API_BASE_URL;
 
 export function useSocket() {
   const [socket, setSocket] = useState(null);
