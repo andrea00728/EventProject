@@ -45,7 +45,7 @@ import EvenementAd from "../pages/Admin/Evenement.jsx";
 import Organisateur from "../pages/Admin/Organisateur.jsx";
 import Parametre from "../pages/Admin/Parametre.jsx";
 import LocationSalle from "../pages/Admin/LocationSalle.jsx";
-import Test from "../layouts/test.jsx";
+ import MyComponent from "../pages/PersonnelCuisine/OrderGateway.jsx";
 import MenuListWithCart from "../pages/Menu/MenuListWithCart.jsx";
 import SystemPromptManager from "../pages/Admin/SystemPromptManager.jsx";
 import MenuForm from "../pages/menu.jsx";
@@ -71,6 +71,7 @@ import StatistiquesPage from "../pages/DashbordCaisse/StatistiquesPage.jsx";
 import RevenuPage from "../pages/DashbordCaisse/RevenuPage.jsx";
 import ActivityHistory from "../pages/Admin/Historique.jsx";
 import Statique from "../pages/Admin/statistique.jsx";
+import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Event.jsx";
 
 
 const router=createBrowserRouter([

@@ -64,6 +64,8 @@ import { ForfaitCronService } from './services/forfait-cron/forfait-cron.service
 import { MailerModule } from '@nestjs-modules/mailer';
 import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 
+import { NotificationController } from './controllers/notification/notification.controller';
+import { NotificationEntity } from './entities/notification.entity';
 
 @Module({
   imports: [
@@ -115,7 +117,8 @@ import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
             ShortLink,
             Commentaire,
             Satisfaction,
-            Favorite,
+            NotificationEntity,
+            Favorite
           ],
           synchronize: true,
         };
