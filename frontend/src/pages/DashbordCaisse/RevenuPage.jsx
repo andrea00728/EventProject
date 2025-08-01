@@ -281,7 +281,7 @@ const RevenuPage = () => {
         rev.total,
         rev.amountPaid,
         rev.paymentStatus,
-        rev.paymentMethod,
+        "Cash", // Forcer la méthode de paiement à "Cash" pour le PDF
         rev.date,
       ]),
       theme: "striped",
