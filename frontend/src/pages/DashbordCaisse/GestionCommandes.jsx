@@ -135,13 +135,6 @@ const GestionCommandesPage = () => {
             },
           }
         );
-
-        const socket = io("http://localhost:3000", {
-          auth: { userId },
-        });
-
-        socket.emit("update_order_status", { orderId, status: newStatus });
-
         setSnackbar({
           open: true,
           message: response.data?.message || "Commande mise à jour avec succès.",
@@ -386,7 +379,7 @@ const GestionCommandesPage = () => {
             }}
           />
         </motion.div>
-      </div>
+      </div> 
       {/* Notification Snackbar */}
       <Snackbar
         open={snackbar.open}
