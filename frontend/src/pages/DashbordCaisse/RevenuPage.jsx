@@ -1,13 +1,11 @@
-{/* Importation des dépendances nécessaires */}
-import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { io } from "socket.io-client";
 import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
-import { Bar, Line } from "react-chartjs-2";
+import { getUserIdForToken } from '../../services/userService';
 import { getEventIdByEmail } from "../../services/invitationService";
-import { getUserIdForToken } from "../../services/userService";
+import { Bar, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   BarElement,
@@ -20,9 +18,10 @@ import {
   Filler,
 } from "chart.js";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable"; // Importation corrigée
+import autoTable from "jspdf-autotable";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useSocket } from "../../socket";
 import { debounce } from "lodash";
 import { FaArrowLeft, FaSync, FaFileCsv, FaFilePdf, FaEye, FaUndo } from "react-icons/fa";
 
@@ -49,10 +48,36 @@ const RevenuPage = () => {
   const [chartType, setChartType] = useState("bar");
   const { token, setToken } = useStateContext();
   const navigate = useNavigate();
-  const socketRef = useRef(null);
+
+  // Récupération du userId pour le socket
+  const [userId, setUserId] = useState(null);
+  const socket = useSocket();
+
+  // Récupérer le userId à partir du token
+  useEffect(() => {
+    async function fetchUserId() {
+      if (!token) {
+        toast.error("Veuillez vous connecter pour accéder aux revenus");
+        navigate("/login");
+        return;
+      }
+      try {
+        const id = await getUserIdForToken();
+        if (!id) {
+          throw new Error("Impossible de récupérer l'ID utilisateur");
+        }
+        setUserId(id);
+      } catch (error) {
+        console.error("Erreur lors de la récupération de l'userId:", error);
+        toast.error("Erreur d'authentification. Veuillez vous reconnecter.");
+        navigate("/login");
+      }
+    }
+    fetchUserId();
+  }, [token, navigate]);
 
   // Fonction pour rafraîchir le token
-  const fetchCommandes = useCallback(async () => {
+  const refreshToken = useCallback(async () => {
     try {
       const response = await axios.post(
         "http://localhost:3000/auth/refresh",
@@ -61,6 +86,12 @@ const RevenuPage = () => {
       );
       const newToken = response.data.access_token;
       setToken(newToken);
+      // Mettre à jour l'userId après le rafraîchissement du token
+      const id = await getUserIdForToken();
+      if (!id) {
+        throw new Error("Impossible de récupérer l'ID utilisateur après rafraîchissement");
+      }
+      setUserId(id);
       return newToken;
     } catch (error) {
       toast.error("Session expirée. Veuillez vous reconnecter.");
@@ -86,9 +117,7 @@ const RevenuPage = () => {
         });
       } catch (error) {
         if (error.response?.status === 401) {
-          currentToken = await fetchCommandes();
-        } else {
-          throw error;
+          currentToken = await refreshToken();
         }
       }
 
@@ -176,7 +205,7 @@ const RevenuPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, fetchCommandes, navigate]);
+  }, [token, refreshToken, navigate]);
 
   // Gestion du remboursement des commandes
   const handleRefund = useCallback(
@@ -205,109 +234,42 @@ const RevenuPage = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        if (socketRef.current) {
-          socketRef.current.emit("orderRefunded", { id, paymentStatus: "refunded" });
-          socketRef.current.emit("orderDeleted", { id });
+        if (socket) {
+          socket.emit("orderRefunded", { id, paymentStatus: "refunded" });
+          socket.emit("orderDeleted", { id });
         }
-
-        toast. success("Commande remboursée et supprimée avec succès");
+        toast.success("Commande remboursée et supprimée avec succès");
         await fetchRevenus();
       } catch (error) {
         console.error("Erreur lors du remboursement:", error);
-        toast.error(error.response?.data?.message || error.message || "Erreur lors du remboursement");
+        toast.error(error.message || "Erreur lors du remboursement");
       } finally {
         setIsRefunding((prev) => ({ ...prev, [id]: false }));
       }
     },
-    [token, fetchRevenus]
+    [token, socket, fetchRevenus]
   );
 
   // Débouncer la fonction de remboursement
   const handleRefundDebounced = useMemo(() => debounce(handleRefund, 300), [handleRefund]);
 
-  // Effet pour initialiser la récupération des données et WebSocket
-  useEffect(() => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
-    const setupWebSocket = async () => {
-      try {
-        const userId = await getUserIdForToken(token);
-        socketRef.current = io("http://localhost:3000", {
-          auth: { userId },
-          transports: ["websocket", "polling"],
-          reconnection: true,
-          reconnectionAttempts: Infinity,
-          reconnectionDelay: 1000,
-          reconnectionDelayMax: 5000,
-          randomizationFactor: 0.5,
-        });
-
-        socketRef.current.on("connect", () => {
-          toast.info("Connecté au serveur en temps réel");
-          console.log("✅ Connecté au serveur WebSocket (RevenuPage)");
-        });
-
-        socketRef.current.on("reconnect_attempt", (attempt) => {
-          console.log(`Tentative de reconnexion ${attempt}`);
-        });
-
-        socketRef.current.on("connect_error", (error) => {
-          console.error("WebSocket connection error:", error);
-          toast.error("Erreur de connexion au serveur en temps réel");
-        });
-
-        socketRef.current.on("orderDeleted", () => {
-          console.log("Commande supprimée reçue via WebSocket");
-          fetchRevenus();
-        });
-
-        socketRef.current.on("orderRefunded", () => {
-          console.log("Commande remboursée reçue via WebSocket");
-          fetchRevenus();
-        });
-      } catch (err) {
-        console.error("Erreur lors de l'initialisation du socket:", err);
-        toast.error("Erreur lors de l'initialisation de la connexion en temps réel");
-      }
-    };
-
-    const loadData = async () => {
-      await fetchRevenus();
-      await setupWebSocket();
-    };
-
-    loadData();
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.off("connect");
-        socketRef.current.off("connect_error");
-        socketRef.current.off("orderDeleted");
-        socketRef.current.off("orderRefunded");
-        socketRef.current.disconnect();
-        console.log("🔌 WebSocket déconnecté (RevenuPage)");
-      }
-    };
-  }, [token, navigate, fetchRevenus]);
-
   // Filtrage des revenus
   const filteredRevenus = useMemo(() => {
-    return revenus.filter((rev) => {
-      const matchSearch = rev.email.toLowerCase().includes(searchTerm.toLowerCase());
-      const orderDate = rev.orderDate ? new Date(rev.orderDate) : null;
-      const today = new Date();
-      const matchPeriod =
-        filterPeriod === "all" ||
-        (orderDate &&
-          ((filterPeriod === "today" && orderDate.toDateString() === today.toDateString()) ||
-           (filterPeriod === "week" && orderDate >= new Date(today.setDate(today.getDate() - 7))) ||
-           (filterPeriod === "month" && orderDate >= new Date(today.setMonth(today.getMonth() - 1)))));
-      const matchStatus = filterStatus === "all" || rev.paymentStatus === filterStatus;
-      return matchSearch && matchPeriod && matchStatus;
-    });
+    return revenus
+      .filter((rev) => rev.paymentStatus !== "Remboursé")
+      .filter((rev) => {
+        const matchSearch = rev.email.toLowerCase().includes(searchTerm.toLowerCase());
+        const orderDate = rev.orderDate ? new Date(rev.orderDate) : null;
+        const today = new Date();
+        const matchPeriod =
+          filterPeriod === "all" ||
+          (orderDate &&
+            ((filterPeriod === "today" && orderDate.toDateString() === today.toDateString()) ||
+             (filterPeriod === "week" && orderDate >= new Date(today.setDate(today.getDate() - 7))) ||
+             (filterPeriod === "month" && orderDate >= new Date(today.setMonth(today.getMonth() - 1)))));
+        const matchStatus = filterStatus === "all" || rev.paymentStatus === filterStatus;
+        return matchSearch && matchPeriod && matchStatus;
+      });
   }, [revenus, searchTerm, filterPeriod, filterStatus]);
 
   // Exportation CSV
@@ -336,7 +298,7 @@ const RevenuPage = () => {
     doc.text("Rapport des Revenus", 20, 20);
     doc.setFontSize(10);
     doc.text(`Total des revenus: €${totalRevenue}`, 20, 30);
-    doc.text(`Reste à encaisser: €${totalRefunded}`, 20, 36);
+    doc.text(`Reste à encaisser: €${totalPending}`, 20, 36);
     doc.text(`Total remboursé: €${totalRefunded}`, 20, 42);
 
     autoTable(doc, {
@@ -462,6 +424,36 @@ const RevenuPage = () => {
     []
   );
 
+  // Effet pour initialiser la récupération des données et gérer le socket
+  useEffect(() => {
+    if (!token || !userId) {
+      if (!token) {
+        navigate("/login");
+      }
+      return;
+    }
+
+    fetchRevenus();
+
+    if (!socket) {
+      return;
+    }
+
+    const socketCleanup = () => {
+      socket.off("connect");
+      socket.off("connect_error");
+      socket.off("orderDeleted");
+      socket.off("orderRefunded");
+    };
+
+    socket.on("connect", () => toast.info("Connecté au serveur en temps réel"));
+    socket.on("connect_error", () => toast.error("Erreur de connexion au serveur en temps réel"));
+    socket.on("orderDeleted", fetchRevenus);
+    socket.on("orderRefunded", fetchRevenus);
+
+    return socketCleanup;
+  }, [token, userId, socket, navigate, fetchRevenus]);
+
   // Rendu de l'interface utilisateur
   return (
     <motion.div
@@ -478,7 +470,7 @@ const RevenuPage = () => {
           </h1>
           <Link
             to="/caisse"
-            className="inline-flex items-center px-4 py-2 bg-white text-gray-700 border border-gray-V300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
+            className="inline-flex items-center px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
           >
             <FaArrowLeft className="mr-2" />
             Retour
@@ -642,7 +634,7 @@ const RevenuPage = () => {
                           <span
                             className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
                               rev.paymentStatus === "Payé"
-                                ? "bg-green-100 text-green8-00"
+                                ? "bg-green-100 text-green-800"
                                 : rev.paymentStatus === "Remboursé"
                                 ? "bg-red-100 text-red-800"
                                 : "bg-yellow-100 text-yellow-800"
@@ -754,7 +746,7 @@ const RevenuPage = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className=" fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
             onClick={() => setShowDetailsModal(null)}
           >
             <motion.div
@@ -801,16 +793,15 @@ const RevenuPage = () => {
                 </table>
               </div>
               <div className="flex justify-end mt-4">
-                <motion.div
+                <motion.button
                   whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale 
-: 0.95 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setShowDetailsModal(null)}
                   className="flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm font-medium"
                   aria-label="Fermer le modal"
                 >
                   Fermer
-                </motion.div>
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>
