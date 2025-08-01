@@ -65,7 +65,6 @@ export default function Dashboard() {
         const CountForAllEventStats = await getCountForAllEventStats();
         const orgaStat = await getOrgStats();
         const transaction = await getLastTransactions();
-        console.log("Dernières Transactions : ", transaction);
         setTransactions(transaction);
         setOrgStats(orgaStat);
         setStatEvent(CountForAllEventStats);
@@ -245,7 +244,7 @@ export default function Dashboard() {
                   : "bg-white text-gray-900"
               }`}
             >
-              <EventChart darkMode={darkMode} />
+              <EventChart darkMode={darkMode} eventData={statEvent.eventTypeStat} />
             </motion.div>
             <motion.div
               whileHover={{ scale: 1.02 }}
@@ -522,24 +521,39 @@ function SectionWrapper({ children, title, darkMode, gradientTitle }) {
   );
 }
 
-function EventChart({ darkMode }) {
-  const data2020 = [10, 15, 20, 12, 17];
-  const data2021 = [14, 18, 25, 22, 20];
-  const months = ["Jan", "Feb", "Mar", "Apr", "May"];
+function EventChart({ darkMode, eventData }) {
+  // Exemple de données passées en props :
+  // eventData = [
+  //   { type: 'anniversaire', total: 1, percentage: 25 },
+  //   { type: 'mariage', total: 3, percentage: 75 }
+  // ]
+
+  // Nettoyage des types null ou vides
+  const filteredData = eventData?.filter((item) => item.type) || [];
+
+  const labels = filteredData.map(item => item.type);
+  const totals = filteredData.map(item => item.total);
+  const percentages = filteredData.map(item => item.percentage);
 
   return (
     <div>
       <h3 className="text-base sm:text-lg font-semibold mb-2 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-        Événements par mois
+        Événements par type
       </h3>
       <BarChart
         series={[
-          { data: data2020, label: "2020" },
-          { data: data2021, label: "2021" },
+          {
+            data: totals,
+            label: "Nombre total",
+          },
+          {
+            data: percentages,
+            label: "Pourcentage",
+          },
         ]}
         xAxis={[
           {
-            data: months,
+            data: labels,
             tickLabelStyle: {
               fill: darkMode ? "#ffffff" : "#000000",
             },
@@ -555,13 +569,14 @@ function EventChart({ darkMode }) {
         height={270}
         margin={{ top: 20, right: 10, bottom: 20, left: 5 }}
         width={480}
-        className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px]${
+        className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px] ${
           darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
         }`}
       />
     </div>
   );
 }
+
 
 function MoneyChart({ darkMode }) {
   const margin = { right: 24 };
@@ -585,7 +600,6 @@ function MoneyChart({ darkMode }) {
       const yData = res.map((item) => item.percentage);
       setLabels(xLabels);
       setRevenus(yData);
-      console.log(yData)
     } catch (err) {
       console.error("Erreur lors du chargement des revenus", err);
     }

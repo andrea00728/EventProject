@@ -14,6 +14,8 @@ export class EvenementService {
     private readonly evenementRepository: Repository<Evenement>,
     private readonly locationService: LocationService,
     private readonly notificationService: NotificationService,
+    @InjectRepository(User)
+    private userRepo: Repository<User>,
   ) {}
 
   async create(dto: CreateEventDto): Promise<Evenement> {
@@ -145,6 +147,7 @@ async findCountForAllEventStats(): Promise<{
   total: number;
   passes: number;
   avenir: number;
+  eventTypeStat: any;
 }> {
   const now = new Date();
 
@@ -162,13 +165,31 @@ async findCountForAllEventStats(): Promise<{
     },
   });
 
+  const eventTypeStats = await this.userRepo
+    .createQueryBuilder('user')
+    .leftJoin('user.evenement', 'evenement')
+    .select('evenement.type', 'type')
+    .addSelect('COUNT(evenement.type)', 'total')
+    .groupBy('evenement.type')
+    .getRawMany();
+
+  const eventTypeStat = eventTypeStats.map((r) => {
+    const count = parseFloat(r.total);
+    const percentage = total > 0 ? (count / total) * 100 : 0;
+    return {
+      type: r.type,
+      total: count,
+      percentage: parseFloat(percentage.toFixed(2)), // garde 2 chiffres après la virgule
+    };
+  });
+
   return {
     total,
     passes,
     avenir,
+    eventTypeStat
   };
 }
-
 
 }
 
