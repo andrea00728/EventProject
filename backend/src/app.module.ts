@@ -101,7 +101,7 @@ import { Satisfaction } from './entities/satisfaction.entity';
           database: dbDatabase,
           entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, Forfait, SystemPrompt, ShortLink, Commentaire, Satisfaction],
      
-          synchronize: true, 
+          synchronize: false, 
         };
       },
       inject: [ConfigService],
