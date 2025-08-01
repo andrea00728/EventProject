@@ -390,7 +390,7 @@ export default function Organisateur() {
 
     const socket = io("http://localhost:3000", {
       auth: {
-        userId: "455b0bed-dd7f-4214-a5dd-5a1ebb66de67", // Remplace par un ID réel, ex: "admin-1"
+        userId: "455b0bed-dd7f-4214-a5dd-5a1eb", 
       },
     });
 
@@ -403,11 +403,10 @@ export default function Organisateur() {
     });
 
     socket.on("organizer_connected", ({ userId }) => {
-      console.log("📡 SuperAdmin reçoit organizer_connected :", userId);
+      // console.log("📡 SuperAdmin reçoit organizer_connected :", userId);
 
       setData((prev) => {
         const match = prev.find((m) => m.id === userId);
-        console.log("Correspondance trouvée :", !!match);
         return prev.map((m) =>
           m.id === userId
             ? { ...m, isOnline: true, lastLogin: new Date().toISOString() }

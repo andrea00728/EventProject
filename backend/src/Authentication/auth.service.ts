@@ -8,6 +8,7 @@ import { CreateUserDto } from './dto/create-auth.dto';
 import { Personnel } from 'src/entities/Personnel';
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
+import { QueryFailedError } from 'typeorm';
 
 @Injectable()
 export class AuthService {
@@ -127,22 +128,33 @@ export class AuthService {
     return { message: 'Organisateur supprimé avec succès' };
   }
 
-  async updateStatus(userId: string, isOnline: boolean) {
-    const manager = await this.userRepository.findOne({
-      where: { id : userId },
-    });
+  async updateStatus(userId: string, isOnline: boolean): Promise<void> {
+    try {
+      const manager = await this.userRepository.findOne({
+        where: { id: userId },
+      });
 
-    if (!manager) {
-      return null
+      if (!manager) {
+        // Aucun utilisateur trouvé : on ne fait rien
+        return;
+      }
+
+      await this.userRepository.update(userId, {
+        isOnline,
+        ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
+      });
+    } catch (error) {
+        if (error instanceof QueryFailedError && error.driverError?.code === '22P02') {
+        // Silence complet ou log discret si tu veux :
+        // console.warn(`[updateStatus] UUID invalide ignoré : ${userId}`);
+        return;
+      }
+
+      // Sinon, log les autres erreurs pour debugging
+      // console.error(`Erreur inattendue updateStatus userId = ${userId}`, error);
     }
-
-    await this.userRepository.update(userId, {
-      isOnline,
-      ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
-    });
-
-    return null
   }
+
 
   async getIdForToken(userEmail) {
     if (!userEmail) {
