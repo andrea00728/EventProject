@@ -1002,7 +1002,7 @@ export default function MenuRestauration() {
         <DialogContent sx={{ p: 4 }}>
           <Box sx={{ display: 'grid', gap: 3, mt: 2 }}>
             {[
-              { field: "name", label: "Nom du plat", type: "text" },
+              { field: "name", label: ` nom  ${allMenus.find((m) => m.id === selectedMenuId)?.name || ""}`, type: "text" },
               { field: "description", label: "Description", type: "text", multiline: true },
               { field: "price", label: "Prix (€)", type: "number" },
               { field: "category", label: "Catégorie", type: "text" },
@@ -1030,7 +1030,7 @@ export default function MenuRestauration() {
             ))}
             <Box>
               <Typography variant="body2" sx={{ mb: 1, color: theme.textLight, fontWeight: 'medium' }}>
-                Image du plat
+                Image {allMenus.find((m) => m.id === selectedMenuId)?.name || ""}
               </Typography>
               <TextField
                 type="file"
