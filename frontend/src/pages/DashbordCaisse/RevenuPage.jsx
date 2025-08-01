@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
-import { getUserIdForToken } from '../../services/userService';
+import { getUserIdForToken } from "../../services/userService";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { Bar, Line } from "react-chartjs-2";
 import {
@@ -24,6 +23,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useSocket } from "../../socket";
 import { debounce } from "lodash";
 import { FaArrowLeft, FaSync, FaFileCsv, FaFilePdf, FaEye, FaUndo } from "react-icons/fa";
+import revenuService from "../../services/revenu";
 
 // Enregistrement des composants ChartJS
 ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler);
@@ -48,10 +48,12 @@ const RevenuPage = () => {
   const [chartType, setChartType] = useState("bar");
   const { token, setToken } = useStateContext();
   const navigate = useNavigate();
-
-  // Récupération du userId pour le socket
-  const [userId, setUserId] = useState(null);
   const socket = useSocket();
+
+  // Synchroniser le token avec revenuService
+  useEffect(() => {
+    revenuService.setAuthToken(token);
+  }, [token]);
 
   // Récupérer le userId à partir du token
   useEffect(() => {
@@ -66,7 +68,6 @@ const RevenuPage = () => {
         if (!id) {
           throw new Error("Impossible de récupérer l'ID utilisateur");
         }
-        setUserId(id);
       } catch (error) {
         console.error("Erreur lors de la récupération de l'userId:", error);
         toast.error("Erreur d'authentification. Veuillez vous reconnecter.");
@@ -75,30 +76,6 @@ const RevenuPage = () => {
     }
     fetchUserId();
   }, [token, navigate]);
-
-  // Fonction pour rafraîchir le token
-  const refreshToken = useCallback(async () => {
-    try {
-      const response = await axios.post(
-        "http://localhost:3000/auth/refresh",
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const newToken = response.data.access_token;
-      setToken(newToken);
-      // Mettre à jour l'userId après le rafraîchissement du token
-      const id = await getUserIdForToken();
-      if (!id) {
-        throw new Error("Impossible de récupérer l'ID utilisateur après rafraîchissement");
-      }
-      setUserId(id);
-      return newToken;
-    } catch (error) {
-      toast.error("Session expirée. Veuillez vous reconnecter.");
-      navigate("/login");
-      throw error;
-    }
-  }, [token, setToken, navigate]);
 
   // Fonction pour récupérer les données des revenus
   const fetchRevenus = useCallback(async () => {
@@ -110,29 +87,13 @@ const RevenuPage = () => {
 
     setLoading(true);
     try {
-      let currentToken = token;
-      try {
-        await axios.get("http://localhost:3000/auth/validate", {
-          headers: { Authorization: `Bearer ${currentToken}` },
-        });
-      } catch (error) {
-        if (error.response?.status === 401) {
-          currentToken = await refreshToken();
-        }
-      }
-
-      const eventId = await getEventIdByEmail(currentToken);
+      const eventId = await getEventIdByEmail(token);
       if (!eventId?.eventId) {
         throw new Error("ID d'événement non trouvé");
       }
 
-      const { data } = await axios.get(
-        `http://localhost:3000/orders/event/${eventId.eventId}`,
-        {
-          headers: { Authorization: `Bearer ${currentToken}` },
-          params: { include: "table,items,items.menuItem" },
-        }
-      );
+      console.log(`Fetching revenues for eventId: ${eventId.eventId}`);
+      const data = await revenuService.getOrdersByEvent(eventId.eventId);
 
       if (!Array.isArray(data) || data.length === 0) {
         toast.warn("Aucune commande trouvée pour cet événement");
@@ -200,12 +161,17 @@ const RevenuPage = () => {
       setCategoryBreakdown(categories);
       setTimeSeriesData(timeSeriesArray);
     } catch (error) {
-      console.error("Erreur lors de la récupération des revenus:", error);
-      toast.error(error.message || "Erreur lors du chargement des données");
+      console.error("Erreur lors de la récupération des revenus:", error.response?.data);
+      if (error.message.includes("Unauthorized")) {
+        toast.error("Session expirée. Veuillez vous reconnecter.");
+        navigate("/login");
+      } else {
+        toast.error(error.message || "Erreur lors du chargement des données");
+      }
     } finally {
       setLoading(false);
     }
-  }, [token, refreshToken, navigate]);
+  }, [token, navigate]);
 
   // Gestion du remboursement des commandes
   const handleRefund = useCallback(
@@ -213,11 +179,7 @@ const RevenuPage = () => {
       if (!window.confirm("Confirmer le remboursement de cette commande ?")) return;
       setIsRefunding((prev) => ({ ...prev, [id]: true }));
       try {
-        const response = await axios.get(`http://localhost:3000/orders/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const order = response.data;
+        const order = await revenuService.getOrderById(id);
         if (!order) {
           throw new Error("Commande non trouvée");
         }
@@ -228,11 +190,8 @@ const RevenuPage = () => {
           throw new Error("La commande n'est pas payée, remboursement impossible");
         }
 
-        await axios.patch(
-          `http://localhost:3000/orders/${id}/refunded`,
-          { paymentStatus: "refunded" },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        console.log(`Tentative de remboursement pour orderId: ${id}`);
+        await revenuService.refundOrder(id);
 
         if (socket) {
           socket.emit("orderRefunded", { id, paymentStatus: "refunded" });
@@ -241,13 +200,24 @@ const RevenuPage = () => {
         toast.success("Commande remboursée et supprimée avec succès");
         await fetchRevenus();
       } catch (error) {
-        console.error("Erreur lors du remboursement:", error);
-        toast.error(error.message || "Erreur lors du remboursement");
+        console.error("Erreur lors du remboursement:", error.response?.data);
+        if (error.message.includes("Unauthorized")) {
+          toast.error("Session expirée. Veuillez vous reconnecter.");
+          navigate("/login");
+        } else if (error.message.includes("Commande non trouvée")) {
+          toast.error("La commande n'existe pas.");
+        } else if (error.message.includes("déjà remboursée")) {
+          toast.error("La commande est déjà remboursée.");
+        } else if (error.message.includes("payées peuvent être remboursées")) {
+          toast.error("Seules les commandes payées peuvent être remboursées.");
+        } else {
+          toast.error(error.message || "Erreur lors du remboursement");
+        }
       } finally {
         setIsRefunding((prev) => ({ ...prev, [id]: false }));
       }
     },
-    [token, socket, fetchRevenus]
+    [socket, navigate, fetchRevenus]
   );
 
   // Débouncer la fonction de remboursement
@@ -426,10 +396,8 @@ const RevenuPage = () => {
 
   // Effet pour initialiser la récupération des données et gérer le socket
   useEffect(() => {
-    if (!token || !userId) {
-      if (!token) {
-        navigate("/login");
-      }
+    if (!token) {
+      navigate("/login");
       return;
     }
 
@@ -452,7 +420,7 @@ const RevenuPage = () => {
     socket.on("orderRefunded", fetchRevenus);
 
     return socketCleanup;
-  }, [token, userId, socket, navigate, fetchRevenus]);
+  }, [token, socket, navigate, fetchRevenus]);
 
   // Rendu de l'interface utilisateur
   return (
