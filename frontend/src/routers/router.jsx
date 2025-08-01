@@ -127,10 +127,10 @@ const router=createBrowserRouter([
       path: "/evenement/tables",
       element: <TableLayout />,
       children: [
-        // {
-        //   path: "creationTable",
-        //   element: <TableToCreateBy_Event/>
-        // },
+        {
+          path: "creationTable",
+          element: <TableToCreateBy_Event/>
+        },
         {
           path: "",
           element: <Listetable />

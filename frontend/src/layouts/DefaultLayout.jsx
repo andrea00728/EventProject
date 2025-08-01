@@ -8,8 +8,8 @@ import ChatWidget from "../pages/ChatWidget";
 import { getUserForfait } from "../services/forfaitService";
 import { ToastContainer } from "react-toastify";
 import Logo from "../assets/LogoMaster.png"
+import { Bell } from "lucide-react";
  import NotificationComponent from "../util/notification";
-import NotificationListener from "../util/Notification/notification";
 
 import { getUserIdForToken } from "../services/userService";
 
