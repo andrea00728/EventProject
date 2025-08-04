@@ -1,7 +1,7 @@
 import { Link, Outlet } from "react-router-dom";
 
 export default function OrganisationPersonnelLayout() {
-    const choixItems = [
+      const choixItems = [
         {
             path: "",
             name: "Dashboard Personnel",

@@ -50,6 +50,13 @@ export const getPersonnelListByEventId = async (eventId) => {
 /****************************************************************** */
 
 
+/**
+ * Récupère le nombre de personnel associé à un événement spécifique.
+ * @param {string} eventId - L'ID de l'événement pour lequel le nombre de personnel est requis.
+ * @param {string} token - Le token d'authentification pour l'accès à l'API.
+ * @returns {Promise<number>} - Retourne le nombre de personnel pour l'événement donné.
+ */
+
 export const CountPersonnelByEvent = async (eventId, token) => {
   const response = await axiosClient.get(`/personnel/count/${eventId}`, {
     headers: {
@@ -58,5 +65,4 @@ export const CountPersonnelByEvent = async (eventId, token) => {
   });
   return response.data;
 }
-
 

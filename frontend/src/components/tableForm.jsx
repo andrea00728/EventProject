@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getMaxCapacity } from "../services/controll_champs/controll_champs";
 
 // Types de tables avec schéma SVG
 const TABLE_TYPES = [
@@ -47,9 +48,41 @@ export default function CreateTable({ onSubmitTable }) {
   const [error, setError] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
 
+  // const handleChange = (e) => {
+  //   setForm({ ...form, [e.target.name]: e.target.value });
+  // };
+
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const { name, value } = e.target;
+
+  if (name === "capacite") {
+    const numericValue = parseInt(value, 10);
+    const max = getMaxCapacity(form.type);
+    if (numericValue > max) {
+      setError(`La capacité maximale pour une table ${form.type} est ${max}`);
+      return;
+    } else {
+      setError(null);
+    }
+    setForm({ ...form, [name]: numericValue });
+    return;
+  }
+
+  if (name === "type") {
+    const max = getMaxCapacity(value);
+    const newCapacite = Math.min(form.capacite, max);
+    if (form.capacite > max) {
+      setError(`Capacité ajustée à ${newCapacite} pour le type ${value}`);
+    } else {
+      setError(null);
+    }
+    setForm({ ...form, [name]: value, capacite: newCapacite });
+    return;
+  }
+
+  setForm({ ...form, [name]: value });
+};
+
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -107,6 +140,7 @@ export default function CreateTable({ onSubmitTable }) {
               placeholder="Ex: 4, 6, 8"
               required
               min="1"
+              max={getMaxCapacity(form.type)}
               className="border border-gray-200 bg-gray-100 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
             />
           </div>

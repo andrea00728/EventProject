@@ -162,14 +162,14 @@ export default function Evenementform({ onNext }) {
               className={`border border-gray-300 rounded-xl px-5 py-3 ${form.locationId ? "cursor-pointer bg-gray-50" : "bg-gray-200"} focus:ring-2 focus:ring-indigo-200 transition`}
             />
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col items-start gap-3">
             <label className="text-sm font-semibold text-gray-700 mb-1">Événement public ?</label>
             <input
               type="checkbox"
               name="isPublic"
               checked={form.isPublic}
               onChange={handleChange}
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+              className="size-5 rounded border-gray-300 shadow-sm"
             />
           </div>
           <div className="col-span-1 md:col-span-2 mt-4">
