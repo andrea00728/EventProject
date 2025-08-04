@@ -166,4 +166,9 @@ export class AuthController {
   async getUserStats(): Promise<any> {
     return this.authService.findUserStats();
   }
+
+  @Get('/session-stats')
+  async getSessionTimeStats(): Promise<any> {
+    return this.authService.findSessionTimeStats();
+  }
 }

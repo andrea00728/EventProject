@@ -215,7 +215,45 @@ export class AuthService {
   
     return {
       count,
-      onlinePercentage: `${onlinePercentage}%`,
+      onlinePercentage: `${onlinePercentage}`,
+    };
+  }
+
+  async findSessionTimeStats(): Promise<any> {
+    const users = await this.userRepository.find({
+      where: { isOnline: false }, // On ne prend que les utilisateurs déconnectés pour avoir lastLogout
+      select: ['id', 'email', 'lastLogin', 'lastLogout'],
+    });
+
+    const sessionStats = users
+      .filter(user => user.lastLogin && user.lastLogout && new Date(user.lastLogout) > new Date(user.lastLogin)) // Vérifier que lastLogout > lastLogin
+      .map(user => {
+        const sessionDurationMs = new Date(user.lastLogout).getTime() - new Date(user.lastLogin).getTime();
+        const sessionDurationMinutes = sessionDurationMs / (1000 * 60); // Convertir en minutes
+        console.log(`User ${user.email}: lastLogin=${user.lastLogin}, lastLogout=${user.lastLogout}, duration=${sessionDurationMinutes}`); // Log pour débogage
+        return {
+          id: user.id,
+          email: user.email,
+          lastSessionDuration: sessionDurationMinutes.toFixed(2), // Durée en minutes, arrondie
+        };
+      });
+
+    // Calcul de la somme totale des durées
+    const totalDuration = sessionStats.reduce((sum, stat) => sum + parseFloat(stat.lastSessionDuration), 0);
+
+    // Calcul de la moyenne globale
+    const averageDuration = sessionStats.length > 0 ? (totalDuration / sessionStats.length).toFixed(2) : '0.00';
+
+    // Ajout du pourcentage pour chaque utilisateur
+    const sessionStatsWithPercentage = sessionStats.map(stat => ({
+      ...stat,
+      percentageOfTotalTime: totalDuration > 0 ? ((parseFloat(stat.lastSessionDuration) / totalDuration) * 100).toFixed(2) : '0.00',
+    }));
+
+    return {
+      totalUsersWithSessions: sessionStats.length,
+      averageSessionDuration: averageDuration, // Moyenne globale en minutes
+      individualStats: sessionStatsWithPercentage, // Stats par utilisateur avec pourcentage
     };
   }
 
