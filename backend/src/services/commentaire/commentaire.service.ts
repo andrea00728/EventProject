@@ -169,4 +169,30 @@ export class CommentaireService {
     });
     return count;
   }
+
+  /**
+   * 
+   * @returns 
+   * pourcentage de satisfaction
+   * 
+   * 
+   * On récupére le nombre de commentaire satisfait
+   * On vérifie si il y a au moins un commentaire satisfait
+   * sinon on renvoie 0
+   * Sinon on récupére le nombre de commentaire global
+   * Et on calcule le pourcentage de satisfaction
+   */
+  async findCount_pourcentageSatisfaction():Promise<number>{
+   const count_Issatisf= await this.commentaireRepository.count({
+     where:{
+       satisfaction:Not(SatisfactionLevel.DECEVANT),
+     }
+   });
+   if(count_Issatisf===0){
+     return 0;
+   }
+   const count_global_satisfaction= await this.commentaireRepository.count();
+   const pourcentage= (count_Issatisf*100)/count_global_satisfaction;
+   return pourcentage;
+  }
 }

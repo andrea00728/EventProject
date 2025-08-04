@@ -52,6 +52,23 @@ export class CommentaireController {
   }
   
 
+   /**
+   * 
+   * @returns 
+   * 
+   * On récupére le nombre de commentaire satisfait
+   * On vérifie si il y a au moins un commentaire satisfait
+   * sinon on renvoie 0
+   * Sinon on récupére le nombre de commentaire global
+   * Et on calcule le pourcentage de satisfaction
+   */
+  
+  @Get('count-pourcentage-satisfaction')
+  @ApiOperation({summary:'recuperation du pourcentage de satisfaction'})
+  @ApiResponse({status:200,description:'pourcentage de satisfaction'})
+  async findCount_pourcentageSatisfaction(){
+    return this.commentaireService.findCount_pourcentageSatisfaction();
+  }
   
 
    /**

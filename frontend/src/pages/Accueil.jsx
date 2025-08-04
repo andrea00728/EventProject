@@ -2,14 +2,17 @@ import { useState, useEffect } from 'react';
 import Footer from "./footer";
 import { FaAward, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaClock, FaMapPin } from "react-icons/fa";
 import TestimonialsSection from "../util/testimonialsSection";
-import { getAllEvents } from '../services/evenementServ';
+import { getAllEvents, getCountEvents } from '../services/evenementServ';
+import { FormaNumber } from '../services/controll_champs/controll_limite';
+import { findCount_pourcentage, findCountSatisfied } from '../services/testimonyService';
 
 export default function Accueil() {
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-
+  const [countEvent,setCountEvent] = useState(0);
+  const [countHeureur,setCountHeureur] = useState(0);
+  const [pourcentage,setPourcentage] = useState(0);
     const getEventIcon = (type) => {
     const icons = {
       'mariage': '💒',
@@ -25,6 +28,8 @@ export default function Accueil() {
     
     return icons[type?.toLowerCase()] || icons.default;
   };
+
+
   // Récupération de tous les événements (succès) au chargement du composant
   useEffect(() => {
     const fetchAllEvents = async () => {
@@ -66,8 +71,44 @@ export default function Accueil() {
         setLoading(false);
       }
     };
+    /**
+     * 
+     * nombre d'evenement organiser par tout les organisateur
+     */
+    const count_event =async ()=>{
+    try{
+      const count = await getCountEvents();
+      setCountEvent(count);
+    }catch(erreur){
+      console.log(erreur);
+    }
+    }
+    /**
+     * 
+     * nombre d'organisateur heureurs
+     */
+    const count_heureur=async () =>{
+      try{
+        const count_h= await findCountSatisfied();
+        setCountHeureur(count_h);
+      }catch(err){
+        console.log(err);
+      }
+    }
+
+    const count_pourcentage=async () =>{
+      try{
+        const count_p=await findCount_pourcentage();
+        setPourcentage(count_p);
+      }catch(err){
+        console.log(err);
+      }
+    }
 
     fetchAllEvents();
+    count_event();
+    count_heureur();
+    count_pourcentage();
   }, []);
 
   // Fonction pour formater la date
@@ -408,21 +449,21 @@ export default function Accueil() {
             <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="text-center group">
                 <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#FB9E3A] to-orange-500 mb-2 group-hover:scale-110 transition-transform">
-                  500+
+                  <strong>{FormaNumber(countEvent)}</strong>
                 </div>
                 <p className="text-slate-500 text-sm font-semibold">Événements organisés</p>
               </div>
 
               <div className="text-center group">
                 <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500 mb-2 group-hover:scale-110 transition-transform">
-                  50K+
+                 <strong>{FormaNumber(countHeureur)}</strong>
                 </div>
-                <p className="text-slate-500 text-sm font-semibold">Participants heureux</p>
+                <p className="text-slate-500 text-sm font-semibold">satisfaction client</p>
               </div>
 
               <div className="text-center group">
                 <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-500 mb-2 group-hover:scale-110 transition-transform">
-                  98%
+                  {pourcentage.toFixed(2)}%
                 </div>
                 <p className="text-slate-500 text-sm font-semibold">Satisfaction client</p>
               </div>
