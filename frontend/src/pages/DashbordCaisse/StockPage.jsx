@@ -39,8 +39,8 @@ const StockPage = () => {
       }
     };
     if (token) fetchAssignedEvent();
-  }, [token]);
-
+  }, [token]);   
+  
   // Récupération des événements disponibles
   const fetchEvents = async () => {
     try {

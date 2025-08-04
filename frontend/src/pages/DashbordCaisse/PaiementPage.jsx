@@ -379,22 +379,21 @@ const PaiementPage = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {[
-            { title: "Total Encaissé", value: `${totalPaid} €`, color: "bg-green-100", icon: <CashIcon /> },
-            { title: "Reste à Encaisser", value: `${totalDue} €`, color: "bg-red-100", icon: <CreditCardIcon /> },
-          ].map((stat, index) => (
-            <motion.div
-              key={index}
-              whileHover={{ scale: 1.03 }}
-              className={`${stat.color} rounded-2xl p-6 shadow-lg transition-all duration-300 flex justify-between items-center`}
-            >
-              <div>
-                <p className="text-sm font-semibold text-gray-600">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900 mt-2">{stat.value}</p>
+            {[
+              { title: "Total Encaissé", value: `${totalPaid} €`, color: "bg-gradient-to-r from-green-100 to-green-200", icon: <CashIcon /> },
+              { title: "Reste à Encaisser", value: `${totalDue} €`, color: "bg-gradient-to-r from-red-100 to-red-200", icon: <CreditCardIcon /> },
+            ].map((stat, index) => (
+              <div
+                key={index}
+                className={`${stat.color} rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex justify-between items-center`}
+              >
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">{stat.title}</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-2">{stat.value}</p>
+                </div>
+                <div className="p-4 rounded-full bg-white/30">{stat.icon}</div>
               </div>
-              <div className="p-3 rounded-full bg-white/50">{stat.icon}</div>
-            </motion.div>
-          ))}
+            ))}
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg p-4 flex flex-col sm:flex-row gap-3 items-center">
