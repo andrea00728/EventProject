@@ -200,5 +200,24 @@ export class AuthService {
     };
   }
 
+  async findUserStats(): Promise<any> {
+    const countTotal = this.userRepository.count();
+    const countOnline = this.userRepository.count({
+      where: { isOnline: true },
+    });
+  
+    const [count, onlineCount] = await Promise.all([
+      countTotal,
+      countOnline
+    ]);
+  
+    const onlinePercentage = count > 0 ? ((onlineCount / count) * 100).toFixed(2) : '0.00';
+  
+    return {
+      count,
+      onlinePercentage: `${onlinePercentage}%`,
+    };
+  }
+
 
 }

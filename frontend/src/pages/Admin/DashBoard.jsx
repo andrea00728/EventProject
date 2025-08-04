@@ -147,7 +147,9 @@ export default function Dashboard() {
   ];
 
   const engagementStats = [
-    { label: "Taux d'ouverture", value: "75%", progress: 75 },
+    { label: "Taux d'ouverture",
+      value: "75%",
+      progress: 75 },
     {
       label: "Taux de participation aux événements",
       value: "50%",
@@ -425,6 +427,7 @@ const Dropdown = React.forwardRef(
       window.addEventListener("resize", checkMobile);
       return () => window.removeEventListener("resize", checkMobile);
     }, []);
+    
 
     return (
       <div className="relative" ref={ref}>

@@ -8,10 +8,10 @@ import { User } from './entities/auth.entity';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService
-  
-  ) {}
 
-    
+  ) { }
+
+
   /**
    * 
    * @returns 
@@ -19,7 +19,7 @@ export class AuthController {
    */
 
   @Get('/count-users')
-  async findCountUsers():Promise<number>{
+  async findCountUsers(): Promise<number> {
     return this.authService.findCountUsers();
   }
 
@@ -41,7 +41,7 @@ export class AuthController {
 
   @Post('create')
   @UseGuards(AuthGuard('jwt'))
-  async createUser(@Body() dto: CreateUserDto){
+  async createUser(@Body() dto: CreateUserDto) {
     return this.authService.createUser(dto);
   }
 
@@ -64,7 +64,7 @@ export class AuthController {
   //     role: req.user.role || 'organisateur', 
   //   };
 
-  
+
   // //  const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}`;
   //   const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}`;
 
@@ -88,17 +88,17 @@ export class AuthController {
       id: req.user.id,
       email: req.user.email,
       name: req.user.name,
-      photo: req.user.photo || '', 
-      role: req.user.role || 'organisateur', 
-      isInPersonnel:req.user.isInPersonnel  || false,
+      photo: req.user.photo || '',
+      role: req.user.role || 'organisateur',
+      isInPersonnel: req.user.isInPersonnel || false,
     };
-  
+
     const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}&isInPersonnel=${encodeURIComponent(user.isInPersonnel)}`;
 
     return res.redirect(redirectUrl);
   }
 
-   //register manuel dans formumaire
+  //register manuel dans formumaire
   //  @Post('register')
   //  @ApiConsumes('multipart/form-data')
   //  @ApiBody({
@@ -132,7 +132,7 @@ export class AuthController {
     res.clearCookie('access_token', {
       httpOnly: true,
       sameSite: 'lax',
-      secure: false, 
+      secure: false,
     });
     return res.status(200).json({ message: 'Déconnecté avec succès' });
   }
@@ -150,15 +150,20 @@ export class AuthController {
 
   @Get('getId')
   @UseGuards(AuthGuard('jwt'))
-  async getIdForToken(@Req() req : any): Promise<any> {
-    
+  async getIdForToken(@Req() req: any): Promise<any> {
+
     return this.authService.getIdForToken(req.user.email);
   }
 
   @Get('/org/stats')
   // @UseGuards(AuthGuard('jwt'))
   async getOrgStats(/*@Req() req : any*/): Promise<any> {
-    
+
     return this.authService.findOrgStats();
+  }
+
+  @Get('/user/stats')
+  async getUserStats(): Promise<any> {
+    return this.authService.findUserStats();
   }
 }
