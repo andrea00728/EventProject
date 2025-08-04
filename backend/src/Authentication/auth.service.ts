@@ -22,7 +22,7 @@ export class AuthService {
     private readonly eventRepository: Repository<Evenement>,
     @InjectRepository(Forfait)
     private readonly forfaitRepository: Repository<Forfait>,
-  ) {}
+  ) { }
 
   async validateUser(profile: any): Promise<any> {
     const { emails, displayName, photos } = profile;
@@ -144,7 +144,7 @@ export class AuthService {
         ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
       });
     } catch (error) {
-        if (error instanceof QueryFailedError && error.driverError?.code === '22P02') {
+      if (error instanceof QueryFailedError && error.driverError?.code === '22P02') {
         // Silence complet ou log discret si tu veux :
         // console.warn(`[updateStatus] UUID invalide ignoré : ${userId}`);
         return;
@@ -205,14 +205,14 @@ export class AuthService {
     const countOnline = this.userRepository.count({
       where: { isOnline: true },
     });
-  
+
     const [count, onlineCount] = await Promise.all([
       countTotal,
       countOnline
     ]);
-  
+
     const onlinePercentage = count > 0 ? ((onlineCount / count) * 100).toFixed(2) : '0.00';
-  
+
     return {
       count,
       onlinePercentage: `${onlinePercentage}`,
@@ -220,9 +220,10 @@ export class AuthService {
   }
 
   async findSessionTimeStats(): Promise<any> {
+    // Sélectionner les champs nécessaires, y compris role et lastLogin
     const users = await this.userRepository.find({
       where: { isOnline: false }, // On ne prend que les utilisateurs déconnectés pour avoir lastLogout
-      select: ['id', 'email', 'lastLogin', 'lastLogout'],
+      select: ['id', 'email', 'lastLogin', 'lastLogout', 'role'],
     });
 
     const sessionStats = users
@@ -235,6 +236,8 @@ export class AuthService {
           id: user.id,
           email: user.email,
           lastSessionDuration: sessionDurationMinutes.toFixed(2), // Durée en minutes, arrondie
+          sessionStartTime: user.lastLogin, // Ajouter lastLogin comme sessionStartTime
+          role: user.role, // Ajouter le rôle
         };
       });
 
