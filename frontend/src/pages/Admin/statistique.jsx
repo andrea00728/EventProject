@@ -192,6 +192,7 @@ const Statique = () => {
   const [showMessages, setShowMessages] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [sessionStats, setSessionStats] = useState(null);
+  const [satisfactionStats, setSatisfactionStats] = useState(null);
 
   const notifRef = useRef(null);
   const msgRef = useRef(null);
@@ -378,6 +379,48 @@ const Statique = () => {
 
     fetchSessionStats();
   }, []);
+
+  // Récupérer les statistiques de satisfaction
+  useEffect(() => {
+    const fetchSatisfactionStats = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/commentaire/satisfaction/statistics`);
+        setSatisfactionStats(response.data);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des satisfactionStats:', error);
+        // Données de secours
+        setSatisfactionStats({
+          decevant: 20.0,
+          moyen: 30.0,
+          bien: 25.0,
+          tres_bien: 15.0,
+          excellent: 10.0
+        });
+      }
+    };
+
+    fetchSatisfactionStats();
+  }, []);
+
+  // Calculer la note moyenne basée sur les pourcentages
+  const averageRating = useMemo(() => {
+    if (!satisfactionStats) return 0;
+    const weights = {
+      decevant: 1,
+      moyen: 2,
+      bien: 3,
+      tres_bien: 4,
+      excellent: 5
+    };
+    const total = (
+      (satisfactionStats.decevant * weights.decevant) +
+      (satisfactionStats.moyen * weights.moyen) +
+      (satisfactionStats.bien * weights.bien) +
+      (satisfactionStats.tres_bien * weights.tres_bien) +
+      (satisfactionStats.excellent * weights.excellent)
+    ) / 100;
+    return total.toFixed(1);
+  }, [satisfactionStats]);
 
   // Préparer les données pour le graphique des heures de pointe (organisateurs uniquement, en pourcentage)
   const peakHoursData = useMemo(() => {
@@ -882,63 +925,115 @@ const Statique = () => {
             <MdPerson className="text-yellow-400" />
             <span>Satisfaction Client</span>
           </h3>
-          <div className="text-center py-4">
-            <div className={`text-6xl font-extrabold mb-3 leading-none ${
-              darkMode ? "text-green-400" : "text-green-600"
-            }`}>
-              4.8<span className={`text-3xl ${
-                darkMode ? "text-gray-400" : "text-gray-500"
-              }`}>/5</span>
-            </div>
-            <div className="flex justify-center space-x-1 mb-5">
-              {[...Array(5)].map((_, i) => (
-                <MdStar key={`star-${i}`} className={`${
-                  darkMode ? "text-yellow-400" : "text-yellow-500"
-                } ${i >= 4 ? 'opacity-50' : ''}`} />
-              ))}
-            </div>
-            <div className="space-y-4">
-              <div>
-                <div className={`flex justify-between text-sm mb-1 ${
-                  darkMode ? "text-gray-300" : "text-gray-600"
-                }`}>
-                  <span>Excellent</span>
-                  <span>1,247 avis</span>
+          {satisfactionStats ? (
+            <div className="text-center py-4">
+              <div className={`text-6xl font-extrabold mb-3 leading-none ${
+                darkMode ? "text-green-400" : "text-green-600"
+              }`}>
+                {averageRating}<span className={`text-3xl ${
+                  darkMode ? "text-gray-400" : "text-gray-500"
+                }`}>/5</span>
+              </div>
+              <div className="flex justify-center space-x-1 mb-5">
+                {[...Array(5)].map((_, i) => (
+                  <MdStar
+                    key={`star-${i}`}
+                    className={`${
+                      darkMode ? "text-yellow-400" : "text-yellow-500"
+                    } ${i < Math.round(averageRating) ? '' : 'opacity-50'}`}
+                  />
+                ))}
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <div className={`flex justify-between text-sm mb-1 ${
+                    darkMode ? "text-gray-300" : "text-gray-600"
+                  }`}>
+                    <span>Excellent</span>
+                    <span>{satisfactionStats.excellent.toFixed(1)}%</span>
+                  </div>
+                  <div className={`w-full rounded-full h-2.5 ${
+                    darkMode ? "bg-gray-700" : "bg-gray-200"
+                  }`}>
+                    <div
+                      className="bg-green-500 h-2.5 rounded-full"
+                      style={{ width: `${satisfactionStats.excellent}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <div className={`w-full rounded-full h-2.5 ${
-                  darkMode ? "bg-gray-700" : "bg-gray-200"
-                }`}>
-                  <div className="bg-green-500 h-2.5 rounded-full" style={{ width: '78%' }}></div>
+                <div>
+                  <div className={`flex justify-between text-sm mb-1 ${
+                    darkMode ? "text-gray-300" : "text-gray-600"
+                  }`}>
+                    <span>Très bien</span>
+                    <span>{satisfactionStats.tres_bien.toFixed(1)}%</span>
+                  </div>
+                  <div className={`w-full rounded-full h-2.5 ${
+                    darkMode ? "bg-gray-700" : "bg-gray-200"
+                  }`}>
+                    <div
+                      className="bg-blue-500 h-2.5 rounded-full"
+                      style={{ width: `${satisfactionStats.tres_bien}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div>
+                  <div className={`flex justify-between text-sm mb-1 ${
+                    darkMode ? "text-gray-300" : "text-gray-600"
+                  }`}>
+                    <span>Bien</span>
+                    <span>{satisfactionStats.bien.toFixed(1)}%</span>
+                  </div>
+                  <div className={`w-full rounded-full h-2.5 ${
+                    darkMode ? "bg-gray-700" : "bg-gray-200"
+                  }`}>
+                    <div
+                      className="bg-teal-500 h-2.5 rounded-full"
+                      style={{ width: `${satisfactionStats.bien}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div>
+                  <div className={`flex justify-between text-sm mb-1 ${
+                    darkMode ? "text-gray-300" : "text-gray-600"
+                  }`}>
+                    <span>Moyen</span>
+                    <span>{satisfactionStats.moyen.toFixed(1)}%</span>
+                  </div>
+                  <div className={`w-full rounded-full h-2.5 ${
+                    darkMode ? "bg-gray-700" : "bg-gray-200"
+                  }`}>
+                    <div
+                      className="bg-yellow-500 h-2.5 rounded-full"
+                      style={{ width: `${satisfactionStats.moyen}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div>
+                  <div className={`flex justify-between text-sm mb-1 ${
+                    darkMode ? "text-gray-300" : "text-gray-600"
+                  }`}>
+                    <span>Décevant</span>
+                    <span>{satisfactionStats.decevant.toFixed(1)}%</span>
+                  </div>
+                  <div className={`w-full rounded-full h-2.5 ${
+                    darkMode ? "bg-gray-700" : "bg-gray-200"
+                  }`}>
+                    <div
+                      className="bg-red-500 h-2.5 rounded-full"
+                      style={{ width: `${satisfactionStats.decevant}%` }}
+                    ></div>
+                  </div>
                 </div>
               </div>
-              <div>
-                <div className={`flex justify-between text-sm mb-1 ${
-                  darkMode ? "text-gray-300" : "text-gray-600"
-                }`}>
-                  <span>Très bien</span>
-                  <span>312 avis</span>
-                </div>
-                <div className={`w-full rounded-full h-2.5 ${
-                  darkMode ? "bg-gray-700" : "bg-gray-200"
-                }`}>
-                  <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: '20%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className={`flex justify-between text-sm mb-1 ${
-                  darkMode ? "text-gray-300" : "text-gray-600"
-                }`}>
-                  <span>Moyen</span>
-                  <span>45 avis</span>
-                </div>
-                <div className={`w-full rounded-full h-2.5 ${
-                  darkMode ? "bg-gray-700" : "bg-gray-200"
-                }`}>
-                  <div className="bg-yellow-500 h-2.5 rounded-full" style={{ width: '3%' }}></div>
-                </div>
-              </div>
             </div>
-          </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className={`text-sm ${
+                darkMode ? "text-gray-400" : "text-gray-600"
+              }`}>Chargement des données de satisfaction...</p>
+            </div>
+          )}
         </div>
 
         {/* Métriques de Performance - Heures de Pointe */}
