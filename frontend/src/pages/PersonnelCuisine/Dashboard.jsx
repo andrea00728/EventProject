@@ -27,6 +27,7 @@ import { getUserIdForToken } from "../../services/userService";
 import OrderList from "./OrderList";
 import Spinner from "./Spinner";
 import BurgerMenu from "./BurgerMenu";
+import { SOCKET_URL } from "../../socket";
 
 const formatDateTime = (dateString) => {
   const date = new Date(dateString);
@@ -78,7 +79,7 @@ export default function DashboardpersCuisine() {
         const UserId = await getUserIdForToken(token);
         setUserId(UserId);
 
-        const newSocket = io("http://localhost:3000", {
+        const newSocket = io(SOCKET_URL, {
           auth: { userId: UserId },
           transports: ["websocket"],
           cors: { origin: "http://localhost:5173" },
@@ -179,7 +180,7 @@ export default function DashboardpersCuisine() {
   };
 
   const changerStatut = async (id, direction = "next") => {
-    const socket = io("http://localhost:3000", {
+    const socket = io(SOCKET_URL, {
       auth: {
         userId: userId,
       },

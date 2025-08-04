@@ -23,6 +23,7 @@ import { useDarkMode } from "../../context/DarkModeContext";
 import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { ChevronDown } from "lucide-react";
 import { io } from "socket.io-client";
+import { SOCKET_URL } from "../../socket";
 
 // Composant StatsCard
 const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
@@ -382,13 +383,13 @@ export default function Organisateur() {
     fetchData();
 
     // const userId = await getUserIdForToken(token);
-    // const socket = io("http://localhost:3000", {
+    // const socket = io(`${import.meta.env.VITE_API_BASE_URL}`, {
     //   auth: {
     //     userId: userId, // très important : doit être l’ID réel de l’organisateur
     //   },
     // });
 
-    const socket = io("http://localhost:3000", {
+    const socket = io(SOCKET_URL, {
       auth: {
         userId: "455b0bed-dd7f-4214-a5dd-5a1eb", 
       },

@@ -24,6 +24,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useSocket } from "../../socket";
 import { debounce } from "lodash";
 import { FaArrowLeft, FaSync, FaFileCsv, FaFilePdf, FaEye, FaUndo } from "react-icons/fa";
+import { SOCKET_URL } from "../../socket";
 
 // Enregistrement des composants ChartJS
 ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler);
@@ -80,7 +81,7 @@ const RevenuPage = () => {
   const refreshToken = useCallback(async () => {
     try {
       const response = await axios.post(
-        "http://localhost:3000/auth/refresh",
+        `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -112,7 +113,7 @@ const RevenuPage = () => {
     try {
       let currentToken = token;
       try {
-        await axios.get("http://localhost:3000/auth/validate", {
+        await axios.get(`${import.meta.env.VITE_API_BASE_URL}/auth/validate`, {
           headers: { Authorization: `Bearer ${currentToken}` },
         });
       } catch (error) {
@@ -127,7 +128,7 @@ const RevenuPage = () => {
       }
 
       const { data } = await axios.get(
-        `http://localhost:3000/orders/event/${eventId.eventId}`,
+        `${import.meta.env.VITE_API_BASE_URL}/orders/event/${eventId.eventId}`,
         {
           headers: { Authorization: `Bearer ${currentToken}` },
           params: { include: "table,items,items.menuItem" },
@@ -213,7 +214,7 @@ const RevenuPage = () => {
       if (!window.confirm("Confirmer le remboursement de cette commande ?")) return;
       setIsRefunding((prev) => ({ ...prev, [id]: true }));
       try {
-        const response = await axios.get(`http://localhost:3000/orders/${id}`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -229,7 +230,7 @@ const RevenuPage = () => {
         }
 
         await axios.patch(
-          `http://localhost:3000/orders/${id}/refunded`,
+          `${import.meta.env.VITE_API_BASE_URL}/orders/${id}/refunded`,
           { paymentStatus: "refunded" },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -252,6 +253,68 @@ const RevenuPage = () => {
 
   // Débouncer la fonction de remboursement
   const handleRefundDebounced = useMemo(() => debounce(handleRefund, 300), [handleRefund]);
+
+  // Effet pour initialiser la récupération des données et WebSocket
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const setupWebSocket = async () => {
+      try {
+        const userId = await getUserIdForToken(token);
+        socketRef.current = io(SOCKET_URL, {
+          auth: { userId },
+          transports: ["websocket", "polling"],
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000,
+        });
+
+        socketRef.current.on("connect", () => {
+          toast.info("Connecté au serveur en temps réel");
+          console.log("✅ Connecté au serveur WebSocket (RevenuPage)");
+        });
+
+        socketRef.current.on("connect_error", (error) => {
+          console.error("WebSocket connection error:", error);
+          toast.error("Erreur de connexion au serveur en temps réel");
+        });
+
+        socketRef.current.on("orderDeleted", () => {
+          console.log("Commande supprimée reçue via WebSocket");
+          fetchRevenus();
+        });
+
+        socketRef.current.on("orderRefunded", () => {
+          console.log("Commande remboursée reçue via WebSocket");
+          fetchRevenus();
+        });
+      } catch (err) {
+        console.error("Erreur lors de l'initialisation du socket:", err);
+        toast.error("Erreur lors de l'initialisation de la connexion en temps réel");
+      }
+    };
+
+    const loadData = async () => {
+      await fetchRevenus();
+      await setupWebSocket();
+    };
+
+    loadData();
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.off("connect");
+        socketRef.current.off("connect_error");
+        socketRef.current.off("orderDeleted");
+        socketRef.current.off("orderRefunded");
+        socketRef.current.disconnect();
+        console.log("🔌 WebSocket déconnecté (RevenuPage)");
+      }
+    };
+  }, [token, navigate, fetchRevenus]);
 
   // Filtrage des revenus
   const filteredRevenus = useMemo(() => {
