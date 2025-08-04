@@ -4,6 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-auth.dto';
 import { User } from './entities/auth.entity';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -160,5 +161,17 @@ export class AuthController {
   async getOrgStats(/*@Req() req : any*/): Promise<any> {
     
     return this.authService.findOrgStats();
+  }
+
+  @Get('user-role-stats')
+  async getUserRoleStats() {
+    return this.authService.getUserRoleStats();
+  }
+  
+  @Get('monthly-registrations')
+  @ApiOperation({ summary: 'Obtenir les inscriptions mensuelles (hors personnel)' })
+  @ApiResponse({ status: 200, description: 'Retourne les inscriptions par mois' })
+  async getMonthlyRegistrations(): Promise<{ month: string; count: number }[]> {
+    return this.authService.getMonthlyRegistrations();
   }
 }

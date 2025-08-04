@@ -186,5 +186,56 @@ export class AuthService {
     };
   }
 
+  async getUserRoleStats(): Promise<{ role: string; count: number }[]> {
+  const result = await this.userRepository
+    .createQueryBuilder('user')
+    .select('user.role', 'role')
+    .addSelect('COUNT(*)', 'count')
+    .groupBy('user.role')
+    .getRawMany();
 
+  return result.map(r => ({
+    role: r.role,
+    count: parseInt(r.count),
+  }));
+}
+  
+async getMonthlyRegistrations(): Promise<{ month: string; count: number }[]> {
+  const currentYear = new Date().getFullYear();
+  const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+  
+  const monthlyResults = await this.userRepository
+    .createQueryBuilder('user')
+    .select("TO_CHAR(user.createdAt, 'Mon')", 'month')
+    .addSelect('COUNT(*)', 'count')
+    .where('user.role IN (:...roles)', { roles: ['organisateur', 'accueil'] })
+    .andWhere('EXTRACT(YEAR FROM user.createdAt) = :year', { year: currentYear })
+    .groupBy('month')
+    .orderBy('MIN(EXTRACT(MONTH FROM user.createdAt))')
+    .getRawMany();
+
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+  
+  const lastThreeMonthsCount = await this.userRepository
+    .createQueryBuilder('user')
+    .where('user.role IN (:...roles)', { roles: ['organisateur', 'accueil'] })
+    .andWhere('user.createdAt >= :date', { date: threeMonthsAgo })
+    .getCount();
+
+  const formattedData = monthNames.slice(0, 6).map(month => {
+    const found = monthlyResults.find(r => r.month.toLowerCase() === month.toLowerCase());
+    return {
+      month,
+      count: found ? parseInt(found.count) : 0
+    };
+  });
+
+  formattedData.push({
+    month: '3 derniers mois',
+    count: lastThreeMonthsCount
+  });
+
+  return formattedData;
+}
 }

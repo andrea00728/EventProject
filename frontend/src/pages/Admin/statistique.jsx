@@ -11,9 +11,7 @@ import {
   MdPerson,
   MdCalendarToday,
   MdTrendingUp,
-  MdQueryStats
-} from "react-icons/md";
-import {
+  MdQueryStats,
   MdInfo,
   MdStar,
   MdCancel,
@@ -21,11 +19,10 @@ import {
 } from "react-icons/md";
 import { FaUsers, FaBell, FaEnvelope, FaUser } from "react-icons/fa";
 import { ChevronDown } from "lucide-react";
+import statsService from "../../services/statsService";
 
-// Enregistrement du plugin ChartDataLabels globalement
 Chart.register(ChartDataLabels);
 
-// Plugin personnalisé pour afficher le total au centre d'un graphique en beignet
 const centerTextPlugin = {
   id: 'centerText',
   beforeDraw(chart) {
@@ -192,10 +189,16 @@ const Statique = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [userRate, setUserRate] = useState('0.0');
+  const [organizerRate, setOrganizerRate] = useState('0.0');
+  const [eventCount, setEventCount] = useState(0);
+  const [revenueTotal, setRevenueTotal] = useState('$0');
+  const [eventTypeData, setEventTypeData] = useState([]);
+  const [registrationData, setRegistrationData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const notifRef = useRef(null);
-  const msgRef = useRef(null);
-  const profileRef = useRef(null);
+  const totalEventMax = 1000;
 
   // Références pour les instances de Chart
   const revenueChartRef = useRef(null);
@@ -229,45 +232,32 @@ const Statique = () => {
     ? "bg-gray-900 text-gray-200" 
     : "bg-gray-50 text-gray-800";
 
-  // Données pour les graphiques
-  const registrationData = useMemo(() => ({
-    labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil'],
-    datasets: [{
-      label: 'Inscriptions',
-      data: [5, 10, 15, 20, 25, 30, 35],
-      borderColor: '#6366f1',
-      backgroundColor: 'rgba(99, 102, 241, 0.15)',
-      tension: 0.4,
-      fill: true,
-      pointBackgroundColor: '#ffffff',
-      pointBorderColor: '#6366f1',
-      pointBorderWidth: 2,
-      pointRadius: 5,
-      pointHoverRadius: 7,
-    }]
-  }), []);
+  // Récupération des données via le service
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Décommentez si un token est requis
+        // statsService.setAuthToken("votre-token-ici");
+        const stats = await statsService.fetchAllStats();
+        setUserRate(stats.userRate);
+        setOrganizerRate(stats.organizerRate);
+        setEventCount(stats.eventCount);
+        setRevenueTotal(stats.revenueTotal);
+        setEventTypeData(stats.eventTypeData);
+        setRegistrationData(stats.registrationData);
+        setError(null);
+      } catch (err) {
+        console.error('Fetch Error:', err);
+        setError(err.message || 'Erreur inconnue');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const eventTypeData = useMemo(() => ({
-    labels: ['Conférences', 'Formations', 'Networking', 'Webinaires', 'Autres'],
-    datasets: [{
-      data: [35, 25, 20, 15, 5],
-      backgroundColor: [
-        'rgba(99, 102, 241, 0.8)',
-        'rgba(168, 85, 247, 0.8)',
-        'rgba(34, 197, 94, 0.8)',
-        'rgba(250, 204, 21, 0.8)',
-        'rgba(239, 68, 68, 0.8)'
-      ],
-      borderColor: [
-        'rgba(99, 102, 241, 1)',
-        'rgba(168, 85, 247, 1)',
-        'rgba(34, 197, 94, 1)',
-        'rgba(250, 204, 21, 1)',
-        'rgba(239, 68, 68, 1)'
-      ],
-      borderWidth: 1.5,
-    }]
-  }), []);
+    fetchStats();
+    const intervalId = setInterval(fetchStats, 30000);
+    return () => clearInterval(intervalId);
+  }, []);
 
   // Options de graphique communes
   const commonChartOptions = useMemo(() => ({
@@ -342,8 +332,8 @@ const Statique = () => {
     },
   }), [commonChartOptions, darkMode]);
 
+  // Mise à jour des graphiques
   useEffect(() => {
-    // Initialiser les graphiques
     if (revenueChartCanvasRef.current) {
       revenueChartRef.current = new Chart(revenueChartCanvasRef.current, {
         type: 'line',
@@ -391,27 +381,18 @@ const Statique = () => {
       });
     }
 
-    if (eventsChartCanvasRef.current) {
+    if (eventsChartCanvasRef.current && eventTypeData.length > 0) {
+      if (eventsChartRef.current) {
+        eventsChartRef.current.destroy();
+      }
       eventsChartRef.current = new Chart(eventsChartCanvasRef.current, {
         type: 'doughnut',
         data: {
-          labels: ['Mariages', 'Conférences', 'Concerts', 'Soirées', 'Autres'],
+          labels: eventTypeData.map(e => e.type),
           datasets: [{
-            data: [35, 25, 20, 15, 5],
-            backgroundColor: [
-              'rgba(99, 102, 241, 0.8)',
-              'rgba(168, 85, 247, 0.8)',
-              'rgba(34, 197, 94, 0.8)',
-              'rgba(250, 204, 21, 0.8)',
-              'rgba(239, 68, 68, 0.8)'
-            ],
-            borderColor: [
-              'rgba(99, 102, 241, 1)',
-              'rgba(168, 85, 247, 1)',
-              'rgba(34, 197, 94, 1)',
-              'rgba(250, 204, 21, 1)',
-              'rgba(239, 68, 68, 1)'
-            ],
+            data: eventTypeData.map(e => e.count),
+            backgroundColor: eventTypeData.map((_, index) => `hsl(${index * 60}, 70%, 50%)`),
+            borderColor: eventTypeData.map((_, index) => `hsl(${index * 60}, 70%, 50%)`),
             borderWidth: 1.5,
           }]
         },
@@ -467,10 +448,28 @@ const Statique = () => {
       });
     }
 
-    if (registrationChartCanvasRef.current) {
+    if (registrationChartCanvasRef.current && registrationData.length > 0) {
+      if (registrationChartRef.current) {
+        registrationChartRef.current.destroy();
+      }
       registrationChartRef.current = new Chart(registrationChartCanvasRef.current, {
         type: 'line',
-        data: registrationData,
+        data: {
+          labels: registrationData.map(item => item.month),
+          datasets: [{
+            label: 'Inscriptions',
+            data: registrationData.map(item => item.count),
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99, 102, 241, 0.15)',
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: '#6366f1',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+          }]
+        },
         options: {
           ...commonChartOptions,
           plugins: {
@@ -492,42 +491,16 @@ const Statique = () => {
                   return ` ${context.dataset.label}: ${context.parsed.y}`;
                 }
               }
-            }
-          },
-        }
-      });
-    }
-
-    if (eventTypeChartCanvasRef.current) {
-      eventTypeChartRef.current = new Chart(eventTypeChartCanvasRef.current, {
-        type: 'doughnut',
-        data: eventTypeData,
-        options: {
-          ...doughnutChartOptions,
-          plugins: {
-            ...doughnutChartOptions.plugins,
-            legend: {
-              ...doughnutChartOptions.plugins.legend,
-              display: true,
-              position: 'right',
-              labels: { 
-                usePointStyle: true, 
-                padding: 20, 
-                color: darkMode ? '#cbd5e1' : '#4a5568' 
-              }
             },
-            tooltip: {
-              ...doughnutChartOptions.plugins.tooltip,
-              callbacks: {
-                label: function(context) {
-                  const value = typeof context.parsed === 'number' ? context.parsed : 0;
-                  return ` ${context.label}: ${value}%`;
-                }
-              }
-            }
-          }
+            datalabels: {
+              color: darkMode ? '#E5E7EB' : '#374151',
+              anchor: 'end',
+              align: 'top',
+              formatter: (value) => value,
+            },
+          },
         },
-        plugins: [ChartDataLabels, centerTextPlugin]
+        plugins: [ChartDataLabels]
       });
     }
 
@@ -536,399 +509,397 @@ const Statique = () => {
       eventsChartRef.current?.destroy();
       peakHoursChartRef.current?.destroy();
       registrationChartRef.current?.destroy();
-      eventTypeChartRef.current?.destroy();
     };
-  }, [commonChartOptions, doughnutChartOptions, registrationData, eventTypeData, darkMode]);
+  }, [commonChartOptions, doughnutChartOptions, eventTypeData, registrationData, darkMode]);
+
+  const eventPercentage = totalEventMax > 0 ? ((eventCount / totalEventMax) * 100).toFixed(1) : '0.0';
 
   return (
     <div className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${bgClass}`}>
+      {loading && <p>Chargement...</p>}
+      {error && <p className="text-red-500">Erreur : {error}</p>}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatsCard
-          title="Utilisateurs Totaux"
-          value="1,523"
-          icon={MdPeople}
-          trend={12.5}
-          color="blue"
-        />
-        <StatsCard
-          title="Événements Créés"
-          value="3,847"
-          icon={MdEvent}
-          trend={22.1}
-          color="green"
-        />
-        <StatsCard
-          title="Revenus Totaux"
-          value="€127K"
-          icon={MdTrendingUp}
-          trend={18.9}
-          color="purple"
-        />
-        <StatsCard
-          title="Organisateurs"
-          value="524"
-          icon={MdPerson}
-          trend={5.5}
-          color="orange"
-        />
-      </div>
+      {!loading && !error && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatsCard
+              title="Utilisateurs Totaux"
+              value={`${userRate}%`}
+              icon={MdPeople}
+              trend={12.5}
+              color="blue"
+            />
+            <StatsCard
+              title="Événements Créés"
+              value={`${eventPercentage}%`}
+              icon={MdEvent}
+              trend={22.1}
+              color="green"
+            />
+            <StatsCard
+              title="Revenus Totaux"
+              value={revenueTotal}
+              icon={MdTrendingUp}
+              trend={18.9}
+              color="purple"
+            />
+            <StatsCard
+              title="Organisateurs"
+              value={`${organizerRate}%`}
+              icon={MdPerson}
+              trend={5.5}
+              color="orange"
+            />
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-        {/* Graphique des Revenus */}
-        <div className={`rounded-2xl p-6 border ${
-          darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-        }`}>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <div>
-              <h3 className={`text-2xl font-bold ${
-                darkMode ? "text-white" : "text-gray-900"
-              } mb-1`}>Évolution des Revenus</h3>
-              <p className={`text-sm ${
-                darkMode ? "text-gray-400" : "text-gray-600"
-              }`}>Performance mensuelle sur les 12 derniers mois</p>
-            </div>
-            <div className="relative mt-4 sm:mt-0">
-              <select className={`appearance-none ${
-                darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 text-gray-800"
-              } border rounded-lg pl-3 pr-9 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 cursor-pointer`}>
-                <option>12 derniers mois</option>
-                <option>6 derniers mois</option>
-                <option>3 derniers mois</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                <ChevronDown className="w-4 h-4" />
-              </div>
-            </div>
-          </div>
-          <div className="chart-container" style={{ height: '300px' }}>
-            <canvas ref={revenueChartCanvasRef}></canvas>
-          </div>
-        </div>
-
-        {/* Graphique des Types d'Événements */}
-        <div className={`rounded-2xl p-6 border ${
-          darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-        }`}>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <div>
-              <h3 className={`text-2xl font-bold ${
-                darkMode ? "text-white" : "text-gray-900"
-              } mb-1`}>Types d'Événements</h3>
-              <p className={`text-sm ${
-                darkMode ? "text-gray-400" : "text-gray-600"
-              }`}>Répartition des événements par catégorie</p>
-            </div>
-            <button className={`flex items-center space-x-2 mt-4 sm:mt-0 ${
-              darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-800"
-            } text-sm`}>
-              <span>Voir détails</span>
-              <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="chart-container flex items-center justify-center" style={{ height: '300px' }}>
-            <canvas ref={eventsChartCanvasRef}></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-        {/* Graphique des Inscriptions */}
-        <div className={`rounded-2xl p-6 border ${
-          darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-        }`}>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <div>
-              <h3 className={`text-2xl font-bold ${
-                darkMode ? "text-white" : "text-gray-900"
-              } mb-1`}>Évolution des Inscriptions</h3>
-              <p className={`text-sm ${
-                darkMode ? "text-gray-400" : "text-gray-600"
-              }`}>Nouvelles inscriptions par mois</p>
-            </div>
-            <div className="relative mt-4 sm:mt-0">
-              <select className={`appearance-none ${
-                darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 text-gray-800"
-              } border rounded-lg pl-3 pr-9 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 cursor-pointer`}>
-                <option>7 derniers mois</option>
-                <option>12 derniers mois</option>
-                <option>3 derniers mois</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                <ChevronDown className="w-4 h-4" />
-              </div>
-            </div>
-          </div>
-          <div className="chart-container" style={{ height: '300px' }}>
-            <canvas ref={registrationChartCanvasRef}></canvas>
-          </div>
-        </div>
-
-        {/* Graphique des Heures de Pointe */}
-        <div className={`rounded-2xl p-6 border ${
-          darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-        }`}>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <div>
-              <h3 className={`text-2xl font-bold ${
-                darkMode ? "text-white" : "text-gray-900"
-              } mb-1`}>Heures de Pointe</h3>
-              <p className={`text-sm ${
-                darkMode ? "text-gray-400" : "text-gray-600"
-              }`}>Activité des utilisateurs par heure</p>
-            </div>
-            <button className={`flex items-center space-x-2 mt-4 sm:mt-0 ${
-              darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-800"
-            } text-sm`}>
-              <span>Rapport détaillé</span>
-              <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="chart-container" style={{ height: '300px' }}>
-            <canvas ref={peakHoursChartCanvasRef}></canvas>
-          </div>
-        </div>
-      </div>
-
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-        {/* Métriques de Performance - Utilisation des Tables */}
-        <div className={`rounded-2xl p-6 border ${
-          darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-        }`}>
-          <h3 className={`text-xl font-bold flex items-center space-x-3 ${
-            darkMode ? "text-white" : "text-gray-900"
-          } mb-5`}>
-            <MdEvent className="text-emerald-400" />
-            <span>Utilisation des Tables</span>
-          </h3>
-          <div className="space-y-5">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-              <div className="flex items-center space-x-3 mb-2 sm:mb-0">
-                <div className="w-4 h-4 rounded-full bg-green-500 shadow-md"></div>
-                <span className={`text-sm ${
-                  darkMode ? "text-gray-300" : "text-gray-600"
-                }`}>Tables VIP</span>
-              </div>
-              <div className="flex items-center space-x-3 w-full sm:w-auto">
-                <div className={`w-full sm:w-32 h-2.5 rounded-full ${
-                  darkMode ? "bg-gray-700" : "bg-gray-200"
-                }`}>
-                  <div className="h-2.5 bg-green-500 rounded-full" style={{ width: '85%' }}></div>
-                </div>
-                <span className="text-green-500 text-sm font-semibold">85%</span>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-              <div className="flex items-center space-x-3 mb-2 sm:mb-0">
-                <div className="w-4 h-4 rounded-full bg-blue-500 shadow-md"></div>
-                <span className={`text-sm ${
-                  darkMode ? "text-gray-300" : "text-gray-600"
-                }`}>Tables Standard</span>
-              </div>
-              <div className="flex items-center space-x-3 w-full sm:w-auto">
-                <div className={`w-full sm:w-32 h-2.5 rounded-full ${
-                  darkMode ? "bg-gray-700" : "bg-gray-200"
-                }`}>
-                  <div className="h-2.5 bg-blue-500 rounded-full" style={{ width: '72%' }}></div>
-                </div>
-                <span className="text-blue-500 text-sm font-semibold">72%</span>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-              <div className="flex items-center space-x-3 mb-2 sm:mb-0">
-                <div className="w-4 h-4 rounded-full bg-yellow-500 shadow-md"></div>
-                <span className={`text-sm ${
-                  darkMode ? "text-gray-300" : "text-gray-600"
-                }`}>Tables Extérieures</span>
-              </div>
-              <div className="flex items-center space-x-3 w-full sm:w-auto">
-                <div className={`w-full sm:w-32 h-2.5 rounded-full ${
-                  darkMode ? "bg-gray-700" : "bg-gray-200"
-                }`}>
-                  <div className="h-2.5 bg-yellow-500 rounded-full" style={{ width: '43%' }}></div>
-                </div>
-                <span className="text-yellow-500 text-sm font-semibold">43%</span>
-              </div>
-            </div>
-          </div>
-          <div className="mt-7 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <p className={`text-xs flex items-center ${
-              darkMode ? "text-gray-400" : "text-gray-500"
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <div className={`rounded-2xl p-6 border ${
+              darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
             }`}>
-              <MdInfo className="mr-2 text-indigo-400" />
-              <span>Taux d'occupation moyen: <span className={`font-semibold ${
-                darkMode ? "text-white" : "text-gray-900"
-              }`}>67%</span> ce mois</span>
-            </p>
-          </div>
-        </div>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <div>
+                  <h3 className={`text-2xl font-bold ${
+                    darkMode ? "text-white" : "text-gray-900"
+                  } mb-1`}>Évolution des Revenus</h3>
+                  <p className={`text-sm ${
+                    darkMode ? "text-gray-400" : "text-gray-600"
+                  }`}>Performance mensuelle sur les 12 derniers mois</p>
+                </div>
+                <div className="relative mt-4 sm:mt-0">
+                  <select className={`appearance-none ${
+                    darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 text-gray-800"
+                  } border rounded-lg pl-3 pr-9 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 cursor-pointer`}>
+                    <option>12 derniers mois</option>
+                    <option>6 derniers mois</option>
+                    <option>3 derniers mois</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+              <div className="chart-container" style={{ height: '300px' }}>
+                <canvas ref={revenueChartCanvasRef}></canvas>
+              </div>
+            </div>
 
-        {/* Métriques de Performance - Satisfaction Client */}
-        <div className={`rounded-2xl p-6 border ${
-          darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-        }`}>
-          <h3 className={`text-xl font-bold flex items-center space-x-3 ${
-            darkMode ? "text-white" : "text-gray-900"
-          } mb-5`}>
-            <MdPerson className="text-yellow-400" />
-            <span>Satisfaction Client</span>
-          </h3>
-          <div className="text-center py-4">
-            <div className={`text-6xl font-extrabold mb-3 leading-none ${
-              darkMode ? "text-green-400" : "text-green-600"
+            <div className={`rounded-2xl p-6 border ${
+              darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
             }`}>
-              4.8<span className={`text-3xl ${
-                darkMode ? "text-gray-400" : "text-gray-500"
-              }`}>/5</span>
-            </div>
-            <div className="flex justify-center space-x-1 mb-5">
-              {[...Array(5)].map((_, i) => (
-                <MdStar key={`star-${i}`} className={`${
-                  darkMode ? "text-yellow-400" : "text-yellow-500"
-                } ${i >= 4 ? 'opacity-50' : ''}`} />
-              ))}
-            </div>
-            <div className="space-y-4">
-              <div>
-                <div className={`flex justify-between text-sm mb-1 ${
-                  darkMode ? "text-gray-300" : "text-gray-600"
-                }`}>
-                  <span>Excellent</span>
-                  <span>1,247 avis</span>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <div>
+                  <h3 className={`text-2xl font-bold ${
+                    darkMode ? "text-white" : "text-gray-900"
+                  } mb-1`}>Types d'Événements</h3>
+                  <p className={`text-sm ${
+                    darkMode ? "text-gray-400" : "text-gray-600"
+                  }`}>Répartition des événements par catégorie</p>
                 </div>
-                <div className={`w-full rounded-full h-2.5 ${
-                  darkMode ? "bg-gray-700" : "bg-gray-200"
-                }`}>
-                  <div className="bg-green-500 h-2.5 rounded-full" style={{ width: '78%' }}></div>
-                </div>
+                <button className={`flex items-center space-x-2 mt-4 sm:mt-0 ${
+                  darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-800"
+                } text-sm`}>
+                  <span>Voir détails</span>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
               </div>
-              <div>
-                <div className={`flex justify-between text-sm mb-1 ${
-                  darkMode ? "text-gray-300" : "text-gray-600"
-                }`}>
-                  <span>Très bien</span>
-                  <span>312 avis</span>
-                </div>
-                <div className={`w-full rounded-full h-2.5 ${
-                  darkMode ? "bg-gray-700" : "bg-gray-200"
-                }`}>
-                  <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: '20%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className={`flex justify-between text-sm mb-1 ${
-                  darkMode ? "text-gray-300" : "text-gray-600"
-                }`}>
-                  <span>Moyen</span>
-                  <span>45 avis</span>
-                </div>
-                <div className={`w-full rounded-full h-2.5 ${
-                  darkMode ? "bg-gray-700" : "bg-gray-200"
-                }`}>
-                  <div className="bg-yellow-500 h-2.5 rounded-full" style={{ width: '3%' }}></div>
-                </div>
+              <div className="chart-container flex items-center justify-center" style={{ height: '300px' }}>
+                <canvas ref={eventsChartCanvasRef}></canvas>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Métriques de Performance - Heures de Pointe */}
-        <div className={`rounded-2xl p-6 border ${
-          darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-        }`}>
-          <h3 className={`text-xl font-bold flex items-center space-x-3 ${
-            darkMode ? "text-white" : "text-gray-900"
-          } mb-5`}>
-            <MdCalendarToday className="text-teal-400" />
-            <span>Heures de Pointe</span>
-          </h3>
-          <div className="chart-container" style={{ height: '220px' }}>
-            <canvas ref={peakHoursChartCanvasRef}></canvas>
-          </div>
-          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <p className={`text-xs flex items-center ${
-              darkMode ? "text-gray-400" : "text-gray-500"
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <div className={`rounded-2xl p-6 border ${
+              darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
             }`}>
-              <MdInfo className="mr-2 text-indigo-400" />
-              <span>Heure la plus fréquentée: <span className={`font-semibold ${
-                darkMode ? "text-white" : "text-gray-900"
-              }`}>20h-22h</span> (68% des réservations)</span>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Section Tendances Récentes */}
-      <div className={`rounded-2xl p-6 border mb-12 ${
-        darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-      }`}>
-        <h3 className={`text-2xl font-bold flex items-center space-x-3 ${
-          darkMode ? "text-white" : "text-gray-900"
-        } mb-8`}>
-          <MdTrendingUp className="text-indigo-400" />
-          <span>Tendances Récentes</span>
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className={`rounded-xl p-5 border ${
-            darkMode ? "border-green-500/20 bg-gray-700/30" : "border-green-200 bg-green-50"
-          }`}>
-            <div className="flex items-center space-x-4">
-              <div className={`p-3 rounded-lg ${
-                darkMode ? "bg-green-500/20" : "bg-green-100"
-              }`}>
-                <MdEvent className="text-green-400 text-xl" />
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <div>
+                  <h3 className={`text-2xl font-bold ${
+                    darkMode ? "text-white" : "text-gray-900"
+                  } mb-1`}>Évolution des Inscriptions</h3>
+                  <p className={`text-sm ${
+                    darkMode ? "text-gray-400" : "text-gray-600"
+                  }`}>Nouvelles inscriptions par mois</p>
+                </div>
+                <div className="relative mt-4 sm:mt-0">
+                  <select className={`appearance-none ${
+                    darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 text-gray-800"
+                  } border rounded-lg pl-3 pr-9 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 cursor-pointer`}>
+                    <option>7 derniers mois</option>
+                    <option>12 derniers mois</option>
+                    <option>3 derniers mois</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className={`text-3xl font-extrabold mb-1 leading-none ${
+              <div className="chart-container" style={{ height: '300px' }}>
+                <canvas ref={registrationChartCanvasRef}></canvas>
+              </div>
+            </div>
+
+            <div className={`rounded-2xl p-6 border ${
+              darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+            }`}>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <div>
+                  <h3 className={`text-2xl font-bold ${
+                    darkMode ? "text-white" : "text-gray-900"
+                  } mb-1`}>Heures de Pointe</h3>
+                  <p className={`text-sm ${
+                    darkMode ? "text-gray-400" : "text-gray-600"
+                  }`}>Activité des utilisateurs par heure</p>
+                </div>
+                <button className={`flex items-center space-x-2 mt-4 sm:mt-0 ${
+                  darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-800"
+                } text-sm`}>
+                  <span>Rapport détaillé</span>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="chart-container" style={{ height: '300px' }}>
+                <canvas ref={peakHoursChartCanvasRef}></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            <div className={`rounded-2xl p-6 border ${
+              darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+            }`}>
+              <h3 className={`text-xl font-bold flex items-center space-x-3 ${
+                darkMode ? "text-white" : "text-gray-900"
+              } mb-5`}>
+                <MdEvent className="text-emerald-400" />
+                <span>Utilisation des Tables</span>
+              </h3>
+              <div className="space-y-5">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <div className="flex items-center space-x-3 mb-2 sm:mb-0">
+                    <div className="w-4 h-4 rounded-full bg-green-500 shadow-md"></div>
+                    <span className={`text-sm ${
+                      darkMode ? "text-gray-300" : "text-gray-600"
+                    }`}>Tables VIP</span>
+                  </div>
+                  <div className="flex items-center space-x-3 w-full sm:w-auto">
+                    <div className={`w-full sm:w-32 h-2.5 rounded-full ${
+                      darkMode ? "bg-gray-700" : "bg-gray-200"
+                    }`}>
+                      <div className="h-2.5 bg-green-500 rounded-full" style={{ width: '85%' }}></div>
+                    </div>
+                    <span className="text-green-500 text-sm font-semibold">85%</span>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <div className="flex items-center space-x-3 mb-2 sm:mb-0">
+                    <div className="w-4 h-4 rounded-full bg-blue-500 shadow-md"></div>
+                    <span className={`text-sm ${
+                      darkMode ? "text-gray-300" : "text-gray-600"
+                    }`}>Tables Standard</span>
+                  </div>
+                  <div className="flex items-center space-x-3 w-full sm:w-auto">
+                    <div className={`w-full sm:w-32 h-2.5 rounded-full ${
+                      darkMode ? "bg-gray-700" : "bg-gray-200"
+                    }`}>
+                      <div className="h-2.5 bg-blue-500 rounded-full" style={{ width: '72%' }}></div>
+                    </div>
+                    <span className="text-blue-500 text-sm font-semibold">72%</span>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <div className="flex items-center space-x-3 mb-2 sm:mb-0">
+                    <div className="w-4 h-4 rounded-full bg-yellow-500 shadow-md"></div>
+                    <span className={`text-sm ${
+                      darkMode ? "text-gray-300" : "text-gray-600"
+                    }`}>Tables Extérieures</span>
+                  </div>
+                  <div className="flex items-center space-x-3 w-full sm:w-auto">
+                    <div className={`w-full sm:w-32 h-2.5 rounded-full ${
+                      darkMode ? "bg-gray-700" : "bg-gray-200"
+                    }`}>
+                      <div className="h-2.5 bg-yellow-500 rounded-full" style={{ width: '43%' }}></div>
+                    </div>
+                    <span className="text-yellow-500 text-sm font-semibold">43%</span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-7 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p className={`text-xs flex items-center ${
+                  darkMode ? "text-gray-400" : "text-gray-500"
+                }`}>
+                  <MdInfo className="mr-2 text-indigo-400" />
+                  <span>Taux d'occupation moyen: <span className={`font-semibold ${
+                    darkMode ? "text-white" : "text-gray-900"
+                  }`}>67%</span> ce mois</span>
+                </p>
+              </div>
+            </div>
+
+            <div className={`rounded-2xl p-6 border ${
+              darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+            }`}>
+              <h3 className={`text-xl font-bold flex items-center space-x-3 ${
+                darkMode ? "text-white" : "text-gray-900"
+              } mb-5`}>
+                <MdPerson className="text-yellow-400" />
+                <span>Satisfaction Client</span>
+              </h3>
+              <div className="text-center py-4">
+                <div className={`text-6xl font-extrabold mb-3 leading-none ${
                   darkMode ? "text-green-400" : "text-green-600"
-                }`}>+34%</div>
-                <p className={`text-sm ${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                }`}>Réservations ce mois</p>
+                }`}>
+                  4.8<span className={`text-3xl ${
+                    darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}>/5</span>
+                </div>
+                <div className="flex justify-center space-x-1 mb-5">
+                  {[...Array(5)].map((_, i) => (
+                    <MdStar key={`star-${i}`} className={`${
+                      darkMode ? "text-yellow-400" : "text-yellow-500"
+                    } ${i >= 4 ? 'opacity-50' : ''}`} />
+                  ))}
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <div className={`flex justify-between text-sm mb-1 ${
+                      darkMode ? "text-gray-300" : "text-gray-600"
+                    }`}>
+                      <span>Excellent</span>
+                      <span>1,247 avis</span>
+                    </div>
+                    <div className={`w-full rounded-full h-2.5 ${
+                      darkMode ? "bg-gray-700" : "bg-gray-200"
+                    }`}>
+                      <div className="bg-green-500 h-2.5 rounded-full" style={{ width: '78%' }}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className={`flex justify-between text-sm mb-1 ${
+                      darkMode ? "text-gray-300" : "text-gray-600"
+                    }`}>
+                      <span>Très bien</span>
+                      <span>312 avis</span>
+                    </div>
+                    <div className={`w-full rounded-full h-2.5 ${
+                      darkMode ? "bg-gray-700" : "bg-gray-200"
+                    }`}>
+                      <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: '20%' }}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className={`flex justify-between text-sm mb-1 ${
+                      darkMode ? "text-gray-300" : "text-gray-600"
+                    }`}>
+                      <span>Moyen</span>
+                      <span>45 avis</span>
+                    </div>
+                    <div className={`w-full rounded-full h-2.5 ${
+                      darkMode ? "bg-gray-700" : "bg-gray-200"
+                    }`}>
+                      <div className="bg-yellow-500 h-2.5 rounded-full" style={{ width: '3%' }}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={`rounded-2xl p-6 border ${
+              darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+            }`}>
+              <h3 className={`text-xl font-bold flex items-center space-x-3 ${
+                darkMode ? "text-white" : "text-gray-900"
+              } mb-5`}>
+                <MdCalendarToday className="text-teal-400" />
+                <span>Heures de Pointe</span>
+              </h3>
+              <div className="chart-container" style={{ height: '220px' }}>
+                <canvas ref={peakHoursChartCanvasRef}></canvas>
+              </div>
+              <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p className={`text-xs flex items-center ${
+                  darkMode ? "text-gray-400" : "text-gray-500"
+                }`}>
+                  <MdInfo className="mr-2 text-indigo-400" />
+                  <span>Heure la plus fréquentée: <span className={`font-semibold ${
+                    darkMode ? "text-white" : "text-gray-900"
+                  }`}>20h-22h</span> (68% des réservations)</span>
+                </p>
               </div>
             </div>
           </div>
-          <div className={`rounded-xl p-5 border ${
-            darkMode ? "border-red-500/20 bg-gray-700/30" : "border-red-200 bg-red-50"
+
+          <div className={`rounded-2xl p-6 border mb-12 ${
+            darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
           }`}>
-            <div className="flex items-center space-x-4">
-              <div className={`p-3 rounded-lg ${
-                darkMode ? "bg-red-500/20" : "bg-red-100"
+            <h3 className={`text-2xl font-bold flex items-center space-x-3 ${
+              darkMode ? "text-white" : "text-gray-900"
+            } mb-8`}>
+              <MdTrendingUp className="text-indigo-400" />
+              <span>Tendances Récentes</span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className={`rounded-xl p-5 border ${
+                darkMode ? "border-green-500/20 bg-gray-700/30" : "border-green-200 bg-green-50"
               }`}>
-                <MdCancel className="text-red-400 text-xl" />
+                <div className="flex items-center space-x-4">
+                  <div className={`p-3 rounded-lg ${
+                    darkMode ? "bg-green-500/20" : "bg-green-100"
+                  }`}>
+                    <MdEvent className="text-green-400 text-xl" />
+                  </div>
+                  <div>
+                    <div className={`text-3xl font-extrabold mb-1 leading-none ${
+                      darkMode ? "text-green-400" : "text-green-600"
+                    }`}>+34%</div>
+                    <p className={`text-sm ${
+                      darkMode ? "text-gray-400" : "text-gray-600"
+                    }`}>Réservations ce mois</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className={`text-3xl font-extrabold mb-1 leading-none ${
-                  darkMode ? "text-red-400" : "text-red-600"
-                }`}>-12%</div>
-                <p className={`text-sm ${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                }`}>Taux d'annulation</p>
+              <div className={`rounded-xl p-5 border ${
+                darkMode ? "border-red-500/20 bg-gray-700/30" : "border-red-200 bg-red-50"
+              }`}>
+                <div className="flex items-center space-x-4">
+                  <div className={`p-3 rounded-lg ${
+                    darkMode ? "bg-red-500/20" : "bg-red-100"
+                  }`}>
+                    <MdCancel className="text-red-400 text-xl" />
+                  </div>
+                  <div>
+                    <div className={`text-3xl font-extrabold mb-1 leading-none ${
+                      darkMode ? "text-red-400" : "text-red-600"
+                    }`}>-12%</div>
+                    <p className={`text-sm ${
+                      darkMode ? "text-gray-400" : "text-gray-600"
+                    }`}>Taux d'annulation</p>
+                  </div>
+                </div>
+              </div>
+              <div className={`rounded-xl p-5 border ${
+                darkMode ? "border-yellow-500/20 bg-gray-700/30" : "border-yellow-200 bg-yellow-50"
+              }`}>
+                <div className="flex items-center space-x-4">
+                  <div className={`p-3 rounded-lg ${
+                    darkMode ? "bg-yellow-500/20" : "bg-yellow-100"
+                  }`}>
+                    <MdAttachMoney className="text-yellow-400 text-xl" />
+                  </div>
+                  <div>
+                    <div className={`text-3xl font-extrabold mb-1 leading-none ${
+                      darkMode ? "text-yellow-400" : "text-yellow-600"
+                    }`}>+8%</div>
+                    <p className={`text-sm ${
+                      darkMode ? "text-gray-400" : "text-gray-600"
+                    }`}>Revenus par client</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <div className={`rounded-xl p-5 border ${
-            darkMode ? "border-yellow-500/20 bg-gray-700/30" : "border-yellow-200 bg-yellow-50"
-          }`}>
-            <div className="flex items-center space-x-4">
-              <div className={`p-3 rounded-lg ${
-                darkMode ? "bg-yellow-500/20" : "bg-yellow-100"
-              }`}>
-                <MdAttachMoney className="text-yellow-400 text-xl" />
-              </div>
-              <div>
-                <div className={`text-3xl font-extrabold mb-1 leading-none ${
-                  darkMode ? "text-yellow-400" : "text-yellow-600"
-                }`}>+8%</div>
-                <p className={`text-sm ${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                }`}>Revenus par client</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };
