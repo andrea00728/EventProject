@@ -4,6 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-auth.dto';
 import { User } from './entities/auth.entity';
+import { FirebaseAuthGuard } from 'src/guards/firebase-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -160,5 +161,16 @@ export class AuthController {
   async getOrgStats(/*@Req() req : any*/): Promise<any> {
     
     return this.authService.findOrgStats();
+  }
+
+  @UseGuards(FirebaseAuthGuard)
+  @Get('profile')
+  getProfile(@Req() request) {
+    // Ici on retourne les infos du token Firebase (id, email, etc)
+    return {
+      uid: request.user.uid,
+      email: request.user.email,
+      name: request.user.name || null,
+    };
   }
 }

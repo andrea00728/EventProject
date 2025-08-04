@@ -9,6 +9,7 @@ import { Personnel } from 'src/entities/Personnel';
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
 import { QueryFailedError } from 'typeorm';
+import admin from 'src/firebase/firebase-admin';
 
 @Injectable()
 export class AuthService {
@@ -200,5 +201,48 @@ export class AuthService {
     };
   }
 
+async verifyFirebaseToken(idToken: string) {
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const email = decodedToken.email;
+    const displayName = decodedToken.name;
+    const photoURL = decodedToken.picture;
+
+    // Chercher l'admin existant dans la base
+    const existingAdmin = await this.userRepository.findOne({
+      where: { email: email, role: "admin" },
+    });
+
+    if (existingAdmin) {
+      return existingAdmin; // Admin existe déjà, retour immédiat
+    }
+
+    // Vérifie si un autre admin existe (peu importe l'email)
+    const adminCount = await this.userRepository.count({
+      where: { role: "admin" },
+    });
+
+    if (adminCount > 0) {
+      // Un admin existe déjà, accès refusé pour créer un autre admin
+      throw new UnauthorizedException('Un admin existe déjà');
+    }
+
+    // Créer un nouvel admin avec les infos de Firebase
+    const newAdmin = this.userRepository.create({
+      email: email,
+      name: displayName,
+      photo: photoURL,
+      role: "admin",
+      // tu peux initialiser d'autres champs si nécessaire (ex: password vide, etc.)
+    });
+
+    await this.userRepository.save(newAdmin);
+
+    return newAdmin;
+  } catch (error) {
+    console.error(error);
+    throw new UnauthorizedException('Token Firebase invalide');
+  }
+}
 
 }
