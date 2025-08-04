@@ -16,7 +16,7 @@ import { TbTrashXFilled } from "react-icons/tb";
 import { getAllManagerEvents } from "../../services/evenementServ";
 import ModalManager from "./ModalManager";
 import DeleteModal from "./DeleteModal";
-import { FaUsers, FaEye, FaUser } from "react-icons/fa";
+import { FaUsers, FaEye, FaUser, FaUserSlash } from "react-icons/fa"; // Ajout de FaUserSlash
 import { handleDownloadXLSX } from "../../services/downloadXLSX";
 import { DataGrid } from "@mui/x-data-grid";
 import { useDarkMode } from "../../context/DarkModeContext";
@@ -38,9 +38,8 @@ const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
 
   return (
     <div
-      className={`rounded-xl p-4 shadow-sm border ${
-        darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-      } relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
+      className={`rounded-xl p-4 shadow-sm border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+        } relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
     >
       <div
         className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${colors[color].bg} opacity-10 rounded-full -mr-4 -mt-4`}
@@ -49,30 +48,26 @@ const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
       <div className="flex items-center justify-between">
         <div>
           <p
-            className={`text-sm font-medium ${
-              darkMode ? "text-blue-300" : "text-blue-600"
-            } mb-1`}
+            className={`text-sm font-medium ${darkMode ? "text-blue-300" : "text-blue-600"
+              } mb-1`}
           >
             {title}
           </p>
           <p
-            className={`text-2xl font-bold ${
-              darkMode ? "text-white" : "text-gray-900"
-            }`}
+            className={`text-2xl font-bold ${darkMode ? "text-white" : "text-gray-900"
+              }`}
           >
             {value}
           </p>
           {trend && (
             <div className="flex items-center mt-1">
               <MdTrendingUp
-                className={`mr-1 ${
-                  trend > 0 ? "text-green-500" : "text-red-500"
-                }`}
+                className={`mr-1 ${trend > 0 ? "text-green-500" : "text-red-500"
+                  }`}
               />
               <span
-                className={`text-sm ${
-                  trend > 0 ? "text-green-600" : "text-red-600"
-                }`}
+                className={`text-sm ${trend > 0 ? "text-green-600" : "text-red-600"
+                  }`}
               >
                 {trend > 0 ? "+" : ""}
                 {trend}%
@@ -106,9 +101,8 @@ const Dropdown = React.forwardRef(
       <div className="relative" ref={ref}>
         <button
           onClick={() => setShow(!show)}
-          className={`relative p-2 rounded-full transition-all duration-200 ${
-            darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-          }`}
+          className={`relative p-2 rounded-full transition-all duration-200 ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+            }`}
           aria-label={label}
         >
           <div className="relative">
@@ -123,20 +117,17 @@ const Dropdown = React.forwardRef(
 
         {show && (
           <div
-            className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] overflow-y-auto rounded-xl shadow-xl border ${
-              darkMode
+            className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] overflow-y-auto rounded-xl shadow-xl border ${darkMode
                 ? "bg-gray-800 border-gray-700 text-gray-200"
                 : "bg-white border-gray-200 text-gray-900"
-            } z-50 transition-all duration-200 ${
-              isMobile ? "left-4 right-4" : "right-0"
-            }`}
+              } z-50 transition-all duration-200 ${isMobile ? "left-4 right-4" : "right-0"
+              }`}
           >
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
               {React.cloneElement(icon, { className: "w-5 h-5" })}
               <h4
-                className={`font-semibold text-sm sm:text-base ${
-                  darkMode ? "text-purple-300" : "text-purple-600" // Changé en violet
-                }`}
+                className={`font-semibold text-sm sm:text-base ${darkMode ? "text-purple-300" : "text-purple-600"
+                  }`}
               >
                 {label}
               </h4>
@@ -152,11 +143,10 @@ const Dropdown = React.forwardRef(
                 items.map((item, i) => (
                   <div
                     key={i}
-                    className={`p-3 transition-colors duration-150 border-b ${
-                      darkMode
+                    className={`p-3 transition-colors duration-150 border-b ${darkMode
                         ? "border-gray-700 hover:bg-gray-700"
                         : "border-gray-200 hover:bg-gray-50"
-                    } cursor-pointer`}
+                      } cursor-pointer`}
                   >
                     <p className="text-sm line-clamp-2">
                       {typeof item === "object"
@@ -164,9 +154,8 @@ const Dropdown = React.forwardRef(
                         : item}
                     </p>
                     <p
-                      className={`text-xs mt-1 ${
-                        darkMode ? "text-gray-400" : "text-gray-500"
-                      }`}
+                      className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
                     >
                       Il y a {Math.floor(Math.random() * 60)} min
                     </p>
@@ -175,9 +164,8 @@ const Dropdown = React.forwardRef(
               ) : (
                 <div className="p-4 text-center">
                   <p
-                    className={`text-sm ${
-                      darkMode ? "text-gray-400" : "text-gray-500"
-                    }`}
+                    className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"
+                      }`}
                   >
                     Aucun {label.toLowerCase()}
                   </p>
@@ -200,39 +188,35 @@ const OrganisateurCard = ({
 }) => {
   return (
     <div
-      className={`p-4 mb-4 rounded-xl shadow-sm border transition-all duration-300 ${
-        darkMode
+      className={`p-4 mb-4 rounded-xl shadow-sm border transition-all duration-300 ${darkMode
           ? "bg-gray-800 border-gray-700 hover:border-gray-600"
           : "bg-white border-gray-200 hover:border-gray-300"
-      }`}
+        }`}
     >
       <div className="flex justify-between items-start mb-2">
         <div>
           <h3
-            className={`text-lg font-semibold ${
-              darkMode ? "text-blue-300" : "text-blue-600"
-            }`}
+            className={`text-lg font-semibold ${darkMode ? "text-blue-300" : "text-blue-600"
+              }`}
           >
             {organisateur.name}
           </h3>
           <p
-            className={`text-sm ${
-              darkMode ? "text-gray-300" : "text-gray-600"
-            }`}
+            className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"
+              }`}
           >
             {organisateur.email}
           </p>
         </div>
         <span
-          className={`px-2 py-1 rounded-full text-xs ${
-            organisateur.isOnline
+          className={`px-2 py-1 rounded-full text-xs ${organisateur.isOnline
               ? darkMode
                 ? "bg-green-900/50 text-green-300"
                 : "bg-green-100 text-green-800"
               : darkMode
-              ? "bg-gray-700/50 text-gray-400"
-              : "bg-gray-100 text-gray-600"
-          }`}
+                ? "bg-gray-700/50 text-gray-400"
+                : "bg-gray-100 text-gray-600"
+            }`}
         >
           {organisateur.isOnline ? "Actif" : "Inactif"}
         </span>
@@ -241,14 +225,12 @@ const OrganisateurCard = ({
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="flex items-center gap-2">
           <MdEvent
-            className={`text-sm ${
-              darkMode ? "text-blue-400" : "text-blue-600"
-            }`}
+            className={`text-sm ${darkMode ? "text-blue-400" : "text-blue-600"
+              }`}
           />
           <span
-            className={`text-sm ${
-              darkMode ? "text-gray-300" : "text-gray-600"
-            }`}
+            className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"
+              }`}
           >
             {organisateur.forfait?.nom || "Aucun forfait"}
           </span>
@@ -256,14 +238,12 @@ const OrganisateurCard = ({
 
         <div className="flex items-center gap-2">
           <MdCalendarToday
-            className={`text-sm ${
-              darkMode ? "text-cyan-400" : "text-cyan-600"
-            }`}
+            className={`text-sm ${darkMode ? "text-cyan-400" : "text-cyan-600"
+              }`}
           />
           <span
-            className={`text-sm ${
-              darkMode ? "text-gray-300" : "text-gray-600"
-            }`}
+            className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"
+              }`}
           >
             {organisateur.createdAt.split(" ")[0]}
           </span>
@@ -273,16 +253,14 @@ const OrganisateurCard = ({
       <div className="flex justify-between items-center mt-3">
         <div>
           <p
-            className={`text-xs ${
-              darkMode ? "text-gray-400" : "text-gray-500"
-            }`}
+            className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"
+              }`}
           >
             Expiration forfait
           </p>
           <p
-            className={`text-sm ${
-              darkMode ? "text-gray-200" : "text-gray-700"
-            }`}
+            className={`text-sm ${darkMode ? "text-gray-200" : "text-gray-700"
+              }`}
           >
             {organisateur.forfaitexpirationdate || "N/A"}
           </p>
@@ -291,11 +269,10 @@ const OrganisateurCard = ({
         <div className="flex gap-2">
           <button
             onClick={() => onViewEvents(organisateur.id, organisateur.name)}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm ${
-              darkMode
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm ${darkMode
                 ? "bg-blue-600 hover:bg-blue-700 text-white"
                 : "bg-blue-500 hover:bg-blue-600 text-white"
-            } transition-colors duration-200`}
+              } transition-colors duration-200`}
           >
             <FaEye className="text-sm" />
             <span>Événements</span>
@@ -303,11 +280,10 @@ const OrganisateurCard = ({
 
           <button
             onClick={() => onDelete(organisateur)}
-            className={`p-2 rounded-lg ${
-              darkMode
+            className={`p-2 rounded-lg ${darkMode
                 ? "text-red-400 hover:text-red-300"
                 : "text-red-600 hover:text-red-800"
-            } transition-colors duration-200`}
+              } transition-colors duration-200`}
           >
             <TbTrashXFilled className="text-lg" />
           </button>
@@ -391,7 +367,7 @@ export default function Organisateur() {
 
     const socket = io(SOCKET_URL, {
       auth: {
-        userId: "455b0bed-dd7f-4214-a5dd-5a1eb", 
+        userId: "455b0bed-dd7f-4214-a5dd-5a1eb",
       },
     });
 
@@ -506,20 +482,21 @@ export default function Organisateur() {
 
   const stats = useMemo(() => {
     const total = data.length;
-    const active = data.filter((e) => e.status === "active").length;
+    const active = data.filter((e) => e.isOnline === true).length;
     const withForfait = data.filter((e) => e.forfait && e.forfait.nom).length;
-    // const eventCount = data.reduce((sum,e) => sum + (e.eventsCount || 0), 0);
+    const inactive = data.filter((e) => e.isOnline === false).length; // Ajout pour compter les organisateurs hors ligne
     const avgEvents =
       total > 0
         ? Math.round(
-            data.reduce((sum, e) => sum + (e.eventsCount || 0), 0) / total
-          )
+          data.reduce((sum, e) => sum + (e.eventsCount || 0), 0) / total
+        )
         : 0;
 
     return {
       total,
       active,
       withForfait,
+      inactive, // Ajout de la nouvelle propriété
       avgEvents,
     };
   }, [data]);
@@ -534,8 +511,8 @@ export default function Organisateur() {
       "bg-gradient-to-r from-indigo-600 via-blue-500 to-indigo-700 text-white",
   };
 
-  const bgClass = darkMode 
-    ? "bg-gray-900 text-gray-200" 
+  const bgClass = darkMode
+    ? "bg-gray-900 text-gray-200"
     : "bg-gray-50 text-gray-800";
 
   const [currentPage, setCurrentPage] = useState(0);
@@ -562,33 +539,31 @@ export default function Organisateur() {
           color="green"
         />
         <StatsCard
+          title="Organisateurs Hors Ligne" // Changement de titre
+          value={stats.inactive} // Utilisation de la nouvelle valeur
+          icon={FaUserSlash} // Nouvelle icône pour hors ligne
+          trend={-5} // Ajustement de la tendance
+          color="orange"
+        />
+        <StatsCard
           title="Avec Forfait"
           value={stats.withForfait}
           icon={MdEvent}
           trend={12}
           color="purple"
         />
-        <StatsCard
-          title="Moyenne Événements"
-          value={stats.avgEvents}
-          icon={MdCalendarToday}
-          trend={-2}
-          color="orange"
-        />
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
           <div
-            className={`flex items-center gap-2 px-5 py-0.5 rounded-lg ${
-              darkMode ? "bg-gray-800" : "bg-gray-100"
-            }`}
+            className={`flex items-center gap-2 px-5 py-0.5 rounded-lg ${darkMode ? "bg-gray-800" : "bg-gray-100"
+              }`}
           >
             <MdFilterList className="text-gray-500" />
             <select
-              className={`p-2 bg-transparent focus:outline-none ${
-                darkMode ? "text-blue-300" : "text-blue-600"
-              }`}
+              className={`p-2 bg-transparent focus:outline-none ${darkMode ? "text-blue-300" : "text-blue-600"
+                }`}
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
             >
@@ -598,21 +573,18 @@ export default function Organisateur() {
           </div>
 
           <div
-            className={`relative w-full sm:w-64 flex items-center ${
-              darkMode ? "bg-gray-800" : "bg-white"
-            } rounded-lg shadow-sm border ${
-              darkMode ? "border-gray-700" : "border-gray-200"
-            }`}
+            className={`relative w-full sm:w-64 flex items-center ${darkMode ? "bg-gray-800" : "bg-white"
+              } rounded-lg shadow-sm border ${darkMode ? "border-gray-700" : "border-gray-200"
+              }`}
           >
             <MdSearch className="absolute left-3 text-gray-400" />
             <input
               type="text"
               placeholder={`Rechercher par ${filterType}...`}
-              className={`w-full pl-10 pr-4 py-2 bg-transparent focus:outline-none ${
-                darkMode
+              className={`w-full pl-10 pr-4 py-2 bg-transparent focus:outline-none ${darkMode
                   ? "text-blue-300 placeholder-gray-400"
                   : "text-blue-600 placeholder-gray-500"
-              }`}
+                }`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -637,14 +609,12 @@ export default function Organisateur() {
         ) : filteredData.length === 0 ? (
           <div className="text-center py-12">
             <FaUsers
-              className={`w-16 h-16 mx-auto mb-4 ${
-                darkMode ? "text-gray-600" : "text-gray-300"
-              }`}
+              className={`w-16 h-16 mx-auto mb-4 ${darkMode ? "text-gray-600" : "text-gray-300"
+                }`}
             />
             <p
-              className={`text-lg ${
-                darkMode ? "text-purple-300" : "text-purple-600"
-              }`}
+              className={`text-lg ${darkMode ? "text-purple-300" : "text-purple-600"
+                }`}
             >
               Aucun organisateur trouvé
             </p>
@@ -724,11 +694,10 @@ export default function Organisateur() {
                       {/* Statut */}
                       <div className="truncate text-sm">
                         <span
-                          className={`flex items-center gap-1 ${
-                            manager.isOnline
+                          className={`flex items-center gap-1 ${manager.isOnline
                               ? "text-green-500"
                               : "text-gray-400"
-                          }`}
+                            }`}
                         >
                           <span className="w-2 h-2 rounded-full bg-current inline-block" />
                           {manager.isOnline ? "En ligne" : "Hors ligne"}
@@ -757,11 +726,10 @@ export default function Organisateur() {
 
                         <button
                           onClick={() => openDeleteModal(manager)}
-                          className={`p-1.5 rounded-lg ${
-                            darkMode
+                          className={`p-1.5 rounded-lg ${darkMode
                               ? "text-red-400 hover:text-red-300"
                               : "text-red-600 hover:text-red-800"
-                          } transition-colors duration-200`}
+                            } transition-colors duration-200`}
                         >
                           <TbTrashXFilled className="text-lg" />
                         </button>
