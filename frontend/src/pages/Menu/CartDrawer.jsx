@@ -59,7 +59,7 @@ const CartDrawer = ({
                     <div className="flex-1 flex gap-4 items-center">
                       {ci.photo ? (
                         <img
-                          src={`http://localhost:3000${ci.photo}`}
+                          src={`http://api.mastertable.site${ci.photo}`}
                           alt={ci.name}
                           className="w-16 h-16 object-cover rounded-lg shadow-sm"
                           loading="lazy"

@@ -56,7 +56,7 @@ const MenuItemForm = ({ menuId, token }) => {
         formData.append('photo', photo);
       }
 
-      await axios.post(`http://localhost:3000/menus/${menuId}/items`, formData, {
+      await axios.post(`http://api.mastertable.site/menus/${menuId}/items`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',

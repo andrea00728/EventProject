@@ -52,7 +52,7 @@ const InvoiceModal = ({
 
     try {
       const res = await axios.get(
-        `http://localhost:3000/guests/check/${eventId}?email=${encodeURIComponent(email)}`,
+        `http://api.mastertable.site/guests/check/${eventId}?email=${encodeURIComponent(email)}`,
           // { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -62,7 +62,7 @@ const InvoiceModal = ({
       } else {
         // Création de l'invité si non trouvé
         await axios.post(
-          `http://localhost:3000/guests/${eventId}`,
+          `http://api.mastertable.site/guests/${eventId}`,
           {
             nom: 'Client invité',
             prenom: 'Automatique',
@@ -102,7 +102,7 @@ const InvoiceModal = ({
 
     try {
       await axios.post(
-        'http://localhost:3000/orders',
+        'http://api.mastertable.site/orders',
         {
           tableId,
           items: cart.map((item) => ({

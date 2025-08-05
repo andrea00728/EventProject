@@ -55,7 +55,7 @@ const StatistiquesPage = () => {
   // Récupération des détails de l'événement
   const fetchEventDetails = async (eventId) => {
     try {
-      const response = await axios.get(`http://localhost:3000/events/${eventId}`, {
+      const response = await axios.get(`http://api.mastertable.site/events/${eventId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setEventDetails(response.data);
@@ -73,7 +73,7 @@ const StatistiquesPage = () => {
       setEventId(eventId);
       await fetchEventDetails(eventId);
 
-      const ordersRes = await axios.get(`http://localhost:3000/orders/event/${eventId}`);
+      const ordersRes = await axios.get(`http://api.mastertable.site/orders/event/${eventId}`);
       const ordersData = ordersRes.data;
 
       const orderStats = ordersData.reduce((acc, order) => {
@@ -86,7 +86,7 @@ const StatistiquesPage = () => {
         return acc;
       }, { paid: 0, unpaid: 0 });
 
-      const stockRes = await axios.get('http://localhost:3000/menus', {
+      const stockRes = await axios.get('http://api.mastertable.site/menus', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const stockItems = stockRes.data.flatMap(menu => menu.items);

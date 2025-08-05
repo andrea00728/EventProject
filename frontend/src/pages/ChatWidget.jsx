@@ -55,7 +55,7 @@ export default function ChatWidget() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:3000/mastertable/chat', { prompt });
+      const response = await axios.post('http://api.mastertable.site/mastertable/chat', { prompt });
       const botMessage = { role: 'bot', text: response.data.response };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {

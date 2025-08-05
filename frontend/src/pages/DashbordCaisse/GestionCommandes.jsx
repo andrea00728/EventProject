@@ -58,7 +58,7 @@ const GestionCommandesPage = () => {
 
       const eventId = await getEventIdByEmail(token);
       const { data } = await axios.get(
-        `http://localhost:3000/orders/event/${eventId.eventId}`,
+        `http://api.mastertable.site/orders/event/${eventId.eventId}`,
         {
           params: { include: "table,items,items.menuItem" },
           headers: { Authorization: `Bearer ${token}` },
@@ -91,7 +91,7 @@ const GestionCommandesPage = () => {
 
   const fetchData = async () => {
     const UserId = await getUserIdForToken(token);
-    const socket = io("http://localhost:3000", {
+    const socket = io("http://api.mastertable.site", {
       auth: {
         userId: UserId, // très important : doit être l’ID réel de l’organisateur
       },
@@ -126,7 +126,7 @@ const GestionCommandesPage = () => {
     async (orderId, newStatus) => {
       try {
         const response = await axios.patch(
-          `http://localhost:3000/orders/${orderId}/status`,
+          `http://api.mastertable.site/orders/${orderId}/status`,
           { status: STATUS_MAPPING.frontToBack[newStatus] },
           {
             headers: {
@@ -136,7 +136,7 @@ const GestionCommandesPage = () => {
           }
         );
 
-        const socket = io("http://localhost:3000", {
+        const socket = io("http://api.mastertable.site", {
           auth: { userId },
         });
 
@@ -169,7 +169,7 @@ const GestionCommandesPage = () => {
         const fetchedUserId = await getUserIdForToken(token);
         setUserId(fetchedUserId);
 
-        socket = io("http://localhost:3000", {
+        socket = io("http://api.mastertable.site", {
           auth: { userId: fetchedUserId },
           transports: ["websocket", "polling"],
           reconnection: true,
