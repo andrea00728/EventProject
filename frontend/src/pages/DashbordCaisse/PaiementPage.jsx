@@ -65,7 +65,7 @@ const PaiementPage = () => {
       if (!token) throw new Error("Token manquant");
 
       const eventId = await getEventIdByEmail(token);
-      const { data } = await axios.get(`http://localhost:3000/orders/event/${eventId.eventId}`, {
+      const { data } = await axios.get(`http://api.mastertable.site/orders/event/${eventId.eventId}`, {
         params: { include: "table,items,items.menuItem" },
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -102,7 +102,7 @@ const PaiementPage = () => {
         const fetchedUserId = await getUserIdForToken(token);
         setUserId(fetchedUserId);
 
-        socketRef.current = io("http://localhost:3000", {
+        socketRef.current = io("http://api.mastertable.site", {
           auth: { userId: fetchedUserId },
           transports: ["websocket", "polling"],
           reconnection: true,
@@ -150,7 +150,7 @@ const PaiementPage = () => {
     try {
       const backendStatus = PAYMENT_STATUS_MAPPING.frontToBack[newStatus];
       await axios.patch(
-        `http://localhost:3000/orders/${id}/payment`,
+        `http://api.mastertable.site/orders/${id}/payment`,
         { paymentStatus: backendStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -173,7 +173,7 @@ const PaiementPage = () => {
     if (row) {
       try {
         await axios.post(
-          `http://localhost:3000/paiement/create`,
+          `http://api.mastertable.site/paiement/create`,
           { eventId: id, amount: row.total },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -213,7 +213,7 @@ const PaiementPage = () => {
 
     let sequentialNumber = row.id;
     try {
-      const response = await axios.get(`http://localhost:3000/invoices/next-sequence`, {
+      const response = await axios.get(`http://api.mastertable.site/invoices/next-sequence`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       sequentialNumber = response.data.nextSequence;

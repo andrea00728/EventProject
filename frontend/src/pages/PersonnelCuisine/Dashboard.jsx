@@ -78,10 +78,10 @@ export default function DashboardpersCuisine() {
         const UserId = await getUserIdForToken(token);
         setUserId(UserId);
 
-        const newSocket = io("http://localhost:3000", {
+        const newSocket = io("http://api.mastertable.site", {
           auth: { userId: UserId },
           transports: ["websocket"],
-          cors: { origin: "http://localhost:5173" },
+          cors: { origin: "http://mastertable.site" },
         });
 
         newSocket.on("connect", () => {
@@ -179,7 +179,7 @@ export default function DashboardpersCuisine() {
   };
 
   const changerStatut = async (id, direction = "next") => {
-    const socket = io("http://localhost:3000", {
+    const socket = io("http://api.mastertable.site", {
       auth: {
         userId: userId,
       },
@@ -398,7 +398,7 @@ export default function DashboardpersCuisine() {
                     <div className="flex items-center space-x-3">
                       <MdError className="text-6xl text-red-500 animate-pulse" />
                       <h2 className="text-2xl font-bold text-red-700">
-                        Une erreur est survenue
+                        Aucun commande pour le moment
                       </h2>
                     </div>
                     <p className="mt-4 text-center text-md text-red-600 font-medium max-w-xl">

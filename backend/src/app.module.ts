@@ -30,18 +30,17 @@ import { SystemPrompt } from './entities/system-prompt.entity';
 import { ShortLink } from './entities/ShortLink';
 import { Commentaire } from './entities/Commentaire';
 import { Satisfaction } from './entities/satisfaction.entity';
+import { Favorite } from './entities/Favorite';
 
 // Modules fonctionnels
 import { AuthModule } from './Authentication/auth.module';
 import { EvenementModule } from './modules/evenement/evenement.module';
-import { LocationModule } from './modules/localisation/localisation.module';  // <- Import du module localisation
+import { LocationModule } from './modules/localisation/localisation.module';
 import { ForfaitModule } from './modules/forfait/forfait.module';
 import { TableModule } from './modules/table/table.module';
 import { InviteModule } from './modules/invite/invite.module';
 import { InvitationModule } from './modules/invitation/invitation.module';
 // Importez vos services et contrôleurs
-import { MailerModule } from '@nestjs-modules/mailer';
-import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 import { PaiementModule } from './modules/paiement/paiement.module';
 import { PersonnelModule } from './modules/personnel/personnel.module';
 import { QrCodeModule } from './modules/qrcode/qrcode.module';
@@ -53,13 +52,18 @@ import { PaypalModule } from './modules/paypal/paypal.module';
 import { SystemPromptModule } from './modules/system-prompt/system-prompt.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { FavoriteModule } from './modules/favorite/favorite.module';
-import { Favorite } from './entities/Favorite';
 import { ShortLinkModule } from './modules/short-link/short-link.module';
 import { CommentaireModule } from './modules/commentaire/commentaire.module';
 import { SatisfactionModule } from './modules/satisfaction/satisfaction.module';
 
 // Contrôleurs et services globaux
 import { ProfileController } from './controllers/profile/profile.controller';
+import { ForfaitService } from './services/forfait/forfait.service';
+import { ForfaitCronService } from './services/forfait-cron/forfait-cron.service';
+
+import { MailerModule } from '@nestjs-modules/mailer';
+import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
+
 import { NotificationController } from './controllers/notification/notification.controller';
 import { NotificationEntity } from './entities/notification.entity';
 
@@ -128,8 +132,8 @@ import { NotificationEntity } from './entities/notification.entity';
 
     // Modules fonctionnels
     AuthModule,
-    LocationModule,       // <--- IMPORTANT
-    EvenementModule,      // <--- IMPORTANT
+    LocationModule,
+    EvenementModule,
     ForfaitModule,
     NotificationModule,
     TableModule,
@@ -148,9 +152,8 @@ import { NotificationEntity } from './entities/notification.entity';
     CommentaireModule,
     SatisfactionModule,
     FavoriteModule,
-
   ],
-  controllers: [ProfileController], // Contrôleurs globaux ici (pas besoin d'ajouter EvenementController ici)
-  providers: [], // Services globaux si besoin
+  controllers: [ProfileController],
+  providers: [],
 })
 export class AppModule {}

@@ -19,7 +19,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useDarkMode } from "../../context/DarkModeContext";
 
-const API_URL = "http://localhost:3000/locations";
+const API_URL = "http://api.mastertable.site/locations";
 
 const LocationSalle = () => {
   const [locations, setLocations] = useState([]);

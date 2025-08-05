@@ -12,7 +12,7 @@ export default function SystemPromptManager() {
   const fetchPrompts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:3000/system-prompt');
+      const response = await axios.get('http://api.mastertable.site/system-prompt');
       setPrompts(response.data);
     } catch (err) {
       setError('Erreur lors du chargement des prompts.');
@@ -29,7 +29,7 @@ export default function SystemPromptManager() {
     if (!newPrompt.trim()) return;
     setLoading(true);
     try {
-      await axios.post('http://localhost:3000/system-prompt', { content: newPrompt });
+      await axios.post('http://api.mastertable.site/system-prompt', { content: newPrompt });
       setNewPrompt('');
       fetchPrompts();
     } catch (err) {
@@ -43,7 +43,7 @@ export default function SystemPromptManager() {
     if (!editingPrompt.content.trim()) return;
     setLoading(true);
     try {
-      await axios.put(`http://localhost:3000/system-prompt/${id}`, {
+      await axios.put(`http://api.mastertable.site/system-prompt/${id}`, {
         content: editingPrompt.content,
         isActive: editingPrompt.isActive,
       });
@@ -59,7 +59,7 @@ export default function SystemPromptManager() {
   const handleDelete = async (id) => {
     setLoading(true);
     try {
-      await axios.delete(`http://localhost:3000/system-prompt/${id}`);
+      await axios.delete(`http://api.mastertable.site/system-prompt/${id}`);
       fetchPrompts();
     } catch (err) {
       setError('Erreur lors de la suppression du prompt.');

@@ -1,129 +1,103 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import InviteForm from "./choixModInvite/inviteForm.jsx";
 
 const PublicEvents = () => {
-  const [events, setEvents] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [evenements, setEvenements] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    const fetchPublicEvents = async () => {
-      setIsLoading(true);
+    const fetchEvenements = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/evenements/publics');
-        setEvents(response.data);
-        setError(null);
+        const response = await axios.get("http://api.mastertable.site/evenements/publics");
+        setEvenements(response.data);
       } catch (error) {
-        console.error('Erreur lors de la récupération des événements publics :', error);
-        setError("Impossible de charger les événements publics.");
-      } finally {
-        setIsLoading(false);
+        console.error("Erreur lors de la récupération des événements :", error);
       }
     };
 
-    fetchPublicEvents();
+    fetchEvenements();
   }, []);
 
+  const handleEventClick = (event) => {
+    setSelectedEvent(event);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedEvent(null);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      <div className="container mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-full mb-6">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+    <div className="min-h-screen bg-gray-50 relative">
+      <main className="container mx-auto px-4 py-10">
+        <h1 className="text-3xl font-bold text-center text-indigo-700 mb-8">Événements Publics</h1>
+
+        {evenements.length === 0 ? (
+          <p className="text-center text-gray-500">Aucun événement public disponible pour le moment.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {evenements.map((event) => (
+              <div
+                key={event.id}
+                onClick={() => handleEventClick(event)}
+                className="cursor-pointer group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1"
+              >
+                <div className="p-6">
+                  <h2 className="text-xl font-semibold text-indigo-700 group-hover:text-indigo-900">
+                    {event.nom}
+                  </h2>
+                  <p className="text-gray-600 mt-2">
+                    <span className="font-semibold">Type :</span> {event.type}
+                  </p>
+                  <p className="text-gray-600">
+                    <span className="font-semibold">Thème :</span> {event.theme}
+                  </p>
+                  <p className="text-gray-600">
+                    <span className="font-semibold">Date :</span>{" "}
+                    {new Date(event.date).toLocaleDateString("fr-FR", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
+                  <p className="text-sm text-gray-600"><strong>Lieu :</strong> {event.location?.nom || "Non précisé"}</p>
+                </div>
+              </div>
+            ))}
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-cyan-600 bg-clip-text text-transparent mb-4">
-            Événements Publics
-          </h1>
-          <p className="text-slate-600 text-lg max-w-2xl mx-auto">
-            Découvrez tous les événements ouverts au public
-          </p>
+        )}
+      </main>
+
+      {/* Modal simple maison */}
+      {showModal && selectedEvent && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+        onClick={handleCloseModal}
+      >
+        <div
+          className="bg-white rounded-xl p-8 max-w-4xl w-full shadow-lg relative max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={handleCloseModal}
+            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-3xl font-bold leading-none"
+            aria-label="Fermer modal"
+          >
+            &times;
+          </button>
+          <h2 className="text-3xl font-bold mb-6 text-indigo-700">
+            Invitation pour : {selectedEvent.nom}
+          </h2>
+          <InviteForm onBack={handleCloseModal} eventId={selectedEvent.id} />
         </div>
-
-        {/* Loading */}
-        {isLoading && (
-          <div className="flex flex-col items-center py-24">
-            <div className="w-16 h-16 border-4 border-indigo-200 rounded-full animate-spin border-t-indigo-500"></div>
-            <p className="mt-4 text-slate-600 font-medium">Chargement des événements publics...</p>
-          </div>
-        )}
-
-        {/* Error */}
-        {error && (
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-6">
-              <div className="flex items-center">
-                <svg className="w-6 h-6 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div>
-                  <h3 className="text-red-800 font-semibold">Erreur de chargement</h3>
-                  <p className="text-red-700 mt-1">{error}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Events */}
-        {!isLoading && !error && (
-          <>
-            {events.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-slate-100 to-slate-200 rounded-full mb-6">
-                  <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-slate-600 mb-2">Aucun événement public</h3>
-                <p className="text-slate-500">Revenez plus tard pour découvrir de nouveaux événements.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                {events.map((event, index) => (
-                  <div
-                    key={event.id}
-                    className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1"
-                  >
-                    {/* Card Header */}
-                    <div className={`h-2 bg-gradient-to-r ${
-                      index % 3 === 0 ? 'from-indigo-500 to-cyan-500' :
-                      index % 3 === 1 ? 'from-pink-500 to-rose-500' :
-                      'from-emerald-500 to-lime-500'
-                    }`}></div>
-
-                    <div className="p-6">
-                      <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide mb-4">
-                        {event.nom}
-                      </h2>
-
-                      <div className="space-y-2">
-                        <p><span className="text-slate-500 font-medium">Type :</span> {event.type}</p>
-                        <p><span className="text-slate-500 font-medium">Thème :</span> {event.theme}</p>
-                        <p><span className="text-slate-500 font-medium">Date :</span>{' '}
-                          {new Date(event.date).toLocaleDateString("fr-FR", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
-                        <p><span className="text-slate-500 font-medium">Lieu :</span> {event.lieu || "Non précisé"}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
       </div>
-    </div>
+    )}
+
+        </div>
   );
 };
 
