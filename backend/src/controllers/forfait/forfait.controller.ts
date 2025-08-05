@@ -195,7 +195,7 @@ async getUserForfait(@Req() req: any) {
   }
 
    // stat by lioka
-  @Get('dashboard-charts')
+@Get('dashboard-charts')
 async getDashboardCharts(@Query('period') period: string = '12') {
   console.log('🔥 Route dashboard-charts appelée avec period:', period);
   
