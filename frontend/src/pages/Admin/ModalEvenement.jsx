@@ -116,7 +116,7 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 853);
+      setIsMobile(window.innerWidth < 855);
     };
 
     handleResize();
@@ -159,7 +159,7 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto py-10"
+        className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 overflow-y-auto py-10"
       >
         <div
           className={`rounded-xl shadow-xl p-6 w-full max-w-6xl mx-4 max-h-[90vh] overflow-auto ${

@@ -338,39 +338,6 @@ export default function Organisateur() {
   const msgRef = useRef(null);
   const profileRef = useRef(null);
 
-  const tableContainerClasses = `hidden md:block rounded-xl shadow-lg border transition-colors duration-300 ${
-    darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
-  }`;
-
-  const gradientsEvent = {
-    eventButton:
-      "bg-gradient-to-r from-indigo-600 via-blue-500 to-indigo-700 text-white",
-  };
-
-  const headerClasses = `grid grid-cols-[minmax(150px,1fr)_minmax(200px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,0.8fr)_minmax(160px,1.2fr)_minmax(140px,1fr)] gap-4 px-6 py-4 font-bold uppercase text-sm border-b transition-colors duration-300 ${
-    darkMode ? "bg-gray-800 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"
-  }`;
-
-  const rowClasses = `grid grid-cols-[minmax(150px,1fr)_minmax(200px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,0.8fr)_minmax(160px,1.2fr)_minmax(140px,1fr)] gap-4 px-6 py-4 items-center border-b transition-colors duration-150 ${
-    darkMode ? "border-gray-700 hover:bg-gray-700" : "border-gray-200 hover:bg-gray-100"
-  }`;
-
-  const paginationClasses = `px-6 py-4 flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0 text-sm border-t transition-colors duration-300 ${
-    darkMode ? "border-gray-700 bg-gray-800 text-gray-300" : "border-gray-200 bg-gray-50 text-gray-600"
-  }`;
-
-  const textPrimary = darkMode ? "text-gray-200" : "text-gray-900";
-  const textMuted = darkMode ? "text-gray-400" : "text-gray-500";
-  const textBlue = darkMode ? "text-blue-300" : "text-blue-600";
-  const textPurple = darkMode ? "text-purple-300" : "text-purple-600";
-
-  const statusOnlineClasses = "flex items-center gap-2 text-green-500";
-  const statusOfflineClasses = "flex items-center gap-2 text-gray-400";
-  
-  const buttonBase = "px-3 py-2 rounded-lg font-semibold shadow-sm transition-all duration-200 hover:shadow-md";
-  const deleteButtonClasses = `p-2 rounded-lg transition-colors duration-200 ${darkMode ? "text-red-400 hover:bg-red-900/50" : "text-red-600 hover:bg-red-100"}`;
-  const actionButtonClasses = `${buttonBase} flex items-center gap-2 ${gradientsEvent.eventButton}`;
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (notifRef.current && !notifRef.current.contains(event.target)) {
@@ -562,7 +529,10 @@ export default function Organisateur() {
   const gradientButton =
     "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-400 text-white";
 
-  
+  const gradientsEvent = {
+    eventButton:
+      "bg-gradient-to-r from-indigo-600 via-blue-500 to-indigo-700 text-white",
+  };
 
   const bgClass = darkMode 
     ? "bg-gray-900 text-gray-200" 
@@ -698,9 +668,9 @@ export default function Organisateur() {
             </div>
 
             {/* Version desktop - DataGrid */}
-            <div className={tableContainerClasses}>
-              {/* En-têtes du tableau */}
-              <div className={headerClasses}>
+            <div className="hidden md:block rounded-tl-xl rounded-br-xl rounded-tr-none rounded-bl-none border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800 w-full">
+              {/* En-têtes du tableau - Modifié pour l'ajustement automatique */}
+              <div className="grid grid-cols-[minmax(150px,1fr)_minmax(200px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,0.8fr)_minmax(160px,1.2fr)_minmax(140px,1fr)] gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
                 <div className="truncate">NOM</div>
                 <div className="truncate">EMAIL</div>
                 <div className="truncate">FORFAIT</div>
@@ -711,85 +681,110 @@ export default function Organisateur() {
                 <div className="truncate text-center">ACTIONS</div>
               </div>
 
-              {/* Contenu du tableau */}
+              {/* Contenu du tableau - Structure identique mais avec ajustement automatique */}
               <div
-                className="divide-y transition-colors duration-300"
+                className="divide-y divide-gray-200 dark:divide-gray-700"
                 style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}
               >
-                {filteredData.length > 0 ? (
-                  filteredData
-                    .slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage)
-                    .map((manager, index) => (
-                      <div key={index} className={rowClasses}>
-                        {/* Nom */}
-                        <div className={`truncate font-medium ${textBlue}`}>{manager.name}</div>
-                        {/* Email */}
-                        <div className={`truncate ${textBlue}`}>{manager.email}</div>
-                        {/* Forfait */}
-                        <div className={`truncate ${textPurple}`}>{manager.forfait?.nom || "Aucun forfait"}</div>
-                        {/* Date Création */}
-                        <div className={`truncate text-sm ${textMuted}`}>
-                          {manager.createdAt}
-                        </div>
-                        {/* Expiration */}
-                        <div className={`truncate text-sm ${textMuted}`}>
-                          {manager.forfaitexpirationdate || "N/A"}
-                        </div>
-                        {/* Statut */}
-                        <div className="truncate text-sm">
-                          <span className={manager.isOnline ? statusOnlineClasses : statusOfflineClasses}>
-                            <span className="w-2.5 h-2.5 rounded-full bg-current inline-block animate-pulse" />
-                            {manager.isOnline ? "En ligne" : "Hors ligne"}
-                          </span>
-                        </div>
-                        {/* Dernière connexion */}
-                        <div className={`truncate text-sm ${textMuted}`}>
-                          {manager.lastLogin ? new Date(manager.lastLogin).toLocaleString("fr-FR") : "Jamais connecté"}
-                        </div>
-                        {/* Actions */}
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => {
-                              handleTakeManagerEvents(manager.id);
-                              setManagerName(manager.name);
-                            }}
-                            className={actionButtonClasses}
-                          >
-                            <FaEye className="text-sm" />
-                            <span>Événements</span>
-                          </button>
-                          <button
-                            onClick={() => openDeleteModal(manager)}
-                            className={deleteButtonClasses}
-                          >
-                            <TbTrashXFilled className="text-xl" />
-                          </button>
-                        </div>
+                {filteredData
+                  .slice(
+                    currentPage * rowsPerPage,
+                    (currentPage + 1) * rowsPerPage
+                  )
+                  .map((manager, index) => (
+                    <div
+                      key={index}
+                      className="grid grid-cols-[minmax(150px,1fr)_minmax(200px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,0.8fr)_minmax(160px,1.2fr)_minmax(140px,1fr)] gap-2 px-4 py-3 items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"
+                    >
+                      {/* Nom */}
+                      <div className="truncate font-medium dark:text-blue-300 text-blue-600">
+                        {manager.name}
                       </div>
-                    ))
-                ) : (
-                  <div className={`px-6 py-8 text-center text-lg font-medium ${textMuted}`}>
-                    Aucun gestionnaire trouvé
-                  </div>
-                )}
+
+                      {/* Email */}
+                      <div className="truncate dark:text-blue-300 text-blue-600">
+                        {manager.email}
+                      </div>
+
+                      {/* Forfait */}
+                      <div className="truncate dark:text-purple-300 text-purple-600">
+                        {manager.forfait?.nom || "Aucun forfait"}
+                      </div>
+
+                      {/* Date Création */}
+                      <div className="truncate text-sm dark:text-blue-300 text-blue-600">
+                        {manager.createdAt}
+                      </div>
+
+                      {/* Expiration */}
+                      <div className="truncate text-sm dark:text-blue-300 text-blue-600">
+                        {manager.forfaitexpirationdate}
+                      </div>
+
+                      {/* Statut */}
+                      <div className="truncate text-sm">
+                        <span
+                          className={`flex items-center gap-1 ${
+                            manager.isOnline
+                              ? "text-green-500"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          <span className="w-2 h-2 rounded-full bg-current inline-block" />
+                          {manager.isOnline ? "En ligne" : "Hors ligne"}
+                        </span>
+                      </div>
+
+                      {/* Dernière connexion */}
+                      <div className="truncate text-sm dark:text-blue-300 text-blue-600">
+                        {manager.lastLogin
+                          ? new Date(manager.lastLogin).toLocaleString("fr-FR")
+                          : "Jamais connecté"}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => {
+                            handleTakeManagerEvents(manager.id);
+                            setManagerName(manager.name);
+                          }}
+                          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs ${gradientsEvent.eventButton} transition-colors duration-200 shadow-sm hover:shadow-md truncate`}
+                        >
+                          <FaEye className="text-xs" />
+                          <span>Événements</span>
+                        </button>
+
+                        <button
+                          onClick={() => openDeleteModal(manager)}
+                          className={`p-1.5 rounded-lg ${
+                            darkMode
+                              ? "text-red-400 hover:text-red-300"
+                              : "text-red-600 hover:text-red-800"
+                          } transition-colors duration-200`}
+                        >
+                          <TbTrashXFilled className="text-lg" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
               </div>
 
-              {/* Pagination */}
+              {/* Pagination - Inchangé */}
               {filteredData.length > 0 && (
-                <div className={paginationClasses}>
+                <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-600 dark:text-gray-300">
+                  {/* Sélection du nombre de lignes */}
                   <div className="flex items-center space-x-2">
-                    <span className={textMuted}>Lignes par page:</span>
+                    <span>Lignes par page:</span>
                     <select
                       value={rowsPerPage}
                       onChange={(e) => {
                         setRowsPerPage(Number(e.target.value));
                         setCurrentPage(0);
                       }}
-                      className={`border rounded px-2 py-1 transition-colors duration-200 ${
-                        darkMode ? "bg-gray-700 border-gray-600 text-gray-200" : "bg-white border-gray-300 text-gray-800"
-                      }`}
+                      className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700"
                     >
-                      {[5, 10, 20, 50].map((option) => (
+                      {[5, 10, 20].map((option) => (
                         <option key={option} value={option}>
                           {option}
                         </option>
@@ -797,7 +792,8 @@ export default function Organisateur() {
                     </select>
                   </div>
 
-                  <div className={textMuted}>
+                  {/* Info de pagination */}
+                  <div>
                     Affichage de {currentPage * rowsPerPage + 1} à{" "}
                     {Math.min(
                       (currentPage + 1) * rowsPerPage,
@@ -806,24 +802,19 @@ export default function Organisateur() {
                     sur {filteredData.length} gestionnaires
                   </div>
 
+                  {/* Boutons de navigation */}
                   <div className="flex space-x-2">
                     <button
-                      className={`px-4 py-2 rounded-lg border transition-colors duration-200 ${
-                        darkMode
-                          ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800"
-                          : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"
-                      } disabled:opacity-50`}
+                      className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
                       disabled={currentPage === 0}
-                      onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(0, prev - 1))
+                      }
                     >
                       Précédent
                     </button>
                     <button
-                      className={`px-4 py-2 rounded-lg border transition-colors duration-200 ${
-                        darkMode
-                          ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800"
-                          : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"
-                      } disabled:opacity-50`}
+                      className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
                       disabled={
                         (currentPage + 1) * rowsPerPage >= filteredData.length
                       }
@@ -832,6 +823,12 @@ export default function Organisateur() {
                       Suivant
                     </button>
                   </div>
+                </div>
+              )}
+
+              {filteredData.length === 0 && (
+                <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                  Aucun gestionnaire trouvé
                 </div>
               )}
             </div>
