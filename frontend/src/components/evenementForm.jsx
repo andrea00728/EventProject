@@ -3,11 +3,11 @@ import { createEvent, getLocations, getSallesByLocation } from "../services/even
 import { textControll } from "../services/controll_champs/controll_champs";
 
 const EVENT_TYPES = [
-  { value: "mariage", label: "Mariage", color: "bg-pink-100 text-pink-700" },
-  { value: "reunion", label: "Réunion", color: "bg-blue-100 text-blue-700" },
-  { value: "anniversaire", label: "Anniversaire", color: "bg-yellow-100 text-yellow-700" },
-  { value: "engagement", label: "Engagement", color: "bg-green-100 text-green-700" },
-  { value: "autre", label: "Autre", color: "bg-gray-100 text-gray-700" },
+  { value: "mariage", label: "Mariage", color: "bg-[#6B46C1]/5 text-[#6B46C1]" },
+  { value: "reunion", label: "Réunion", color: "bg-indigo-600/5 text-indigo-600" },
+  { value: "anniversaire", label: "Anniversaire", color: "bg-[#6B46C1]/5 text-[#6B46C1]" },
+  { value: "engagement", label: "Engagement", color: "bg-indigo-600/5 text-indigo-600" },
+  { value: "autre", label: "Autre", color: "bg-gray-50 text-gray-600" },
 ];
 
 function LocationAutocomplete({ locations, form, setForm }) {
@@ -16,13 +16,11 @@ function LocationAutocomplete({ locations, form, setForm }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const containerRef = useRef(null);
 
-  // Met à jour inputValue quand form.locationId change
   useEffect(() => {
     const loc = locations.find((l) => l.id === form.locationId);
     setInputValue(loc ? loc.nom : "");
   }, [form.locationId, locations]);
 
-  // Filtrer suggestions selon inputValue (non sensible à la casse)
   useEffect(() => {
     if (!inputValue.trim()) {
       setFilteredLocations([]);
@@ -34,7 +32,6 @@ function LocationAutocomplete({ locations, form, setForm }) {
     setFilteredLocations(filtered);
   }, [inputValue, locations]);
 
-  // Fermer suggestions si clic en dehors
   useEffect(() => {
     function handleClickOutside(event) {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
@@ -52,16 +49,16 @@ function LocationAutocomplete({ locations, form, setForm }) {
   };
 
   return (
-    <div className="flex flex-col gap-2 relative" ref={containerRef}>
-      <label className="text-sm font-semibold text-gray-700 mb-1">Lieu</label>
+    <div className="relative flex flex-col gap-1.5" ref={containerRef}>
+      <label className="text-sm font-semibold text-gray-800">Lieu</label>
       <input
         type="text"
-        className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+        className="border border-gray-200 rounded-xl px-4 py-3.5 bg-white focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent transition-all duration-200 shadow-sm hover:shadow focus:shadow-md placeholder:text-gray-400"
         value={inputValue}
         onChange={(e) => {
           setInputValue(e.target.value);
           setShowSuggestions(true);
-          setForm({ ...form, locationId: "", salleId: "" }); // reset locationId tant que rien sélectionné
+          setForm({ ...form, locationId: "", salleId: "" });
         }}
         onFocus={() => inputValue && setShowSuggestions(true)}
         placeholder="Commencez à taper un lieu..."
@@ -69,11 +66,11 @@ function LocationAutocomplete({ locations, form, setForm }) {
         required
       />
       {showSuggestions && filteredLocations.length > 0 && (
-        <ul className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-300 rounded-xl shadow max-h-60 overflow-y-auto">
+        <ul className="absolute z-30 top-full mt-1.5 w-full bg-white border border-gray-100 rounded-xl shadow-lg max-h-64 overflow-y-auto">
           {filteredLocations.map((loc) => (
             <li
               key={loc.id}
-              className="px-4 py-2 hover:bg-indigo-100 cursor-pointer"
+              className="px-4 py-3 text-gray-800 hover:bg-[#6B46C1]/5 hover:text-[#6B46C1] cursor-pointer transition-colors duration-150"
               onMouseDown={() => handleSelect(loc)}
             >
               {loc.nom}
@@ -148,20 +145,24 @@ export default function Evenementform({ onNext }) {
   const selectedSalleName = () => salles.find((s) => s.id === form.salleId)?.nom || "";
 
   return (
-    <div className="w-400 max-w-3xl mx-auto mt-12 px-6">
-      <div className="bg-white rounded-3xl shadow-2xl p-10 border border-gray-100">
-        <h2 className="text-4xl font-extrabold text-center mb-2 text-indigo-800 tracking-tight">
+    <div className="max-w-4xl mx-auto mt-12 px-4 sm:px-8">
+      <div className="bg-white rounded-3xl shadow-md p-8 border border-gray-100/50">
+        <h2 className="text-2xl font-bold text-center mb-3 text-[#6B46C1] tracking-tight">
           Créer un événement
         </h2>
-        <p className="text-center text-gray-500 mb-8">
-          Décrivez votre événement pour commencer l'organisation.
+        <p className="text-center text-gray-500 mb-8 text-sm font-medium">
+          Organisez votre événement en quelques étapes simples.
         </p>
 
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        {error && (
+          <p className="text-red-500 text-center mb-6 bg-red-50/50 py-2.5 px-4 rounded-xl text-sm font-medium">
+            {error}
+          </p>
+        )}
 
-        <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-7">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Nom de l'événement</label>
+        <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-gray-800">Nom de l'événement</label>
             <input
               name="nom"
               value={form.nom}
@@ -170,12 +171,12 @@ export default function Evenementform({ onNext }) {
               }}
               placeholder="Ex: Mariage de Sarah & Paul"
               required
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+              className="border border-gray-200 rounded-xl px-4 py-3.5 bg-white focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent transition-all duration-200 shadow-sm hover:shadow focus:shadow-md placeholder:text-gray-400"
             />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Type d'événement</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-gray-800">Type d'événement</label>
             <input
               name="type"
               value={EVENT_TYPES.find((t) => t.value === form.type)?.label || "Type d'événement"}
@@ -183,51 +184,50 @@ export default function Evenementform({ onNext }) {
               onClick={() => setModalTypeOpen(true)}
               placeholder="Type d'événement"
               required
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 cursor-pointer focus:ring-2 focus:ring-pink-400 transition"
+              className="border border-gray-200 rounded-xl px-4 py-3.5 bg-white cursor-pointer focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent transition-all duration-200 shadow-sm hover:shadow focus:shadow-md placeholder:text-gray-400"
             />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Thème</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-gray-800">Thème</label>
             <input
               name="theme"
               value={form.theme}
               onChange={handleChange}
               placeholder="Ex: Chic, Bohème, Classique..."
               required
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+              className="border border-gray-200 rounded-xl px-4 py-3.5 bg-white focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent transition-all duration-200 shadow-sm hover:shadow focus:shadow-md placeholder:text-gray-400"
             />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Date de début</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-gray-800">Date de début</label>
             <input
               type="datetime-local"
               name="date"
               value={form.date}
               onChange={handleChange}
               required
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+              className="border border-gray-200 rounded-xl px-4 py-3.5 bg-white focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent transition-all duration-200 shadow-sm hover:shadow focus:shadow-md"
             />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Date de fin</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-gray-800">Date de fin</label>
             <input
               type="datetime-local"
               name="date_fin"
               value={form.date_fin}
               onChange={handleChange}
               required
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+              className="border border-gray-200 rounded-xl px-4 py-3.5 bg-white focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent transition-all duration-200 shadow-sm hover:shadow focus:shadow-md"
             />
           </div>
 
-          {/* Champ Lieu avec autocomplete */}
           <LocationAutocomplete locations={locations} form={form} setForm={setForm} />
 
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Salle</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-gray-800">Salle</label>
             <input
               type="text"
               value={selectedSalleName()}
@@ -235,27 +235,27 @@ export default function Evenementform({ onNext }) {
               disabled={!form.locationId}
               onClick={() => form.locationId && setModalSalleOpen(true)}
               placeholder="Salle"
-              className={`border border-gray-300 rounded-xl px-5 py-3 ${
-                form.locationId ? "cursor-pointer bg-gray-50" : "bg-gray-200"
-              } focus:ring-2 focus:ring-indigo-200 transition`}
+              className={`border border-gray-200 rounded-xl px-4 py-3.5 ${
+                form.locationId ? "cursor-pointer bg-white" : "bg-gray-50"
+              } focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent transition-all duration-200 shadow-sm hover:shadow focus:shadow-md placeholder:text-gray-400`}
             />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Événement public ?</label>
+          <div className="flex items-center gap-3">
             <input
               type="checkbox"
               name="isPublic"
               checked={form.isPublic}
               onChange={handleChange}
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+              className="h-5 w-5 text-[#6B46C1] border-gray-200 rounded focus:ring-[#6B46C1] transition-all duration-200"
             />
+            <label className="text-sm font-semibold text-gray-800">Événement public</label>
           </div>
 
           <div className="col-span-1 md:col-span-2 mt-4">
             <button
               type="submit"
-              className="w-full bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition"
+              className="w-full bg-[#6B46C1] text-white font-semibold py-3.5 rounded-xl shadow-md hover:bg-[#5a3aa6] focus:ring-2 focus:ring-[#6B46C1]/50 transition-all duration-200"
             >
               Créer l'événement
             </button>
@@ -263,18 +263,17 @@ export default function Evenementform({ onNext }) {
         </form>
       </div>
 
-      {/* Modal salles */}
       {modalSalleOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg bg-white shadow-2xl rounded-2xl p-8">
+          <div className="relative w-full max-w-sm bg-white shadow-lg rounded-2xl p-6">
             <button
-              className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"
+              className="absolute top-3 right-3 text-xl font-semibold text-gray-500 hover:text-red-500 transition-colors duration-150"
               onClick={() => setModalSalleOpen(false)}
             >
               ×
             </button>
-            <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">Choisissez une salle</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <h3 className="text-lg font-semibold text-center mb-5 text-[#6B46C1]">Choisissez une salle</h3>
+            <div className="grid grid-cols-2 gap-3">
               {salles.map((salle) => (
                 <div
                   key={salle.id}
@@ -282,7 +281,7 @@ export default function Evenementform({ onNext }) {
                     setForm({ ...form, salleId: salle.id });
                     setModalSalleOpen(false);
                   }}
-                  className="border-2 border-indigo-100 rounded-xl px-4 py-3 text-center bg-indigo-50 text-indigo-800 cursor-pointer hover:bg-indigo-100 hover:border-indigo-400 font-semibold transition"
+                  className="border border-[#6B46C1]/10 rounded-xl px-3 py-2.5 text-center bg-[#6B46C1]/5 text-[#6B46C1] cursor-pointer hover:bg-[#6B46C1]/10 hover:border-[#6B46C1]/50 font-medium transition-all duration-150"
                 >
                   {salle.nom}
                 </div>
@@ -292,31 +291,32 @@ export default function Evenementform({ onNext }) {
         </div>
       )}
 
-      {/* Modal type d'événement */}
       {modalTypeOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-[90vw] max-w-2xl">
-            <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">Choisissez le type d'événement</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-center mb-5 text-[#6B46C1]">
+              Choisissez le type d'événement
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
               {EVENT_TYPES.map((type) => (
                 <button
                   key={type.value}
                   type="button"
-                  className={`flex flex-col items-center justify-center rounded-xl p-6 border-2 border-transparent hover:border-pink-400 transition ${type.color} shadow-md hover:shadow-lg focus:outline-none ${
-                    form.type === type.value ? "ring-2 ring-pink-400" : ""
+                  className={`flex flex-col items-center justify-center rounded-xl p-4 border border-transparent hover:border-[#6B46C1]/50 transition-all duration-150 ${type.color} shadow-sm hover:shadow-md ${
+                    form.type === type.value ? "ring-2 ring-[#6B46C1]/50" : ""
                   }`}
                   onClick={() => {
                     setForm({ ...form, type: type.value });
                     setModalTypeOpen(false);
                   }}
                 >
-                  <span className="text-lg font-semibold mb-2">{type.label}</span>
-                  <span className="text-xs uppercase tracking-wider">{type.value}</span>
+                  <span className="text-sm font-medium mb-1">{type.label}</span>
+                  <span className="text-xs uppercase tracking-wide">{type.value}</span>
                 </button>
               ))}
             </div>
             <button
-              className="mt-8 w-full py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
+              className="mt-5 w-full py-2.5 rounded-xl bg-gray-50 text-gray-600 font-medium hover:bg-gray-100 transition-all duration-150"
               onClick={() => setModalTypeOpen(false)}
               type="button"
             >

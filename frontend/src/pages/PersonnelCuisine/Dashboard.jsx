@@ -398,7 +398,7 @@ export default function DashboardpersCuisine() {
                     <div className="flex items-center space-x-3">
                       <MdError className="text-6xl text-red-500 animate-pulse" />
                       <h2 className="text-2xl font-bold text-red-700">
-                        Une erreur est survenue
+                        Aucun commande pour le moment
                       </h2>
                     </div>
                     <p className="mt-4 text-center text-md text-red-600 font-medium max-w-xl">
