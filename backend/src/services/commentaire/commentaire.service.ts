@@ -169,4 +169,34 @@ export class CommentaireService {
     });
     return count;
   }
+
+  async findSatisfactionStatistics() {
+    const totalComments = await this.commentaireRepository.count();
+    
+    if (totalComments === 0) {
+      return {
+        decevant: 0,
+        moyen: 0,
+        bien: 0,
+        tres_bien: 0,
+        excellent: 0,
+      };
+    }
+
+    const counts = await Promise.all([
+      this.commentaireRepository.count({ where: { satisfaction: SatisfactionLevel.DECEVANT } }),
+      this.commentaireRepository.count({ where: { satisfaction: SatisfactionLevel.MOYEN } }),
+      this.commentaireRepository.count({ where: { satisfaction: SatisfactionLevel.BIEN } }),
+      this.commentaireRepository.count({ where: { satisfaction: SatisfactionLevel.TRES_BIEN } }),
+      this.commentaireRepository.count({ where: { satisfaction: SatisfactionLevel.EXELLENT } }),
+    ]);
+
+    return {
+      decevant: Number(((counts[0] / totalComments) * 100).toFixed(2)),
+      moyen: Number(((counts[1] / totalComments) * 100).toFixed(2)),
+      bien: Number(((counts[2] / totalComments) * 100).toFixed(2)),
+      tres_bien: Number(((counts[3] / totalComments) * 100).toFixed(2)),
+      excellent: Number(((counts[4] / totalComments) * 100).toFixed(2)),
+    };
+  }
 }

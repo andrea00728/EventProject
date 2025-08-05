@@ -387,7 +387,7 @@ const GestionCommandesPage = () => {
             }}
           />
         </motion.div>
-      </div>
+      </div> 
       {/* Notification Snackbar */}
       <Snackbar
         open={snackbar.open}

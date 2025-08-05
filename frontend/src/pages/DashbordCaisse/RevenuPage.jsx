@@ -1,13 +1,11 @@
-{/* Importation des dépendances nécessaires */}
-import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { io } from "socket.io-client"; // Added socket.io-client import
 import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
-import { Bar, Line } from "react-chartjs-2";
+import { getUserIdForToken } from '../../services/userService';
 import { getEventIdByEmail } from "../../services/invitationService";
-import { getUserIdForToken } from "../../services/userService";
+import { Bar, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   BarElement,
@@ -20,9 +18,10 @@ import {
   Filler,
 } from "chart.js";
 import jsPDF from "jspdf";
-// import autoTable from "jspdf-autotable"; // Uncommented for PDF export
+import autoTable from "jspdf-autotable";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useSocket } from "../../socket";
 import { debounce } from "lodash";
 import { FaArrowLeft, FaSync, FaFileCsv, FaFilePdf, FaEye, FaUndo } from "react-icons/fa";
 import { SOCKET_URL } from "../../socket";
@@ -50,8 +49,36 @@ const RevenuPage = () => {
   const [chartType, setChartType] = useState("bar");
   const { token, setToken } = useStateContext();
   const navigate = useNavigate();
+
+  // Récupération du userId pour le socket
+  const [userId, setUserId] = useState(null);
   const socket = useSocket();
-  const fetchCommandes =( async () => {
+
+  // Récupérer le userId à partir du token
+  useEffect(() => {
+    async function fetchUserId() {
+      if (!token) {
+        toast.error("Veuillez vous connecter pour accéder aux revenus");
+        navigate("/login");
+        return;
+      }
+      try {
+        const id = await getUserIdForToken();
+        if (!id) {
+          throw new Error("Impossible de récupérer l'ID utilisateur");
+        }
+        setUserId(id);
+      } catch (error) {
+        console.error("Erreur lors de la récupération de l'userId:", error);
+        toast.error("Erreur d'authentification. Veuillez vous reconnecter.");
+        navigate("/login");
+      }
+    }
+    fetchUserId();
+  }, [token, navigate]);
+
+  // Fonction pour rafraîchir le token
+  const refreshToken = useCallback(async () => {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
@@ -60,6 +87,12 @@ const RevenuPage = () => {
       );
       const newToken = response.data.access_token;
       setToken(newToken);
+      // Mettre à jour l'userId après le rafraîchissement du token
+      const id = await getUserIdForToken();
+      if (!id) {
+        throw new Error("Impossible de récupérer l'ID utilisateur après rafraîchissement");
+      }
+      setUserId(id);
       return newToken;
     } catch (error) {
       toast.error("Session expirée. Veuillez vous reconnecter.");
@@ -202,13 +235,10 @@ const RevenuPage = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        if (socketRef.current) {
-          socketRef.current.emit("orderRefunded", { id, paymentStatus: "refunded" });
-          socketRef.current.emit("orderDeleted", { id });
-        } else {
-          console.warn("Socket non connecté, impossible d'émettre les événements.");
+        if (socket) {
+          socket.emit("orderRefunded", { id, paymentStatus: "refunded" });
+          socket.emit("orderDeleted", { id });
         }
-
         toast.success("Commande remboursée et supprimée avec succès");
         await fetchRevenus();
       } catch (error) {
@@ -218,7 +248,7 @@ const RevenuPage = () => {
         setIsRefunding((prev) => ({ ...prev, [id]: false }));
       }
     },
-    [token, fetchRevenus]
+    [token, socket, fetchRevenus]
   );
 
   // Débouncer la fonction de remboursement
@@ -456,6 +486,36 @@ const RevenuPage = () => {
     }),
     []
   );
+
+  // Effet pour initialiser la récupération des données et gérer le socket
+  useEffect(() => {
+    if (!token || !userId) {
+      if (!token) {
+        navigate("/login");
+      }
+      return;
+    }
+
+    fetchRevenus();
+
+    if (!socket) {
+      return;
+    }
+
+    const socketCleanup = () => {
+      socket.off("connect");
+      socket.off("connect_error");
+      socket.off("orderDeleted");
+      socket.off("orderRefunded");
+    };
+
+    socket.on("connect", () => toast.info("Connecté au serveur en temps réel"));
+    socket.on("connect_error", () => toast.error("Erreur de connexion au serveur en temps réel"));
+    socket.on("orderDeleted", fetchRevenus);
+    socket.on("orderRefunded", fetchRevenus);
+
+    return socketCleanup;
+  }, [token, userId, socket, navigate, fetchRevenus]);
 
   // Rendu de l'interface utilisateur
   return (
