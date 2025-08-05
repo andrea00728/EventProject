@@ -332,39 +332,32 @@ const GestionCommandesPage = () => {
           </Link>
         </div>
         {/* Filtres et boutons d'action */}
-        <div className="bg-white rounded-2xl shadow-lg p-4 flex flex-col sm:flex-row gap-3 items-center">
-          <TextField
-            size="small"
-            placeholder="Rechercher client ou email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full sm:w-1/3"
-            InputProps={{ className: "text-sm" }}
-          />
-          <Select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            size="small"
-            className="w-full sm:w-1/6"
-          >
-            <MenuItem value="all">Toutes les commandes</MenuItem>
-            {STATUS_OPTIONS.map((s) => (
-              <MenuItem key={s.value} value={s.value}>
-                {s.label}
-              </MenuItem>
-            ))}
-          </Select>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={fetchCommandes}
-            className="flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
-            aria-label="Actualiser les commandes"
-          >
-            <FaSync className="mr-2" />
-            Actualiser
-          </motion.button>
-        </div>
+        <div className="bg-white rounded-xl shadow-md p-4 flex flex-col sm:flex-row gap-3 items-center border border-indigo-100">
+            <input
+              type="text"
+              placeholder="Rechercher client ou email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full sm:w-1/3 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all duration-300"
+            />
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="w-full sm:w-1/6 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all duration-300"
+            >
+              <option value="all">Toutes les commandes</option>
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+            <button
+              onClick={fetchCommandes}
+              className="flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
+            >
+              <FaSync className="mr-2" />
+              Actualiser
+            </button>
+          </div>
         {/* Tableau des commandes */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
