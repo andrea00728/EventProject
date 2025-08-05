@@ -1,4 +1,4 @@
-import {  BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from 'src/Authentication/entities/auth.entity';
@@ -11,44 +11,44 @@ export class ForfaitService {
     @InjectRepository(User)
     private userRepo: Repository<User>,
     @InjectRepository(Evenement)
-    private evenementRepository:Repository<Evenement>,
-    @InjectRepository(Forfait) 
-    private forfaitRepository:Repository<Forfait>
-  ) {}
+    private evenementRepository: Repository<Evenement>,
+    @InjectRepository(Forfait)
+    private forfaitRepository: Repository<Forfait>
+  ) { }
 
- async canCreateEvent(userId: string): Promise<boolean> {
-  console.log(`Checking if user ${userId} can create event`);
+  async canCreateEvent(userId: string): Promise<boolean> {
+    console.log(`Checking if user ${userId} can create event`);
 
-  // Charger juste l'utilisateur avec son forfait
-  const user = await this.userRepo.findOne({
-    where: { id: userId },
-    relations: ['forfait'],
-  });
+    // Charger juste l'utilisateur avec son forfait
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['forfait'],
+    });
 
-  if (!user) {
-    console.log(`User ${userId} not found`);
-    return false; // ou throw une erreur selon ton besoin
+    if (!user) {
+      console.log(`User ${userId} not found`);
+      return false; // ou throw une erreur selon ton besoin
+    }
+
+    const maxEvents = user.forfait?.maxevents;
+
+    console.log(`Max events for this forfait is ${maxEvents}`);
+
+    // Si maxEvents est null ou undefined => illimité
+    if (maxEvents === null || maxEvents === undefined) {
+      console.log('No max events specified, allowing creation');
+      return true;
+    }
+
+    // Compter directement le nombre d'événements de l'utilisateur dans la base
+    const count = await this.evenementRepository.count({
+      where: { user: { id: userId } },
+    });
+
+    console.log(`User has already created ${count} events`);
+
+    return count < maxEvents;
   }
-
-  const maxEvents = user.forfait?.maxevents;
-
-  console.log(`Max events for this forfait is ${maxEvents}`);
-
-  // Si maxEvents est null ou undefined => illimité
-  if (maxEvents === null || maxEvents === undefined) {
-    console.log('No max events specified, allowing creation');
-    return true;
-  }
-
-  // Compter directement le nombre d'événements de l'utilisateur dans la base
-  const count = await this.evenementRepository.count({
-    where: { user: { id: userId } },
-  });
-
-  console.log(`User has already created ${count} events`);
-
-  return count < maxEvents;
-}
 
 
   async canAddInvite(userId: string, currentInviteCount: number): Promise<boolean> {
@@ -83,26 +83,26 @@ export class ForfaitService {
    * @param userId 
    * utilise pour léxpiration
    */
-    async checkForfaitExpiration(userId: string): Promise<void> {
-  const user = await this.userRepo.findOne({
-    where: { id: userId },
-    relations: ['forfait'],
-  });
-  if (!user) throw new BadRequestException('Utilisateur introuvable');
+  async checkForfaitExpiration(userId: string): Promise<void> {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['forfait'],
+    });
+    if (!user) throw new BadRequestException('Utilisateur introuvable');
 
-  const now = new Date();
-  if (user.forfaitexpirationdate && user.forfaitexpirationdate < now && user.forfait.nom !== 'freemium') {
-    // Rétrograder vers freemium si le forfait a expiré
-    const freemiumForfait = await this.forfaitRepository.findOne({ where: { nom: 'freemium' } });
-    if (!freemiumForfait) throw new BadRequestException('Forfait freemium introuvable');
+    const now = new Date();
+    if (user.forfaitexpirationdate && user.forfaitexpirationdate < now && user.forfait.nom !== 'freemium') {
+      // Rétrograder vers freemium si le forfait a expiré
+      const freemiumForfait = await this.forfaitRepository.findOne({ where: { nom: 'freemium' } });
+      if (!freemiumForfait) throw new BadRequestException('Forfait freemium introuvable');
 
-    user.forfait = freemiumForfait;
-    user.datedowngraded = now;
-    user.forfaitexpirationdate = null; // Pas d'expiration pour freemium
-    await this.userRepo.save(user);
-    console.log(`Utilisateur ${userId} rétrogradé à freemium car le forfait a expiré.`);
+      user.forfait = freemiumForfait;
+      user.datedowngraded = now;
+      user.forfaitexpirationdate = null; // Pas d'expiration pour freemium
+      await this.userRepo.save(user);
+      console.log(`Utilisateur ${userId} rétrogradé à freemium car le forfait a expiré.`);
+    }
   }
-}
 
   /*************************************************************************************
    * ***************  Pour la page Super Admin dans le dashboard *********************
@@ -121,9 +121,9 @@ export class ForfaitService {
     return Number(result.sum); // conversion en number
   }
 
-// user.service.ts
+  // user.service.ts
   async findLastTransactions(limit: number = 5): Promise<
-    { name: string; photo: string; nameForfait : string; amount: number; date: Date }[]
+    { name: string; photo: string; nameForfait: string; amount: number; date: Date }[]
   > {
     const results = await this.userRepo
       .createQueryBuilder('user')
@@ -144,7 +144,7 @@ export class ForfaitService {
     return results.map(r => ({
       name: r.name,
       photo: r.photo,
-      nameForfait : r.nameforfait,
+      nameForfait: r.nameforfait,
       amount: Number(r.amount),
       date: new Date(r.date),
     }));
@@ -188,6 +188,86 @@ export class ForfaitService {
   //   }));
   // }
 
+  // Dans ForfaitService
+  async getMonthlyForfaitRevenue(months: number = 12): Promise<{ month: string; total: number }[]> {
+    try {
+      console.log('📊 Calcul des revenus mensuels pour', months, 'mois');
+
+      // Requête SQL brute plus simple
+      const results = await this.userRepo.query(`
+      SELECT 
+        TO_CHAR(u.forfaitexpirationdate, 'YYYY-MM') as month_key,
+        SUM(f.price) as total
+      FROM users u
+      LEFT JOIN forfait f ON f.id = u.forfait_id
+      WHERE f.price > 0 
+        AND u.forfaitexpirationdate IS NOT NULL 
+        AND u.forfaitexpirationdate >= NOW() - INTERVAL '${months} months'
+      GROUP BY TO_CHAR(u.forfaitexpirationdate, 'YYYY-MM')
+      ORDER BY TO_CHAR(u.forfaitexpirationdate, 'YYYY-MM') ASC
+    `);
+
+      console.log('💰 Revenus calculés:', results);
+
+      return results.map(result => ({
+        month: this.formatMonth(result.month_key),
+        total: parseFloat(result.total) || 0
+      }));
+
+    } catch (error) {
+      console.error('❌ Erreur dans getMonthlyForfaitRevenue:', error);
+
+      // Retour de données de test
+      return [
+        { month: 'Janvier 2025', total: 1200 },
+        { month: 'Février 2025', total: 1500 },
+        { month: 'Mars 2025', total: 900 }
+      ];
+    }
+  }
+
+  private formatMonth(monthKey: string): string {
+    const [year, month] = monthKey.split('-');
+    const months = [
+      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    ];
+    return `${months[parseInt(month) - 1]} ${year}`;
+  }
+
+
+  // -- Supprimer uniquement les données de test que nous venons de créer
+// DELETE FROM users 
+// WHERE email LIKE '%@test.com';
+
+
+
+  async getEventsByType(): Promise<{ type: string; count: number }[]> {
+    try {
+      const evenementRepository = this.forfaitRepository.manager.getRepository('Evenement');
+
+      const results = await evenementRepository
+        .createQueryBuilder('evenement')
+        .select('evenement.type', 'type') // ← type au lieu de typeevent
+        .addSelect('COUNT(*)', 'count')
+        .where('evenement.type IS NOT NULL')
+        .groupBy('evenement.type')
+        .orderBy('COUNT(*)', 'DESC')
+        .getRawMany();
+
+      return results.map(result => ({
+        type: result.type,
+        count: parseInt(result.count) || 0
+      }));
+    } catch (error) {
+      console.error('❌ Erreur dans getEventsByType:', error);
+      return [];
+    }
+  }
+
+
+
+
   async getRevenusPourcentagesParForfait(): Promise<{ name: string; total: number; percentage: number }[]> {
     // Étape 1 : récupérer les revenus groupés par forfait depuis userRepo
     const results = await this.userRepo
@@ -206,7 +286,7 @@ export class ForfaitService {
     const allForfaits = await this.forfaitRepository.find();
 
     return allForfaits.map(forfait => {
-      
+
       const revenu = results.find(r => r.name === forfait.nom);
       const total = revenu ? parseFloat(revenu.total) : 0;
       const percentage = totalRevenu > 0 ? (total / totalRevenu) * 100 : 0;

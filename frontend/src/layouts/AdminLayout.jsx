@@ -9,12 +9,13 @@ import {
   FaMoon,
   FaSun,
   FaUser,
+  FaPaperPlane,
   // FaUserCircle
 } from "react-icons/fa";
 import { FaBell, FaEnvelope } from "react-icons/fa6";
 
 import { FiLayout } from "react-icons/fi";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { MdCalendarToday, MdHistory, MdQueryStats, MdRoom } from "react-icons/md";
 import { useDarkMode } from "../context/DarkModeContext";
 
@@ -24,14 +25,12 @@ export default function AdminLayout() {
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
 
-  
-
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
       if (window.innerWidth >= 768) setSidebarOpen(false);
     };
-    
+
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -64,24 +63,200 @@ export default function AdminLayout() {
   const currentPageName = currentPage ? currentPage.name : "Page Inconnue";
   const currentPageIcon = currentPage ? currentPage.icon : null;
 
-  const Dropdown = React.forwardRef(({ show, setShow, icon, label, count, items }, ref) => {
+  // ============= NOUVEAU: Modal de conversation =============
+  const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
+    const [newMessage, setNewMessage] = useState('');
+    const [messages, setMessages] = useState([]);
+    const messagesEndRef = useRef(null);
+
+    useEffect(() => {
+      if (conversation) {
+        // Simuler un historique de conversation
+        setMessages([
+          {
+            id: 1,
+            text: typeof conversation.content === 'object' ? conversation.content.text : conversation,
+            sender: typeof conversation.content === 'object' ? conversation.content.from : 'Utilisateur',
+            timestamp: new Date(Date.now() - 30 * 60000),
+            isAdmin: false
+          },
+          {
+            id: 2,
+            text: "Bonjour ! Comment puis-je vous aider ?",
+            sender: 'Admin',
+            timestamp: new Date(Date.now() - 25 * 60000),
+            isAdmin: true
+          },
+          {
+            id: 3,
+            text: "J'aimerais avoir plus d'informations sur l'événement de demain.",
+            sender: typeof conversation.content === 'object' ? conversation.content.from : 'Utilisateur',
+            timestamp: new Date(Date.now() - 20 * 60000),
+            isAdmin: false
+          }
+        ]);
+      }
+    }, [conversation]);
+
+    useEffect(() => {
+      scrollToBottom();
+    }, [messages]);
+
+    const scrollToBottom = () => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    const handleSendMessage = (e) => {
+      e.preventDefault();
+      if (newMessage.trim()) {
+        const message = {
+          id: messages.length + 1,
+          text: newMessage,
+          sender: 'Admin',
+          timestamp: new Date(),
+          isAdmin: true
+        };
+        setMessages([...messages, message]);
+        setNewMessage('');
+      }
+    };
+
+    const formatTime = (date) => {
+      return new Intl.DateTimeFormat('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    };
+
+    if (!show) return null;
+
+    return (
+      <div className="fixed inset-0 bg-gray-900 bg-opacity-30 z-[60] flex items-center justify-center p-4">
+        <div 
+          className={`w-full max-w-2xl h-[80vh] rounded-lg shadow-xl ${
+            darkMode ? 'bg-gray-800 text-gray-200' : 'bg-white text-gray-900'
+          } flex flex-col`}
+        >
+          {/* Header */}
+          <div className={`p-4 border-b ${
+            darkMode ? 'border-gray-700' : 'border-gray-200'
+          } flex items-center justify-between`}>
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                darkMode ? 'bg-gray-700' : 'bg-gray-100'
+              }`}>
+                <FaUser className="text-sm" />
+              </div>
+              <div>
+                <h3 className="font-semibold">
+                  {typeof conversation?.content === 'object' ? conversation.content.from : 'Utilisateur'}
+                </h3>
+                <p className={`text-sm ${
+                  darkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}>
+                  En ligne
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors`}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${message.isAdmin ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                  message.isAdmin
+                    ? 'bg-blue-500 text-white'
+                    : darkMode 
+                      ? 'bg-gray-700 text-gray-200' 
+                      : 'bg-gray-200 text-gray-900'
+                }`}>
+                  <p className="text-sm">{message.text}</p>
+                  <p className={`text-xs mt-1 ${
+                    message.isAdmin 
+                      ? 'text-blue-100' 
+                      : darkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    {formatTime(message.timestamp)}
+                  </p>
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <form 
+            onSubmit={handleSendMessage}
+            className={`p-4 border-t ${
+              darkMode ? 'border-gray-700' : 'border-gray-200'
+            }`}
+          >
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Tapez votre message..."
+                className={`flex-1 px-3 py-2 rounded-lg border ${
+                  darkMode 
+                    ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                <FaPaperPlane className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  // ============= MODIFIÉ: Dropdown avec gestion du clic =============
+  const Dropdown = React.forwardRef(({ show, setShow, icon, label, count, items, onItemClick }, ref) => {
     const { darkMode } = useDarkMode();
     const [isMobile, setIsMobile] = useState(false);
-  
+    const [filter, setFilter] = useState('all');
+
     useEffect(() => {
       const checkMobile = () => setIsMobile(window.innerWidth < 640);
       checkMobile();
       window.addEventListener('resize', checkMobile);
       return () => window.removeEventListener('resize', checkMobile);
     }, []);
-  
+
+    // Simuler un statut de lecture pour les éléments existants
+    const itemsWithReadStatus = items.map((item, index) => ({
+      content: item,
+      read: index % 2 === 0, // Alternance pour la démo
+    }));
+
+    const filteredItems = filter === 'all'
+      ? itemsWithReadStatus
+      : itemsWithReadStatus.filter(item => !item.read);
+
+    const unreadCount = itemsWithReadStatus.filter(item => !item.read).length;
+
     return (
       <div className="relative" ref={ref}>
         <button
           onClick={() => setShow(!show)}
-          className={`relative p-2 rounded-full transition-all duration-200 ${
-            darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-          }`}
+          className={`relative p-2 rounded-full transition-all duration-200 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+            }`}
           aria-label={label}
         >
           <div className="relative">
@@ -93,56 +268,85 @@ export default function AdminLayout() {
             )}
           </div>
         </button>
-        
+
         {show && (
           <div
-            className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] overflow-y-auto rounded-xl shadow-xl border ${
-              darkMode 
-                ? 'bg-gray-800 border-gray-700 text-gray-200' 
+            className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] overflow-y-auto rounded-xl shadow-xl border ${darkMode
+                ? 'bg-gray-800 border-gray-700 text-gray-200'
                 : 'bg-white border-gray-200 text-gray-900'
-            } z-50 transition-all duration-200 ${
-              isMobile ? 'left-4 right-4' : 'right-0'
-            }`}
+              } z-50 transition-all duration-200 ${isMobile ? 'left-4 right-4' : 'right-0'
+              }`}
           >
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
-              {React.cloneElement(icon, { className: 'w-5 h-5' })}
-              <h4 className={`font-semibold text-sm sm:text-base ${
-                darkMode ? "text-purple-300" : "text-purple-600"  // Changé en violet
-              }`}>{label}</h4>
-              {count > 0 && (
-                <span className="ml-auto bg-blue-500 text-white text-xs rounded-full px-2 py-1">
-                  {count > 99 ? '99+' : count}
-                </span>
-              )}
+            {/* Header avec titre et filtres */}
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2 mb-3">
+                {React.cloneElement(icon, { className: 'w-5 h-5' })}
+                <h4 className={`font-semibold text-sm sm:text-base ${darkMode ? "text-purple-300" : "text-purple-600"
+                  }`}>{label}</h4>
+                {count > 0 && (
+                  <span className="ml-auto bg-blue-500 text-white text-xs rounded-full px-2 py-1">
+                    {count > 99 ? '99+' : count}
+                  </span>
+                )}
+              </div>
+
+              {/* Filtres */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`px-3 py-1 text-sm rounded-full transition-colors ${filter === 'all'
+                      ? 'bg-blue-500 text-white'
+                      : `${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`
+                    }`}
+                >
+                  Tout ({items.length})
+                </button>
+                <button
+                  onClick={() => setFilter('unread')}
+                  className={`px-3 py-1 text-sm rounded-full transition-colors ${filter === 'unread'
+                      ? 'bg-blue-500 text-white'
+                      : `${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`
+                    }`}
+                >
+                  Non lus ({unreadCount})
+                </button>
+              </div>
             </div>
-            
+
             <div className="max-h-[60vh] overflow-y-auto">
-              {items.length ? (
-                items.map((item, i) => (
+              {filteredItems.length ? (
+                filteredItems.map((item, i) => (
                   <div
                     key={i}
-                    className={`p-3 transition-colors duration-150 border-b ${
-                      darkMode 
-                        ? 'border-gray-700 hover:bg-gray-700' 
+                    onClick={() => onItemClick && onItemClick(item)} // NOUVEAU: Gestion du clic
+                    className={`p-3 transition-colors duration-150 border-b ${darkMode
+                        ? 'border-gray-700 hover:bg-gray-700'
                         : 'border-gray-200 hover:bg-gray-50'
-                    } cursor-pointer`}
+                      } cursor-pointer ${!item.read ? (darkMode ? 'bg-blue-900/20' : 'bg-blue-50') : ''
+                      }`}
                   >
-                    <p className="text-sm line-clamp-2">
-                      {typeof item === 'object' ? `${item.from}: ${item.text}` : item}
-                    </p>
-                    <p className={`text-xs mt-1 ${
-                      darkMode ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
-                      Il y a {Math.floor(Math.random() * 60)} min
-                    </p>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className={`text-sm line-clamp-2 ${!item.read ? 'font-medium' : ''
+                          }`}>
+                          {typeof item.content === 'object' ? `${item.content.from}: ${item.content.text}` : item.content}
+                        </p>
+                        <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
+                          Il y a {Math.floor(Math.random() * 60)} min
+                        </p>
+                      </div>
+                      {!item.read && (
+                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2 mt-1"></div>
+                      )}
+                    </div>
                   </div>
                 ))
               ) : (
                 <div className="p-4 text-center">
-                  <p className={`text-sm ${
-                    darkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}>
-                    Aucun {label.toLowerCase()}
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                    {filter === 'unread' ? `Aucun ${label.toLowerCase()} non lu` : `Aucun ${label.toLowerCase()}`}
                   </p>
                 </div>
               )}
@@ -153,11 +357,13 @@ export default function AdminLayout() {
     );
   });
 
+  // ============= MODIFIÉ: AdminHeader avec modal =============
   const AdminHeader = ({ currentPageName, darkMode }) => {
-
     const [showNotifications, setShowNotifications] = useState(false);
     const [showMessages, setShowMessages] = useState(false);
     const [showProfile, setShowProfile] = useState(false);
+    const [showConversationModal, setShowConversationModal] = useState(false); // NOUVEAU
+    const [selectedConversation, setSelectedConversation] = useState(null); // NOUVEAU
 
     const notifRef = useRef(null);
     const msgRef = useRef(null);
@@ -179,6 +385,12 @@ export default function AdminLayout() {
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    // NOUVEAU: Fonction pour gérer le clic sur un message
+    const handleMessageClick = (item) => {
+      setSelectedConversation(item);
+      setShowConversationModal(true);
+      setShowMessages(false); // Fermer le dropdown
+    };
 
     const notifications = [
       "Nouvel organisateur inscrit",
@@ -198,119 +410,119 @@ export default function AdminLayout() {
       : "bg-gray-50 text-gray-800";
 
     return (
-      <header className={`flex flex-col md:flex-row justify-between items-center gap-4 pt-8 pl-8 pr-8 ${pageBg}`}
-      >
-        <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
-          {currentPageIcon && <span className="mr-2 sm:mr-3 text-blue-700">{currentPageIcon}</span>}
-          {currentPageName}
-        </h2>
-        <div className="flex items-center gap-3 sm:gap-6 relative">
-          <Dropdown
-            ref={notifRef}
-            show={showNotifications}
-            setShow={setShowNotifications}
-            icon={<FaBell className="text-lg sm:text-xl" />}
-            label="Notifications"
-            count={notifications.length}
-            items={notifications}
-            noScroll={true}
-          />
+      <>
+        <header className={`flex flex-col md:flex-row justify-between items-center gap-4 pt-8 pl-8 pr-8 ${pageBg}`}>
+          <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
+            {currentPageIcon && <span className="mr-2 sm:mr-3 text-blue-700">{currentPageIcon}</span>}
+            {currentPageName}
+          </h2>
 
-          <Dropdown
-            ref={msgRef}
-            show={showMessages}
-            setShow={setShowMessages}
-            icon={<FaEnvelope className="text-lg sm:text-xl" />}
-            label="Messages"
-            count={messages.length}
-            items={messages.map((msg) => `${msg.from} : ${msg.text}`)}
-            noScroll={true}
-          />
+          <div className="flex items-center gap-3 sm:gap-6 relative">
+            <Dropdown
+              ref={notifRef}
+              show={showNotifications}
+              setShow={setShowNotifications}
+              icon={<FaBell className="text-lg sm:text-xl" />}
+              label="Notifications"
+              count={notifications.length}
+              items={notifications}
+              noScroll={true}
+            />
 
-          <div ref={profileRef} className="relative">
-            <button
-              onClick={() => setShowProfile(!showProfile)}
-              className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
-                darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-              }`}
-              aria-label="Menu profil"
-            >
-              <div className="relative">
-                <FaUser className="w-5 h-5" />
-              </div>
-              <span className="hidden sm:inline text-sm font-medium">Admin</span>
-              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
-                showProfile ? 'rotate-180' : ''
-              }`} />
-            </button>
-            {showProfile && (
-              <div
-                className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
-                  darkMode 
-                    ? 'bg-gray-800 border-gray-700' 
-                    : 'bg-white border-gray-200'
-                } z-50 transition-all duration-200 ${
-                  window.innerWidth < 640 ? 'left-4 right-4' : 'right-0'
-                }`}
+            <Dropdown
+              ref={msgRef}
+              show={showMessages}
+              setShow={setShowMessages}
+              icon={<FaEnvelope className="text-lg sm:text-xl" />}
+              label="Messages"
+              count={messages.length}
+              items={messages}
+              onItemClick={handleMessageClick} // NOUVEAU: Passer la fonction de clic
+              noScroll={true}
+            />
+
+            <div ref={profileRef} className="relative">
+              <button
+                onClick={() => setShowProfile(!showProfile)}
+                className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                  }`}
+                aria-label="Menu profil"
               >
-                <div className="p-2">
-                  <div className={`px-3 py-2 text-sm ${
-                    darkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    <p className="font-medium">Connecté en tant que</p>
-                    <p className="truncate">admin@example.com</p>
-                  </div>
-                  <div className={`border-t ${
-                    darkMode ? 'border-gray-700' : 'border-gray-200'
-                  }`}></div>
-                  <button
-                    className={`w-full text-left px-3 py-2 text-sm ${
-                      darkMode 
-                        ? 'hover:bg-gray-700 text-gray-200' 
-                        : 'hover:bg-gray-100 text-gray-800'
-                    } transition-colors duration-150`}
-                  >
-                    Mon profil
-                  </button>
-                  <button
-                    className={`w-full text-left px-3 py-2 text-sm ${
-                      darkMode 
-                        ? 'hover:bg-gray-700 text-gray-200' 
-                        : 'hover:bg-gray-100 text-gray-800'
-                    } transition-colors duration-150`}
-                  >
-                    Paramètres
-                  </button>
-                  <div className={`border-t ${
-                    darkMode ? 'border-gray-700' : 'border-gray-200'
-                  }`}></div>
-                  <button
-                    className={`w-full text-left px-3 py-2 text-sm ${
-                      darkMode 
-                        ? 'hover:bg-gray-700 text-red-400' 
-                        : 'hover:bg-gray-100 text-red-600'
-                    } transition-colors duration-150`}
-                  >
-                    Déconnexion
-                  </button>
+                <div className="relative">
+                  <FaUser className="w-5 h-5" />
                 </div>
-              </div>
-            )}
-          </div>
+                <span className="hidden sm:inline text-sm font-medium">Admin</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showProfile ? 'rotate-180' : ''
+                  }`} />
+              </button>
+              {showProfile && (
+                <div
+                  className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${darkMode
+                    ? 'bg-gray-800 border-gray-700'
+                    : 'bg-white border-gray-200'
+                    } z-50 transition-all duration-200 ${window.innerWidth < 640 ? 'left-4 right-4' : 'right-0'
+                    }`}
+                >
+                  <div className="p-2">
+                    <div className={`px-3 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                      <p className="font-medium">Connecté en tant que</p>
+                      <p className="truncate">admin@example.com</p>
+                    </div>
+                    <div className={`border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'
+                      }`}></div>
+                    <button
+                      className={`w-full text-left px-3 py-2 text-sm ${darkMode
+                        ? 'hover:bg-gray-700 text-gray-200'
+                        : 'hover:bg-gray-100 text-gray-800'
+                        } transition-colors duration-150`}
+                    >
+                      Mon profil
+                    </button>
+                    <button
+                      className={`w-full text-left px-3 py-2 text-sm ${darkMode
+                        ? 'hover:bg-gray-700 text-gray-200'
+                        : 'hover:bg-gray-100 text-gray-800'
+                        } transition-colors duration-150`}
+                    >
+                      Paramètres
+                    </button>
+                    <div className={`border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'
+                      }`}></div>
+                    <button
+                      className={`w-full text-left px-3 py-2 text-sm ${darkMode
+                        ? 'hover:bg-gray-700 text-red-400'
+                        : 'hover:bg-gray-100 text-red-600'
+                        } transition-colors duration-150`}
+                    >
+                      Déconnexion
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
-          <button
-            onClick={toggleDarkMode}
-            className={`p-2 rounded-full ${
-              darkMode 
-                ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' 
+            <button
+              onClick={toggleDarkMode}
+              className={`p-2 rounded-full ${darkMode
+                ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600'
                 : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-            } transition-colors duration-200`}
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? "☀️" : "🌙"}
-          </button>
-        </div>
-      </header>
+                } transition-colors duration-200`}
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? "☀️" : "🌙"}
+            </button>
+          </div>
+        </header>
+
+        {/* NOUVEAU: Modal de conversation */}
+        <ConversationModal
+          show={showConversationModal}
+          onClose={() => setShowConversationModal(false)}
+          conversation={selectedConversation}
+          darkMode={darkMode}
+        />
+      </>
     );
   };
 
@@ -318,7 +530,7 @@ export default function AdminLayout() {
     <div className={`flex h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
       {/* Overlay pour mobile */}
       {sidebarOpen && isMobile && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={() => setSidebarOpen(false)}
         />
@@ -327,8 +539,8 @@ export default function AdminLayout() {
       {/* Bouton Burger flottant */}
       <button
         className={`fixed z-30 top-4 left-4 p-2 rounded-lg transition-all duration-300 md:hidden
-          ${darkMode 
-            ? "bg-gray-700 text-gray-200 hover:bg-gray-600" 
+          ${darkMode
+            ? "bg-gray-700 text-gray-200 hover:bg-gray-600"
             : "bg-white text-gray-600 hover:bg-gray-100"} shadow-md hover:scale-105`}
         onClick={() => setSidebarOpen(!sidebarOpen)}
       >
@@ -346,16 +558,16 @@ export default function AdminLayout() {
           {/* Header Sidebar */}
           <div className="p-5 flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <img 
-                src="../../public/images/logo_4.png" 
-                alt="Logo" 
+              <img
+                src="../../public/images/logo_4.png"
+                alt="Logo"
                 className="w-10 h-10 rounded-lg object-cover transition-transform duration-300 hover:scale-110"
               />
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
                 Master Table
               </h1>
             </div>
-            <button 
+            <button
               className="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-all duration-300 hover:rotate-90"
               onClick={() => setSidebarOpen(false)}
             >
@@ -371,21 +583,18 @@ export default function AdminLayout() {
                   <Link
                     to={item.path}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 transform
-                    ${
-                      location.pathname === item.path
+                    ${location.pathname === item.path
                         ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg scale-[1.02]"
-                        : `${
-                            darkMode 
-                              ? "text-gray-200 hover:bg-gray-700 hover:text-white" 
-                              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                          } hover:translate-x-1 hover:scale-[1.02]`
-                    }`}
+                        : `${darkMode
+                          ? "text-gray-200 hover:bg-gray-700 hover:text-white"
+                          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                        } hover:translate-x-1 hover:scale-[1.02]`
+                      }`}
                     onClick={() => isMobile && setSidebarOpen(false)}
                   >
-                    <span className={`text-lg transition-transform duration-300 ${
-                      location.pathname === item.path ? "text-white scale-110" : 
+                    <span className={`text-lg transition-transform duration-300 ${location.pathname === item.path ? "text-white scale-110" :
                       darkMode ? "text-gray-300 group-hover:scale-110" : "text-gray-500 group-hover:scale-110"
-                    }`}>
+                      }`}>
                       {item.icon}
                     </span>
                     <span className="transition-all duration-300">{item.name}</span>
@@ -401,11 +610,10 @@ export default function AdminLayout() {
               <button
                 onClick={toggleDarkMode}
                 className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 transform
-                ${
-                  darkMode 
-                    ? "bg-gray-700 text-blue-300 hover:bg-gray-600 hover:scale-[1.02]" 
+                ${darkMode
+                    ? "bg-gray-700 text-blue-300 hover:bg-gray-600 hover:scale-[1.02]"
                     : "bg-gray-100 text-blue-600 hover:bg-gray-200 hover:scale-[1.02]"
-                }`}
+                  }`}
               >
                 {darkMode ? (
                   <>
@@ -423,19 +631,17 @@ export default function AdminLayout() {
               <button
                 onClick={handleLogout}
                 className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 transform
-                ${
-                  darkMode
+                ${darkMode
                     ? "text-red-300 hover:bg-gray-700 hover:bg-opacity-50 hover:scale-[1.02]"
                     : "text-red-500 hover:bg-red-50 hover:scale-[1.02]"
-                }`}
+                  }`}
               >
                 <FaSignOutAlt className="text-lg transition-transform duration-300 hover:translate-x-1" />
                 <span className="text-sm font-medium">Déconnexion</span>
               </button>
             </div>
-            <p className={`text-xs text-center transition-colors duration-300 ${
-              darkMode ? "text-gray-400" : "text-gray-500"
-            }`}>
+            <p className={`text-xs text-center transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-500"
+              }`}>
               © {new Date().getFullYear()} Master Table
             </p>
           </div>
