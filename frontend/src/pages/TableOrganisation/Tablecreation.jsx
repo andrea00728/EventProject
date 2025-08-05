@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { getMyEvents } from "../../services/evenementServ";
 
 import { useStateContext } from "../../context/ContextProvider";
-import { chiffreControll } from "../../services/controll_champs/controll_champs";
+import { chiffreControll, getMaxCapacity } from "../../services/controll_champs/controll_champs";
 
 export default function Tablecreation({onSubmitTable}) {
   const { token } = useStateContext();
@@ -40,9 +40,43 @@ export default function Tablecreation({onSubmitTable}) {
   }, [token]);
 
   
+    // const handleChange = (e) => {
+    //   setForm({ ...form, [e.target.name]: e.target.value });
+      
+    // };
+
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const { name, value } = e.target;
+
+  if (name === "capacite") {
+    const numericValue = parseInt(value, 10);
+    const max = getMaxCapacity(form.type);
+    if (numericValue > max) {
+      setError(`La capacité maximale pour une table ${form.type} est ${max}`);
+      return;
+    } else {
+      setError(null);
+    }
+    setForm({ ...form, [name]: numericValue });
+    return;
+  }
+
+  if (name === "type") {
+    const max = getMaxCapacity(value);
+    const newCapacite = Math.min(form.capacite, max);
+    if (form.capacite > max) {
+      setError(`Capacité ajustée à ${newCapacite} pour le type ${value}`);
+    } else {
+      setError(null);
+    }
+    setForm({ ...form, [name]: value, capacite: newCapacite });
+    return;
+  }
+
+  setForm({ ...form, [name]: value });
+};
+
+
 
   const selectEvent = (event) => {
     setSelectedEvent(event);
@@ -136,8 +170,10 @@ export default function Tablecreation({onSubmitTable}) {
               placeholder="Ex: 4, 6, 8"
               required
               min="1"
+              max={getMaxCapacity(form.type )}
               className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
             />
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
           </div>
            <div className="flex flex-col">
             <label htmlFor="nombre" className="text-gray-700 font-medium mb-2 text-sm">

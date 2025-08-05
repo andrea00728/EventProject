@@ -240,14 +240,14 @@ export default function Evenementform({ onNext }) {
               } focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent transition-all duration-200 shadow-sm hover:shadow focus:shadow-md placeholder:text-gray-400`}
             />
           </div>
-
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-start gap-3">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Événement public ?</label>
             <input
               type="checkbox"
               name="isPublic"
               checked={form.isPublic}
               onChange={handleChange}
-              className="h-5 w-5 text-[#6B46C1] border-gray-200 rounded focus:ring-[#6B46C1] transition-all duration-200"
+              className="size-5 rounded border-gray-300 shadow-sm"
             />
             <label className="text-sm font-semibold text-gray-800">Événement public</label>
           </div>

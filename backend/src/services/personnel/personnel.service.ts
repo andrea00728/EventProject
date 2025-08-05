@@ -87,6 +87,22 @@ async confirmEmail(token: string): Promise<string> {
 }
 
 
+/**
+ * Refuses a personnel invitation for an event.
+ *
+ * This function decodes a JWT token to extract the user's email and event ID,
+ * and attempts to find the corresponding personnel entry with a status of "attent"
+ * (pending). If the personnel entry is found and its status is pending, the entry
+ * is removed and a notification is sent. If the entry is not found or its status
+ * is not pending, appropriate exceptions are thrown.
+ *
+ * @param token - A JWT token containing the user's email and event ID.
+ * @returns A promise that resolves to a success message if the invitation is refused.
+ * @throws NotFoundException if the invitation is not found or already processed.
+ * @throws BadRequestException if the token is invalid or expired, or if the invitation
+ *         is already confirmed or refused.
+ */
+
 async RefuseEmail(token: string): Promise<string> {
   try {
     const decoded = this.jwtService.verify(token);
@@ -119,6 +135,22 @@ async RefuseEmail(token: string): Promise<string> {
   }
 }
 
+
+/**
+ * Creates a new personnel entry for the given event and user.
+ * 
+ * This function attempts to find the specified event by its ID and the
+ * user ID. If the event is found, it creates a personnel entry with the
+ * status "attent" (pending) and sends a notification to all users. 
+ * It generates a JWT token for confirmation and refusal actions and
+ * sends an email to the personnel's email address with links to confirm
+ * or refuse the role.
+ *
+ * @param dto - Data transfer object containing personnel details.
+ * @param userId - The ID of the user creating the personnel entry.
+ * @returns A promise that resolves to the newly created Personnel object.
+ * @throws BadRequestException if the event is not found for the user.
+ */
 
 async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
   const evenement = await this.evenementRepository.findOne({
@@ -183,6 +215,19 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
   return savedPersonnel;
 }
 
+/**
+ * Finds a personnel entry by user email and event ID.
+ *
+ * This function searches the personnel repository for a record
+ * that matches the given email and event ID, returning the
+ * corresponding Personnel object if found.
+ *
+ * @param email - The email of the personnel to find.
+ * @param eventId - The ID of the event associated with the personnel.
+ * @returns A promise that resolves to the Personnel object if found,
+ *          or null if no matching record is found.
+ */
+
 async findOneByUserEmailAndEvent(email: string, eventId: number): Promise<Personnel | null> {
   return await this.personnelRepository.findOne({
     where: {
@@ -201,6 +246,17 @@ async findOneByUserEmailAndEvent(email: string, eventId: number): Promise<Person
  * 
  */
 
+  /**
+   * Finds a personnel entry by user email.
+   *
+   * This function searches the personnel repository for a record
+   * that matches the given email, returning the corresponding
+   * Personnel object if found.
+   *
+   * @param email - The email of the personnel to find.
+   * @returns A promise that resolves to the Personnel object if found,
+   *          or null if no matching record is found.
+   */
 async findOneByUserEmail(email: string): Promise<Personnel | null> {
   return await this.personnelRepository.findOne({
     where: {
@@ -210,6 +266,12 @@ async findOneByUserEmail(email: string): Promise<Personnel | null> {
   });
 }
 
+  /**
+   * Finds the count of personnel entries associated with the given event ID.
+   *
+   * @param evenementId - The ID of the event for which to count personnel.
+   * @returns A promise that resolves to the count of personnel entries for the given event.
+   */
 async findCountPersonnelByEvenement(evenementId: number): Promise<number> {
     const count = await this.personnelRepository.count({
       where: {
@@ -220,4 +282,7 @@ async findCountPersonnelByEvenement(evenementId: number): Promise<number> {
     });
     return count;
   }
+
+
+
 }
