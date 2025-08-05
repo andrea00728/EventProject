@@ -201,48 +201,68 @@ export class AuthService {
     };
   }
 
-async verifyFirebaseToken(idToken: string) {
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const email = decodedToken.email;
-    const displayName = decodedToken.name;
-    const photoURL = decodedToken.picture;
+async loginWithFirebase(idToken: string) {
+    try {
+      // 1. Vérifier et décoder le token Firebase
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const email = decodedToken.email;
+      const displayName = decodedToken.name || 'Admin';
+      const photoURL = decodedToken.picture || null;
 
-    // Chercher l'admin existant dans la base
-    const existingAdmin = await this.userRepository.findOne({
-      where: { email: email, role: "admin" },
-    });
+      // 2. Chercher l'admin existant
+      let adminUser = await this.userRepository.findOne({
+        where: { email, role: 'admin' },
+      });
 
-    if (existingAdmin) {
-      return existingAdmin; // Admin existe déjà, retour immédiat
+      if (!adminUser) {
+        // 3. Vérifier s'il existe déjà un autre admin
+        const adminCount = await this.userRepository.count({
+          where: { role: 'admin' },
+        });
+
+        if (adminCount > 0) {
+          throw new UnauthorizedException('Un admin existe déjà');
+        }
+
+        // 4. Créer un nouvel admin
+        adminUser = this.userRepository.create({
+          id: uuidv4(),
+          email,
+          name: displayName,
+          photo: photoURL ?? null, // Si jamais photoURL est undefined, mets null
+          role: 'admin',
+          isOnline: true,
+          lastLogin: new Date(),
+        } as Partial<User>);
+
+          await this.userRepository.save(adminUser);
+        }
+
+      // 5. Créer le payload pour JWT backend
+      const payload = {
+        sub: adminUser.id, // id de ta base
+        email: adminUser.email,
+        role: adminUser.role,
+      };
+
+      // 6. Générer un JWT signé par ton backend
+      const access_token = this.jwtService.sign(payload);
+
+      // 7. Retourner token + user (optionnel)
+      return {
+        access_token,
+        user: {
+          id: adminUser.id,
+          email: adminUser.email,
+          name: adminUser.name,
+          photo: adminUser.photo,
+          role: adminUser.role,
+        },
+      };
+    } catch (error) {
+      console.error('Login with Firebase error:', error);
+      throw new UnauthorizedException('Token Firebase invalide ou autre erreur');
     }
-
-    // Vérifie si un autre admin existe (peu importe l'email)
-    const adminCount = await this.userRepository.count({
-      where: { role: "admin" },
-    });
-
-    if (adminCount > 0) {
-      // Un admin existe déjà, accès refusé pour créer un autre admin
-      throw new UnauthorizedException('Un admin existe déjà');
-    }
-
-    // Créer un nouvel admin avec les infos de Firebase
-    const newAdmin = this.userRepository.create({
-      email: email,
-      name: displayName,
-      photo: photoURL,
-      role: "admin",
-      // tu peux initialiser d'autres champs si nécessaire (ex: password vide, etc.)
-    });
-
-    await this.userRepository.save(newAdmin);
-
-    return newAdmin;
-  } catch (error) {
-    console.error(error);
-    throw new UnauthorizedException('Token Firebase invalide');
   }
-}
 
 }

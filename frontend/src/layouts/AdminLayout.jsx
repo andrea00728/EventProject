@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Outlet, Link, useLocation, Navigate, useNavigate } from "react-router-dom";
+import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
 import {
   FaCogs,
   FaUsers,
@@ -25,56 +25,30 @@ import { useDarkMode } from "../context/DarkModeContext";
 import { useStateContext } from "../context/ContextProvider";
 
 export default function AdminLayout() {
- const { user, isLoading } = useStateContext();
-  const navigate = useNavigate();  // 🔥 Ajoute ça
+  const { token, role, isLoading } = useStateContext();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
 
-  // 🟢 Gestion des redirections après chargement
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user?.token) {
-        navigate("/pagepublic", { replace: true });
-      } else {
-        switch (user.role) {
-          case "admin":
-            // On reste sur la page
-            break;
-          case "accueil":
-            navigate("/personnelAccueil", { replace: true });
-            break;
-          case "caissier":
-            navigate("/personnelCaisse", { replace: true });
-            break;
-          case "cuisinier":
-            navigate("/personnelCuisine", { replace: true });
-            break;
-          default:
-            navigate("/AdminAccueil", { replace: true });
-        }
-      }
-    }
-  }, [user, isLoading, navigate]);
+  //  Ne pas continuer si en chargement
+  if (isLoading) return <div>Chargement ...</div>;
 
-  // 🟡 Attendre que le contexte finisse de charger
-  if (isLoading) {
-    return (
-      <div className="h-screen flex justify-center items-center">
-        <p>Chargement...</p>
-      </div>
-    );
-  }
+  // 🔐 Rediriger si non connecté
+  if (!token) return <Navigate to="/pagepublic" replace />;
 
-  // 🟠 Si pas de token mais déjà géré par useEffect (rien à faire ici)
-  if (!user?.token) {
-    return null; // on attend que le useEffect fasse la redirection
-  }
-
-  // 🔵 Si le rôle est autre que admin, useEffect fera la redirection
-  if (user.role !== "admin") {
-    return null; // on attend que le useEffect fasse la redirection
+  // Rediriger selon rôle
+  switch (role) {
+    case "admin":
+      break;
+    case "accueil":
+      return <Navigate to="/personnelAccueil" replace />;
+    case "caissier":
+      return <Navigate to="/personnelCaisse" replace />;
+    case "cuisinier":
+      return <Navigate to="/personnelCuisine" replace />;
+    default:
+      return <Navigate to="/AdminAccueil" replace />;
   }
 
   useEffect(() => {

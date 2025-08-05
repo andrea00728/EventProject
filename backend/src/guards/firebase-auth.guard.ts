@@ -12,12 +12,15 @@ export class FirebaseAuthGuard implements CanActivate {
     }
     
     const token = authHeader.split('Bearer ')[1];
+    console.log('token : ', token)
     try {
       const decodedToken = await admin.auth().verifyIdToken(token);
       req.user = decodedToken;
       return true;
     } catch (err) {
+      console.error('Firebase Token Verification Failed:', err); // 🔥 Ce log va te dire pourquoi ça échoue
       throw new UnauthorizedException('Token invalide');
     }
+
   }
 }

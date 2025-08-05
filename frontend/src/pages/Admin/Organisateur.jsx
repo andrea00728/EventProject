@@ -24,6 +24,7 @@ import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { ChevronDown } from "lucide-react";
 import { io } from "socket.io-client";
 import { SOCKET_URL } from "../../socket";
+import { useStateContext } from "../../context/ContextProvider";
 
 // Composant StatsCard
 const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
@@ -334,6 +335,7 @@ export default function Organisateur() {
   const [showProfile, setShowProfile] = useState(false);
 
   const { darkMode, toggleDarkMode } = useDarkMode();
+  const { user } = useStateContext()
 
   const notifRef = useRef(null);
   const msgRef = useRef(null);
@@ -383,15 +385,9 @@ export default function Organisateur() {
     fetchData();
 
     // const userId = await getUserIdForToken(token);
-    // const socket = io(`${import.meta.env.VITE_API_BASE_URL}`, {
-    //   auth: {
-    //     userId: userId, // très important : doit être l’ID réel de l’organisateur
-    //   },
-    // });
-
     const socket = io(SOCKET_URL, {
       auth: {
-        userId: "455b0bed-dd7f-4214-a5dd-5a1eb", 
+        userId: user.id,
       },
     });
 

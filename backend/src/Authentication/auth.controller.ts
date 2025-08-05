@@ -1,5 +1,5 @@
 // auth.controller.ts
-import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-auth.dto';
@@ -164,13 +164,13 @@ export class AuthController {
   }
 
   @UseGuards(FirebaseAuthGuard)
-  @Get('profile')
-  getProfile(@Req() request) {
-    // Ici on retourne les infos du token Firebase (id, email, etc)
-    return {
-      uid: request.user.uid,
-      email: request.user.email,
-      name: request.user.name || null,
-    };
+  @Post('/login/admin')
+  async logSuperAd(@Req() request : any) {
+    const idToken = request.headers.authorization?.split('Bearer ')[1];
+    if (!idToken) {
+      throw new UnauthorizedException('Token manquant');
+    }
+    return await this.authService.loginWithFirebase(idToken);
   }
+
 }
