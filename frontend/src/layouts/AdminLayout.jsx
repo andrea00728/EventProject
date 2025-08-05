@@ -418,8 +418,8 @@ export default function AdminLayout() {
     <div className={`flex h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
       {/* Overlay pour mobile */}
       {sidebarOpen && isMobile && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+        <div 
+          className="fixed inset-0 bg-black opacity-50 z-40"
           onClick={() => setSidebarOpen(false)}
         />
       )}

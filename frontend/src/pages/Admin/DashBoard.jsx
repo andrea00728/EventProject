@@ -319,16 +319,28 @@ export default function Dashboard() {
                       )}
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm sm:text-base">
-                          <p className="font-semibold text-base sm:text-lg text-gray-800 dark:text-gray-100">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm sm:text-base ">
+                          <p className={`font-semibold text-base sm:text-lg text-gray-100 dark:text-gray-100 ${
+                            darkMode
+                              ? "bg-gray-800 border-gray-700 text-gray-200"
+                              : "bg-white border-gray-200 text-gray-900"
+                          }`}>
                             {name}
                           </p>
-                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1 sm:mt-0">
+                          <p className={`text-xs sm:text-sm text-gray-300 dark:text-gray-400 mt-1 sm:mt-0 ${
+                            darkMode
+                              ? "bg-gray-800 border-gray-700 text-gray-200"
+                              : "bg-white border-gray-200 text-gray-900"
+                          }`}>
                             Inscrit le{" "}
                             {format(new Date(createdAt), "dd/MM/yyyy")}
                           </p>
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                        <p className={`text-sm text-gray-300 dark:text-gray-400 truncate ${
+                          darkMode
+                            ? "bg-gray-800 border-gray-700 text-gray-200"
+                            : "bg-white border-gray-200 text-gray-900"
+                        }`}>
                           {email}
                         </p>
                       </div>
@@ -388,7 +400,11 @@ export default function Dashboard() {
                         <td className="p-3 font-semibold text-green-600 dark:text-green-400">
                           ${Number(amount).toFixed(2)}
                         </td>
-                        <td className="p-3 text-sm text-gray-600 dark:text-gray-400">
+                        <td className={`p-3 text-sm text-gray-300 dark:text-gray-400 ${
+                          darkMode
+                            ? "bg-gray-800 border-gray-700 text-gray-200"
+                            : "bg-white border-gray-200 text-gray-900"
+                        }`}>
                           {format(new Date(date), "dd MMM yyyy, HH:mm", {
                             locale: fr,
                           })}
@@ -541,10 +557,16 @@ function EventChart({ darkMode, eventData }) {
           {
             data: totals,
             label: "Nombre total",
+            LabelStyle: {
+              fill: darkMode ? "#ffffff" : "#000000",
+            },
           },
           {
             data: percentages,
             label: "Pourcentage",
+            LabelStyle: {
+              fill: darkMode ? "#ffffff" : "#000000",
+            },
           },
         ]}
         xAxis={[
