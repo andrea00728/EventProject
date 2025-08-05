@@ -194,5 +194,29 @@ async getUserForfait(@Req() req: any) {
     return this.forfaitService.getRevenusPourcentagesParForfait();
   }
 
+   // stat by lioka
+  @Get('dashboard-charts')
+async getDashboardCharts(@Query('period') period: string = '12') {
+  console.log('🔥 Route dashboard-charts appelée avec period:', period);
+  
+  const periodNumber = parseInt(period) || 12;
+
+  try {
+    const [revenueData] = await Promise.all([
+      this.forfaitService.getMonthlyForfaitRevenue(periodNumber),
+    ]);
+
+    const result = {
+      revenue: revenueData,
+    };
+    
+    console.log('✅ Données à retourner:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Erreur dans getDashboardCharts:', error);
+    throw error;
+  }
+}
+
 
 }
