@@ -60,35 +60,36 @@ const MenuListWithCart = () => {
 
   // Charger les menus
   useEffect(() => {
-    const fetchMenus = async () => {
-      if (!selectedEvent) return;
+  const fetchMenus = async () => {
+    if (!selectedEvent) return;
 
-      try {
-        setIsLoading(true);
-        const res = await axios.get(`http://localhost:3000/menus/event/${selectedEvent}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    try {
+      setIsLoading(true);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        const formattedMenus = res.data.map(menu => ({
-          ...menu,
-          items: menu.items.map(item => ({
-            ...item,
-            price: parseFloat(item.price) || 0,
-          })),
-        }));
+      // On suppose que res.data est un tableau de menus avec items
+      const formattedMenus = res.data.map(menu => ({
+        ...menu,
+        items: menu.items.map(item => ({
+          ...item,
+        })),
+      }));
 
-        setMenus(formattedMenus);
-      } catch (error) {
-        console.error(error);
-        setMessage('Oups, impossible de charger les menus.');
-        setTimeout(() => setMessage(''), 3000);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      setMenus(formattedMenus);
+    } catch (error) {
+      console.error(error);
+      setMessage('Oups, impossible de charger les menus.');
+      setTimeout(() => setMessage(''), 3000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    if (selectedEvent) fetchMenus();
-  }, [selectedEvent, token]);
+  fetchMenus();
+}, [selectedEvent, token]);
+
 
   // Fonctions Panier
   const addToCart = (item) => {
@@ -228,13 +229,6 @@ const MenuListWithCart = () => {
           placeholder="Prix min"
           value={minPrice}
           onChange={(e) => setMinPrice(e.target.value)}
-          className="px-2 py-1 border rounded-md shadow-sm"
-        />
-        <input
-          type="number"
-          placeholder="Prix max"
-          value={maxPrice}
-          onChange={(e) => setMaxPrice(e.target.value)}
           className="px-2 py-1 border rounded-md shadow-sm"
         />
       </div>

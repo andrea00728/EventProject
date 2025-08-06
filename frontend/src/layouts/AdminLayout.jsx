@@ -17,12 +17,29 @@ import { FiLayout } from "react-icons/fi";
 import { ChevronDown } from "lucide-react";
 import { MdCalendarToday, MdHistory, MdQueryStats, MdRoom } from "react-icons/md";
 import { useDarkMode } from "../context/DarkModeContext";
+import { useStateContext } from "../context/ContextProvider";
+import Dropdown from "./Dropdown";
+import LogoutModal from "../pages/Admin/LogoutModal";
+import { logout } from "../services/firebase/authService";
 
 export default function AdminLayout() {
+  const { token, role, isLoading, setToken, setUser } = useStateContext();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) setSidebarOpen(false);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   
 
@@ -36,6 +53,23 @@ export default function AdminLayout() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    console.log("Déconnexion Confirmée");
+    // 🔒 Ici tu fais ton clearToken / clearUser
+    setToken(null);
+    setUser(null);
+    // navigate("/pagepublic");
+    logout()
+    setShowLogoutModal(false);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
+  };
 
   const menuItems = [
     { path: "/AdminAccueil", name: "Tableau de bord", icon: <FiLayout className="text-lg" /> },
@@ -47,9 +81,6 @@ export default function AdminLayout() {
     { path: "/AdminParametre", name: "Paramètres", icon: <FaCogs className="text-lg" /> },
   ];
 
-  const handleLogout = () => {
-    console.log("Déconnexion");
-  };
 
   const gradientTitle =
     "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";
@@ -450,6 +481,13 @@ export default function AdminLayout() {
             <Outlet />
           </div>
         </main>
+
+        <LogoutModal
+          isOpen={showLogoutModal}
+          onClose={cancelLogout}
+          onConfirm={confirmLogout}
+          darkMode={darkMode}
+        />
       </div>
     </div>
   );

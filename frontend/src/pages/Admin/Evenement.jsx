@@ -315,6 +315,7 @@ export default function EvenementAd() {
         setLoading(true);
         setError(null);
         const data = await getAllEvents();
+        console.log(data);
         setData(data);
       } catch (error) {
         console.error("Erreur lors de la récupération des événements : ", error);

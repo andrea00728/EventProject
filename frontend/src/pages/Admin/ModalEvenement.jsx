@@ -276,6 +276,8 @@ function Invites({ data, darkMode, isMobile }) {
   const [filterField, setFilterField] = useState("nom");
   const [searchValue, setSearchValue] = useState("");
 
+  console.log('Les invités : ',data)
+
   const handleExportExcel = () => {
     const exportData = data.invites.map((p) => ({
       Nom: p.nom,

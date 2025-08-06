@@ -550,12 +550,16 @@ function EventChart({ darkMode }) {
       </h3>
       <BarChart
         series={[
-          { data: data2020, label: "2020", 
+          {
+            data: totals,
+            label: "Nombre total",
             LabelStyle: {
               fill: darkMode ? "#ffffff" : "#000000",
             },
           },
-          { data: data2021, label: "2021", 
+          {
+            data: percentages,
+            label: "Pourcentage",
             LabelStyle: {
               fill: darkMode ? "#ffffff" : "#000000",
             },

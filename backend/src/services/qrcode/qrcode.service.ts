@@ -39,7 +39,9 @@ export class QrCodeService {
       await this.shortLinkRepository.save(shortLink);
     }
 
+
     const shortUrl = `http://localhost:5173/menulist/${shortLink.slug}`;
+
     return QRCode.toDataURL(shortUrl);
   }
 }

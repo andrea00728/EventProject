@@ -16,7 +16,7 @@ export default function EnhancedSystemPromptManager() {
   const fetchPrompts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:3000/system-prompt");
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/system-prompt`);
       setPrompts(response.data);
     } catch (err) {
       setError("Erreur lors du chargement des prompts.");
@@ -33,8 +33,8 @@ export default function EnhancedSystemPromptManager() {
     if (!newPrompt.trim()) return;
     setLoading(true);
     try {
-      await axios.post("http://localhost:3000/system-prompt", { content: newPrompt });
-      setNewPrompt("");
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/system-prompt`, { content: newPrompt });
+      setNewPrompt('');
       fetchPrompts();
     } catch (err) {
       setError("Erreur lors de la création du prompt.");
