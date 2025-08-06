@@ -11,7 +11,7 @@ import { FaArrowLeft, FaDollarSign, FaPrint } from "react-icons/fa";
 const CashIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    className="h-8 w-8 text-green-500"
+    className="h-8 w-8 text-green-600"
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -28,7 +28,7 @@ const CashIcon = () => (
 const CreditCardIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    className="h-8 w-8 text-red-500"
+    className="h-8 w-8 text-red-600"
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -203,12 +203,14 @@ const PaiementPage = () => {
       <head>
         <title>Facture - Commande #${row.id}</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          h1 { text-align: center; }
+          body { font-family: 'Inter', Arial, sans-serif; margin: 20px; color: #1F2937; }
+          h1 { text-align: center; color: #4B5563; }
+          p { margin: 5px 0; }
           table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 8px; }
-          th { background-color: #f3f4f6; }
-          tfoot td { font-weight: bold; }
+          th, td { border: 1px solid #E5E7EB; padding: 10px; }
+          th { background: linear-gradient(to right, #EEF2FF, #F3E8FF); color: #4B5563; font-weight: 600; }
+          tfoot td { font-weight: 600; background-color: #F9FAFB; }
+          .total { text-align: right; }
         </style>
       </head>
       <body>
@@ -233,16 +235,16 @@ const PaiementPage = () => {
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="3" style="text-align:right;">Total à payer :</td>
-              <td style="text-align:right;">${row.total} €</td>
+              <td colspan="3" class="total">Total à payer :</td>
+              <td class="total">${row.total} €</td>
             </tr>
             <tr>
-              <td colspan="3" style="text-align:right;">Montant payé :</td>
-              <td style="text-align:right;">${row.amountPaid} €</td>
+              <td colspan="3" class="total">Montant payé :</td>
+              <td class="total">${row.amountPaid} €</td>
             </tr>
             <tr>
-              <td colspan="3" style="text-align:right;">Reste à payer :</td>
-              <td style="text-align:right;">${(row.total - row.amountPaid).toFixed(2)} €</td>
+              <td colspan="3" class="total">Reste à payer :</td>
+              <td class="total">${(row.total - row.amountPaid).toFixed(2)} €</td>
             </tr>
           </tfoot>
         </table>
@@ -294,12 +296,13 @@ const PaiementPage = () => {
         return (
           <motion.select
             whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             value={row.paymentStatus}
             onChange={(e) => handlePaymentStatusChange(row.id, e.target.value)}
-            className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 h-9 ${
+            className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 h-9 shadow-sm border ${
               isPaid
-                ? "bg-green-100 text-green-700 border border-green-300"
-                : "bg-red-100 text-red-700 border border-red-300"
+                ? "bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
+                : "bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
             } focus:ring-2 focus:ring-indigo-500 focus:outline-none`}
             aria-label="Changer le statut de paiement"
           >
@@ -322,14 +325,14 @@ const PaiementPage = () => {
             onClick={() => handleProcessPayment(row.id)}
             disabled={row.paymentStatus === "paye"}
             title="Payer la commande"
-            className={`flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+            className={`flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-all duration-300 ${
               row.paymentStatus === "paye"
-                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                : "bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white hover:from-indigo-700 hover:to-indigo-800 focus:ring-4 focus:ring-indigo-300"
             }`}
             aria-label="Payer la commande"
           >
-            <FaDollarSign className="mr-2" />
+            <FaDollarSign className="mr-2 w-4 h-4" />
             Payer
           </motion.button>
           <motion.button
@@ -337,10 +340,10 @@ const PaiementPage = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => handlePrintInvoice(row)}
             title="Imprimer la facture"
-            className="flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex items-center justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 text-sm font-medium shadow-sm hover:from-gray-200 hover:to-gray-300 focus:ring-4 focus:ring-indigo-300 transition-all duration-300"
             aria-label="Imprimer la facture"
           >
-            <FaPrint className="mr-2" />
+            <FaPrint className="mr-2 w-4 h-4" />
             Facture
           </motion.button>
         </div>
@@ -350,9 +353,13 @@ const PaiementPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center"
+      >
         <p className="text-lg font-semibold text-gray-700">Chargement des données...</p>
-      </div>
+      </motion.div>
     );
   }
 
@@ -360,66 +367,97 @@ const PaiementPage = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="min-h-screen bg-gray-100 flex flex-col p-4 sm:p-6"
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8 font-inter"
     >
-      <div className="relative z-10 max-w-7xl mx-auto flex-1 flex flex-col space-y-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+      <div className="max-w-7xl mx-auto flex flex-col space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-800 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
             Gestion des Paiements
           </h1>
           <Link
             to="/caisse"
-            className="flex items-center justify-center px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
+            className="flex items-center px-4 py-2 bg-white text-gray-700 rounded-lg shadow-md hover:bg-gray-50 focus:ring-4 focus:ring-indigo-300 transition-all duration-300 text-sm font-semibold"
             aria-label="Retour à la caisse"
           >
-            <FaArrowLeft className="mr-2" />
+            <FaArrowLeft className="mr-2 w-4 h-4" />
             Retour
           </Link>
         </div>
 
+        {/* Key Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              { title: "Total Encaissé", value: `${totalPaid} €`, color: "bg-gradient-to-r from-green-100 to-green-200", icon: <CashIcon /> },
-              { title: "Reste à Encaisser", value: `${totalDue} €`, color: "bg-gradient-to-r from-red-100 to-red-200", icon: <CreditCardIcon /> },
-            ].map((stat, index) => (
-              <div
-                key={index}
-                className={`${stat.color} rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex justify-between items-center`}
-              >
-                <div>
-                  <p className="text-sm font-semibold text-gray-700">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-2">{stat.value}</p>
-                </div>
-                <div className="p-4 rounded-full bg-white/30">{stat.icon}</div>
+          {[
+            {
+              title: "Total Encaissé",
+              value: `${totalPaid} €`,
+              color: "bg-gradient-to-r from-green-100 to-green-200",
+              icon: <CashIcon />,
+            },
+            {
+              title: "Reste à Encaisser",
+              value: `${totalDue} €`,
+              color: "bg-gradient-to-r from-red-100 to-red-200",
+              icon: <CreditCardIcon />,
+            },
+          ].map((stat, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1, duration: 0.4, ease: "easeOut" }}
+              whileHover={{ scale: 1.03 }}
+              className={`${stat.color} rounded-2xl p-5 shadow-lg transition-all duration-300 border border-gray-100 flex justify-between items-center`}
+            >
+              <div>
+                <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                <h2 className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</h2>
               </div>
-            ))}
+              <div className="p-3 rounded-full bg-white/50">{stat.icon}</div>
+            </motion.div>
+          ))}
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-4 flex flex-col sm:flex-row gap-3 items-center">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Rechercher par nom ou email..."
-            className="w-full sm:w-1/2 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
-          />
-          <select
+        {/* Filters */}
+        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col sm:flex-row gap-4 items-center border border-gray-100">
+          <div className="relative w-full sm:w-1/2">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Rechercher par nom ou email..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-gray-50 text-gray-800 placeholder-gray-400 transition-all duration-300 text-sm"
+              aria-label="Rechercher par nom ou email"
+            />
+            <svg
+              className="w-5 h-5 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <motion.select
+            whileHover={{ scale: 1.05 }}
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full sm:w-1/4 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+            className="w-full sm:w-1/4 px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-gray-50 text-gray-800 transition-all duration-300 text-sm shadow-sm"
+            aria-label="Filtrer par statut"
           >
             <option value="all">Tous les statuts</option>
             <option value="paye">Payé</option>
             <option value="non_paye">Non Payé</option>
-          </select>
+          </motion.select>
         </div>
 
+        {/* DataGrid */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white rounded-2xl shadow-lg overflow-hidden"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
+          className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100"
         >
           <DataGrid
             rows={filteredCommandes}
@@ -430,9 +468,17 @@ const PaiementPage = () => {
             autoHeight
             className="border-none"
             sx={{
-              "& .MuiDataGrid-cell": { fontSize: "0.875rem" },
-              "& .MuiDataGrid-columnHeaders": { backgroundColor: "#f8fafc", fontWeight: "bold" },
-              "& .MuiDataGrid-row:hover": { backgroundColor: "#f1f5f9" },
+              "& .MuiDataGrid-cell": { fontSize: "0.875rem", color: "#1F2937", padding: "8px" },
+              "& .MuiDataGrid-columnHeaders": {
+                background: "linear-gradient(to right, #EEF2FF, #F3E8FF)",
+                color: "#4B5563",
+                fontWeight: "600",
+                fontSize: "0.75rem",
+                textTransform: "uppercase",
+              },
+              "& .MuiDataGrid-row:hover": { backgroundColor: "#F1F5F9" },
+              "& .MuiDataGrid-columnHeaderTitle": { fontWeight: "600" },
+              "& .MuiDataGrid-footerContainer": { backgroundColor: "#F9FAFB", borderTop: "1px solid #E5E7EB" },
             }}
           />
         </motion.div>
