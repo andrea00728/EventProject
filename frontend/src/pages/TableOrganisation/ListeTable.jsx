@@ -136,33 +136,6 @@ export default function ListeTable() {
     printWindow.focus();
     printWindow.print();
   };
-  
-
-  const handlePrintAll = () => {
-    if (tables.length === 0) {
-      alert("Aucune table à imprimer.");
-      return;
-    }
-    const printWindow = window.open("", "_blank");
-    printWindow.document.write(`
-      <style>
-        body { font-family: Arial, sans-serif; }
-        .table-container { margin-bottom: 20px; text-align: center; }
-        img { max-width: 200px; }
-      </style>
-    `);
-    tables.forEach((table) => {
-      printWindow.document.write(`
-        <div class="table-container">
-          <strong>Table ${table.numero}</strong><br/>
-          <img src="${table.qrCode}" alt="QR Code Table ${table.numero}" />
-        </div>
-      `);
-    });
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-  };
 
   const handleOpenDeleteConfirm = () => {
     if (selectedTableIds.length === 0) {

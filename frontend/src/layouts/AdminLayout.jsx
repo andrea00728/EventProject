@@ -24,13 +24,27 @@ import {
 import { useDarkMode } from "../context/DarkModeContext";
 import { useStateContext } from "../context/ContextProvider";
 import Dropdown from "./Dropdown";
+import LogoutModal from "../pages/Admin/LogoutModal";
+import { logout } from "../services/firebase/authService";
 
 export default function AdminLayout() {
-  const { token, role, isLoading } = useStateContext();
+  const { token, role, isLoading, setToken, setUser } = useStateContext();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) setSidebarOpen(false);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   //  Ne pas continuer si en chargement
   if (isLoading) return <div>Chargement ...</div>;
@@ -52,16 +66,23 @@ export default function AdminLayout() {
       return <Navigate to="/AdminAccueil" replace />;
   }
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth >= 768) setSidebarOpen(false);
-    };
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const confirmLogout = () => {
+    console.log("Déconnexion Confirmée");
+    // 🔒 Ici tu fais ton clearToken / clearUser
+    setToken(null);
+    setUser(null);
+    // navigate("/pagepublic");
+    logout()
+    setShowLogoutModal(false);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
+  };
 
   const menuItems = [
     {
@@ -101,9 +122,6 @@ export default function AdminLayout() {
     },
   ];
 
-  const handleLogout = () => {
-    console.log("Déconnexion");
-  };
 
   const gradientTitle =
     "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";
@@ -400,8 +418,8 @@ export default function AdminLayout() {
     <div className={`flex h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
       {/* Overlay pour mobile */}
       {sidebarOpen && isMobile && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+        <div 
+          className="fixed inset-0 bg-black opacity-50 z-40"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -547,6 +565,13 @@ export default function AdminLayout() {
             <Outlet />
           </div>
         </main>
+
+        <LogoutModal
+          isOpen={showLogoutModal}
+          onClose={cancelLogout}
+          onConfirm={confirmLogout}
+          darkMode={darkMode}
+        />
       </div>
     </div>
   );

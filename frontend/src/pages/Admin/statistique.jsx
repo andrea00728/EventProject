@@ -792,6 +792,7 @@ const Statique = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            {/* Graphique des Revenus */}
             <div
               className={`rounded-2xl p-6 border ${
                 darkMode
