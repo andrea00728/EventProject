@@ -8,7 +8,7 @@ import CartDrawer from './CartDrawer';
 import InvoiceModal from './InvoiceModal';
 
 const MenuListWithCart = () => {
-  const  slug  = useParams();
+  const slug = useParams();
   const navigate = useNavigate();
 
   const [menus, setMenus] = useState([]);
@@ -40,7 +40,7 @@ const MenuListWithCart = () => {
       console.log(slug);
 
       try {
-        const response = await axios.get(`http://localhost:3000/qr/${slug.slug}/info`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/qr/${slug.slug}/info`);
         console.log(response.data);
         setSelectedEvent(response.data.eventId);
         setSelectedTable(response.data.tableId);
@@ -222,8 +222,8 @@ const MenuListWithCart = () => {
         cartLength={cart.length}
         onCartOpen={() => setIsCartOpen(true)}
       />
+      {/* <div className="flex flex-wrap gap-4 mb-6 text-sm">
 
-      <div className="flex flex-wrap gap-4 mb-6 text-sm">
         <input
           type="number"
           placeholder="Prix min"
@@ -231,7 +231,10 @@ const MenuListWithCart = () => {
           onChange={(e) => setMinPrice(e.target.value)}
           className="px-2 py-1 border rounded-md shadow-sm"
         />
-      </div>
+          type="number"
+          className="px-2 py-1 border rounded-md shadow-sm"
+        />
+      </div> */}
 
       {message && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
@@ -245,24 +248,27 @@ const MenuListWithCart = () => {
         </div>
       ) : (
         <>
-          <h2 className="text-2xl font-bold mb-4">Menu pour l'événement {selectedEvent}</h2>
-          <MenuGrid menus={paginatedMenus} addToCart={addToCart} formatPrice={formatPrice} />
-
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-8 gap-2">
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <button
-                  key={i}
-                  className={`px-3 py-1 rounded ${
-                    currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'
-                  }`}
-                  onClick={() => setCurrentPage(i + 1)}
-                >
-                  {i + 1}
-                </button>
-              ))}
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Menu pour l'événement {selectedEvent}</h2>
+            <div className='w-sceen flex items-center justify-center'>
+              <MenuGrid menus={paginatedMenus} addToCart={addToCart} formatPrice={formatPrice} />
             </div>
-          )}
+
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-8 gap-2">
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <button
+                    key={i}
+                    className={`px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'
+                      }`}
+                    onClick={() => setCurrentPage(i + 1)}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </>
       )}
 

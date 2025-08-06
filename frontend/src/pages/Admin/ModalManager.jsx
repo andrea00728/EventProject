@@ -129,6 +129,9 @@ const ModalManager = ({ isOpen, onClose, data, managerName }) => {
   const [searchValue, setSearchValue] = useState("");
   const [isMobile, setIsMobile] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 855);
@@ -229,6 +232,10 @@ const ModalManager = ({ isOpen, onClose, data, managerName }) => {
     }));
     handleDownloadXLSX(formattedData, `evenements_manager_${managerName}`);
   };
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchValue, filterField]);
 
   const gradientTitle = "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";
   const gradientButton = "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-400 text-white";
@@ -370,33 +377,104 @@ const ModalManager = ({ isOpen, onClose, data, managerName }) => {
                   ))
                 )}
               </div>
+            ) : (filteredData.length === 0 ? (
+              <NotFound403 message="Aucun événement trouvé" />
             ) : (
-              <div className={`rounded-xl border ${
-                darkMode ? "border-gray-700" : "border-gray-200"
-              }`}>
-                <DataGrid
-                  rows={rows}
-                  columns={columns}
-                  pageSize={10}
-                  rowsPerPageOptions={[10]}
-                  autoHeight
-                  sx={{
-                    '& .MuiDataGrid-cell': {
-                      borderColor: darkMode ? '#374151' : '#e5e7eb',
-                      color: darkMode ? '#e5e7eb' : '#111827',
-                    },
-                    '& .MuiDataGrid-columnHeaders': {
-                      backgroundColor: darkMode ? '#1f2937' : '#f3f4f6',
-                      borderColor: darkMode ? '#374151' : '#e5e7eb',
-                      color: darkMode ? '#93c5fd' : '#2563eb',
-                    },
-                    '& .MuiDataGrid-footerContainer': {
-                      borderColor: darkMode ? '#374151' : '#e5e7eb',
-                    },
-                  }}
-                />
-              </div>
-            )}
+              <>
+                {/* En-têtes */}
+                <div className="grid grid-cols-12 px-4 py-2 font-semibold text-sm border-b border-gray-300 dark:border-gray-600">
+                  <div className="col-span-3">Nom</div>
+                  <div className="col-span-2">Type</div>
+                  <div className="col-span-2">Thème</div>
+                  <div className="col-span-3">Localisation</div>
+                  <div className="col-span-2 text-center">Actions</div>
+                </div>
+
+                {/* Lignes de données */}
+                <div
+                  className="divide-y transition-colors duration-300"
+                  style={{ maxHeight: "calc(70vh)", overflowY: "auto" }}
+                >
+                  {filteredData
+                    .slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage)
+                    .map((event, index) => (
+                      <div key={index} className="grid grid-cols-12 px-4 py-3 items-center text-sm">
+                        <div className="col-span-3 truncate font-medium">{event.nom}</div>
+                        <div className="col-span-2">{event.type}</div>
+                        <div className="col-span-2 truncate">{event.theme}</div>
+                        <div className="col-span-3 truncate">{event.location?.nom || "N/A"}</div>
+                        <div className="col-span-2 flex justify-center">
+                          <button
+                            onClick={() => openModal(event)}
+                            className={`px-3 py-1.5 rounded-lg text-sm transition-all duration-200 shadow-sm hover:shadow-md ${
+                              darkMode
+                                ? "bg-blue-600 text-white hover:bg-blue-700"
+                                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                            }`}
+                          >
+                            Détails
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+
+                {/* Pagination */}
+                <div className="flex justify-between items-center mt-4 px-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className={darkMode ? "text-gray-400" : "text-gray-600"}>Lignes par page:</span>
+                    <select
+                      value={rowsPerPage}
+                      onChange={(e) => {
+                        setRowsPerPage(Number(e.target.value));
+                        setCurrentPage(0);
+                      }}
+                      className={`border rounded px-2 py-1 ${
+                        darkMode
+                          ? "bg-gray-700 border-gray-600 text-gray-200"
+                          : "bg-white border-gray-300 text-gray-800"
+                      }`}
+                    >
+                      {[5, 10, 20, 50].map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                    Affichage de {(currentPage * rowsPerPage) + 1} à{" "}
+                    {Math.min((currentPage + 1) * rowsPerPage, filteredData.length)} sur {filteredData.length} événements
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <button
+                      className={`px-4 py-2 rounded-lg border text-sm transition-colors duration-200 ${
+                        darkMode
+                          ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800"
+                          : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"
+                      } disabled:opacity-50`}
+                      disabled={currentPage === 0}
+                      onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
+                    >
+                      Précédent
+                    </button>
+                    <button
+                      className={`px-4 py-2 rounded-lg border text-sm transition-colors duration-200 ${
+                        darkMode
+                          ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800"
+                          : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"
+                      } disabled:opacity-50`}
+                      disabled={(currentPage + 1) * rowsPerPage >= filteredData.length}
+                      onClick={() => setCurrentPage((prev) => prev + 1)}
+                    >
+                      Suivant
+                    </button>
+                  </div>
+                </div>
+              </>
+            ))}
           </div>
 
           {/* Modal détail d'événement */}

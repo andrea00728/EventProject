@@ -52,7 +52,7 @@ const InvoiceModal = ({
 
     try {
       const res = await axios.get(
-        `http://localhost:3000/guests/check/${eventId}?email=${encodeURIComponent(email)}`,
+        `${import.meta.env.VITE_API_BASE_URL}/guests/check/${eventId}?email=${encodeURIComponent(email)}`,
           // { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -62,7 +62,7 @@ const InvoiceModal = ({
       } else {
         // Création de l'invité si non trouvé
         await axios.post(
-          `http://localhost:3000/guests/${eventId}`,
+          `${import.meta.env.VITE_API_BASE_URL}/guests/${eventId}`,
           {
             nom: 'Client invité',
             prenom: 'Automatique',
@@ -102,7 +102,7 @@ const InvoiceModal = ({
 
     try {
       await axios.post(
-        'http://localhost:3000/orders',
+        `${import.meta.env.VITE_API_BASE_URL}/orders`,
         {
           tableId,
           items: cart.map((item) => ({
@@ -178,7 +178,7 @@ const InvoiceModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-xl shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4">Facture</h2>
 

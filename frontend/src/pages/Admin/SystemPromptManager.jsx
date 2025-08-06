@@ -47,7 +47,7 @@ export default function EnhancedSystemPromptManager() {
     if (!editingPrompt.content.trim()) return;
     setLoading(true);
     try {
-      await axios.put(`http://localhost:3000/system-prompt/${id}`, {
+      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/system-prompt/${id}`, {
         content: editingPrompt.content,
         isActive: editingPrompt.isActive,
       });
@@ -63,7 +63,7 @@ export default function EnhancedSystemPromptManager() {
   const handleDelete = async (id) => {
     setLoading(true);
     try {
-      await axios.delete(`http://localhost:3000/system-prompt/${id}`);
+      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/system-prompt/${id}`);
       fetchPrompts();
     } catch (err) {
       setError("Erreur lors de la suppression du prompt.");

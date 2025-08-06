@@ -11,9 +11,9 @@ import Inscription from "../pages/Inscription";
 import Connnexiongoogle from "../services/connexiongoogl.jsx";
 import Evenemenpage from "../pages/Evenementpage";
 import Apropos from "../pages/apropos";
-// import PublicEvents from "../pages/PublicEvents"; // adapte le chemin si besoin
+import PublicEvents from "../pages/PublicEvents"; // adapte le chemin si besoin
 // import PagePublic from "../pages/PagePublic";
-// import PageEvenementDetail from "../pages/PageEvenementDetail";
+import PageEvenementDetail from "../pages/PageEvenementDetail";
 
 // import Table3DScene from "../components/table3D";
 import ChoixModeInvite from "../layouts/ChoixModeInvite";
@@ -71,7 +71,7 @@ import StatistiquesPage from "../pages/DashbordCaisse/StatistiquesPage.jsx";
 import RevenuPage from "../pages/DashbordCaisse/RevenuPage.jsx";
 import ActivityHistory from "../pages/Admin/Historique.jsx";
 import Statique from "../pages/Admin/statistique.jsx";
-// import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Event.jsx";
+import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Event.jsx";
 import LoginPage from "../pages/Admin/LoginPage.jsx";
 import UserStats from "../pages/Admin/cards.jsx";
 import Tablecreation from "../pages/TableOrganisation/Tablecreation.jsx";

@@ -59,7 +59,7 @@ const CartDrawer = ({
                     <div className="flex-1 flex gap-4 items-center">
                       {ci.photo ? (
                         <img
-                          src={`http://localhost:3000${ci.photo}`}
+                          src={`${import.meta.env.VITE_API_BASE_URL}${ci.photo}`}
                           alt={ci.name}
                           className="w-16 h-16 object-cover rounded-lg shadow-sm"
                           loading="lazy"
@@ -131,7 +131,7 @@ const CartDrawer = ({
       {/* Overlay foncé quand le panier est ouvert */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-black/30 z-40"
           onClick={onClose}
           aria-hidden="true"
           tabIndex={-1}

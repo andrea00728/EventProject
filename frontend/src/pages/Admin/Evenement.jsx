@@ -173,11 +173,14 @@ const Dropdown = React.forwardRef(({ show, setShow, icon, label, count, items },
 
 // Composant EventCard pour l'affichage mobile
 const EventCard = ({ event, darkMode, onViewDetails }) => {
+  
+  
   return (
     <div className={`p-4 mb-4 rounded-xl shadow-sm border transition-all duration-300 ${
       darkMode ? "bg-gray-800 border-gray-700 hover:border-gray-600" : "bg-white border-gray-200 hover:border-gray-300"
     }`}>
       <div className="flex justify-between items-start mb-2">
+        
         <h3 className={`text-lg font-semibold ${
           darkMode ? "text-blue-300" : "text-blue-600"  // Changé en bleu clair
         }`}>

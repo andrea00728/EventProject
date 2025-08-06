@@ -8,7 +8,7 @@ export const getAllOrdersForOnEvent = async (id) => {
 export const updateOrderStatus = async (orderId, status, token) => {
   try {
     const response = await axiosClient.patch(
-      `http://localhost:3000/orders/${orderId}/status`,
+      `${import.meta.env.VITE_API_BASE_URL}/orders/${orderId}/status`,
       { status } , {
     headers: {
       Authorization: `Bearer ${token}`,
