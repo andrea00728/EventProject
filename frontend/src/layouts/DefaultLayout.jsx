@@ -381,7 +381,7 @@ export default function DefaultLayout() {
                 <NotificationComponent/>
               </div>
 
-              <div className="">
+              <div>
                 <Profil />
               </div>
 

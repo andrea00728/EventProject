@@ -5,15 +5,16 @@ import TestimonialsSection from "../util/testimonialsSection";
 import { getAllEvents, getCountEvents } from '../services/evenementServ';
 import { FormaNumber } from '../services/controll_champs/controll_limite';
 import { findCount_pourcentage, findCountSatisfied } from '../services/testimonyService';
+import { Link } from 'react-router-dom';
 
 export default function Accueil() {
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [countEvent,setCountEvent] = useState(0);
-  const [countHeureur,setCountHeureur] = useState(0);
-  const [pourcentage,setPourcentage] = useState(0);
-    const getEventIcon = (type) => {
+  const [countEvent, setCountEvent] = useState(0);
+  const [countHeureur, setCountHeureur] = useState(0);
+  const [pourcentage, setPourcentage] = useState(0);
+  const getEventIcon = (type) => {
     const icons = {
       'mariage': '💒',
       'anniversaire': '🎂',
@@ -25,7 +26,7 @@ export default function Accueil() {
       'reunion': '👥',
       'default': '🎉'
     };
-    
+
     return icons[type?.toLowerCase()] || icons.default;
   };
 
@@ -75,32 +76,32 @@ export default function Accueil() {
      * 
      * nombre d'evenement organiser par tout les organisateur
      */
-    const count_event =async ()=>{
-    try{
-      const count = await getCountEvents();
-      setCountEvent(count);
-    }catch(erreur){
-      console.log(erreur);
-    }
+    const count_event = async () => {
+      try {
+        const count = await getCountEvents();
+        setCountEvent(count);
+      } catch (erreur) {
+        console.log(erreur);
+      }
     }
     /**
      * 
      * nombre d'organisateur heureurs
      */
-    const count_heureur=async () =>{
-      try{
-        const count_h= await findCountSatisfied();
+    const count_heureur = async () => {
+      try {
+        const count_h = await findCountSatisfied();
         setCountHeureur(count_h);
-      }catch(err){
+      } catch (err) {
         console.log(err);
       }
     }
 
-    const count_pourcentage=async () =>{
-      try{
-        const count_p=await findCount_pourcentage();
+    const count_pourcentage = async () => {
+      try {
+        const count_p = await findCount_pourcentage();
         setPourcentage(count_p);
-      }catch(err){
+      } catch (err) {
         console.log(err);
       }
     }
@@ -181,12 +182,14 @@ export default function Accueil() {
 
             {/* Boutons d'action */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <button className="group relative bg-gradient-to-r from-[#6B46C1] via-purple-600 to-indigo-600 text-white px-8 py-4 rounded-2xl font-bold text-lg tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25 active:scale-95">
+              <Link to="/evenement" className="group relative bg-gradient-to-r from-[#6B46C1] via-purple-600 to-indigo-600 text-white px-8 py-4 rounded-2xl font-bold text-lg tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25 active:scale-95">
                 <span className="relative z-10">Commencer gratuitement</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-700 to-indigo-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </button>
+              </Link>
 
-              <button className="group bg-white/80 backdrop-blur-sm text-slate-700 border-2 border-slate-200 px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-white hover:border-slate-300 hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95">
+              <button className="group bg-white/80 backdrop-blur-sm text-slate-700 border-2 border-slate-200 px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-white hover:border-slate-300 hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95"
+                onClick={() => setDemo(true)}
+              >
                 <span className="flex items-center gap-2">
                   Voir la démo
                   <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -456,7 +459,7 @@ export default function Accueil() {
 
               <div className="text-center group">
                 <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500 mb-2 group-hover:scale-110 transition-transform">
-                 <strong>{FormaNumber(countHeureur)}</strong>
+                  <strong>{FormaNumber(countHeureur)}</strong>
                 </div>
                 <p className="text-slate-500 text-sm font-semibold">satisfaction client</p>
               </div>

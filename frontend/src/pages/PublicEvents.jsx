@@ -483,7 +483,7 @@ const PublicEvents = () => {
                                 initial={{ opacity: 0, scale: 0 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0 }}
-                                transition={{ duration: 0.3 }}
+                                transition={{ duration: 0.3 }} 
                                 className="bg-white rounded-lg p-6 w-full max-w-md">
                                 <h2 className="text-xl font-bold mb-4">Liste des tables</h2>
                                 <div className="max-h-96 overflow-y-auto">

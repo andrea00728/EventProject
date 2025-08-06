@@ -175,7 +175,7 @@ export default function Evenementform({ onNext }) {
           <div className="col-span-1 md:col-span-2 mt-4">
             <button
               type="submit"
-              className="w-full bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition"
+              className="w-full bg-gradient-to-r from-[#6B46C1] via-purple-600 to-indigo-600 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition"
             >
               Créer l'événement
             </button>

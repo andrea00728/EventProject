@@ -3,11 +3,12 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { io } from "socket.io-client"; // Added socket.io-client import
 import { DataGrid } from "@mui/x-data-grid";
-
+import { motion, AnimatePresence } from 'framer-motion';
 import { useStateContext } from "../../context/ContextProvider";
 import { Link } from "react-router-dom";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { useSocket } from "../../socket";
+import { ArrowLeft } from "lucide-react";
  
 const CashIcon = () => (
   <svg
@@ -393,7 +394,7 @@ const PaiementPage = () => {
             className="flex items-center justify-center px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
             aria-label="Retour à la caisse"
           >
-            <FaArrowLeft className="mr-2" />
+            <ArrowLeft className="mr-2" />
             Retour
           </Link>
         </div>
