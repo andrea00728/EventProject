@@ -1,7 +1,9 @@
 import React, { useState, useEffect, forwardRef } from "react";
 import { useDarkMode } from "../context/DarkModeContext";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
-const Dropdown = forwardRef(({ show, setShow, icon, label, count, items }, ref) => {
+const Dropdown = forwardRef(({ show, setShow, icon, label, count, items, onItemClick, noScroll }, ref) => {
   const { darkMode } = useDarkMode();
   const [isMobile, setIsMobile] = useState(false);
 
@@ -33,7 +35,9 @@ const Dropdown = forwardRef(({ show, setShow, icon, label, count, items }, ref) 
 
       {show && (
         <div
-          className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] overflow-y-auto rounded-xl shadow-xl border ${
+          className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] ${
+            noScroll ? '' : 'overflow-y-auto'
+          } rounded-xl shadow-xl border ${
             darkMode
               ? "bg-gray-800 border-gray-700 text-gray-200"
               : "bg-white border-gray-200 text-gray-900"
@@ -57,7 +61,7 @@ const Dropdown = forwardRef(({ show, setShow, icon, label, count, items }, ref) 
             )}
           </div>
 
-          <div className="max-h-[60vh] overflow-y-auto">
+          <div className={`${noScroll ? '' : 'max-h-[60vh] overflow-y-auto'}`}>
             {items.length ? (
               items.map((item, i) => (
                 <div
@@ -67,18 +71,22 @@ const Dropdown = forwardRef(({ show, setShow, icon, label, count, items }, ref) 
                       ? "border-gray-700 hover:bg-gray-700"
                       : "border-gray-200 hover:bg-gray-50"
                   } cursor-pointer`}
+                  onClick={() => onItemClick && onItemClick(item)}
                 >
-                  <p className="text-sm line-clamp-2">
-                    {typeof item === "object"
-                      ? `${item.from}: ${item.text}`
-                      : item}
+                  <p className="text-sm font-semibold">
+                    {item.title || (typeof item === "object" ? `${item.from}: ${item.text}` : item)}
                   </p>
+                  {item.message && (
+                    <p className="text-sm line-clamp-2">{item.message}</p>
+                  )}
                   <p
                     className={`text-xs mt-1 ${
                       darkMode ? "text-gray-400" : "text-gray-500"
                     }`}
                   >
-                    Il y a {Math.floor(Math.random() * 60)} min
+                    {item.date
+                      ? format(new Date(item.date), "dd MMM yyyy, HH:mm", { locale: fr })
+                      : `Il y a ${Math.floor(Math.random() * 60)} min`}
                   </p>
                 </div>
               ))

@@ -11,9 +11,11 @@ const LogoutModal = ({ isOpen, onClose, onConfirm, darkMode }) => {
     }
   }, [isOpen]);
 
-  const bgOverlay = darkMode
-    ? "bg-black/70"
-    : "bg-white/70";
+  // const bgOverlay = darkMode
+  //   ? "bg-black/70"
+  //   : "bg-white/70";
+
+  const bgOverlay = "bg-black/70"
 
 
   const modalBg = darkMode
