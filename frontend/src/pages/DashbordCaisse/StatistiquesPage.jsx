@@ -1,4 +1,3 @@
-{/* Importation des dépendances nécessaires */}
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Pie, Line } from "react-chartjs-2";
@@ -19,9 +18,7 @@ import { motion } from "framer-motion";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, LineElement, PointElement);
 
-// Composant principal pour l'affichage des statistiques
 const StatistiquesPage = () => {
-  // Déclaration des états
   const [stats, setStats] = useState({
     orders: { pending: 0, preparing: 0, served: 0, canceled: 0 },
     payments: { paid: 0, unpaid: 0 },
@@ -33,26 +30,24 @@ const StatistiquesPage = () => {
   const { token } = useStateContext();
   const navigate = useNavigate();
 
-  // Couleurs pour les graphiques
   const COLORS = {
     orders: {
-      pending: "#FBBF24",
-      preparing: "#3B82F6",
-      served: "#22C55E",
-      canceled: "#EF4444",
+      pending: ["rgba(234, 179, 8, 0.8)", "rgba(250, 204, 21, 0.8)"], // Yellow-600 to Yellow-400
+      preparing: ["rgba(99, 102, 241, 0.8)", "rgba(129, 140, 248, 0.8)"], // Indigo-600 to Indigo-400
+      served: ["rgba(16, 185, 129, 0.8)", "rgba(52, 211, 153, 0.8)"], // Emerald-600 to Emerald-400
+      canceled: ["rgba(239, 68, 68, 0.8)", "rgba(248, 113, 113, 0.8)"], // Red-600 to Red-400
     },
     payments: {
-      paid: "#22C55E",
-      unpaid: "#EF4444",
+      paid: ["rgba(34, 197, 94, 0.8)", "rgba(74, 222, 128, 0.8)"], // Green-600 to Green-400
+      unpaid: ["rgba(244, 63, 94, 0.8)", "rgba(251, 113, 133, 0.8)"], // Rose-600 to Rose-400
     },
     stock: {
-      critical: "#EF4444",
-      low: "#F59E0B",
-      ok: "#22C55E",
+      critical: ["rgba(220, 38, 38, 0.8)", "rgba(248, 113, 113, 0.8)"], // Red-700 to Red-400
+      low: ["rgba(249, 115, 22, 0.8)", "rgba(251, 146, 60, 0.8)"], // Orange-600 to Orange-400
+      ok: ["rgba(6, 182, 212, 0.8)", "rgba(34, 211, 238, 0.8)"], // Cyan-600 to Cyan-400
     },
   };
 
-  // Récupération des détails de l'événement
   const fetchEventDetails = async (eventId) => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/events/${eventId}`, {
@@ -64,7 +59,6 @@ const StatistiquesPage = () => {
     }
   };
 
-  // Récupération des statistiques
   const fetchStatistics = async () => {
     try {
       setLoading(true);
@@ -110,21 +104,18 @@ const StatistiquesPage = () => {
     }
   };
 
-  // Chargement des statistiques au montage du composant
   useEffect(() => {
     if (token) {
       fetchStatistics();
     }
   }, [token]);
 
-  // Calcul des totaux
   const totals = {
     orders: Object.values(stats.orders).reduce((a, b) => a + b, 0),
     payments: Object.values(stats.payments).reduce((a, b) => a + b, 0),
     stock: Object.values(stats.stock).reduce((a, b) => a + b, 0),
   };
 
-  // Options pour les graphiques
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -132,30 +123,37 @@ const StatistiquesPage = () => {
       legend: {
         position: 'bottom',
         labels: {
-          boxWidth: 12,
-          padding: 12,
-          font: { size: 14 },
+          boxWidth: 14,
+          padding: 20,
+          font: { size: 14, weight: '600', family: "'Inter', sans-serif" },
           color: '#1F2937',
+          usePointStyle: true,
+          pointStyle: 'circle',
         },
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        padding: 10,
-        cornerRadius: 6,
+        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+        padding: 12,
+        cornerRadius: 8,
+        bodyFont: { size: 14, weight: '500' },
+        titleFont: { size: 16, weight: '600' },
+        boxPadding: 8,
         callbacks: {
           label: (context) => {
             const label = context.dataset.label || context.label || '';
             const value = context.raw || 0;
             const total = context.dataset.data.reduce((a, b) => a + b, 0);
-            const percentage = Math.round((value / total) * 100);
+            const percentage = total ? Math.round((value / total) * 100) : 0;
             return `${label}: ${value} (${percentage}%)`;
           },
         },
       },
     },
     animation: {
-      duration: 800,
-      easing: 'easeOutQuart',
+      duration: 1200,
+      easing: 'easeInOutQuart',
+      animateScale: true,
+      animateRotate: true,
     },
   };
 
@@ -164,27 +162,67 @@ const StatistiquesPage = () => {
     scales: {
       y: {
         beginAtZero: true,
-        ticks: { stepSize: 1, color: '#6B7280', font: { size: 12 } },
-        grid: { color: 'rgba(0, 0, 0, 0.05)' },
+        ticks: {
+          stepSize: 1,
+          color: '#6B7280',
+          font: { size: 12, family: "'Inter', sans-serif" },
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)',
+          borderColor: '#D1D5DB',
+          borderWidth: 1,
+        },
       },
       x: {
-        ticks: { color: '#6B7280', font: { size: 12 } },
+        ticks: {
+          color: '#6B7280',
+          font: { size: 12, family: "'Inter', sans-serif" },
+        },
         grid: { display: false },
       },
     },
+    plugins: {
+      ...chartOptions.plugins,
+      legend: {
+        ...chartOptions.plugins.legend,
+        labels: {
+          ...chartOptions.plugins.legend.labels,
+          pointStyle: 'circle',
+          usePointStyle: true,
+        },
+      },
+    },
+    animation: {
+      duration: 1200,
+      easing: 'easeInOutQuart',
+    },
   };
 
-  // Données des graphiques
+  const createGradient = (ctx, chartArea, colors) => {
+    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+    colors.forEach((color, index) => {
+      gradient.addColorStop(index / (colors.length - 1), color);
+    });
+    return gradient;
+  };
+
   const charts = {
     orders: {
       data: {
         labels: ['En attente', 'En préparation', 'Servies', 'Annulées'],
         datasets: [{
           data: Object.values(stats.orders),
-          backgroundColor: Object.values(COLORS.orders),
-          borderWidth: 1,
+          backgroundColor: (context) => {
+            const ctx = context.chart.ctx;
+            const chartArea = context.chart.chartArea;
+            if (!chartArea) return COLORS.orders[Object.keys(COLORS.orders)[context.dataIndex]][0];
+            const key = Object.keys(COLORS.orders)[context.dataIndex];
+            return createGradient(ctx, chartArea, COLORS.orders[key]);
+          },
+          borderWidth: 2,
           borderColor: '#ffffff',
-          hoverOffset: 16,
+          hoverOffset: 24,
+          hoverBorderWidth: 3,
         }],
       },
       type: Pie,
@@ -196,22 +234,48 @@ const StatistiquesPage = () => {
           {
             label: 'Paiements',
             data: [stats.payments.paid, stats.payments.unpaid, 0, 0, 0],
-            borderColor: COLORS.payments.paid,
-            backgroundColor: COLORS.payments.paid,
+            borderColor: (context) => {
+              const ctx = context.chart.ctx;
+              const chartArea = context.chart.chartArea;
+              if (!chartArea) return COLORS.payments.paid[0];
+              return createGradient(ctx, chartArea, COLORS.payments.paid);
+            },
+            backgroundColor: COLORS.payments.paid[0],
             fill: false,
             tension: 0.4,
-            pointRadius: 4,
-            pointHoverRadius: 6,
+            pointRadius: 6,
+            pointHoverRadius: 10,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: (context) => {
+              const ctx = context.chart.ctx;
+              const chartArea = context.chart.chartArea;
+              if (!chartArea) return COLORS.payments.paid[0];
+              return createGradient(ctx, chartArea, COLORS.payments.paid);
+            },
+            pointBorderWidth: 2,
           },
           {
             label: 'Stock',
             data: [0, 0, stats.stock.critical, stats.stock.low, stats.stock.ok],
-            borderColor: COLORS.stock.ok,
-            backgroundColor: COLORS.stock.ok,
+            borderColor: (context) => {
+              const ctx = context.chart.ctx;
+              const chartArea = context.chart.chartArea;
+              if (!chartArea) return COLORS.stock.ok[0];
+              return createGradient(ctx, chartArea, COLORS.stock.ok);
+            },
+            backgroundColor: COLORS.stock.ok[0],
             fill: false,
             tension: 0.4,
-            pointRadius: 4,
-            pointHoverRadius: 6,
+            pointRadius: 6,
+            pointHoverRadius: 10,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: (context) => {
+              const ctx = context.chart.ctx;
+              const chartArea = context.chart.chartArea;
+              if (!chartArea) return COLORS.stock.ok[0];
+              return createGradient(ctx, chartArea, COLORS.stock.ok);
+            },
+            pointBorderWidth: 2,
           },
         ],
       },
@@ -219,7 +283,6 @@ const StatistiquesPage = () => {
     },
   };
 
-  // Définition des indicateurs clés (KPIs)
   const kpis = [
     {
       title: "Commandes totales",
@@ -251,63 +314,68 @@ const StatistiquesPage = () => {
     },
   ];
 
-  // Rendu de l'interface utilisateur
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 flex flex-col p-6 sm:p-8"
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8"
     >
-      {/* Conteneur principal */}
-      <div className="relative z-10 max-w-7xl mx-auto flex-1 flex flex-col space-y-8">
-        {/* En-tête */}
+      <div className="max-w-7xl mx-auto flex flex-col space-y-6">
+        {/* Header */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
             <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)" }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate(-1)}
-              className="px-6 py-3 bg-indigo-100 text-indigo-600 rounded-xl hover:bg-indigo-200 transition-all duration-200 shadow-sm flex items-center gap-2 text-base font-semibold"
+              className="flex items-center px-4 py-2 bg-white text-gray-700 rounded-lg shadow-md hover:bg-gray-50 focus:ring-4 focus:ring-indigo-300 transition-all duration-300"
               aria-label="Retour à la page précédente"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
               </svg>
               Retour
             </motion.button>
-            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+            <h1 className="text-3xl font-bold text-gray-800 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
               Tableau de bord – {eventDetails ? eventDetails.name : "Chargement..."}
             </h1>
           </div>
-          <span className="text-base text-gray-600">
+          <span className="text-sm text-gray-600 font-medium">
             Mis à jour: {new Date().toLocaleString()}
           </span>
         </div>
 
-        {/* Indicateurs clés (KPIs) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* KPIs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {kpis.map((kpi, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.4 }}
-              className="bg-white rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300"
+              transition={{ delay: index * 0.1, duration: 0.4, ease: "easeOut" }}
+              className="bg-white rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
             >
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-base font-medium text-gray-600">{kpi.title}</p>
-                  <h2 className="text-2xl font-bold text-gray-900 mt-2">{kpi.value}</h2>
+                  <p className="text-sm font-medium text-gray-600">{kpi.title}</p>
+                  <h2 className="text-2xl font-bold text-gray-900 mt-1">{kpi.value}</h2>
                 </div>
-                <div className="p-3 rounded-full bg-gray-100 text-gray-700">{kpi.icon}</div>
+                <div className="p-2 rounded-full bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-600">
+                  {kpi.icon}
+                </div>
               </div>
               <div
-                className={`mt-4 text-sm font-medium flex items-center ${
+                className={`mt-3 text-sm font-medium flex items-center ${
                   kpi.trend === "up" ? "text-green-600" : "text-red-600"
                 }`}
               >
-                <svg className={`w-5 h-5 mr-2 ${kpi.trend === "up" ? "" : "rotate-180"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className={`w-4 h-4 mr-1 ${kpi.trend === "up" ? "" : "rotate-180"}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7 7 7" />
                 </svg>
                 <span>{kpi.change}</span>
@@ -316,28 +384,28 @@ const StatistiquesPage = () => {
           ))}
         </div>
 
-        {/* Graphiques */}
+        {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white rounded-3xl p-6 shadow-xl"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
+            className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100"
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Commandes</h3>
-            <p className="text-base text-gray-600 mb-4">Total : {totals.orders}</p>
+            <p className="text-sm text-gray-600 mb-4">Total : {totals.orders}</p>
             <div className="h-80 relative">
               <Pie data={charts.orders.data} options={chartOptions} />
             </div>
           </motion.div>
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white rounded-3xl p-6 shadow-xl"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
+            className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100"
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Paiements & Stock</h3>
-            <p className="text-base text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 mb-4">
               {totals.payments} paiements – {totals.stock} articles
             </p>
             <div className="h-80 relative">

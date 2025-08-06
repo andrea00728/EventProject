@@ -1,20 +1,17 @@
-// Importation des dépendances nécessaires
 import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { io } from "socket.io-client";
 import { DataGrid } from "@mui/x-data-grid";
-import { Snackbar, Alert, TextField, Chip, MenuItem, Select } from "@mui/material";
+import { Snackbar, Alert, Chip } from "@mui/material";
 import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { getUserIdForToken } from "../../services/userService";
 import { FaArrowLeft, FaSync, FaTimes } from "react-icons/fa";
 import { SOCKET_URL } from "../../socket";
 
-// Composant principal pour la gestion des commandes
 const GestionCommandesPage = () => {
-  // Déclaration des états
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -27,7 +24,6 @@ const GestionCommandesPage = () => {
   });
   const { token } = useStateContext();
 
-  // Mappage des statuts pour conversion front/back
   const STATUS_MAPPING = {
     frontToBack: {
       en_attente: "pending",
@@ -43,7 +39,6 @@ const GestionCommandesPage = () => {
     },
   };
 
-  // Options de statut pour le menu déroulant
   const STATUS_OPTIONS = [
     { value: "en_attente", label: "En attente", color: "warning" },
     { value: "preparation", label: "Préparation", color: "info" },
@@ -51,7 +46,6 @@ const GestionCommandesPage = () => {
     { value: "annuler", label: "Annulée", color: "error" },
   ];
 
-  // Fonction pour récupérer les commandes
   const fetchCommandes = useCallback(async () => {
     try {
       setLoading(true);
@@ -90,25 +84,6 @@ const GestionCommandesPage = () => {
     }
   }, [token]);
 
-  const fetchData = async () => {
-    const UserId = await getUserIdForToken(token);
-    const socket = io(SOCKET_URL, {
-      auth: {
-        userId: UserId, // très important : doit être l’ID réel de l’organisateur
-      },
-    });
-    socket.on("connect", () => {
-      console.log("✅ Connecté au serveur WebSocket");
-    });
-
-    // Pour écouter les mises à jour
-    socket.on("order_status_updated", (data) => {
-      updateCommande(data)
-    });
-  };
-
-
-
   const updateCommande = useCallback((update) => {
     setCommandes((prevCommandes) =>
       prevCommandes.map((cmd) =>
@@ -122,7 +97,7 @@ const GestionCommandesPage = () => {
       )
     );
   }, []);
-  // Gestion du changement de statut
+
   const handleStatusChange = useCallback(
     async (orderId, newStatus) => {
       try {
@@ -158,10 +133,9 @@ const GestionCommandesPage = () => {
         });
       }
     },
-    [token, updateCommande, userId]
+    [token, updateCommande]
   );
 
-  // Effet pour l'initialisation des données et WebSocket
   useEffect(() => {
     let socket;
 
@@ -235,7 +209,6 @@ const GestionCommandesPage = () => {
     };
   }, [token, fetchCommandes, updateCommande]);
 
-  // Filtrage des commandes
   const filteredCommandes = commandes.filter((cmd) => {
     const matchStatus = selectedStatus === "all" || cmd.status === selectedStatus;
     const search = searchTerm.toLowerCase();
@@ -244,7 +217,6 @@ const GestionCommandesPage = () => {
     return matchStatus && matchSearch;
   });
 
-  // Définition des colonnes pour DataGrid
   const columns = [
     { field: "id", headerName: "ID", width: 70, sortable: true },
     { field: "nom", headerName: "Client", width: 150, sortable: true },
@@ -258,7 +230,7 @@ const GestionCommandesPage = () => {
           label={params.value}
           color={params.value === "N/A" ? "default" : "primary"}
           size="small"
-          sx={{ fontWeight: "bold" }}
+          className="font-medium"
         />
       ),
     },
@@ -272,11 +244,14 @@ const GestionCommandesPage = () => {
       renderCell: (params) => {
         const statusInfo = STATUS_OPTIONS.find((s) => s.value === params.row.status);
         return (
-          <Chip
-            label={statusInfo?.label || params.row.status}
-            color={statusInfo?.color || "default"}
-            sx={{ fontWeight: "medium" }}
-          />
+          <div className="flex items-center h-full">
+            <Chip
+              label={statusInfo?.label || params.row.status}
+              color={statusInfo?.color || "default"}
+              size="small"
+              className="font-medium px-3 py-1"
+            />
+          </div>
         );
       },
     },
@@ -288,82 +263,89 @@ const GestionCommandesPage = () => {
       renderCell: (params) => {
         const isCanceled = params.row.status === "annuler";
         return (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => handleStatusChange(params.row.id, "annuler")}
-            disabled={isCanceled}
-            className={`flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-              isCanceled
-                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                : "bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-            }`}
-            aria-label="Annuler la commande"
-          >
-            <FaTimes className="mr-2" />
-            Annuler
-          </motion.button>
+          <div className="flex items-center h-full">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleStatusChange(params.row.id, "annuler")}
+              disabled={isCanceled}
+              className={`flex items-center justify-center px-3 py-1 rounded-full text-sm font-semibold transition-all duration-300 shadow-md ${
+                isCanceled
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 focus:ring-4 focus:ring-red-300"
+              }`}
+              aria-label="Annuler la commande"
+            >
+              <FaTimes className="mr-2" />
+              Annuler
+            </motion.button>
+          </div>
         );
       },
     },
   ];
 
-  // Rendu de l'interface utilisateur
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="min-h-screen bg-gray-100 flex flex-col p-4 sm:p-6"
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8"
     >
-      <div className="relative z-10 max-w-7xl mx-auto flex-1 flex flex-col space-y-6">
-        {/* En-tête */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+      <div className="max-w-7xl mx-auto flex flex-col space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <h2 className="text-3xl font-bold text-gray-800 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
             Gestion des Commandes
           </h2>
           <Link
             to="/caisse"
-            className="flex items-center justify-center px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
+            className="flex items-center px-4 py-2 bg-white text-gray-700 rounded-lg shadow-md hover:bg-gray-50 focus:ring-4 focus:ring-indigo-300 transition-all duration-300"
             aria-label="Retour à la caisse"
           >
             <FaArrowLeft className="mr-2" />
             Retour
           </Link>
         </div>
-        {/* Filtres et boutons d'action */}
-        <div className="bg-white rounded-xl shadow-md p-4 flex flex-col sm:flex-row gap-3 items-center border border-indigo-100">
-            <input
-              type="text"
-              placeholder="Rechercher client ou email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full sm:w-1/3 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all duration-300"
-            />
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full sm:w-1/6 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all duration-300"
-            >
-              <option value="all">Toutes les commandes</option>
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-            <button
-              onClick={fetchCommandes}
-              className="flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
-            >
-              <FaSync className="mr-2" />
-              Actualiser
-            </button>
-          </div>
-        {/* Tableau des commandes */}
+
+        {/* Filters and Actions */}
+        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col sm:flex-row gap-4 items-center border border-gray-100">
+          <input
+            type="text"
+            placeholder="Rechercher client ou email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full sm:w-1/3 px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-gray-50 text-gray-800 placeholder-gray-400 transition-all duration-300"
+          />
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="w-full sm:w-1/4 px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-gray-50 text-gray-800 transition-all duration-300"
+          >
+            <option value="all">Toutes les commandes</option>
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={fetchCommandes}
+            className="flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg shadow-md hover:from-indigo-700 hover:to-indigo-800 focus:ring-4 focus:ring-indigo-300 transition-all duration-300"
+          >
+            <FaSync className="mr-2" />
+            Actualiser
+          </motion.button>
+        </div>
+
+        {/* Data Grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white rounded-2xl shadow-lg overflow-hidden"
+          transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
+          className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100"
         >
           <DataGrid
             rows={filteredCommandes}
@@ -374,14 +356,25 @@ const GestionCommandesPage = () => {
             disableSelectionOnClick
             className="border-none"
             sx={{
-              "& .MuiDataGrid-cell": { fontSize: "0.875rem" },
-              "& .MuiDataGrid-columnHeaders": { backgroundColor: "#f8fafc", fontWeight: "bold" },
-              "& .MuiDataGrid-row:hover": { backgroundColor: "#f1f5f9" },
+              "& .MuiDataGrid-cell": { fontSize: "0.875rem", color: "#1f2937" },
+              "& .MuiDataGrid-columnHeaders": {
+                backgroundColor: "#f8fafc",
+                color: "#1f2937",
+                fontWeight: "bold",
+                borderBottom: "2px solid #e5e7eb",
+              },
+              "& .MuiDataGrid-row": {
+                transition: "background-color 0.2s ease",
+              },
+              "& .MuiDataGrid-row:hover": {
+                backgroundColor: "#f1f5f9",
+              },
             }}
           />
         </motion.div>
-      </div> 
-      {/* Notification Snackbar */}
+      </div>
+
+      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
@@ -392,7 +385,14 @@ const GestionCommandesPage = () => {
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
           variant="filled"
-          className="w-full"
+          className="w-full shadow-lg"
+          sx={{
+            background: snackbar.severity === "success"
+              ? "linear-gradient(to right, #10b981, #059669)"
+              : snackbar.severity === "error"
+              ? "linear-gradient(to right, #ef4444, #dc2626)"
+              : undefined,
+          }}
         >
           {snackbar.message}
         </Alert>
