@@ -12,11 +12,10 @@ import { NotificationModule } from '../notification/notification.module';
 
 // IMPORT du LocationModule pour utiliser LocationService
 import { LocationModule } from '../localisation/localisation.module';
-import { Favorite } from 'src/entities/Favorite';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Evenement, Localisation, Salle, TableEvent, User,Favorite]),
+    TypeOrmModule.forFeature([Evenement, Localisation, Salle, TableEvent, User]),
     ForfaitModule,
     NotificationModule,
     LocationModule,  // <-- Import ici au lieu de déclarer LocationService dans providers

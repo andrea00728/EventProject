@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createInvite } from "../../services/inviteService";
 import { useStateContext } from "../../context/ContextProvider";
 import { checkEmail, textControll } from "../../services/controll_champs/controll_champs";
 
-let debouceTimeout;
 export default function Inviteform({ onBack }) {
   const [form, setForm] = useState({
     nom: "",
@@ -14,42 +13,19 @@ export default function Inviteform({ onBack }) {
   const [error, setError] = useState(null);
   const { token } = useStateContext();
   const [loading, setLoading] = useState(false);
-  const [isValid, setIsValid] = useState(null);
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
 
-  /**
-   * 
-   * verification d'email
-   * 
-   */
-
-  useEffect(()=>{
-    clearTimeout(debouceTimeout);
-
-    if(!form.email.trim()){
-      setIsValid(null);
-      return;
-    }
-
-    debouceTimeout= setTimeout(async()=>{
-      const emailValid = await checkEmail(form.email.trim());
-      setIsValid(emailValid);
-    },800);
-
-    return ()=>clearTimeout(debouceTimeout);
-  },[form.email]);
-
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // const emailValid = await checkEmail(form.email.trim());
+    const emailValid = await checkEmail(form.email.trim());
 
-    if (isValid === false) {
-      setError("adresse email incorrecte ou inexistante.");
+    if (!emailValid) {
+      setError("l'adresse email saisi n'existe pas");
       setLoading(false);
       return;
     }
@@ -171,7 +147,7 @@ export default function Inviteform({ onBack }) {
                : "bg-indigo-600 hover:bg-indigo-700 text-white"
                 }`}
                 >
-                {loading ? "Création..." : "Créer le invité"}
+                {loading ? "Création..." : "Créer le personnel"}
                 </button>
       </div>
     </form>

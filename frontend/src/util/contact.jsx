@@ -2,7 +2,7 @@ export default function Contact() {
     return (
         <>
             {/* Section Contact - Design Épuré avec Touches Colorées */}
-            <section className="relative bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 pt-24 pb-15 px-4 shadow-xl overflow-hidden">
+            <section className="relative bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 py-24 px-4 rounded-3xl shadow-xl overflow-hidden">
                 {/* Effets lumineux subtils colorés */}
                 <div className="absolute top-1/4 left-0 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-pulse" />
                 <div className="absolute bottom-1/4 right-0 w-80 h-80 bg-purple-400/8 rounded-full blur-3xl animate-pulse" />

@@ -9,7 +9,6 @@ import { FormaNumber } from "../services/controll_champs/controll_limite";
 import { getUserCount } from "../services/userService";
 
 import { AuthModal } from "../components/Modal/authModal";
-import { findCount_pourcentage } from "../services/testimonyService";
 
 const images = [
   "/images/music-7238254_1280.jpg",
@@ -29,7 +28,7 @@ const Public_Accueil = () => {
   const contactRef = useRef(null);
   const testimonyRef = useRef(null);
   const [eventCount,setEventCount] = useState(0);
-  const [pourcentage,setPourcentage] = useState(0);
+  
   const [organisateurCount,setOrganisateurCount] = useState(0);
   useEffect(() => {
     const hash = window.location.hash;
@@ -42,44 +41,6 @@ const Public_Accueil = () => {
     if (hash === "#testimony" && testimonyRef.current) {
       testimonyRef.current.scrollIntoView({ behavior: "smooth" });
     }
-
-    /**
-     * nombre d'organisateur enregistrer
-     */
-      const fetchDataUserCount= async () =>{
-     try{
-
-      const count =await getUserCount();
-      setOrganisateurCount(count);
-     }catch(err){
-      console.log(err)
-     }
-    };
-    /**
-     * nombrer total d'evenement
-     */
-    const fetchData = async () => {
-      try{
-         const count = await getCountEvents();
-      setEventCount(count);
-      }catch(err){
-        console.log(err)
-      } 
-    };
-    /**
-     * pourcentage satisfaction
-     */
-     const count_pourcentage=async () =>{
-          try{
-            const count_p=await findCount_pourcentage();
-            setPourcentage(count_p);
-          }catch(err){
-            console.log(err);
-          }
-        }
-    fetchDataUserCount();
-    fetchData();
-    count_pourcentage();
   }, []);
 
   useEffect(() => {
@@ -117,9 +78,30 @@ const Public_Accueil = () => {
     else if (delta < -50) next();
   };
 
- 
+  useEffect(()=>{
+    const fetchData = async () => {
+      try{
+         const count = await getCountEvents();
+      setEventCount(count);
+      }catch(err){
+        console.log(err)
+      } 
+    };
+    fetchData();
+  },[]);
 
+  useEffect(()=>{
+    const fetchDataUserCount= async () =>{
+     try{
 
+      const count =await getUserCount();
+      setOrganisateurCount(count);
+     }catch(err){
+      console.log(err)
+     }
+    };
+    fetchDataUserCount();
+    },[]);
 
     const renderStars= (currentRating, interactive = false) => {
       return [...Array(5)].map((_, index) => (
@@ -249,7 +231,7 @@ const Public_Accueil = () => {
                   <div className="text-white/70 text-sm font-medium">Participants actifs</div>
                 </div>
                 <div className="text-center group">
-                  <div className="text-3xl font-bold text-white group-hover:text-green-400 transition-colors duration-300">{pourcentage.toFixed(1)}★</div>
+                  <div className="text-3xl font-bold text-white group-hover:text-green-400 transition-colors duration-300">4.9★</div>
                   <div className="text-white/70 text-sm font-medium">Satisfaction client</div>
                 </div>
               </motion.div>
@@ -328,47 +310,6 @@ const Public_Accueil = () => {
           <Contact />
         </div>
       </section>
-      <footer className="bg-gray-700 p-5">
-        <div className="">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-4">
-              {/* Logo/Nom */}
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-[#FB9E3A] to-orange-400 rounded-xl flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <span className="text-xl font-black text-white">Rapex group</span>
-              </div>
-              <p className="text-slate-400 text-sm">
-                © 2025. Tous droits réservés
-              </p>
-            </div>
-
-            <div className="flex items-center gap-6 text-sm">
-              <a
-                href="#"
-                className="text-slate-400 hover:text-white transition-colors hover:underline"
-              >
-                Politique de confidentialité
-              </a>
-              <a
-                href="#"
-                className="text-slate-400 hover:text-white transition-colors hover:underline"
-              >
-                Conditions d'utilisation
-              </a>
-              <a
-                href="#"
-                className="text-slate-400 hover:text-white transition-colors hover:underline"
-              >
-                Support
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
     </>
   );
 };

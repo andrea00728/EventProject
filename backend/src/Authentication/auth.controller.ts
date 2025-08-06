@@ -1,17 +1,19 @@
 // auth.controller.ts
-import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-auth.dto';
 import { User } from './entities/auth.entity';
+import { FirebaseAuthGuard } from 'src/guards/firebase-auth.guard';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService
-  
-  ) {}
 
-    
+  ) { }
+
+
   /**
    * 
    * @returns 
@@ -19,7 +21,7 @@ export class AuthController {
    */
 
   @Get('/count-users')
-  async findCountUsers():Promise<number>{
+  async findCountUsers(): Promise<number> {
     return this.authService.findCountUsers();
   }
 
@@ -41,11 +43,35 @@ export class AuthController {
 
   @Post('create')
   @UseGuards(AuthGuard('jwt'))
-  async createUser(@Body() dto: CreateUserDto){
+  async createUser(@Body() dto: CreateUserDto) {
     return this.authService.createUser(dto);
   }
 
-  
+  /***
+   * 
+   * 
+   * commentena fotsin alony mba itestena ilay Hybride rol
+   * 
+   */
+  // @Get('google/callback')
+  // @UseGuards(AuthGuard('google'))
+  // async googleAuthRedirect(@Req() req, @Res() res) {
+  //   const tokenResponse = await this.authService.login(req.user);
+  //   const { access_token } = tokenResponse;
+  //   const user = {
+  //     id: req.user.id,
+  //     email: req.user.email,
+  //     name: req.user.name,
+  //     photo: req.user.photo || '', 
+  //     role: req.user.role || 'organisateur', 
+  //   };
+
+
+  // //  const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}`;
+  //   const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}`;
+
+  //   return res.redirect(redirectUrl);
+  // }
 
   /**
    * 
@@ -64,16 +90,41 @@ export class AuthController {
       id: req.user.id,
       email: req.user.email,
       name: req.user.name,
-      photo: req.user.photo || '', 
-      role: req.user.role || 'organisateur', 
-      isInPersonnel:req.user.isInPersonnel  || false,
+      photo: req.user.photo || '',
+      role: req.user.role || 'organisateur',
+      isInPersonnel: req.user.isInPersonnel || false,
     };
-  
+
     const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}&isInPersonnel=${encodeURIComponent(user.isInPersonnel)}`;
 
     return res.redirect(redirectUrl);
   }
 
+  //register manuel dans formumaire
+  //  @Post('register')
+  //  @ApiConsumes('multipart/form-data')
+  //  @ApiBody({
+  //    schema: {
+  //      type: 'object',
+  //      properties: {
+  //        name: { type: 'string' },
+  //        email: { type: 'string' },
+  //        password: { type: 'string' },
+  //        photo: { type: 'string', format: 'binary' },
+  //      },
+  //    },
+  //  })
+  //  @UseInterceptors(FileInterceptor('photo', {
+  //    storage: diskStorage({
+  //      destination: './uploads',  // dossier de stockage
+  //      filename: (req, file, callback) => {
+  //        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+  //        const ext = extname(file.originalname);
+  //        const filename = `${file.fieldname}-${uniqueSuffix}${ext}`;
+  //        callback(null, filename);
+  //      },
+  //    }),
+  //  }))
 
 
   @Post('logout')
@@ -83,7 +134,7 @@ export class AuthController {
     res.clearCookie('access_token', {
       httpOnly: true,
       sameSite: 'lax',
-      secure: false, 
+      secure: false,
     });
     return res.status(200).json({ message: 'Déconnecté avec succès' });
   }
@@ -101,15 +152,47 @@ export class AuthController {
 
   @Get('getId')
   @UseGuards(AuthGuard('jwt'))
-  async getIdForToken(@Req() req : any): Promise<any> {
-    
+  async getIdForToken(@Req() req: any): Promise<any> {
+
     return this.authService.getIdForToken(req.user.email);
   }
 
   @Get('/org/stats')
   // @UseGuards(AuthGuard('jwt'))
   async getOrgStats(/*@Req() req : any*/): Promise<any> {
-    
+
     return this.authService.findOrgStats();
+  }
+
+  @UseGuards(FirebaseAuthGuard)
+  @Post('/login/admin')
+  async logSuperAd(@Req() request : any) {
+    const idToken = request.headers.authorization?.split('Bearer ')[1];
+    if (!idToken) {
+      throw new UnauthorizedException('Token manquant');
+    }
+    return await this.authService.loginWithFirebase(idToken);
+  }
+
+  @Get('/user/stats')
+  async getUserStats(): Promise<any> {
+    return this.authService.findUserStats();
+  }
+
+  @Get('/session-stats')
+  async getSessionTimeStats(): Promise<any> {
+    return this.authService.findSessionTimeStats();
+  }
+
+  @Get('user-role-stats')
+  async getUserRoleStats() {
+    return this.authService.getUserRoleStats();
+  }
+  
+  @Get('monthly-registrations')
+  @ApiOperation({ summary: 'Obtenir les inscriptions mensuelles (hors personnel)' })
+  @ApiResponse({ status: 200, description: 'Retourne les inscriptions par mois' })
+  async getMonthlyRegistrations(): Promise<{ month: string; count: number }[]> {
+    return this.authService.getMonthlyRegistrations();
   }
 }
