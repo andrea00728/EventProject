@@ -12,7 +12,6 @@ yarn.lock
 node_modules
 dist
 dist-ssr
-public
 *.local
 
 # Editor directories and files
