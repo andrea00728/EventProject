@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { DataGrid } from "@mui/x-data-grid";
 import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
 import { Link } from "react-router-dom";
 import { getEventIdByEmail } from "../../services/invitationService";
-import { SOCKET_URL, useSocket } from "../../socket";
+import { SOCKET_URL } from "../../socket";
 import { FaArrowLeft, FaDollarSign, FaPrint } from "react-icons/fa";
+import io from "socket.io-client";
 
 const CashIcon = () => (
   <svg
@@ -45,10 +46,12 @@ const CreditCardIcon = () => (
 const PaiementPage = () => {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState(null);
   const { token } = useStateContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const socket = useSocket(token);
+  const socketRef = useRef(null);
+
   const PAYMENT_STATUS_MAPPING = {
     frontToBack: { paye: "paid", non_paye: "unpaid" },
     backToFront: { paid: "paye", unpaid: "non_paye" },
@@ -108,12 +111,12 @@ const PaiementPage = () => {
           console.log("✅ Connecté au serveur WebSocket (PaiementPage)");
         });
 
-        socket.on("orderUpdated", () => {
+        socketRef.current.on("orderUpdated", () => {
           console.log("Mise à jour de commande reçue via WebSocket");
           fetchCommandes();
         });
 
-        socket.on("connect_error", (error) => {
+        socketRef.current.on("connect_error", (error) => {
           console.error("WebSocket connection error:", error);
         });
       } catch (error) {
@@ -122,17 +125,18 @@ const PaiementPage = () => {
     };
 
     if (token) {
-      loadData();
+      fetchCommandes();
+      setupWebSocket();
     }
 
     return () => {
-      if (socket) {
-        socket.off("orderUpdated", fetchCommandes);
-        socket.disconnect();
+      if (socketRef.current) {
+        socketRef.current.off("orderUpdated", fetchCommandes);
+        socketRef.current.disconnect();
         console.log("🔌 WebSocket déconnecté (PaiementPage)");
       }
     };
-  }, [token, socket]);
+  }, [token]);
 
   const handlePaymentStatusChange = async (id, newStatus) => {
     try {
@@ -145,8 +149,8 @@ const PaiementPage = () => {
       setCommandes((prev) =>
         prev.map((cmd) => (cmd.id === id ? { ...cmd, paymentStatus: newStatus } : cmd))
       );
-      if (socket) {
-        socket.emit("paymentStatusChanged", { id, paymentStatus: backendStatus });
+      if (socketRef.current) {
+        socketRef.current.emit("paymentStatusChanged", { id, paymentStatus: backendStatus });
       } else {
         console.warn("Socket non connecté, impossible d'émettre l'événement paymentStatusChanged.");
       }
@@ -165,8 +169,8 @@ const PaiementPage = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         fetchCommandes();
-        if (socket) {
-          socket.emit("paymentProcessed", { id, amount: row.total });
+        if (socketRef.current) {
+          socketRef.current.emit("paymentProcessed", { id, amount: row.total });
         }
       } catch (error) {
         console.error("Erreur lors du traitement du paiement :", error);

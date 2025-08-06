@@ -21,7 +21,6 @@ import autoTable from "jspdf-autotable";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useSocket } from "../../socket";
-import { SOCKET_URL } from "../../socket";
 import revenuService from "../../services/revenu";
 import { debounce } from "lodash";
 import { FaArrowLeft, FaSync, FaFileCsv, FaFilePdf, FaEye, FaUndo } from "react-icons/fa";
@@ -50,9 +49,9 @@ const RevenuPage = () => {
   const socket = useSocket();
 
   const COLORS = {
-    paid: ["rgba(34, 197, 94, 0.8)", "rgba(74, 222, 128, 0.8)"], // Green-600 to Green-400
-    pending: ["rgba(234, 179, 8, 0.8)", "rgba(250, 204, 21, 0.8)"], // Yellow-600 to Yellow-400
-    timeSeries: ["rgba(99, 102, 241, 0.8)", "rgba(129, 140, 248, 0.8)"], // Indigo-600 to Indigo-400
+    paid: ["rgba(34, 197, 94, 0.8)", "rgba(74, 222, 128, 0.8)"],
+    pending: ["rgba(234, 179, 8, 0.8)", "rgba(250, 204, 21, 0.8)"],
+    timeSeries: ["rgba(99, 102, 241, 0.8)", "rgba(129, 140, 248, 0.8)"],
   };
 
   useEffect(() => {
@@ -89,18 +88,7 @@ const RevenuPage = () => {
 
     setLoading(true);
     try {
-      let currentToken = token;
-      try {
-        await axios.get(`${import.meta.env.VITE_API_BASE_URL}/auth/validate`, {
-          headers: { Authorization: `Bearer ${currentToken}` },
-        });
-      } catch (error) {
-        if (error.response?.status === 401) {
-          currentToken = await refreshToken();
-        }
-      }
-
-      const eventId = await getEventIdByEmail(currentToken);
+      const eventId = await getEventIdByEmail(token); // Utiliser directement le token
       if (!eventId?.eventId) {
         throw new Error("ID d'événement non trouvé");
       }
@@ -174,7 +162,7 @@ const RevenuPage = () => {
       setTimeSeriesData(timeSeriesArray);
     } catch (error) {
       console.error("Erreur lors de la récupération des revenus:", error.response?.data);
-      if (error.message.includes("Unauthorized")) {
+      if (error.response?.status === 401) {
         toast.error("Session expirée. Veuillez vous reconnecter.");
         navigate("/login");
       } else {
@@ -183,7 +171,7 @@ const RevenuPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, navigate, refreshToken]);
+  }, [token, navigate]);
 
   const handleRefund = useCallback(
     async (id) => {
@@ -211,7 +199,7 @@ const RevenuPage = () => {
         await fetchRevenus();
       } catch (error) {
         console.error("Erreur lors du remboursement:", error.response?.data);
-        if (error.message.includes("Unauthorized")) {
+        if (error.response?.status === 401) {
           toast.error("Session expirée. Veuillez vous reconnecter.");
           navigate("/login");
         } else if (error.message.includes("Commande non trouvée")) {
