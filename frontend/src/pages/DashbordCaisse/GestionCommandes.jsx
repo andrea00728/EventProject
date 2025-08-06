@@ -9,6 +9,7 @@ import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { getUserIdForToken } from "../../services/userService";
 import { FaArrowLeft, FaSync, FaTimes } from "react-icons/fa";
+import { SOCKET_URL } from "../../socket";
 
 const GestionCommandesPage = () => {
   const [commandes, setCommandes] = useState([]);
@@ -52,7 +53,7 @@ const GestionCommandesPage = () => {
 
       const eventId = await getEventIdByEmail(token);
       const { data } = await axios.get(
-        `http://localhost:3000/orders/event/${eventId.eventId}`,
+        `${import.meta.env.VITE_API_BASE_URL}/orders/event/${eventId.eventId}`,
         {
           params: { include: "table,items,items.menuItem" },
           headers: { Authorization: `Bearer ${token}` },
@@ -101,7 +102,7 @@ const GestionCommandesPage = () => {
     async (orderId, newStatus) => {
       try {
         const response = await axios.patch(
-          `http://localhost:3000/orders/${orderId}/status`,
+          `${import.meta.env.VITE_API_BASE_URL}/orders/${orderId}/status`,
           { status: STATUS_MAPPING.frontToBack[newStatus] },
           {
             headers: {
@@ -110,6 +111,13 @@ const GestionCommandesPage = () => {
             },
           }
         );
+
+        const socket = io(SOCKET_URL, {
+          auth: { userId },
+        });
+
+        socket.emit("update_order_status", { orderId, status: newStatus });
+
         setSnackbar({
           open: true,
           message: response.data?.message || "Commande mise à jour avec succès.",
@@ -136,7 +144,7 @@ const GestionCommandesPage = () => {
         const fetchedUserId = await getUserIdForToken(token);
         setUserId(fetchedUserId);
 
-        socket = io("http://localhost:3000", {
+        socket = io(SOCKET_URL, {
           auth: { userId: fetchedUserId },
           transports: ["websocket", "polling"],
           reconnection: true,

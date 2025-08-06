@@ -8,6 +8,8 @@ import { CreateUserDto } from './dto/create-auth.dto';
 import { Personnel } from 'src/entities/Personnel';
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
+import { QueryFailedError } from 'typeorm';
+import admin from 'src/firebase/firebase-admin';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +23,7 @@ export class AuthService {
     private readonly eventRepository: Repository<Evenement>,
     @InjectRepository(Forfait)
     private readonly forfaitRepository: Repository<Forfait>,
-  ) {}
+  ) { }
 
   async validateUser(profile: any): Promise<any> {
     const { emails, displayName, photos } = profile;
@@ -127,20 +129,33 @@ export class AuthService {
     return { message: 'Organisateur supprimé avec succès' };
   }
 
-  async updateStatus(userId: string, isOnline: boolean) {
-    const manager = await this.userRepository.findOne({
-      where: { id : userId },
-    });
+  async updateStatus(userId: string, isOnline: boolean): Promise<void> {
+    try {
+      const manager = await this.userRepository.findOne({
+        where: { id: userId },
+      });
 
-    if (!manager) {
-      throw new NotFoundException(`Manager avec ID ${userId} non trouvé`);
+      if (!manager) {
+        // Aucun utilisateur trouvé : on ne fait rien
+        return;
+      }
+
+      await this.userRepository.update(userId, {
+        isOnline,
+        ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
+      });
+    } catch (error) {
+      if (error instanceof QueryFailedError && error.driverError?.code === '22P02') {
+        // Silence complet ou log discret si tu veux :
+        // console.warn(`[updateStatus] UUID invalide ignoré : ${userId}`);
+        return;
+      }
+
+      // Sinon, log les autres erreurs pour debugging
+      // console.error(`Erreur inattendue updateStatus userId = ${userId}`, error);
     }
-
-    await this.userRepository.update(userId, {
-      isOnline,
-      ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
-    });
   }
+
 
   async getIdForToken(userEmail) {
     if (!userEmail) {
@@ -183,6 +198,129 @@ export class AuthService {
     return {
       count,
       lastOrganizers,
+    };
+  }
+
+async loginWithFirebase(idToken: string) {
+    try {
+      // 1. Vérifier et décoder le token Firebase
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const email = decodedToken.email;
+      const displayName = decodedToken.name || 'Admin';
+      const photoURL = decodedToken.picture || null;
+
+      // 2. Chercher l'admin existant
+      let adminUser = await this.userRepository.findOne({
+        where: { email, role: 'admin' },
+      });
+
+      if (!adminUser) {
+        // 3. Vérifier s'il existe déjà un autre admin
+        const adminCount = await this.userRepository.count({
+          where: { role: 'admin' },
+        });
+
+        if (adminCount > 0) {
+          throw new UnauthorizedException('Un admin existe déjà');
+        }
+
+        // 4. Créer un nouvel admin
+        adminUser = this.userRepository.create({
+          id: uuidv4(),
+          email,
+          name: displayName,
+          photo: photoURL ?? null, // Si jamais photoURL est undefined, mets null
+          role: 'admin',
+          isOnline: true,
+          lastLogin: new Date(),
+        } as Partial<User>);
+
+          await this.userRepository.save(adminUser);
+        }
+
+      // 5. Créer le payload pour JWT backend
+      const payload = {
+        sub: adminUser.id, // id de ta base
+        email: adminUser.email,
+        role: adminUser.role,
+      };
+
+      // 6. Générer un JWT signé par ton backend
+      const access_token = this.jwtService.sign(payload);
+
+      // 7. Retourner token + user (optionnel)
+      return {
+        access_token,
+        user: {
+          id: adminUser.id,
+          email: adminUser.email,
+          name: adminUser.name,
+          photo: adminUser.photo,
+          role: adminUser.role,
+        },
+      };
+    } catch (error) {
+      console.error('Login with Firebase error:', error);
+      throw new UnauthorizedException('Token Firebase invalide ou autre erreur');
+    }
+  }
+  async findUserStats(): Promise<any> {
+    const countTotal = this.userRepository.count();
+    const countOnline = this.userRepository.count({
+      where: { isOnline: true },
+    });
+
+    const [count, onlineCount] = await Promise.all([
+      countTotal,
+      countOnline
+    ]);
+
+    const onlinePercentage = count > 0 ? ((onlineCount / count) * 100).toFixed(2) : '0.00';
+
+    return {
+      count,
+      onlinePercentage: `${onlinePercentage}`,
+    };
+  }
+
+  async findSessionTimeStats(): Promise<any> {
+    // Sélectionner les champs nécessaires, y compris role et lastLogin
+    const users = await this.userRepository.find({
+      where: { isOnline: false }, // On ne prend que les utilisateurs déconnectés pour avoir lastLogout
+      select: ['id', 'email', 'lastLogin', 'lastLogout', 'role'],
+    });
+
+    const sessionStats = users
+      .filter(user => user.lastLogin && user.lastLogout && new Date(user.lastLogout) > new Date(user.lastLogin)) // Vérifier que lastLogout > lastLogin
+      .map(user => {
+        const sessionDurationMs = new Date(user.lastLogout).getTime() - new Date(user.lastLogin).getTime();
+        const sessionDurationMinutes = sessionDurationMs / (1000 * 60); // Convertir en minutes
+        console.log(`User ${user.email}: lastLogin=${user.lastLogin}, lastLogout=${user.lastLogout}, duration=${sessionDurationMinutes}`); // Log pour débogage
+        return {
+          id: user.id,
+          email: user.email,
+          lastSessionDuration: sessionDurationMinutes.toFixed(2), // Durée en minutes, arrondie
+          sessionStartTime: user.lastLogin, // Ajouter lastLogin comme sessionStartTime
+          role: user.role, // Ajouter le rôle
+        };
+      });
+
+    // Calcul de la somme totale des durées
+    const totalDuration = sessionStats.reduce((sum, stat) => sum + parseFloat(stat.lastSessionDuration), 0);
+
+    // Calcul de la moyenne globale
+    const averageDuration = sessionStats.length > 0 ? (totalDuration / sessionStats.length).toFixed(2) : '0.00';
+
+    // Ajout du pourcentage pour chaque utilisateur
+    const sessionStatsWithPercentage = sessionStats.map(stat => ({
+      ...stat,
+      percentageOfTotalTime: totalDuration > 0 ? ((parseFloat(stat.lastSessionDuration) / totalDuration) * 100).toFixed(2) : '0.00',
+    }));
+
+    return {
+      totalUsersWithSessions: sessionStats.length,
+      averageSessionDuration: averageDuration, // Moyenne globale en minutes
+      individualStats: sessionStatsWithPercentage, // Stats par utilisateur avec pourcentage
     };
   }
 

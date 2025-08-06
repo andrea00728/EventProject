@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
 import { Link } from "react-router-dom";
 import { getEventIdByEmail } from "../../services/invitationService";
-import { useSocket } from "../../socket";
+import { SOCKET_URL, useSocket } from "../../socket";
 import { FaArrowLeft, FaDollarSign, FaPrint } from "react-icons/fa";
 
 const CashIcon = () => (
@@ -60,7 +60,7 @@ const PaiementPage = () => {
       if (!token) throw new Error("Token manquant");
 
       const eventId = await getEventIdByEmail(token);
-      const { data } = await axios.get(`http://localhost:3000/orders/event/${eventId.eventId}`, {
+      const { data } = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders/event/${eventId.eventId}`, {
         params: { include: "table,items,items.menuItem" },
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -91,10 +91,20 @@ const PaiementPage = () => {
   };
 
   useEffect(() => {
-    const loadData = async () => {
-      await fetchCommandes();
-      if (socket) {
-        socket.on("connect", () => {
+    const setupWebSocket = async () => {
+      try {
+        const fetchedUserId = await getUserIdForToken(token);
+        setUserId(fetchedUserId);
+
+        socketRef.current = io(SOCKET_URL, {
+          auth: { userId: fetchedUserId },
+          transports: ["websocket", "polling"],
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000,
+        });
+
+        socketRef.current.on("connect", () => {
           console.log("✅ Connecté au serveur WebSocket (PaiementPage)");
         });
 
@@ -106,6 +116,8 @@ const PaiementPage = () => {
         socket.on("connect_error", (error) => {
           console.error("WebSocket connection error:", error);
         });
+      } catch (error) {
+        console.error("Erreur lors de la configuration du WebSocket:", error);
       }
     };
 
@@ -126,7 +138,7 @@ const PaiementPage = () => {
     try {
       const backendStatus = PAYMENT_STATUS_MAPPING.frontToBack[newStatus];
       await axios.patch(
-        `http://localhost:3000/orders/${id}/payment`,
+        `${import.meta.env.VITE_API_BASE_URL}/orders/${id}/payment`,
         { paymentStatus: backendStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -148,7 +160,7 @@ const PaiementPage = () => {
     if (row) {
       try {
         await axios.post(
-          `http://localhost:3000/paiement/create`,
+          `${import.meta.env.VITE_API_BASE_URL}/paiement/create`,
           { eventId: id, amount: row.total },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -188,7 +200,7 @@ const PaiementPage = () => {
 
     let sequentialNumber = row.id;
     try {
-      const response = await axios.get(`http://localhost:3000/invoices/next-sequence`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/invoices/next-sequence`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       sequentialNumber = response.data.nextSequence;

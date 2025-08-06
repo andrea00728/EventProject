@@ -7,7 +7,7 @@ const axiosClient=axios.create({
 })
 
 axiosClient.interceptors.request.use((config)=>{
-     const token=sessionStorage.getItem("ACCESS_TOKEN")
+    const token=sessionStorage.getItem("ACCESS_TOKEN")
     config.headers.Authorization=`Bearer ${token}`
     return config;
 })

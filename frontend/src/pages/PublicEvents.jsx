@@ -11,7 +11,7 @@ const PublicEvents = () => {
     const fetchPublicEvents = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get('http://localhost:3000/evenements/publics');
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/evenements/publics`);
         setEvents(response.data);
         setError(null);
       } catch (error) {

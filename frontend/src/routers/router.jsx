@@ -72,6 +72,7 @@ import RevenuPage from "../pages/DashbordCaisse/RevenuPage.jsx";
 import ActivityHistory from "../pages/Admin/Historique.jsx";
 import Statique from "../pages/Admin/statistique.jsx";
 import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Event.jsx";
+import LoginPage from "../pages/Admin/LoginPage.jsx";
 import UserStats from "../pages/Admin/cards.jsx";
 
 
@@ -494,6 +495,10 @@ const router=createBrowserRouter([
   {
     path: "/menutitemform",
     element: <MenuItemForm />,
+  },
+  {
+    path: "/login-site/super/admin",
+    element: <LoginPage />,
   },
 ]);
 

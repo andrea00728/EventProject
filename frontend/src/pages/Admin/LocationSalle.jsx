@@ -19,7 +19,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useDarkMode } from "../../context/DarkModeContext";
 
-const API_URL = "http://localhost:3000/locations";
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/locations`;
 
 const LocationSalle = () => {
   const [locations, setLocations] = useState([]);

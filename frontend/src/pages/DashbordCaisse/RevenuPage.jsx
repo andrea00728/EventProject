@@ -21,9 +21,11 @@ import autoTable from "jspdf-autotable";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useSocket } from "../../socket";
+import { SOCKET_URL } from "../../socket";
+import revenuService from "../../services/revenu";
 import { debounce } from "lodash";
 import { FaArrowLeft, FaSync, FaFileCsv, FaFilePdf, FaEye, FaUndo } from "react-icons/fa";
-import revenuService from "../../services/revenu";
+import axios from "axios";
 
 ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler);
 
@@ -87,7 +89,18 @@ const RevenuPage = () => {
 
     setLoading(true);
     try {
-      const eventId = await getEventIdByEmail(token);
+      let currentToken = token;
+      try {
+        await axios.get(`${import.meta.env.VITE_API_BASE_URL}/auth/validate`, {
+          headers: { Authorization: `Bearer ${currentToken}` },
+        });
+      } catch (error) {
+        if (error.response?.status === 401) {
+          currentToken = await refreshToken();
+        }
+      }
+
+      const eventId = await getEventIdByEmail(currentToken);
       if (!eventId?.eventId) {
         throw new Error("ID d'événement non trouvé");
       }
@@ -170,7 +183,7 @@ const RevenuPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, navigate]);
+  }, [token, navigate, refreshToken]);
 
   const handleRefund = useCallback(
     async (id) => {
