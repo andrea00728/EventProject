@@ -306,7 +306,7 @@ export default function Dashboard() {
                   ({ name, email, photo, createdAt }, i) => (
                     <li
                       key={i}
-                      className="flex items-center gap-4 p-3 border-b border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded-md"
+                      className="flex items-center gap-4 p-3 border-b border-gray-300 dark:border-gray-700 hover:bg-gray-400/30 dark:hover:bg-gray-700 cursor-pointer rounded-md"
                     >
                       {photo ? (
                         <img
@@ -322,15 +322,15 @@ export default function Dashboard() {
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm sm:text-base ">
                           <p className={`font-semibold text-base sm:text-lg text-gray-100 dark:text-gray-100 ${
                             darkMode
-                              ? "bg-gray-800 border-gray-700 text-gray-200"
-                              : "bg-white border-gray-200 text-gray-900"
+                              ? "bg-transparent border-gray-700 text-gray-200"
+                              : "bg-transparent border-gray-200 text-gray-900"
                           }`}>
                             {name}
                           </p>
                           <p className={`text-xs sm:text-sm text-gray-300 dark:text-gray-400 mt-1 sm:mt-0 ${
                             darkMode
-                              ? "bg-gray-800 border-gray-700 text-gray-200"
-                              : "bg-white border-gray-200 text-gray-900"
+                              ? "bg-transparent border-gray-700 text-gray-200"
+                              : "bg-transparent border-gray-200 text-gray-900"
                           }`}>
                             Inscrit le{" "}
                             {format(new Date(createdAt), "dd/MM/yyyy")}
@@ -338,8 +338,8 @@ export default function Dashboard() {
                         </div>
                         <p className={`text-sm text-gray-300 dark:text-gray-400 truncate ${
                           darkMode
-                            ? "bg-gray-800 border-gray-700 text-gray-200"
-                            : "bg-white border-gray-200 text-gray-900"
+                            ? "bg-transparent border-gray-700 text-gray-200"
+                            : "bg-transparent border-gray-200 text-gray-900"
                         }`}>
                           {email}
                         </p>
@@ -381,7 +381,7 @@ export default function Dashboard() {
                     {transactions.map(({ name, amount, date, photo }, i) => (
                       <tr
                         key={i}
-                        className="hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150"
+                        className="hover:bg-gray-400/30 dark:hover:bg-gray-700/30 transition duration-150 cursor-pointer rounded-md"
                       >
                         <td className="p-3 flex items-center gap-3">
                           {photo ? (
@@ -397,13 +397,17 @@ export default function Dashboard() {
                             {name}
                           </span>
                         </td>
-                        <td className="p-3 font-semibold text-green-600 dark:text-green-400">
+                        <td className={`p-3 font-semibold ${
+                          darkMode
+                            ? "bg-transparent border-gray-700 text-green-400"
+                            : "bg-transparent border-gray-200 text-green-600"
+                        }`}>
                           ${Number(amount).toFixed(2)}
                         </td>
-                        <td className={`p-3 text-sm text-gray-300 dark:text-gray-400 ${
+                        <td className={`p-3 text-sm ${
                           darkMode
-                            ? "bg-gray-800 border-gray-700 text-gray-200"
-                            : "bg-white border-gray-200 text-gray-900"
+                            ? "bg-transparent border-gray-700 text-gray-400"
+                            : "bg-transparent border-gray-200 text-gray-600"
                         }`}>
                           {format(new Date(date), "dd MMM yyyy, HH:mm", {
                             locale: fr,

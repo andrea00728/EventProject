@@ -62,8 +62,10 @@ export default function AdminLayout() {
       return <Navigate to="/personnelCaisse" replace />;
     case "cuisinier":
       return <Navigate to="/personnelCuisine" replace />;
+    case "organisateur":
+      return <Navigate to="/pagepublic" replace />;
     default:
-      return <Navigate to="/AdminAccueil" replace />;
+      return <Navigate to={location.pathname || "/AdminAccueil"} replace />;
   }
 
   const handleLogout = () => {
