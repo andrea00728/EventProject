@@ -2,15 +2,6 @@ import { useEffect, useState } from "react";
 import { useStateContext } from "../context/ContextProvider";
 import { Camera, Check, LogOut, Mail, Settings, User, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  UserIcon,
-  EnvelopeIcon,
-  LockClosedIcon,
-  BellIcon,
-  CreditCardIcon,
-  UsersIcon,
-  GlobeAltIcon,
-} from '@heroicons/react/24/outline';
 import EventPlatformSettings from "./setting";
 export default function Profil() {
 
@@ -316,6 +307,7 @@ export default function Profil() {
                       type="text"
                       defaultValue={userName}
                       className="border border-gray-300 rounded px-3 py-1 text-sm w-full"
+                      onChange={(e)=>e.target.value}
                     />
                   </div>
 
@@ -348,12 +340,12 @@ export default function Profil() {
             onClick={() => setIsParametre(false)}
           >
             <motion.div
-              className="  z-50 flex-col  p-4 bg-white"
+              className="z-50 flex-col  p-4 bg-white"
               variants={backdropVariants}
               initial="hidden"
               animate="visible"
               exit="hidden"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e)=>e.stopPropagation()}
             >
               <EventPlatformSettings />
             </motion.div>

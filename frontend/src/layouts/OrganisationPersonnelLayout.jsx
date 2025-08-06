@@ -30,6 +30,7 @@ export default function OrganisationPersonnelLayout() {
             )
         },
     ];
+    // const nbrEquipe = 
 
 return (
   <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -119,13 +120,13 @@ return (
                 </svg>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-emerald-700 truncate">Équipe Active</p>
+                <p className="text-sm font-bold text-emerald-700 truncate">Équipes</p>
                 <p className="text-2xl font-bold text-emerald-600">24</p>
               </div>
             </div>
           </div>
 
-          <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200/50">
+          {/* <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200/50">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,7 +138,7 @@ return (
                 <p className="text-2xl font-bold text-amber-600">8</p>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </nav>
 

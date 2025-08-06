@@ -5,6 +5,7 @@ import { useStateContext } from "../../context/ContextProvider";
 import { DataGrid } from "@mui/x-data-grid";
 import DeleteGuestButton from "../../util/DeleteInviteButton";
 import EditGuestButton from "../../util/buttonModifIvite";
+import { motion, AnimatePresence } from "framer-motion";
 
 const EventOption = ({ event, onSelect }) => (
   <div
@@ -148,8 +149,13 @@ export default function AffichageInvite() {
 
           {/* Modal */}
           {showModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-2xl shadow-2xl w-[90vw] max-w-2xl max-h-[80vh] flex flex-col">
+            <AnimatePresence>
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50" onClick={()=>setShowModal(false)}>
+              <motion.div
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+              onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-[90vw] max-w-2xl max-h-[80vh] flex flex-col">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
                   <h3 className="text-xl font-bold text-gray-800">Sélectionner un événement</h3>
                   <button
@@ -170,8 +176,9 @@ export default function AffichageInvite() {
                     )}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
+            </AnimatePresence>
           )}
         </div>
 
