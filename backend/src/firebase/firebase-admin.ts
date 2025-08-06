@@ -11,4 +11,4 @@ admin.initializeApp({
   }),
 });
 
-export default admin;
+export default admin;

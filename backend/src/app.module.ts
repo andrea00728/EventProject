@@ -172,7 +172,7 @@ import { NotificationEntity } from './entities/notification.entity';
     FavoriteModule,
 
   ],
-  controllers: [ProfileController], // Contrôleurs globaux ici (pas besoin d'ajouter EvenementController ici)
-  providers: [], // Services globaux si besoin
+  controllers: [ProfileController,],
+  providers: [],
 })
 export class AppModule {}
