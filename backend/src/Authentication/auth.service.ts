@@ -8,6 +8,7 @@ import { CreateUserDto } from './dto/create-auth.dto';
 import { Personnel } from 'src/entities/Personnel';
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
+import { QueryFailedError } from 'typeorm';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +22,7 @@ export class AuthService {
     private readonly eventRepository: Repository<Evenement>,
     @InjectRepository(Forfait)
     private readonly forfaitRepository: Repository<Forfait>,
-  ) {}
+  ) { }
 
   async validateUser(profile: any): Promise<any> {
     const { emails, displayName, photos } = profile;
@@ -127,8 +128,33 @@ export class AuthService {
     return { message: 'Organisateur supprimé avec succès' };
   }
 
-   async updateStatus(userId: string, isOnline: boolean): Promise<void> {
+  async updateStatus(userId: string, isOnline: boolean): Promise<void> {
+    try {
+      const manager = await this.userRepository.findOne({
+        where: { id: userId },
+      });
+
+      if (!manager) {
+        // Aucun utilisateur trouvé : on ne fait rien
+        return;
+      }
+
+      await this.userRepository.update(userId, {
+        isOnline,
+        ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
+      });
+    } catch (error) {
+      if (error instanceof QueryFailedError && error.driverError?.code === '22P02') {
+        // Silence complet ou log discret si tu veux :
+        // console.warn(`[updateStatus] UUID invalide ignoré : ${userId}`);
+        return;
+      }
+
+      // Sinon, log les autres erreurs pour debugging
+      // console.error(`Erreur inattendue updateStatus userId = ${userId}`, error);
+    }
   }
+
 
   async getIdForToken(userEmail) {
     if (!userEmail) {
@@ -171,6 +197,66 @@ export class AuthService {
     return {
       count,
       lastOrganizers,
+    };
+  }
+
+  async findUserStats(): Promise<any> {
+    const countTotal = this.userRepository.count();
+    const countOnline = this.userRepository.count({
+      where: { isOnline: true },
+    });
+
+    const [count, onlineCount] = await Promise.all([
+      countTotal,
+      countOnline
+    ]);
+
+    const onlinePercentage = count > 0 ? ((onlineCount / count) * 100).toFixed(2) : '0.00';
+
+    return {
+      count,
+      onlinePercentage: `${onlinePercentage}`,
+    };
+  }
+
+  async findSessionTimeStats(): Promise<any> {
+    // Sélectionner les champs nécessaires, y compris role et lastLogin
+    const users = await this.userRepository.find({
+      where: { isOnline: false }, // On ne prend que les utilisateurs déconnectés pour avoir lastLogout
+      select: ['id', 'email', 'lastLogin', 'lastLogout', 'role'],
+    });
+
+    const sessionStats = users
+      .filter(user => user.lastLogin && user.lastLogout && new Date(user.lastLogout) > new Date(user.lastLogin)) // Vérifier que lastLogout > lastLogin
+      .map(user => {
+        const sessionDurationMs = new Date(user.lastLogout).getTime() - new Date(user.lastLogin).getTime();
+        const sessionDurationMinutes = sessionDurationMs / (1000 * 60); // Convertir en minutes
+        console.log(`User ${user.email}: lastLogin=${user.lastLogin}, lastLogout=${user.lastLogout}, duration=${sessionDurationMinutes}`); // Log pour débogage
+        return {
+          id: user.id,
+          email: user.email,
+          lastSessionDuration: sessionDurationMinutes.toFixed(2), // Durée en minutes, arrondie
+          sessionStartTime: user.lastLogin, // Ajouter lastLogin comme sessionStartTime
+          role: user.role, // Ajouter le rôle
+        };
+      });
+
+    // Calcul de la somme totale des durées
+    const totalDuration = sessionStats.reduce((sum, stat) => sum + parseFloat(stat.lastSessionDuration), 0);
+
+    // Calcul de la moyenne globale
+    const averageDuration = sessionStats.length > 0 ? (totalDuration / sessionStats.length).toFixed(2) : '0.00';
+
+    // Ajout du pourcentage pour chaque utilisateur
+    const sessionStatsWithPercentage = sessionStats.map(stat => ({
+      ...stat,
+      percentageOfTotalTime: totalDuration > 0 ? ((parseFloat(stat.lastSessionDuration) / totalDuration) * 100).toFixed(2) : '0.00',
+    }));
+
+    return {
+      totalUsersWithSessions: sessionStats.length,
+      averageSessionDuration: averageDuration, // Moyenne globale en minutes
+      individualStats: sessionStatsWithPercentage, // Stats par utilisateur avec pourcentage
     };
   }
 

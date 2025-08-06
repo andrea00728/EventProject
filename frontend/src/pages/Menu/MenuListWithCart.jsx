@@ -40,7 +40,7 @@ const MenuListWithCart = () => {
       console.log(slug);
 
       try {
-        const response = await axios.get(`http://api.mastertable.site/qr/${slug.slug}/info`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/qr/${slug.slug}/info`);
         console.log(response.data);
         setSelectedEvent(response.data.eventId);
         setSelectedTable(response.data.tableId);
@@ -65,7 +65,7 @@ const MenuListWithCart = () => {
 
       try {
         setIsLoading(true);
-        const res = await axios.get(`http://api.mastertable.site/menus/event/${selectedEvent}`, {
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

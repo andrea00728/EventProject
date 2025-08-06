@@ -10,8 +10,9 @@ const PublicEvents = () => {
   useEffect(() => {
     const fetchEvenements = async () => {
       try {
-        const response = await axios.get("http://api.mastertable.site/evenements/publics");
-        setEvenements(response.data);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/evenements/publics`);
+        setEvents(response.data);
+        setError(null);
       } catch (error) {
         console.error("Erreur lors de la récupération des événements :", error);
       }

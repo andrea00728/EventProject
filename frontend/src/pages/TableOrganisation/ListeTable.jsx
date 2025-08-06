@@ -24,7 +24,7 @@ export default function ListeTable() {
   const [noSelectionMessage, setNoSelectionMessage] = useState("");
 
   // Configure Axios base URL
-  axios.defaults.baseURL = "http://api.mastertable.site";
+  axios.defaults.baseURL = `${import.meta.env.VITE_API_BASE_URL}`;
 
   // Fetch events when component mounts
   useEffect(() => {

@@ -8,7 +8,7 @@ export const getAllOrdersForOnEvent = async (id) => {
 export const updateOrderStatus = async (orderId, status, token) => {
   try {
     const response = await axiosClient.patch(
-      `http://api.mastertable.site/orders/${orderId}/status`,
+      `/orders/${orderId}/status`,
       { status } , {
     headers: {
       Authorization: `Bearer ${token}`,

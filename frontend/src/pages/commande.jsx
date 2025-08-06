@@ -46,7 +46,7 @@ const MenuListWithCart = () => {
   const fetchMenus = async (id) => {
     try {
       setIsLoading(true);
-      const res = await axios.get(`http://api.mastertable.site/menus/event/${id}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${id}`);
       const formattedMenus = res.data.map(menu => ({
         ...menu,
         items: menu.items.map(item => ({
@@ -65,7 +65,7 @@ const MenuListWithCart = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get('http://api.mastertable.site/menus/categories', {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/categories`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCategories(['all', ...res.data]);
@@ -76,7 +76,7 @@ const MenuListWithCart = () => {
 
   const fetchFavorites = async () => {
     try {
-      const res = await axios.get('http://api.mastertable.site/favorites', {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/favorites`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setFavorites(res.data.map(item => item.id));
@@ -87,7 +87,7 @@ const MenuListWithCart = () => {
 
   const fetchOrderHistory = async () => {
     try {
-      const res = await axios.get('http://api.mastertable.site/orders/user', {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders/user`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setOrderHistory(res.data);
@@ -280,7 +280,7 @@ const MenuListWithCart = () => {
       }));
 
       await axios.post(
-        'http://api.mastertable.site/orders',
+        `${import.meta.env.VITE_API_BASE_URL}/orders`,
         {
           tableId: selectedTable.id,
           nom: guestName,
@@ -390,13 +390,13 @@ const MenuListWithCart = () => {
   const toggleFavorite = async (itemId) => {
     try {
       if (favorites.includes(itemId)) {
-        await axios.delete(`http://api.mastertable.site/favorites/${itemId}`, {
+        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/favorites/${itemId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setFavorites(favorites.filter(id => id !== itemId));
         setMessage('Retiré des favoris.');
       } else {
-        await axios.post(`http://api.mastertable.site/favorites/${itemId}`, {}, {
+        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/favorites/${itemId}`, {}, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setFavorites([...favorites, itemId]);
@@ -413,7 +413,7 @@ const MenuListWithCart = () => {
   const submitRating = async (itemId, rating, comment) => {
     try {
       await axios.post(
-        `http://api.mastertable.site/menus/items/${itemId}/ratings`,
+        `${import.meta.env.VITE_API_BASE_URL}/menus/items/${itemId}/ratings`,
         { rating, comment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -548,7 +548,7 @@ const MenuListWithCart = () => {
                         <div className="flex-shrink-0">
                           {item.photo ? (
                             <img
-                              src={`http://api.mastertable.site${item.photo}`}
+                              src={`${import.meta.env.VITE_API_BASE_URL}${item.photo}`}
                               alt={item.name}
                               className="w-20 h-20 object-cover rounded-lg shadow-sm group-hover:scale-105 transition-transform duration-200"
                               loading="lazy"
@@ -720,7 +720,7 @@ const MenuListWithCart = () => {
                     <div className="flex-shrink-0">
                       {ci.photo ? (
                         <img
-                          src={`http://api.mastertable.site${ci.photo}`}
+                          src={`${import.meta.env.VITE_API_BASE_URL}${ci.photo}`}
                           alt={ci.name}
                           className="w-16 h-16 object-cover rounded-lg"
                           loading="lazy"

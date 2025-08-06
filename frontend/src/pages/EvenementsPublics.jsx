@@ -9,7 +9,7 @@ const EvenementsPublics = () => {
   const [evenements, setEvenements] = useState([]);
 
   useEffect(() => {
-    axios.get('http://api.mastertable.site/evenements/publics') // Adapte le port si nécessaire
+    axios.get(`${import.meta.env.VITE_API_BASE_URL}/evenements/publics`) // Adapte le port si nécessaire
       .then(response => {
         setEvenements(response.data);
       })

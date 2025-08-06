@@ -168,4 +168,11 @@ export class CommentaireController {
     return this.commentaireService.remove(+id, req.user);
   }
 
+  @Get('satisfaction/statistics')
+  @ApiOperation({ summary: 'Récupération des statistiques de satisfaction en pourcentage' })
+  @ApiResponse({ status: 200, description: 'Statistiques de satisfaction en pourcentage.' })
+  async findSatisfactionStatistics() {
+    return this.commentaireService.findSatisfactionStatistics();
+  }
+
 }

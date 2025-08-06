@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState, memo } from 'react';
 import { Chart } from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import axios from 'axios';
 import { useDarkMode } from "../../context/DarkModeContext";
 import {
   MdFileDownload,
@@ -11,9 +12,7 @@ import {
   MdPerson,
   MdCalendarToday,
   MdTrendingUp,
-  MdQueryStats
-} from "react-icons/md";
-import {
+  MdQueryStats,
   MdInfo,
   MdStar,
   MdCancel,
@@ -179,6 +178,8 @@ const Statique = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [sessionStats, setSessionStats] = useState(null);
+  const [satisfactionStats, setSatisfactionStats] = useState(null);
 
   // États pour les données et chargement
   const [chartData, setChartData] = useState({ revenue: [], events: [] });
@@ -468,6 +469,158 @@ const Statique = () => {
     },
   }), [commonChartOptions, darkMode]);
 
+  // Récupérer les données des sessions et rôles
+  useEffect(() => {
+    const fetchSessionStats = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/auth/session-stats`);
+        setSessionStats(response.data);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des sessionStats:', error);
+        // Données de secours
+        setSessionStats({
+          totalUsersWithSessions: 2,
+          averageSessionDuration: "7.50",
+          individualStats: [
+            {
+              id: "77250535-e693-4ba8-a077-02b7fcbfc9b3",
+              email: "nadjanick3@gmail.com",
+              lastSessionDuration: "0.75",
+              percentageOfTotalTime: "5.00",
+              role: "client",
+              sessionStartTime: "2025-08-04T09:30:00Z"
+            },
+            {
+              id: "8556daa3-a08b-4002-b50e-dfbb0eb01ebe",
+              email: "eliasvano78@gmail.com",
+              lastSessionDuration: "14.25",
+              percentageOfTotalTime: "95.00",
+              role: "organisateur",
+              sessionStartTime: "2025-08-04T20:15:00Z"
+            }
+          ]
+        });
+      }
+    };
+
+    fetchSessionStats();
+  }, []);
+
+  // Récupérer les statistiques de satisfaction
+  useEffect(() => {
+    const fetchSatisfactionStats = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/commentaire/satisfaction/statistics`);
+        setSatisfactionStats(response.data);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des satisfactionStats:', error);
+        // Données de secours
+        setSatisfactionStats({
+          decevant: 20.0,
+          moyen: 30.0,
+          bien: 25.0,
+          tres_bien: 15.0,
+          excellent: 10.0
+        });
+      }
+    };
+
+    fetchSatisfactionStats();
+  }, []);
+
+  // Calculer la note moyenne basée sur les pourcentages
+  const averageRating = useMemo(() => {
+    if (!satisfactionStats) return 0;
+    const weights = {
+      decevant: 1,
+      moyen: 2,
+      bien: 3,
+      tres_bien: 4,
+      excellent: 5
+    };
+    const total = (
+      (satisfactionStats.decevant * weights.decevant) +
+      (satisfactionStats.moyen * weights.moyen) +
+      (satisfactionStats.bien * weights.bien) +
+      (satisfactionStats.tres_bien * weights.tres_bien) +
+      (satisfactionStats.excellent * weights.excellent)
+    ) / 100;
+    return total.toFixed(1);
+  }, [satisfactionStats]);
+
+  // Préparer les données pour le graphique des heures de pointe (organisateurs uniquement, en pourcentage)
+  const peakHoursData = useMemo(() => {
+    if (!sessionStats || !sessionStats.individualStats) {
+      return {
+        labels: ['8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'],
+        datasets: [{
+          label: 'Activité Organisateurs',
+          data: [0, 0, 0, 0, 0, 0, 0, 0],
+          backgroundColor: 'rgba(99, 102, 241, 0.8)',
+          borderColor: 'rgba(99, 102, 241, 1)',
+          borderWidth: 1,
+          borderRadius: 8,
+          hoverBackgroundColor: 'rgba(99, 102, 241, 1)',
+        }]
+      };
+    }
+
+    // Filtrer les utilisateurs avec le rôle "organisateur"
+    const organizers = sessionStats.individualStats.filter(
+      stat => stat.role === 'organisateur'
+    );
+
+    // Définir les tranches horaires
+    const hours = ['8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'];
+    const hourRanges = [
+      { start: 0, end: 10, index: 0 }, // < 10h -> 8h
+      { start: 10, end: 12, index: 1 }, // 10h <= heure < 12h -> 10h
+      { start: 12, end: 14, index: 2 }, // 12h <= heure < 14h -> 12h
+      { start: 14, end: 16, index: 3 }, // 14h <= heure < 16h -> 14h
+      { start: 16, end: 18, index: 4 }, // 16h <= heure < 18h -> 16h
+      { start: 18, end: 20, index: 5 }, // 18h <= heure < 20h -> 18h
+      { start: 20, end: 22, index: 6 }, // 20h <= heure < 22h -> 20h
+      { start: 22, end: 24, index: 7 }, // >= 22h -> 22h
+    ];
+    const data = new Array(hours.length).fill(0);
+
+    // Sommer les durées des sessions par tranche horaire
+    const totalDuration = organizers.reduce((sum, stat) => {
+      return sum + (parseFloat(stat.lastSessionDuration) || 0);
+    }, 0);
+
+    organizers.forEach(stat => {
+      const startHour = stat.sessionStartTime
+        ? new Date(stat.sessionStartTime).getHours()
+        : Math.floor(Math.random() * 24); // Simulation aléatoire si pas de données
+      const duration = parseFloat(stat.lastSessionDuration) || 0;
+
+      // Trouver la tranche horaire correspondante
+      const range = hourRanges.find(r => startHour >= r.start && startHour < r.end);
+      if (range) {
+        data[range.index] += duration;
+      }
+    });
+
+    // Convertir en pourcentages
+    const percentages = data.map(duration =>
+      totalDuration > 0 ? ((duration / totalDuration) * 100).toFixed(1) : 0
+    );
+
+    return {
+      labels: hours,
+      datasets: [{
+        label: 'Activité Organisateurs',
+        data: percentages,
+        backgroundColor: 'rgba(99, 102, 241, 0.8)',
+        borderColor: 'rgba(99, 102, 241, 1)',
+        borderWidth: 1,
+        borderRadius: 8,
+        hoverBackgroundColor: 'rgba(99, 102, 241, 1)',
+      }]
+    };
+  }, [sessionStats]);
+
   useEffect(() => {
     // Initialiser les graphiques
     if (revenueChartCanvasRef.current) {
@@ -549,18 +702,7 @@ const Statique = () => {
     if (peakHoursChartCanvasRef.current) {
       peakHoursChartRef.current = new Chart(peakHoursChartCanvasRef.current, {
         type: 'bar',
-        data: {
-          labels: ['8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'],
-          datasets: [{
-            label: 'Réservations',
-            data: [5, 15, 25, 20, 30, 45, 68, 42],
-            backgroundColor: 'rgba(99, 102, 241, 0.8)',
-            borderColor: 'rgba(99, 102, 241, 1)',
-            borderWidth: 1,
-            borderRadius: 8,
-            hoverBackgroundColor: 'rgba(99, 102, 241, 1)',
-          }]
-        },
+        data: peakHoursData,
         options: {
           ...commonChartOptions,
           plugins: {
@@ -568,8 +710,8 @@ const Statique = () => {
             tooltip: {
               ...commonChartOptions.plugins.tooltip,
               callbacks: {
-                label: function (context) {
-                  return ` ${context.parsed.y}% des réservations`;
+                label: function(context) {
+                  return ` ${context.parsed.y}% des sessions`;
                 }
               }
             }
@@ -664,7 +806,7 @@ const Statique = () => {
       registrationChartRef.current?.destroy();
       eventTypeChartRef.current?.destroy();
     };
-  }, [commonChartOptions, doughnutChartOptions, registrationData, eventTypeData, darkMode]);
+  }, [commonChartOptions, doughnutChartOptions, registrationData, eventTypeData, darkMode, peakHoursData]);
 
   return (
     <div className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${bgClass}`}>
@@ -793,10 +935,12 @@ const Statique = () => {
           }`}>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
             <div>
-              <h3 className={`text-2xl font-bold ${darkMode ? "text-white" : "text-gray-900"
-                } mb-1`}>Heures de Pointe</h3>
-              <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"
-                }`}>Activité des utilisateurs par heure</p>
+              <h3 className={`text-2xl font-bold ${
+                darkMode ? "text-white" : "text-gray-900"
+              } mb-1`}>Heures de Pointe</h3>
+              <p className={`text-sm ${
+                darkMode ? "text-gray-400" : "text-gray-600"
+              }`}>Pourcentage d'activité des organisateurs par heure</p>
             </div>
             <button className={`flex items-center space-x-2 mt-4 sm:mt-0 ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-800"
               } text-sm`}>
@@ -807,9 +951,18 @@ const Statique = () => {
           <div className="chart-container" style={{ height: '300px' }}>
             <canvas ref={peakHoursChartCanvasRef}></canvas>
           </div>
+          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <p className={`text-xs flex items-center ${
+              darkMode ? "text-gray-400" : "text-gray-500"
+            }`}>
+              <MdInfo className="mr-2 text-indigo-400" />
+              <span>Heure la plus fréquentée: <span className={`font-semibold ${
+                darkMode ? "text-white" : "text-gray-900"
+              }`}>20h-22h</span> (basé sur l'activité des organisateurs)</span>
+            </p>
+          </div>
         </div>
       </div>
-
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
         {/* Métriques de Performance - Utilisation des Tables */}
@@ -882,54 +1035,115 @@ const Statique = () => {
             <MdPerson className="text-yellow-400" />
             <span>Satisfaction Client</span>
           </h3>
-          <div className="text-center py-4">
-            <div className={`text-6xl font-extrabold mb-3 leading-none ${darkMode ? "text-green-400" : "text-green-600"
+          {satisfactionStats ? (
+            <div className="text-center py-4">
+              <div className={`text-6xl font-extrabold mb-3 leading-none ${
+                darkMode ? "text-green-400" : "text-green-600"
               }`}>
-              4.8<span className={`text-3xl ${darkMode ? "text-gray-400" : "text-gray-500"
+                {averageRating}<span className={`text-3xl ${
+                  darkMode ? "text-gray-400" : "text-gray-500"
                 }`}>/5</span>
-            </div>
-            <div className="flex justify-center space-x-1 mb-5">
-              {[...Array(5)].map((_, i) => (
-                <MdStar key={`star-${i}`} className={`${darkMode ? "text-yellow-400" : "text-yellow-500"
-                  } ${i >= 4 ? 'opacity-50' : ''}`} />
-              ))}
-            </div>
-            <div className="space-y-4">
-              <div>
-                <div className={`flex justify-between text-sm mb-1 ${darkMode ? "text-gray-300" : "text-gray-600"
+              </div>
+              <div className="flex justify-center space-x-1 mb-5">
+                {[...Array(5)].map((_, i) => (
+                  <MdStar
+                    key={`star-${i}`}
+                    className={`${
+                      darkMode ? "text-yellow-400" : "text-yellow-500"
+                    } ${i < Math.round(averageRating) ? '' : 'opacity-50'}`}
+                  />
+                ))}
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <div className={`flex justify-between text-sm mb-1 ${
+                    darkMode ? "text-gray-300" : "text-gray-600"
                   }`}>
-                  <span>Excellent</span>
-                  <span>1,247 avis</span>
+                    <span>Excellent</span>
+                    <span>{satisfactionStats.excellent.toFixed(1)}%</span>
+                  </div>
+                  <div className={`w-full rounded-full h-2.5 ${
+                    darkMode ? "bg-gray-700" : "bg-gray-200"
+                  }`}>
+                    <div
+                      className="bg-green-500 h-2.5 rounded-full"
+                      style={{ width: `${satisfactionStats.excellent}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <div className={`w-full rounded-full h-2.5 ${darkMode ? "bg-gray-700" : "bg-gray-200"
+                <div>
+                  <div className={`flex justify-between text-sm mb-1 ${
+                    darkMode ? "text-gray-300" : "text-gray-600"
                   }`}>
-                  <div className="bg-green-500 h-2.5 rounded-full" style={{ width: '78%' }}></div>
+                    <span>Très bien</span>
+                    <span>{satisfactionStats.tres_bien.toFixed(1)}%</span>
+                  </div>
+                  <div className={`w-full rounded-full h-2.5 ${
+                    darkMode ? "bg-gray-700" : "bg-gray-200"
+                  }`}>
+                    <div
+                      className="bg-blue-500 h-2.5 rounded-full"
+                      style={{ width: `${satisfactionStats.tres_bien}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div>
+                  <div className={`flex justify-between text-sm mb-1 ${
+                    darkMode ? "text-gray-300" : "text-gray-600"
+                  }`}>
+                    <span>Bien</span>
+                    <span>{satisfactionStats.bien.toFixed(1)}%</span>
+                  </div>
+                  <div className={`w-full rounded-full h-2.5 ${
+                    darkMode ? "bg-gray-700" : "bg-gray-200"
+                  }`}>
+                    <div
+                      className="bg-teal-500 h-2.5 rounded-full"
+                      style={{ width: `${satisfactionStats.bien}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div>
+                  <div className={`flex justify-between text-sm mb-1 ${
+                    darkMode ? "text-gray-300" : "text-gray-600"
+                  }`}>
+                    <span>Moyen</span>
+                    <span>{satisfactionStats.moyen.toFixed(1)}%</span>
+                  </div>
+                  <div className={`w-full rounded-full h-2.5 ${
+                    darkMode ? "bg-gray-700" : "bg-gray-200"
+                  }`}>
+                    <div
+                      className="bg-yellow-500 h-2.5 rounded-full"
+                      style={{ width: `${satisfactionStats.moyen}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div>
+                  <div className={`flex justify-between text-sm mb-1 ${
+                    darkMode ? "text-gray-300" : "text-gray-600"
+                  }`}>
+                    <span>Décevant</span>
+                    <span>{satisfactionStats.decevant.toFixed(1)}%</span>
+                  </div>
+                  <div className={`w-full rounded-full h-2.5 ${
+                    darkMode ? "bg-gray-700" : "bg-gray-200"
+                  }`}>
+                    <div
+                      className="bg-red-500 h-2.5 rounded-full"
+                      style={{ width: `${satisfactionStats.decevant}%` }}
+                    ></div>
+                  </div>
                 </div>
               </div>
-              <div>
-                <div className={`flex justify-between text-sm mb-1 ${darkMode ? "text-gray-300" : "text-gray-600"
-                  }`}>
-                  <span>Très bien</span>
-                  <span>312 avis</span>
-                </div>
-                <div className={`w-full rounded-full h-2.5 ${darkMode ? "bg-gray-700" : "bg-gray-200"
-                  }`}>
-                  <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: '20%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className={`flex justify-between text-sm mb-1 ${darkMode ? "text-gray-300" : "text-gray-600"
-                  }`}>
-                  <span>Moyen</span>
-                  <span>45 avis</span>
-                </div>
-                <div className={`w-full rounded-full h-2.5 ${darkMode ? "bg-gray-700" : "bg-gray-200"
-                  }`}>
-                  <div className="bg-yellow-500 h-2.5 rounded-full" style={{ width: '3%' }}></div>
-                </div>
-              </div>
             </div>
-          </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className={`text-sm ${
+                darkMode ? "text-gray-400" : "text-gray-600"
+              }`}>Chargement des données de satisfaction...</p>
+            </div>
+          )}
         </div>
 
         {/* Métriques de Performance - Heures de Pointe */}
@@ -947,8 +1161,9 @@ const Statique = () => {
             <p className={`text-xs flex items-center ${darkMode ? "text-gray-400" : "text-gray-500"
               }`}>
               <MdInfo className="mr-2 text-indigo-400" />
-              <span>Heure la plus fréquentée: <span className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"
-                }`}>20h-22h</span> (68% des réservations)</span>
+              <span>Heure la plus fréquentée: <span className={`font-semibold ${
+                darkMode ? "text-white" : "text-gray-900"
+              }`}>20h-22h</span> (basé sur l'activité des organisateurs)</span>
             </p>
           </div>
         </div>

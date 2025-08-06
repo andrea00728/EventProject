@@ -44,7 +44,7 @@ const StockPage = () => {
   // Récupération des événements disponibles
   const fetchEvents = async () => {
     try {
-      const res = await axios.get('http://api.mastertable.site/events', {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/events`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setEvents(res.data);
@@ -59,8 +59,8 @@ const StockPage = () => {
       setIsLoading(true);
       const eventToUse = assignedEventId || selectedEvent;
       const url = eventToUse
-        ? `http://api.mastertable.site/menus/event/${eventToUse}`
-        : 'http://api.mastertable.site/menus';
+        ? `${import.meta.env.VITE_API_BASE_URL}/menus/event/${eventToUse}`
+        : `${import.meta.env.VITE_API_BASE_URL}/menus`;
       const res = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -121,12 +121,12 @@ const StockPage = () => {
   const handleSaveEdit = async () => {
     try {
       if (editedItem.id) {
-        await axios.patch(`http://api.mastertable.site/menus/items/${editedItem.id}`, editedItem, {
+        await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/menus/items/${editedItem.id}`, editedItem, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setSnackbar({ open: true, message: 'Article modifié avec succès.', severity: 'success' });
       } else {
-        await axios.post(`http://api.mastertable.site/menus/items`, {
+        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/menus/items`, {
           ...editedItem,
           eventId: selectedEvent || assignedEventId,
         }, {
@@ -145,7 +145,7 @@ const StockPage = () => {
   const handleDelete = async (id) => {
     if (!confirm('Confirmer la suppression de cet article ?')) return;
     try {
-      await axios.delete(`http://api.mastertable.site/menus/items/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/menus/items/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSnackbar({ open: true, message: 'Article supprimé.', severity: 'success' });
