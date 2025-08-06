@@ -88,7 +88,7 @@ const RevenuPage = () => {
 
     setLoading(true);
     try {
-      const eventId = await getEventIdByEmail(token); // Utiliser directement le token
+      const eventId = await getEventIdByEmail(token);
       if (!eventId?.eventId) {
         throw new Error("ID d'événement non trouvé");
       }
@@ -335,6 +335,7 @@ const RevenuPage = () => {
           },
           borderColor: "#ffffff",
           borderWidth: 2,
+          borderRadius: 8,
           hoverBackgroundColor: (context) => {
             const ctx = context.chart.ctx;
             const chartArea = context.chart.chartArea;
@@ -397,7 +398,7 @@ const RevenuPage = () => {
           },
         },
         tooltip: {
-          backgroundColor: "rgba(17, 24, 39, 0.9)",
+          backgroundColor: "rgba(17, 24, 39, 0.95)",
           padding: 12,
           cornerRadius: 8,
           bodyFont: { size: 14, weight: "500", family: "'Inter', sans-serif" },
@@ -466,76 +467,76 @@ const RevenuPage = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8 font-inter"
+      className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 p-4 sm:p-6 lg:p-8 font-inter"
     >
-      <div className="max-w-7xl mx-auto flex flex-col space-y-6">
+      <div className="max-w-7xl mx-auto flex flex-col space-y-8">
         {/* Header */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-800 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
             Tableau de Bord des Revenus
           </h1>
           <Link
             to="/caisse"
-            className="flex items-center px-4 py-2 bg-white text-gray-700 rounded-lg shadow-md hover:bg-gray-50 focus:ring-4 focus:ring-indigo-300 transition-all duration-300"
+            className="flex items-center px-5 py-2.5 bg-white text-gray-700 rounded-xl shadow-md hover:bg-gray-50 focus:ring-4 focus:ring-indigo-200 transition-all duration-300 text-sm font-semibold"
             aria-label="Retour à la caisse"
           >
-            <FaArrowLeft className="mr-2 w-5 h-5" />
-            Retour
+            <FaArrowLeft className="mr-2 w-4 h-4" />
+            Retour à la caisse
           </Link>
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             {
               title: "Total des Revenus",
               value: `€${totalRevenue}`,
-              color: "bg-gradient-to-r from-green-100 to-green-200",
-              icon: <FaFileCsv className="w-6 h-6 text-green-600" />,
+              color: "bg-gradient-to-r from-green-500 to-emerald-500",
+              icon: <FaFileCsv className="w-6 h-6 text-white" />,
             },
             {
               title: "En Attente",
               value: `€${totalPending}`,
-              color: "bg-gradient-to-r from-yellow-100 to-yellow-200",
-              icon: <FaFileCsv className="w-6 h-6 text-yellow-600" />,
+              color: "bg-gradient-to-r from-yellow-500 to-amber-500",
+              icon: <FaFileCsv className="w-6 h-6 text-white" />,
             },
             {
               title: "Remboursé",
               value: `€${totalRefunded}`,
-              color: "bg-gradient-to-r from-red-100 to-red-200",
-              icon: <FaFileCsv className="w-6 h-6 text-red-600" />,
+              color: "bg-gradient-to-r from-red-500 to-rose-500",
+              icon: <FaFileCsv className="w-6 h-6 text-white" />,
             },
           ].map((stat, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.4, ease: "easeOut" }}
-              whileHover={{ scale: 1.03 }}
-              className={`${stat.color} rounded-2xl p-5 shadow-lg transition-all duration-300 border border-gray-100 flex justify-between items-center`}
+              transition={{ delay: index * 0.1, duration: 0.5, ease: "easeOut" }}
+              whileHover={{ scale: 1.03, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+              className={`${stat.color} rounded-xl p-6 shadow-lg border border-gray-100/50 flex justify-between items-center text-white`}
             >
               <div>
-                <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                <h2 className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</h2>
+                <p className="text-sm font-medium opacity-90">{stat.title}</p>
+                <h2 className="text-2xl font-bold mt-1">{stat.value}</h2>
               </div>
-              <div className="p-3 rounded-full bg-white/50">{stat.icon}</div>
+              <div className="p-3 rounded-full bg-white/20">{stat.icon}</div>
             </motion.div>
           ))}
         </div>
 
         {/* Filters and Actions */}
-        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col sm:flex-row gap-4 items-center border border-gray-100">
+        <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col sm:flex-row gap-4 items-center border border-gray-100/50">
           <div className="relative w-full sm:w-1/3">
             <input
               type="text"
               placeholder="Rechercher par email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-gray-50 text-gray-800 placeholder-gray-400 transition-all duration-300 text-sm"
+              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-gray-50 text-gray-900 placeholder-gray-400 transition-all duration-300 text-sm shadow-sm"
               aria-label="Rechercher par email"
             />
             <svg
-              className="w-5 h-5 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2"
+              className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -546,7 +547,7 @@ const RevenuPage = () => {
           <select
             value={filterPeriod}
             onChange={(e) => setFilterPeriod(e.target.value)}
-            className="w-full sm:w-1/4 px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-gray-50 text-gray-800 transition-all duration-300 text-sm"
+            className="w-full sm:w-1/4 px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-gray-50 text-gray-900 transition-all duration-300 text-sm shadow-sm"
             aria-label="Filtrer par période"
           >
             <option value="all">Toutes les périodes</option>
@@ -557,7 +558,7 @@ const RevenuPage = () => {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full sm:w-1/4 px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-gray-50 text-gray-800 transition-all duration-300 text-sm"
+            className="w-full sm:w-1/4 px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-gray-50 text-gray-900 transition-all duration-300 text-sm shadow-sm"
             aria-label="Filtrer par statut"
           >
             <option value="all">Tous les statuts</option>
@@ -570,7 +571,7 @@ const RevenuPage = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={fetchRevenus}
-              className="flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg shadow-md hover:from-indigo-700 hover:to-indigo-800 focus:ring-4 focus:ring-indigo-300 transition-all duration-300 text-sm font-semibold"
+              className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 focus:ring-4 focus:ring-indigo-300 transition-all duration-300 text-sm font-semibold"
               aria-label="Actualiser les données"
             >
               <FaSync className="mr-2 w-4 h-4" />
@@ -580,7 +581,7 @@ const RevenuPage = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={exportToCSV}
-              className="flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg shadow-md hover:from-green-700 hover:to-green-800 focus:ring-4 focus:ring-green-300 transition-all duration-300 text-sm font-semibold"
+              className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg shadow-md hover:from-green-600 hover:to-emerald-600 focus:ring-4 focus:ring-green-300 transition-all duration-300 text-sm font-semibold"
               aria-label="Exporter en CSV"
             >
               <FaFileCsv className="mr-2 w-4 h-4" />
@@ -590,7 +591,7 @@ const RevenuPage = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={exportToPDF}
-              className="flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-md hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 transition-all duration-300 text-sm font-semibold"
+              className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 focus:ring-4 focus:ring-blue-300 transition-all duration-300 text-sm font-semibold"
               aria-label="Exporter en PDF"
             >
               <FaFilePdf className="mr-2 w-4 h-4" />
@@ -605,7 +606,7 @@ const RevenuPage = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
-            className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100"
+            className="bg-white rounded-xl p-6 shadow-lg border border-gray-100/50"
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -615,13 +616,13 @@ const RevenuPage = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setChartType(chartType === "bar" ? "line" : "bar")}
-                className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-100 to-indigo-200 text-indigo-700 rounded-lg shadow-sm hover:from-indigo-200 hover:to-indigo-300 focus:ring-4 focus:ring-indigo-300 transition-all duration-300 text-sm font-semibold"
+                className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-lg shadow-sm hover:from-indigo-200 hover:to-purple-200 focus:ring-4 focus:ring-indigo-200 transition-all duration-300 text-sm font-semibold"
                 aria-label="Changer le type de graphique"
               >
                 {chartType === "bar" ? "Graphique Temporel" : "Graphique Barres"}
               </motion.button>
             </div>
-            <div className="h-80 relative">
+            <div className="h-80 relative rounded-lg overflow-hidden shadow-sm border border-gray-100/50">
               {chartType === "bar" ? (
                 <Bar data={barChartData} options={chartOptions} />
               ) : (
@@ -633,21 +634,21 @@ const RevenuPage = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
-            className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-xl border border-gray-100"
+            className="lg:col-span-2 bg-white rounded-xl p-6 shadow-lg border border-gray-100/50"
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Détails des Revenus</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-600">
-                <thead className="text-xs uppercase bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700">
+            <div className="overflow-x-auto rounded-lg border border-gray-100/50">
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="text-xs uppercase bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-800">
                   <tr>
-                    <th className="px-6 py-3">ID</th>
-                    <th className="px-6 py-3">Client</th>
-                    <th className="px-6 py-3">Email</th>
-                    <th className="px-6 py-3 text-right">Total (€)</th>
-                    <th className="px-6 py-3 text-right">Payé (€)</th>
-                    <th className="px-6 py-3">Statut</th>
-                    <th className="px-6 py-3">Date</th>
-                    <th className="px-6 py-3">Actions</th>
+                    <th className="px-6 py-4 font-semibold">ID</th>
+                    <th className="px-6 py-4 font-semibold">Client</th>
+                    <th className="px-6 py-4 font-semibold">Email</th>
+                    <th className="px-6 py-4 font-semibold text-right">Total (€)</th>
+                    <th className="px-6 py-4 font-semibold text-right">Payé (€)</th>
+                    <th className="px-6 py-4 font-semibold">Statut</th>
+                    <th className="px-6 py-4 font-semibold">Date</th>
+                    <th className="px-6 py-4 font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -665,7 +666,7 @@ const RevenuPage = () => {
                     </tr>
                   ) : (
                     currentItems.map((rev) => (
-                      <tr key={rev.id} className="border-b hover:bg-indigo-50 transition-colors duration-200">
+                      <tr key={rev.id} className="border-b border-gray-100/50 hover:bg-indigo-50/50 transition-colors duration-200">
                         <td className="px-6 py-4">{rev.id}</td>
                         <td className="px-6 py-4 truncate max-w-[150px]">{rev.nom}</td>
                         <td className="px-6 py-4 truncate max-w-[200px]">{rev.email}</td>
@@ -675,10 +676,10 @@ const RevenuPage = () => {
                           <span
                             className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
                               rev.paymentStatus === "Payé"
-                                ? "bg-green-200 text-green-800"
+                                ? "bg-green-100 text-green-800"
                                 : rev.paymentStatus === "Remboursé"
-                                ? "bg-red-200 text-red-800"
-                                : "bg-yellow-200 text-yellow-800"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
                             }`}
                           >
                             {rev.paymentStatus}
@@ -690,7 +691,7 @@ const RevenuPage = () => {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setShowDetailsModal(rev)}
-                            className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg shadow-md hover:from-indigo-700 hover:to-indigo-800 focus:ring-4 focus:ring-indigo-300 transition-all duration-300 text-sm font-semibold"
+                            className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 focus:ring-4 focus:ring-indigo-300 transition-all duration-300 text-sm font-semibold"
                             aria-label={`Voir les détails de la commande ${rev.id}`}
                           >
                             <FaEye className="mr-2 w-4 h-4" />
@@ -701,10 +702,10 @@ const RevenuPage = () => {
                             whileTap={{ scale: 0.95 }}
                             onClick={() => handleRefundDebounced(rev.id)}
                             disabled={isRefunding[rev.id] || rev.paymentStatus !== "Payé"}
-                            className={`flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                            className={`flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 shadow-md ${
                               isRefunding[rev.id] || rev.paymentStatus !== "Payé"
                                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                                : "bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 focus:ring-4 focus:ring-red-300"
+                                : "bg-gradient-to-r from-red-600 to-rose-600 text-white hover:from-red-700 hover:to-rose-700 focus:ring-4 focus:ring-red-300"
                             }`}
                             aria-label={`Rembourser la commande ${rev.id}`}
                           >
@@ -724,7 +725,7 @@ const RevenuPage = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => paginate(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-100 to-indigo-200 text-indigo-700 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus:ring-4 focus:ring-indigo-300 transition-all duration-300 text-sm font-semibold"
+                className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus:ring-4 focus:ring-indigo-200 transition-all duration-300 text-sm font-semibold"
                 aria-label="Page précédente"
               >
                 Précédent
@@ -737,7 +738,7 @@ const RevenuPage = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => paginate(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-100 to-indigo-200 text-indigo-700 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus:ring-4 focus:ring-indigo-300 transition-all duration-300 text-sm font-semibold"
+                className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus:ring-4 focus:ring-indigo-200 transition-all duration-300 text-sm font-semibold"
                 aria-label="Page suivante"
               >
                 Suivant
@@ -751,15 +752,15 @@ const RevenuPage = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
-          className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100"
+          className="bg-white rounded-xl p-6 shadow-lg border border-gray-100/50"
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Répartition par Catégorie</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-600">
-              <thead className="text-xs uppercase bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700">
+          <div className="overflow-x-auto rounded-lg border border-gray-100/50">
+            <table className="w-full text-sm text-left text-gray-700">
+              <thead className="text-xs uppercase bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-800">
                 <tr>
-                  <th className="px-6 py-3">Catégorie</th>
-                  <th className="px-6 py-3 text-right">Revenu (€)</th>
+                  <th className="px-6 py-4 font-semibold">Catégorie</th>
+                  <th className="px-6 py-4 font-semibold text-right">Revenu (€)</th>
                 </tr>
               </thead>
               <tbody>
@@ -771,7 +772,7 @@ const RevenuPage = () => {
                   </tr>
                 ) : (
                   Object.entries(categoryBreakdown).map(([category, revenue]) => (
-                    <tr key={category} className="border-b hover:bg-indigo-50 transition-colors duration-200">
+                    <tr key={category} className="border-b border-gray-100/50 hover:bg-indigo-50/50 transition-colors duration-200">
                       <td className="px-6 py-4 truncate">{category}</td>
                       <td className="px-6 py-4 text-right">{parseFloat(revenue).toFixed(2)}</td>
                     </tr>
@@ -795,20 +796,20 @@ const RevenuPage = () => {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
-              className="bg-white rounded-2xl p-6 sm:p-8 max-w-3xl w-full shadow-2xl"
+              className="bg-white rounded-xl p-6 sm:p-8 max-w-3xl w-full shadow-2xl border border-gray-100/50"
               onClick={(e) => e.stopPropagation()}
             >
               <h3 className="text-xl font-semibold text-gray-900 mb-6">
                 Détails de la Commande #{showDetailsModal.id}
               </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left text-gray-600">
-                  <thead className="text-xs uppercase bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700">
+              <div className="overflow-x-auto rounded-lg border border-gray-100/50">
+                <table className="w-full text-sm text-left text-gray-700">
+                  <thead className="text-xs uppercase bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-800">
                     <tr>
-                      <th className="px-6 py-3">Article</th>
-                      <th className="px-6 py-3 text-right">Quantité</th>
-                      <th className="px-6 py-3 text-right">Prix (€)</th>
-                      <th className="px-6 py-3 text-right">Total (€)</th>
+                      <th className="px-6 py-4 font-semibold">Article</th>
+                      <th className="px-6 py-4 font-semibold text-right">Quantité</th>
+                      <th className="px-6 py-4 font-semibold text-right">Prix (€)</th>
+                      <th className="px-6 py-4 font-semibold text-right">Total (€)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -820,7 +821,7 @@ const RevenuPage = () => {
                       </tr>
                     ) : (
                       showDetailsModal.items.map((item, index) => (
-                        <tr key={index} className="border-b hover:bg-indigo-50 transition-colors duration-200">
+                        <tr key={index} className="border-b border-gray-100/50 hover:bg-indigo-50/50 transition-colors duration-200">
                           <td className="px-6 py-4 truncate">{item.menuItem?.name || "Inconnu"}</td>
                           <td className="px-6 py-4 text-right">{item.quantity || 0}</td>
                           <td className="px-6 py-4 text-right">

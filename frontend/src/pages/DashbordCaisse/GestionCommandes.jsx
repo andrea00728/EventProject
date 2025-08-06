@@ -16,6 +16,7 @@ const GestionCommandesPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCanceled, setShowCanceled] = useState(false); // Nouvel état pour afficher/masquer les commandes annulées
   const [userId, setUserId] = useState(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -133,7 +134,7 @@ const GestionCommandesPage = () => {
         });
       }
     },
-    [token, updateCommande]
+    [token, updateCommande, userId]
   );
 
   useEffect(() => {
@@ -210,7 +211,12 @@ const GestionCommandesPage = () => {
   }, [token, fetchCommandes, updateCommande]);
 
   const filteredCommandes = commandes.filter((cmd) => {
-    const matchStatus = selectedStatus === "all" || cmd.status === selectedStatus;
+    const matchStatus =
+      selectedStatus === "all"
+        ? showCanceled
+          ? true // Si showCanceled est true, inclure toutes les commandes
+          : cmd.status !== "annuler" // Sinon, exclure les commandes annulées
+        : cmd.status === selectedStatus;
     const search = searchTerm.toLowerCase();
     const matchSearch =
       cmd.nom.toLowerCase().includes(search) || cmd.email.toLowerCase().includes(search);
@@ -337,6 +343,15 @@ const GestionCommandesPage = () => {
           >
             <FaSync className="mr-2" />
             Actualiser
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowCanceled(!showCanceled)}
+            className="flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg shadow-md hover:from-gray-700 hover:to-gray-800 focus:ring-4 focus:ring-gray-300 transition-all duration-300"
+            aria-label={showCanceled ? "Masquer les commandes annulées" : "Afficher les commandes annulées"}
+          >
+            {showCanceled ? "Masquer Annulées" : "Voir Annulées"}
           </motion.button>
         </div>
 
