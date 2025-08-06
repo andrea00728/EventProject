@@ -230,10 +230,85 @@ const router=createBrowserRouter([
         element: <StatistiquesPage />,
       },
       {
+<<<<<<< HEAD
           path: "/revenu",
           element: <RevenuPage />,
       }
 
+=======
+        path: "/evenement/tables",
+        element: <TableLayout />,
+        children: [
+          {
+            path: "creationTable",
+            element: <Tablecreation />,
+          },
+          {
+            path: "",
+            element: <Listetable />,
+          },
+          {
+            path: "3Dtable",
+            element: <Affichage3dTable />,
+          },
+        ],
+      },
+      {
+        path: "/evenement/evenement",
+        element: <EventLayout />,
+        children: [
+          {
+            path: "eventpadding",
+            element: <EventPending />,
+          },
+          {
+            path: "",
+            element: <EventAccept />,
+          },
+        ],
+      },
+      {
+        path: "/evenement/personnel",
+        element: <OrganisationPersonnelLayout />,
+        children: [
+          {
+            path: "createPersonnel",
+            element: <CreationPersonnel />,
+          },
+          {
+            path: "",
+            element: <DashboardPersonnel />,
+          },
+        ],
+      },
+      {
+        path: "/evenement/restauration",
+        element: <MenuForm/>,
+        // children: [
+        //   {
+        //     path: "createPersonnel",
+        //     element: <CreationPersonnel />,
+        //   },
+        //   {
+        //     path: "",
+        //     element: <DashboardPersonnel />,
+        //   },
+        // ],
+      },
+      {
+        path: "/paypal-success",
+        element: <PaypalSuccess />,
+      },
+      ,
+      {
+        path: "/forfait/success",
+        element: <ForfaitSuccess />,
+      },
+      {
+        path: "/forfaits",
+        element: <ForfaitActive />,
+      },
+>>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
     ],
   },
 
@@ -479,7 +554,11 @@ const router=createBrowserRouter([
     path: "/menutitemform",
     element: <MenuItemForm />,
   },
+<<<<<<< HEAD
 
+=======
+  ,
+>>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
   {
     path: "/systemprompt",
     element: <SystemPromptManager />,
@@ -496,10 +575,13 @@ const router=createBrowserRouter([
     path: "/menutitemform",
     element: <MenuItemForm />,
   },
+<<<<<<< HEAD
   {
     path: "/login-site/super/admin",
     element: <LoginPage />,
   },
+=======
+>>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
 ]);
 
 export default router;

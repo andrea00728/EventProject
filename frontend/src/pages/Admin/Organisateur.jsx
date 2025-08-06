@@ -545,6 +545,7 @@ export default function Organisateur() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   return (
+<<<<<<< HEAD
     <div
       className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${bgClass}`}
     >
@@ -578,6 +579,13 @@ export default function Organisateur() {
           trend={12}
           color="purple"
         />
+=======
+    <div className="py-10 px-8 h-screen overflow-auto flex flex-col">
+      <div>
+        <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center">
+          <FaUsers className="mr-3" /> Liste des organisateurs
+        </h2>
+>>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
