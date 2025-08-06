@@ -389,22 +389,12 @@ export default function EvenementAd() {
     handleDownloadXLSX(page, "liste_evenements");
   };
 
-<<<<<<< HEAD
   // Statistiques
   const stats = useMemo(() => {
     const total = data.length;
     const active = data.filter(e => e.status === 'active').length;
     const totalParticipants = data.reduce((sum, e) => sum + (e.participants || 0), 0);
     const avgParticipants = total > 0 ? Math.round(totalParticipants / total) : 0;
-=======
-  return (
-    <div className="p-8 h-screen overflow-auto flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-200">
-      <div>
-        <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center">
-          <MdCalendarToday className="mr-3" /> Liste des événements
-        </h2>
-      </div>
->>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
 
     return {
       total,
@@ -545,59 +535,8 @@ export default function EvenementAd() {
 
       <div className="p-4 overflow-auto">
         {loading ? (
-<<<<<<< HEAD
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-=======
-          <p className="text-center text-lg py-5">Chargement...</p>
-        ) : error ? (
-          <p className="text-center text-lg py-5 text-red-600">{error}</p>
-        ) : filteredData.length === 0 ? (
-          <p className="text-center text-lg py-5">Aucun événement trouvé.</p>
-        ) : (
-          <div className="h-[600px] w-full overflow-auto">
-            <DataGrid
-              rows={filteredData.map((event, index) => ({
-                id: index,
-                nom: event.nom,
-                type: event.type,
-                theme: event.theme,
-                date: formatDate(event.date),
-                date_fin: formatDate(event.date_fin),
-                localisation: event.location.nom,
-                organisateur: event.user.name,
-                action: index,
-              }))}
-              columns={[
-                { field: "nom", headerName: "Nom", flex: 1 },
-                { field: "type", headerName: "Type", flex: 1 },
-                { field: "theme", headerName: "Thème", flex: 1 },
-                { field: "date", headerName: "Date début", flex: 1 },
-                { field: "date_fin", headerName: "Date fin", flex: 1 },
-                { field: "localisation", headerName: "Localisation", flex: 1 },
-                { field: "organisateur", headerName: "Organisateur", flex: 1 },
-                {
-                  field: "action",
-                  headerName: "Action",
-                  flex: 1,
-                  sortable: false,
-                  renderCell: (params) => (
-                    <button
-                      onClick={() => openModal(params.value)}
-                      className="group flex items-center mt-2 gap-2 bg-[#cfc6c4] hover:bg-[#bfb3b1] text-sm text-black font-medium py-1.5 px-4 rounded-full shadow-md transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#cfc6c4]"
-                    >
-                      <FaEye className="text-gray-700 group-hover:text-black transition-transform duration-200 group-hover:scale-110" />
-                      <span className="tracking-wide">Voir détail</span>
-                    </button>
-                  ),
-                },
-              ]}
-              pageSize={5}
-              rowsPerPageOptions={[5, 10, 20]}
-              disableSelectionOnClick
-              autoHeight
-            />
->>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
           </div>
         ) : error ? (
           <div className="text-center py-12">

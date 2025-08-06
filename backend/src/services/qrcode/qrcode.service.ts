@@ -39,11 +39,9 @@ export class QrCodeService {
       await this.shortLinkRepository.save(shortLink);
     }
 
-<<<<<<< HEAD
+
     const shortUrl = `http://localhost:5173/menulist/${shortLink.slug}`;
-=======
-    const shortUrl = `http://localhost:3000/menulist/${shortLink.slug}`;
->>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
+
     return QRCode.toDataURL(shortUrl);
   }
 }

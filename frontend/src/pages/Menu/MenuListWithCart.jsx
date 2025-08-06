@@ -8,11 +8,7 @@ import CartDrawer from './CartDrawer';
 import InvoiceModal from './InvoiceModal';
 
 const MenuListWithCart = () => {
-<<<<<<< HEAD
   const slug = useParams();
-=======
-  const  slug  = useParams();
->>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
   const navigate = useNavigate();
 
   const [menus, setMenus] = useState([]);
@@ -44,11 +40,7 @@ const MenuListWithCart = () => {
       console.log(slug);
 
       try {
-<<<<<<< HEAD
         const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/qr/${slug.slug}/info`);
-=======
-        const response = await axios.get(`http://localhost:3000/qr/${slug.slug}/info`);
->>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
         console.log(response.data);
         setSelectedEvent(response.data.eventId);
         setSelectedTable(response.data.tableId);
@@ -68,39 +60,36 @@ const MenuListWithCart = () => {
 
   // Charger les menus
   useEffect(() => {
-    const fetchMenus = async () => {
-      if (!selectedEvent) return;
+  const fetchMenus = async () => {
+    if (!selectedEvent) return;
 
-      try {
-        setIsLoading(true);
-<<<<<<< HEAD
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`, {
-=======
-        const res = await axios.get(`http://localhost:3000/menus/event/${selectedEvent}`, {
->>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    try {
+      setIsLoading(true);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        const formattedMenus = res.data.map(menu => ({
-          ...menu,
-          items: menu.items.map(item => ({
-            ...item,
-            price: parseFloat(item.price) || 0,
-          })),
-        }));
+      // On suppose que res.data est un tableau de menus avec items
+      const formattedMenus = res.data.map(menu => ({
+        ...menu,
+        items: menu.items.map(item => ({
+          ...item,
+        })),
+      }));
 
-        setMenus(formattedMenus);
-      } catch (error) {
-        console.error(error);
-        setMessage('Oups, impossible de charger les menus.');
-        setTimeout(() => setMessage(''), 3000);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      setMenus(formattedMenus);
+    } catch (error) {
+      console.error(error);
+      setMessage('Oups, impossible de charger les menus.');
+      setTimeout(() => setMessage(''), 3000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    if (selectedEvent) fetchMenus();
-  }, [selectedEvent, token]);
+  fetchMenus();
+}, [selectedEvent, token]);
+
 
   // Fonctions Panier
   const addToCart = (item) => {
@@ -233,12 +222,8 @@ const MenuListWithCart = () => {
         cartLength={cart.length}
         onCartOpen={() => setIsCartOpen(true)}
       />
-
-<<<<<<< HEAD
       {/* <div className="flex flex-wrap gap-4 mb-6 text-sm">
-=======
-      <div className="flex flex-wrap gap-4 mb-6 text-sm">
->>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
+
         <input
           type="number"
           placeholder="Prix min"
@@ -246,11 +231,7 @@ const MenuListWithCart = () => {
           onChange={(e) => setMinPrice(e.target.value)}
           className="px-2 py-1 border rounded-md shadow-sm"
         />
-        <input
           type="number"
-          placeholder="Prix max"
-          value={maxPrice}
-          onChange={(e) => setMaxPrice(e.target.value)}
           className="px-2 py-1 border rounded-md shadow-sm"
         />
       </div> */}
@@ -267,29 +248,10 @@ const MenuListWithCart = () => {
         </div>
       ) : (
         <>
-<<<<<<< HEAD
           <div>
             <h2 className="text-2xl font-bold mb-4">Menu pour l'événement {selectedEvent}</h2>
             <div className='w-sceen flex items-center justify-center'>
               <MenuGrid menus={paginatedMenus} addToCart={addToCart} formatPrice={formatPrice} />
-=======
-          <h2 className="text-2xl font-bold mb-4">Menu pour l'événement {selectedEvent}</h2>
-          <MenuGrid menus={paginatedMenus} addToCart={addToCart} formatPrice={formatPrice} />
-
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-8 gap-2">
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <button
-                  key={i}
-                  className={`px-3 py-1 rounded ${
-                    currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'
-                  }`}
-                  onClick={() => setCurrentPage(i + 1)}
-                >
-                  {i + 1}
-                </button>
-              ))}
->>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
             </div>
 
             {totalPages > 1 && (

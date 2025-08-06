@@ -244,13 +244,9 @@ const ModalManager = ({ isOpen, onClose, data, managerName }) => {
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
         className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 overflow-y-auto py-10"
       >
-<<<<<<< HEAD
         <div className={`rounded-xl shadow-xl p-6 w-full max-w-6xl mx-4 max-h-[90vh] overflow-auto ${
           darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-800"
         }`}>
-=======
-        <div className="bg-white rounded-lg shadow-xl p-6 w-full h-screen mx-4 relative">
->>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
           {/* En-tête */}
           <div className="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
             <div>

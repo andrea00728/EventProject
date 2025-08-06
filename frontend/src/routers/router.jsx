@@ -74,6 +74,7 @@ import Statique from "../pages/Admin/statistique.jsx";
 import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Event.jsx";
 import LoginPage from "../pages/Admin/LoginPage.jsx";
 import UserStats from "../pages/Admin/cards.jsx";
+import Tablecreation from "../pages/TableOrganisation/Tablecreation.jsx";
 
 
 const router=createBrowserRouter([
@@ -230,12 +231,6 @@ const router=createBrowserRouter([
         element: <StatistiquesPage />,
       },
       {
-<<<<<<< HEAD
-          path: "/revenu",
-          element: <RevenuPage />,
-      }
-
-=======
         path: "/evenement/tables",
         element: <TableLayout />,
         children: [
@@ -308,7 +303,6 @@ const router=createBrowserRouter([
         path: "/forfaits",
         element: <ForfaitActive />,
       },
->>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
     ],
   },
 
@@ -554,19 +548,10 @@ const router=createBrowserRouter([
     path: "/menutitemform",
     element: <MenuItemForm />,
   },
-<<<<<<< HEAD
-
-=======
-  ,
->>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
   {
     path: "/systemprompt",
-    element: <SystemPromptManager />,
   },
-  {
-    path: "/menuform",
-    element: <MenuForm />,
-  },
+
   {
     path: "/menulist/:slug",
     element: <MenuListWithCart />,
@@ -575,13 +560,10 @@ const router=createBrowserRouter([
     path: "/menutitemform",
     element: <MenuItemForm />,
   },
-<<<<<<< HEAD
   {
     path: "/login-site/super/admin",
     element: <LoginPage />,
   },
-=======
->>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
 ]);
 
 export default router;

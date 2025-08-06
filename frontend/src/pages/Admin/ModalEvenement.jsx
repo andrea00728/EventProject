@@ -432,21 +432,7 @@ function Invites({ data, darkMode, isMobile }) {
             }}
           />
         </div>
-<<<<<<< HEAD
       )}
-=======
-      </div>
-
-      <div className="py-4 overflow-y-auto h-[600px]">
-        <DataGrid
-          rows={filteredRows}
-          columns={columns}
-          pageSize={10}
-          rowsPerPageOptions={[]}
-          autoHeight
-        />
-      </div>
->>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
     </div>
   );
 }

@@ -220,7 +220,6 @@ export default function Dashboard() {
     : "bg-gray-50 text-gray-800";
 
   return (
-<<<<<<< HEAD
     <div
       className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${pageBg}`}
     >
@@ -250,14 +249,6 @@ export default function Dashboard() {
               </motion.div>
             ))}
           </div>
-=======
-    <div className="p-8 h-screen overflow-y-auto bg-gradient-to-r from-white to-gray-50">
-      <div>
-        <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center">
-          <MdDashboard className="mr-3" /> Tableau de bord
-        </h2>
-      </div>
->>>>>>> 25b71f1 (code nafindra tam pass syvlvano)
 
           <div className="flex flex-wrap gap-6 justify-center">
             <motion.div
