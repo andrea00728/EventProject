@@ -115,7 +115,7 @@ import { NotificationEntity } from './entities/notification.entity';
             Commentaire,
             Satisfaction,
             NotificationEntity,
-            Favorite
+            Favorite,
           ],
           synchronize: true,
         };

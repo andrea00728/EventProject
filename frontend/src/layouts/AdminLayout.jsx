@@ -27,6 +27,7 @@ import Dropdown from "./Dropdown";
 import LogoutModal from "../pages/Admin/LogoutModal";
 import { logout } from "../services/firebase/authService";
 
+
 export default function AdminLayout() {
   const { token, role, isLoading, setToken, setUser } = useStateContext();
   const location = useLocation();
@@ -245,6 +246,7 @@ export default function AdminLayout() {
     const notifRef = useRef(null);
     const msgRef = useRef(null);
     const profileRef = useRef(null);
+    const [notifications, setNotifications] = useState([]); // État pour les notifications dynamiques
 
     useEffect(() => {
       const handleClickOutside = (event) => {
@@ -263,12 +265,27 @@ export default function AdminLayout() {
         document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const notifications = [
-      "Nouvel organisateur inscrit",
-      "Événement 'Conférence Tech' mis à jour",
-      "Paiement reçu pour 'Atelier React'",
-      "Nouveau message de support",
-    ];
+
+    // Récupération des notifications depuis l'API
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/notifications`);
+        const data = await response.json();
+        setNotifications(data);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des notifications :", error);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
+    // const notifications = [
+    //   "Nouvel organisateur inscrit",
+    //   "Événement 'Conférence Tech' mis à jour",
+    //   "Paiement reçu pour 'Atelier React'",
+    //   "Nouveau message de support",
+    // ];
 
     const messages = [
       { from: "Alice", text: "Bonjour, j'ai une question sur l'événement." },

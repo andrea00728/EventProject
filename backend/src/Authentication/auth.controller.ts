@@ -6,6 +6,7 @@ import { CreateUserDto } from './dto/create-auth.dto';
 import { User } from './entities/auth.entity';
 import { FirebaseAuthGuard } from 'src/guards/firebase-auth.guard';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { NotificationEntity } from 'src/entities/notification.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -194,5 +195,13 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Retourne les inscriptions par mois' })
   async getMonthlyRegistrations(): Promise<{ month: string; count: number }[]> {
     return this.authService.getMonthlyRegistrations();
+  }
+
+
+  @Get('notifications')
+  @ApiOperation({ summary: 'Obtenir les notifications récentes' })
+  @ApiResponse({ status: 200, description: 'Retourne les notifications' })
+  async getNotifications(): Promise<NotificationEntity[]> {
+    return this.authService.getNotifications();
   }
 }
