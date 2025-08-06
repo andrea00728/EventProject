@@ -96,3 +96,25 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+
+*************************************autre explication************************************************
+🧱 Architecture du backend
+Le backend de ce projet a été développé avec NestJS en suivant une architecture claire et modulaire basée sur les principes SOLID. Cette structure permet de garantir un code propre, maintenable et facilement extensible.
+
+Nous avons organisé notre code en plusieurs couches distinctes :
+
+🔸 Entité (Entity)
+Les entités représentent les modèles de données utilisés dans la base de données. Elles définissent les champs (propriétés) des objets métier tels que les événements, les invités, les tables, etc. Chaque entité peut contenir des relations avec d'autres entités (ex : un événement a plusieurs tables).
+
+🔸 DTO (Data Transfer Object)
+Les DTO sont des objets qui servent à transporter et valider les données entre le client et le serveur. Par exemple, lorsqu’on crée un événement, un DTO CreateEventDto permet de définir les champs attendus et de vérifier leur validité (ex : nom, date, etc.). Cela améliore la sécurité et évite les erreurs côté serveur.
+
+🔸 Service
+Les services contiennent toute la logique métier du backend. C’est ici que l’on applique les règles fonctionnelles (ex : création d’un événement, affectation d’une table à un invité, etc.). Les services utilisent les entités et effectuent les opérations de lecture/écriture dans la base de données. Ils sont ensuite appelés par les contrôleurs.
+
+🔸 Contrôleur (Controller)
+Les contrôleurs sont les points d’entrée des requêtes HTTP (API REST). Ils reçoivent les demandes du frontend, appellent les services nécessaires, puis renvoient une réponse au client. Ils ne contiennent aucune logique métier, uniquement des appels aux services et la gestion des réponses.
+
+🔸 Gateway (WebSocket Gateway)
+Pour les fonctionnalités en temps réel, nous utilisons des WebSockets via les gateways de NestJS. Cela permet, par exemple, de mettre à jour en direct la disposition des tables ou la liste des invités dès qu’une modification a lieu, sans recharger la page côté utilisateur.

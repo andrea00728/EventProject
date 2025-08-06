@@ -1,17 +1,20 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { ContextProvider } from "./context/ContextProvider.jsx";
-import { RouterProvider } from "react-router-dom";
-import router from "./routers/router.jsx";
-import "./App.css";
-import { DarkModeProvider } from "./context/DarkModeContext.jsx";
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { RouterProvider } from 'react-router-dom'
 
-createRoot(document.getElementById("root")).render(
+import { ContextProvider } from './context/ContextProvider.jsx'
+import { DarkModeProvider } from './context/DarkModeContext.jsx'
+
+import router from './routers/router.jsx'
+import './App.css'
+
+// Point d'entrée de l'application React
+createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ContextProvider>
-      <DarkModeProvider>
+    <DarkModeProvider>
+      <ContextProvider>
         <RouterProvider router={router} />
-      </DarkModeProvider>
-    </ContextProvider>
+      </ContextProvider>
+    </DarkModeProvider>
   </StrictMode>
-);
+)

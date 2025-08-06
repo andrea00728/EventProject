@@ -1,4 +1,5 @@
 import { Evenement } from 'src/entities/Evenement';
+import { Favorite } from 'src/entities/Favorite';
 import { Forfait } from 'src/entities/Forfait';
 import { Entity, Column, PrimaryColumn, ManyToMany, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
@@ -55,6 +56,10 @@ export class User {
 
   @Column({ type: 'timestamp', nullable: true })
   lastLogout: Date;
+
+
+  @OneToMany(() => Favorite, (favorite) => favorite.user, { onDelete: 'CASCADE' })
+  favorites: Favorite[];
 
 }
 

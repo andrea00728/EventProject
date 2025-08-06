@@ -26,8 +26,9 @@ export class AuthService {
   async validateUser(profile: any): Promise<any> {
     const { emails, displayName, photos } = profile;
     const email = emails[0].value;
-    console.log('Google Profile Data:', { email, displayName, photos }); // Log pour déboguer
+    console.log('Google Profile Data:', { email, displayName, photos });
 
+    // Vérifier si l'utilisateur est dans la table Personnel
     const personnel = await this.personnelRepository.findOne({
       where: { email },
       relations: ['evenement'],
@@ -35,6 +36,7 @@ export class AuthService {
 
     const isInPersonnel = !!personnel;
     const isdetectedRole = isInPersonnel ? personnel.role : 'organisateur';
+    console.log('Rôle détecté:', { isInPersonnel, isdetectedRole });
 
     let user = await this.userRepository.findOne({ where: { email } });
 
@@ -55,17 +57,21 @@ export class AuthService {
       });
 
       await this.userRepository.save(user);
+      console.log('Nouvel utilisateur créé:', { id: user.id, email, role: user.role });
     } else {
-      // Mettre à jour name et photo si nécessaire
-      if (user.name !== displayName || user.photo !== (photos?.[0]?.value || null)) {
-        user.name = displayName || null;
-        user.photo = photos?.[0]?.value || null;
-        await this.userRepository.save(user);
-      }
+      // Mettre à jour name, photo et role
+      user.name = displayName || null;
+      user.photo = photos?.[0]?.value || null;
+      user.role = isdetectedRole; // Synchroniser le rôle
+      await this.userRepository.save(user);
+      console.log('Utilisateur mis à jour:', { id: user.id, email, role: user.role });
     }
 
     return {
-      ...user,
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      photo: user.photo,
       role: isdetectedRole,
       isInPersonnel,
     };
@@ -79,7 +85,7 @@ export class AuthService {
       name: user.name,
       photo: user.photo,
     };
-    console.log('JWT Payload:', payload); // Log pour déboguer
+    console.log('JWT Payload:', payload);
     return {
       access_token: this.jwtService.sign(payload),
     };
@@ -121,49 +127,26 @@ export class AuthService {
     return { message: 'Organisateur supprimé avec succès' };
   }
 
-  async updateStatus(userId: string, isOnline: boolean) {
-    const manager = await this.userRepository.findOne({
-      where: { id : userId },
-    });
-
-    if (!manager) {
-      throw new NotFoundException(`Manager avec ID ${userId} non trouvé`);
-    }
-
-    await this.userRepository.update(userId, {
-      isOnline,
-      ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
-    });
+   async updateStatus(userId: string, isOnline: boolean): Promise<void> {
   }
 
   async getIdForToken(userEmail) {
-    if(!userEmail) {
+    if (!userEmail) {
       return "Id non trouvé";
     }
 
     const user = await this.userRepository.findOne({
-      where : {
-        email : userEmail
-      }
-    })
+      where: { email: userEmail },
+    });
 
-    if ( ! user) return "Organisateur non trouvé"
+    if (!user) return "Organisateur non trouvé";
 
     return user.id;
   }
 
-    /**
-   * 
-   * @returns 
-   * 
-   * nombre totale d'organisateur
-   */
-
-  async findCountUsers():Promise<number>{
-    const count= this.userRepository.count({
-      where: {
-        role: 'organisateur',
-      },
+  async findCountUsers(): Promise<number> {
+    const count = await this.userRepository.count({
+      where: { role: 'organisateur' },
     });
     return count;
   }

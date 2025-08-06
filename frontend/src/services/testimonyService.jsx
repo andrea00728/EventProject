@@ -83,3 +83,14 @@ export const findCountSatisfied =async ()=>{
     const response  = await  axiosClient.get('/commentaire/count-satisfaction');
     return response.data;
 }
+
+/**
+ * @returns {Promise<Object>} - Le pourcentage de satisfaction des commentaires.
+ * 
+ * Ce service récupère le pourcentage de satisfaction basé sur les commentaires.
+ */
+
+export const findCount_pourcentage =async ()=>{
+    const response  = await  axiosClient.get('/commentaire/count-pourcentage-satisfaction');
+    return response.data;
+}

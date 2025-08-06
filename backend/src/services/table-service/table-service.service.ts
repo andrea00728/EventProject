@@ -21,11 +21,63 @@ export class TableService {
     private readonly notificationService:NotificationService,
   ) {}
 
-async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEvent> {
+// async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEvent> {
+//   if (!dto || dto.nom === undefined || dto.capacite === undefined || !dto.eventId) {
+//     throw new BadRequestException('Données de création de table incomplètes');
+//   }
+//   // Vérifier que l'événement existe et appartient bien à l'utilisateur
+//   const event = await this.eventRepository.findOne({
+//     where: {
+//       id: dto.eventId,
+//       user: { id: utilisateurId }
+//     },
+//     relations: ['user']
+//   });
+
+//   if (!event) {
+//     throw new UnauthorizedException("Cet événement n'appartient pas à l'utilisateur connecté");
+//   }
+
+//   // Vérification du numéro de table déjà utilisé
+//   const existingTable = await this.tableRepository.findOne({
+//     where: {
+//       nom: dto.nom,
+//       event: { id: dto.eventId }
+//     }
+//   });
+//   if (existingTable) {
+//     throw new BadRequestException("Le numéro de table est déjà utilisé pour cet événement.");
+//   }
+
+//   const table = this.tableRepository.create({
+//     nom: dto.nom,
+//     capacite: dto.capacite,
+//     type: dto.type,
+//     position: dto.position || { left: 0, top: 0 },
+//     event
+//   });
+
+//     // Sauvegarder la table pour obtenir un ID
+//   const savedTable = await this.tableRepository.save(table);
+
+//   // Générer le QR code pour la table
+//   savedTable.qrCode = await this.qrCodeService.generateQrCodeForTable(dto.eventId, savedTable.id)
+  
+//   const table_event=await this.tableRepository.save(table);
+//   await this.notificationService.notifyAll(
+//     'Nouvelle table ajoutée',
+//     `Une nouvelle table numero ${table_event.nom  } a été ajouté pour l'événement ${event.nom}.`,
+//   );
+
+//   return table_event;
+// }
+
+
+async createTable(dto: CreateTableDto & { nombre?: number }, utilisateurId: string): Promise<TableEvent[]> {
   if (!dto || dto.nom === undefined || dto.capacite === undefined || !dto.eventId) {
     throw new BadRequestException('Données de création de table incomplètes');
   }
-  // Vérifier que l'événement existe et appartient bien à l'utilisateur
+
   const event = await this.eventRepository.findOne({
     where: {
       id: dto.eventId,
@@ -38,38 +90,42 @@ async createTable(dto: CreateTableDto, utilisateurId: string): Promise<TableEven
     throw new UnauthorizedException("Cet événement n'appartient pas à l'utilisateur connecté");
   }
 
-  // Vérification du numéro de table déjà utilisé
-  const existingTable = await this.tableRepository.findOne({
-    where: {
-      nom: dto.nom,
-      event: { id: dto.eventId }
-    }
-  });
-  if (existingTable) {
-    throw new BadRequestException("Le numéro de table est déjà utilisé pour cet événement.");
+  const tables: TableEvent[] = [];
+  const nombre = dto.nombre || 1;
+
+  for (let i = 1; i <= nombre; i++) {
+    const nomTable = `${dto.nom}-${i}`;
+
+    const existing = await this.tableRepository.findOne({
+      where: {
+        nom: nomTable,
+        event: { id: dto.eventId }
+      }
+    });
+
+    if (existing) continue;
+
+    const table = this.tableRepository.create({
+      nom: nomTable,
+      capacite: dto.capacite,
+      type: dto.type,
+      position: dto.position || { left: 0, top: 0 },
+      event
+    });
+
+    const saved = await this.tableRepository.save(table);
+    saved.qrCode = await this.qrCodeService.generateQrCodeForTable(dto.eventId, saved.id);
+    await this.tableRepository.save(saved);
+
+    tables.push(saved);
   }
 
-  const table = this.tableRepository.create({
-    nom: dto.nom,
-    capacite: dto.capacite,
-    type: dto.type,
-    position: dto.position || { left: 0, top: 0 },
-    event
-  });
-
-    // Sauvegarder la table pour obtenir un ID
-  const savedTable = await this.tableRepository.save(table);
-
-  // Générer le QR code pour la table
-  savedTable.qrCode = await this.qrCodeService.generateQrCodeForTable(dto.eventId, savedTable.id)
-  
-  const table_event=await this.tableRepository.save(table);
   await this.notificationService.notifyAll(
-    'Nouvelle table ajoutée',
-    `Une nouvelle table numero ${table_event.nom  } a été ajouté pour l'événement ${event.nom}.`,
+    'Tables ajoutées',
+    `${tables.length} nouvelles tables ont été ajoutées à l’événement ${event.nom}.`,
   );
 
-  return table_event;
+  return tables;
 }
 
 

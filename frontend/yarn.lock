@@ -211,11 +211,13 @@
     "@babel/helper-string-parser" "^7.27.1"
     "@babel/helper-validator-identifier" "^7.27.1"
 
-"@cesium/engine@^17.0.0":
-  version "17.0.0"
-  resolved "https://registry.npmjs.org/@cesium/engine/-/engine-17.0.0.tgz"
-  integrity sha512-bvLWmWVY4QX9rfcx/zfBzA8R1xR8KzmaCDOVL6pFkNZeYmRtt8JN//IICYR3P45lznlcb0Dklw1iCb37t4tvLA==
+"@cesium/engine@^18.3.0":
+  version "18.3.0"
+  resolved "https://registry.npmjs.org/@cesium/engine/-/engine-18.3.0.tgz"
+  integrity sha512-ILNA1a+RX2gNsQGyF2zq27Ucaj5UMj19paYoJbKxX/U0QtxLuFUhJ2yg6wr2eBtC3X3kd475o7kAx0LpfCZxpg==
   dependencies:
+    "@cesium/wasm-splats" "^0.1.0-alpha.2"
+    "@spz-loader/core" "0.1.0"
     "@tweenjs/tween.js" "^25.0.0"
     "@zip.js/zip.js" "^2.7.34"
     autolinker "^4.0.0"
@@ -229,19 +231,24 @@
     ktx-parse "^1.0.0"
     lerc "^2.0.0"
     mersenne-twister "^1.1.0"
-    meshoptimizer "^0.23.0"
+    meshoptimizer "^0.24.0"
     pako "^2.0.4"
     protobufjs "^7.1.0"
-    rbush "3.0.1"
+    rbush "^4.0.1"
     topojson-client "^3.1.0"
     urijs "^1.19.7"
 
-"@cesium/widgets@^12.0.0":
-  version "12.0.0"
-  resolved "https://registry.npmjs.org/@cesium/widgets/-/widgets-12.0.0.tgz"
-  integrity sha512-5Re06LU8lRPEZInHrpOCGBiLoj9VNJ0JJtPrzdnw1qhIDpf3v1W75OJf59k8CCFvUYkZzuTTi8qTVbpzmcbOuw==
+"@cesium/wasm-splats@^0.1.0-alpha.2":
+  version "0.1.0-alpha.2"
+  resolved "https://registry.npmjs.org/@cesium/wasm-splats/-/wasm-splats-0.1.0-alpha.2.tgz"
+  integrity sha512-t9pMkknv31hhIbLpMa8yPvmqfpvs5UkUjgqlQv9SeO8VerCXOYnyP8/486BDaFrztM0A7FMbRjsXtNeKvqQghA==
+
+"@cesium/widgets@^12.3.0":
+  version "12.3.0"
+  resolved "https://registry.npmjs.org/@cesium/widgets/-/widgets-12.3.0.tgz"
+  integrity sha512-5Aa54lCrdywogY1ypOwRmRrb72LVrPvrOzOrcYeQ50DDZSs5hCxVXWecYYsq3qoeK0buA9wP/5TBWE7RlsV7OA==
   dependencies:
-    "@cesium/engine" "^17.0.0"
+    "@cesium/engine" "^18.3.0"
     nosleep.js "^0.12.0"
 
 "@dnd-kit/accessibility@^3.1.1":
@@ -393,10 +400,15 @@
   resolved "https://registry.npmjs.org/@emotion/weak-memoize/-/weak-memoize-0.4.0.tgz"
   integrity sha512-snKqtPW01tN0ui7yu9rGv69aJXr/a/Ywvl11sUjNtEcRc+ng/mQriFL0wLXMef74iHa/EkftbDzU9F8iFbH+zg==
 
-"@esbuild/win32-x64@0.25.5":
-  version "0.25.5"
-  resolved "https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.25.5.tgz"
-  integrity sha512-TXv6YnJ8ZMVdX+SXWVBo/0p8LTcrUYngpWjvm91TMjjBQii7Oz11Lw5lbDV5Y0TzuhSJHwiH4hEtC1I42mMS0g==
+"@esbuild-plugins/node-globals-polyfill@^0.2.3":
+  version "0.2.3"
+  resolved "https://registry.npmjs.org/@esbuild-plugins/node-globals-polyfill/-/node-globals-polyfill-0.2.3.tgz"
+  integrity sha512-r3MIryXDeXDOZh7ih1l/yE9ZLORCd5e8vWg02azWRGj5SPTuoh69A2AIyn0Z31V/kHBfZ4HgWJ+OK3GTTwLmnw==
+
+"@esbuild/win32-x64@0.25.8":
+  version "0.25.8"
+  resolved "https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.25.8.tgz"
+  integrity sha512-cn3Yr7+OaaZq1c+2pe+8yxC8E144SReCQjN6/2ynubzYjvyqZjTXfQJpAcQpsdJq3My7XADANiYGHoFC69pLQw==
 
 "@eslint-community/eslint-utils@^4.2.0":
   version "4.7.0"
@@ -976,6 +988,11 @@
   version "3.1.2"
   resolved "https://registry.npmjs.org/@socket.io/component-emitter/-/component-emitter-3.1.2.tgz"
   integrity sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA==
+
+"@spz-loader/core@0.1.0":
+  version "0.1.0"
+  resolved "https://registry.npmjs.org/@spz-loader/core/-/core-0.1.0.tgz"
+  integrity sha512-atqn/DLy0xNkqRgz3l/5CD12y1M44JdjTmAFQYDKvzf0pIyj+NlJ/PeCRlSJQfXmZ2JndNOCpcGOFVldANf/EA==
 
 "@standard-schema/spec@^1.0.0":
   version "1.0.0"
@@ -1633,12 +1650,12 @@ canvg@^3.0.11:
     svg-pathdata "^6.0.3"
 
 cesium@1.x:
-  version "1.129.0"
-  resolved "https://registry.npmjs.org/cesium/-/cesium-1.129.0.tgz"
-  integrity sha512-XDEJKLnr8s5/Q/1wcdZVEJCgx+xbgfDzkVKd9OxRZzYttazip6KffusMHexRdExVMPfDcTohuqcuHNxj9CUNFA==
+  version "1.131.0"
+  resolved "https://registry.npmjs.org/cesium/-/cesium-1.131.0.tgz"
+  integrity sha512-4OVlpds2TR6elsHLfVAp5FOqxjNbvKA7Ff5n3yuwDBFKgYgc6JErbpBSjY31pBI2ZJSWhKLknCNjrTR8FlVTFg==
   dependencies:
-    "@cesium/engine" "^17.0.0"
-    "@cesium/widgets" "^12.0.0"
+    "@cesium/engine" "^18.3.0"
+    "@cesium/widgets" "^12.3.0"
 
 cfb@~1.2.1:
   version "1.2.2"
@@ -1776,6 +1793,11 @@ concat-map@0.0.1:
   version "0.0.1"
   resolved "https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz"
   integrity sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==
+
+connect-history-api-fallback@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.npmjs.org/connect-history-api-fallback/-/connect-history-api-fallback-2.0.0.tgz"
+  integrity sha512-U73+6lQFmfiNPrYbXqr6kZ1i1wiRqXnp2nhMsINseWXO8lDau0LGEffJ8kQi4EjLZympVgRdvqjAgiZ1tgzDDA==
 
 convert-source-map@^1.5.0:
   version "1.9.0"
@@ -2299,36 +2321,37 @@ es6-promise@^4.0.2:
   resolved "https://registry.npmjs.org/es6-promise/-/es6-promise-4.2.8.tgz"
   integrity sha512-HJDGx5daxeIvxdBxvG2cb9g4tEvwIk3i8+nhX0yGrYmZUzbkdg8QbDevheDB8gd0//uPj4c1EQua8Q+MViT0/w==
 
-esbuild@^0.25.0:
-  version "0.25.5"
-  resolved "https://registry.npmjs.org/esbuild/-/esbuild-0.25.5.tgz"
-  integrity sha512-P8OtKZRv/5J5hhz0cUAdu/cLuPIKXpQl1R9pZtvmHWQvrAUVd0UNIPT4IB4W3rNOqVO0rlqHmCIbSwxh/c9yUQ==
+esbuild@*, esbuild@^0.25.0:
+  version "0.25.8"
+  resolved "https://registry.npmjs.org/esbuild/-/esbuild-0.25.8.tgz"
+  integrity sha512-vVC0USHGtMi8+R4Kz8rt6JhEWLxsv9Rnu/lGYbPR8u47B+DCBksq9JarW0zOO7bs37hyOK1l2/oqtbciutL5+Q==
   optionalDependencies:
-    "@esbuild/aix-ppc64" "0.25.5"
-    "@esbuild/android-arm" "0.25.5"
-    "@esbuild/android-arm64" "0.25.5"
-    "@esbuild/android-x64" "0.25.5"
-    "@esbuild/darwin-arm64" "0.25.5"
-    "@esbuild/darwin-x64" "0.25.5"
-    "@esbuild/freebsd-arm64" "0.25.5"
-    "@esbuild/freebsd-x64" "0.25.5"
-    "@esbuild/linux-arm" "0.25.5"
-    "@esbuild/linux-arm64" "0.25.5"
-    "@esbuild/linux-ia32" "0.25.5"
-    "@esbuild/linux-loong64" "0.25.5"
-    "@esbuild/linux-mips64el" "0.25.5"
-    "@esbuild/linux-ppc64" "0.25.5"
-    "@esbuild/linux-riscv64" "0.25.5"
-    "@esbuild/linux-s390x" "0.25.5"
-    "@esbuild/linux-x64" "0.25.5"
-    "@esbuild/netbsd-arm64" "0.25.5"
-    "@esbuild/netbsd-x64" "0.25.5"
-    "@esbuild/openbsd-arm64" "0.25.5"
-    "@esbuild/openbsd-x64" "0.25.5"
-    "@esbuild/sunos-x64" "0.25.5"
-    "@esbuild/win32-arm64" "0.25.5"
-    "@esbuild/win32-ia32" "0.25.5"
-    "@esbuild/win32-x64" "0.25.5"
+    "@esbuild/aix-ppc64" "0.25.8"
+    "@esbuild/android-arm" "0.25.8"
+    "@esbuild/android-arm64" "0.25.8"
+    "@esbuild/android-x64" "0.25.8"
+    "@esbuild/darwin-arm64" "0.25.8"
+    "@esbuild/darwin-x64" "0.25.8"
+    "@esbuild/freebsd-arm64" "0.25.8"
+    "@esbuild/freebsd-x64" "0.25.8"
+    "@esbuild/linux-arm" "0.25.8"
+    "@esbuild/linux-arm64" "0.25.8"
+    "@esbuild/linux-ia32" "0.25.8"
+    "@esbuild/linux-loong64" "0.25.8"
+    "@esbuild/linux-mips64el" "0.25.8"
+    "@esbuild/linux-ppc64" "0.25.8"
+    "@esbuild/linux-riscv64" "0.25.8"
+    "@esbuild/linux-s390x" "0.25.8"
+    "@esbuild/linux-x64" "0.25.8"
+    "@esbuild/netbsd-arm64" "0.25.8"
+    "@esbuild/netbsd-x64" "0.25.8"
+    "@esbuild/openbsd-arm64" "0.25.8"
+    "@esbuild/openbsd-x64" "0.25.8"
+    "@esbuild/openharmony-arm64" "0.25.8"
+    "@esbuild/sunos-x64" "0.25.8"
+    "@esbuild/win32-arm64" "0.25.8"
+    "@esbuild/win32-ia32" "0.25.8"
+    "@esbuild/win32-x64" "0.25.8"
 
 escalade@^3.2.0:
   version "3.2.0"
@@ -3314,7 +3337,12 @@ jsonfile@^6.0.1:
   optionalDependencies:
     graceful-fs "^4.1.6"
 
-jspdf@^3.0.1:
+jspdf-autotable@^5.0.2:
+  version "5.0.2"
+  resolved "https://registry.npmjs.org/jspdf-autotable/-/jspdf-autotable-5.0.2.tgz"
+  integrity sha512-YNKeB7qmx3pxOLcNeoqAv3qTS7KuvVwkFe5AduCawpop3NOkBUtqDToxNc225MlNecxT4kP2Zy3z/y/yvGdXUQ==
+
+"jspdf@^2 || ^3", jspdf@^3.0.1:
   version "3.0.1"
   resolved "https://registry.npmjs.org/jspdf/-/jspdf-3.0.1.tgz"
   integrity sha512-qaGIxqxetdoNnFQQXxTKUD9/Z7AloLaw94fFsOiJMxbfYdBbrBuhWmbzI8TVjrw7s3jBY1PFHofBKMV/wZPapg==
@@ -3470,10 +3498,10 @@ mersenne-twister@^1.1.0:
   resolved "https://registry.npmjs.org/mersenne-twister/-/mersenne-twister-1.1.0.tgz"
   integrity sha512-mUYWsMKNrm4lfygPkL3OfGzOPTR2DBlTkBNHM//F6hGp8cLThY897crAlk3/Jo17LEOOjQUrNAx6DvgO77QJkA==
 
-meshoptimizer@^0.23.0:
-  version "0.23.0"
-  resolved "https://registry.npmjs.org/meshoptimizer/-/meshoptimizer-0.23.0.tgz"
-  integrity sha512-zAZcfhHE3wBbwEN8MfCMI9PKRyOpz8491wcR2dxkv3IlNwDZrq2hEs5JZVtzfBrmjWhBZZtZZUO0OBSNFq5iUQ==
+meshoptimizer@^0.24.0:
+  version "0.24.0"
+  resolved "https://registry.npmjs.org/meshoptimizer/-/meshoptimizer-0.24.0.tgz"
+  integrity sha512-Iq/8cM5cK2B0P0QdKHexr30zEJn5sQxjXKtQJGp6LO7r1VUPwhgxau18pvybVDnEDsKE49GdlJYwqPX9A/P9Sw==
 
 micromatch@^4.0.8:
   version "4.0.8"
@@ -3885,10 +3913,10 @@ queue-microtask@^1.2.2:
   resolved "https://registry.npmjs.org/queue-microtask/-/queue-microtask-1.2.3.tgz"
   integrity sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==
 
-quickselect@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.npmjs.org/quickselect/-/quickselect-2.0.0.tgz"
-  integrity sha512-RKJ22hX8mHe3Y6wH/N3wCM6BWtjaxIyyUIkpHOvfFnxdI4yD4tBXEBKSbriGujF6jnSVkJrffuo6vxACiSSxIw==
+quickselect@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.npmjs.org/quickselect/-/quickselect-3.0.0.tgz"
+  integrity sha512-XdjUArbK4Bm5fLLvlm5KpTFOiOThgfWWI4axAZDWg4E/0mKdZyI9tNEfds27qCi1ze/vwTR16kvmmGhRra3c2g==
 
 raf@^3.4.1:
   version "3.4.1"
@@ -3897,12 +3925,12 @@ raf@^3.4.1:
   dependencies:
     performance-now "^2.1.0"
 
-rbush@3.0.1:
-  version "3.0.1"
-  resolved "https://registry.npmjs.org/rbush/-/rbush-3.0.1.tgz"
-  integrity sha512-XRaVO0YecOpEuIvbhbpTrZgoiI6xBlz6hnlr6EHhd+0x9ase6EmeN+hdwwUaJvLcsFFQ8iWVF1GAK1yB0BWi0w==
+rbush@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.npmjs.org/rbush/-/rbush-4.0.1.tgz"
+  integrity sha512-IP0UpfeWQujYC8Jg162rMNc01Rf0gWMMAb2Uxus/Q0qOFw4lCcq6ZnQEZwUoJqWyUGJ9th7JjwI4yIWo+uvoAQ==
   dependencies:
-    quickselect "^2.0.0"
+    quickselect "^3.0.0"
 
 react-chartjs-2@^5.3.0:
   version "5.3.0"

@@ -13,6 +13,7 @@ const roles = [
   { id: "cuisinier", label: "👨‍🍳 Cuisinier", color: "bg-yellow-100 text-yellow-800" },
 ];
 
+let debouceTimeout;
 export default function CreationPersonnel() {
   const { token } = useStateContext();
   const [form, setForm] = useState({ nom: "", email: "", role: "", event: "" });
@@ -24,13 +25,14 @@ export default function CreationPersonnel() {
   const [eventError, setEventError] = useState("");
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const[isValid,setIsValid]=useState(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const data = await getMyEvents(token);
         setEvents(data);
-        if (data.length > 0) {
+        if(data.length>0){
           setSelectedEvent(data[0].id);
           setForm({ ...form, event: data[0].id });
         }
@@ -67,6 +69,28 @@ export default function CreationPersonnel() {
     setError("");
   };
 
+
+  /**
+   * verification d'email
+   * 
+   */
+
+  useEffect(() => {
+  clearTimeout(debouceTimeout); 
+
+  if (!form.email.trim()) {
+    setIsValid(null);
+    return;
+  }
+
+  debouceTimeout = setTimeout(async () => {
+    const valid = await checkEmail(form.email.trim());
+    setIsValid(valid);
+  }, 800); 
+
+  return () => clearTimeout(debouceTimeout);
+}, [form.email]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -78,10 +102,15 @@ export default function CreationPersonnel() {
       setLoading(false);
       return;
     }
+    // const emailValid=await checkEmail(form.email.trim());
+    // if(!emailValid){
+    //   setError("Format d'email invalide.");
+    //   setLoading(false);
+    //   return;
+    // }
 
-    const emailValid = await checkEmail(form.email.trim());
-    if (!emailValid) {
-      setError("Format d'email invalide.");
+    if(isValid===false){
+      setError("adresse email incorrecte ou inexistante.");
       setLoading(false);
       return;
     }
@@ -201,7 +230,7 @@ export default function CreationPersonnel() {
                       type="text"
                       name="nom"
                       value={form.nom}
-                      onChange={handleChange}
+                      onChange={(e)=>setForm({...form,nom:textControll(e.target.value)})}
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       placeholder="Entrez le nom complet"
