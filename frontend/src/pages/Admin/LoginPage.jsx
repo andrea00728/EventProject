@@ -7,44 +7,44 @@ import { FcGoogle } from 'react-icons/fc';
 import { FaFacebook, FaLock } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 
+const URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
+
 const LoginPage = () => {
 
   const { setToken, setUser } = useStateContext();
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState(null); // <-- Ajout de l'état pour l'erreur
 
-  useEffect(() => {
-  const checkRedirectResult = async () => {
-    const token = await handleRedirectResult();
-    if (token) {
-      // Faire l'appel à ton backend avec le token
-      try {
-        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/login/admin`, {}, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+//   useEffect(() => {
+//   const checkRedirectResult = async () => {
+//     const token = await handleRedirectResult();
+//     if (token) {
+//       // Faire l'appel à ton backend avec le token
+//       try {
+//         const response = await axios.post(`${URL}/auth/login/admin`, {}, {
+//           headers: {
+//             Authorization: `Bearer ${token}`,
+//           },
+//         });
+//         const res = response.data;
+//         setToken(res.access_token);
+//         setUser(res.user);
 
-        const res = response.data;
-        setToken(res.access_token);
-        setUser(res.user);
+//         navigate('/AdminAccueil');
+//       } catch (error) {
+//         console.error("Erreur lors de la connexion Google (redirect):", error);
+//         setErrorMessage("Accès non autorisé.");
+//       }
+//     }
+//   };
+//   checkRedirectResult();
+// }, []);
 
-        navigate('/AdminAccueil');
-      } catch (error) {
-        console.error("Erreur lors de la connexion Google (redirect):", error);
-        setErrorMessage("Accès non autorisé.");
-      }
-    }
-  };
-
-  checkRedirectResult();
-}, []);
-
-  const handleGoogleLogin = async () => {
+  const handleLogin = async (provider) => {
     setErrorMessage(null);  // Réinitialiser l'erreur
     try {
-      const token = await signInWithGoogle();
-      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/login/admin`, {}, {
+      const token = provider === "Google" ? await signInWithGoogle() : await signInWithFacebook();
+      const response = await axios.post(`${URL}/admin/login/admin`, {}, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -57,31 +57,6 @@ const LoginPage = () => {
       navigate('/AdminAccueil');
     } catch (error) {
       console.error("Erreur lors de la connexion Google :", error);
-      if (error.response && error.response.status === 401) {
-        setErrorMessage("Accès non autorisé. Votre compte n'a pas les droits d'admin.");
-      } else {
-        setErrorMessage("Erreur de connexion. Veuillez réessayer.");
-      }
-    }
-  };
-
-  const handleFacebookLogin = async () => {
-    setErrorMessage(null);  // Réinitialiser l'erreur
-    try {
-      const token = await signInWithFacebook();
-      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/login/admin`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const res = response.data;
-      setToken(res.access_token);
-      setUser(res.user);
-
-      navigate('/AdminAccueil');
-    } catch (error) {
-      console.error("Erreur lors de la connexion Facebook :", error);
       if (error.response && error.response.status === 401) {
         setErrorMessage("Accès non autorisé. Votre compte n'a pas les droits d'admin.");
       } else {
@@ -117,7 +92,7 @@ const LoginPage = () => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={handleGoogleLogin}
+          onClick={() =>{handleLogin('Google')}}
           className="w-full flex items-center justify-center gap-3 bg-white text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 py-3 rounded-xl shadow hover:shadow-md transition mb-4"
         >
           <FcGoogle size={24} />
@@ -127,7 +102,7 @@ const LoginPage = () => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={handleFacebookLogin}
+          onClick={() =>{handleLogin('Facebook')}}
           className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white py-3 rounded-xl shadow hover:bg-blue-700 transition"
         >
           <FaFacebook size={24} />
