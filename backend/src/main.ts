@@ -26,7 +26,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document); // Expose Swagger à l'URL /api
 
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://mastertable.site'],
+    origin:  'https://mastertable.site',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true, // si tu utilises des cookies ou l'authentification
   });
