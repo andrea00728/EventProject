@@ -10,6 +10,7 @@ import { Menu } from './menu.entity';
 import { Balance } from './balance.entity';
 import { Payment } from './payment.entity';
 import { MenuItem } from './menu-item.entity';
+import { Favorite } from './Favorite';
 
 
 @Unique(['nom','user'])
@@ -82,5 +83,8 @@ export class Evenement {
 
     @OneToMany(()=>Invitation,(inv)=>inv.event)
     invitation:Invitation[];
+
+    @OneToMany(() => Favorite, (favorite) => favorite.evenement, { onDelete: 'CASCADE' })
+    favorites: Favorite[];
 }
 

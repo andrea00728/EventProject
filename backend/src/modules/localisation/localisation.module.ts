@@ -13,4 +13,11 @@ import { Localisation } from 'src/entities/Location'; // Assuming this exists ba
   providers: [LocationService],
   controllers: [LocationController],
 })
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Localisation, Salle])],
+  providers: [LocationService],
+  exports: [LocationService],
+})
+
 export class LocationModule {}

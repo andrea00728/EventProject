@@ -11,9 +11,10 @@ export class CreateOrderItemDto {
 }
 
 export class CreateOrderDto {
-  @IsString()
+  @IsInt()
+  @Min(1)
   @IsNotEmpty()
-  slug: string
+  tableId: number;
 
   @IsString()
   @IsOptional()
@@ -27,10 +28,9 @@ export class CreateOrderDto {
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
   items: CreateOrderItemDto[];
-  tableId: number;
 }
 
 export class UpdateOrderStatusDto {
-  @IsEnum(['pending', 'preparing', 'served'])
-  status: 'pending' | 'preparing' | 'served';
+  @IsEnum(['pending', 'preparing', 'served', 'canceled'])
+  status: 'pending' | 'preparing' | 'served' | 'canceled';
 }

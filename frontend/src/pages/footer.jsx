@@ -95,7 +95,6 @@ function Footer() {
                 </div>
                 <span className="text-xl font-black text-white">Rapex group</span>
               </div>
-
               <p className="text-slate-400 text-sm">
                 © 2025. Tous droits réservés
               </p>

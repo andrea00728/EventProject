@@ -1,25 +1,21 @@
-// src/entities/payment.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { Order } from './order.entity';
-import { User } from 'src/Authentication/entities/auth.entity';
 import { Evenement } from './Evenement';
+import { Personnel } from './Personnel';
 
 @Entity()
 export class Payment {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Order, (order) => order.payments)
+  @ManyToOne(() => Order, (order) => order.payments, { onDelete: 'CASCADE' })
   order: Order;
 
   @Column()
   orderId: number;
 
-  @ManyToOne(() => User)
-  user: User;
-
-  @Column()
-  userId: string;
+  @ManyToOne(() => Personnel)
+  personnel: Personnel;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount: number;

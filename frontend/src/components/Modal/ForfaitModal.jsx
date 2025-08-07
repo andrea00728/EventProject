@@ -27,12 +27,10 @@ const ForfaitModal = ({ forfaits, loading, onChoisir, onClose, activeForfait, ex
             <FaCrown className="w-4 h-4 text-[#FB9E3A]" />
             Choisissez votre forfait
           </div>
-
           <h2 className="text-4xl lg:text-5xl font-black text-slate-800 leading-tight tracking-tight mb-4">
             Plans &
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FB9E3A] via-orange-500 to-amber-500"> Tarifs</span>
           </h2>
-
           <p className="text-slate-600 text-lg leading-relaxed max-w-2xl mx-auto">
             Sélectionnez le forfait qui correspond le mieux à vos besoins d'organisation d'événements
           </p>

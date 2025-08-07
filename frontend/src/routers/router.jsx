@@ -11,6 +11,9 @@ import Inscription from "../pages/Inscription";
 import Connnexiongoogle from "../services/connexiongoogl.jsx";
 import Evenemenpage from "../pages/Evenementpage";
 import Apropos from "../pages/apropos";
+import PublicEvents from "../pages/PublicEvents"; // adapte le chemin si besoin
+// import PagePublic from "../pages/PagePublic";
+import PageEvenementDetail from "../pages/PageEvenementDetail";
 
 // import Table3DScene from "../components/table3D";
 import ChoixModeInvite from "../layouts/ChoixModeInvite";
@@ -20,7 +23,6 @@ import AffichageInvite from "../pages/choixModInvite/affichageInvite";
 import InviteformWithId from "../pages/choixModInvite/InviteFormparId";
 import TableLayout from "../layouts/TableLayout.jsx";
 import EventLayout from "../layouts/eventLayout.jsx";
-import Tablecreation from "../pages/TableOrganisation/Tablecreation";
 import Listetable from "../pages/TableOrganisation/ListeTable";
 import Affichage3dTable from "../pages/TableOrganisation/Affichage3dTable";
 import EventPending from "../pages/dashboardEvenement/Eventpadding.jsx";
@@ -43,8 +45,7 @@ import EvenementAd from "../pages/Admin/Evenement.jsx";
 import Organisateur from "../pages/Admin/Organisateur.jsx";
 import Parametre from "../pages/Admin/Parametre.jsx";
 import LocationSalle from "../pages/Admin/LocationSalle.jsx";
-import MyComponent from "../pages/PersonnelCuisine/OrderGateway.jsx";
-import Test from "../layouts/test.jsx";
+ import MyComponent from "../pages/PersonnelCuisine/OrderGateway.jsx";
 import MenuListWithCart from "../pages/Menu/MenuListWithCart.jsx";
 import SystemPromptManager from "../pages/Admin/SystemPromptManager.jsx";
 import MenuForm from "../pages/menu.jsx";
@@ -61,6 +62,17 @@ import RestaurationPage from "../pages/restauration/RestaurationPage.jsx";
 import MenuRestauration from "../pages/restauration/MenuRestauration.jsx";
 import RoleSelector from "../pages/RoleSelector.jsx";
 import Public_Accueil from "../pages/public_Accueil.jsx";
+import Caisse from "../pages/DashbordCaisse/DashboardCaisse.jsx";
+import GestionCommandesPage from "../pages/DashbordCaisse/GestionCommandes.jsx";
+import PaiementPage from "../pages/DashbordCaisse/PaiementPage.jsx";
+import DashboardCard from "../pages/DashbordCaisse/DashboardCaisse.jsx"
+import StockPage from "../pages/DashbordCaisse/StockPage.jsx";
+import StatistiquesPage from "../pages/DashbordCaisse/StatistiquesPage.jsx";
+import RevenuPage from "../pages/DashbordCaisse/RevenuPage.jsx";
+import ActivityHistory from "../pages/Admin/Historique.jsx";
+import Statique from "../pages/Admin/statistique.jsx";
+import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Event.jsx";
+
 
 const router=createBrowserRouter([
    
@@ -117,7 +129,7 @@ const router=createBrowserRouter([
       children: [
         {
           path: "creationTable",
-          element: <Tablecreation />
+          element: <TableToCreateBy_Event/>
         },
         {
           path: "",
@@ -159,6 +171,10 @@ const router=createBrowserRouter([
           path: "organigramme",
           element: <PersonnelOrganigrammeDashboard/>
         },
+        {
+          path:"dashboardCaisse",
+          element:<DashboardCard />
+        },
       ]
     },
     {
@@ -187,6 +203,37 @@ const router=createBrowserRouter([
     },
   ]
 },
+// route caissier
+{
+    path: "/",
+    children: [
+      {
+        path: "/caisse",
+        element: < Caisse/>,
+      },
+      {
+        path: "/gestion-commandes",
+        element: <GestionCommandesPage />,
+      },
+      {
+        path: "/paiement",
+        element: <PaiementPage />,
+      },
+      {
+        path: "/stock",
+        element: <StockPage />,
+      },
+      {
+        path: "/statistiques",
+        element: <StatistiquesPage />,
+      },
+      {
+          path: "/revenu",
+          element: <RevenuPage />,
+      }
+
+    ],
+  },
 
 
     /**
@@ -240,7 +287,7 @@ const router=createBrowserRouter([
       path: "/personnelCaisse",
       element: (
         <ProtectedRoute allowedRoles={["caissier", "organisateur", "accueil","cuisinier"]}>
-          <DashboardpersCaisse />
+          <DashboardCard />
         </ProtectedRoute>
       )
     }
@@ -362,6 +409,14 @@ const router=createBrowserRouter([
         path: "/AdminParametre",
         element: <Parametre />,
       },
+      {
+        path: "/AdminHistorique",
+        element: <ActivityHistory />,
+      },
+      {
+        path: "/AdminStats",
+        element: <Statique />
+      },
 
       {
         path: "/LocationSalle",
@@ -369,17 +424,6 @@ const router=createBrowserRouter([
       },
     ],
   },
-  ,
-  /************************* Page pour les cuisiniers (poue le test) ************** */
-  {
-    path: "/Cuisine",
-    element: <DashboardpersCuisine />,
-  },
-  {
-    path: "/exemple",
-    element: <MyComponent />,
-  },
-  /*********************************************************** */
   {
     path: "/",
     element: <GuestLayout />,
@@ -405,6 +449,15 @@ const router=createBrowserRouter([
         path: "/inscription",
         element: <Inscription />,
       },
+      {
+      path: "/evenements-publics",
+      element: <PublicEvents />,
+      },
+      {
+        path: "/evenement/:slug",
+        element: <PageEvenementDetail />,
+      },
+
     ],
   },
   {
@@ -423,7 +476,7 @@ const router=createBrowserRouter([
     path: "/menutitemform",
     element: <MenuItemForm />,
   },
-  ,
+
   {
     path: "/systemprompt",
     element: <SystemPromptManager />,

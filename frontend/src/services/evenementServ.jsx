@@ -84,3 +84,11 @@ export const getCountEvents = async () => {
   return response.data;
 };
 
+export const getCountForAllEventStats = async () => {
+  const response = await axiosClient.get(`/evenements/events/statistics`/*, {
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+}*/);
+  return response.data;
+}
