@@ -169,4 +169,75 @@ export class CommentaireService {
     });
     return count;
   }
+
+  /**
+   * 
+   * @returns 
+   * pourcentage de satisfaction
+   * 
+   * 
+   * On récupére le nombre de commentaire satisfait
+   * On vérifie si il y a au moins un commentaire satisfait
+   * sinon on renvoie 0
+   * Sinon on récupére le nombre de commentaire global
+   * Et on calcule le pourcentage de satisfaction
+   */
+  async findCount_pourcentageSatisfaction():Promise<number>{
+   const count_Issatisf= await this.commentaireRepository.count({
+     where:{
+       satisfaction:Not(SatisfactionLevel.DECEVANT),
+     }
+   });
+   if(count_Issatisf===0){
+     return 0;
+   }
+   const count_global_satisfaction= await this.commentaireRepository.count();
+   const pourcentage= (count_Issatisf*100)/count_global_satisfaction;
+   return pourcentage;
+  }
+  
+  /**
+   * 
+   * @returns 
+   * Les statistiques de satisfaction.
+   * 
+   * La méthode renvoie un objet avec les clés suivantes :
+   * - decevant : le pourcentage de commentaires décevants
+   * - moyen : le pourcentage de commentaires moyens
+   * - bien : le pourcentage de commentaires satisfaisants
+   * - tres_bien : le pourcentage de commentaires très satisfaits
+   * - excellent : le pourcentage de commentaires excellents
+   * 
+   * Si il n'y a pas de commentaire, la méthode renvoie un objet avec toutes les valeurs à 0.
+   * 
+   */
+  async findSatisfactionStatistics() {
+    const totalComments = await this.commentaireRepository.count();
+    
+    if (totalComments === 0) {
+      return {
+        decevant: 0,
+        moyen: 0,
+        bien: 0,
+        tres_bien: 0,
+        excellent: 0,
+      };
+    }
+
+    const counts = await Promise.all([
+      this.commentaireRepository.count({ where: { satisfaction: SatisfactionLevel.DECEVANT } }),
+      this.commentaireRepository.count({ where: { satisfaction: SatisfactionLevel.MOYEN } }),
+      this.commentaireRepository.count({ where: { satisfaction: SatisfactionLevel.BIEN } }),
+      this.commentaireRepository.count({ where: { satisfaction: SatisfactionLevel.TRES_BIEN } }),
+      this.commentaireRepository.count({ where: { satisfaction: SatisfactionLevel.EXELLENT } }),
+    ]);
+
+    return {
+      decevant: Number(((counts[0] / totalComments) * 100).toFixed(2)),
+      moyen: Number(((counts[1] / totalComments) * 100).toFixed(2)),
+      bien: Number(((counts[2] / totalComments) * 100).toFixed(2)),
+      tres_bien: Number(((counts[3] / totalComments) * 100).toFixed(2)),
+      excellent: Number(((counts[4] / totalComments) * 100).toFixed(2)),
+    };
+  }
 }

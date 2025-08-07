@@ -52,6 +52,23 @@ export class CommentaireController {
   }
   
 
+   /**
+   * 
+   * @returns 
+   * 
+   * On récupére le nombre de commentaire satisfait
+   * On vérifie si il y a au moins un commentaire satisfait
+   * sinon on renvoie 0
+   * Sinon on récupére le nombre de commentaire global
+   * Et on calcule le pourcentage de satisfaction
+   */
+  
+  @Get('count-pourcentage-satisfaction')
+  @ApiOperation({summary:'recuperation du pourcentage de satisfaction'})
+  @ApiResponse({status:200,description:'pourcentage de satisfaction'})
+  async findCount_pourcentageSatisfaction(){
+    return this.commentaireService.findCount_pourcentageSatisfaction();
+  }
   
 
    /**
@@ -149,6 +166,13 @@ export class CommentaireController {
   @ApiResponse({ status: 404, description: 'Commentaire non trouvé.' })
   remove(@Param('id') id: string, @Request() req) {
     return this.commentaireService.remove(+id, req.user);
+  }
+
+  @Get('satisfaction/statistics')
+  @ApiOperation({ summary: 'Récupération des statistiques de satisfaction en pourcentage' })
+  @ApiResponse({ status: 200, description: 'Statistiques de satisfaction en pourcentage.' })
+  async findSatisfactionStatistics() {
+    return this.commentaireService.findSatisfactionStatistics();
   }
 
 }

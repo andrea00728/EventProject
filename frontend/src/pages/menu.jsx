@@ -15,7 +15,7 @@ const MenuForm = () => {
   // Récupérer les événements
   const fetchEvents = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/evenements', {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/evenements`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setEvents(res.data);
@@ -28,7 +28,7 @@ const MenuForm = () => {
   // Récupérer les menus pour vérifier les doublons
   const fetchMenus = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/menus', {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMenus(res.data);
@@ -68,7 +68,7 @@ const MenuForm = () => {
 
     try {
       const body = { name: name.trim(), eventId: Number(eventId) };
-      const response = await axios.post('http://localhost:3000/menus', body, {
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/menus`, body, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

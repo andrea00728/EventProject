@@ -101,5 +101,4 @@ export class EvenementController {
     return this.evenementService.findCountForAllEventStats();   
   }
 
-
 }

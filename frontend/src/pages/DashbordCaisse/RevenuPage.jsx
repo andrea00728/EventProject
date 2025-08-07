@@ -48,6 +48,9 @@ const RevenuPage = () => {
   const [chartType, setChartType] = useState("bar");
   const { token, setToken } = useStateContext();
   const navigate = useNavigate();
+
+  // Récupération du userId pour le socket
+  const [userId, setUserId] = useState(null);
   const socket = useSocket();
 
   // Synchroniser le token avec revenuService

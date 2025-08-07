@@ -88,7 +88,7 @@ export default function MenuRestauration() {
     gradientCard: "linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)",
   };
 
-  axios.defaults.baseURL = "http://localhost:3000";
+  axios.defaults.baseURL = `${import.meta.env.VITE_API_BASE_URL}`;
 
   // Fonction pour regrouper les éléments par catégorie
   const groupByCategory = (items) => {
@@ -175,7 +175,7 @@ export default function MenuRestauration() {
         params.row.photo ? (
           <Box
             component="img"
-            src={`http://localhost:3000${params.row.photo}`}
+            src={`${import.meta.env.VITE_API_BASE_URL}${params.row.photo}`}
             alt={params.row.name}
             sx={{
               width: 60,
@@ -812,7 +812,7 @@ export default function MenuRestauration() {
                                   <CardMedia
                                     component="img"
                                     height="200"
-                                    image={`http://localhost:3000${item.photo}`}
+                                    image={`${import.meta.env.VITE_API_BASE_URL}${item.photo}`}
                                     alt={item.name}
                                     sx={{
                                       transition: 'transform 0.3s ease',

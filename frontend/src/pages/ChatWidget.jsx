@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AnimatePresence, motion } from 'framer-motion';
+import axiosClient from '../api/axios-client';
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -55,7 +56,7 @@ export default function ChatWidget() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:3000/mastertable/chat', { prompt });
+      const response = await axiosClient.post('/mastertable/chat', { prompt });
       const botMessage = { role: 'bot', text: response.data.response };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
