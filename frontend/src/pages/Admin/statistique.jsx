@@ -211,7 +211,7 @@ const Statique = () => {
       setLoading(true);
       console.log(`🔄 Chargement des données pour ${selectedPeriod} mois`);
 
-      const response = await fetch(`http://api.mastertable.site/forfait/dashboard-charts?period=${selectedPeriod}`);
+      const response = await fetch(`https://api.mastertable.site/forfait/dashboard-charts?period=${selectedPeriod}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

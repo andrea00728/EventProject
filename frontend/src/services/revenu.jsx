@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://api.mastertable.site"; 
+const API_BASE_URL = "https://api.mastertable.site"; 
 
 
 const axiosInstance = axios.create({

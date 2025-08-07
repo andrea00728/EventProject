@@ -3,14 +3,14 @@ import React from 'react';
 export default function LogoutButton() {
   const handleLogout = async () => {
     try {
-      const res = await fetch('http://api.mastertable.site/auth/logout', {
+      const res = await fetch('https://api.mastertable.site/auth/logout', {
         method: 'POST',
         credentials: 'include', // Important pour envoyer les cookies
       });
 
       if (res.ok) {
         // Rediriger après succès de la déconnexion
-        window.location.href = 'http://masterttable.site/pagepublic';
+        window.location.href = 'https://masterttable.site/pagepublic';
       } else {
         console.error('Erreur lors de la déconnexion');
       }

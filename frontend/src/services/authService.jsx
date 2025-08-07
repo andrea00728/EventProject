@@ -1,4 +1,4 @@
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://api.mastertable.site';
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.mastertable.site';
 
 // Enregistrement de l'utilisateur
 export const registerUser = async (userData) => {
