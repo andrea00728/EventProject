@@ -330,7 +330,7 @@ export default function AdminLayout() {
         try {
           const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/notifications`, {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+              Authorization: `Bearer ${token}`,
             },
           });
           if (!response.ok) throw new Error("Erreur lors de la récupération des notifications");
@@ -342,17 +342,18 @@ export default function AdminLayout() {
         }
       };
       fetchNotifications();
-    }, []);
+    }, [token]);
 
     const messages = [
-      { from: "Alice", text: "Bonjour, j'ai une question sur l'événement." },
-      { from: "Bob", text: "Le planning a été modifié." },
-      { from: "Charlie", text: "Merci pour la confirmation." },
+      { from: "Alice", text: "Bonjour, j'ai une question sur l'événement.", read: false },
+      { from: "Bob", text: "Le planning a été modifié.", read: true },
+      { from: "Charlie", text: "Merci pour la confirmation.", read: false },
     ];
 
-    const handleMessageClick = (message) => {
-      setSelectedConversation({ content: message });
+    const handleMessageClick = (item) => {
+      setSelectedConversation({ content: item });
       setShowConversationModal(true);
+      setShowMessages(false);
     };
 
     const pageBg = darkMode
@@ -417,9 +418,7 @@ export default function AdminLayout() {
               {showProfile && (
                 <div
                   className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
-                    darkMode
-                      ? 'bg-gray-800 border-gray-700'
-                      : 'bg-white border-gray-200'
+                    darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
                   } z-50 transition-all duration-200 ${
                     window.innerWidth < 640 ? 'left-4 right-4' : 'right-0'
                   }`}
@@ -440,18 +439,14 @@ export default function AdminLayout() {
                     ></div>
                     <button
                       className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode
-                          ? 'hover:bg-gray-700 text-gray-200'
-                          : 'hover:bg-gray-100 text-gray-800'
+                        darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-800'
                       } transition-colors duration-150`}
                     >
                       Mon profil
                     </button>
                     <button
                       className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode
-                          ? 'hover:bg-gray-700 text-gray-200'
-                          : 'hover:bg-gray-100 text-gray-800'
+                        darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-800'
                       } transition-colors duration-150`}
                     >
                       Paramètres
@@ -464,9 +459,7 @@ export default function AdminLayout() {
                     <button
                       onClick={handleLogout}
                       className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode
-                          ? 'hover:bg-gray-700 text-red-400'
-                          : 'hover:bg-gray-100 text-red-600'
+                        darkMode ? 'hover:bg-gray-700 text-red-400' : 'hover:bg-gray-100 text-red-600'
                       } transition-colors duration-150`}
                     >
                       Déconnexion
@@ -478,9 +471,7 @@ export default function AdminLayout() {
             <button
               onClick={toggleDarkMode}
               className={`p-2 rounded-full ${
-                darkMode
-                  ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600'
-                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                darkMode ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
               } transition-colors duration-200`}
               aria-label="Toggle dark mode"
             >
@@ -508,9 +499,7 @@ export default function AdminLayout() {
       )}
       <button
         className={`fixed z-30 top-4 left-4 p-2 rounded-lg transition-all duration-300 md:hidden ${
-          darkMode
-            ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-            : 'bg-white text-gray-600 hover:bg-gray-100'
+          darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-white text-gray-600 hover:bg-gray-100'
         } shadow-md hover:scale-105`}
         onClick={() => setSidebarOpen(!sidebarOpen)}
       >
