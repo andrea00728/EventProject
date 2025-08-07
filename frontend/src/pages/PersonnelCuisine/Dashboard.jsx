@@ -78,7 +78,7 @@ export default function DashboardpersCuisine() {
         const UserId = await getUserIdForToken(token);
         setUserId(UserId);
 
-        const newSocket = io("api.mastertable.site", {
+        const newSocket = io("http://localhost:3000", {
           auth: { userId: UserId },
           transports: ["websocket"],
           cors: { origin: "mastertable.site" },
@@ -179,7 +179,7 @@ export default function DashboardpersCuisine() {
   };
 
   const changerStatut = async (id, direction = "next") => {
-    const socket = io("api.mastertable.site", {
+    const socket = io("http://localhost:3000", {
       auth: {
         userId: userId,
       },

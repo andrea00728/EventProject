@@ -3,8 +3,8 @@
 import axiosClient from "../api/axios-client"; // Assurez-vous que le chemin est correct
 import axios from 'axios';
 
-const API_URL = 'http://api.mastertable.site/public-invites/add'; // backend public route
-const PUBLIC_API = 'http://api.mastertable.site/public-guest/create';
+const API_URL = 'http://localhost:3000/public-invites/add'; // backend public route
+const PUBLIC_API = 'http://localhost:3000/public-guest/create';
 
 export const createInvite = async (inviteData) => {
   const token = localStorage.getItem("token");
@@ -14,7 +14,7 @@ export const createInvite = async (inviteData) => {
     ...(token && { Authorization: `Bearer ${token}` }), // seulement si token présent
   };
 
-  const response = await fetch('http://api.mastertable.site/public-guest/create', {
+  const response = await fetch('http://localhost:3000/public-guest/create', {
     method: 'POST',
     headers,
     body: JSON.stringify(inviteData),
@@ -93,7 +93,7 @@ export const createGuestPublicly = async (inviteData) => {
 
 export const createPublicInvite = async (inviteData) => {
   try {
-    const response = await axios.post('http://api.mastertable.site/public-guest/create', inviteData);
+    const response = await axios.post('http://localhost:3000/public-guest/create', inviteData);
     return response.data;
   } catch (error) {
     console.error('Erreur création invité public :', error.response?.data || error.message);
