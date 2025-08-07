@@ -50,22 +50,22 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Configuration CORS complète et stricte
+  // Configuration CORS
   app.enableCors({
     origin: 'https://mastertable.site',
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
     credentials: true,
   });
 
-  // Middleware pour gérer OPTIONS (par sécurité, même si Apache gère déjà)
-  app.use((req, res, next) => {
-    if (req.method === 'OPTIONS') {
-      res.status(204).send();
-    } else {
-      next();
-    }
-  });
+  // Supprimer le middleware personnalisé pour OPTIONS, car Apache le gère
+  // app.use((req, res, next) => {
+  //   if (req.method === 'OPTIONS') {
+  //     res.status(204).send();
+  //   } else {
+  //     next();
+  //   }
+  // });
 
   // Swagger API documentation
   const config = new DocumentBuilder()
@@ -84,7 +84,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // Servir les fichiers statiques (ex: images uploadées)
+  // Servir les fichiers statiques
   app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
 
   // Gestion globale des exceptions
@@ -93,4 +93,3 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
-
