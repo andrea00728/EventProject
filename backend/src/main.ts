@@ -58,6 +58,14 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Middleware pour gérer OPTIONS (par sécurité, même si Apache gère déjà)
+  app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+      res.status(204).send();
+    } else {
+      next();
+    }
+  });
 
   // Swagger API documentation
   const config = new DocumentBuilder()
