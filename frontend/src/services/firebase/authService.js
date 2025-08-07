@@ -1,11 +1,12 @@
 import { GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, signOut, getAuth, getRedirectResult } from 'firebase/auth';
 import { auth } from './firebaseConfig';
 import axios from 'axios';
+import { useStateContext } from '../../context/ContextProvider';
 
 const URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
 
-export const signInWithGoogle = async () => {
-  const provider = new GoogleAuthProvider();
+export const signInWith = async (props) => {
+  const provider = props === "Google" ? new GoogleAuthProvider() : new FacebookAuthProvider();
   const result = await signInWithPopup(auth, provider);
   const token = await result.user.getIdToken(true);
   const response = await axios.post(`${URL}/admin/login/admin`, {}, {
@@ -13,19 +14,9 @@ export const signInWithGoogle = async () => {
       Authorization: `Bearer ${token}`,
     },
   });
-  return response.data;
-};
-
-export const signInWithFacebook = async () => {
-  const provider = new FacebookAuthProvider();
-  const result = await signInWithPopup(auth, provider);
-  const token = await result.user.getIdToken(true);
-  const response = await axios.post(`${URL}/admin/login/admin`, {}, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return response.data;
+  const res = response.data;
+  sessionStorage.setItem("USER", JSON.stringify(res.user));   
+  sessionStorage.setItem("ACCESS_TOKEN", res.access_token); 
 };
 
 export const handleRedirectResult = async () => {
