@@ -13,7 +13,7 @@ import { Evenement } from 'src/entities/Evenement';
 import { Payment } from 'src/entities/payment.entity';
 import { Invite } from 'src/entities/Invite';
 import { ShortLink } from 'src/entities/ShortLink';
-import { OrdersGateway } from 'src/gateway/orders.gateway';
+import { OrdersGateway } from 'src/ateway/orders.gateway';
 
 @Module({
   imports: [
