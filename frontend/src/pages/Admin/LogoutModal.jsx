@@ -51,20 +51,22 @@ const LogoutModal = ({ isOpen, onClose, onConfirm, darkMode }) => {
                 Êtes-vous sûr de vouloir vous déconnecter de votre compte ?
               </p>
             </div>
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center w-full gap-4 mt-4">
               <button
-                ref={cancelButtonRef}
                 onClick={onClose}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition ${btnCancel}`}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                  darkMode
+                    ? "bg-gray-700 hover:bg-gray-600 text-gray-200"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+                } ${btnCancel}`}
               >
                 <FaTimes />
                 Annuler
               </button>
               <button
                 onClick={onConfirm}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition ${btnConfirm}`}
-              >
-                <FaSignOutAlt />
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold transition-all ${btnConfirm}  duration-300`}
+              > <FaSignOutAlt />
                 Déconnexion
               </button>
             </div>
