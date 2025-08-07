@@ -25,16 +25,13 @@ export class AdminService {
 
       // 2. Chercher l'admin existant
       let adminUser = await this.userRepository.findOne({
-        where: { email, role: 'admin' },
+        where: {email, role: 'admin' },
       });
 
       if (!adminUser) {
-        const adminCount = await this.userRepository.count({
-          where: { role: 'admin' },
-        });
-
-        if (adminCount > 0) {
-          throw new UnauthorizedException('Un admin existe déjà');
+        
+        if(email !== process.env.ADMIN_EMAIL) {
+          throw new UnauthorizedException('Non autorisé : vous n\'êtes pas autorisé à vous connecter en tant qu\'admin');
         }
 
         adminUser = this.userRepository.create({
@@ -47,8 +44,8 @@ export class AdminService {
           lastLogin: new Date(),
         } as Partial<Admin>);
 
-          await this.userRepository.save(adminUser);
-        }
+        await this.userRepository.save(adminUser);
+      }
 
       const payload = {
         sub: adminUser.id, 

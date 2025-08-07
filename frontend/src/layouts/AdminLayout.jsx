@@ -303,6 +303,7 @@ export default function AdminLayout() {
     const [showConversationModal, setShowConversationModal] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [notifications, setNotifications] = useState([]);
+    const {user} = useStateContext();
 
     const notifRef = useRef(null);
     const msgRef = useRef(null);
@@ -404,9 +405,9 @@ export default function AdminLayout() {
                 aria-label="Menu profil"
               >
                 <div className="relative">
-                  <FaUser className="w-5 h-5" />
+                  {<img src={user.photo} alt="" className="w-8 rounded-[50%]" /> || <FaUser className="w-5 h-5" />}
                 </div>
-                <span className="hidden sm:inline text-sm font-medium">Admin</span>
+                <span className="hidden sm:inline text-sm font-medium">{ user.name || Admin}</span>
                 <ChevronDown
                   className={`w-4 h-4 transition-transform duration-200 ${
                     showProfile ? 'rotate-180' : ''
