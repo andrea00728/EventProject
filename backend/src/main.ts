@@ -50,7 +50,27 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Swagger
+  // Configuration CORS complète et stricte
+  app.enableCors({
+    origin: 'https://mastertable.site',
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+    credentials: true,
+  });
+
+  // Middleware pour gérer explicitement les requêtes OPTIONS (preflight)
+  app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+      res.header('Access-Control-Allow-Origin', 'https://mastertable.site');
+      res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
+      res.header('Access-Control-Allow-Credentials', 'true');
+      return res.status(204).send('');
+    }
+    next();
+  });
+
+  // Swagger API documentation
   const config = new DocumentBuilder()
     .setTitle('Commentaire API')
     .setDescription('API pour gérer les commentaires avec authentification JWT')
@@ -67,21 +87,13 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // CORS : origin exact + méthodes + headers + credentials
-  app.enableCors({
-    origin: 'https://mastertable.site',
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-    credentials: true,
-  });
-
-  // Pour servir les fichiers statiques
+  // Servir les fichiers statiques (ex: images uploadées)
   app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
 
-  // Global error filter
+  // Gestion globale des exceptions
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // Start server
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
+
