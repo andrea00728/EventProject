@@ -36,7 +36,7 @@ export default function AdminLayout() {
       setIsMobile(window.innerWidth < 768);
       if (window.innerWidth >= 768) setSidebarOpen(false);
     };
-
+    
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);

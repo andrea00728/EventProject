@@ -51,7 +51,7 @@ const LogoutModal = ({ isOpen, onClose, onConfirm, darkMode }) => {
                 Êtes-vous sûr de vouloir vous déconnecter de votre compte ?
               </p>
             </div>
-            <div className="flex justify-around gap-4">
+            <div className="flex justify-center gap-4">
               <button
                 ref={cancelButtonRef}
                 onClick={onClose}
