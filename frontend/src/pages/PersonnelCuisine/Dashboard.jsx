@@ -27,7 +27,6 @@ import { getUserIdForToken } from "../../services/userService";
 import OrderList from "./OrderList";
 import Spinner from "./Spinner";
 import BurgerMenu from "./BurgerMenu";
-import { SOCKET_URL } from "../../socket";
 
 const formatDateTime = (dateString) => {
   const date = new Date(dateString);
@@ -79,10 +78,10 @@ export default function DashboardpersCuisine() {
         const UserId = await getUserIdForToken(token);
         setUserId(UserId);
 
-        const newSocket = io(SOCKET_URL, {
+        const newSocket = io("api.mastertable.site", {
           auth: { userId: UserId },
           transports: ["websocket"],
-          cors: { origin: "http://mastertable.site" },
+          cors: { origin: "mastertable.site" },
         });
 
         newSocket.on("connect", () => {
@@ -180,7 +179,7 @@ export default function DashboardpersCuisine() {
   };
 
   const changerStatut = async (id, direction = "next") => {
-    const socket = io(SOCKET_URL, {
+    const socket = io("api.mastertable.site", {
       auth: {
         userId: userId,
       },
@@ -399,7 +398,7 @@ export default function DashboardpersCuisine() {
                     <div className="flex items-center space-x-3">
                       <MdError className="text-6xl text-red-500 animate-pulse" />
                       <h2 className="text-2xl font-bold text-red-700">
-                        Aucun commande pour le moment
+                        Une erreur est survenue
                       </h2>
                     </div>
                     <p className="mt-4 text-center text-md text-red-600 font-medium max-w-xl">
