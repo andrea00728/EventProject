@@ -46,6 +46,7 @@ import { HttpExceptionFilter } from './Exception/http-exception.filter';
 import * as express from 'express';
 import { join } from 'path';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -57,6 +58,8 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
     credentials: true,
   });
+
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   // Supprimer le middleware personnalisé pour OPTIONS, car Apache le gère
   // app.use((req, res, next) => {
