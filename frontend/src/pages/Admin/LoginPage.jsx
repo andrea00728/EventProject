@@ -7,50 +7,16 @@ import { FcGoogle } from 'react-icons/fc';
 import { FaFacebook, FaLock } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 
-const URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
-
 const LoginPage = () => {
 
   const { setToken, setUser } = useStateContext();
   const navigate = useNavigate();
-  const [errorMessage, setErrorMessage] = useState(null); // <-- Ajout de l'état pour l'erreur
-
-//   useEffect(() => {
-//   const checkRedirectResult = async () => {
-//     const token = await handleRedirectResult();
-//     if (token) {
-//       // Faire l'appel à ton backend avec le token
-//       try {
-//         const response = await axios.post(`${URL}/auth/login/admin`, {}, {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         });
-//         const res = response.data;
-//         setToken(res.access_token);
-//         setUser(res.user);
-
-//         navigate('/AdminAccueil');
-//       } catch (error) {
-//         console.error("Erreur lors de la connexion Google (redirect):", error);
-//         setErrorMessage("Accès non autorisé.");
-//       }
-//     }
-//   };
-//   checkRedirectResult();
-// }, []);
+  const [errorMessage, setErrorMessage] = useState(null); 
 
   const handleLogin = async (provider) => {
     setErrorMessage(null);  // Réinitialiser l'erreur
     try {
-      const token = provider === "Google" ? await signInWithGoogle() : await signInWithFacebook();
-      const response = await axios.post(`${URL}/admin/login/admin`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const res = response.data;
+      const res = provider === "Google" ? await signInWithGoogle() : await signInWithFacebook();
       setToken(res.access_token);
       setUser(res.user);
 
