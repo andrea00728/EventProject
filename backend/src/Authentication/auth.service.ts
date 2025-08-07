@@ -63,9 +63,7 @@ export class AuthService {
 
       await this.userRepository.save(user);
       console.log('Nouvel utilisateur créé:', { id: user.id, email, role: user.role });
-    }
-
-    if (isdetectedRole === 'organisateur') {
+      
       const notification = this.notificationRepository.create({
         title: 'Nouvel organisateur inscrit',
         message: `L'organisateur ${displayName || email} s'est inscrit.`,
@@ -73,6 +71,7 @@ export class AuthService {
       });
       await this.notificationRepository.save(notification);
     }
+
 
     else {
       // Mettre à jour name, photo et role
@@ -109,14 +108,12 @@ export class AuthService {
 
   async createUser(dto: CreateUserDto) {
     const user = this.userRepository.create(dto);
-    if (dto.role === 'organisateur') {
       const notification = this.notificationRepository.create({
         title: 'Nouvel organisateur inscrit',
         message: `L'organisateur ${dto.name || dto.email} s'est inscrit.`,
         type: 'info',
       });
       await this.notificationRepository.save(notification);
-    }
     return this.userRepository.save(user);
   }
 
