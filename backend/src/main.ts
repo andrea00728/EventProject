@@ -58,17 +58,6 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Middleware pour gérer explicitement les requêtes OPTIONS (preflight)
-  app.use((req, res, next) => {
-    if (req.method === 'OPTIONS') {
-      res.header('Access-Control-Allow-Origin', 'https://mastertable.site');
-      res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
-      res.header('Access-Control-Allow-Credentials', 'true');
-      return res.status(204).send('');
-    }
-    next();
-  });
 
   // Swagger API documentation
   const config = new DocumentBuilder()
