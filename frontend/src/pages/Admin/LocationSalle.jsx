@@ -704,7 +704,7 @@ const LocationSalle = () => {
       <AnimatePresence>
         {showDeleteModal && deleteItem && (
           <motion.div
-            className="fixed inset-0 flex justify-center items-center z-50 bg-black/30 backdrop-blur-sm p-4"
+            className="fixed inset-0 flex justify-center items-center z-50 bg-black/70 p-4"
             initial="hidden"
             animate="visible"
             exit="hidden"

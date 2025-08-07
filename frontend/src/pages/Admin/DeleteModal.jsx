@@ -24,7 +24,7 @@ export default function DeleteModal({ isOpen, onClose, onConfirm, managerName })
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 flex justify-center items-center z-50 bg-black/30 backdrop-blur-sm"
+          className="fixed inset-0 flex justify-center items-center z-50 bg-black/70"
           initial="hidden"
           animate="visible"
           exit="hidden"

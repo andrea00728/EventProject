@@ -63,6 +63,8 @@ import { SatisfactionModule } from './modules/satisfaction/satisfaction.module';
 import { ProfileController } from './controllers/profile/profile.controller';
 import { NotificationController } from './controllers/notification/notification.controller';
 import { NotificationEntity } from './entities/notification.entity';
+import { Admin } from './entities/Admin';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -115,7 +117,8 @@ import { NotificationEntity } from './entities/notification.entity';
             Commentaire,
             Satisfaction,
             NotificationEntity,
-            Favorite
+            Favorite,
+            Admin
           ],
           synchronize: true,
         };
@@ -172,9 +175,10 @@ import { NotificationEntity } from './entities/notification.entity';
     SatisfactionModule,
     FavoriteModule,
     NotificationModule,
+    AdminModule
 
   ],
-  controllers: [ProfileController], // Contrôleurs globaux ici (pas besoin d'ajouter EvenementController ici)
-  providers: [], // Services globaux si besoin
+  controllers: [ProfileController,],
+  providers: [],
 })
 export class AppModule {}

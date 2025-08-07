@@ -11,9 +11,11 @@ const LogoutModal = ({ isOpen, onClose, onConfirm, darkMode }) => {
     }
   }, [isOpen]);
 
-  const bgOverlay = darkMode
-    ? "bg-opacity-70 backdrop-blur-sm"
-    : "bg-opacity-50 backdrop-blur-sm";
+  // const bgOverlay = darkMode
+  //   ? "bg-black/70"
+  //   : "bg-white/70";
+
+  const bgOverlay = "bg-black/70"
 
 
   const modalBg = darkMode
@@ -49,7 +51,7 @@ const LogoutModal = ({ isOpen, onClose, onConfirm, darkMode }) => {
                 Êtes-vous sûr de vouloir vous déconnecter de votre compte ?
               </p>
             </div>
-            <div className="flex justify-end gap-4">
+            <div className="flex justify-around gap-4">
               <button
                 ref={cancelButtonRef}
                 onClick={onClose}

@@ -1,11 +1,10 @@
 // auth.controller.ts
-import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-auth.dto';
-import { User } from './entities/auth.entity';
-import { FirebaseAuthGuard } from 'src/guards/firebase-auth.guard';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { NotificationEntity } from 'src/entities/notification.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -164,16 +163,6 @@ export class AuthController {
     return this.authService.findOrgStats();
   }
 
-  @UseGuards(FirebaseAuthGuard)
-  @Post('/login/admin')
-  async logSuperAd(@Req() request : any) {
-    const idToken = request.headers.authorization?.split('Bearer ')[1];
-    if (!idToken) {
-      throw new UnauthorizedException('Token manquant');
-    }
-    return await this.authService.loginWithFirebase(idToken);
-  }
-
   @Get('/user/stats')
   async getUserStats(): Promise<any> {
     return this.authService.findUserStats();
@@ -194,5 +183,13 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Retourne les inscriptions par mois' })
   async getMonthlyRegistrations(): Promise<{ month: string; count: number }[]> {
     return this.authService.getMonthlyRegistrations();
+  }
+
+
+  @Get('notifications')
+  @ApiOperation({ summary: 'Obtenir les notifications récentes' })
+  @ApiResponse({ status: 200, description: 'Retourne les notifications' })
+  async getNotifications(): Promise<NotificationEntity[]> {
+    return this.authService.getNotifications();
   }
 }
