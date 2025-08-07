@@ -11,12 +11,32 @@ import {
   LineElement,
   PointElement,
 } from "chart.js";
-import { useStateContext } from "../../context/ContextProvider";
+import { useStateContext } from "../../context/ContextProvider";  // Adjusted path, assuming context is in parent directory
 import { useNavigate } from "react-router-dom";
-import { getEventIdByEmail } from "../../services/invitationService";
+import { getEventIdByEmail } from "../../services/invitationService";  // Adjusted path
 import { motion } from "framer-motion";
 
+// Enregistrement des éléments nécessaires pour Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, LineElement, PointElement);
+
+// Définition d'un thème de couleurs modernes avec des dégradés
+const COLORS = {
+  orders: {
+    pending: ["#FDE047", "#FACC15"], // Jaune
+    preparing: ["#6366F1", "#818CF8"], // Indigo
+    served: ["#10B981", "#34D399"], // Vert
+    canceled: ["#EF4444", "#F87171"], // Rouge
+  },
+  payments: {
+    paid: ["#22C55E", "#4ADE80"], // Vert vif
+    unpaid: ["#F43F5E", "#FB7185"], // Rose
+  },
+  stock: {
+    critical: ["#DC2626", "#F87171"], // Rouge foncé
+    low: ["#F97316", "#FB923C"], // Orange
+    ok: ["#06B6D4", "#22D3EE"], // Cyan
+  },
+};
 
 const StatistiquesPage = () => {
   const [stats, setStats] = useState({
@@ -31,137 +51,37 @@ const StatistiquesPage = () => {
   const { token } = useStateContext();
   const navigate = useNavigate();
 
-  const COLORS = {
-    orders: {
-      pending: ["rgba(234, 179, 8, 0.8)", "rgba(250, 204, 21, 0.8)"],
-      preparing: ["rgba(99, 102, 241, 0.8)", "rgba(129, 140, 248, 0.8)"],
-      served: ["rgba(16, 185, 129, 0.8)", "rgba(52, 211, 153, 0.8)"],
-      canceled: ["rgba(239, 68, 68, 0.8)", "rgba(248, 113, 113, 0.8)"],
-    },
-    payments: {
-      paid: ["rgba(34, 197, 94, 0.8)", "rgba(74, 222, 128, 0.8)"],
-      unpaid: ["rgba(244, 63, 94, 0.8)", "rgba(251, 113, 133, 0.8)"],
-    },
-    stock: {
-      critical: ["rgba(220, 38, 38, 0.8)", "rgba(248, 113, 113, 0.8)"],
-      low: ["rgba(249, 115, 22, 0.8)", "rgba(251, 146, 60, 0.8)"],
-      ok: ["rgba(6, 182, 212, 0.8)", "rgba(34, 211, 238, 0.8)"],
-    },
+  // Fonction utilitaire pour créer un dégradé de couleur pour les graphiques
+  const createGradient = (ctx, chartArea, colors) => {
+    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+    colors.forEach((color, index) => {
+      gradient.addColorStop(index / (colors.length - 1), color);
+    });
+    return gradient;
   };
 
-  const fetchEventDetails = async (eventId) => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/evenements/${eventId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setEventDetails(response.data);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des détails de l'événement :", error);
-      if (error.response?.status === 404) {
-        setError("Événement non trouvé. Vérifiez l'ID de l'événement.");
-      } else {
-        setError("Erreur lors de la récupération des détails de l'événement.");
-      }
-    }
-  };
-
-  const fetchStatistics = async () => {
-    try {
-      setLoading(true);
-      const event = await getEventIdByEmail(token);
-      if (!event?.eventId) {
-        throw new Error("ID d'événement non valide ou introuvable.");
-      }
-      const eventId = event.eventId;
-      console.log("Event ID:", eventId);
-      setEventId(eventId);
-      await fetchEventDetails(eventId);
-
-      const ordersRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders/event/${eventId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const ordersData = ordersRes.data;
-
-      const orderStats = ordersData.reduce((acc, order) => {
-        acc[order.status] = (acc[order.status] || 0) + 1;
-        return acc;
-      }, { pending: 0, preparing: 0, served: 0, canceled: 0 });
-
-      const paymentStats = ordersData.reduce((acc, order) => {
-        order.paymentStatus === "paid" ? acc.paid++ : acc.unpaid++;
-        return acc;
-      }, { paid: 0, unpaid: 0 });
-
-      let stockItems = [];
-      try {
-        const stockRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log("Stock response:", stockRes.data);
-        stockItems = Array.isArray(stockRes.data)
-          ? stockRes.data.flatMap((menu) => (Array.isArray(menu.items) ? menu.items : []))
-          : [];
-      } catch (error) {
-        console.error("Erreur lors de la récupération des menus :", error);
-        if (error.response?.status === 404) {
-          console.warn("API /menus non trouvée, utilisation d'un tableau vide.");
-        }
-        stockItems = [];
-      }
-
-      const stockStats = stockItems.reduce((acc, item) => {
-        if (item.stock <= 5) acc.critical++;
-        else if (item.stock <= 10) acc.low++;
-        else acc.ok++;
-        return acc;
-      }, { critical: 0, low: 0, ok: 0 });
-
-      setStats({
-        orders: orderStats,
-        payments: paymentStats,
-        stock: stockStats,
-      });
-    } catch (error) {
-      console.error("Erreur lors de la récupération des statistiques :", error);
-      setError(error.message || "Erreur lors de la récupération des statistiques.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
-      fetchStatistics();
-    }
-  }, [token]);
-
-  const totals = {
-    orders: Object.values(stats.orders).reduce((a, b) => a + b, 0),
-    payments: Object.values(stats.payments).reduce((a, b) => a + b, 0),
-    stock: Object.values(stats.stock).reduce((a, b) => a + b, 0),
-  };
-
-  const chartOptions = {
+  // Options communes pour les graphiques (améliorées)
+  const baseChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "bottom",
         labels: {
-          boxWidth: 14,
-          padding: 20,
-          font: { size: 14, weight: "600", family: "'Inter', sans-serif" },
-          color: "#1F2937",
+          boxWidth: 16,
+          padding: 24,
+          font: { size: 14, weight: "600", family: "Inter, sans-serif" },
+          color: "#374151",
           usePointStyle: true,
           pointStyle: "circle",
         },
       },
       tooltip: {
-        backgroundColor: "rgba(17, 24, 39, 0.9)",
-        padding: 12,
-        cornerRadius: 8,
+        backgroundColor: "rgba(17, 24, 39, 0.95)",
+        padding: 16,
+        cornerRadius: 12,
         bodyFont: { size: 14, weight: "500" },
-        titleFont: { size: 16, weight: "600" },
+        titleFont: { size: 16, weight: "700" },
         boxPadding: 8,
         callbacks: {
           label: (context) => {
@@ -175,7 +95,7 @@ const StatistiquesPage = () => {
       },
     },
     animation: {
-      duration: 1200,
+      duration: 1500,
       easing: "easeInOutQuart",
       animateScale: true,
       animateRotate: true,
@@ -183,54 +103,21 @@ const StatistiquesPage = () => {
   };
 
   const lineOptions = {
-    ...chartOptions,
+    ...baseChartOptions,
     scales: {
       y: {
         beginAtZero: true,
-        ticks: {
-          stepSize: 1,
-          color: "#6B7280",
-          font: { size: 12, family: "'Inter', sans-serif" },
-        },
-        grid: {
-          color: "rgba(0, 0, 0, 0.05)",
-          borderColor: "#D1D5DB",
-          borderWidth: 1,
-        },
+        ticks: { stepSize: 1, color: "#6B7280", font: { size: 12, family: "Inter, sans-serif" } },
+        grid: { color: "rgba(0, 0, 0, 0.08)", borderColor: "#D1D5DB", borderWidth: 1 },
       },
       x: {
-        ticks: {
-          color: "#6B7280",
-          font: { size: 12, family: "'Inter', sans-serif" },
-        },
+        ticks: { color: "#6B7280", font: { size: 12, family: "Inter, sans-serif" } },
         grid: { display: false },
       },
     },
-    plugins: {
-      ...chartOptions.plugins,
-      legend: {
-        ...chartOptions.plugins.legend,
-        labels: {
-          ...chartOptions.plugins.legend.labels,
-          pointStyle: "circle",
-          usePointStyle: true,
-        },
-      },
-    },
-    animation: {
-      duration: 1200,
-      easing: "easeInOutQuart",
-    },
   };
 
-  const createGradient = (ctx, chartArea, colors) => {
-    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-    colors.forEach((color, index) => {
-      gradient.addColorStop(index / (colors.length - 1), color);
-    });
-    return gradient;
-  };
-
+  // Données des graphiques
   const charts = {
     orders: {
       data: {
@@ -245,10 +132,10 @@ const StatistiquesPage = () => {
               const key = Object.keys(COLORS.orders)[context.dataIndex];
               return createGradient(ctx, chartArea, COLORS.orders[key]);
             },
-            borderWidth: 2,
             borderColor: "#ffffff",
+            borderWidth: 2,
             hoverOffset: 24,
-            hoverBorderWidth: 3,
+            hoverBorderWidth: 4,
           },
         ],
       },
@@ -267,8 +154,16 @@ const StatistiquesPage = () => {
               if (!chartArea) return COLORS.payments.paid[0];
               return createGradient(ctx, chartArea, COLORS.payments.paid);
             },
-            backgroundColor: COLORS.payments.paid[0],
-            fill: false,
+            backgroundColor: (context) => {
+              const ctx = context.chart.ctx;
+              const chartArea = context.chart.chartArea;
+              if (!chartArea) return COLORS.payments.paid[0];
+              const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+              gradient.addColorStop(0, "rgba(34, 197, 94, 0.2)");
+              gradient.addColorStop(1, "rgba(34, 197, 94, 0)");
+              return gradient;
+            },
+            fill: true, // Remplir la zone sous la ligne
             tension: 0.4,
             pointRadius: 6,
             pointHoverRadius: 10,
@@ -290,8 +185,16 @@ const StatistiquesPage = () => {
               if (!chartArea) return COLORS.stock.ok[0];
               return createGradient(ctx, chartArea, COLORS.stock.ok);
             },
-            backgroundColor: COLORS.stock.ok[0],
-            fill: false,
+            backgroundColor: (context) => {
+              const ctx = context.chart.ctx;
+              const chartArea = context.chart.chartArea;
+              if (!chartArea) return COLORS.stock.ok[0];
+              const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+              gradient.addColorStop(0, "rgba(6, 182, 212, 0.2)");
+              gradient.addColorStop(1, "rgba(6, 182, 212, 0)");
+              return gradient;
+            },
+            fill: true,
             tension: 0.4,
             pointRadius: 6,
             pointHoverRadius: 10,
@@ -308,6 +211,13 @@ const StatistiquesPage = () => {
       },
       type: Line,
     },
+  };
+
+  // Calcul des totaux et des KPIs
+  const totals = {
+    orders: Object.values(stats.orders).reduce((a, b) => a + b, 0),
+    payments: Object.values(stats.payments).reduce((a, b) => a + b, 0),
+    stock: Object.values(stats.stock).reduce((a, b) => a + b, 0),
   };
 
   const kpis = [
@@ -357,16 +267,107 @@ const StatistiquesPage = () => {
     },
   ];
 
+  // Logique de récupération des données
+  const fetchEventDetails = async (eventId) => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/evenements/${eventId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setEventDetails(response.data);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des détails de l'événement :", error);
+      if (error.response?.status === 404) {
+        setError("Événement non trouvé. Vérifiez l'ID de l'événement.");
+      } else {
+        setError("Erreur lors de la récupération des détails de l'événement.");
+      }
+    }
+  };
+
+  const fetchStatistics = async () => {
+    try {
+      setLoading(true);
+      const event = await getEventIdByEmail(token);
+      if (!event?.eventId) {
+        throw new Error("ID d'événement non valide ou introuvable.");
+      }
+      const eventId = event.eventId;
+      setEventId(eventId);
+      await fetchEventDetails(eventId);
+
+      const ordersRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders/event/${eventId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const ordersData = ordersRes.data;
+
+      const orderStats = ordersData.reduce((acc, order) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+      }, { pending: 0, preparing: 0, served: 0, canceled: 0 });
+
+      const paymentStats = ordersData.reduce((acc, order) => {
+        order.paymentStatus === "paid" ? acc.paid++ : acc.unpaid++;
+        return acc;
+      }, { paid: 0, unpaid: 0 });
+
+      let stockItems = [];
+      try {
+        const stockRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        stockItems = Array.isArray(stockRes.data)
+          ? stockRes.data.flatMap((menu) => (Array.isArray(menu.items) ? menu.items : []))
+          : [];
+      } catch (error) {
+        console.error("Erreur lors de la récupération des menus :", error);
+        if (error.response?.status === 404) {
+          console.warn("API /menus non trouvée, utilisation d'un tableau vide.");
+        }
+        stockItems = [];
+      }
+
+      const stockStats = stockItems.reduce((acc, item) => {
+        if (item.stock <= 5) acc.critical++;
+        else if (item.stock <= 10) acc.low++;
+        else acc.ok++;
+        return acc;
+      }, { critical: 0, low: 0, ok: 0 });
+
+      setStats({
+        orders: orderStats,
+        payments: paymentStats,
+        stock: stockStats,
+      });
+    } catch (error) {
+      console.error("Erreur lors de la récupération des statistiques :", error);
+      setError(error.message || "Erreur lors de la récupération des statistiques.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchStatistics();
+    }
+  }, [token]);
+
+  // États de chargement et d'erreur
   if (error) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center"
+        className="min-h-screen bg-gray-50 flex items-center justify-center p-8"
       >
-        <div className="bg-red-100 text-red-800 p-4 rounded-lg">
-          <h2 className="text-lg font-semibold">Erreur</h2>
-          <p>{error}</p>
+        <div className="bg-white rounded-xl shadow-xl p-8 max-w-lg w-full text-center">
+          <div className="text-red-500 mb-4">
+            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Erreur</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -374,7 +375,7 @@ const StatistiquesPage = () => {
               setError(null);
               fetchStatistics();
             }}
-            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300"
+            className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 focus:ring-4 focus:ring-indigo-300"
           >
             Réessayer
           </motion.button>
@@ -388,9 +389,12 @@ const StatistiquesPage = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center"
+        className="min-h-screen bg-gray-50 flex items-center justify-center p-8"
       >
-        <p className="text-lg font-semibold text-gray-700">Chargement des données...</p>
+        <div className="flex flex-col items-center">
+          <div className="w-16 h-16 border-4 border-t-4 border-gray-200 border-t-indigo-500 rounded-full animate-spin"></div>
+          <p className="mt-4 text-lg font-semibold text-gray-700">Chargement des données...</p>
+        </div>
       </motion.div>
     );
   }
@@ -400,16 +404,16 @@ const StatistiquesPage = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8"
+      className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8 font-inter"
     >
-      <div className="max-w-7xl mx-auto flex flex-col space-y-6">
-        <div className="flex justify-between items-center">
+      <div className="max-w-7xl mx-auto flex flex-col space-y-8">
+        <div className="flex justify-between items-center flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate(-1)}
-              className="flex items-center px-4 py-2 bg-white text-gray-700 rounded-lg shadow-md hover:bg-gray-50 focus:ring-4 focus:ring-indigo-300 transition-all duration-300"
+              className="flex items-center px-4 py-2 bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 transition-all duration-300 focus:ring-4 focus:ring-indigo-300"
               aria-label="Retour à la page précédente"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -417,7 +421,7 @@ const StatistiquesPage = () => {
               </svg>
               Retour
             </motion.button>
-            <h1 className="text-3xl font-bold text-gray-800 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+            <h1 className="text-3xl font-bold text-gray-800 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
               Tableau de bord – {eventDetails ? eventDetails.nom : "Événement non chargé"}
             </h1>
           </div>
@@ -425,26 +429,28 @@ const StatistiquesPage = () => {
             Mis à jour: {new Date().toLocaleString()}
           </span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        {/* Section des KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {kpis.map((kpi, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.4, ease: "easeOut" }}
-              className="bg-white rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
+              transition={{ delay: index * 0.1, duration: 0.5, ease: "easeOut" }}
+              className="bg-white rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 border border-gray-100"
             >
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{kpi.title}</p>
-                  <h2 className="text-2xl font-bold text-gray-900 mt-1">{kpi.value}</h2>
+                  <h2 className="text-3xl font-bold text-gray-900 mt-2">{kpi.value}</h2>
                 </div>
-                <div className="p-2 rounded-full bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-600">
+                <div className="p-3 rounded-full bg-gradient-to-br from-indigo-50 to-purple-50 text-indigo-600 shadow-md">
                   {kpi.icon}
                 </div>
               </div>
               <div
-                className={`mt-3 text-sm font-medium flex items-center ${
+                className={`mt-4 text-sm font-medium flex items-center ${
                   kpi.trend === "up" ? "text-green-600" : "text-red-600"
                 }`}
               >
@@ -461,28 +467,31 @@ const StatistiquesPage = () => {
             </motion.div>
           ))}
         </div>
+
+        {/* Section des graphiques */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
-            className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100"
+            className="bg-white rounded-3xl p-8 shadow-2xl border border-gray-100"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Commandes</h3>
-            <p className="text-sm text-gray-600 mb-4">Total : {totals.orders}</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Statut des Commandes</h3>
+            <p className="text-sm text-gray-600 mb-6">Total : {totals.orders}</p>
             <div className="h-80 relative">
-              <Pie data={charts.orders.data} options={chartOptions} />
+              <Pie data={charts.orders.data} options={baseChartOptions} />
             </div>
           </motion.div>
+
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
-            className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100"
+            className="bg-white rounded-3xl p-8 shadow-2xl border border-gray-100"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Paiements & Stock</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              {totals.payments} paiements – {totals.stock} articles
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Paiements & État du Stock</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              {totals.payments} paiements – {totals.stock} articles en stock
             </p>
             <div className="h-80 relative">
               <Line data={charts.combined.data} options={lineOptions} />

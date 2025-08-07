@@ -10,7 +10,7 @@ import {
 import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
 
-// Carte individuelle avec animation et style dynamique
+// ✅ Carte du tableau de bord
 const DashboardCard = ({ name, icon, description, path, gradient, index }) => (
   <Link to={path} className="group">
     <motion.div
@@ -22,7 +22,6 @@ const DashboardCard = ({ name, icon, description, path, gradient, index }) => (
       className={`relative overflow-hidden p-6 min-h-[260px] flex flex-col justify-between rounded-2xl shadow-lg border border-gray-200 backdrop-blur-md ${gradient} transition-all duration-300 transform group-hover:ring-2 group-hover:ring-offset-2 group-hover:ring-indigo-300`}
     >
       <div className="absolute inset-0 bg-white/40 opacity-10 rounded-2xl"></div>
-
       <div className="relative z-10 flex flex-col items-center text-center space-y-4">
         <div className="p-3 bg-white/70 rounded-full shadow-md">{icon}</div>
         <h3 className="text-xl font-bold text-gray-800">{name}</h3>
@@ -32,8 +31,7 @@ const DashboardCard = ({ name, icon, description, path, gradient, index }) => (
   </Link>
 );
 
-
-// Données des cartes du dashboard
+// ✅ Données des cartes
 const dashboardItems = [
   {
     name: "Gestion des Commandes",
@@ -72,13 +70,16 @@ const dashboardItems = [
   },
 ];
 
+// ✅ Composant principal
 const Caisse = () => {
   const navigate = useNavigate();
-  const { setToken } = useStateContext();
+  const { setToken, setUser, user } = useStateContext();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("ACCESS_TOKEN");
+    sessionStorage.removeItem("USER");
     setToken(null);
+    setUser(null);
     navigate("/pagepublic");
   };
 
@@ -90,7 +91,8 @@ const Caisse = () => {
       className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-100 px-4 sm:px-6 lg:px-12 py-10"
     >
       <div className="max-w-7xl mx-auto space-y-10">
-        {/* Header */}
+
+        {/* ✅ Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -100,27 +102,42 @@ const Caisse = () => {
           <h1 className="text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text">
             Tableau de Bord Caisse
           </h1>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleLogout}
-            className="flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow hover:from-red-600 hover:to-red-700 focus:ring-4 focus:ring-red-300 transition-all duration-300 text-sm font-semibold"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Déconnexion
-          </motion.button>
+
+          {/* ✅ Avatar et déconnexion */}
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <img
+                src={user?.avatar || "https://i.pravatar.cc/150?img=12"}
+                alt="Avatar utilisateur"
+                className="w-10 h-10 rounded-full border-2 border-indigo-500 object-cover"
+              />
+              <span className="text-sm font-medium text-gray-700">
+                {user?.name || "Utilisateur"}
+              </span>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogout}
+              className="flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow hover:from-red-600 hover:to-red-700 focus:ring-4 focus:ring-red-300 transition-all duration-300 text-sm font-semibold"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Déconnexion
+            </motion.button>
+          </div>
         </motion.div>
 
-        {/* Cartes */}
+        {/* ✅ Cartes */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {dashboardItems.map((item, index) => (
             <DashboardCard key={index} {...item} index={index} />
           ))}
         </div>
 
-        {/* Sous-routes */}
+        {/* ✅ Sous-routes */}
         <div className="mt-10">
           <Outlet />
         </div>
