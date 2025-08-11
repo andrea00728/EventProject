@@ -113,7 +113,7 @@ const PublicEvents = () => {
                             minute: "2-digit",
                           })}
                         </p>
-                        <p><span className="text-slate-500 font-medium">Lieu :</span> {event.lieu || "Non précisé"}</p>
+                        <p><span className="text-slate-500 font-medium">Lieu :</span> {event.location.nom || "Non précisé"}</p>
                       </div>
                     </div>
                   </div>

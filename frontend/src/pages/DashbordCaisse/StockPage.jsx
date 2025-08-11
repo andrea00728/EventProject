@@ -286,9 +286,6 @@ const StockPage = () => {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [sortConfig, setSortConfig] = useState({ field: null, direction: 'asc' });
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editedItem, setEditedItem] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -496,10 +493,8 @@ const StockPage = () => {
 
   // Filtrage des lignes selon la recherche et les filtres
   const filteredRows = rows.filter(r =>
-    (r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.category.toLowerCase().includes(searchQuery.toLowerCase())) &&
-    (categoryFilter ? r.category === categoryFilter : true) &&
-    (statusFilter ? r.status === statusFilter : true)
+    r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    r.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Rendu de l'interface utilisateur

@@ -25,7 +25,7 @@ export default function Pagepublic() {
           </h1>
           <p className="text-[#6D6767] mt-6 sm:mt-8 text-base sm:text-lg lg:text-xl leading-relaxed font-medium">
             Connectez-vous pour profiter d’une expérience personnalisée, fluide et
-            adaptée à vos besoins. Découvrez toutes les fonctionnalités avancées de
+            adaptée à vos besoins. Découvrez toutes les fonctionnalités avancées de 
             notre plateforme événementielle.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center lg:justify-start">

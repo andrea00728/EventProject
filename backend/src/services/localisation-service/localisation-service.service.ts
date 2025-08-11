@@ -5,10 +5,12 @@ import { Evenement } from 'src/entities/Evenement';
 import { Localisation } from 'src/entities/Location';
 import { Salle } from 'src/entities/salle';
 import { DataSource, Repository } from 'typeorm';
+import { ILike } from 'typeorm';
 
 
 @Injectable()
 export class LocationService {
+
   constructor(
     @InjectRepository(Localisation)
     private readonly locationRepository: Repository<Localisation>,
@@ -22,8 +24,20 @@ export class LocationService {
 
   // Créer un lieu
   async createLocation(nom: string): Promise<Localisation> {
+    const existing = await this.locationRepository.findOne({ where: { nom } });
+    if (existing) {
+      return existing;
+    }
     const location = this.locationRepository.create({ nom });
     return this.locationRepository.save(location);
+  }
+
+
+  async findLocationsBySearch(search: string): Promise<Localisation[]> {
+    return this.locationRepository.find({
+      where: { nom: ILike(`${search}%`) },
+      order: { nom: 'ASC' },
+    });
   }
 
   // Récupérer tous les lieux

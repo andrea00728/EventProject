@@ -231,10 +231,6 @@ const router=createBrowserRouter([
         element: <StatistiquesPage />,
       },
       {
-        path: "/revenu",
-        element: <RevenuPage />,
-      },
-      {
         path: "/evenement/tables",
         element: <TableLayout />,
         children: [

@@ -492,7 +492,7 @@ export default function MenuRestauration() {
                 transition: 'all 0.3s ease',
                 '&:hover': {
                   bgcolor: theme.neutral,
-                  background:'#3b83f61c',
+                  background: '#3b83f61c',
                   // transform: 'translateY(-2px)'
                 },
                 '&.Mui-selected': {
@@ -987,7 +987,7 @@ export default function MenuRestauration() {
       >
         <DialogTitle sx={{
           background: theme.gradientCard,
-          color: 'gray',
+          color: 'white',
           display: 'flex',
           alignItems: 'center',
           gap: 2,
@@ -996,13 +996,13 @@ export default function MenuRestauration() {
         }}>
           <RestaurantIcon />
           {editingItem
-            ? `Modifier - ${allMenus.find((m) => m.id === selectedMenuId)?.name || ""}`
-            : `Ajouter un - ${allMenus.find((m) => m.id === selectedMenuId)?.name || ""}`}
+            ? `Modifier ${allMenus.find((m) => m.id === selectedMenuId)?.name || "menu"}`
+            : `Ajouter un(e) ${allMenus.find((m) => m.id === selectedMenuId)?.name || ""}`}
         </DialogTitle>
         <DialogContent sx={{ p: 4 }}>
           <Box sx={{ display: 'grid', gap: 3, mt: 2 }}>
             {[
-              { field: "name", label: "Nom du plat", type: "text" },
+              { field: "name", label: ` nom  ${allMenus.find((m) => m.id === selectedMenuId)?.name || ""}`, type: "text" },
               { field: "description", label: "Description", type: "text", multiline: true },
               { field: "price", label: "Prix (€)", type: "number" },
               { field: "category", label: "Catégorie", type: "text" },
@@ -1030,7 +1030,7 @@ export default function MenuRestauration() {
             ))}
             <Box>
               <Typography variant="body2" sx={{ mb: 1, color: theme.textLight, fontWeight: 'medium' }}>
-                Image du plat
+                Image {allMenus.find((m) => m.id === selectedMenuId)?.name || ""}
               </Typography>
               <TextField
                 type="file"

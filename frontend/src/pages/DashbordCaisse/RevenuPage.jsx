@@ -17,7 +17,6 @@ import {
   Filler,
   ArcElement,
 } from "chart.js";
-import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -62,16 +61,13 @@ ChartJS.register(
 );
 
 const RevenuPage = () => {
-  const [revenus, setRevenus] = useState([]);
+  const [commandes, setCommandes] = useState([]);
+  const [periode, setPeriode] = useState("jour");
   const [loading, setLoading] = useState(true);
   const [isRefunding, setIsRefunding] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPeriod, setFilterPeriod] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [totalRevenue, setTotalRevenue] = useState(0);
-  const [totalPending, setTotalPending] = useState(0);
-  const [totalRefunded, setTotalRefunded] = useState(0);
-  const [categoryBreakdown, setCategoryBreakdown] = useState({});
   const [timeSeriesData, setTimeSeriesData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
