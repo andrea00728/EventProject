@@ -6,6 +6,7 @@ import {
 import { useStateContext } from "../../context/ContextProvider";
 import { checkEmail, textControll } from "../../services/controll_champs/controll_champs";
 
+let debouceTimeout;
 export default function Inviteform({ onBack, eventId }) {
   const [form, setForm] = useState({
     nom: "",

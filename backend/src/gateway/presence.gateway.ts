@@ -12,7 +12,7 @@ import { AuthService } from 'src/Authentication/auth.service';
   cors: {
   origin: 'https://mastertable.site',
   credentials: true,
-   path: '/socket.io',
+  //  path: '/socket.io',
 },
 })
 export class PresenceGateway implements OnGatewayConnection, OnGatewayDisconnect {
