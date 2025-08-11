@@ -17,6 +17,7 @@ export function useSocket() {
       newSocket = io(SOCKET_URL, {
         path: '/socket.io/', 
         // transports: ['websocket'],
+        transports: ['websocket', 'polling'],
         auth: { userId },
         // secure:true,
       });

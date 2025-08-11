@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef, use } from "react";
 import { deleteManager, getManagerList } from "../../services/inviteService";
 import { formatDate } from "./Evenement";
 import {
@@ -24,6 +24,7 @@ import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { ChevronDown } from "lucide-react";
 import { io } from "socket.io-client";
 import { SOCKET_URL } from "../../socket";
+import { getUserIdForToken } from "../../services/userService";
 
 // Composant StatsCard
 const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
@@ -331,44 +332,129 @@ export default function Organisateur() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+
+  /**
+   * 
+   * debugg erreur 
+   * 
+   */
+  // useEffect(() => {
+  //   document.title = "Organisateur - Admin";
+  //   const fetchData = async () => {
+  //     try {
+  //       setLoading(true);
+  //       const data = await getManagerList();
+  //       setData(
+  //         data.map((org) => ({
+  //           ...org,
+  //           forfait: org.forfait || null,
+  //           createdAt: formatDate(org.createdAt),
+  //           forfaitexpirationdate: org.forfaitexpirationdate
+  //             ? formatDate(org.forfaitexpirationdate)
+  //             : "N/A",
+  //         }))
+  //       );
+  //     } catch (error) {
+  //       console.error(
+  //         "Erreur lors de la récupération des organisateurs :",
+  //         error
+  //       );
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchData();
+
+  
+
+  //   // const socket = io(`${import.meta.env.VITE_API_BASE_URL}`, {
+  //   //   auth: {
+  //   //     userId: userId, // très important : doit être l’ID réel de l’organisateur
+  //   //   },
+  //   // });
+
+  //   const socket = io(SOCKET_URL, {
+  //     const userId =  getUserIdForToken();
+  //     if (!userId) return;
+  //    path: '/socket.io/', 
+  //       // transports: ['websocket'],
+  //       transports: ['websocket', 'polling'],
+  //       auth: { userId },
+  //       // secure:true,
+  //   });
+
+  //   socket.on("connect", () => {
+  //     console.log("🟢 SuperAdmin connecté au WebSocket !");
+  //   });
+
+  //   socket.on("connect_error", (err) => {
+  //     console.error("❌ Erreur WebSocket SuperAdmin :", err.message);
+  //   });
+
+  //   socket.on("organizer_connected", ({ userId }) => {
+  //     // console.log("📡 SuperAdmin reçoit organizer_connected :", userId);
+
+  //     setData((prev) => {
+  //       const match = prev.find((m) => m.id === userId);
+  //       return prev.map((m) =>
+  //         m.id === userId
+  //           ? { ...m, isOnline: true, lastLogin: new Date().toISOString() }
+  //           : m
+  //       );
+  //     });
+  //   });
+
+  //   socket.on("organizer_disconnected", ({ userId }) => {
+  //     setData((prev) =>
+  //       prev.map((m) =>
+  //         m.id === userId
+  //           ? { ...m, isOnline: false, lastLogin: new Date().toISOString() }
+  //           : m
+  //       )
+  //     );
+  //   });
+
+  //   return () => {
+  //     socket.disconnect();
+  //   };
+  // }, []);
+
   useEffect(() => {
-    document.title = "Organisateur - Admin";
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const data = await getManagerList();
-        setData(
-          data.map((org) => ({
-            ...org,
-            forfait: org.forfait || null,
-            createdAt: formatDate(org.createdAt),
-            forfaitexpirationdate: org.forfaitexpirationdate
-              ? formatDate(org.forfaitexpirationdate)
-              : "N/A",
-          }))
-        );
-      } catch (error) {
-        console.error(
-          "Erreur lors de la récupération des organisateurs :",
-          error
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  document.title = "Organisateur - Admin";
 
-    // const userId = await getUserIdForToken(token);
-    // const socket = io(`${import.meta.env.VITE_API_BASE_URL}`, {
-    //   auth: {
-    //     userId: userId, // très important : doit être l’ID réel de l’organisateur
-    //   },
-    // });
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const data = await getManagerList();
+      setData(
+        data.map((org) => ({
+          ...org,
+          forfait: org.forfait || null,
+          createdAt: formatDate(org.createdAt),
+          forfaitexpirationdate: org.forfaitexpirationdate
+            ? formatDate(org.forfaitexpirationdate)
+            : "N/A",
+        }))
+      );
+    } catch (error) {
+      console.error("Erreur lors de la récupération des organisateurs :", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchData();
 
-    const socket = io(SOCKET_URL, {
-      auth: {
-        userId: "455b0bed-dd7f-4214-a5dd-5a1eb",
-      },
+  let socket;
+
+  async function connectSocket() {
+    const userId = await getUserIdForToken();
+    if (!userId) return;
+
+    socket = io(SOCKET_URL, {
+      path: '/socket.io/',
+      transports: ['websocket', 'polling'],
+      auth: { userId },
+      // secure: true, // si besoin
     });
 
     socket.on("connect", () => {
@@ -380,16 +466,13 @@ export default function Organisateur() {
     });
 
     socket.on("organizer_connected", ({ userId }) => {
-      // console.log("📡 SuperAdmin reçoit organizer_connected :", userId);
-
-      setData((prev) => {
-        const match = prev.find((m) => m.id === userId);
-        return prev.map((m) =>
+      setData((prev) =>
+        prev.map((m) =>
           m.id === userId
             ? { ...m, isOnline: true, lastLogin: new Date().toISOString() }
             : m
-        );
-      });
+        )
+      );
     });
 
     socket.on("organizer_disconnected", ({ userId }) => {
@@ -401,11 +484,15 @@ export default function Organisateur() {
         )
       );
     });
+  }
 
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+  connectSocket();
+
+  return () => {
+    if (socket) socket.disconnect();
+  };
+}, []);
+
 
   const filteredData = data.filter((organisateur) =>
     organisateur[filterType]?.toLowerCase().includes(searchTerm.toLowerCase())
