@@ -12,6 +12,7 @@ const PublicEvents = () => {
       setIsLoading(true);
       try {
         const response = await axios.get('http://localhost:3000/evenements/publics');
+        console.log(response);
         setEvents(response.data);
         setError(null);
       } catch (error) {
@@ -113,7 +114,7 @@ const PublicEvents = () => {
                             minute: "2-digit",
                           })}
                         </p>
-                        <p><span className="text-slate-500 font-medium">Lieu :</span> {event.lieu || "Non précisé"}</p>
+                        <p><span className="text-slate-500 font-medium">Lieu :</span> {event.location.nom || "Non précisé"}</p>
                       </div>
                     </div>
                   </div>

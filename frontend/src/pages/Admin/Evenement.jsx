@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useDarkMode } from "../../context/DarkModeContext";
 import ModalEvenement from "./ModalEvenement";
+// import { Evenement } from 'backend/src/entities/Evenement';
+// import { EvenementService } from 'backend/src/services/evenement/evenement.service';
 import { getAllEvents } from "../../services/evenementServ";
 import { FaEye, FaUser } from "react-icons/fa";
 import {
@@ -367,6 +369,9 @@ export default function EvenementAd() {
       case "organisateur":
         value = event.user.name;
         break;
+      case "visibilite":
+        value = event.isPublic ? 'public' : 'privé';
+        break;
       default:
         value = "";
     }
@@ -379,25 +384,32 @@ export default function EvenementAd() {
         Nom: value.nom,
         Type: value.type,
         Theme: value.theme,
+        Visibilité: value.isPublic ? 'Public' : 'Privé',
         Date_debut: value.date,
         Date_fin: value.date_fin,
         Localisation: value.location.nom,
         Organisateur: value.user.name,
+        Statut: value.status === 'active' ? 'Actif' : 'Inactif',
+        Participants: value.participants || 0
       })
     );
     handleDownloadXLSX(page, "liste_evenements");
   };
-
+  // Statistiques
   // Statistiques
   const stats = useMemo(() => {
     const total = data.length;
     const active = data.filter(e => e.status === 'active').length;
+    const publicEvents = data.filter(e => e.isPublic === true).length;
+    const privateEvents = data.filter(e => e.isPublic === false).length;
     const totalParticipants = data.reduce((sum, e) => sum + (e.participants || 0), 0);
     const avgParticipants = total > 0 ? Math.round(totalParticipants / total) : 0;
 
     return {
       total,
       active,
+      publicEvents,
+      privateEvents,
       totalParticipants,
       avgParticipants
     };
@@ -414,13 +426,126 @@ export default function EvenementAd() {
 
   const pageBg = darkMode
     ? "bg-gray-900 text-gray-200"
-    : "bg-gray-50 text-gray-800";
+    : "bg-gradient-to-r from-white to-gray-50 text-gray-800";
 
   const [currentPage, setCurrentPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   return (
     <div className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${pageBg}`}>
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${ gradientTitle }`}>
+          <MdCalendarToday className="mr-2 sm:mr-3 text-blue-700" /> Liste des événements
+        </h2>
+
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Dropdown
+            ref={notifRef}
+            show={showNotifications}
+            setShow={setShowNotifications}
+            icon={<FaBell />}
+            label="Notifications"
+            count={notifications.length}
+            items={notifications}
+          />
+
+          <Dropdown
+            ref={msgRef}
+            show={showMessages}
+            setShow={setShowMessages}
+            icon={<FaEnvelope />}
+            label="Messages"
+            count={messages.length}
+            items={messages}
+          />
+
+          <div ref={profileRef} className="relative">
+            <button
+              onClick={() => setShowProfile(!showProfile)}
+              className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
+                darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+              }`}
+              aria-label="Menu profil"
+            >
+              <div className="relative">
+                <FaUser className="w-5 h-5" />
+              </div>
+              <span className={`hidden sm:inline text-sm font-medium ${
+                darkMode ? "text-purple-300" : "text-purple-600"  // Violet
+              }`}>Admin</span>
+              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
+                showProfile ? 'rotate-180' : ''
+              }`} />
+            </button>
+
+            {showProfile && (
+              <div
+                className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
+                  darkMode 
+                    ? 'bg-gray-800 border-gray-700' 
+                    : 'bg-white border-gray-200'
+                } z-50 transition-all duration-200 ${
+                  window.innerWidth < 640 ? 'left-4 right-4' : 'right-0'
+                }`}
+              >
+                <div className="p-2">
+                  <div className={`px-3 py-2 text-sm ${
+                    darkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    <p className="font-medium">Connecté en tant que</p>
+                    <p className="truncate">admin@example.com</p>
+                  </div>
+                  <div className={`border-t ${
+                    darkMode ? 'border-gray-700' : 'border-gray-200'
+                  }`}></div>
+                  <button
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      darkMode 
+                        ? 'hover:bg-gray-700 text-gray-200' 
+                        : 'hover:bg-gray-100 text-gray-800'
+                    } transition-colors duration-150`}
+                  >
+                    Mon profil
+                  </button>
+                  <button
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      darkMode 
+                        ? 'hover:bg-gray-700 text-gray-200' 
+                        : 'hover:bg-gray-100 text-gray-800'
+                    } transition-colors duration-150`}
+                  >
+                    Paramètres
+                  </button>
+                  <div className={`border-t ${
+                    darkMode ? 'border-gray-700' : 'border-gray-200'
+                  }`}></div>
+                  <button
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      darkMode 
+                        ? 'hover:bg-gray-700 text-red-400' 
+                        : 'hover:bg-gray-100 text-red-600'
+                    } transition-colors duration-150`}
+                  >
+                    Déconnexion
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={toggleDarkMode}
+            className={`p-2 rounded-full ${
+              darkMode 
+                ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' 
+                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+            } transition-colors duration-200`}
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? "☀️" : "🌙"}
+          </button>
+        </div>
+      </div>
 
       {/* Section Statistiques */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -431,25 +556,25 @@ export default function EvenementAd() {
           trend={12}
           color="blue"
         />
-        <StatsCard
+        {/* <StatsCard
           title="Événements Actifs"
           value={stats.active}
           icon={MdCalendarToday}
           trend={8}
           color="green"
-        />
+        /> */}
         <StatsCard
-          title="Total Participants"
-          value={stats.totalParticipants.toLocaleString()}
+          title="Événements Publics"
+          value={stats.publicEvents}
           icon={MdPeople}
-          trend={-3}
+          trend={5}
           color="purple"
         />
         <StatsCard
-          title="Moyenne Participants"
-          value={stats.avgParticipants}
+          title="Événements Privés"
+          value={stats.privateEvents}
           icon={MdLocationOn}
-          trend={5}
+          trend={3}
           color="orange"
         />
       </div>
@@ -576,7 +701,7 @@ export default function EvenementAd() {
                       className="grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"
                     >
                       {/* Nom Événement */}
-                      <div className="col-span-3">
+                      <div className="col-span-2">
                         <div className={`font-medium truncate ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
                           {event.nom}
                         </div>
@@ -592,9 +717,24 @@ export default function EvenementAd() {
                       </div>
 
                       {/* Thème */}
-                      <div className="col-span-2">
+                      <div className="col-span-1">
                         <span className={`truncate ${darkMode ? 'text-purple-300' : 'text-purple-600'}`}>
                           {event.theme}
+                        </span>
+                      </div>
+
+                      {/* Visibilité */}
+                      <div className="col-span-1">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          event.isPublic
+                            ? darkMode
+                              ? 'bg-blue-900/50 text-blue-300'
+                              : 'bg-blue-100 text-blue-800'
+                            : darkMode
+                              ? 'bg-gray-700/50 text-gray-400'
+                              : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {event.isPublic ? 'Public' : 'Privé'}
                         </span>
                       </div>
 

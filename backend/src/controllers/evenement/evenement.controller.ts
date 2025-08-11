@@ -51,6 +51,7 @@ export class EvenementController {
 
   @Get('/me')
   @UseGuards(AuthGuard('jwt'))
+  @Get('publics')
   async findUserEvenement(@Req() req: any): Promise<Evenement[]> {
     const userIdFromToken = req.user?.sub;
     if (!userIdFromToken) {
