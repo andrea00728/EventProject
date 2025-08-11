@@ -18,6 +18,14 @@ export class OrdersGateway {
   @WebSocketServer()
   server: Server;
 
+/*************  ✨ Windsurf Command ⭐  *************/
+/**
+ * Emits an 'orderRefunded' event to all connected clients.
+ * 
+ * @param data - An object containing the ID of the order and its payment status.
+ */
+
+/*******  aac60649-4a01-4139-9995-5546cc7b7453  *******/
   handleOrderRefunded(data: { id: number; paymentStatus: string }) {
     console.log(`Émission de l'événement orderRefunded: ${JSON.stringify(data)}`);
     this.server.emit('orderRefunded', data);
