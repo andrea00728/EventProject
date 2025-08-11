@@ -2,18 +2,32 @@ import { GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, signOut, get
 import { auth } from './firebaseConfig';
 import axios from 'axios';
 
+const URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
+
 export const signInWithGoogle = async () => {
   const provider = new GoogleAuthProvider();
   const result = await signInWithPopup(auth, provider);
   const token = await result.user.getIdToken(true);
-  return token;
+  const response = await axios.post(`${URL}/admin/login/admin`, {}, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
 };
 
 export const signInWithFacebook = async () => {
   const provider = new FacebookAuthProvider();
   const result = await signInWithPopup(auth, provider);
   const token = await result.user.getIdToken(true);
-  return token;
+  const response = await axios.post(`${URL}/admin/login/admin`, {}, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
 };
 
 export const handleRedirectResult = async () => {

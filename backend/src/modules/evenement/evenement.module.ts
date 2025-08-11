@@ -18,10 +18,13 @@ import { LocationModule } from '../localisation/localisation.module';
     TypeOrmModule.forFeature([Evenement, Localisation, Salle, TableEvent, User]),
     ForfaitModule,
     NotificationModule,
-    LocationModule,  // <-- Import ici au lieu de déclarer LocationService dans providers
+    LocationModule,
   ],
   controllers: [EvenementController],
-  providers: [EvenementService], // LocationService SUPPRIMÉ d'ici
-  exports: [EvenementService],
+  providers: [EvenementService],
+  exports: [
+    EvenementService,
+    TypeOrmModule, // <-- AJOUTER ÇA POUR EXPORTER LES REPOSITORIES
+  ],
 })
 export class EvenementModule {}

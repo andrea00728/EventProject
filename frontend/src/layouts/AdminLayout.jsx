@@ -36,7 +36,7 @@ export default function AdminLayout() {
       setIsMobile(window.innerWidth < 768);
       if (window.innerWidth >= 768) setSidebarOpen(false);
     };
-
+    
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -55,8 +55,10 @@ export default function AdminLayout() {
       return <Navigate to="/personnelCaisse" replace />;
     case "cuisinier":
       return <Navigate to="/personnelCuisine" replace />;
+    case "organisateur":
+      return <Navigate to="/pagepublic" replace />;
     default:
-      return <Navigate to="/AdminAccueil" replace />;
+      return <Navigate to={location.pathname || "/AdminAccueil"} replace />;
   }
 
   const handleLogout = () => {
@@ -301,6 +303,7 @@ export default function AdminLayout() {
     const [showConversationModal, setShowConversationModal] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [notifications, setNotifications] = useState([]);
+    const {user} = useStateContext();
 
     const notifRef = useRef(null);
     const msgRef = useRef(null);
@@ -403,9 +406,9 @@ export default function AdminLayout() {
                 aria-label="Menu profil"
               >
                 <div className="relative">
-                  <FaUser className="w-5 h-5" />
+                  {<img src={user.photo} alt="" className="w-8 rounded-[50%]" /> || <FaUser className="w-5 h-5" />}
                 </div>
-                <span className="hidden sm:inline text-sm font-medium">Admin</span>
+                <span className="hidden sm:inline text-sm font-medium">{ user.name || Admin}</span>
                 <ChevronDown
                   className={`w-4 h-4 transition-transform duration-200 ${
                     showProfile ? 'rotate-180' : ''
@@ -606,7 +609,7 @@ export default function AdminLayout() {
       </aside>
       <div className="flex-1 flex flex-col overflow-hidden">
         <AdminHeader currentPageName={currentPageName} darkMode={darkMode} />
-        <main className="flex-1 overflow-auto scrollable p-0 bg-gray-50 dark:bg-gray-900">
+        <main className={`flex-1 overflow-auto scrollable p-0 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
           <div className={`h-full ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
             <Outlet />
           </div>
