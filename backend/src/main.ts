@@ -14,7 +14,7 @@ async function bootstrap() {
 
   // Configuration CORS
   app.enableCors({
-    origin: 'https://mastertable.site',
+    origin:'https://mastertable.site' ,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
     credentials: true,
