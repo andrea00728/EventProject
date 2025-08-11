@@ -14,9 +14,7 @@ export const signInWithGoogle = async () => {
     },
   });
 
-  const res = response.data;
-  sessionStorage.setItem('ACCESS_TOKEN', res.access_token);
-  sessionStorage.setItem('USER', JSON.stringify(res.user));    
+  return response.data;
 };
 
 export const signInWithFacebook = async () => {
@@ -28,9 +26,8 @@ export const signInWithFacebook = async () => {
       Authorization: `Bearer ${token}`,
     },
   });
-  const res = response.data;
-  sessionStorage.setItem('ACCESS_TOKEN', res.access_token);
-  sessionStorage.setItem('USER', JSON.stringify(res.user));    
+
+  return response.data;
 };
 
 export const handleRedirectResult = async () => {
