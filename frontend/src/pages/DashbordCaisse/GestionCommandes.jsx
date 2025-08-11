@@ -8,14 +8,16 @@ import { Snackbar, Alert, Chip } from "@mui/material";
 import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { getUserIdForToken } from "../../services/userService";
-import { FaArrowLeft, FaSync, FaTimes } from "react-icons/fa";
+import { FaArrowLeft, FaSync, FaTimes, FaSearch } from "react-icons/fa";
 import { SOCKET_URL } from "../../socket";
 
 const GestionCommandesPage = () => {
+  // Déclarations d'état pour la gestion des commandes et de l'UI
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCanceled, setShowCanceled] = useState(false);
   const [userId, setUserId] = useState(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -24,6 +26,7 @@ const GestionCommandesPage = () => {
   });
   const { token } = useStateContext();
 
+  // Mappage des statuts pour la cohérence entre le front-end et le back-end
   const STATUS_MAPPING = {
     frontToBack: {
       en_attente: "pending",
@@ -39,6 +42,7 @@ const GestionCommandesPage = () => {
     },
   };
 
+  // Options de statut avec leurs couleurs pour un rendu visuel
   const STATUS_OPTIONS = [
     { value: "en_attente", label: "En attente", color: "warning" },
     { value: "preparation", label: "Préparation", color: "info" },
@@ -46,6 +50,7 @@ const GestionCommandesPage = () => {
     { value: "annuler", label: "Annulée", color: "error" },
   ];
 
+  // Fonction pour récupérer les commandes depuis l'API
   const fetchCommandes = useCallback(async () => {
     try {
       setLoading(true);
@@ -84,6 +89,7 @@ const GestionCommandesPage = () => {
     }
   }, [token]);
 
+  // Fonction pour mettre à jour une commande dans l'état local
   const updateCommande = useCallback((update) => {
     setCommandes((prevCommandes) =>
       prevCommandes.map((cmd) =>
@@ -98,6 +104,7 @@ const GestionCommandesPage = () => {
     );
   }, []);
 
+  // Fonction pour changer le statut d'une commande via l'API et le socket
   const handleStatusChange = useCallback(
     async (orderId, newStatus) => {
       try {
@@ -133,9 +140,10 @@ const GestionCommandesPage = () => {
         });
       }
     },
-    [token, updateCommande]
+    [token, updateCommande, userId]
   );
 
+  // Effet pour initialiser les données et la connexion WebSocket
   useEffect(() => {
     let socket;
 
@@ -177,7 +185,7 @@ const GestionCommandesPage = () => {
               date: new Date(order.orderDate).toLocaleString(),
               status: STATUS_MAPPING.backToFront[order.status] || order.status,
             };
-            return [...prevCommandes, formattedOrder];
+            return [formattedOrder, ...prevCommandes]; // Ajoute la nouvelle commande en haut
           });
         });
 
@@ -209,14 +217,21 @@ const GestionCommandesPage = () => {
     };
   }, [token, fetchCommandes, updateCommande]);
 
+  // Filtrage des commandes en fonction de la sélection de l'utilisateur
   const filteredCommandes = commandes.filter((cmd) => {
-    const matchStatus = selectedStatus === "all" || cmd.status === selectedStatus;
+    const matchStatus =
+      selectedStatus === "all"
+        ? showCanceled
+          ? true
+          : cmd.status !== "annuler"
+        : cmd.status === selectedStatus;
     const search = searchTerm.toLowerCase();
     const matchSearch =
       cmd.nom.toLowerCase().includes(search) || cmd.email.toLowerCase().includes(search);
     return matchStatus && matchSearch;
   });
 
+  // Définition des colonnes pour le DataGrid
   const columns = [
     { field: "id", headerName: "ID", width: 70, sortable: true },
     { field: "nom", headerName: "Client", width: 150, sortable: true },
@@ -230,7 +245,7 @@ const GestionCommandesPage = () => {
           label={params.value}
           color={params.value === "N/A" ? "default" : "primary"}
           size="small"
-          className="font-medium"
+          className="font-medium rounded-full"
         />
       ),
     },
@@ -249,7 +264,7 @@ const GestionCommandesPage = () => {
               label={statusInfo?.label || params.row.status}
               color={statusInfo?.color || "default"}
               size="small"
-              className="font-medium px-3 py-1"
+              className="font-medium px-3 py-1 rounded-full"
             />
           </div>
         );
@@ -257,28 +272,50 @@ const GestionCommandesPage = () => {
     },
     {
       field: "action",
-      headerName: "Action",
+      headerName: "Actions",
       width: 200,
       sortable: false,
       renderCell: (params) => {
         const isCanceled = params.row.status === "annuler";
+        const isServed = params.row.status === "servir";
+        const isPreparing = params.row.status === "preparation";
+        const isPending = params.row.status === "en_attente";
+
         return (
-          <div className="flex items-center h-full">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleStatusChange(params.row.id, "annuler")}
-              disabled={isCanceled}
-              className={`flex items-center justify-center px-3 py-1 rounded-full text-sm font-semibold transition-all duration-300 shadow-md ${
-                isCanceled
-                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  : "bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 focus:ring-4 focus:ring-red-300"
-              }`}
-              aria-label="Annuler la commande"
-            >
-              <FaTimes className="mr-2" />
-              Annuler
-            </motion.button>
+          <div className="flex space-x-2">
+            {isPending && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleStatusChange(params.row.id, "preparation")}
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full p-2 text-xs shadow-md hover:from-blue-600 hover:to-indigo-700 transition-all duration-300"
+                aria-label="Passer en préparation"
+              >
+                Préparer
+              </motion.button>
+            )}
+            {isPreparing && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleStatusChange(params.row.id, "servir")}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full p-2 text-xs shadow-md hover:from-green-600 hover:to-emerald-700 transition-all duration-300"
+                aria-label="Passer en servi"
+              >
+                Servir
+              </motion.button>
+            )}
+            {!isCanceled && (
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleStatusChange(params.row.id, "annuler")}
+                    className="bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-full p-2 text-xs shadow-md hover:from-red-600 hover:to-rose-700 transition-all duration-300"
+                    aria-label="Annuler la commande"
+                >
+                    <FaTimes />
+                </motion.button>
+            )}
           </div>
         );
       },
@@ -290,17 +327,17 @@ const GestionCommandesPage = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8"
+      className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-100 p-4 sm:p-6 lg:p-8 font-inter"
     >
       <div className="max-w-7xl mx-auto flex flex-col space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <h2 className="text-3xl font-bold text-gray-800 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-            Gestion des Commandes
+        {/* En-tête avec titre et bouton de retour */}
+        <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-xl">
+          <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+            Tableau de Bord des Commandes
           </h2>
           <Link
             to="/caisse"
-            className="flex items-center px-4 py-2 bg-white text-gray-700 rounded-lg shadow-md hover:bg-gray-50 focus:ring-4 focus:ring-indigo-300 transition-all duration-300"
+            className="flex items-center px-4 py-2 bg-slate-800 text-white rounded-full shadow-lg hover:bg-slate-700 transition-all duration-300"
             aria-label="Retour à la caisse"
           >
             <FaArrowLeft className="mr-2" />
@@ -308,39 +345,62 @@ const GestionCommandesPage = () => {
           </Link>
         </div>
 
-        {/* Filters and Actions */}
-        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col sm:flex-row gap-4 items-center border border-gray-100">
-          <input
-            type="text"
-            placeholder="Rechercher client ou email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full sm:w-1/3 px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-gray-50 text-gray-800 placeholder-gray-400 transition-all duration-300"
-          />
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="w-full sm:w-1/4 px-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-gray-50 text-gray-800 transition-all duration-300"
-          >
-            <option value="all">Toutes les commandes</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={fetchCommandes}
-            className="flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg shadow-md hover:from-indigo-700 hover:to-indigo-800 focus:ring-4 focus:ring-indigo-300 transition-all duration-300"
-          >
-            <FaSync className="mr-2" />
-            Actualiser
-          </motion.button>
+        {/* Filtres et actions de la barre d'outils */}
+        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col md:flex-row gap-4 items-center justify-between border border-gray-100">
+          <div className="relative w-full md:w-1/3">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+              <FaSearch />
+            </div>
+            <input
+              type="text"
+              placeholder="Rechercher client ou email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none bg-gray-50 text-gray-800 placeholder-gray-400 transition-all duration-300"
+            />
+          </div>
+          <div className="flex-grow flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+              <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-full border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none bg-gray-50 text-gray-800 transition-all duration-300"
+              >
+                  <option value="all">Tous les statuts</option>
+                  {STATUS_OPTIONS.map((s) => (
+                      <option key={s.value} value={s.value}>
+                          {s.label}
+                      </option>
+                  ))}
+              </select>
+              <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={fetchCommandes}
+                  className="flex items-center justify-center w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full shadow-lg hover:from-blue-600 hover:to-indigo-700 focus:ring-4 focus:ring-blue-300 transition-all duration-300"
+              >
+                  <FaSync className="mr-2" />
+                  Actualiser
+              </motion.button>
+              <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowCanceled(!showCanceled)}
+                  className={`flex items-center justify-center w-full sm:w-auto px-4 py-2.5 rounded-full shadow-lg transition-all duration-300 ${
+                      showCanceled
+                          ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                          : "bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                  aria-label={showCanceled ? "Masquer les commandes annulées" : "Afficher les commandes annulées"}
+              >
+                  <span className="mr-2">
+                      {showCanceled ? <FaTimes /> : <FaSync />}
+                  </span>
+                  {showCanceled ? "Masquer Annulées" : "Voir Annulées"}
+              </motion.button>
+          </div>
         </div>
 
-        {/* Data Grid */}
+        {/* Grille de données avec un style amélioré */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -354,11 +414,12 @@ const GestionCommandesPage = () => {
             rowsPerPageOptions={[10, 25, 50]}
             loading={loading}
             disableSelectionOnClick
+            autoHeight
             className="border-none"
             sx={{
-              "& .MuiDataGrid-cell": { fontSize: "0.875rem", color: "#1f2937" },
+              "& .MuiDataGrid-cell": { fontSize: "0.875rem", color: "#4b5563" },
               "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "#f8fafc",
+                backgroundColor: "#f9fafb",
                 color: "#1f2937",
                 fontWeight: "bold",
                 borderBottom: "2px solid #e5e7eb",
@@ -367,14 +428,14 @@ const GestionCommandesPage = () => {
                 transition: "background-color 0.2s ease",
               },
               "& .MuiDataGrid-row:hover": {
-                backgroundColor: "#f1f5f9",
+                backgroundColor: "#f3f4f6",
               },
             }}
           />
         </motion.div>
       </div>
 
-      {/* Snackbar */}
+      {/* Snackbar pour les notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
@@ -387,11 +448,12 @@ const GestionCommandesPage = () => {
           variant="filled"
           className="w-full shadow-lg"
           sx={{
-            background: snackbar.severity === "success"
-              ? "linear-gradient(to right, #10b981, #059669)"
-              : snackbar.severity === "error"
-              ? "linear-gradient(to right, #ef4444, #dc2626)"
-              : undefined,
+            background:
+              snackbar.severity === "success"
+                ? "linear-gradient(to right, #10b981, #059669)"
+                : snackbar.severity === "error"
+                ? "linear-gradient(to right, #ef4444, #dc2626)"
+                : undefined,
           }}
         >
           {snackbar.message}
