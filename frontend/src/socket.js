@@ -15,8 +15,10 @@ export function useSocket() {
       if (!userId) return;
 
       newSocket = io(SOCKET_URL, {
+        path:' /socket.io/',
         transports: ['websocket'],
         auth: { userId },
+        secure:true,
       });
       setSocket(newSocket);
     }
