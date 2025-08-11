@@ -12,6 +12,7 @@ import { Server, Socket } from 'socket.io';
     origin: process.env.CLIENT_URL || 'https://mastertable.site',
     credentials: true,
   },
+   path: '/socket.io',
 })
 export class OrdersGateway {
   @WebSocketServer()

@@ -1,7 +1,7 @@
 // // Patch pour rendre crypto global (pour TypeORM et NestJS)
 
 
- { NestFactory } from '@nestjs/core';
+import  { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './Exception/http-exception.filter';
 import * as express from 'express';
