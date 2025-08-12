@@ -308,6 +308,7 @@ export default function AdminLayout() {
     const notifRef = useRef(null);
     const msgRef = useRef(null);
     const profileRef = useRef(null);
+    const [messages, setMessages] = useState([]);
 
     useEffect(() => {
       const handleClickOutside = (event) => {
@@ -344,11 +345,33 @@ export default function AdminLayout() {
       fetchNotifications();
     }, [token]);
 
-    const messages = [
-      { from: "Alice", text: "Bonjour, j'ai une question sur l'événement.", read: false },
-      { from: "Bob", text: "Le planning a été modifié.", read: true },
-      { from: "Charlie", text: "Merci pour la confirmation.", read: false },
-    ];
+    useEffect(() => {
+      const fetchMessages = async () => {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/messages`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (!response.ok) throw new Error("Erreur lors de la récupération des messages");
+          const data = await response.json();
+
+          // Adapter le format au même style que ton tableau statique
+          const formatted = data.map(msg => ({
+            from: `${msg.firstName} ${msg.lastName}`,
+            text: msg.message,
+            read: false, // ou msg.read si tu ajoutes ce champ dans la DB
+          }));
+
+          setMessages(formatted);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des messages :", error);
+          setMessages([]);
+        }
+      };
+
+      fetchMessages();
+    }, [token]);
 
     const handleMessageClick = (item) => {
       setSelectedConversation({ content: item });
