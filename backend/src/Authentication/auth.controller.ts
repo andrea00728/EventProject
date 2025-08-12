@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-auth.dto';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { NotificationEntity } from 'src/entities/notification.entity';
+import { ContactMessage } from 'src/entities/ContactMessage';
 
 @Controller('auth')
 export class AuthController {
@@ -192,4 +193,13 @@ export class AuthController {
   async getNotifications(): Promise<NotificationEntity[]> {
     return this.authService.getNotifications();
   }
+
+
+  @Get('messages')
+  @ApiOperation({ summary: 'Obtenir les messages de contact' })
+  @ApiResponse({ status: 200, description: 'Retourne les messages' })
+  async getMessages(): Promise<ContactMessage[]> {
+    return this.authService.getMessages();
+  }
+
 }
