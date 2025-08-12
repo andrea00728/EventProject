@@ -68,14 +68,14 @@ button.btn-primary:hover {
   height: 8px;
 }
 
-/* Fond de la scrollbar */
+/* Fond de la scrollbar (transparent) */
 .scrollable::-webkit-scrollbar-track {
-  background: none;
+  background-color: transparent;
 }
 
 /* Curseur de la scrollbar */
 .scrollable::-webkit-scrollbar-thumb {
-  background-color: #c4c4c4; /* violet */
+  background-color: #c4c4c4; /* gris clair */
   border-radius: 6px;
 }
 
@@ -83,3 +83,4 @@ button.btn-primary:hover {
 .scrollable::-webkit-scrollbar-thumb:hover {
   background-color: #9e9d9e;
 }
+

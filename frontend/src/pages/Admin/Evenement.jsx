@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useDarkMode } from "../../context/DarkModeContext";
 import ModalEvenement from "./ModalEvenement";
+// import { Evenement } from 'backend/src/entities/Evenement';
+// import { EvenementService } from 'backend/src/services/evenement/evenement.service';
 import { getAllEvents } from "../../services/evenementServ";
 import { FaEye, FaUser } from "react-icons/fa";
 import {
@@ -173,14 +175,11 @@ const Dropdown = React.forwardRef(({ show, setShow, icon, label, count, items },
 
 // Composant EventCard pour l'affichage mobile
 const EventCard = ({ event, darkMode, onViewDetails }) => {
-  
-  
   return (
     <div className={`p-4 mb-4 rounded-xl shadow-sm border transition-all duration-300 ${
       darkMode ? "bg-gray-800 border-gray-700 hover:border-gray-600" : "bg-white border-gray-200 hover:border-gray-300"
     }`}>
       <div className="flex justify-between items-start mb-2">
-        
         <h3 className={`text-lg font-semibold ${
           darkMode ? "text-blue-300" : "text-blue-600"  // Changé en bleu clair
         }`}>
@@ -371,6 +370,9 @@ export default function EvenementAd() {
       case "organisateur":
         value = event.user.name;
         break;
+      case "visibilite":
+        value = event.isPublic ? 'public' : 'privé';
+        break;
       default:
         value = "";
     }
@@ -383,25 +385,32 @@ export default function EvenementAd() {
         Nom: value.nom,
         Type: value.type,
         Theme: value.theme,
+        Visibilité: value.isPublic ? 'Public' : 'Privé',
         Date_debut: value.date,
         Date_fin: value.date_fin,
         Localisation: value.location.nom,
         Organisateur: value.user.name,
+        Statut: value.status === 'active' ? 'Actif' : 'Inactif',
+        Participants: value.participants || 0
       })
     );
     handleDownloadXLSX(page, "liste_evenements");
   };
-
+  // Statistiques
   // Statistiques
   const stats = useMemo(() => {
     const total = data.length;
     const active = data.filter(e => e.status === 'active').length;
+    const publicEvents = data.filter(e => e.isPublic === true).length;
+    const privateEvents = data.filter(e => e.isPublic === false).length;
     const totalParticipants = data.reduce((sum, e) => sum + (e.participants || 0), 0);
     const avgParticipants = total > 0 ? Math.round(totalParticipants / total) : 0;
 
     return {
       total,
       active,
+      publicEvents,
+      privateEvents,
       totalParticipants,
       avgParticipants
     };
@@ -418,7 +427,7 @@ export default function EvenementAd() {
 
   const pageBg = darkMode
     ? "bg-gray-900 text-gray-200"
-    : "bg-gray-50 text-gray-800";
+    : "bg-gradient-to-r from-white to-gray-50 text-gray-800";
 
   const [currentPage, setCurrentPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -458,25 +467,25 @@ export default function EvenementAd() {
           trend={12}
           color="blue"
         />
-        <StatsCard
+        {/* <StatsCard
           title="Événements Actifs"
           value={stats.active}
           icon={MdCalendarToday}
           trend={8}
           color="green"
-        />
+        /> */}
         <StatsCard
-          title="Total Participants"
-          value={stats.totalParticipants.toLocaleString()}
+          title="Événements Publics"
+          value={stats.publicEvents}
           icon={MdPeople}
-          trend={-3}
+          trend={5}
           color="purple"
         />
         <StatsCard
-          title="Moyenne Participants"
-          value={stats.avgParticipants}
+          title="Événements Privés"
+          value={stats.privateEvents}
           icon={MdLocationOn}
-          trend={5}
+          trend={3}
           color="orange"
         />
       </div>
@@ -587,9 +596,10 @@ export default function EvenementAd() {
                 <div className="col-span-3">ÉVÉNEMENT</div>
                 <div className="col-span-1">TYPE</div>
                 <div className="col-span-2">THÈME</div>
+                <div className="col-span-1">ÉVÉNEMENT ORGANISE</div>
                 <div className="col-span-2">DATE DÉBUT</div>
                 <div className="col-span-1 text-center">PARTICIPANTS</div>
-                <div className="col-span-1 text-center">STATUT</div>
+                {/* <div className="col-span-1 text-center">STATUT</div> */}
                 <div className="col-span-2 text-center">ACTIONS</div>
               </div>
 
@@ -619,6 +629,20 @@ export default function EvenementAd() {
                         <div className={`col-span-2 truncate ${textPurple}`}>
                           {event.theme}
                         </div>
+                        {/* Visibilité */}
+                        <div className="col-span-1">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            event.isPublic
+                              ? darkMode
+                                ? 'bg-blue-900/50 text-blue-300'
+                                : 'bg-blue-100 text-blue-800'
+                              : darkMode
+                                ? 'bg-gray-700/50 text-gray-400'
+                                : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {event.isPublic ? 'Public' : 'Privé'}
+                          </span>
+                        </div>
                         {/* Date Début */}
                         <div className={`col-span-2 text-sm ${textMuted}`}>
                           {formatDate(event.date)}
@@ -627,17 +651,17 @@ export default function EvenementAd() {
                         <div className="col-span-1 flex items-center justify-center">
                           <div className={`flex items-center gap-1 ${textBlue}`}>
                             <MdPeople className="text-lg" />
-                            <span>{event.participants || 0}</span>
+                            <span>{event.invites.length || 0}</span>
                           </div>
                         </div>
                         {/* Statut */}
-                        <div className="col-span-1 flex items-center justify-center">
+                        {/* <div className="col-span-1 flex items-center justify-center">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                               event.status === 'active' ? activeStatusClasses : inactiveStatusClasses
                             }`}>
                             {event.status === 'active' ? 'Actif' : 'Inactif'}
                           </span>
-                        </div>
+                        </div> */}
                         {/* Bouton d'action */}
                         <div className="col-span-2 flex items-center justify-center">
                           <button

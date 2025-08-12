@@ -223,6 +223,10 @@ const router=createBrowserRouter([
         element: <PaiementPage />,
       },
       {
+        path: "/revenu",
+        element: <RevenuPage />,
+      },
+      {
         path: "/stock",
         element: <StockPage />,
       },

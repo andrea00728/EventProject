@@ -30,7 +30,6 @@ import { getPersonnelListByEventId } from "../../services/personnel_service";
 import { motion, AnimatePresence } from "framer-motion";
 import { DataGrid } from "@mui/x-data-grid";
 import NotFound403 from "../../layouts/NotFound403";
-import { useNavigate } from "react-router-dom";
 
 const StatsCard = ({ title, value, icon: Icon, color = "blue" }) => {
   const { darkMode } = useDarkMode();
@@ -128,12 +127,6 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const navigate = useNavigate();
-  
-  const handleRetour = () => {
-    navigate(-1);
-  };
-
   if (!isOpen) return null;
 
   const renderTabContent = () => {
@@ -157,8 +150,6 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
     }
   };
 
-  
-
   const gradientTitle =
     "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";
   const gradientButton =
@@ -181,7 +172,6 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
           {/* En-tête */}
           <div className="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
             <div>
-              <button type="button" className="bouton bouton-secondaire" onClick={handleRetour}>Retour</button>
               <h3 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
                 <MdOutlineCalendarToday className="mr-2 sm:mr-3 text-blue-700" />
                 {data.nom}

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
 import { getUserIdForToken } from "../../services/userService";
 import { getEventIdByEmail } from "../../services/invitationService";
-import { Bar, Line } from "react-chartjs-2";
+import { Bar, Line, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   BarElement,
@@ -15,24 +15,53 @@ import {
   Tooltip,
   Legend,
   Filler,
+  ArcElement,
 } from "chart.js";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useSocket } from "../../socket";
-import { SOCKET_URL } from "../../socket";
 import revenuService from "../../services/revenu";
 import { debounce } from "lodash";
-import { FaArrowLeft, FaSync, FaFileCsv, FaFilePdf, FaEye, FaUndo } from "react-icons/fa";
-import axios from "axios";
+import {
+  FaArrowLeft,
+  FaSync,
+  FaFileCsv,
+  FaFilePdf,
+  FaUndo,
+  FaMoneyBillWave,
+  FaClock,
+  FaExchangeAlt,
+} from "react-icons/fa";
 
-// Enregistrement des composants ChartJS
-ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler);
+const noScrollbarCSS = `
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+`;
 
-// Composant principal de la page des revenus
+const style = document.createElement('style');
+style.textContent = noScrollbarCSS;
+document.head.appendChild(style);
+
+ChartJS.register(
+  BarElement,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+  Filler,
+  ArcElement
+);
+
 const RevenuPage = () => {
-  // Déclaration des états
   const [revenus, setRevenus] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefunding, setIsRefunding] = useState({});
@@ -46,18 +75,25 @@ const RevenuPage = () => {
   const [timeSeriesData, setTimeSeriesData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
-  const [showDetailsModal, setShowDetailsModal] = useState(null);
   const [chartType, setChartType] = useState("bar");
-  const { token, setToken } = useStateContext();
+  const { token } = useStateContext();
   const navigate = useNavigate();
   const socket = useSocket();
 
-  // Synchroniser le token avec revenuService
+  const COLORS = {
+    paid: ["rgba(34, 197, 94, 0.8)", "rgba(74, 222, 128, 0.8)"],
+    pending: ["rgba(234, 179, 8, 0.8)", "rgba(250, 204, 21, 0.8)"],
+    refunded: ["rgba(239, 68, 68, 0.8)", "rgba(248, 113, 113, 0.8)"],
+    timeSeries: ["rgba(99, 102, 241, 0.8)", "rgba(129, 140, 248, 0.8)"],
+    categories: [
+      "#4a90e2", "#7ed321", "#f5a623", "#bd10e0", "#50e3c2", "#e2b84a", "#9013fe", "#e01083", "#008cff",
+    ],
+  };
+
   useEffect(() => {
     revenuService.setAuthToken(token);
   }, [token]);
 
-  // Récupérer le userId à partir du token
   useEffect(() => {
     async function fetchUserId() {
       if (!token) {
@@ -79,30 +115,6 @@ const RevenuPage = () => {
     fetchUserId();
   }, [token, navigate]);
 
-  // Fonction pour rafraîchir le token
-  const refreshToken = useCallback(async () => {
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const newToken = response.data.access_token;
-      setToken(newToken);
-      revenuService.setAuthToken(newToken);
-      const id = await getUserIdForToken();
-      if (!id) {
-        throw new Error("Impossible de récupérer l'ID utilisateur après rafraîchissement");
-      }
-      return newToken;
-    } catch (error) {
-      toast.error("Session expirée. Veuillez vous reconnecter.");
-      navigate("/login");
-      throw error;
-    }
-  }, [token, setToken, navigate]);
-
-  // Fonction pour récupérer les données des revenus
   const fetchRevenus = useCallback(async () => {
     if (!token) {
       toast.error("Veuillez vous connecter pour accéder aux revenus");
@@ -112,28 +124,22 @@ const RevenuPage = () => {
 
     setLoading(true);
     try {
-      let currentToken = token;
-      try {
-        await axios.get(`${import.meta.env.VITE_API_BASE_URL}/auth/validate`, {
-          headers: { Authorization: `Bearer ${currentToken}` },
-        });
-      } catch (error) {
-        if (error.response?.status === 401) {
-          currentToken = await refreshToken();
-        }
-      }
-
-      const eventId = await getEventIdByEmail(currentToken);
+      const eventId = await getEventIdByEmail(token);
       if (!eventId?.eventId) {
         throw new Error("ID d'événement non trouvé");
       }
 
-      console.log(`Fetching revenues for eventId: ${eventId.eventId}`);
       const data = await revenuService.getOrdersByEvent(eventId.eventId);
 
       if (!Array.isArray(data) || data.length === 0) {
         toast.warn("Aucune commande trouvée pour cet événement");
         setRevenus([]);
+        setTotalRevenue(0);
+        setTotalPending(0);
+        setTotalRefunded(0);
+        setCategoryBreakdown({});
+        setTimeSeriesData([]);
+        setLoading(false);
         return;
       }
 
@@ -142,7 +148,10 @@ const RevenuPage = () => {
         nom: order.nom || "Anonyme",
         email: order.email || "-",
         total: parseFloat(order.total || 0).toFixed(2),
-        amountPaid: order.paymentStatus === "paid" ? parseFloat(order.total || 0).toFixed(2) : "0.00",
+        amountPaid:
+          order.paymentStatus === "paid"
+            ? parseFloat(order.total || 0).toFixed(2)
+            : "0.00",
         paymentStatus:
           order.paymentStatus === "paid"
             ? "Payé"
@@ -160,7 +169,10 @@ const RevenuPage = () => {
         items: Array.isArray(order.items) ? order.items : [],
       }));
 
-      const total = formattedRevenus.reduce((sum, order) => sum + parseFloat(order.total), 0);
+      const total = formattedRevenus.reduce(
+        (sum, order) => sum + parseFloat(order.total),
+        0
+      );
       const pending = formattedRevenus
         .filter((order) => order.paymentStatus === "Non payé")
         .reduce((sum, order) => sum + parseFloat(order.total), 0);
@@ -183,11 +195,15 @@ const RevenuPage = () => {
       formattedRevenus.forEach((order) => {
         if (order.orderDate) {
           const date = new Date(order.orderDate).toLocaleDateString("fr-FR");
-          timeSeries[date] = (timeSeries[date] || 0) + parseFloat(order.amountPaid);
+          timeSeries[date] =
+            (timeSeries[date] || 0) + parseFloat(order.amountPaid);
         }
       });
       const timeSeriesArray = Object.entries(timeSeries)
-        .map(([date, revenue]) => ({ date, revenue: parseFloat(revenue).toFixed(2) }))
+        .map(([date, revenue]) => ({
+          date,
+          revenue: parseFloat(revenue).toFixed(2),
+        }))
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
       setRevenus(formattedRevenus);
@@ -207,12 +223,12 @@ const RevenuPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, navigate, refreshToken]);
+  }, [token, navigate]);
 
-  // Gestion du remboursement des commandes
   const handleRefund = useCallback(
     async (id) => {
-      if (!window.confirm("Confirmer le remboursement de cette commande ?")) return;
+      if (!window.confirm("Confirmer le remboursement de cette commande ?"))
+        return;
       setIsRefunding((prev) => ({ ...prev, [id]: true }));
       try {
         const order = await revenuService.getOrderById(id);
@@ -226,7 +242,6 @@ const RevenuPage = () => {
           throw new Error("La commande n'est pas payée, remboursement impossible");
         }
 
-        console.log(`Tentative de remboursement pour orderId: ${id}`);
         await revenuService.refundOrder(id);
 
         if (socket) {
@@ -239,7 +254,6 @@ const RevenuPage = () => {
         console.error("Erreur lors du remboursement:", error.response?.data);
         if (error.message.includes("Unauthorized")) {
           toast.error("Session expirée. Veuillez vous reconnecter.");
-          navigate("/login");
         } else if (error.message.includes("Commande non trouvée")) {
           toast.error("La commande n'existe pas.");
         } else if (error.message.includes("déjà remboursée")) {
@@ -256,97 +270,54 @@ const RevenuPage = () => {
     [socket, navigate, fetchRevenus]
   );
 
-  // Débouncer la fonction de remboursement
-  const handleRefundDebounced = useMemo(() => debounce(handleRefund, 300), [handleRefund]);
+  const handleRefundDebounced = useMemo(
+    () => debounce(handleRefund, 300),
+    [handleRefund]
+  );
 
-  // Effet pour initialiser la récupération des données et WebSocket
-  useEffect(() => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
-    const socketRef = { current: null };
-
-    const setupWebSocket = async () => {
-      try {
-        const userId = await getUserIdForToken(token);
-        socketRef.current = io(SOCKET_URL, {
-          auth: { userId },
-          transports: ["websocket", "polling"],
-          reconnection: true,
-          reconnectionAttempts: 5,
-          reconnectionDelay: 1000,
-        });
-
-        socketRef.current.on("connect", () => {
-          toast.info("Connecté au serveur en temps réel");
-          console.log("✅ Connecté au serveur WebSocket (RevenuPage)");
-        });
-
-        socketRef.current.on("connect_error", (error) => {
-          console.error("WebSocket connection error:", error);
-          toast.error("Erreur de connexion au serveur en temps réel");
-        });
-
-        socketRef.current.on("orderDeleted", () => {
-          console.log("Commande supprimée reçue via WebSocket");
-          fetchRevenus();
-        });
-
-        socketRef.current.on("orderRefunded", () => {
-          console.log("Commande remboursée reçue via WebSocket");
-          fetchRevenus();
-        });
-      } catch (err) {
-        console.error("Erreur lors de l'initialisation du socket:", err);
-        toast.error("Erreur lors de l'initialisation de la connexion en temps réel");
-      }
-    };
-
-    const loadData = async () => {
-      await fetchRevenus();
-      await setupWebSocket();
-    };
-
-    loadData();
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.off("connect");
-        socketRef.current.off("connect_error");
-        socketRef.current.off("orderDeleted");
-        socketRef.current.off("orderRefunded");
-        socketRef.current.disconnect();
-        console.log("🔌 WebSocket déconnecté (RevenuPage)");
-      }
-    };
-  }, [token, navigate, fetchRevenus]);
-
-  // Filtrage des revenus
   const filteredRevenus = useMemo(() => {
-    return revenus
-      .filter((rev) => rev.paymentStatus !== "Remboursé")
-      .filter((rev) => {
-        const matchSearch = rev.email.toLowerCase().includes(searchTerm.toLowerCase());
-        const orderDate = rev.orderDate ? new Date(rev.orderDate) : null;
-        const today = new Date();
-        const matchPeriod =
-          filterPeriod === "all" ||
-          (orderDate &&
-            ((filterPeriod === "today" && orderDate.toDateString() === today.toDateString()) ||
-             (filterPeriod === "week" && orderDate >= new Date(today.setDate(today.getDate() - 7))) ||
-             (filterPeriod === "month" && orderDate >= new Date(today.setMonth(today.getMonth() - 1)))));
-        const matchStatus = filterStatus === "all" || rev.paymentStatus === filterStatus;
-        return matchSearch && matchPeriod && matchStatus;
-      });
+    return revenus.filter((rev) => {
+      const matchSearch =
+        String(rev.email).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        String(rev.nom).toLowerCase().includes(searchTerm.toLowerCase());
+      const orderDate = rev.orderDate ? new Date(rev.orderDate) : null;
+      const today = new Date();
+      const matchPeriod =
+        filterPeriod === "all" ||
+        (orderDate &&
+          ((filterPeriod === "today" &&
+            orderDate.toDateString() === today.toDateString()) ||
+            (filterPeriod === "week" &&
+              orderDate >= new Date(today.setDate(today.getDate() - 7))) ||
+            (filterPeriod === "month" &&
+              orderDate >= new Date(today.setMonth(today.getMonth() - 1)))));
+      const matchStatus = filterStatus === "all" || rev.paymentStatus === filterStatus;
+      return matchSearch && matchPeriod && matchStatus;
+    });
   }, [revenus, searchTerm, filterPeriod, filterStatus]);
 
-  // Exportation CSV
   const exportToCSV = useCallback(() => {
-    const headers = ["ID", "Client", "Email", "Total (€)", "Payé (€)", "Statut", "Méthode", "Date"];
+    const headers = [
+      "ID",
+      "Client",
+      "Email",
+      "Total (€)",
+      "Payé (€)",
+      "Statut",
+      "Méthode",
+      "Date",
+    ];
     const rows = filteredRevenus.map((rev) =>
-      [rev.id, rev.nom, rev.email, rev.total, rev.amountPaid, rev.paymentStatus, rev.paymentMethod, rev.date]
+      [
+        String(rev.id),
+        rev.nom,
+        rev.email,
+        rev.total,
+        rev.amountPaid,
+        rev.paymentStatus,
+        rev.paymentMethod,
+        rev.date,
+      ]
         .map((field) => `"${String(field).replace(/"/g, '""')}"`)
         .join(",")
     );
@@ -361,7 +332,6 @@ const RevenuPage = () => {
     toast.success("Exportation CSV réussie");
   }, [filteredRevenus]);
 
-  // Exportation PDF
   const exportToPDF = useCallback(() => {
     const doc = new jsPDF();
     doc.setFontSize(16);
@@ -373,20 +343,22 @@ const RevenuPage = () => {
 
     autoTable(doc, {
       startY: 50,
-      head: [["ID", "Client", "Email", "Total (€)", "Payé (€)", "Statut", "Méthode", "Date"]],
+      head: [
+        ["ID", "Client", "Email", "Total (€)", "Payé (€)", "Statut", "Méthode", "Date"],
+      ],
       body: filteredRevenus.map((rev) => [
-        rev.id,
+        String(rev.id),
         rev.nom,
         rev.email,
         rev.total,
         rev.amountPaid,
         rev.paymentStatus,
-        "Cash", // Forcer la méthode de paiement à "Cash" pour le PDF
+        rev.paymentMethod,
         rev.date,
       ]),
       theme: "striped",
       styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [107, 33, 168], textColor: [255, 255, 255] },
+      headStyles: { fillColor: [99, 102, 241], textColor: [255, 255, 255] },
     });
 
     const finalY = doc.lastAutoTable.finalY + 10;
@@ -400,43 +372,125 @@ const RevenuPage = () => {
       ]),
       theme: "striped",
       styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [107, 33, 168], textColor: [255, 255, 255] },
+      headStyles: { fillColor: [99, 102, 241], textColor: [255, 255, 255] },
     });
 
     doc.save(`revenus_${new Date().toISOString()}.pdf`);
     toast.success("Exportation PDF réussie");
   }, [filteredRevenus, totalRevenue, totalPending, totalRefunded, categoryBreakdown]);
 
-  // Pagination
+  const generateInvoicePDF = (order) => {
+    const doc = new jsPDF();
+    doc.setFontSize(22);
+    doc.text(`Facture Commande #${String(order.id)}`, 20, 20);
+
+    doc.setFontSize(12);
+    doc.text(`Date: ${order.date}`, 20, 30);
+    doc.text(`Client: ${order.nom} (${order.email})`, 20, 36);
+    doc.text(`Statut: ${order.paymentStatus}`, 20, 42);
+    doc.text(`Méthode de paiement: ${order.paymentMethod}`, 20, 48);
+
+    autoTable(doc, {
+      startY: 60,
+      head: [["Produit", "Catégorie", "Prix unitaire (€)", "Quantité", "Sous-total (€)"]],
+      body: order.items.map(item => [
+        item.menuItem?.name || 'N/A',
+        item.menuItem?.category || 'N/A',
+        parseFloat(item.price || 0).toFixed(2),
+        item.quantity,
+        parseFloat(item.subtotal || 0).toFixed(2),
+      ]),
+      theme: "striped",
+      styles: { fontSize: 10, cellPadding: 3 },
+      headStyles: { fillColor: [99, 102, 241], textColor: [255, 255, 255] },
+    });
+
+    const finalY = doc.lastAutoTable.finalY;
+    doc.setFontSize(14);
+    doc.text(`Total de la commande: €${order.total}`, 20, finalY + 15);
+    doc.save(`facture_commande_${String(order.id)}.pdf`);
+    toast.success("Facture PDF générée avec succès");
+  };
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredRevenus.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredRevenus.length / itemsPerPage);
 
-  const paginate = useCallback((pageNumber) => {
-    if (pageNumber >= 1 && pageNumber <= totalPages) {
-      setCurrentPage(pageNumber);
-    }
-  }, [totalPages]);
+  const paginate = useCallback(
+    (pageNumber) => {
+      if (pageNumber >= 1 && pageNumber <= totalPages) {
+        setCurrentPage(pageNumber);
+      }
+    },
+    [totalPages]
+  );
 
-  // Données pour le graphique à barres
+  const createGradient = (ctx, chartArea, colors) => {
+    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+    colors.forEach((color, index) => {
+      gradient.addColorStop(index / (colors.length - 1), color);
+    });
+    return gradient;
+  };
+
+  const pieChartData = useMemo(() => {
+    const labels = Object.keys(categoryBreakdown);
+    const data = Object.values(categoryBreakdown);
+    return {
+      labels,
+      datasets: [{
+        data: data,
+        backgroundColor: COLORS.categories.slice(0, labels.length),
+        borderColor: "#ffffff",
+        borderWidth: 2,
+        hoverOffset: 10,
+      }],
+    };
+  }, [categoryBreakdown]);
+
   const barChartData = useMemo(
     () => ({
-      labels: ["Payé", "Non payé"],
+      labels: ["Payé", "Non payé", "Remboursé"],
       datasets: [
         {
           label: "Revenus",
-          data: [parseFloat(totalRevenue) - parseFloat(totalPending), parseFloat(totalPending)],
-          backgroundColor: ["#22C55E", "#EF4444"],
-          borderColor: ["#ffffff", "#ffffff"],
-          borderWidth: 1,
+          data: [
+            parseFloat(totalRevenue) - parseFloat(totalPending) - parseFloat(totalRefunded),
+            parseFloat(totalPending),
+            parseFloat(totalRefunded),
+          ],
+          backgroundColor: (context) => {
+            const ctx = context.chart.ctx;
+            const chartArea = context.chart.chartArea;
+            if (!chartArea) return COLORS.paid[0];
+            const colors = [
+              COLORS.paid,
+              COLORS.pending,
+              COLORS.refunded
+            ];
+            return createGradient(ctx, chartArea, colors[context.dataIndex]);
+          },
+          borderColor: "#ffffff",
+          borderWidth: 2,
+          hoverBackgroundColor: (context) => {
+            const ctx = context.chart.ctx;
+            const chartArea = context.chart.chartArea;
+            if (!chartArea) return COLORS.paid[1];
+            const colors = [
+              COLORS.paid.map((c) => c.replace("0.8", "0.9")),
+              COLORS.pending.map((c) => c.replace("0.8", "0.9")),
+              COLORS.refunded.map((c) => c.replace("0.8", "0.9"))
+            ];
+            return createGradient(ctx, chartArea, colors[context.dataIndex]);
+          },
+          hoverBorderWidth: 3,
         },
       ],
     }),
-    [totalRevenue, totalPending]
+    [totalRevenue, totalPending, totalRefunded]
   );
 
-  // Données pour le graphique temporel
   const timeSeriesChartData = useMemo(
     () => ({
       labels: timeSeriesData.map((item) => item.date),
@@ -444,19 +498,35 @@ const RevenuPage = () => {
         {
           label: "Revenus (€)",
           data: timeSeriesData.map((item) => parseFloat(item.revenue)),
-          borderColor: "#4F46E5",
-          backgroundColor: "rgba(79, 70, 229, 0.2)",
+          borderColor: (context) => {
+            const ctx = context.chart.ctx;
+            const chartArea = context.chart.chartArea;
+            if (!chartArea) return COLORS.timeSeries[0];
+            return createGradient(ctx, chartArea, COLORS.timeSeries);
+          },
+          backgroundColor: (context) => {
+            const ctx = context.chart.ctx;
+            const chartArea = context.chart.chartArea;
+            if (!chartArea) return COLORS.timeSeries[0].replace("0.8", "0.2");
+            return createGradient(
+              ctx,
+              chartArea,
+              COLORS.timeSeries.map((c) => c.replace("0.8", "0.2"))
+            );
+          },
           fill: true,
           tension: 0.4,
-          pointRadius: 4,
-          pointHoverRadius: 6,
+          pointRadius: 5,
+          pointHoverRadius: 8,
+          pointBackgroundColor: "#ffffff",
+          pointBorderColor: COLORS.timeSeries[0],
+          pointBorderWidth: 2,
         },
       ],
     }),
     [timeSeriesData]
   );
 
-  // Options des graphiques
   const chartOptions = useMemo(
     () => ({
       responsive: true,
@@ -464,12 +534,22 @@ const RevenuPage = () => {
       plugins: {
         legend: {
           position: "bottom",
-          labels: { font: { size: 12, family: 'Inter' }, color: "#1F2937" },
+          labels: {
+            boxWidth: 14,
+            padding: 20,
+            font: { size: 14, weight: "600", family: "'Inter', sans-serif" },
+            color: "#1F2937",
+            usePointStyle: true,
+            pointStyle: "circle",
+          },
         },
         tooltip: {
-          backgroundColor: "rgba(0, 0, 0, 0.85)",
-          padding: 8,
+          backgroundColor: "rgba(17, 24, 39, 0.9)",
+          padding: 12,
           cornerRadius: 8,
+          bodyFont: { size: 14, weight: "500", family: "'Inter', sans-serif" },
+          titleFont: { size: 16, weight: "600", family: "'Inter', sans-serif" },
+          boxPadding: 8,
           callbacks: {
             label: (context) => `€${parseFloat(context.raw).toFixed(2)}`,
           },
@@ -481,21 +561,26 @@ const RevenuPage = () => {
           ticks: {
             stepSize: 100,
             callback: (value) => `€${value}`,
-            color: "#4B5563",
-            font: { size: 12, family: 'Inter' },
+            color: "#6B7280",
+            font: { size: 12, family: "'Inter', sans-serif" },
           },
-          grid: { color: "rgba(0, 0, 0, 0.05)" },
+          grid: { color: "rgba(0, 0, 0, 0.05)", borderColor: "#D1D5DB", borderWidth: 1 },
         },
         x: {
-          ticks: { color: "#4B5563", font: { size: 12, family: 'Inter' } },
+          ticks: { color: "#6B7280", font: { size: 12, family: "'Inter', sans-serif" } },
           grid: { display: false },
         },
+      },
+      animation: {
+        duration: 1200,
+        easing: "easeInOutQuart",
+        animateScale: true,
+        animateRotate: true,
       },
     }),
     []
   );
 
-  // Effet pour initialiser la récupération des données et gérer le socket
   useEffect(() => {
     if (!token) {
       navigate("/login");
@@ -523,73 +608,99 @@ const RevenuPage = () => {
     return socketCleanup;
   }, [token, socket, navigate, fetchRevenus]);
 
-  // Rendu de l'interface utilisateur
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, ease: "easeOut" }}
-      className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-teal-50 flex flex-col p-6 lg:p-8 font-inter"
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8 font-inter no-scrollbar"
     >
-      <div className="relative z-10 max-w-7xl mx-auto flex-1 flex flex-col space-y-8">
-        {/* En-tête */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+      <div className="max-w-7xl mx-auto flex flex-col space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-800 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
             Tableau de Bord des Revenus
           </h1>
           <Link
             to="/caisse"
-            className="inline-flex items-center px-5 py-2.5 bg-indigo-600 text-white rounded-xl shadow-md hover:bg-indigo-700 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 text-base font-semibold"
+            className="flex items-center px-4 py-2 bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 focus:ring-4 focus:ring-indigo-300 transition-all duration-300 transform hover:-translate-y-0.5"
             aria-label="Retour à la caisse"
           >
-            <FaArrowLeft className="mr-2 w-5 h-5" />
+            <FaArrowLeft className="mr-2 w-4 h-4" />
             Retour
           </Link>
         </div>
-
-        {/* Statistiques principales */}
+        
+        {/* Key Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
-            { title: "Total des Revenus", value: `€${totalRevenue}`, color: "bg-gradient-to-r from-green-100 to-green-200", icon: <FaFileCsv className="w-6 h-6" /> },
-            { title: "En Attente", value: `€${totalPending}`, color: "bg-gradient-to-r from-yellow-100 to-yellow-200", icon: <FaFileCsv className="w-6 h-6" /> },
-            { title: "Remboursé", value: `€${totalRefunded}`, color: "bg-gradient-to-r from-red-100 to-red-200", icon: <FaFileCsv className="w-6 h-6" /> },
+            {
+              title: "Total des Revenus",
+              value: `€${totalRevenue}`,
+              color: "bg-gradient-to-br from-green-50 to-green-100",
+              icon: <FaMoneyBillWave className="w-7 h-7 text-green-500" />,
+            },
+            {
+              title: "En Attente",
+              value: `€${totalPending}`,
+              color: "bg-gradient-to-br from-yellow-50 to-yellow-100",
+              icon: <FaClock className="w-7 h-7 text-yellow-500" />,
+            },
+            {
+              title: "Remboursé",
+              value: `€${totalRefunded}`,
+              color: "bg-gradient-to-br from-red-50 to-red-100",
+              icon: <FaExchangeAlt className="w-7 h-7 text-red-500" />,
+            },
           ].map((stat, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-              whileHover={{ scale: 1.03 }}
-              className={`${stat.color} rounded-2xl p-6 shadow-lg transition-all duration-300 flex justify-between items-center`}
+              transition={{ delay: index * 0.1, duration: 0.4, ease: "easeOut" }}
+              whileHover={{ scale: 1.03, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" }}
+              className={`${stat.color} rounded-3xl p-6 shadow-lg transition-all duration-300 border border-gray-200 flex items-center justify-between`}
             >
               <div>
-                <h3 className="text-sm font-semibold text-gray-700">{stat.title}</h3>
-                <p className="text-2xl font-bold text-gray-900 mt-2">{stat.value}</p>
+                <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                <h2 className="text-3xl font-extrabold text-gray-900 mt-1">{stat.value}</h2>
               </div>
-              <div className="p-4 rounded-full bg-white/30">{stat.icon}</div>
+              <div className="p-3 rounded-full bg-white/60 backdrop-blur-sm">
+                {stat.icon}
+              </div>
             </motion.div>
           ))}
         </div>
-
-        {/* Filtres et actions */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col sm:flex-row gap-4 items-center border border-indigo-100">
+        
+        {/* Filters and Actions */}
+        <div className="bg-white rounded-3xl shadow-xl p-5 flex flex-wrap gap-4 items-center border border-gray-200">
           <div className="relative w-full sm:w-1/3">
             <input
               type="text"
-              placeholder="Rechercher par email..."
+              placeholder="Rechercher par client ou email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all duration-300 text-sm"
-              aria-label="Rechercher par email"
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-gray-50 text-gray-800 placeholder-gray-400 transition-all duration-300 text-sm"
+              aria-label="Rechercher par email ou nom"
             />
-            <svg className="w-5 h-5 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg
+              className="w-5 h-5 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
           </div>
           <select
             value={filterPeriod}
             onChange={(e) => setFilterPeriod(e.target.value)}
-            className="w-full sm:w-1/4 px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all duration-300 text-sm"
+            className="w-full sm:w-1/4 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-gray-50 text-gray-800 transition-all duration-300 text-sm"
             aria-label="Filtrer par période"
           >
             <option value="all">Toutes les périodes</option>
@@ -600,7 +711,7 @@ const RevenuPage = () => {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full sm:w-1/4 px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all duration-300 text-sm"
+            className="w-full sm:w-1/4 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-gray-50 text-gray-800 transition-all duration-300 text-sm"
             aria-label="Filtrer par statut"
           >
             <option value="all">Tous les statuts</option>
@@ -613,7 +724,7 @@ const RevenuPage = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={fetchRevenus}
-              className="flex-1 flex items-center justify-center px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 text-sm font-semibold"
+              className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-xl shadow-md hover:from-indigo-700 hover:to-indigo-800 focus:ring-4 focus:ring-indigo-300 transition-all duration-300 text-sm font-semibold"
               aria-label="Actualiser les données"
             >
               <FaSync className="mr-2 w-4 h-4" />
@@ -623,48 +734,60 @@ const RevenuPage = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={exportToCSV}
-              className="flex-1 flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-300 text-sm font-semibold"
+              className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl shadow-md hover:from-green-700 hover:to-green-800 focus:ring-4 focus:ring-green-300 transition-all duration-300 text-sm font-semibold"
               aria-label="Exporter en CSV"
             >
-              <FaFileCsv className="mr-2 w-4 h-4" />
-              CSV
+              <FaFileCsv className="w-4 h-4" />
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={exportToPDF}
-              className="flex-1 flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 text-sm font-semibold"
+              className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-md hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 transition-all duration-300 text-sm font-semibold"
               aria-label="Exporter en PDF"
             >
-              <FaFilePdf className="mr-2 w-4 h-4" />
-              PDF
+              <FaFilePdf className="w-4 h-4" />
             </motion.button>
           </div>
         </div>
-
-        {/* Graphique et tableau */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
+        
+        {/* Charts and Table */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="bg-white rounded-2xl shadow-lg p-6 flex flex-col"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
+            className="bg-white rounded-3xl p-6 shadow-xl border border-gray-200 col-span-1"
+          >
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Répartition par Catégorie</h3>
+            <div className="h-80 relative flex items-center justify-center">
+              <Pie data={pieChartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }} />
+            </div>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
+            className="bg-white rounded-3xl p-6 shadow-xl border border-gray-200 col-span-2"
           >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {chartType === "bar" ? "Répartition des Revenus" : "Revenus par Période"}
+              <h3 className="text-xl font-semibold text-gray-900">
+                {chartType === "bar"
+                  ? "Répartition des Revenus"
+                  : "Revenus par Période"}
               </h3>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setChartType(chartType === "bar" ? "line" : "bar")}
-                className="flex items-center justify-center px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 text-sm font-semibold"
+                className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-100 to-indigo-200 text-indigo-700 rounded-full shadow-sm hover:from-indigo-200 hover:to-indigo-300 focus:ring-4 focus:ring-indigo-300 transition-all duration-300 text-sm font-semibold"
                 aria-label="Changer le type de graphique"
               >
                 {chartType === "bar" ? "Graphique Temporel" : "Graphique Barres"}
               </motion.button>
             </div>
-            <div className="flex-1 h-80">
+            <div className="h-80 relative">
               {chartType === "bar" ? (
                 <Bar data={barChartData} options={chartOptions} />
               ) : (
@@ -673,87 +796,112 @@ const RevenuPage = () => {
             </div>
           </motion.div>
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6 flex flex-col"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
+            className="lg:col-span-3 bg-white rounded-3xl p-6 shadow-xl border border-gray-200"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Détails des Revenus</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-600">
-                <thead className="text-xs uppercase bg-indigo-50 text-indigo-700">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Détails des Revenus</h3>
+            <div className="overflow-x-auto rounded-xl border border-gray-100 no-scrollbar">
+              <table className="min-w-full text-sm text-left text-gray-600">
+                <thead className="text-xs uppercase bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700">
                   <tr>
-                    <th className="px-6 py-3">ID</th>
-                    <th className="px-6 py-3">Client</th>
-                    <th className="px-6 py-3">Email</th>
-                    <th className="px-6 py-3 text-right">Total (€)</th>
-                    <th className="px-6 py-3 text-right">Payé (€)</th>
-                    <th className="px-6 py-3">Statut</th>
-                    <th className="px-6 py-3">Date</th>
-                    <th className="px-6 py-3">Actions</th>
+                    <th scope="col" className="px-6 py-3">ID</th>
+                    <th scope="col" className="px-6 py-3">Client</th>
+                    <th scope="col" className="px-6 py-3">Email</th>
+                    <th scope="col" className="px-6 py-3 text-right">Total (€)</th>
+                    <th scope="col" className="px-6 py-3 text-right">Payé (€)</th>
+                    <th scope="col" className="px-6 py-3">Statut</th>
+                    <th scope="col" className="px-6 py-3">Date</th>
+                    <th scope="col" className="px-6 py-3">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100">
                   {loading ? (
                     <tr>
                       <td colSpan="8" className="px-6 py-4 text-center text-gray-500 font-medium">
-                        Chargement...
+                        <div className="flex items-center justify-center p-4">
+                          <svg
+                            className="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-600"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                          </svg>
+                          <span>Chargement des données...</span>
+                        </div>
                       </td>
                     </tr>
-                  ) : currentItems.length === 0 ? (
+                  ) : filteredRevenus.length === 0 ? (
                     <tr>
                       <td colSpan="8" className="px-6 py-4 text-center text-gray-500 font-medium">
-                        Aucune donnée
+                        Aucun revenu trouvé.
                       </td>
                     </tr>
                   ) : (
-                    currentItems.map((rev) => (
-                      <tr key={rev.id} className="border-b hover:bg-indigo-50 transition-colors duration-200">
-                        <td className="px-6 py-4">{rev.id}</td>
-                        <td className="px-6 py-4 truncate max-w-[150px]">{rev.nom}</td>
-                        <td className="px-6 py-4 truncate max-w-[200px]">{rev.email}</td>
+                    currentItems.map((rev, index) => (
+                      <tr key={String(rev.id) || index} className="bg-white hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 font-medium text-gray-900">
+                          {/* CORRECTION APPLIQUÉE ICI */}
+                          {String(rev.id).substring(0, 8)}...
+                        </td>
+                        <td className="px-6 py-4">{rev.nom}</td>
+                        <td className="px-6 py-4">{rev.email}</td>
                         <td className="px-6 py-4 text-right">{rev.total}</td>
                         <td className="px-6 py-4 text-right">{rev.amountPaid}</td>
                         <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                              rev.paymentStatus === "Payé"
-                                ? "bg-green-200 text-green-800"
-                                : rev.paymentStatus === "Remboursé"
-                                ? "bg-red-200 text-red-800"
-                                : "bg-yellow-200 text-yellow-800"
-                            }`}
-                          >
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            rev.paymentStatus === 'Payé'
+                              ? 'bg-green-100 text-green-800'
+                              : rev.paymentStatus === 'Remboursé'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
                             {rev.paymentStatus}
                           </span>
                         </td>
-                        <td className="px-6 py-4 truncate">{rev.date}</td>
-                        <td className="px-6 py-4 flex gap-3">
+                        <td className="px-6 py-4">{rev.date}</td>
+                        <td className="px-6 py-4 flex items-center gap-2">
                           <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setShowDetailsModal(rev)}
-                            className="flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 text-sm font-semibold"
-                            aria-label={`Voir les détails de la commande ${rev.id}`}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => generateInvoicePDF(rev)}
+                            className="p-2 rounded-full text-blue-500 hover:bg-blue-50 transition-colors"
+                            aria-label="Voir la facture"
                           >
-                            <FaEye className="mr-2 w-4 h-4" />
-                            Détails
+                            <FaFilePdf className="w-4 h-4" />
                           </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleRefundDebounced(rev.id)}
-                            disabled={isRefunding[rev.id] || rev.paymentStatus !== "Payé"}
-                            className={`flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
-                              isRefunding[rev.id] || rev.paymentStatus !== "Payé"
-                                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                                : "bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                            }`}
-                            aria-label={`Rembourser la commande ${rev.id}`}
-                          >
-                            <FaUndo className="mr-2 w-4 h-4" />
-                            {isRefunding[rev.id] ? "En cours..." : "Rembourser"}
-                          </motion.button>
+                          {rev.paymentStatus === "Payé" && (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => handleRefundDebounced(rev.id)}
+                              disabled={isRefunding[rev.id]}
+                              className={`p-2 rounded-full transition-colors ${
+                                isRefunding[rev.id] ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'text-red-500 hover:bg-red-50'
+                              }`}
+                              aria-label="Rembourser la commande"
+                            >
+                              {isRefunding[rev.id] ? (
+                                <FaSync className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <FaUndo className="w-4 h-4" />
+                              )}
+                            </motion.button>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -761,138 +909,32 @@ const RevenuPage = () => {
                 </tbody>
               </table>
             </div>
-            <div className="flex justify-center items-center gap-4 mt-6">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => paginate(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="flex items-center justify-center px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 text-sm font-semibold"
-                aria-label="Page précédente"
-              >
-                Précédent
-              </motion.button>
-              <span className="text-sm text-gray-600 font-medium">
+            {/* Pagination */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-b-xl">
+              <span className="text-sm text-gray-700">
                 Page {currentPage} sur {totalPages}
               </span>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => paginate(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="flex items-center justify-center px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 text-sm font-semibold"
-                aria-label="Page suivante"
-              >
-                Suivant
-              </motion.button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => paginate(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 bg-white rounded-md shadow-sm border border-gray-300 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                >
+                  Précédent
+                </button>
+                <button
+                  onClick={() => paginate(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 bg-white rounded-md shadow-sm border border-gray-300 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                >
+                  Suivant
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>
-
-        {/* Répartition par catégorie */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="bg-white rounded-2xl shadow-lg p-6"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Répartition par Catégorie</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-600">
-              <thead className="text-xs uppercase bg-indigo-50 text-indigo-700">
-                <tr>
-                  <th className="px-6 py-3">Catégorie</th>
-                  <th className="px-6 py-3 text-right">Revenu (€)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.keys(categoryBreakdown).length === 0 ? (
-                  <tr>
-                    <td colSpan="2" className="px-6 py-4 text-center text-gray-500 font-medium">
-                      Aucune donnée
-                    </td>
-                  </tr>
-                ) : (
-                  Object.entries(categoryBreakdown).map(([category, revenue]) => (
-                    <tr key={category} className="border-b hover:bg-indigo-50 transition-colors duration-200">
-                      <td className="px-6 py-4 truncate">{category}</td>
-                      <td className="px-6 py-4 text-right">{parseFloat(revenue).toFixed(2)}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </motion.div>
-
-        {/* Modal détails */}
-        {showDetailsModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6"
-            onClick={() => setShowDetailsModal(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              className="bg-white rounded-2xl p-8 max-w-3xl w-full shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">
-                Détails de la Commande #{showDetailsModal.id}
-              </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left text-gray-600">
-                  <thead className="text-xs uppercase bg-indigo-50 text-indigo-700">
-                    <tr>
-                      <th className="px-6 py-3">Article</th>
-                      <th className="px-6 py-3 text-right">Quantité</th>
-                      <th className="px-6 py-3 text-right">Prix (€)</th>
-                      <th className="px-6 py-3 text-right">Total (€)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {showDetailsModal.items.length === 0 ? (
-                      <tr>
-                        <td colSpan="4" className="px-6 py-4 text-center text-gray-500 font-medium">
-                          Aucun article
-                        </td>
-                      </tr>
-                    ) : (
-                      showDetailsModal.items.map((item, index) => (
-                        <tr key={index} className="border-b hover:bg-indigo-50 transition-colors duration-200">
-                          <td className="px-6 py-4 truncate">{item.menuItem?.name || "Inconnu"}</td>
-                          <td className="px-6 py-4 text-right">{item.quantity || 0}</td>
-                          <td className="px-6 py-4 text-right">
-                            {parseFloat(item.subtotal / (item.quantity || 1)).toFixed(2)}
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            {parseFloat(item.subtotal || 0).toFixed(2)}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              <div className="flex justify-end mt-6">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowDetailsModal(null)}
-                  className="flex items-center justify-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-300 text-sm font-semibold"
-                  aria-label="Fermer le modal"
-                >
-                  Fermer
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
       </div>
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer />
     </motion.div>
   );
 };
