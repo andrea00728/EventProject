@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-// (global as any).crypto = crypto;
+(global as any).crypto = crypto;
 
 
   import { Module } from '@nestjs/common';
@@ -29,7 +29,7 @@ import * as crypto from 'crypto';
   import { Commentaire } from './entities/Commentaire';
   import { Satisfaction } from './entities/satisfaction.entity';
   import { Favorite } from './entities/Favorite';
-  import { ContactMessage } from './entities/ContactMessage.entity';
+  import { ContactMessage } from './entities/ContactMessage';
 
   // Modules fonctionnels
   import { AuthModule } from './Authentication/auth.module';
@@ -121,7 +121,8 @@ import { AdminModule } from './modules/admin/admin.module';
             Satisfaction,
             NotificationEntity,
             Favorite,
-            Admin
+            Admin,
+            ContactMessage
           ],
           synchronize: true,
         };
