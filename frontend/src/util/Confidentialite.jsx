@@ -3,7 +3,11 @@ import { FaDatabase, FaTable, FaShare } from 'react-icons/fa';
 import { MdOutlineSecurity, MdArrowLeft, MdArrowRight } from "react-icons/md";
 import { LuUserCheck } from "react-icons/lu";
 import Modal from './Modal';
-
+import IM from '../../public/network-maintenance-graphic.jpg';
+import IMAGE from '../../public/marketers-with-magnifier-research-marketing-opportunities-chart-marketing-research-marketing-analysis-market-opportunities-and-problems-concept-flat-modern-illustration-vector.jpg';
+import AM from '../../public/stock-market-data-analysis-team-of-statistical-analysts-or-businesspeople-analyzing-statistical-information-trendy-illustration-vector.jpg';
+import ImageO from '../../public/pngtree-data-secure-people-protect-cybersecurity-picture-image_8729665.png';
+import ImageZ from '../../public/istockphoto-1314379517-612x612.jpg';
 const Confidentialite = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState('');
@@ -15,7 +19,7 @@ const Confidentialite = () => {
         {
             title: "Informations que nous collectons",
             icon: <FaDatabase className='mr-2 mb-1 inline text-indigo-600' size={28} />,
-            image: 'src/assets/marketers-with-magnifier-research-marketing-opportunities-chart-marketing-research-marketing-analysis-market-opportunities-and-problems-concept-flat-modern-illustration-vector.jpg',
+            image: {IMAGE},
             fullText: `
 Nous pouvons collecter différents types d'informations vous concernant, y compris :
 
@@ -42,7 +46,7 @@ Informations personnelles identifiables (IPI) : Lors de l'inscription/création 
         {
             title: "Comment nous utilisons vos informations",
             icon: <FaTable className='mr-2 mb-1 inline text-indigo-600' size={28} />,
-            image: 'src/assets/stock-market-data-analysis-team-of-statistical-analysts-or-businesspeople-analyzing-statistical-information-trendy-illustration-vector.jpg',
+            image: {AM},
             fullText: `
 Nous utilisons les informations collectées à diverses fins :
 
@@ -67,7 +71,7 @@ Fournir et maintenir le Service : Créer et gérer votre compte, traiter les pai
         {
             title: "Partage et divulgation de vos informations",
             icon: <FaShare className='mr-2 mb-1 inline text-indigo-600' size={28} />,
-            image: 'src/assets/network-maintenance-graphic.jpg',
+            image: {IM},
             fullText: `
 Nous ne vendons ni ne louons vos informations personnelles à des tiers. Nous pouvons partager vos informations dans les situations suivantes :
 
@@ -90,7 +94,7 @@ Avec les organisateurs d'événements : Si vous êtes un participant, les inform
         {
             title: "Sécurité des données",
             icon: <MdOutlineSecurity className='mr-2 mb-1 inline text-indigo-600' size={28} />,
-            image: 'src/assets/pngtree-data-secure-people-protect-cybersecurity-picture-image_8729665.png',
+            image: {ImageO},
             fullText: `
 Nous mettons en œuvre des mesures de sécurité techniques et organisationnelles appropriées pour protéger vos informations personnelles contre l'accès non autorisé, la divulgation, l'altération ou la destruction. Cependant, aucune méthode de transmission sur Internet ou de stockage électronique n'est 100% sécurisée. Par conséquent, bien que nous nous efforcions de protéger vos informations personnelles, nous ne pouvons garantir leur sécurité absolue.
             `,
@@ -101,7 +105,7 @@ Nous mettons en œuvre des mesures de sécurité techniques et organisationnelle
         {
             title: "Vos droits",
             icon: <LuUserCheck className='mr-2 mb-1 inline text-indigo-600' size={28} />,
-            image: 'src/assets/istockphoto-1314379517-612x612.jpg',
+            image: {ImageZ},
             fullText: `
 Conformément à la législation applicable sur la protection des données, vous disposez de certains droits concernant vos informations personnelles :
 

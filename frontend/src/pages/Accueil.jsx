@@ -5,7 +5,7 @@ import TestimonialsSection from "../util/testimonialsSection";
 import { getAllEvents, getCountEvents } from '../services/evenementServ';
 import { FormaNumber } from '../services/controll_champs/controll_limite';
 import { findCount_pourcentage, findCountSatisfied } from '../services/testimonyService';
-
+import IMage from '../../public/undraw_having-fun_kkeu.svg';
 export default function Accueil() {
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -205,7 +205,7 @@ export default function Accueil() {
 
               <div className="relative bg-white/30 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/40">
                 <img
-                  src="/src/assets/undraw_having-fun_kkeu.svg"
+                  src={IMage}
                   alt="Illustration organisateurs d'événements"
                   className="w-full max-w-lg h-auto drop-shadow-lg hover:scale-105 transition-transform duration-500"
                 />

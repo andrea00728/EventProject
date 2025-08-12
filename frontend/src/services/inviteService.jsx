@@ -5,22 +5,38 @@ import axiosClient from "../api/axios-client"; // Assurez-vous que le chemin est
 const API_URL = 'https://api.mastertable.site/public-invites/add'; // backend public route
 const PUBLIC_API = 'https://api.mastertable.site/public-guest/create';
 
-export const createInvite = async (inviteData) => {
-  const token = localStorage.getItem("token");
+// export const createInvite = async (inviteData) => {
+//   const token = localStorage.getItem("token");
 
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }), // seulement si token présent
-  };
+//   const headers = {
+//     'Content-Type': 'application/json',
+//     ...(token && { Authorization: `Bearer ${token}` }), // seulement si token présent
+//   };
 
-  const response = await fetch('https://api.mastertable.site/public-guest/create', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(inviteData),
-  });
+//   const response = await fetch('https://api.mastertable.site/public-guest/create', {
+//     method: 'POST',
+//     headers,
+//     body: JSON.stringify(inviteData),
+//   });
 
-  if (!response.ok) throw new Error('Erreur lors de l’ajout de l’invité');
-  return response.json();
+//   if (!response.ok) throw new Error('Erreur lors de l’ajout de l’invité');
+//   return response.json();
+
+//   try {
+//     const response = await axiosClient.post("/guests/create", inviteData, {
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//       },
+//     });
+//     return response.data;
+//   } catch (error) {
+//     console.error("Erreur lors de la création de l'invité:", error);
+//     throw error;
+//   }
+// };
+
+export const createInvite = async (inviteData, token) => {
+  if (!token) throw new Error("Utilisateur non authentifié");
 
   try {
     const response = await axiosClient.post("/guests/create", inviteData, {
