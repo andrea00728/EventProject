@@ -9,9 +9,11 @@ import { Personnel } from 'src/entities/Personnel';
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
 import { QueryFailedError } from 'typeorm';
+import { Response } from 'express';
 
 @Injectable()
 export class AuthService {
+  private readonly tokenBlacklist = new Set<string>();
   constructor(
     private readonly jwtService: JwtService,
     @InjectRepository(User)
@@ -92,15 +94,44 @@ export class AuthService {
     };
   }
 
+
+
+async logout(token: string, res: Response): Promise<{ message: string }> {
+    try {
+      // Verify token (optional, for additional security)
+      await this.jwtService.verifyAsync(token, {
+        secret: process.env.JWT_SECRET || 'your-secret-key',
+      });
+
+      // Add token to blacklist
+      this.tokenBlacklist.add(token);
+
+      // Clear the JWT cookie
+      res.clearCookie('jwt', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+      });
+
+      return { message: 'Déconnexion réussie' };
+    } catch (error) {
+      throw new Error('Token invalide ou erreur lors de la déconnexion');
+    }
+  }
+
+  // Method to check if a token is blacklisted (for use in auth guard)
+  isTokenBlacklisted(token: string): boolean {
+    return this.tokenBlacklist.has(token);
+  }
+
+
+
+
   async createUser(dto: CreateUserDto) {
     const user = this.userRepository.create(dto);
     return this.userRepository.save(user);
   }
 
-  async logout(user: any) {
-    const token = this.jwtService.sign({}, { expiresIn: '1s' });
-    return { message: 'Déconnexion réussie' };
-  }
 
   async getManagerList(): Promise<any> {
     return this.userRepository.find({

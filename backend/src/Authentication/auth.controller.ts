@@ -1,9 +1,10 @@
 // auth.controller.ts
-import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-auth.dto';
 import { User } from './entities/auth.entity';
+import { Request, Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -75,18 +76,27 @@ export class AuthController {
   }
 
 
+@Post('logout')
+async logout(@Req() req: Request, @Res() res: Response) {
+  try {
+    const token = req.cookies?.jwt || req.headers['authorization']?.split(' ')[1];
 
-  @Post('logout')
-  async logout(@Req() req, @Res() res) {
-    const user = req.user;
-    await this.authService.logout(user);
-    res.clearCookie('access_token', {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: false,
+    if (!token) {
+      return res.status(HttpStatus.UNAUTHORIZED).json({ message: 'Aucun token fourni' });
+    }
+
+    const result = await this.authService.logout(token, res);
+
+    return res.status(HttpStatus.OK).json(result);
+  } catch (error) {
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+      message: 'Erreur lors de la déconnexion',
+      error: error.message,
     });
-    return res.status(200).json({ message: 'Déconnecté avec succès' });
   }
+}
+
+
 
   @Get('ManagerList')
   async getManagerList() {

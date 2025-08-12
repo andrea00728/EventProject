@@ -1,41 +1,32 @@
-import React from 'react';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useStateContext } from '../context/ContextProvider';
 
 export default function LogoutButton() {
-  const handleLogout = async () => {
-    try {
-      const res = await fetch('http://localhost:3000/auth/logout', {
-        method: 'POST',
-        credentials: 'include', // Important pour envoyer les cookies
-      });
+  const { setUser, setToken, user, token } = useStateContext();
+  const navigate = useNavigate();
 
-      if (res.ok) {
-        // Rediriger après succès de la déconnexion
-        window.location.href = 'http://localhost:5173/pagepublic';
-      } else {
-        console.error('Erreur lors de la déconnexion');
-      }
-    } catch (err) {
-      console.error('Erreur de déconnexion', err);
+const handleLogout = () => {
+  console.log("Déconnexion lancée");
+  setToken(null);
+  setUser(null);
+  localStorage.removeItem('ACCESS_TOKEN');
+  localStorage.removeItem('USER');
+  console.log("ACCESS_TOKEN supprimé", localStorage.getItem('ACCESS_TOKEN'));
+  console.log("USER supprimé", localStorage.getItem('USER'));
+   window.location.href = '/pagepublic';
+};
+
+
+  useEffect(() => {
+    if (!token && !user) {
+      navigate('/pagepublic', { replace: true });
     }
-  };
+  }, [token, user, navigate]);
 
   return (
-    <button onClick={handleLogout} className="px-4 py-3 flex items-center space-x-4 rounded-md text-gray-600 group">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-6 w-6"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-        />
-      </svg>
-      <span className="group-hover:text-gray-700">Logout</span>
+    <button onClick={handleLogout}>
+      Déconnexion
     </button>
   );
 }

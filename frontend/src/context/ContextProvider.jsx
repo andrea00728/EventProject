@@ -11,13 +11,13 @@ const StateContext = createContext({
 export const ContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, _setToken] = useState(() => {
-    const storedToken = sessionStorage.getItem("ACCESS_TOKEN");
+    const storedToken = localStorage.getItem("ACCESS_TOKEN");
     return storedToken || null;
   });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = sessionStorage.getItem("USER");
+    const storedUser = localStorage.getItem("USER");
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
@@ -32,19 +32,19 @@ export const ContextProvider = ({ children }) => {
   const setToken = (newToken) => {
     _setToken(newToken);
     if (newToken) {
-      sessionStorage.setItem("ACCESS_TOKEN", newToken);
+      localStorage.setItem("ACCESS_TOKEN", newToken);
       setIsLoading(false);
     } else {
-      sessionStorage.removeItem("ACCESS_TOKEN");
+      localStorage.removeItem("ACCESS_TOKEN");
     }
   };
 
   const setUserAndStore = (userData) => {
     setUser(userData);
     if (userData) {
-      sessionStorage.setItem("USER", JSON.stringify(userData));
+      localStorage.setItem("USER", JSON.stringify(userData));
     } else {
-      sessionStorage.removeItem("USER");
+      localStorage.removeItem("USER");
     }
   };
 
