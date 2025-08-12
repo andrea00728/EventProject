@@ -11,4 +11,10 @@ export class NotificationGateway{
         console.log('Envoi notification:', notification);
         this.server.emit('notification',notification);
     }
+
+
+    emitNotifRegisterToAdmin(notifRegister:{title:string;message:string;type?:string;date?:string}){
+        console.log('Envoi notifRegister:', notifRegister);
+        this.server.emit('notifRegister',notifRegister);
+    }
 }

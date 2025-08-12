@@ -12,6 +12,8 @@ import { QueryFailedError } from 'typeorm';
 import admin from 'src/firebase/firebase-admin';
 import { NotificationEntity } from 'src/entities/notification.entity';
 import { ContactMessage } from 'src/entities/ContactMessage';
+import { NotificationGateway } from 'src/gateway/notification.gateway';
+
 
 @Injectable()
 export class AuthService {
@@ -30,6 +32,7 @@ export class AuthService {
     private readonly notificationRepository: Repository<NotificationEntity>,
     @InjectRepository(ContactMessage)                              // <-- Ajouté ici
     private readonly contact_messages: Repository<ContactMessage>,
+    private readonly notificationGateway: NotificationGateway,
   ) { }
 
   async validateUser(profile: any): Promise<any> {
@@ -67,13 +70,22 @@ export class AuthService {
 
       await this.userRepository.save(user);
       console.log('Nouvel utilisateur créé:', { id: user.id, email, role: user.role });
-      
+
       const notification = this.notificationRepository.create({
         title: 'Nouvel organisateur inscrit',
         message: `L'organisateur ${displayName || email} s'est inscrit.`,
         type: 'info',
+        date: new Date().toISOString(),
       });
       await this.notificationRepository.save(notification);
+
+      // Emit notification to admin via WebSocket
+      this.notificationGateway.emitNotifRegisterToAdmin({
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        date: notification.date.toISOString(),
+      });
     }
 
 
@@ -112,12 +124,22 @@ export class AuthService {
 
   async createUser(dto: CreateUserDto) {
     const user = this.userRepository.create(dto);
-      const notification = this.notificationRepository.create({
-        title: 'Nouvel organisateur inscrit',
-        message: `L'organisateur ${dto.name || dto.email} s'est inscrit.`,
-        type: 'info',
-      });
-      await this.notificationRepository.save(notification);
+    const notification = this.notificationRepository.create({
+      title: 'Nouvel organisateur inscrit',
+      message: `L'organisateur ${dto.name || dto.email} s'est inscrit.`,
+      type: 'info',
+      date: new Date().toISOString(),
+    });
+    await this.notificationRepository.save(notification);
+  
+    // Emit notification to admin via WebSocket
+    this.notificationGateway.emitNotifRegisterToAdmin({
+      title: notification.title,
+      message: notification.message,
+      type: notification.type,
+      date: notification.date.toISOString(),
+    });
+  
     return this.userRepository.save(user);
   }
 
@@ -400,7 +422,7 @@ export class AuthService {
     return formattedData;
   }
 
-  
+
 
   async getNotifications(): Promise<NotificationEntity[]> {
     return this.notificationRepository.find({
@@ -410,7 +432,7 @@ export class AuthService {
   }
 
 
-    async getMessages(): Promise<ContactMessage[]> {
+  async getMessages(): Promise<ContactMessage[]> {
     return this.contact_messages.find({
       order: { createdAt: 'DESC' },
     });

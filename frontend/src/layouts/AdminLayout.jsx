@@ -22,6 +22,9 @@ import LogoutModal from "../pages/Admin/LogoutModal";
 import { logout } from "../services/firebase/authService";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { getUserIdForToken } from "../services/userService";
+import { SOCKET_URL } from "../socket";
+import { io } from "socket.io-client";
 
 export default function AdminLayout() {
   const { token, role, isLoading, setToken, setUser } = useStateContext();
@@ -36,7 +39,7 @@ export default function AdminLayout() {
       setIsMobile(window.innerWidth < 768);
       if (window.innerWidth >= 768) setSidebarOpen(false);
     };
-    
+
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -196,20 +199,17 @@ export default function AdminLayout() {
     return (
       <div className="fixed inset-0 bg-gray-900 bg-opacity-30 z-[60] flex items-center justify-center p-4">
         <div
-          className={`w-full max-w-2xl h-[80vh] rounded-lg shadow-xl ${
-            darkMode ? 'bg-gray-800 text-gray-200' : 'bg-white text-gray-900'
-          } flex flex-col`}
+          className={`w-full max-w-2xl h-[80vh] rounded-lg shadow-xl ${darkMode ? 'bg-gray-800 text-gray-200' : 'bg-white text-gray-900'
+            } flex flex-col`}
         >
           <div
-            className={`p-4 border-b ${
-              darkMode ? 'border-gray-700' : 'border-gray-200'
-            } flex items-center justify-between`}
+            className={`p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'
+              } flex items-center justify-between`}
           >
             <div className="flex items-center gap-3">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  darkMode ? 'bg-gray-700' : 'bg-gray-100'
-                }`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center ${darkMode ? 'bg-gray-700' : 'bg-gray-100'
+                  }`}
               >
                 <FaUser className="text-sm" />
               </div>
@@ -218,9 +218,8 @@ export default function AdminLayout() {
                   {typeof conversation?.content === 'object' ? conversation.content.from : 'Utilisateur'}
                 </h3>
                 <p
-                  className={`text-sm ${
-                    darkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}
+                  className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}
                 >
                   En ligne
                 </p>
@@ -240,23 +239,21 @@ export default function AdminLayout() {
                 className={`flex ${message.isAdmin ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                    message.isAdmin
+                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${message.isAdmin
                       ? 'bg-blue-500 text-white'
                       : darkMode
-                      ? 'bg-gray-700 text-gray-200'
-                      : 'bg-gray-200 text-gray-900'
-                  }`}
+                        ? 'bg-gray-700 text-gray-200'
+                        : 'bg-gray-200 text-gray-900'
+                    }`}
                 >
                   <p className="text-sm">{message.text}</p>
                   <p
-                    className={`text-xs mt-1 ${
-                      message.isAdmin
+                    className={`text-xs mt-1 ${message.isAdmin
                         ? 'text-blue-100'
                         : darkMode
-                        ? 'text-gray-400'
-                        : 'text-gray-500'
-                    }`}
+                          ? 'text-gray-400'
+                          : 'text-gray-500'
+                      }`}
                   >
                     {formatTime(message.timestamp)}
                   </p>
@@ -267,9 +264,8 @@ export default function AdminLayout() {
           </div>
           <form
             onSubmit={handleSendMessage}
-            className={`p-4 border-t ${
-              darkMode ? 'border-gray-700' : 'border-gray-200'
-            }`}
+            className={`p-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'
+              }`}
           >
             <div className="flex gap-2">
               <input
@@ -277,11 +273,10 @@ export default function AdminLayout() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Tapez votre message..."
-                className={`flex-1 px-3 py-2 rounded-lg border ${
-                  darkMode
+                className={`flex-1 px-3 py-2 rounded-lg border ${darkMode
                     ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400'
                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
               <button
                 type="submit"
@@ -303,7 +298,7 @@ export default function AdminLayout() {
     const [showConversationModal, setShowConversationModal] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [notifications, setNotifications] = useState([]);
-    const {user} = useStateContext();
+    const { user } = useStateContext();
 
     const notifRef = useRef(null);
     const msgRef = useRef(null);
@@ -322,8 +317,41 @@ export default function AdminLayout() {
           setShowProfile(false);
         }
       };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+
+      let newSocket;
+
+      async function connectSocket() {
+        const userId = await getUserIdForToken();
+        if (!userId) return;
+
+        newSocket = io(SOCKET_URL, {
+          transports: ['websocket'],
+          auth: { userId },
+        });
+
+        newSocket.on("notificationMessageAdmin", (data) => {
+          console.log("📦 Mis à jour du message : ", data);
+        });
+
+        newSocket.on("notifRegister", (data) => {
+          console.log("📦 Mis à jour notification admin : ", data);
+          setNotifications(...notifications, data);
+          
+        });
+
+      }
+
+      connectSocket();
+
+      // Pour écouter les mises à jour
+
+      return () => {
+        if (newSocket) {
+          document.removeEventListener("mousedown", handleClickOutside);
+          newSocket.disconnect();
+        }
+      };
+
     }, []);
 
     useEffect(() => {
@@ -423,67 +451,57 @@ export default function AdminLayout() {
             <div ref={profileRef} className="relative">
               <button
                 onClick={() => setShowProfile(!showProfile)}
-                className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
-                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                }`}
+                className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                  }`}
                 aria-label="Menu profil"
               >
                 <div className="relative">
                   {<img src={user.photo} alt="" className="w-8 rounded-[50%]" /> || <FaUser className="w-5 h-5" />}
                 </div>
-                <span className="hidden sm:inline text-sm font-medium">{ user.name || Admin}</span>
+                <span className="hidden sm:inline text-sm font-medium">{user.name || Admin}</span>
                 <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-200 ${
-                    showProfile ? 'rotate-180' : ''
-                  }`}
+                  className={`w-4 h-4 transition-transform duration-200 ${showProfile ? 'rotate-180' : ''
+                    }`}
                 />
               </button>
               {showProfile && (
                 <div
-                  className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
-                    darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-                  } z-50 transition-all duration-200 ${
-                    window.innerWidth < 640 ? 'left-4 right-4' : 'right-0'
-                  }`}
+                  className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                    } z-50 transition-all duration-200 ${window.innerWidth < 640 ? 'left-4 right-4' : 'right-0'
+                    }`}
                 >
                   <div className="p-2">
                     <div
-                      className={`px-3 py-2 text-sm ${
-                        darkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}
+                      className={`px-3 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}
                     >
                       <p className="font-medium">Connecté en tant que</p>
                       <p className="truncate">admin@example.com</p>
                     </div>
                     <div
-                      className={`border-t ${
-                        darkMode ? 'border-gray-700' : 'border-gray-200'
-                      }`}
+                      className={`border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'
+                        }`}
                     ></div>
                     <button
-                      className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-800'
-                      } transition-colors duration-150`}
+                      className={`w-full text-left px-3 py-2 text-sm ${darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-800'
+                        } transition-colors duration-150`}
                     >
                       Mon profil
                     </button>
                     <button
-                      className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-800'
-                      } transition-colors duration-150`}
+                      className={`w-full text-left px-3 py-2 text-sm ${darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-800'
+                        } transition-colors duration-150`}
                     >
                       Paramètres
                     </button>
                     <div
-                      className={`border-t ${
-                        darkMode ? 'border-gray-700' : 'border-gray-200'
-                      }`}
+                      className={`border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'
+                        }`}
                     ></div>
                     <button
                       onClick={handleLogout}
-                      className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode ? 'hover:bg-gray-700 text-red-400' : 'hover:bg-gray-100 text-red-600'
-                      } transition-colors duration-150`}
+                      className={`w-full text-left px-3 py-2 text-sm ${darkMode ? 'hover:bg-gray-700 text-red-400' : 'hover:bg-gray-100 text-red-600'
+                        } transition-colors duration-150`}
                     >
                       Déconnexion
                     </button>
@@ -493,9 +511,8 @@ export default function AdminLayout() {
             </div>
             <button
               onClick={toggleDarkMode}
-              className={`p-2 rounded-full ${
-                darkMode ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-              } transition-colors duration-200`}
+              className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                } transition-colors duration-200`}
               aria-label="Toggle dark mode"
             >
               {darkMode ? <FaSun className="text-lg" /> : <FaMoon className="text-lg" />}
@@ -521,17 +538,15 @@ export default function AdminLayout() {
         />
       )}
       <button
-        className={`fixed z-30 top-4 left-4 p-2 rounded-lg transition-all duration-300 md:hidden ${
-          darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-white text-gray-600 hover:bg-gray-100'
-        } shadow-md hover:scale-105`}
+        className={`fixed z-30 top-4 left-4 p-2 rounded-lg transition-all duration-300 md:hidden ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-white text-gray-600 hover:bg-gray-100'
+          } shadow-md hover:scale-105`}
         onClick={() => setSidebarOpen(!sidebarOpen)}
       >
         {sidebarOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
       </button>
       <aside
-        className={`fixed z-50 top-0 left-0 h-full w-64 transition-all duration-300 ease-in-out ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 md:relative md:w-72 ${darkMode ? 'bg-gray-800' : 'bg-gray-200'}`}
+        className={`fixed z-50 top-0 left-0 h-full w-64 transition-all duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } md:translate-x-0 md:relative md:w-72 ${darkMode ? 'bg-gray-800' : 'bg-gray-200'}`}
       >
         <div className="flex flex-col h-full">
           <div className="p-5 flex items-center justify-between">
@@ -558,25 +573,22 @@ export default function AdminLayout() {
                 <li key={index}>
                   <Link
                     to={item.path}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 transform ${
-                      location.pathname === item.path
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 transform ${location.pathname === item.path
                         ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg scale-[1.02]'
-                        : `${
-                            darkMode
-                              ? 'text-gray-200 hover:bg-gray-700 hover:text-white'
-                              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                          } hover:translate-x-1 hover:scale-[1.02]`
-                    }`}
+                        : `${darkMode
+                          ? 'text-gray-200 hover:bg-gray-700 hover:text-white'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        } hover:translate-x-1 hover:scale-[1.02]`
+                      }`}
                     onClick={() => isMobile && setSidebarOpen(false)}
                   >
                     <span
-                      className={`text-lg transition-transform duration-300 ${
-                        location.pathname === item.path
+                      className={`text-lg transition-transform duration-300 ${location.pathname === item.path
                           ? 'text-white scale-110'
                           : darkMode
-                          ? 'text-gray-300 group-hover:scale-110'
-                          : 'text-gray-500 group-hover:scale-110'
-                      }`}
+                            ? 'text-gray-300 group-hover:scale-110'
+                            : 'text-gray-500 group-hover:scale-110'
+                        }`}
                     >
                       {item.icon}
                     </span>
@@ -590,11 +602,10 @@ export default function AdminLayout() {
             <div className="flex flex-col space-y-3 mb-4">
               <button
                 onClick={toggleDarkMode}
-                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 transform ${
-                  darkMode
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 transform ${darkMode
                     ? 'bg-gray-700 text-blue-300 hover:bg-gray-600 hover:scale-[1.02]'
                     : 'bg-gray-100 text-blue-600 hover:bg-gray-200 hover:scale-[1.02]'
-                }`}
+                  }`}
               >
                 {darkMode ? (
                   <>
@@ -610,20 +621,18 @@ export default function AdminLayout() {
               </button>
               <button
                 onClick={handleLogout}
-                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 transform ${
-                  darkMode
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 transform ${darkMode
                     ? 'text-red-300 hover:bg-gray-700 hover:bg-opacity-50 hover:scale-[1.02]'
                     : 'text-red-500 hover:bg-red-50 hover:scale-[1.02]'
-                }`}
+                  }`}
               >
                 <FaSignOutAlt className="text-lg transition-transform duration-300 hover:translate-x-1" />
                 <span className="text-sm font-medium">Déconnexion</span>
               </button>
             </div>
             <p
-              className={`text-xs text-center transition-colors duration-300 ${
-                darkMode ? 'text-gray-400' : 'text-gray-500'
-              }`}
+              className={`text-xs text-center transition-colors duration-300 ${darkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}
             >
               © {new Date().getFullYear()} Master Table
             </p>
