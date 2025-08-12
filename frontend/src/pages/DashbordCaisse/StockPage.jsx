@@ -1,10 +1,284 @@
-{/* Importation des dépendances nécessaires */}
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useStateContext } from '../../context/ContextProvider';
 import { getEventIdByEmail } from '../../services/invitationService';
+import {
+  AlertTriangle,
+  Package,
+  CheckCircle,
+  ChevronUp,
+  ChevronDown,
+  Trash,
+  Edit,
+  Search,
+  ArrowLeft,
+  X,
+  Zap,
+} from 'lucide-react';
+
+// Composant pour les indicateurs (utilisant Lucide-React pour les icônes)
+const StatCard = ({ title, value, icon: Icon, color }) => (
+  <motion.div
+    className="bg-white rounded-3xl shadow-xl p-6 flex items-center gap-4 border border-gray-100"
+    initial={{ opacity: 0, scale: 0.95 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.4 }}
+  >
+    <div className={`p-3 rounded-full bg-${color}-100`}>
+      <Icon className={`w-7 h-7 text-${color}-600`} />
+    </div>
+    <div>
+      <p className="text-gray-500 font-medium text-sm">{title}</p>
+      <h3 className="text-3xl font-bold text-gray-900">{value}</h3>
+    </div>
+  </motion.div>
+);
+
+// Composant Modale de confirmation
+const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans"
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden"
+          >
+            <div className="bg-red-500 text-white p-6 flex items-center gap-4">
+              <Zap className="h-8 w-8" />
+              <h3 className="text-xl font-bold">{title}</h3>
+            </div>
+            <div className="p-8">
+              <p className="text-gray-700 text-base">{message}</p>
+            </div>
+            <div className="p-6 bg-gray-50 flex justify-end gap-3 rounded-b-3xl">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onCancel}
+                className="px-6 py-3 bg-gray-200 text-gray-800 rounded-xl font-semibold transition-colors duration-200"
+              >
+                Annuler
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onConfirm}
+                className="px-6 py-3 bg-red-600 text-white rounded-xl font-semibold transition-colors duration-200"
+              >
+                Confirmer
+              </motion.button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+
+// Composant Modale de confirmation (pour la suppression)
+const DeletionConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel }) => (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-sans"
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden"
+          >
+            <div className="bg-red-500 text-white p-6 flex items-center gap-4">
+              <Trash className="h-8 w-8" />
+              <h3 className="text-xl font-bold">{title}</h3>
+            </div>
+            <div className="p-8">
+              <p className="text-gray-700 text-base">{message}</p>
+            </div>
+            <div className="p-6 bg-gray-50 flex justify-end gap-3 rounded-b-3xl">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onCancel}
+                className="px-6 py-3 bg-gray-200 text-gray-800 rounded-xl font-semibold transition-colors duration-200"
+              >
+                Annuler
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onConfirm}
+                className="px-6 py-3 bg-red-600 text-white rounded-xl font-semibold transition-colors duration-200"
+              >
+                Supprimer
+              </motion.button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+);
+
+// Composant pour l'interface d'édition
+const EditModal = ({ isOpen, item, onSave, onCancel }) => {
+  const [editedItem, setEditedItem] = useState(item);
+
+  useEffect(() => {
+    setEditedItem(item);
+  }, [item]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditedItem(prev => ({
+      ...prev,
+      [name]: name === 'price' || name === 'stock' ? parseFloat(value) : value,
+    }));
+  };
+
+  const handleSave = () => {
+    onSave(editedItem);
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6 font-sans"
+        >
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 rounded-t-3xl">
+              <h2 className="text-2xl font-bold">Modifier l'Article</h2>
+            </div>
+            <div className="p-8 space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Nom</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={editedItem.name || ''}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Catégorie</label>
+                <input
+                  type="text"
+                  name="category"
+                  value={editedItem.category || ''}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Prix (€)</label>
+                <input
+                  type="number"
+                  name="price"
+                  step="0.01"
+                  min="0"
+                  value={editedItem.price || ''}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Stock</label>
+                <input
+                  type="number"
+                  name="stock"
+                  min="0"
+                  value={editedItem.stock || ''}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
+                />
+              </div>
+            </div>
+            <div className="p-6 flex justify-end gap-3 bg-gray-50 rounded-b-3xl">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onCancel}
+                className="px-6 py-3 bg-gray-200 text-gray-800 rounded-xl font-semibold transition-colors duration-200"
+              >
+                Annuler
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleSave}
+                className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold transition-colors duration-200"
+              >
+                Enregistrer
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+
+// Composant de notification temporaire (Snackbar)
+const Snackbar = ({ open, message, severity, onClose }) => {
+  useEffect(() => {
+    if (open) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [open, onClose]);
+
+  const bgClass = severity === 'success' ? 'bg-green-600' : 'bg-red-600';
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.3 }}
+          className="fixed bottom-6 left-1/2 transform -translate-x-1/2 max-w-md w-full z-50 font-sans"
+        >
+          <div className={`p-5 rounded-xl shadow-xl text-white flex justify-between items-center gap-4 ${bgClass}`}>
+            <span className="text-base">{message}</span>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onClose}
+              className="p-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-all duration-200"
+              aria-label="Fermer la notification"
+            >
+              <X className="h-5 w-5" />
+            </motion.button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 
 // Composant principal pour la gestion du stock
 const StockPage = () => {
@@ -21,28 +295,31 @@ const StockPage = () => {
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState('');
   const [assignedEventId, setAssignedEventId] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   const { token } = useStateContext();
   const navigate = useNavigate();
 
-  // Récupération de l'événement assigné pour l'utilisateur
-  useEffect(() => {
-    const fetchAssignedEvent = async () => {
-      try {
-        const resp = await getEventIdByEmail(token);
-        if (resp?.eventId) {
-          setAssignedEventId(resp.eventId);
-          setSelectedEvent(resp.eventId);
-        }
-      } catch (e) {
-        console.error("Erreur récupération événement assigné :", e);
+  // Calcul des indicateurs de stock
+  const totalItems = rows.length;
+  const criticalItems = rows.filter(item => item.status === 'CRITIQUE').length;
+  const lowItems = rows.filter(item => item.status === 'FAIBLE').length;
+  const okItems = totalItems - criticalItems - lowItems;
+
+  const fetchAssignedEvent = useCallback(async () => {
+    try {
+      const resp = await getEventIdByEmail(token);
+      if (resp?.eventId) {
+        setAssignedEventId(resp.eventId);
+        setSelectedEvent(resp.eventId);
       }
-    };
-    if (token) fetchAssignedEvent();
+    } catch (e) {
+      console.error("Erreur récupération événement assigné :", e);
+    }
   }, [token]);
 
-  // Récupération des événements disponibles
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/events`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -51,10 +328,9 @@ const StockPage = () => {
     } catch (error) {
       console.error('Erreur de chargement des événements :', error);
     }
-  };
+  }, [token]);
 
-  // Récupération des données de stock
-  const fetchStockData = async () => {
+  const fetchStockData = useCallback(async () => {
     try {
       setIsLoading(true);
       const eventToUse = assignedEventId || selectedEvent;
@@ -83,17 +359,16 @@ const StockPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, assignedEventId, selectedEvent]);
 
-  // Chargement initial des événements
   useEffect(() => {
     fetchEvents();
-  }, []);
+    if (token) fetchAssignedEvent();
+  }, [fetchEvents, fetchAssignedEvent, token]);
 
-  // Chargement des données de stock lorsque l'événement change
   useEffect(() => {
     fetchStockData();
-  }, [assignedEventId, selectedEvent]);
+  }, [assignedEventId, selectedEvent, fetchStockData]);
 
   // Tri des lignes du tableau
   const sortRows = (field) => {
@@ -117,35 +392,32 @@ const StockPage = () => {
   // Fermeture de la modale d'édition
   const handleCloseEditModal = () => setEditModalOpen(false);
 
-  // Sauvegarde des modifications ou ajout d'un nouvel article
-  const handleSaveEdit = async () => {
+  // Sauvegarde des modifications
+  const handleSaveEdit = async (updatedItem) => {
     try {
-      if (editedItem.id) {
-        await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/menus/items/${editedItem.id}`, editedItem, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setSnackbar({ open: true, message: 'Article modifié avec succès.', severity: 'success' });
-      } else {
-        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/menus/items`, {
-          ...editedItem,
-          eventId: selectedEvent || assignedEventId,
-        }, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setSnackbar({ open: true, message: 'Article ajouté avec succès.', severity: 'success' });
-      }
+      await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/menus/items/${updatedItem.id}`, updatedItem, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSnackbar({ open: true, message: 'Article modifié avec succès.', severity: 'success' });
       handleCloseEditModal();
       fetchStockData();
     } catch {
-      setSnackbar({ open: true, message: `Erreur lors de ${editedItem.id ? 'la modification' : "l'ajout"}.`, severity: 'error' });
+      setSnackbar({ open: true, message: `Erreur lors de la modification.`, severity: 'error' });
     }
   };
 
+  // Gestion de l'ouverture de la modale de suppression
+  const handleOpenDeleteModal = (item) => {
+    setItemToDelete(item);
+    setDeleteModalOpen(true);
+  };
+
   // Suppression d'un article
-  const handleDelete = async (id) => {
-    if (!confirm('Confirmer la suppression de cet article ?')) return;
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+
     try {
-      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/menus/items/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/menus/items/${itemToDelete.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSnackbar({ open: true, message: 'Article supprimé.', severity: 'success' });
@@ -153,6 +425,9 @@ const StockPage = () => {
     } catch (error) {
       console.error('Erreur lors de la suppression :', error);
       setSnackbar({ open: true, message: 'Erreur lors de la suppression.', severity: 'error' });
+    } finally {
+      setDeleteModalOpen(false);
+      setItemToDelete(null);
     }
   };
 
@@ -165,7 +440,7 @@ const StockPage = () => {
       field: 'price',
       headerName: 'Prix',
       width: 120,
-      renderCell: ({ row }) => <span className="text-base">{row.price.toFixed(2)} €</span>,
+      renderCell: ({ row }) => <span className="text-base text-gray-700">{row.price.toFixed(2)} €</span>,
     },
     {
       field: 'stock',
@@ -197,26 +472,22 @@ const StockPage = () => {
       renderCell: ({ row }) => (
         <div className="flex gap-3 items-center">
           <motion.button
-            whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)" }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.1, backgroundColor: '#e0e7ff' }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => handleOpenEditModal(row)}
-            className="p-2.5 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-all duration-200 shadow-sm"
+            className="p-2 bg-indigo-100 text-indigo-600 rounded-full transition-all duration-200"
             aria-label="Modifier l'article"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
+            <Edit className="h-5 w-5" />
           </motion.button>
           <motion.button
-            whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)" }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => handleDelete(row.id)}
-            className="p-2.5 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-all duration-200 shadow-sm"
+            whileHover={{ scale: 1.1, backgroundColor: '#fee2e2' }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => handleOpenDeleteModal(row)}
+            className="p-2 bg-red-100 text-red-600 rounded-full transition-all duration-200"
             aria-label="Supprimer l'article"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
+            <Trash className="h-5 w-5" />
           </motion.button>
         </div>
       ),
@@ -237,31 +508,39 @@ const StockPage = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 flex flex-col p-6 sm:p-8"
+      className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-indigo-100 flex flex-col p-6 sm:p-8 font-sans antialiased"
     >
-      {/* Conteneur principal */}
-      <div className="relative z-10 max-w-7xl mx-auto flex-1 flex flex-col space-y-8">
-        {/* En-tête avec titre et bouton de retour */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+      <div className="relative z-10 max-w-7xl mx-auto flex-1 flex flex-col space-y-8 w-full">
+        <div className="flex justify-between items-center pb-4">
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">
             Gestion du Stock
           </h1>
           <motion.button
             whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)" }}
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate(-1)}
-            className="px-6 py-3 bg-indigo-100 text-indigo-600 rounded-xl hover:bg-indigo-200 transition-all duration-200 shadow-sm flex items-center gap-2 text-base font-semibold"
+            className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-200 shadow-lg flex items-center gap-2 text-base font-semibold"
             aria-label="Retour à la page précédente"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
+            <ArrowLeft className="w-5 h-5" />
             Retour
           </motion.button>
         </div>
 
+        {/* Cartes d'indicateurs de stock */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StatCard title="Articles OK" value={okItems} icon={CheckCircle} color="green" />
+          <StatCard title="Stock Faible" value={lowItems} icon={Package} color="orange" />
+          <StatCard title="Articles Critiques" value={criticalItems} icon={AlertTriangle} color="red" />
+        </div>
+
         {/* Filtres et recherche */}
-        <div className="bg-white rounded-3xl shadow-xl p-6 flex flex-col sm:flex-row gap-4 items-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="bg-white rounded-3xl shadow-xl p-6 flex flex-col sm:flex-row gap-4 items-center border border-gray-100"
+        >
           {!assignedEventId && (
             <div className="w-full sm:w-1/4">
               <label htmlFor="event-select" className="block text-base font-medium text-gray-900 mb-2">
@@ -271,7 +550,7 @@ const StockPage = () => {
                 id="event-select"
                 value={selectedEvent}
                 onChange={(e) => setSelectedEvent(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
               >
                 <option value="">Tous les événements</option>
                 {events.map(ev => (
@@ -288,7 +567,7 @@ const StockPage = () => {
               id="category-select"
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
             >
               <option value="">Toutes les catégories</option>
               {[...new Set(rows.map(row => row.category))].map(category => (
@@ -304,7 +583,7 @@ const StockPage = () => {
               id="status-select"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
             >
               <option value="">Tous les statuts</option>
               <option value="CRITIQUE">Critique</option>
@@ -313,58 +592,35 @@ const StockPage = () => {
             </select>
           </div>
           <div className="relative w-full sm:w-1/4">
-            <input
-              type="text"
-              placeholder="Rechercher un article..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base placeholder-gray-400 transition-colors duration-200"
-            />
-            <svg className="w-6 h-6 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <label htmlFor="search-input" className="block text-base font-medium text-gray-900 mb-2">
+              Rechercher
+            </label>
+            <div className="relative">
+              <input
+                id="search-input"
+                type="text"
+                placeholder="Nom ou catégorie..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base placeholder-gray-400 transition-colors duration-200"
+              />
+              <Search className="w-6 h-6 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2" />
+            </div>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)" }}
-            whileTap={{ scale: 0.95 }}
-            onClick={fetchStockData}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-200 shadow-sm text-base font-semibold flex items-center gap-2"
-            aria-label="Actualiser les données"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9H4m4 11H3v-5h.582m15.356-2A8.001 8.001 0 013.582 15H3" />
-            </svg>
-            Actualiser
-          </motion.button>
-        </div>
+        </motion.div>
 
         {/* Tableau des articles */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-3xl shadow-xl overflow-hidden"
+          className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100"
         >
-          <div className="flex items-center justify-between p-6">
+          <div className="p-6 bg-gray-50 border-b border-gray-100">
             <h2 className="text-2xl font-semibold text-gray-900">Liste des Articles</h2>
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)" }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setEditedItem({ name: '', price: 0, stock: 0, category: '' });
-                setEditModalOpen(true);
-              }}
-              className="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 shadow-sm text-base font-semibold flex items-center gap-2"
-              aria-label="Ajouter un nouvel article"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Ajouter un Article
-            </motion.button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full bg-white">
+            <table className="w-full">
               <thead className="bg-gray-100 sticky top-0">
                 <tr>
                   {columns.map(col => (
@@ -377,9 +633,7 @@ const StockPage = () => {
                       <div className="flex items-center gap-2">
                         {col.headerName}
                         {sortConfig.field === col.field && (
-                          <svg className={`w-5 h-5 ${sortConfig.direction === 'asc' ? 'rotate-0' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
+                          sortConfig.direction === 'asc' ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />
                         )}
                       </div>
                     </th>
@@ -390,134 +644,58 @@ const StockPage = () => {
                 {isLoading ? (
                   <tr>
                     <td colSpan={columns.length} className="text-center py-6">
-                      <div className="animate-pulse flex space-x-4">
-                        <div className="h-6 bg-gray-200 rounded w-full"></div>
+                      <div className="flex justify-center items-center h-24">
+                        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
                       </div>
                     </td>
                   </tr>
-                ) : filteredRows.map(row => (
-                  <tr key={row.id} className="hover:bg-gray-50 transition duration-150">
+                ) : filteredRows.length > 0 ? filteredRows.map(row => (
+                  <motion.tr
+                    key={row.id}
+                    className="hover:bg-indigo-50 transition duration-150 border-t border-gray-100"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
                     {columns.map(col => (
-                      <td key={col.field} className="px-6 py-4 text-base text-gray-900 border-t border-gray-100">
+                      <td key={col.field} className="px-6 py-4 text-base text-gray-900">
                         {col.renderCell ? col.renderCell({ row }) : row[col.field]}
                       </td>
                     ))}
+                  </motion.tr>
+                )) : (
+                  <tr>
+                    <td colSpan={columns.length} className="text-center py-6 text-gray-500">
+                      Aucun article ne correspond à votre recherche.
+                    </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
         </motion.div>
 
-        {/* Modale d'édition ou d'ajout */}
-        {editModalOpen && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6"
-          >
-            <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full">
-              <div className="bg-indigo-600 text-white p-6 rounded-t-3xl">
-                <h2 className="text-xl font-bold">{editedItem.id ? 'Modifier Article' : 'Ajouter Article'}</h2>
-              </div>
-              <div className="p-8 space-y-6">
-                <div>
-                  <label className="block text-base font-medium text-gray-900 mb-2">Nom</label>
-                  <input
-                    type="text"
-                    value={editedItem.name || ''}
-                    onChange={(e) => setEditedItem(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
-                  />
-                </div>
-                <div>
-                  <label className="block text-base font-medium text-gray-900 mb-2">Prix (€)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={editedItem.price || ''}
-                    onChange={(e) => setEditedItem(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
-                  />
-                </div>
-                <div>
-                  <label className="block text-base font-medium text-gray-900 mb-2">Stock</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={editedItem.stock || ''}
-                    onChange={(e) => setEditedItem(prev => ({ ...prev, stock: parseInt(e.target.value) }))}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
-                  />
-                </div>
-                <div>
-                  <label className="block text-base font-medium text-gray-900 mb-2">Catégorie</label>
-                  <input
-                    type="text"
-                    value={editedItem.category || ''}
-                    onChange={(e) => setEditedItem(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
-                  />
-                </div>
-              </div>
-              <div className="p-6 flex justify-end gap-3 bg-gray-50 rounded-b-3xl">
-                <motion.button
-                  whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)" }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleCloseEditModal}
-                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 shadow-sm text-base font-semibold flex items-center gap-2"
-                  aria-label="Annuler l'édition"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Annuler
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)" }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleSaveEdit}
-                  className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-200 shadow-sm text-base font-semibold flex items-center gap-2"
-                  aria-label={editedItem.id ? "Enregistrer les modifications" : "Ajouter l'article"}
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {editedItem.id ? 'Enregistrer' : 'Ajouter'}
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
-        )}
+        <EditModal
+          isOpen={editModalOpen}
+          item={editedItem}
+          onSave={handleSaveEdit}
+          onCancel={handleCloseEditModal}
+        />
 
-        {/* Notification Snackbar */}
-        {snackbar.open && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed bottom-6 left-1/2 transform -translate-x-1/2 max-w-md w-full"
-          >
-            <div className={`p-5 rounded-xl shadow-xl text-white flex justify-between items-center ${
-              snackbar.severity === 'success' ? 'bg-green-600' : 'bg-red-600'
-            }`}>
-              <span className="text-base">{snackbar.message}</span>
-              <motion.button
-                whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)" }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSnackbar(prev => ({ ...prev, open: false }))}
-                className="p-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-all duration-200 shadow-sm"
-                aria-label="Fermer la notification"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
+        <DeletionConfirmationModal
+          isOpen={deleteModalOpen}
+          title="Confirmer la suppression"
+          message={`Êtes-vous sûr de vouloir supprimer l'article "${itemToDelete?.name}" ? Cette action est irréversible.`}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteModalOpen(false)}
+        />
+
+        <Snackbar
+          open={snackbar.open}
+          message={snackbar.message}
+          severity={snackbar.severity}
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        />
       </div>
     </motion.div>
   );

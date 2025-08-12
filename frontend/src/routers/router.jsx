@@ -72,6 +72,9 @@ import RevenuPage from "../pages/DashbordCaisse/RevenuPage.jsx";
 import ActivityHistory from "../pages/Admin/Historique.jsx";
 import Statique from "../pages/Admin/statistique.jsx";
 import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Event.jsx";
+import LoginPage from "../pages/Admin/LoginPage.jsx";
+import UserStats from "../pages/Admin/cards.jsx";
+import Tablecreation from "../pages/TableOrganisation/Tablecreation.jsx";
 
 
 const router=createBrowserRouter([
@@ -220,6 +223,10 @@ const router=createBrowserRouter([
         element: <PaiementPage />,
       },
       {
+        path: "/revenu",
+        element: <RevenuPage />,
+      },
+      {
         path: "/stock",
         element: <StockPage />,
       },
@@ -228,10 +235,78 @@ const router=createBrowserRouter([
         element: <StatistiquesPage />,
       },
       {
-          path: "/revenu",
-          element: <RevenuPage />,
-      }
-
+        path: "/evenement/tables",
+        element: <TableLayout />,
+        children: [
+          {
+            path: "creationTable",
+            element: <Tablecreation />,
+          },
+          {
+            path: "",
+            element: <Listetable />,
+          },
+          {
+            path: "3Dtable",
+            element: <Affichage3dTable />,
+          },
+        ],
+      },
+      {
+        path: "/evenement/evenement",
+        element: <EventLayout />,
+        children: [
+          {
+            path: "eventpadding",
+            element: <EventPending />,
+          },
+          {
+            path: "",
+            element: <EventAccept />,
+          },
+        ],
+      },
+      {
+        path: "/evenement/personnel",
+        element: <OrganisationPersonnelLayout />,
+        children: [
+          {
+            path: "createPersonnel",
+            element: <CreationPersonnel />,
+          },
+          {
+            path: "",
+            element: <DashboardPersonnel />,
+          },
+        ],
+      },
+      {
+        path: "/evenement/restauration",
+        element: <MenuForm/>,
+        // children: [
+        //   {
+        //     path: "createPersonnel",
+        //     element: <CreationPersonnel />,
+        //   },
+        //   {
+        //     path: "",
+        //     element: <DashboardPersonnel />,
+        //   },
+        // ],
+      },
+      {
+        path: "/paypal-success",
+        element: <PaypalSuccess />,
+      },
+      ,
+      {
+        path: "/forfait/success",
+        element: <ForfaitSuccess />,
+      },
+      {
+        path: "/forfaits",
+        element: <ForfaitActive />,
+      },
     ],
   },
 
@@ -388,6 +463,7 @@ const router=createBrowserRouter([
   {
     path: "/",
     element: <AdminLayout />,
+    // element: <UserStats />,
     children: [
       {
         path: "/",
@@ -476,15 +552,10 @@ const router=createBrowserRouter([
     path: "/menutitemform",
     element: <MenuItemForm />,
   },
-
   {
     path: "/systemprompt",
-    element: <SystemPromptManager />,
   },
-  {
-    path: "/menuform",
-    element: <MenuForm />,
-  },
+
   {
     path: "/menulist/:slug",
     element: <MenuListWithCart />,
@@ -492,6 +563,10 @@ const router=createBrowserRouter([
   {
     path: "/menutitemform",
     element: <MenuItemForm />,
+  },
+  {
+    path: "/login-site/super/admin",
+    element: <LoginPage />,
   },
 ]);
 

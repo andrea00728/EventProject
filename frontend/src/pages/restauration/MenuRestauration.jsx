@@ -987,7 +987,7 @@ export default function MenuRestauration() {
       >
         <DialogTitle sx={{
           background: theme.gradientCard,
-          color: 'gray',
+          color: 'white',
           display: 'flex',
           alignItems: 'center',
           gap: 2,
@@ -996,8 +996,8 @@ export default function MenuRestauration() {
         }}>
           <RestaurantIcon />
           {editingItem
-            ? `Modifier - ${allMenus.find((m) => m.id === selectedMenuId)?.name || ""}`
-            : `Ajouter un - ${allMenus.find((m) => m.id === selectedMenuId)?.name || ""}`}
+            ? `Modifier ${allMenus.find((m) => m.id === selectedMenuId)?.name || "menu"}`
+            : `Ajouter un(e) ${allMenus.find((m) => m.id === selectedMenuId)?.name || ""}`}
         </DialogTitle>
         <DialogContent sx={{ p: 4 }}>
           <Box sx={{ display: 'grid', gap: 3, mt: 2 }}>

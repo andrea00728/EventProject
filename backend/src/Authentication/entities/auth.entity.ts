@@ -3,7 +3,7 @@ import { Favorite } from 'src/entities/Favorite';
 import { Forfait } from 'src/entities/Forfait';
 import { Entity, Column, PrimaryColumn, ManyToMany, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
-export type UserRole = 'organisateur' | 'accueil' | 'caissier' | 'cuisinier';
+export type UserRole = 'organisateur' | 'accueil' | 'caissier' | 'cuisinier'| 'admin';
 
 @Entity('users')
 export class User {
@@ -21,7 +21,7 @@ export class User {
 
   @Column({
     type: 'enum',
-    enum: ['organisateur', 'accueil', 'caissier', 'cuisinier'],
+    enum: ['organisateur', 'accueil', 'caissier', 'cuisinier','admin'],
     default: 'organisateur',
   })
   role: UserRole;

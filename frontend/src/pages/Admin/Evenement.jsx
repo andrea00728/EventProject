@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useDarkMode } from "../../context/DarkModeContext";
 import ModalEvenement from "./ModalEvenement";
+// import { Evenement } from 'backend/src/entities/Evenement';
+// import { EvenementService } from 'backend/src/services/evenement/evenement.service';
 import { getAllEvents } from "../../services/evenementServ";
 import { FaEye, FaUser } from "react-icons/fa";
 import {
@@ -315,6 +317,7 @@ export default function EvenementAd() {
         setLoading(true);
         setError(null);
         const data = await getAllEvents();
+        console.log(data);
         setData(data);
       } catch (error) {
         console.error("Erreur lors de la récupération des événements : ", error);
@@ -367,6 +370,9 @@ export default function EvenementAd() {
       case "organisateur":
         value = event.user.name;
         break;
+      case "visibilite":
+        value = event.isPublic ? 'public' : 'privé';
+        break;
       default:
         value = "";
     }
@@ -379,25 +385,32 @@ export default function EvenementAd() {
         Nom: value.nom,
         Type: value.type,
         Theme: value.theme,
+        Visibilité: value.isPublic ? 'Public' : 'Privé',
         Date_debut: value.date,
         Date_fin: value.date_fin,
         Localisation: value.location.nom,
         Organisateur: value.user.name,
+        Statut: value.status === 'active' ? 'Actif' : 'Inactif',
+        Participants: value.participants || 0
       })
     );
     handleDownloadXLSX(page, "liste_evenements");
   };
-
+  // Statistiques
   // Statistiques
   const stats = useMemo(() => {
     const total = data.length;
     const active = data.filter(e => e.status === 'active').length;
+    const publicEvents = data.filter(e => e.isPublic === true).length;
+    const privateEvents = data.filter(e => e.isPublic === false).length;
     const totalParticipants = data.reduce((sum, e) => sum + (e.participants || 0), 0);
     const avgParticipants = total > 0 ? Math.round(totalParticipants / total) : 0;
 
     return {
       total,
       active,
+      publicEvents,
+      privateEvents,
       totalParticipants,
       avgParticipants
     };
@@ -414,10 +427,33 @@ export default function EvenementAd() {
 
   const pageBg = darkMode
     ? "bg-gray-900 text-gray-200"
-    : "bg-gray-50 text-gray-800";
+    : "bg-gradient-to-r from-white to-gray-50 text-gray-800";
 
   const [currentPage, setCurrentPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const tableContainerClasses = `hidden md:block rounded-xl shadow-lg border transition-colors duration-300 ${
+    darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
+  }`;
+
+  const headerClasses = `grid grid-cols-12 gap-4 px-6 py-4 font-bold uppercase text-xs border-b transition-colors duration-300 ${
+    darkMode ? "bg-gray-800 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"
+  }`;
+
+  const rowClasses = `grid grid-cols-12 gap-4 px-6 py-4 items-center border-b transition-colors duration-150 ${
+    darkMode ? "border-gray-700 hover:bg-gray-700" : "border-gray-200 hover:bg-gray-100"
+  }`;
+
+  const paginationClasses = `px-6 py-4 flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0 text-sm border-t transition-colors duration-300 ${
+    darkMode ? "border-gray-700 bg-gray-800 text-gray-300" : "border-gray-200 bg-gray-50 text-gray-600"
+  }`;
+  
+  const textMuted = darkMode ? "text-gray-400" : "text-gray-500";
+  const textBlue = darkMode ? "text-blue-300" : "text-blue-600";
+  const textPurple = darkMode ? "text-purple-300" : "text-purple-600";
+  const activeStatusClasses = darkMode ? "bg-green-900/50 text-green-300" : "bg-green-100 text-green-800";
+  const inactiveStatusClasses = darkMode ? "bg-gray-700/50 text-gray-400" : "bg-gray-100 text-gray-600";
+
 
   return (
     <div className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${pageBg}`}>
@@ -431,25 +467,25 @@ export default function EvenementAd() {
           trend={12}
           color="blue"
         />
-        <StatsCard
+        {/* <StatsCard
           title="Événements Actifs"
           value={stats.active}
           icon={MdCalendarToday}
           trend={8}
           color="green"
-        />
+        /> */}
         <StatsCard
-          title="Total Participants"
-          value={stats.totalParticipants.toLocaleString()}
+          title="Événements Publics"
+          value={stats.publicEvents}
           icon={MdPeople}
-          trend={-3}
+          trend={5}
           color="purple"
         />
         <StatsCard
-          title="Moyenne Participants"
-          value={stats.avgParticipants}
+          title="Événements Privés"
+          value={stats.privateEvents}
           icon={MdLocationOn}
-          trend={5}
+          trend={3}
           color="orange"
         />
       </div>
@@ -554,145 +590,149 @@ export default function EvenementAd() {
             </div>
 
             {/* Version desktop - DataGrid */}
-            <div className="hidden md:block overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800">
+            <div className={tableContainerClasses}>
               {/* En-têtes du tableau */}
-              <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+              <div className={headerClasses}>
                 <div className="col-span-3">ÉVÉNEMENT</div>
                 <div className="col-span-1">TYPE</div>
                 <div className="col-span-2">THÈME</div>
+                <div className="col-span-1">ÉVÉNEMENT ORGANISE</div>
                 <div className="col-span-2">DATE DÉBUT</div>
                 <div className="col-span-1 text-center">PARTICIPANTS</div>
-                <div className="col-span-1 text-center">STATUT</div>
+                {/* <div className="col-span-1 text-center">STATUT</div> */}
                 <div className="col-span-2 text-center">ACTIONS</div>
               </div>
 
               {/* Contenu du tableau */}
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredData
-                  .slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage)
-                  .map((event, index) => (
-                    <div 
-                      key={index}
-                      className="grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"
-                    >
-                      {/* Nom Événement */}
-                      <div className="col-span-3">
-                        <div className={`font-medium truncate ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
+              <div
+                className="divide-y transition-colors duration-300"
+                style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}
+              >
+                {filteredData.length > 0 ? (
+                  filteredData
+                    .slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage)
+                    .map((event, index) => (
+                      <div key={index} className={rowClasses}>
+                        {/* Nom Événement */}
+                        <div className={`col-span-3 font-medium truncate ${textBlue}`}>
                           {event.nom}
                         </div>
-                      </div>
-
-                      {/* Type */}
-                      <div className="col-span-1">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          darkMode ? 'bg-gray-700 text-blue-300' : 'bg-blue-50 text-blue-600'
-                        }`}>
-                          {event.type}
-                        </span>
-                      </div>
-
-                      {/* Thème */}
-                      <div className="col-span-2">
-                        <span className={`truncate ${darkMode ? 'text-purple-300' : 'text-purple-600'}`}>
+                        {/* Type */}
+                        <div className="col-span-1">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              darkMode ? 'bg-gray-700 text-blue-300' : 'bg-blue-50 text-blue-600'
+                            }`}>
+                            {event.type}
+                          </span>
+                        </div>
+                        {/* Thème */}
+                        <div className={`col-span-2 truncate ${textPurple}`}>
                           {event.theme}
-                        </span>
-                      </div>
-
-                      {/* Date Début */}
-                      <div className="col-span-2">
-                        <div className={`text-sm ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
+                        </div>
+                        {/* Visibilité */}
+                        <div className="col-span-1">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            event.isPublic
+                              ? darkMode
+                                ? 'bg-blue-900/50 text-blue-300'
+                                : 'bg-blue-100 text-blue-800'
+                              : darkMode
+                                ? 'bg-gray-700/50 text-gray-400'
+                                : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {event.isPublic ? 'Public' : 'Privé'}
+                          </span>
+                        </div>
+                        {/* Date Début */}
+                        <div className={`col-span-2 text-sm ${textMuted}`}>
                           {formatDate(event.date)}
                         </div>
-                      </div>
-
-                      {/* Participants */}
-                      <div className="col-span-1 flex items-center justify-center">
-                        <div className={`flex items-center gap-1 ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>
-                          <MdPeople className="text-lg" />
-                          <span>{event.participants || 0}</span>
+                        {/* Participants */}
+                        <div className="col-span-1 flex items-center justify-center">
+                          <div className={`flex items-center gap-1 ${textBlue}`}>
+                            <MdPeople className="text-lg" />
+                            <span>{event.invites.length || 0}</span>
+                          </div>
+                        </div>
+                        {/* Statut */}
+                        {/* <div className="col-span-1 flex items-center justify-center">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              event.status === 'active' ? activeStatusClasses : inactiveStatusClasses
+                            }`}>
+                            {event.status === 'active' ? 'Actif' : 'Inactif'}
+                          </span>
+                        </div> */}
+                        {/* Bouton d'action */}
+                        <div className="col-span-2 flex items-center justify-center">
+                          <button
+                            onClick={() => openModal(index)}
+                            className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 shadow-sm hover:shadow-md ${gradientsEvent.eventButton}`}
+                          >
+                            <FaEye className="text-sm" />
+                            <span>Détails</span>
+                          </button>
                         </div>
                       </div>
-
-                      {/* Statut */}
-                      <div className="col-span-1 flex items-center justify-center">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          event.status === 'active'
-                            ? darkMode
-                              ? 'bg-green-900/50 text-green-300'
-                              : 'bg-green-100 text-green-800'
-                            : darkMode
-                              ? 'bg-gray-700/50 text-gray-400'
-                              : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {event.status === 'active' ? 'Actif' : 'Inactif'}
-                        </span>
-                      </div>
-
-                      {/* Bouton d'action */}
-                      <div className="col-span-2 flex items-center justify-center">
-                        <button
-                          onClick={() => openModal(index)}
-                          className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-sm ${
-                            gradientsEvent.eventButton
-                          } transition-colors duration-200 shadow-sm hover:shadow-md text-xs`}
-                        >
-                          <FaEye className="text-sm" />
-                          <span>Détails</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                ) : (
+                  <div className={`px-6 py-8 text-center text-lg font-medium ${textMuted}`}>
+                    Aucun événement trouvé
+                  </div>
+                )}
               </div>
 
-              {/* Pagination et sélection de lignes */}
+              {/* Pagination */}
               {filteredData.length > 0 && (
-                <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-600 dark:text-gray-300">
+                <div className={paginationClasses}>
                   {/* Sélection du nombre de lignes */}
                   <div className="flex items-center space-x-2">
-                    <span>Lignes par page:</span>
+                    <span className={textMuted}>Lignes par page:</span>
                     <select 
                       value={rowsPerPage}
                       onChange={(e) => {
                         setRowsPerPage(Number(e.target.value));
-                        setCurrentPage(0); // Reset à la première page quand on change le nombre d'éléments
+                        setCurrentPage(0);
                       }}
-                      className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700"
+                      className={`border rounded px-2 py-1 transition-colors duration-200 ${
+                        darkMode ? "bg-gray-700 border-gray-600 text-gray-200" : "bg-white border-gray-300 text-gray-800"
+                      }`}
                     >
-                      {[5, 10, 20].map(option => (
+                      {[5, 10, 20, 50].map(option => (
                         <option key={option} value={option}>{option}</option>
                       ))}
                     </select>
                   </div>
 
                   {/* Info de pagination */}
-                  <div>
+                  <div className={textMuted}>
                     Affichage de {(currentPage * rowsPerPage) + 1} à {Math.min((currentPage + 1) * rowsPerPage, filteredData.length)} sur {filteredData.length} événements
                   </div>
 
                   {/* Boutons de navigation */}
                   <div className="flex space-x-2">
                     <button 
-                      className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                      className={`px-4 py-2 rounded-lg border transition-colors duration-200 ${
+                        darkMode
+                          ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800"
+                          : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"
+                      } disabled:opacity-50`}
                       disabled={currentPage === 0}
                       onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
                     >
                       Précédent
                     </button>
                     <button 
-                      className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                      className={`px-4 py-2 rounded-lg border transition-colors duration-200 ${
+                        darkMode
+                          ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800"
+                          : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"
+                      } disabled:opacity-50`}
                       disabled={(currentPage + 1) * rowsPerPage >= filteredData.length}
                       onClick={() => setCurrentPage(prev => prev + 1)}
                     >
                       Suivant
                     </button>
                   </div>
-                </div>
-              )}
-
-              {/* Aucun résultat */}
-              {filteredData.length === 0 && (
-                <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                  Aucun événement trouvé
                 </div>
               )}
             </div>

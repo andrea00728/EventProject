@@ -16,6 +16,7 @@ import {
   MdFilterList,
   MdRefresh
 } from "react-icons/md";
+import { TbAlertTriangle } from "react-icons/tb";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDarkMode } from "../../context/DarkModeContext";
 
@@ -264,6 +265,20 @@ const LocationSalle = () => {
     </tr>
   );
 
+  const backdropVariants = {
+    visible: { opacity: 1 },
+    hidden: { opacity: 0 },
+  };
+
+  const modalVariants = {
+    visible: {
+      scale: 1,
+      opacity: 1,
+      transition: { type: "spring", stiffness: 300, damping: 25 },
+    },
+    hidden: { scale: 0.8, opacity: 0, transition: { duration: 0.2 } },
+  };
+
   const gradientTitle = darkMode 
     ? "bg-gradient-to-r from-blue-400 via-violet-400 to-purple-300 bg-clip-text text-transparent"
     : "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";
@@ -272,10 +287,6 @@ const LocationSalle = () => {
     ? "bg-gradient-to-r from-blue-600 via-violet-600 to-purple-500 text-white"
     : "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-400 text-white";
 
-  const pageBg = darkMode
-    ? "bg-gray-900 text-gray-200"
-    : "bg-gray-50 text-gray-800";
-
   return (
     <div className={`min-h-screen ${darkMode ? "bg-gray-900 text-gray-200" : "bg-white text-gray-800"}`}>
       <div className={`h-full flex flex-col ${darkMode ? "bg-gray-900" : "bg-white"}`}>
@@ -283,6 +294,14 @@ const LocationSalle = () => {
         <div className={`shadow-sm border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
           {/* Panel Header */}
           <div className={`px-6 py-4 border-b ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-none"}`}>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex items-center">
+                <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
+                  <MdLocationCity className={`mr-2 sm:mr-3 ${darkMode ? "text-blue-400" : "text-blue-700"}`} /> 
+                  Gestion des Lieux & Salles
+                </h2>
+              </div>
+            </div>
 
             {/* Tabs */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-2 mb-1">
@@ -689,44 +708,91 @@ const LocationSalle = () => {
       <AnimatePresence>
         {showDeleteModal && deleteItem && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+            className="fixed inset-0 flex justify-center items-center z-50 bg-black/70 p-4"
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={backdropVariants}
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className={`rounded-xl shadow-xl max-w-md w-full overflow-hidden ${darkMode ? "bg-gray-800" : "bg-white"}`}
+              className={`rounded-2xl shadow-2xl p-8 max-w-md w-full relative border transition-colors duration-300 ${
+                darkMode
+                  ? "bg-gray-800 text-gray-100 border-gray-700"
+                  : "bg-white text-gray-900 border-gray-200"
+              }`}
+              variants={modalVariants}
             >
-              <div className="p-6">
-                <div className={`flex items-center justify-center w-16 h-16 mx-auto rounded-full ${darkMode ? "bg-red-900 bg-opacity-30" : "bg-red-100"}`}>
-                  <MdDelete className={`text-3xl ${darkMode ? "text-red-400" : "text-red-600"}`} />
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteItem(null);
+                }}
+                className={`absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors ${
+                  darkMode ? "dark:text-gray-400 dark:hover:text-gray-200" : ""
+                }`}
+              >
+                <MdClose size={24} />
+              </button>
+
+              <div className="flex flex-col items-center text-center">
+                <div
+                  className={`mb-4 p-3 rounded-full transition-colors duration-300 ${
+                    darkMode ? "bg-red-900" : "bg-red-100"
+                  }`}
+                >
+                  <TbAlertTriangle className="text-red-500 text-5xl" />
                 </div>
-                <h3 className={`mt-4 text-lg font-semibold text-center ${darkMode ? "text-gray-300" : "text-gray-900"}`}>
+
+                <h2
+                  className={`text-2xl font-bold mb-2 transition-colors duration-300 ${
+                    darkMode ? "text-gray-100" : "text-gray-900"
+                  }`}
+                >
                   Confirmer la suppression
-                </h3>
-                <p className={`mt-2 text-center ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                  Êtes-vous sûr de vouloir supprimer {deleteItem.type === "location" ? "le lieu" : "la salle"} "
-                  <span className={`font-semibold ${darkMode ? "text-gray-300" : "text-gray-900"}`}>{deleteItem.nom}</span>" ? Cette action est irréversible.
+                </h2>
+
+                <p
+                  className={`transition-colors duration-300 ${
+                    darkMode ? "text-gray-400" : "text-gray-600"
+                  } mb-6`}
+                >
+                  Êtes-vous sûr de vouloir supprimer{" "}
+                  {deleteItem.type === "location" ? "le lieu" : "la salle"}{" "}
+                  <span
+                    className={`font-extrabold transition-colors duration-300 ${
+                      darkMode ? "text-gray-200" : "text-gray-800"
+                    }`}
+                  >
+                    "{deleteItem.nom}"
+                  </span>{" "}
+                  ? Cette action est{" "}
+                  <strong className="text-red-500">irréversible</strong>.
                 </p>
-                <div className="mt-6 flex justify-center space-x-3">
+
+                <div className="flex flex-col sm:flex-row justify-center w-full gap-4 mt-4">
                   <button
                     onClick={() => {
                       setShowDeleteModal(false);
                       setDeleteItem(null);
                     }}
-                    className={`px-6 py-2 border rounded-lg shadow-sm transition ${darkMode ? "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+                    className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                      darkMode
+                        ? "bg-gray-700 hover:bg-gray-600 text-gray-200"
+                        : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+                    }`}
                   >
                     Annuler
                   </button>
                   <button
                     onClick={handleConfirmDelete}
-                    className={`px-6 py-2 rounded-lg transition flex items-center shadow-sm ${darkMode ? "bg-red-700 hover:bg-red-600 text-white" : "bg-red-600 hover:bg-red-700 text-white"}`}
+                    className={`flex-1 px-6 py-3 rounded-xl flex items-center justify-center font-semibold transition-all duration-300 ${
+                      darkMode
+                        ? "bg-red-700 hover:bg-red-600 text-white shadow-lg shadow-red-700/30"
+                        : "bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/30"
+                    }`}
                   >
-                    <MdDelete className="mr-2" />
-                    Supprimer définitivement
+                    <MdDelete className="mr-2 text-xl" />
+                    Supprimer
                   </button>
                 </div>
               </div>

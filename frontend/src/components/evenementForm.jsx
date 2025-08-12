@@ -175,8 +175,8 @@ export default function Evenementform({ onNext }) {
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-gray-800">Type d'événement</label>
+         <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Type d'événement</label>
             <input
               name="type"
               value={EVENT_TYPES.find((t) => t.value === form.type)?.label || "Type d'événement"}
@@ -188,8 +188,9 @@ export default function Evenementform({ onNext }) {
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-gray-800">Thème</label>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Thème</label>
             <input
               name="theme"
               value={form.theme}

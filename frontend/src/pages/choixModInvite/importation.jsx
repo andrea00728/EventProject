@@ -258,7 +258,7 @@ return (
                     { field: 'nom', desc: 'Nom de famille de l\'invité' },
                     { field: 'prenom', desc: 'Prénom de l\'invité' },
                     { field: 'email', desc: 'Adresse email valide' },
-                    { field: 'sex', desc: 'Sexe (M pour Homme, F pour Femme)' }
+                    { field: 'sexe', desc: 'Sexe (M pour Homme, F pour Femme)' }
                   ].map((item, index) => (
                     <div key={index} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-indigo-100">
                       <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -276,7 +276,7 @@ return (
               <div className="bg-white rounded-xl p-4 border border-indigo-200">
                 <div className="text-sm font-medium text-gray-700 mb-2">Exemple de fichier :</div>
                 <div className="bg-gray-900 text-green-400 p-4 rounded-lg text-sm font-mono overflow-x-auto">
-                  <div className="text-yellow-400">nom,prenom,email,sex</div>
+                  <div className="text-yellow-400">nom,prenom,email,sexe</div>
                   <div>Rakoto,Jean,jean@example.com,M</div>
                   <div>Rabe,Marie,marie@example.com,F</div>
                   <div>Andry,Paul,paul@example.com,M</div>

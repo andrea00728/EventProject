@@ -202,14 +202,12 @@ async getDashboardCharts(@Query('period') period: string = '12') {
   const periodNumber = parseInt(period) || 12;
 
   try {
-    const [revenueData, eventsData] = await Promise.all([
+    const [revenueData] = await Promise.all([
       this.forfaitService.getMonthlyForfaitRevenue(periodNumber),
-      this.forfaitService.getEventsByType(),
     ]);
 
     const result = {
       revenue: revenueData,
-      events: eventsData,
     };
     
     console.log('✅ Données à retourner:', result);
@@ -219,7 +217,6 @@ async getDashboardCharts(@Query('period') period: string = '12') {
     throw error;
   }
 }
-
 
 
 }

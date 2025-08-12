@@ -3,7 +3,8 @@ import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param } from 
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-auth.dto';
-import { User } from './entities/auth.entity';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { NotificationEntity } from 'src/entities/notification.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -121,5 +122,25 @@ export class AuthController {
   @Get('/session-stats')
   async getSessionTimeStats(): Promise<any> {
     return this.authService.findSessionTimeStats();
+  }
+
+  @Get('user-role-stats')
+  async getUserRoleStats() {
+    return this.authService.getUserRoleStats();
+  }
+  
+  @Get('monthly-registrations')
+  @ApiOperation({ summary: 'Obtenir les inscriptions mensuelles (hors personnel)' })
+  @ApiResponse({ status: 200, description: 'Retourne les inscriptions par mois' })
+  async getMonthlyRegistrations(): Promise<{ month: string; count: number }[]> {
+    return this.authService.getMonthlyRegistrations();
+  }
+
+
+  @Get('notifications')
+  @ApiOperation({ summary: 'Obtenir les notifications récentes' })
+  @ApiResponse({ status: 200, description: 'Retourne les notifications' })
+  async getNotifications(): Promise<NotificationEntity[]> {
+    return this.authService.getNotifications();
   }
 }
