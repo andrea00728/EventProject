@@ -22,6 +22,9 @@ import LogoutModal from "../pages/Admin/LogoutModal";
 import { logout } from "../services/firebase/authService";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { getUserIdForToken } from "../services/userService";
+import { SOCKET_URL } from "../socket";
+import { io } from "socket.io-client";
 
 export default function AdminLayout() {
   const { token, role, isLoading, setToken, setUser } = useStateContext();
@@ -322,8 +325,35 @@ export default function AdminLayout() {
           setShowProfile(false);
         }
       };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+
+      let newSocket;
+  
+      async function connectSocket() {
+        const userId = await getUserIdForToken();
+        if (!userId) return;
+  
+        newSocket = io(SOCKET_URL, {
+          transports: ['websocket'],
+          auth: { userId },
+        });
+
+        newSocket.on("notificationMessageAdmin", (data) => {
+        console.log("📦 Mis à jour du message : ", data);
+      });
+        
+      }
+  
+      connectSocket();
+
+      // Pour écouter les mises à jour
+  
+      return () => {
+        if (newSocket) {
+          document.removeEventListener("mousedown", handleClickOutside);
+          newSocket.disconnect();
+        }
+      };
+
     }, []);
 
     useEffect(() => {
