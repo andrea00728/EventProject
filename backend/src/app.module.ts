@@ -29,7 +29,7 @@
   import { Commentaire } from './entities/Commentaire';
   import { Satisfaction } from './entities/satisfaction.entity';
   import { Favorite } from './entities/Favorite';
-  import { ContactMessage } from './entities/ContactMessage.entity';
+  import { ContactMessage } from './entities/ContactMessage';
 
   // Modules fonctionnels
   import { AuthModule } from './Authentication/auth.module';
