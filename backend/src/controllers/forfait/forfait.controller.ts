@@ -21,7 +21,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { addDays } from 'date-fns';
 import { NotificationService } from 'src/services/notification/notification.service';
 import { ForfaitService } from 'src/services/forfait/forfait.service';
-
 @Controller('forfait')
 export class ForfaitController {
   constructor(
