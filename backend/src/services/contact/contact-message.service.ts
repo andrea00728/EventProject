@@ -16,7 +16,7 @@ export class ContactService {
         const message = this.contactMessageRepository.create(contactData);
         this.notificationGateway.emitNotificationMessage({
             type: 'contactMessage',
-            data: message,
+            data: [message],
         });
         return await this.contactMessageRepository.save(message);
     }
