@@ -360,7 +360,7 @@ export default function AdminLayout() {
             from: `${msg.firstName} ${msg.lastName}`,
             text: msg.message,
             read: false,
-          }));
+        }));
 
           setMessages(...messages, formatted);
         });
