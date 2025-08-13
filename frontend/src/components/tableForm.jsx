@@ -161,7 +161,7 @@ export default function CreateTable({ onSubmitTable }) {
 
       {/* Modal de sélection du type de table */}
       {modalTypeOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-2xl p-8 w-[90vw] max-w-2xl relative">
             <button
               className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"
