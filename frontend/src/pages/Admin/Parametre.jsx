@@ -1,6 +1,7 @@
 // import { FaGears } from "react-icons/fa6";
 import SystemPromptManager from "./SystemPromptManager";
 import { useDarkMode } from "../../context/DarkModeContext";
+import SuperAdminProfileEdit from "./Profil";
 
 
 export default function Parametre() {
@@ -15,6 +16,10 @@ export default function Parametre() {
       
       <div>
         <SystemPromptManager />
+      </div>
+
+      <div>
+        <SuperAdminProfileEdit/>
       </div>
       
     </div>
