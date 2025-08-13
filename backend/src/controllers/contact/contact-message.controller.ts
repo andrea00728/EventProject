@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Get } from '@nestjs/common';
 import { ContactService } from '../../services/contact/contact-message.service';
-import { ContactMessage } from '../../entities/ContactMessage.entity';
+import { ContactMessage } from '../../entities/ContactMessage';
 
 @Controller('contact')
 export class ContactController {

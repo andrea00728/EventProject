@@ -11,9 +11,11 @@ import { Forfait } from 'src/entities/Forfait';
 import { QueryFailedError } from 'typeorm';
 import admin from 'src/firebase/firebase-admin';
 import { NotificationEntity } from 'src/entities/notification.entity';
+import { ContactMessage } from 'src/entities/ContactMessage';
 
 @Injectable()
 export class AuthService {
+
   constructor(
     private readonly jwtService: JwtService,
     @InjectRepository(User)
@@ -26,6 +28,8 @@ export class AuthService {
     private readonly forfaitRepository: Repository<Forfait>,
     @InjectRepository(NotificationEntity)
     private readonly notificationRepository: Repository<NotificationEntity>,
+    @InjectRepository(ContactMessage)                              // <-- Ajouté ici
+    private readonly contact_messages: Repository<ContactMessage>,
   ) { }
 
   async validateUser(profile: any): Promise<any> {
@@ -404,4 +408,12 @@ export class AuthService {
       take: 10,
     });
   }
+
+
+    async getMessages(): Promise<ContactMessage[]> {
+    return this.contact_messages.find({
+      order: { createdAt: 'DESC' },
+    });
+  }
+
 }

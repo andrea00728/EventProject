@@ -158,49 +158,6 @@ const TestimonialsSection = () => {
             </p>
           </div>
         )}
-
-        {/* Testimonials Display */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {testimonials.map((testimonial) => (
-            <div
-              key={testimonial.id}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-200 hover:border-indigo-300 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-100"
-            >
-              <div className="flex items-center mb-4">
-                {testimonial.userPhoto ? (
-                  <img
-                    src={testimonial.userPhoto}
-                    alt={testimonial.userName || "Utilisateur"}
-                    className="w-12 h-12 rounded-full mr-3 object-cover"
-                  />
-                ) : (
-                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-white text-lg font-bold">
-                      {testimonial.userName?.charAt(0) || "U"}
-                    </span>
-                  </div>
-                )}
-                <div>
-                  <h4 className="text-lg font-bold text-slate-800">
-                    {testimonial.userName || "Anonyme"}
-                  </h4>
-                  <p className="text-sm text-gray-500">
-                    {satisfactionDisplay[testimonial.satisfaction] || "Bien"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-1 mb-3">
-                {renderStars(mapSatisfactionToStars(testimonial.satisfaction))}
-              </div>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                {testimonial.contenu}
-              </p>
-              <p className="text-xs text-gray-400 mt-2">
-                {new Date(testimonial.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-          ))}
-        </div>
       </div>
     </section>
   );
