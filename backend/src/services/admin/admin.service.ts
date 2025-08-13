@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { Admin } from 'src/entities/Admin';
 import admin from 'src/firebase/firebase-admin';
 import { Repository } from 'typeorm';
-import { log } from 'console';
 
 @Injectable()
 export class AdminService {
@@ -32,7 +31,6 @@ export class AdminService {
       if (!adminUser) {
         
         if(email !== process.env.ADMIN_EMAIL) {
-          console.log(email, process.env.ADMIN_EMAIL)
           throw new UnauthorizedException('Non autorisé : vous n\'êtes pas autorisé à vous connecter en tant qu\'admin');
         }
 

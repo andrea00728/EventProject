@@ -57,17 +57,25 @@ export const AuthModal = ({ isOpen, onClose }) => {
                 setIsSignUp(false);
             } else {
                 console.log("Tentative de connexion avec : ", formData);
-                const result = await loginUser(formData);
+
+                const result = await loginUser({
+                    email: formData.email,
+                    password: formData.password
+                });
+
                 console.log("Résultat de la connexion : ", result);
 
-                if (result.access_token) {
-                    localStorage.setItem('token', result.access_token);
+                if (result.token) {
+                    localStorage.setItem('token', result.token);
                     toast.success("Connexion réussie !");
-                    navigate("/accueil");
-                    onClose();
+                    setTimeout(() => {
+                        navigate("/accueil");
+                        onClose();
+                    }, 500);
                 } else {
                     throw new Error("Token absent dans la réponse.");
                 }
+
             }
         } catch (err) {
             console.log("Erreur :", err);
@@ -76,6 +84,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
             setLoading(false);
         }
     };
+
 
     const removePhoto = () => {
         setPhotoPreview(null);

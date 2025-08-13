@@ -14,7 +14,6 @@ import Apropos from "../pages/apropos";
 import PublicEvents from "../pages/PublicEvents"; // adapte le chemin si besoin
 // import PagePublic from "../pages/PagePublic";
 import PageEvenementDetail from "../pages/PageEvenementDetail";
-
 // import Table3DScene from "../components/table3D";
 import ChoixModeInvite from "../layouts/ChoixModeInvite";
 import Inviteform from "../pages/choixModInvite/inviteForm";
@@ -233,6 +232,10 @@ const router=createBrowserRouter([
       {
         path: "/statistiques",
         element: <StatistiquesPage />,
+      },
+      {
+        path: "/revenu",
+        element: <RevenuPage />,
       },
       {
         path: "/evenement/tables",
