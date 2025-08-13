@@ -10,9 +10,12 @@ import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
 import { QueryFailedError } from 'typeorm';
 import admin from 'src/firebase/firebase-admin';
+import { NotificationEntity } from 'src/entities/notification.entity';
+import { ContactMessage } from 'src/entities/ContactMessage';
 
 @Injectable()
 export class AuthService {
+
   constructor(
     private readonly jwtService: JwtService,
     @InjectRepository(User)
@@ -23,6 +26,10 @@ export class AuthService {
     private readonly eventRepository: Repository<Evenement>,
     @InjectRepository(Forfait)
     private readonly forfaitRepository: Repository<Forfait>,
+    @InjectRepository(NotificationEntity)
+    private readonly notificationRepository: Repository<NotificationEntity>,
+    @InjectRepository(ContactMessage)                              // <-- Ajouté ici
+    private readonly contact_messages: Repository<ContactMessage>,
   ) { }
 
   async validateUser(profile: any): Promise<any> {
@@ -60,7 +67,18 @@ export class AuthService {
 
       await this.userRepository.save(user);
       console.log('Nouvel utilisateur créé:', { id: user.id, email, role: user.role });
-    } else {
+    }
+
+    if (isdetectedRole === 'organisateur') {
+      const notification = this.notificationRepository.create({
+        title: 'Nouvel organisateur inscrit',
+        message: `L'organisateur ${displayName || email} s'est inscrit.`,
+        type: 'info',
+      });
+      await this.notificationRepository.save(notification);
+    }
+
+    else {
       // Mettre à jour name, photo et role
       user.name = displayName || null;
       user.photo = photos?.[0]?.value || null;
@@ -95,6 +113,14 @@ export class AuthService {
 
   async createUser(dto: CreateUserDto) {
     const user = this.userRepository.create(dto);
+    if (dto.role === 'organisateur') {
+      const notification = this.notificationRepository.create({
+        title: 'Nouvel organisateur inscrit',
+        message: `L'organisateur ${dto.name || dto.email} s'est inscrit.`,
+        type: 'info',
+      });
+      await this.notificationRepository.save(notification);
+    }
     return this.userRepository.save(user);
   }
 
@@ -201,7 +227,7 @@ export class AuthService {
     };
   }
 
-async loginWithFirebase(idToken: string) {
+  async loginWithFirebase(idToken: string) {
     try {
       // 1. Vérifier et décoder le token Firebase
       const decodedToken = await admin.auth().verifyIdToken(idToken);
@@ -235,8 +261,8 @@ async loginWithFirebase(idToken: string) {
           lastLogin: new Date(),
         } as Partial<User>);
 
-          await this.userRepository.save(adminUser);
-        }
+        await this.userRepository.save(adminUser);
+      }
 
       // 5. Créer le payload pour JWT backend
       const payload = {
@@ -325,55 +351,72 @@ async loginWithFirebase(idToken: string) {
   }
 
   async getUserRoleStats(): Promise<{ role: string; count: number }[]> {
-  const result = await this.userRepository
-    .createQueryBuilder('user')
-    .select('user.role', 'role')
-    .addSelect('COUNT(*)', 'count')
-    .groupBy('user.role')
-    .getRawMany();
+    const result = await this.userRepository
+      .createQueryBuilder('user')
+      .select('user.role', 'role')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('user.role')
+      .getRawMany();
 
-  return result.map(r => ({
-    role: r.role,
-    count: parseInt(r.count),
-  }));
-}
+    return result.map(r => ({
+      role: r.role,
+      count: parseInt(r.count),
+    }));
+  }
+
+  async getMonthlyRegistrations(): Promise<{ month: string; count: number }[]> {
+    const currentYear = new Date().getFullYear();
+    const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+    const monthlyResults = await this.userRepository
+      .createQueryBuilder('user')
+      .select("TO_CHAR(user.createdAt, 'Mon')", 'month')
+      .addSelect('COUNT(*)', 'count')
+      .where('user.role IN (:...roles)', { roles: ['organisateur', 'accueil'] })
+      .andWhere('EXTRACT(YEAR FROM user.createdAt) = :year', { year: currentYear })
+      .groupBy('month')
+      .orderBy('MIN(EXTRACT(MONTH FROM user.createdAt))')
+      .getRawMany();
+
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+    const lastThreeMonthsCount = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.role IN (:...roles)', { roles: ['organisateur', 'accueil'] })
+      .andWhere('user.createdAt >= :date', { date: threeMonthsAgo })
+      .getCount();
+
+    const formattedData = monthNames.slice(0, 6).map(month => {
+      const found = monthlyResults.find(r => r.month.toLowerCase() === month.toLowerCase());
+      return {
+        month,
+        count: found ? parseInt(found.count) : 0
+      };
+    });
+
+    formattedData.push({
+      month: '3 derniers mois',
+      count: lastThreeMonthsCount
+    });
+
+    return formattedData;
+  }
+
   
-async getMonthlyRegistrations(): Promise<{ month: string; count: number }[]> {
-  const currentYear = new Date().getFullYear();
-  const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-  
-  const monthlyResults = await this.userRepository
-    .createQueryBuilder('user')
-    .select("TO_CHAR(user.createdAt, 'Mon')", 'month')
-    .addSelect('COUNT(*)', 'count')
-    .where('user.role IN (:...roles)', { roles: ['organisateur', 'accueil'] })
-    .andWhere('EXTRACT(YEAR FROM user.createdAt) = :year', { year: currentYear })
-    .groupBy('month')
-    .orderBy('MIN(EXTRACT(MONTH FROM user.createdAt))')
-    .getRawMany();
 
-  const threeMonthsAgo = new Date();
-  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-  
-  const lastThreeMonthsCount = await this.userRepository
-    .createQueryBuilder('user')
-    .where('user.role IN (:...roles)', { roles: ['organisateur', 'accueil'] })
-    .andWhere('user.createdAt >= :date', { date: threeMonthsAgo })
-    .getCount();
+  async getNotifications(): Promise<NotificationEntity[]> {
+    return this.notificationRepository.find({
+      order: { date: 'DESC' },
+      take: 10,
+    });
+  }
 
-  const formattedData = monthNames.slice(0, 6).map(month => {
-    const found = monthlyResults.find(r => r.month.toLowerCase() === month.toLowerCase());
-    return {
-      month,
-      count: found ? parseInt(found.count) : 0
-    };
-  });
 
-  formattedData.push({
-    month: '3 derniers mois',
-    count: lastThreeMonthsCount
-  });
+    async getMessages(): Promise<ContactMessage[]> {
+    return this.contact_messages.find({
+      order: { createdAt: 'DESC' },
+    });
+  }
 
-  return formattedData;
-}
 }
