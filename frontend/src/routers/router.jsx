@@ -518,7 +518,7 @@ const router=createBrowserRouter([
         element: <Connexionorganisateur />,
       },
       {
-        path: "/google/callback",
+        path: "/callback",
         element: <Connnexiongoogle />,
       },
       {
