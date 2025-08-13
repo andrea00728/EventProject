@@ -67,7 +67,7 @@ export class AdminService {
       };
     } catch (error) {
       console.error('Login with Firebase error:', error);
-      throw new UnauthorizedException('Token Firebase invalide ou autre erreur');
+      throw new UnauthorizedException('Token Firebase invalide ou autre erreur : ', error);
     }
   }
 }
