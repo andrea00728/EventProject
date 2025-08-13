@@ -3,7 +3,7 @@ import { useDarkMode } from "../context/DarkModeContext";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
-const Dropdown = forwardRef(({ show, setShow, icon, label, count, items, onItemClick, noScroll }, ref) => {
+const Dropdown = forwardRef(({ show, setShow, icon, label, count, items, onItemClick, onDelete, noScroll }, ref) => {
   const { darkMode } = useDarkMode();
   const [isMobile, setIsMobile] = useState(false);
   const [filter, setFilter] = useState('all');
@@ -25,6 +25,13 @@ const Dropdown = forwardRef(({ show, setShow, icon, label, count, items, onItemC
     : itemsWithReadStatus.filter(item => !item.read);
 
   const unreadCount = itemsWithReadStatus.filter(item => !item.read).length;
+
+  const handleDelete = (itemToDelete) => {
+    console.log('Suppression de l\'élément :', itemToDelete.content.title);
+    onDelete(itemToDelete.content.id);
+    // const updatedItems = items.filter(item => item.id !== itemToDelete.id);
+    // setItems(updatedItems);
+  };
 
   return (
     <div className="relative" ref={ref}>
@@ -113,11 +120,11 @@ const Dropdown = forwardRef(({ show, setShow, icon, label, count, items, onItemC
                       >
                         {item.content.title ||
                           (typeof item.content === 'object'
-                            ? `${item.content.from}: ${item.content.text}`
+                            ? `${item.content.from} : `
                             : item.content)}
                       </p>
                       {item.content.message && (
-                        <p className="text-sm line-clamp-2">{item.content.message}</p>
+                        <p className="text-sm line-clamp-2 w-60 h-auto">{item.content.message}</p>
                       )}
                       <p
                         className={`text-xs mt-1 ${
@@ -129,9 +136,30 @@ const Dropdown = forwardRef(({ show, setShow, icon, label, count, items, onItemC
                           : `Il y a ${Math.floor(Math.random() * 60)} min`}
                       </p>
                     </div>
-                    {!item.read && (
+
+                    <div className="flex items-center flex-shrink-0 ml-2 mt-1 gap-2">
+                      {!item.read && (
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(item);
+                        }}
+                        className={`p-1 rounded-full ${
+                          darkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-500 hover:bg-gray-200'
+                        } transition-colors duration-150`}
+                      >
+                        
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.381 21H7.618a2 2 0 01-1.99-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* {!item.read && (
                       <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2 mt-1"></div>
-                    )}
+                    )} */}
                   </div>
                 </div>
               ))
