@@ -17,7 +17,10 @@ export class User {
   name: string;
 
   @Column({ type: 'varchar', nullable: true })
-  photo: string;
+  password: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  photo: string | null;
 
   @Column({
     type: 'enum',

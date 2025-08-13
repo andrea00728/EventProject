@@ -31,6 +31,7 @@ import { getOrgStats, getUserCount } from "../../services/userService";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { FaRegMoneyBill1 } from "react-icons/fa6";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -170,8 +171,8 @@ export default function Dashboard() {
   ];
 
   const quickActions = [
-    { label: "Gérer utilisateurs", icon: <FaUsers /> },
-    { label: "Paramètres", icon: <FaCogs /> },
+    { label: "Gérer organisateurs", icon: <FaUsers/>, path: "/AdminOrganisateur" },
+    { label: "Paramètres", icon: <FaCogs/>, path: "/AdminParametre" },
     { label: "Voir rapports", icon: <MdEventNote /> },
   ];
 
@@ -218,6 +219,8 @@ export default function Dashboard() {
   const pageBg = darkMode
     ? "bg-gray-900 text-gray-200"
     : "bg-gray-50 text-gray-800";
+
+  const MotionLink = motion(Link);
 
   return (
     <div
@@ -428,14 +431,15 @@ export default function Dashboard() {
 
           <div className="flex flex-col gap-4">
             {quickActions.map((action, i) => (
-              <motion.button
+              <MotionLink
                 key={i}
+                to={action.path}
                 whileHover={{ scale: 1, boxShadow: glowEffects[i] }}
                 className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-3 font-semibold rounded-xl shadow-md hover:scale-105 transition ${gradients[i]}`}
               >
                 {action.icon}
                 {action.label}
-              </motion.button>
+              </MotionLink>
             ))}
           </div>
         </div>

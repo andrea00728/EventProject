@@ -1,11 +1,14 @@
 // auth.controller.ts
-import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-auth.dto';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { NotificationEntity } from 'src/entities/notification.entity';
 import { ContactMessage } from 'src/entities/ContactMessage';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 @Controller('auth')
 export class AuthController {
@@ -129,7 +132,7 @@ export class AuthController {
   async getUserRoleStats() {
     return this.authService.getUserRoleStats();
   }
-  
+
   @Get('monthly-registrations')
   @ApiOperation({ summary: 'Obtenir les inscriptions mensuelles (hors personnel)' })
   @ApiResponse({ status: 200, description: 'Retourne les inscriptions par mois' })
@@ -152,5 +155,43 @@ export class AuthController {
   async getMessages(): Promise<ContactMessage[]> {
     return this.authService.getMessages();
   }
+
+  //ENDPOINT BY LIOKA
+  @Post('register')
+  @UseInterceptors(FileInterceptor('photo', {
+    storage: diskStorage({
+      destination: './uploads', // dossier où stocker l'image
+      filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = extname(file.originalname);
+        callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+      }
+    }),
+    limits: { fileSize: 20 * 1024 * 1024 } //20Mo 
+  }))
+  async register(
+    @Body() body: any,
+    @UploadedFile() file?: Express.Multer.File
+  ) {
+    if (!body.name || !body.email || !body.password) {
+      throw new BadRequestException('Champs requis manquants');
+    }
+    return this.authService.registerUser({
+      ...body,
+      photo: file?.filename || null,
+    });
+  }
+
+  @Post('login')
+async login(@Body() body: any) {
+  const { email, password } = body;
+
+  if (!email || !password) {
+    throw new BadRequestException('Email et mot de passe requis');
+  }
+
+  return this.authService.loginUser(email, password);
+}
+
 
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,6 +12,7 @@ import { QueryFailedError } from 'typeorm';
 import admin from 'src/firebase/firebase-admin';
 import { NotificationEntity } from 'src/entities/notification.entity';
 import { ContactMessage } from 'src/entities/ContactMessage';
+import * as bcrypt from 'bcrypt'
 
 @Injectable()
 export class AuthService {
@@ -96,6 +97,45 @@ export class AuthService {
     };
   }
 
+  //REGISTRE MANUEL BY LIOKA
+  async registerUser(data: { name: string; email: string; password: string; photo?: string }) {
+    const { name, email, password, photo } = data;
+
+    // Vérifier si email existe déjà
+    const existing = await this.userRepository.findOne({ where: { email } });
+    if (existing) {
+      throw new BadRequestException('Cet email est déjà utilisé');
+    }
+
+    // Récupérer le forfait freemium
+    const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
+    if (!freemium) {
+      throw new BadRequestException('Forfait freemium non trouvé');
+    }
+
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Créer l'utilisateur
+    const newUser = this.userRepository.create({
+      id: uuidv4(),
+      name,
+      email,
+      password: hashedPassword,
+      photo: photo || null, // nom du fichier
+      role: 'organisateur',
+      forfait: freemium,
+    });
+
+    await this.userRepository.save(newUser);
+
+    return {
+      message: 'Utilisateur créé avec succès',
+      userId: newUser.id,
+    };
+  }
+
+
   async login(user: any) {
     const payload = {
       email: user.email,
@@ -109,6 +149,38 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     };
   }
+
+  //Login user manuel
+  async loginUser(email: string, password: string) {
+    // Chercher l'utilisateur
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      throw new BadRequestException('Email ou mot de passe incorrect');
+    }
+
+    // Vérifier le mot de passe
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new BadRequestException('Email ou mot de passe incorrect');
+    }
+
+    // Générer un JWT
+    const payload = { id: user.id, email: user.email, role: user.role };
+    const token = this.jwtService.sign(payload);
+
+    return {
+      message: 'Connexion réussie',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        photo: user.photo
+      }
+    };
+  }
+
 
   async createUser(dto: CreateUserDto) {
     const user = this.userRepository.create(dto);
@@ -400,7 +472,7 @@ export class AuthService {
     return formattedData;
   }
 
-  
+
 
   async getNotifications(): Promise<NotificationEntity[]> {
     return this.notificationRepository.find({
@@ -410,7 +482,7 @@ export class AuthService {
   }
 
 
-    async getMessages(): Promise<ContactMessage[]> {
+  async getMessages(): Promise<ContactMessage[]> {
     return this.contact_messages.find({
       order: { createdAt: 'DESC' },
     });
