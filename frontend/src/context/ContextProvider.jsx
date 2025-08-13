@@ -15,7 +15,6 @@ export const ContextProvider = ({ children }) => {
     return storedToken || null;
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem("USER");
