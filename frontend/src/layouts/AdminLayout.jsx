@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
+import { Outlet, Link, useLocation, Navigate, useNavigate } from "react-router-dom";
 import {
   FaCogs,
   FaUsers,
@@ -310,6 +310,12 @@ export default function AdminLayout() {
     const profileRef = useRef(null);
     const [messages, setMessages] = useState([]);
 
+    const navigate = useNavigate();
+
+    const handleRedirect = () => {
+      navigate("/AdminParametre");
+    };
+
     useEffect(() => {
       const handleClickOutside = (event) => {
         if (notifRef.current && !notifRef.current.contains(event.target)) {
@@ -389,6 +395,11 @@ export default function AdminLayout() {
       setShowMessages(false);
     };
 
+    const handleDeleteMessage = (idToDelete) => {
+      const updatedMessages = messages.filter(msg => msg.id !== idToDelete);
+      setMessages(updatedMessages);
+    };
+
     const pageBg = darkMode
       ? "bg-gray-900 text-gray-200"
       : "bg-gray-50 text-gray-800";
@@ -427,6 +438,7 @@ export default function AdminLayout() {
               label="Messages"
               count={messages.filter(msg => !msg.read).length}
               items={messages}
+              onDelete={handleDeleteMessage}
               onItemClick={handleMessageClick}
               noScroll={true}
             />
@@ -478,6 +490,7 @@ export default function AdminLayout() {
                       Mon profil
                     </button>
                     <button
+                      onClick={handleRedirect}
                       className={`w-full text-left px-3 py-2 text-sm ${
                         darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-800'
                       } transition-colors duration-150`}
@@ -642,7 +655,7 @@ export default function AdminLayout() {
       </aside>
       <div className="flex-1 flex flex-col overflow-hidden">
         <AdminHeader currentPageName={currentPageName} darkMode={darkMode} />
-        <main className={`flex-1 overflow-auto scrollable p-0 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <main className={`flex-1 overflow-auto scrollable ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
           <div className={`h-full ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
             <Outlet />
           </div>
