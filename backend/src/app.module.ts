@@ -124,7 +124,7 @@ import { AdminModule } from './modules/admin/admin.module';
             Admin,
             ContactMessage
           ],
-          synchronize: false,
+          synchronize: true,
         };
       },
       inject: [ConfigService],
