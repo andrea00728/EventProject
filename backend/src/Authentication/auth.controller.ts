@@ -71,7 +71,7 @@ export class AuthController {
       isInPersonnel: req.user.isInPersonnel || false,
     };
   
-    const redirectUrl = `https://mastertable.site/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}&isInPersonnel=${encodeURIComponent(user.isInPersonnel)}`;
+    const redirectUrl = `https://mastertable.site/google/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}&isInPersonnel=${encodeURIComponent(user.isInPersonnel)}`;
 
     return res.redirect(redirectUrl);
   }
