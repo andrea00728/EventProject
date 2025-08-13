@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, memo } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import {
   LucideReceipt,
@@ -6,142 +6,195 @@ import {
   LucideClipboardList,
   LucideBarChart,
   LucideDollarSign,
+  LucideLogOut,
+  LucideCheckCircle,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
 
-// ✅ Carte du tableau de bord
-const DashboardCard = ({ name, icon, description, path, gradient, index }) => (
-  <Link to={path} className="group">
-    <motion.div
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.97 }}
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 * index, duration: 0.5, ease: "easeOut" }}
-      className={`relative overflow-hidden p-6 min-h-[260px] flex flex-col justify-between rounded-2xl shadow-lg border border-gray-200 backdrop-blur-md ${gradient} transition-all duration-300 transform group-hover:ring-2 group-hover:ring-offset-2 group-hover:ring-indigo-300`}
-    >
-      <div className="absolute inset-0 bg-white/40 opacity-10 rounded-2xl"></div>
-      <div className="relative z-10 flex flex-col items-center text-center space-y-4">
-        <div className="p-3 bg-white/70 rounded-full shadow-md">{icon}</div>
-        <h3 className="text-xl font-bold text-gray-800">{name}</h3>
-        <p className="text-sm text-gray-600">{description}</p>
-      </div>
-    </motion.div>
-  </Link>
-);
+const theme = {
+  colors: {
+    primary: "bg-indigo-600",
+    primaryHover: "bg-indigo-700",
+    text: "text-gray-900",
+    textSecondary: "text-gray-600",
+    background: "bg-gray-50",
+    cardGradient: {
+      orders: "bg-gradient-to-tr from-blue-100 to-blue-200",
+      payment: "bg-gradient-to-tr from-green-100 to-green-200",
+      stock: "bg-gradient-to-tr from-yellow-100 to-yellow-200",
+      stats: "bg-gradient-to-tr from-purple-100 to-purple-200",
+      revenue: "bg-gradient-to-tr from-teal-100 to-teal-200",
+    },
+  },
+  typography: {
+    title: "text-4xl font-extrabold",
+    subtitle: "text-xl font-bold",
+    description: "text-sm font-medium",
+  },
+};
 
-// ✅ Données des cartes
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+};
+
 const dashboardItems = [
-  {
-    name: "Gestion des Commandes",
-    icon: <LucideReceipt className="w-10 h-10 text-blue-600" />,
-    path: "/gestion-commandes",
-    description: "Prendre, modifier, visualiser les commandes.",
-    gradient: "bg-gradient-to-tr from-blue-100 to-blue-200",
-  },
-  {
-    name: "Paiement",
-    icon: <LucideCreditCard className="w-10 h-10 text-green-600" />,
-    path: "/paiement",
-    description: "Encaisser les paiements et émettre les factures.",
-    gradient: "bg-gradient-to-tr from-green-100 to-green-200",
-  },
-  {
-    name: "Gestion du Stock",
-    icon: <LucideClipboardList className="w-10 h-10 text-yellow-600" />,
-    path: "/stock",
-    description: "Consulter les stocks restants et l'historique.",
-    gradient: "bg-gradient-to-tr from-yellow-100 to-yellow-200",
-  },
-  {
-    name: "Statistiques",
-    icon: <LucideBarChart className="w-10 h-10 text-purple-600" />,
-    path: "/statistiques",
-    description: "Voir les performances de vente et les données clés.",
-    gradient: "bg-gradient-to-tr from-purple-100 to-purple-200",
-  },
-  {
-    name: "Revenu",
-    icon: <LucideDollarSign className="w-10 h-10 text-teal-600" />,
-    path: "/revenu",
-    description: "Consulter les revenus totaux et les rapports financiers.",
-    gradient: "bg-gradient-to-tr from-teal-100 to-teal-200",
-  },
+  { name: "Gestion des Commandes", icon: <LucideReceipt className="w-10 h-10 text-blue-600" />, path: "/gestion-commandes", description: "Prendre, modifier, visualiser les commandes.", gradient: "bg-gradient-to-tr from-blue-100 to-blue-200" },
+  { name: "Paiement", icon: <LucideCreditCard className="w-10 h-10 text-green-600" />, path: "/paiement", description: "Encaisser les paiements et émettre les factures.", gradient: "bg-gradient-to-tr from-green-100 to-green-200" },
+  { name: "Gestion du Stock", icon: <LucideClipboardList className="w-10 h-10 text-yellow-600" />, path: "/stock", description: "Consulter les stocks restants et l'historique.", gradient: "bg-gradient-to-tr from-yellow-100 to-yellow-200" },
+  { name: "Statistiques", icon: <LucideBarChart className="w-10 h-10 text-purple-600" />, path: "/statistiques", description: "Voir les performances de vente et les données clés.", gradient: "bg-gradient-to-tr from-purple-100 to-purple-200" },
+  { name: "Revenu", icon: <LucideDollarSign className="w-10 h-10 text-teal-600" />, path: "/revenu", description: "Consulter les revenus totaux et les rapports financiers.", gradient: "bg-gradient-to-tr from-teal-100 to-teal-200" },
 ];
 
-// ✅ Composant principal
+const DashboardCard = memo(({ name, icon, description, path, gradient }) => (
+  <motion.div
+    variants={cardVariants}
+    whileHover={{ scale: 1.03, boxShadow: "0 8px 24px rgba(0,0,0,0.1)" }}
+    whileTap={{ scale: 0.98 }}
+    className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-2xl"
+    tabIndex={0}
+    onKeyDown={(e) => e.key === "Enter" && window.location.assign(path)}
+  >
+    <Link to={path} aria-label={`Accéder à ${name}`}>
+      <div className={`relative overflow-hidden p-6 min-h-[260px] flex flex-col justify-between rounded-2xl shadow-md border border-white/20 backdrop-blur-lg ${gradient} transition-all duration-300`}>
+        <motion.div initial={{ opacity: 0 }} whileHover={{ opacity: 0.1 }} className="absolute inset-0 bg-white rounded-2xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col items-center text-center space-y-4">
+          <motion.div whileHover={{ scale: 1.1 }} className="p-4 bg-white/60 rounded-full shadow-md backdrop-blur-md relative">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white to-transparent opacity-20 blur-lg" />
+            {icon}
+          </motion.div>
+          <h3 className={`${theme.typography.subtitle} ${theme.colors.text} drop-shadow-sm`}>{name}</h3>
+          <p className={`${theme.typography.description} ${theme.colors.textSecondary}`}>{description}</p>
+        </div>
+      </div>
+    </Link>
+  </motion.div>
+));
+
+const LogoutToast = ({ onClose }) => (
+  <motion.div
+    initial={{ opacity: 0, y: -20, scale: 0.9 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    exit={{ opacity: 0, y: -20, scale: 0.9 }}
+    transition={{ duration: 0.3 }}
+    className="fixed top-5 right-5 z-50 bg-white shadow-lg rounded-xl border border-gray-200 p-4 flex items-center gap-3"
+  >
+    <LucideCheckCircle className="w-6 h-6 text-green-500" />
+    <div>
+      <p className="text-sm font-semibold text-gray-800">Déconnexion réussie</p>
+      <p className="text-xs text-gray-500">Redirection dans 2s...</p>
+    </div>
+    <button onClick={onClose} className="ml-3 text-gray-400 hover:text-gray-600 transition" aria-label="Fermer la notification">✕</button>
+  </motion.div>
+);
+
 const Caisse = () => {
   const navigate = useNavigate();
   const { setToken, setUser, user } = useStateContext();
+  const [showMenu, setShowMenu] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   const handleLogout = () => {
     sessionStorage.removeItem("ACCESS_TOKEN");
     sessionStorage.removeItem("USER");
     setToken(null);
     setUser(null);
-    navigate("/pagepublic");
+    setConfirmLogout(false);
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+      navigate("/pagepublic");
+    }, 2000);
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.8 }}
-      className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-100 px-4 sm:px-6 lg:px-12 py-10"
-    >
+    <motion.div initial="hidden" animate="visible" variants={containerVariants} className={`min-h-screen ${theme.colors.background} px-4 sm:px-6 lg:px-12 py-10 transition-colors duration-300`}>
       <div className="max-w-7xl mx-auto space-y-10">
-
-        {/* ✅ Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex justify-between items-center"
-        >
-          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text">
-            Tableau de Bord Caisse
-          </h1>
-
-          {/* ✅ Avatar et déconnexion */}
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <img
-                src={user?.avatar || "https://i.pravatar.cc/150?img=12"}
-                alt="Avatar utilisateur"
-                className="w-10 h-10 rounded-full border-2 border-indigo-500 object-cover"
-              />
-              <span className="text-sm font-medium text-gray-700">
-                {user?.name || "Utilisateur"}
-              </span>
+        {/* Header */}
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <h1 className={`${theme.typography.title} bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text`}>Tableau de Bord Caisse</h1>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu((prev) => !prev)}
+                className="flex items-center space-x-2 hover:bg-gray-100 px-3 py-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                aria-label="Ouvrir le menu utilisateur"
+              >
+                <img src={user?.avatar || "https://i.pravatar.cc/150?img=12"} alt="Avatar utilisateur" className="w-10 h-10 rounded-full border-2 border-indigo-500 object-cover" />
+                <span className="text-sm font-medium text-gray-700">{user?.name || "Utilisateur"}</span>
+              </button>
+              <AnimatePresence>
+                {showMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden"
+                  >
+                    <button
+                      onClick={() => setConfirmLogout(true)}
+                      className="flex items-center px-4 py-3 w-full text-left text-red-600 hover:bg-red-50 transition"
+                    >
+                      <LucideLogOut className="w-5 h-5 mr-2" />
+                      Déconnexion
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleLogout}
-              className="flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow hover:from-red-600 hover:to-red-700 focus:ring-4 focus:ring-red-300 transition-all duration-300 text-sm font-semibold"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Déconnexion
-            </motion.button>
           </div>
-        </motion.div>
-
-        {/* ✅ Cartes */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dashboardItems.map((item, index) => (
-            <DashboardCard key={index} {...item} index={index} />
-          ))}
         </div>
 
-        {/* ✅ Sous-routes */}
+        {/* Cards */}
+        <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" variants={containerVariants}>
+          {dashboardItems.map((item, index) => (
+            <DashboardCard key={index} {...item} />
+          ))}
+        </motion.div>
+
+        {/* Sub-routes */}
         <div className="mt-10">
           <Outlet />
         </div>
       </div>
+
+      {/* Confirmation Popup */}
+      <AnimatePresence>
+        {confirmLogout && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 20 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15 }}
+              className="bg-white/90 backdrop-blur-xl rounded-2xl p-6 shadow-2xl w-80 text-center border border-gray-200"
+            >
+              <motion.div initial={{ rotate: -10, scale: 0.9 }} animate={{ rotate: 0, scale: 1 }} className="p-3 bg-red-100 rounded-full w-fit mx-auto mb-4">
+                <LucideLogOut className="w-8 h-8 text-red-500" />
+              </motion.div>
+              <h2 className={`${theme.typography.subtitle} ${theme.colors.text} mb-2`}>Confirmation</h2>
+              <p className={`${theme.typography.description} ${theme.colors.textSecondary} mb-6`}>Voulez-vous vraiment vous déconnecter ?</p>
+              <div className="flex justify-center gap-4">
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setConfirmLogout(false)} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition font-medium" aria-label="Annuler la déconnexion">Annuler</motion.button>
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleLogout} className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium shadow-md" aria-label="Confirmer la déconnexion">Oui, déconnecter</motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {showToast && <LogoutToast onClose={() => setShowToast(false)} />}
+      </AnimatePresence>
     </motion.div>
   );
 };
