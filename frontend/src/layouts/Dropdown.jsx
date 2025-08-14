@@ -15,10 +15,12 @@ const Dropdown = forwardRef(({ show, setShow, icon, label, count, items, onItemC
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const itemsWithReadStatus = items.map((item, index) => ({
-    content: item,
-    read: item.read !== undefined ? item.read : index % 2 === 0, // Utiliser read si défini, sinon alternance
-  }));
+  const itemsWithReadStatus = Array.isArray(items)
+  ? items.map((item, index) => ({
+      content: item,
+      read: item.read !== undefined ? item.read : index % 2 === 0,
+    }))
+  : [];
 
   const filteredItems = filter === 'all'
     ? itemsWithReadStatus
