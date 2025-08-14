@@ -35,20 +35,7 @@ import {
   FaExchangeAlt,
 } from "react-icons/fa";
 
-const noScrollbarCSS = `
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-`;
-
-const style = document.createElement('style');
-style.textContent = noScrollbarCSS;
-document.head.appendChild(style);
-
+// Enregistrement des composants Chart.js
 ChartJS.register(
   BarElement,
   LineElement,
@@ -61,25 +48,46 @@ ChartJS.register(
   ArcElement
 );
 
+// CSS pour masquer la barre de défilement pour les éléments avec la classe `no-scrollbar`
+const noScrollbarCSS = `
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+`;
+
+const style = document.createElement("style");
+style.textContent = noScrollbarCSS;
+document.head.appendChild(style);
+
+// --- Composant principal ---
 const RevenuPage = () => {
+  // États de l'application
   const [revenus, setRevenus] = useState([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalPending, setTotalPending] = useState(0);
+  const [totalRefunded, setTotalRefunded] = useState(0);
+  const [categoryBreakdown, setCategoryBreakdown] = useState({});
+  const [periode, setPeriode] = useState("jour"); // État inutilisé, peut être retiré ou utilisé
   const [loading, setLoading] = useState(true);
   const [isRefunding, setIsRefunding] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPeriod, setFilterPeriod] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [totalRevenue, setTotalRevenue] = useState(0);
-  const [totalPending, setTotalPending] = useState(0);
-  const [totalRefunded, setTotalRefunded] = useState(0);
-  const [categoryBreakdown, setCategoryBreakdown] = useState({});
   const [timeSeriesData, setTimeSeriesData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
   const [chartType, setChartType] = useState("bar");
+
+  // Hooks et services
   const { token } = useStateContext();
   const navigate = useNavigate();
   const socket = useSocket();
 
+  // Constantes de style pour les graphiques
   const COLORS = {
     paid: ["rgba(34, 197, 94, 0.8)", "rgba(74, 222, 128, 0.8)"],
     pending: ["rgba(234, 179, 8, 0.8)", "rgba(250, 204, 21, 0.8)"],
@@ -90,10 +98,12 @@ const RevenuPage = () => {
     ],
   };
 
+  // Mise à jour du token pour le service de revenus
   useEffect(() => {
     revenuService.setAuthToken(token);
   }, [token]);
 
+  // Vérification de l'authentification et récupération de l'ID utilisateur
   useEffect(() => {
     async function fetchUserId() {
       if (!token) {
@@ -115,6 +125,7 @@ const RevenuPage = () => {
     fetchUserId();
   }, [token, navigate]);
 
+  // Fonction pour récupérer les revenus
   const fetchRevenus = useCallback(async () => {
     if (!token) {
       toast.error("Veuillez vous connecter pour accéder aux revenus");
@@ -149,9 +160,7 @@ const RevenuPage = () => {
         email: order.email || "-",
         total: parseFloat(order.total || 0).toFixed(2),
         amountPaid:
-          order.paymentStatus === "paid"
-            ? parseFloat(order.total || 0).toFixed(2)
-            : "0.00",
+          order.paymentStatus === "paid" ? parseFloat(order.total || 0).toFixed(2) : "0.00",
         paymentStatus:
           order.paymentStatus === "paid"
             ? "Payé"
@@ -225,6 +234,7 @@ const RevenuPage = () => {
     }
   }, [token, navigate]);
 
+  // Fonction de remboursement avec confirmation
   const handleRefund = useCallback(
     async (id) => {
       if (!window.confirm("Confirmer le remboursement de cette commande ?"))
@@ -252,17 +262,16 @@ const RevenuPage = () => {
         await fetchRevenus();
       } catch (error) {
         console.error("Erreur lors du remboursement:", error.response?.data);
-        if (error.message.includes("Unauthorized")) {
-          toast.error("Session expirée. Veuillez vous reconnecter.");
-        } else if (error.message.includes("Commande non trouvée")) {
-          toast.error("La commande n'existe pas.");
-        } else if (error.message.includes("déjà remboursée")) {
-          toast.error("La commande est déjà remboursée.");
-        } else if (error.message.includes("payées peuvent être remboursées")) {
-          toast.error("Seules les commandes payées peuvent être remboursées.");
-        } else {
-          toast.error(error.message || "Erreur lors du remboursement");
-        }
+        const errorMessage =
+          error.message.includes("Unauthorized")
+            ? "Session expirée. Veuillez vous reconnecter."
+            : error.message.includes("déjà remboursée")
+            ? "La commande est déjà remboursée."
+            : error.message.includes("payées peuvent être remboursées")
+            ? "Seules les commandes payées peuvent être remboursées."
+            : error.message || "Erreur lors du remboursement";
+        toast.error(errorMessage);
+        if (error.message.includes("Unauthorized")) navigate("/login");
       } finally {
         setIsRefunding((prev) => ({ ...prev, [id]: false }));
       }
@@ -270,11 +279,10 @@ const RevenuPage = () => {
     [socket, navigate, fetchRevenus]
   );
 
-  const handleRefundDebounced = useMemo(
-    () => debounce(handleRefund, 300),
-    [handleRefund]
-  );
+  // Utilisation de `debounce` pour éviter les clics multiples rapides
+  const handleRefundDebounced = useMemo(() => debounce(handleRefund, 300), [handleRefund]);
 
+  // Filtrage des revenus
   const filteredRevenus = useMemo(() => {
     return revenus.filter((rev) => {
       const matchSearch =
@@ -296,6 +304,7 @@ const RevenuPage = () => {
     });
   }, [revenus, searchTerm, filterPeriod, filterStatus]);
 
+  // Exportation des données en CSV
   const exportToCSV = useCallback(() => {
     const headers = [
       "ID",
@@ -317,9 +326,7 @@ const RevenuPage = () => {
         rev.paymentStatus,
         rev.paymentMethod,
         rev.date,
-      ]
-        .map((field) => `"${String(field).replace(/"/g, '""')}"`)
-        .join(",")
+      ].map((field) => `"${String(field).replace(/"/g, '""')}"`).join(",")
     );
     const csvContent = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -332,6 +339,7 @@ const RevenuPage = () => {
     toast.success("Exportation CSV réussie");
   }, [filteredRevenus]);
 
+  // Exportation des données en PDF
   const exportToPDF = useCallback(() => {
     const doc = new jsPDF();
     doc.setFontSize(16);
@@ -379,6 +387,7 @@ const RevenuPage = () => {
     toast.success("Exportation PDF réussie");
   }, [filteredRevenus, totalRevenue, totalPending, totalRefunded, categoryBreakdown]);
 
+  // Génération d'une facture PDF pour une commande spécifique
   const generateInvoicePDF = (order) => {
     const doc = new jsPDF();
     doc.setFontSize(22);
@@ -412,6 +421,7 @@ const RevenuPage = () => {
     toast.success("Facture PDF générée avec succès");
   };
 
+  // Logique de pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredRevenus.slice(indexOfFirstItem, indexOfLastItem);
@@ -426,6 +436,7 @@ const RevenuPage = () => {
     [totalPages]
   );
 
+  // Création d'un dégradé pour les graphiques
   const createGradient = (ctx, chartArea, colors) => {
     const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
     colors.forEach((color, index) => {
@@ -434,6 +445,7 @@ const RevenuPage = () => {
     return gradient;
   };
 
+  // Données pour le graphique en anneau (Pie)
   const pieChartData = useMemo(() => {
     const labels = Object.keys(categoryBreakdown);
     const data = Object.values(categoryBreakdown);
@@ -449,6 +461,7 @@ const RevenuPage = () => {
     };
   }, [categoryBreakdown]);
 
+  // Données pour le graphique à barres (Bar)
   const barChartData = useMemo(
     () => ({
       labels: ["Payé", "Non payé", "Remboursé"],
@@ -464,11 +477,7 @@ const RevenuPage = () => {
             const ctx = context.chart.ctx;
             const chartArea = context.chart.chartArea;
             if (!chartArea) return COLORS.paid[0];
-            const colors = [
-              COLORS.paid,
-              COLORS.pending,
-              COLORS.refunded
-            ];
+            const colors = [COLORS.paid, COLORS.pending, COLORS.refunded];
             return createGradient(ctx, chartArea, colors[context.dataIndex]);
           },
           borderColor: "#ffffff",
@@ -491,6 +500,7 @@ const RevenuPage = () => {
     [totalRevenue, totalPending, totalRefunded]
   );
 
+  // Données pour le graphique en ligne (Line)
   const timeSeriesChartData = useMemo(
     () => ({
       labels: timeSeriesData.map((item) => item.date),
@@ -527,6 +537,7 @@ const RevenuPage = () => {
     [timeSeriesData]
   );
 
+  // Options pour les graphiques
   const chartOptions = useMemo(
     () => ({
       responsive: true,
@@ -581,6 +592,7 @@ const RevenuPage = () => {
     []
   );
 
+  // Effet pour le chargement initial des données et la gestion des WebSockets
   useEffect(() => {
     if (!token) {
       navigate("/login");
@@ -608,6 +620,34 @@ const RevenuPage = () => {
     return socketCleanup;
   }, [token, socket, navigate, fetchRevenus]);
 
+  // Composant pour afficher le statut avec une pastille de couleur
+  const StatusPill = ({ status }) => {
+    let colorClass, text;
+    switch (status) {
+      case "Payé":
+        colorClass = "bg-green-100 text-green-800 border-green-200";
+        text = "Payé";
+        break;
+      case "Non payé":
+        colorClass = "bg-yellow-100 text-yellow-800 border-yellow-200";
+        text = "En Attente";
+        break;
+      case "Remboursé":
+        colorClass = "bg-red-100 text-red-800 border-red-200";
+        text = "Remboursé";
+        break;
+      default:
+        colorClass = "bg-gray-100 text-gray-800 border-gray-200";
+        text = "Inconnu";
+    }
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${colorClass}`}>
+        {text}
+      </span>
+    );
+  };
+
+  // --- Rendu du composant ---
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -630,7 +670,6 @@ const RevenuPage = () => {
             Retour
           </Link>
         </div>
-        
         {/* Key Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
@@ -671,7 +710,6 @@ const RevenuPage = () => {
             </motion.div>
           ))}
         </div>
-        
         {/* Filters and Actions */}
         <div className="bg-white rounded-3xl shadow-xl p-5 flex flex-wrap gap-4 items-center border border-gray-200">
           <div className="relative w-full sm:w-1/3">
@@ -750,7 +788,6 @@ const RevenuPage = () => {
             </motion.button>
           </div>
         </div>
-        
         {/* Charts and Table */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <motion.div
@@ -764,7 +801,6 @@ const RevenuPage = () => {
               <Pie data={pieChartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }} />
             </div>
           </motion.div>
-          
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -795,6 +831,7 @@ const RevenuPage = () => {
               )}
             </div>
           </motion.div>
+
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -841,91 +878,79 @@ const RevenuPage = () => {
                               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                             />
                           </svg>
-                          <span>Chargement des données...</span>
+                          Chargement des données...
                         </div>
                       </td>
                     </tr>
-                  ) : filteredRevenus.length === 0 ? (
-                    <tr>
-                      <td colSpan="8" className="px-6 py-4 text-center text-gray-500 font-medium">
-                        Aucun revenu trouvé.
-                      </td>
-                    </tr>
-                  ) : (
-                    currentItems.map((rev, index) => (
-                      <tr key={String(rev.id) || index} className="bg-white hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 font-medium text-gray-900">
-                          {/* CORRECTION APPLIQUÉE ICI */}
-                          {String(rev.id).substring(0, 8)}...
-                        </td>
+                  ) : currentItems.length > 0 ? (
+                    currentItems.map((rev) => (
+                      <tr key={rev.id} className="bg-white hover:bg-gray-50 transition-colors duration-200">
+                        <td className="px-6 py-4 font-medium text-gray-900">{String(rev.id).substring(0, 8)}...</td>
                         <td className="px-6 py-4">{rev.nom}</td>
                         <td className="px-6 py-4">{rev.email}</td>
-                        <td className="px-6 py-4 text-right">{rev.total}</td>
-                        <td className="px-6 py-4 text-right">{rev.amountPaid}</td>
+                        <td className="px-6 py-4 text-right font-medium text-gray-900">€{rev.total}</td>
+                        <td className="px-6 py-4 text-right font-medium text-gray-900">€{rev.amountPaid}</td>
                         <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            rev.paymentStatus === 'Payé'
-                              ? 'bg-green-100 text-green-800'
-                              : rev.paymentStatus === 'Remboursé'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {rev.paymentStatus}
-                          </span>
+                          <StatusPill status={rev.paymentStatus} />
                         </td>
-                        <td className="px-6 py-4">{rev.date}</td>
-                        <td className="px-6 py-4 flex items-center gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => generateInvoicePDF(rev)}
-                            className="p-2 rounded-full text-blue-500 hover:bg-blue-50 transition-colors"
-                            aria-label="Voir la facture"
-                          >
-                            <FaFilePdf className="w-4 h-4" />
-                          </motion.button>
-                          {rev.paymentStatus === "Payé" && (
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => handleRefundDebounced(rev.id)}
-                              disabled={isRefunding[rev.id]}
-                              className={`p-2 rounded-full transition-colors ${
-                                isRefunding[rev.id] ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'text-red-500 hover:bg-red-50'
-                              }`}
-                              aria-label="Rembourser la commande"
+                        <td className="px-6 py-4 text-gray-500">{rev.date}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => generateInvoicePDF(rev)}
+                              className="p-2 text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                              aria-label={`Générer la facture pour la commande ${rev.id}`}
                             >
-                              {isRefunding[rev.id] ? (
-                                <FaSync className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <FaUndo className="w-4 h-4" />
-                              )}
-                            </motion.button>
-                          )}
+                              <FaFilePdf className="w-5 h-5" />
+                            </button>
+                            {rev.paymentStatus === "Payé" && (
+                              <button
+                                onClick={() => handleRefundDebounced(rev.id)}
+                                disabled={isRefunding[rev.id]}
+                                className="p-2 text-red-600 hover:text-red-800 transition-colors duration-200"
+                                aria-label={`Rembourser la commande ${rev.id}`}
+                              >
+                                {isRefunding[rev.id] ? (
+                                  <svg className="animate-spin h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                ) : (
+                                  <FaUndo className="w-5 h-5" />
+                                )}
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
+                  ) : (
+                    <tr>
+                      <td colSpan="8" className="px-6 py-4 text-center text-gray-500 font-medium">
+                        Aucune donnée ne correspond à vos filtres.
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>
             </div>
             {/* Pagination */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-b-xl">
-              <span className="text-sm text-gray-700">
+            <div className="flex justify-between items-center mt-6">
+              <span className="text-sm text-gray-600">
                 Page {currentPage} sur {totalPages}
               </span>
-              <div className="flex gap-2">
+              <div className="flex space-x-2">
                 <button
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 bg-white rounded-md shadow-sm border border-gray-300 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                  className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Précédent
                 </button>
                 <button
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1 bg-white rounded-md shadow-sm border border-gray-300 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                  className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Suivant
                 </button>
@@ -934,7 +959,7 @@ const RevenuPage = () => {
           </motion.div>
         </div>
       </div>
-      <ToastContainer />
+      <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
     </motion.div>
   );
 };
