@@ -158,7 +158,7 @@ const RevenuPage = () => {
             : order.paymentStatus === "refunded"
             ? "Remboursé"
             : "Non payé",
-        paymentMethod: order.paymentMethod || "Inconnu",
+        paymentMethod: "Espèces",
         date: order.orderDate
           ? new Date(order.orderDate).toLocaleString("fr-FR", {
               dateStyle: "short",
@@ -394,7 +394,7 @@ const RevenuPage = () => {
     doc.text(`Email: ${order.email || "-"}`, 20, 66);
     doc.text(`Date: ${order.date || "-"}`, 20, 72);
     doc.text(`Statut: ${order.paymentStatus || "Inconnu"}`, 20, 78);
-    doc.text(`Méthode de paiement: ${order.paymentMethod || "Inconnu"}`, 20, 84);
+    doc.text(`Méthode de paiement: Espèces`, 20, 84);
 
     autoTable(doc, {
       startY: 94,
