@@ -169,7 +169,9 @@ const RevenuPage = () => {
         items: Array.isArray(order.items) ? order.items : [],
       }));
 
-      const total = formattedRevenus.reduce((sum, order) => sum + parseFloat(order.total), 0);
+      const total = formattedRevenus
+        .filter((order) => order.paymentStatus !== "Remboursé")
+        .reduce((sum, order) => sum + parseFloat(order.total), 0);
       const pending = formattedRevenus
         .filter((order) => order.paymentStatus === "Non payé")
         .reduce((sum, order) => sum + parseFloat(order.total), 0);
@@ -507,7 +509,7 @@ const RevenuPage = () => {
         {
           label: "Revenus",
           data: [
-            parseFloat(totalRevenue) - parseFloat(totalPending) - parseFloat(totalRefunded),
+            parseFloat(totalRevenue),
             parseFloat(totalPending),
             parseFloat(totalRefunded),
           ],
