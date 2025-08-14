@@ -10,12 +10,14 @@ import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
 import { QueryFailedError } from 'typeorm';
 import { Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   private readonly tokenBlacklist = new Set<string>();
   constructor(
     private readonly jwtService: JwtService,
+    private readonly configService:ConfigService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     @InjectRepository(Personnel)
@@ -80,6 +82,20 @@ export class AuthService {
     };
   }
 
+  // async login(user: any) {
+  //   const payload = {
+  //     email: user.email,
+  //     sub: user.id,
+  //     role: user.role,
+  //     name: user.name,
+  //     photo: user.photo,
+  //   };
+  //   console.log('JWT Payload:', payload);
+  //   return {
+  //     access_token: this.jwtService.sign(payload),
+  //   };
+  // }
+
   async login(user: any) {
     const payload = {
       email: user.email,
@@ -89,13 +105,67 @@ export class AuthService {
       photo: user.photo,
     };
     console.log('JWT Payload:', payload);
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+    
+    // Appeler la méthode qui génère les deux jetons
+    return this.generateTokens(payload);
   }
 
+  /**
+   * Génère un couple de jetons d'accès et de rafraîchissement
+   * @param payload Données à inclure dans le jeton
+   * @returns Un objet contenant les deux jetons
+   */
+async generateTokens(payload: any) {
+    // Access token court (ex : 6 min)
+    const access_token = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+      expiresIn: '1m',
+    });
 
+    // Refresh token long (ex : 7 jours)
+    const refresh_token = this.jwtService.sign(
+      { ...payload, type: 'refresh' },
+      {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET') || '3f1d2e4b5a6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e',
+        expiresIn: '2m',
+      }
+    );
 
+    return { access_token, refresh_token };
+  }
+
+ 
+
+  /**
+   * Génère un nouveau couple de jetons d'accès et de rafraîchissement
+   * en échange d'un jeton de rafraîchissement valide
+   * @param refreshToken Jeton de rafraîchissement
+   * @returns Un objet contenant les deux nouveaux jetons
+   * @throws UnauthorizedException si le jeton est invalide ou a expiré
+   */
+  async refreshToken(refreshToken: string) {
+    try {
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
+
+      if (payload.type !== 'refresh') {
+        throw new UnauthorizedException('Invalid token type');
+      }
+
+      return this.generateTokens({ sub: payload.sub, email: payload.email });
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+  }
+
+  /**
+   * Déconnecte un utilisateur en supprimant son jeton d'accès
+   * @param token Jeton d'accès à supprimer
+   * @param res Objet de réponse HTTP
+   * @returns Un objet de type { message: string } avec un message de déconnexion
+   * @throws Error Si le jeton est invalide ou si une erreur survient lors de la déconnexion
+   */
 async logout(token: string, res: Response): Promise<{ message: string }> {
     try {
       // Verify token (optional, for additional security)
