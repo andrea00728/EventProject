@@ -408,6 +408,21 @@ export default function AdminLayout() {
       }
     };
 
+    const handleDeleteNotification = async (id) => {
+      try {
+        const response = await fetch(`http://localhost:3000/notification/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Erreur lors de la suppression');
+
+        setNotifications(prev => prev.filter(notif => notif.id !== id));
+      } catch (error) {
+        console.error('Suppression impossible :', error);
+      }
+    };
+
+
 
     const pageBg = darkMode
       ? "bg-gray-900 text-gray-200"
@@ -438,7 +453,9 @@ export default function AdminLayout() {
               count={notifications.length}
               items={notifications}
               noScroll={true}
+              onDelete={handleDeleteNotification}
             />
+
             <Dropdown
               ref={msgRef}
               show={showMessages}
