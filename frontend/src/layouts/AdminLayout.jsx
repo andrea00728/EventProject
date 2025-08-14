@@ -150,13 +150,7 @@ export default function AdminLayout() {
             timestamp: new Date(Date.now() - 25 * 60000),
             isAdmin: true,
           },
-          {
-            id: 3,
-            text: "J'aimerais avoir plus d'informations sur l'événement de demain.",
-            sender: typeof conversation.content === 'object' ? conversation.content.from : 'Utilisateur',
-            timestamp: new Date(Date.now() - 20 * 60000),
-            isAdmin: false,
-          },
+          
         ]);
       }
     }, [conversation]);
