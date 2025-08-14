@@ -288,20 +288,20 @@ const LocationSalle = () => {
     : "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-400 text-white";
 
   return (
-    <div className={`min-h-screen ${darkMode ? "bg-gray-900 text-gray-200" : "bg-white text-gray-800"}`}>
+    <div className={`min-h-100vh ${darkMode ? "bg-gray-900 text-gray-200" : "bg-white text-gray-800"}`}>
       <div className={`h-full flex flex-col ${darkMode ? "bg-gray-900" : "bg-white"}`}>
         {/* Main Content */}
         <div className={`shadow-sm border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
           {/* Panel Header */}
-          <div className={`px-6 py-4 border-b ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-none"}`}>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className={`px-6 py-4 border-b ${darkMode ? "bg-gray-900 border-gray-700" : "bg-gray-50 border-none"}`}>
+            {/* <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex items-center">
                 <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
                   <MdLocationCity className={`mr-2 sm:mr-3 ${darkMode ? "text-blue-400" : "text-blue-700"}`} /> 
                   Gestion des Lieux & Salles
                 </h2>
               </div>
-            </div>
+            </div> */}
 
             {/* Tabs */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-2 mb-1">
@@ -367,7 +367,7 @@ const LocationSalle = () => {
           )}
 
           {/* Create Location Form */}
-          <div className={`p-6 border-b ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
+          <div className={`p-6 border-b ${darkMode ? "bg-gray-900 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
             <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
               <MdAdd className={`mr-2 ${darkMode ? "text-blue-400" : "text-indigo-600"}`} /> 
               Ajouter un nouveau lieu
@@ -395,7 +395,7 @@ const LocationSalle = () => {
           </div>
 
           {/* Bulk Actions */}
-          <div className={`px-6 py-3 border-b flex justify-between items-center ${darkMode ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+          <div className={`px-6 py-3 border-b flex justify-between items-center ${darkMode ? "bg-gray-900 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
             <div className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
               {filteredLocations.length} {filteredLocations.length > 1 ? 'lieux trouvés' : 'lieu trouvé'}
             </div>
