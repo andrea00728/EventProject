@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
+import { Outlet, Link, useLocation, Navigate, useNavigate } from "react-router-dom";
 import {
   FaCogs,
   FaUsers,
@@ -310,6 +310,12 @@ export default function AdminLayout() {
     const profileRef = useRef(null);
     const [messages, setMessages] = useState([]);
 
+    const navigate = useNavigate();
+
+    const handleRedirect = () => {
+      navigate("/AdminParametre");
+    };
+
     useEffect(() => {
       const handleClickOutside = (event) => {
         if (notifRef.current && !notifRef.current.contains(event.target)) {
@@ -358,9 +364,10 @@ export default function AdminLayout() {
 
           // Adapter le format au même style que ton tableau statique
           const formatted = data.map(msg => ({
+            ...msg,
             from: `${msg.firstName} ${msg.lastName}`,
             text: msg.message,
-            read: false, // ou msg.read si tu ajoutes ce champ dans la DB
+            read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
           }));
 
           setMessages(formatted);
@@ -373,11 +380,40 @@ export default function AdminLayout() {
       fetchMessages();
     }, [token]);
 
+    const markMessageAsRead = (message) => {
+      setMessages(prevMessages =>
+        prevMessages.map(msg =>
+          msg.id === message.id ? { ...msg, read: true } : msg
+        )
+      );
+    };
+
     const handleMessageClick = (item) => {
       setSelectedConversation({ content: item });
+      markMessageAsRead(item);
       setShowConversationModal(true);
       setShowMessages(false);
     };
+
+    const handleDeleteMessage = async (id) => {
+      try {
+        // Appel à ton backend pour supprimer en base
+        const response = await fetch(`http://localhost:3000/contact_messages/${id}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) {
+          throw new Error("Erreur lors de la suppression");
+        }
+
+        // Mise à jour locale après confirmation de la suppression
+        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== id));
+
+      } catch (error) {
+        console.error("Suppression impossible :", error);
+      }
+    };
+
 
     const pageBg = darkMode
       ? "bg-gray-900 text-gray-200"
@@ -415,8 +451,9 @@ export default function AdminLayout() {
               setShow={setShowMessages}
               icon={<FaEnvelope className="text-lg sm:text-xl" />}
               label="Messages"
-              count={messages.length}
+              count={messages.filter(msg => !msg.read).length}
               items={messages}
+              onDelete={handleDeleteMessage}
               onItemClick={handleMessageClick}
               noScroll={true}
             />
@@ -468,6 +505,7 @@ export default function AdminLayout() {
                       Mon profil
                     </button>
                     <button
+                      onClick={handleRedirect}
                       className={`w-full text-left px-3 py-2 text-sm ${
                         darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-800'
                       } transition-colors duration-150`}
@@ -632,7 +670,7 @@ export default function AdminLayout() {
       </aside>
       <div className="flex-1 flex flex-col overflow-hidden">
         <AdminHeader currentPageName={currentPageName} darkMode={darkMode} />
-        <main className={`flex-1 overflow-auto scrollable p-0 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <main className={`flex-1 overflow-auto scrollable ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
           <div className={`h-full ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
             <Outlet />
           </div>

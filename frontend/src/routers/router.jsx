@@ -75,6 +75,9 @@ import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Ev
 import LoginPage from "../pages/Admin/LoginPage.jsx";
 import UserStats from "../pages/Admin/cards.jsx";
 import Tablecreation from "../pages/TableOrganisation/Tablecreation.jsx";
+import CreerEvenementPrive from "../pages/CreerEvenementPrive.jsx";
+import CreerEvenementPublic from "../pages/CreerEvenementPublic.jsx";
+
 
 
 const router=createBrowserRouter([
