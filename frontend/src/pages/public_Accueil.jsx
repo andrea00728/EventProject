@@ -9,7 +9,6 @@ import { FormaNumber } from "../services/controll_champs/controll_limite";
 import { getUserCount } from "../services/userService";
 
 import { AuthModal } from "../components/Modal/authModal";
-import { findCount_pourcentage } from "../services/testimonyService";
 
 const images = [
   "/images/music-7238254_1280.jpg",
@@ -29,7 +28,7 @@ const Public_Accueil = () => {
   const contactRef = useRef(null);
   const testimonyRef = useRef(null);
   const [eventCount,setEventCount] = useState(0);
-  const [pourcentage,setPourcentage] = useState(0);
+  
   const [organisateurCount,setOrganisateurCount] = useState(0);
   useEffect(() => {
     const hash = window.location.hash;
@@ -42,44 +41,6 @@ const Public_Accueil = () => {
     if (hash === "#testimony" && testimonyRef.current) {
       testimonyRef.current.scrollIntoView({ behavior: "smooth" });
     }
-
-    /**
-     * nombre d'organisateur enregistrer
-     */
-      const fetchDataUserCount= async () =>{
-     try{
-
-      const count =await getUserCount();
-      setOrganisateurCount(count);
-     }catch(err){
-      console.log(err)
-     }
-    };
-    /**
-     * nombrer total d'evenement
-     */
-    const fetchData = async () => {
-      try{
-         const count = await getCountEvents();
-      setEventCount(count);
-      }catch(err){
-        console.log(err)
-      } 
-    };
-    /**
-     * pourcentage satisfaction
-     */
-     const count_pourcentage=async () =>{
-          try{
-            const count_p=await findCount_pourcentage();
-            setPourcentage(count_p);
-          }catch(err){
-            console.log(err);
-          }
-        }
-    fetchDataUserCount();
-    fetchData();
-    count_pourcentage();
   }, []);
 
   useEffect(() => {
@@ -117,9 +78,30 @@ const Public_Accueil = () => {
     else if (delta < -50) next();
   };
 
- 
+  useEffect(()=>{
+    const fetchData = async () => {
+      try{
+         const count = await getCountEvents();
+      setEventCount(count);
+      }catch(err){
+        console.log(err)
+      } 
+    };
+    fetchData();
+  },[]);
 
+  useEffect(()=>{
+    const fetchDataUserCount= async () =>{
+     try{
 
+      const count =await getUserCount();
+      setOrganisateurCount(count);
+     }catch(err){
+      console.log(err)
+     }
+    };
+    fetchDataUserCount();
+    },[]);
 
     const renderStars= (currentRating, interactive = false) => {
       return [...Array(5)].map((_, index) => (
@@ -249,7 +231,7 @@ const Public_Accueil = () => {
                   <div className="text-white/70 text-sm font-medium">Participants actifs</div>
                 </div>
                 <div className="text-center group">
-                  <div className="text-3xl font-bold text-white group-hover:text-green-400 transition-colors duration-300">{pourcentage.toFixed(1)}★</div>
+                  <div className="text-3xl font-bold text-white group-hover:text-green-400 transition-colors duration-300">4.9★</div>
                   <div className="text-white/70 text-sm font-medium">Satisfaction client</div>
                 </div>
               </motion.div>

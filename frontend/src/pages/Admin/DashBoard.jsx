@@ -549,13 +549,6 @@ function SectionWrapper({ children, title, darkMode, gradientTitle }) {
 }
 
 function EventChart({ darkMode, eventData }) {
-  // Exemple de données passées en props :
-  // eventData = [
-  //   { type: 'anniversaire', total: 1, percentage: 25 },
-  //   { type: 'mariage', total: 3, percentage: 75 }
-  // ]
-
-  // Nettoyage des types null ou vides
   const filteredData = eventData?.filter((item) => item.type) || [];
 
   const labels = filteredData.map(item => item.type);
@@ -609,7 +602,6 @@ function EventChart({ darkMode, eventData }) {
     </div>
   );
 }
-
 
 function MoneyChart({ darkMode }) {
   const margin = { right: 24 };
