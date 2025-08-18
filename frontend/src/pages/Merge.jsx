@@ -13,6 +13,7 @@ import { getAllEvents } from '../services/evenementServ';
 import { AuthModal } from "../components/Modal/authModal";
 import SuccessEvent from "../util/SuccessEvent";
 import Aboutus from "../util/Aboutus";
+import Demo from "../util/Dem";
 
 const images = [
   "/images/music-7238254_1280.jpg",
@@ -397,6 +398,15 @@ const Publicacc = () => {
                 <NosService />
             </div>
         </section>
+
+
+        <section id="demo" >
+            <div className="bg-gradient-to-b from-gray-50 to-white">
+                <Demo />
+            </div>
+        </section>
+
+        
 
         {/* Section Événements de Succès - Design Pro avec gestion d'images */}
         <section id="success">
