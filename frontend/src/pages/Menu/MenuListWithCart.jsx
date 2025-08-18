@@ -210,7 +210,7 @@ const MenuListWithCart = () => {
       setIsInvoiceOpen(true);
     } else {
       setMessage('Votre panier est vide.');
-      setTimeout(() => setMessage(''), 3000);
+      setTimeout(() => setMessage(''), 3000);         
     }
   };
 
