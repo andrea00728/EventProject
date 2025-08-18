@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { AuthModal } from "../components/Modal/authModal";
 
 export default function NosForfaits() {
   const [showModal, setShowModal] = useState(false);
@@ -20,7 +21,6 @@ export default function NosForfaits() {
       >
         <h3 className="text-xl font-bold mb-4">{title}</h3>
         <p className="text-2xl font-extrabold mb-2">{price}</p>
-
         <p>Invitations : {invitations}</p>
         <p>Événements : {events}</p>
         <p>Durée : {duration}</p>
@@ -39,7 +39,6 @@ export default function NosForfaits() {
   return (
     <>
       <section className="relative bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 py-24 px-4 rounded-3xl shadow-2xl overflow-hidden">
-        
         {/* Orbes lumineux */}
         <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-r from-[#FB9E3A]/10 to-orange-400/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-10 right-10 w-64 h-64 bg-gradient-to-l from-indigo-400/15 to-purple-400/10 rounded-full blur-2xl animate-pulse delay-1000" />
@@ -94,7 +93,9 @@ export default function NosForfaits() {
                   Annuler
                 </button>
                 <button
-                  onClick={() => setShowLogin(true)}
+                  onClick={() => {
+                    setShowLogin(true);
+                  }}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
                 >
                   Oui
@@ -105,48 +106,14 @@ export default function NosForfaits() {
         )}
       </AnimatePresence>
 
-      {/* Formulaire Login */}
-      <AnimatePresence>
-        {showLogin && (
-          <motion.div
-            className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-white rounded-xl shadow-xl p-6 w-96"
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 50, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <h2 className="text-lg font-semibold mb-4">Connexion</h2>
-              <form className="space-y-4">
-                <input type="email" placeholder="Email" className="w-full p-2 border rounded-lg" />
-                <input type="password" placeholder="Mot de passe" className="w-full p-2 border rounded-lg" />
-                <button
-                  type="submit"
-                  className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-                >
-                  Se connecter
-                </button>
-              </form>
-              <div className="mt-4 text-center">
-                <button
-                  onClick={() => {
-                    setShowLogin(false);
-                    setShowModal(false);
-                  }}
-                  className="text-sm text-gray-500 hover:underline"
-                >
-                  Annuler
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Nouveau formulaire AuthModal */}
+      <AuthModal
+        isOpen={showLogin}
+        onClose={() => {
+          setShowLogin(false);
+          setShowModal(false);
+        }}
+      />
 
       {/* Animation fadeIn */}
       <style>{`
