@@ -25,17 +25,17 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document); // Expose Swagger à l'URL /api
 
-  app.enableCors({
-    origin: 'http://localhost:5173', // URL de ton frontend
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true, // si tu utilises des cookies ou l'authentification
-  });
-
+  // app.enableCors({
+  //   origin: 'http://localhost:5173', // URL de ton frontend
+  //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  //   credentials: true, // si tu utilises des cookies ou l'authentification
+  // });
+  app.enableCors();
   app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
   app.useGlobalFilters(new HttpExceptionFilter())
   await app.listen(process.env.PORT ?? 3000);
 
-  
+
 }
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 bootstrap();
