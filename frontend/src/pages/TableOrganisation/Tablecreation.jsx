@@ -87,7 +87,12 @@ export default function Tablecreation({ onSubmitTable }) {
     }
 
     try {
-      const formDataArray = form.noms.map((nom) => ({
+      // Remplir les noms vides avec un nom par défaut
+      const nomsFinal = form.noms.map((nom, index) =>
+        nom && nom.trim() !== "" ? nom : `Table ${index + 1}`
+      );
+
+      const formDataArray = nomsFinal.map((nom) => ({
         nom,
         capacite: form.capacite,
         type: form.type,
@@ -201,8 +206,7 @@ export default function Tablecreation({ onSubmitTable }) {
                 <input
                   value={nom}
                   onChange={(e) => handleNomChange(index, e.target.value)}
-                  placeholder={`Ex: Table ${index + 1}`}
-                  required
+                  placeholder={`Table ${index + 1}`}
                   className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3"
                 />
               </div>

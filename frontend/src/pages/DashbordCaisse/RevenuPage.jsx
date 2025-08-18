@@ -226,7 +226,8 @@ const RevenuPage = () => {
 
   const handleRefund = useCallback(
     async (id) => {
-      if (!window.confirm("Confirmer le remboursement de cette commande ?")) return;
+      if (!window.confirm("Confirmer le remboursement de cette commande ?"))
+        return;
       setIsRefunding((prev) => ({ ...prev, [id]: true }));
       try {
         const order = await revenuService.getOrderById(id);
@@ -291,7 +292,16 @@ const RevenuPage = () => {
   }, [revenus, searchTerm, filterPeriod, filterStatus]);
 
   const exportToCSV = useCallback(() => {
-    const headers = ["ID", "Client", "Email", "Total (€)", "Payé (€)", "Statut", "Méthode", "Date"];
+    const headers = [
+      "ID",
+      "Client",
+      "Email",
+      "Total (€)",
+      "Payé (€)",
+      "Statut",
+      "Méthode",
+      "Date",
+    ];
     const rows = filteredRevenus.map((rev) =>
       [
         String(rev.id),
@@ -704,7 +714,6 @@ const RevenuPage = () => {
             Retour
           </Link>
         </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             {
@@ -744,7 +753,6 @@ const RevenuPage = () => {
             </motion.div>
           ))}
         </div>
-
         <div className="bg-white rounded-3xl shadow-xl p-5 flex flex-wrap gap-4 items-center border border-gray-200">
           <div className="relative w-full sm:w-1/3">
             <input
@@ -822,7 +830,6 @@ const RevenuPage = () => {
             </motion.button>
           </div>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -835,7 +842,6 @@ const RevenuPage = () => {
               <Pie data={pieChartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }} />
             </div>
           </motion.div>
-
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
