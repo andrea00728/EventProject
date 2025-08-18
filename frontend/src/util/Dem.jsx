@@ -1,11 +1,14 @@
 import { useRef, useState } from "react";
 import tutorialVideo from "../assets/demo.mp4"; // import de la vidéo
+import DemoTable from "./demo";
 
 const Demo = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [showVideo, setShowVideo] = useState(true);
+
+
 
   const videoRef = useRef(null);
 
@@ -60,7 +63,7 @@ const Demo = () => {
               className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-semibold hover:scale-105 transition"
             >
               Voir la démo
-            </button>
+            </button>   
 
             {/* Bouton pour afficher/masquer la vidéo */}
             <button
@@ -95,9 +98,7 @@ const Demo = () => {
             </button>
 
             {/* Contenu du modal */}
-            <h1 className="text-3xl font-bold text-gray-900">
-              Page de démonstration
-            </h1>
+            <DemoTable/>
           </div>
         </div>
       )}
