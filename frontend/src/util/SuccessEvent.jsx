@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
+import Slider from 'react-slick';
+import "slick-carousel/slick/slick.css"; 
+import "slick-carousel/slick/slick-theme.css";
 
 import { getAllEvents } from '../services/evenementServ';
 import { FaCalendarAlt, FaClock } from "react-icons/fa";
@@ -101,6 +104,15 @@ const SuccessEvent = () => {
         return colors[type?.toLowerCase()] || colors.default;
     };
 
+    const sliderSettings = {
+        dots: true,
+        infinite: true,
+        speed: 500,
+        slidesToShow: 1,
+        slidesToScroll: 1,
+        arrows: false,
+    };
+
 
     return(
         <>
@@ -122,122 +134,240 @@ const SuccessEvent = () => {
                 {/* Contenu dynamique des événements */}
                 {loading ? (
                     <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                     </div>
                 ) : error ? (
                     <div className="text-center py-12">
-                    <div className="bg-red-50 border border-red-200 rounded-2xl p-6 max-w-md mx-auto">
-                        <p className="text-red-600 font-medium">{error}</p>
-                    </div>
+                        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 max-w-md mx-auto">
+                            <p className="text-red-600 font-medium">{error}</p>
+                        </div>
                     </div>
                 ) : allEvents.length > 0 ? (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
-                    {allEvents.map((event) => (
-                        <div key={event.id} className="group bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/60 hover:border-blue-300/60 transition-all duration-300 hover:shadow-xl hover:shadow-blue-100/30 hover:-translate-y-1">
-        
-                        {/* Image de l'événement */}
-                        <div className="relative h-48 overflow-hidden">
-                            {event.image ? (
-                            <img
-                                src={event.image}
-                                alt={event.nom}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                onError={(e) => {
-                                // Si l'image ne charge pas, afficher l'image par défaut
-                                e.target.src = '/default-event-image.jpg';
-                                }}
-                            />
-                            ) : (
-                            // Image par défaut avec gradient et icône
-                            <div className={`w-full h-full bg-gradient-to-br ${getEventTypeColor(event.type)} relative flex items-center justify-center`}>
-                                <div className="absolute inset-0 bg-black/10"></div>
-                                <div className="text-white/80 text-6xl">
-                                {getEventIcon(event.type)}
+                    <>
+                        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        {allEvents.map((event) => (
+                            <div key={event.id} className="group bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/60 hover:border-blue-300/60 transition-all duration-300 hover:shadow-xl hover:shadow-blue-100/30 hover:-translate-y-1">
+            
+                            {/* Image de l'événement */}
+                            <div className="relative h-48 overflow-hidden">
+                                {event.image ? (
+                                <img
+                                    src={event.image}
+                                    alt={event.nom}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    onError={(e) => {
+                                    // Si l'image ne charge pas, afficher l'image par défaut
+                                    e.target.src = '/default-event-image.jpg';
+                                    }}
+                                />
+                                ) : (
+                                // Image par défaut avec gradient et icône
+                                <div className={`w-full h-full bg-gradient-to-br ${getEventTypeColor(event.type)} relative flex items-center justify-center`}>
+                                    <div className="absolute inset-0 bg-black/10"></div>
+                                    <div className="text-white/80 text-6xl">
+                                    {getEventIcon(event.type)}
+                                    </div>
+                                </div>
+                                )}
+            
+                                {/* Overlay avec badges */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent">
+                                <div className="absolute top-3 left-3 flex items-center gap-2">
+                                    <span className="bg-white/95 backdrop-blur-sm text-slate-700 px-3 py-1.5 rounded-full text-xs font-bold">
+                                    {event.type || 'Événement'}
+                                    </span>
+                                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${event.isPublic
+                                    ? 'bg-green-100/90 text-green-700 border border-green-200/50'
+                                    : 'bg-blue-100/90 text-blue-700 border border-blue-200/50'
+                                    }`}>
+                                    {event.isPublic ? 'Public' : 'Privé'}
+                                    </span>
+                                </div>
+            
+                                {/* Badge Succès */}
+                                <div className="absolute bottom-3 right-3">
+                                    <div className="bg-gradient-to-r from-emerald-500 to-green-500 text-white px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5">
+                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                    Réalisé
+                                    </div>
+                                </div>
                                 </div>
                             </div>
-                            )}
-        
-                            {/* Overlay avec badges */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent">
-                            <div className="absolute top-3 left-3 flex items-center gap-2">
-                                <span className="bg-white/95 backdrop-blur-sm text-slate-700 px-3 py-1.5 rounded-full text-xs font-bold">
-                                {event.type || 'Événement'}
-                                </span>
-                                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${event.isPublic
-                                ? 'bg-green-100/90 text-green-700 border border-green-200/50'
-                                : 'bg-blue-100/90 text-blue-700 border border-blue-200/50'
-                                }`}>
-                                {event.isPublic ? 'Public' : 'Privé'}
-                                </span>
-                            </div>
-        
-                            {/* Badge Succès */}
-                            <div className="absolute bottom-3 right-3">
-                                <div className="bg-gradient-to-r from-emerald-500 to-green-500 text-white px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5">
-                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                                Réalisé
+            
+                            {/* Contenu */}
+                            <div className="p-5 space-y-4">
+                                <div>
+                                <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                    {event.nom}
+                                </h3>
+                                {event.theme && (
+                                    <p className="text-slate-600 text-xs font-medium bg-slate-100 px-2.5 py-1 rounded-full inline-block">
+                                    {event.theme}
+                                    </p>
+                                )}
+                                </div>
+            
+                                <div className="space-y-2.5">
+                                <div className="flex items-center gap-2.5 text-slate-600">
+                                    <FaCalendarAlt className="w-3.5 h-3.5 text-blue-500" />
+                                    <span className="text-sm font-medium">{formatDate(event.date)}</span>
+                                </div>
+            
+                                <div className="flex items-center gap-2.5 text-slate-600">
+                                    <FaClock className="w-3.5 h-3.5 text-purple-500" />
+                                    <span className="text-sm">
+                                    {formatTime(event.date)} - {formatTime(event.date_fin)}
+                                    </span>
+                                </div>
+            
+                                {event.salle && (
+                                    <div className="text-sm text-slate-600 bg-gradient-to-r from-slate-50 to-blue-50/50 px-3 py-2 rounded-xl border border-slate-100">
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+                                        <span className="font-medium">{event.salle.nom}</span>
+                                    </div>
+                                    <span className="text-slate-500 text-xs ml-3.5">
+                                        Capacité: {event.salle.capacite} personnes
+                                    </span>
+                                    </div>
+                                )}
+                                </div>
+            
+                                {/* Indicateur de statut en bas */}
+                                <div className="pt-2 border-t border-slate-100">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                    <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                                    Événement terminé
+                                    </div>
+                                    <div className="text-xs text-slate-400 font-medium">
+                                    #{event.id}
+                                    </div>
+                                </div>
                                 </div>
                             </div>
                             </div>
+                        ))}
                         </div>
-        
-                        {/* Contenu */}
-                        <div className="p-5 space-y-4">
-                            <div>
-                            <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
-                                {event.nom}
-                            </h3>
-                            {event.theme && (
-                                <p className="text-slate-600 text-xs font-medium bg-slate-100 px-2.5 py-1 rounded-full inline-block">
-                                {event.theme}
-                                </p>
-                            )}
-                            </div>
-        
-                            <div className="space-y-2.5">
-                            <div className="flex items-center gap-2.5 text-slate-600">
-                                <FaCalendarAlt className="w-3.5 h-3.5 text-blue-500" />
-                                <span className="text-sm font-medium">{formatDate(event.date)}</span>
-                            </div>
-        
-                            <div className="flex items-center gap-2.5 text-slate-600">
-                                <FaClock className="w-3.5 h-3.5 text-purple-500" />
-                                <span className="text-sm">
-                                {formatTime(event.date)} - {formatTime(event.date_fin)}
-                                </span>
-                            </div>
-        
-                            {event.salle && (
-                                <div className="text-sm text-slate-600 bg-gradient-to-r from-slate-50 to-blue-50/50 px-3 py-2 rounded-xl border border-slate-100">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
-                                    <span className="font-medium">{event.salle.nom}</span>
-                                </div>
-                                <span className="text-slate-500 text-xs ml-3.5">
-                                    Capacité: {event.salle.capacite} personnes
-                                </span>
-                                </div>
-                            )}
-                            </div>
-        
-                            {/* Indicateur de statut en bas */}
-                            <div className="pt-2 border-t border-slate-100">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                                <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                                Événement terminé
-                                </div>
-                                <div className="text-xs text-slate-400 font-medium">
-                                #{event.id}
-                                </div>
-                            </div>
-                            </div>
+
+                        {/* Version mobile (slick slider) : visible en dessous de 'md' */}
+                        <div className="md:hidden">
+                            <Slider {...sliderSettings}>
+                                {allEvents.map((event) => (
+                                    <div key={event.id} className="p-2">
+                                        <div className="group bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/60 hover:border-blue-300/60 transition-all duration-300 hover:shadow-xl hover:shadow-blue-100/30 hover:-translate-y-1">
+                                            {/* Le contenu de la carte d'événement */}
+                                            {/* Copiez/collez ici tout le contenu de la carte (y compris l'image, les badges, etc.) */}
+                                            {/* Image de l'événement */}
+                                            <div className="relative h-48 overflow-hidden">
+                                                {event.image ? (
+                                                    <img
+                                                        src={event.image}
+                                                        alt={event.nom}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                        onError={(e) => {
+                                                            // Si l'image ne charge pas, afficher l'image par défaut
+                                                            e.target.src = '/default-event-image.jpg';
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    // Image par défaut avec gradient et icône
+                                                    <div className={`w-full h-full bg-gradient-to-br ${getEventTypeColor(event.type)} relative flex items-center justify-center`}>
+                                                        <div className="absolute inset-0 bg-black/10"></div>
+                                                        <div className="text-white/80 text-6xl">
+                                                            {getEventIcon(event.type)}
+                                                        </div>
+                                                    </div>
+                                                )}
+                        
+                                                {/* Overlay avec badges */}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent">
+                                                    <div className="absolute top-3 left-3 flex items-center gap-2">
+                                                        <span className="bg-white/95 backdrop-blur-sm text-slate-700 px-3 py-1.5 rounded-full text-xs font-bold">
+                                                            {event.type || 'Événement'}
+                                                        </span>
+                                                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${event.isPublic
+                                                            ? 'bg-green-100/90 text-green-700 border border-green-200/50'
+                                                            : 'bg-blue-100/90 text-blue-700 border border-blue-200/50'
+                                                            }`}>
+                                                            {event.isPublic ? 'Public' : 'Privé'}
+                                                        </span>
+                                                    </div>
+                        
+                                                    {/* Badge Succès */}
+                                                    <div className="absolute bottom-3 right-3">
+                                                        <div className="bg-gradient-to-r from-emerald-500 to-green-500 text-white px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5">
+                                                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                            Réalisé
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                        
+                                            {/* Contenu */}
+                                            <div className="p-5 space-y-4">
+                                                <div>
+                                                    <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                                        {event.nom}
+                                                    </h3>
+                                                    {event.theme && (
+                                                        <p className="text-slate-600 text-xs font-medium bg-slate-100 px-2.5 py-1 rounded-full inline-block">
+                                                            {event.theme}
+                                                        </p>
+                                                    )}
+                                                </div>
+                        
+                                                <div className="space-y-2.5">
+                                                    <div className="flex items-center gap-2.5 text-slate-600">
+                                                        <FaCalendarAlt className="w-3.5 h-3.5 text-blue-500" />
+                                                        <span className="text-sm font-medium">{formatDate(event.date)}</span>
+                                                    </div>
+                        
+                                                    <div className="flex items-center gap-2.5 text-slate-600">
+                                                        <FaClock className="w-3.5 h-3.5 text-purple-500" />
+                                                        <span className="text-sm">
+                                                            {formatTime(event.date)} - {formatTime(event.date_fin)}
+                                                        </span>
+                                                    </div>
+                        
+                                                    {event.salle && (
+                                                        <div className="text-sm text-slate-600 bg-gradient-to-r from-slate-50 to-blue-50/50 px-3 py-2 rounded-xl border border-slate-100">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+                                                                <span className="font-medium">{event.salle.nom}</span>
+                                                            </div>
+                                                            <span className="text-slate-500 text-xs ml-3.5">
+                                                                Capacité: {event.salle.capacite} personnes
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                        
+                                                {/* Indicateur de statut en bas */}
+                                                <div className="pt-2 border-t border-slate-100">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                            <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                                                            Événement terminé
+                                                        </div>
+                                                        <div className="text-xs text-slate-400 font-medium">
+                                                            #{event.id}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </Slider>
                         </div>
-                        </div>
-                    ))}
-                    </div>
+                    </>
+
+
                 ) : (
                     <div className="text-center py-12">
                     <div className="bg-white/60 border border-slate-200/50 rounded-2xl p-8 max-w-md mx-auto backdrop-blur-sm">
