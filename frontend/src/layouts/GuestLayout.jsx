@@ -19,7 +19,7 @@ export default function GuestLayout() {
     { path: "#testimony", name: "Témoignages" },
     { path: "#plans", name: "Forfaits" },
     { path: "#contact", name: "Contact" },
-    
+
   ];
 
   const handleSmoothScroll = (e, target) => {

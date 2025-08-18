@@ -47,12 +47,13 @@ const Public_Accueil = () => {
     if (hash === "#contact" && contactRef.current) {
       contactRef.current.scrollIntoView({ behavior: "smooth" });
     }
-    if (hash === "#testimony" && testimonyRef.current) {
-      testimonyRef.current.scrollIntoView({ behavior: "smooth" });
-    }
     if (hash === "#plans" && plansRef.current) {
       testimonyRef.current.scrollIntoView({ behavior: "smooth" });
     }
+    if (hash === "#testimony" && testimonyRef.current) {
+      testimonyRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+    
   }, []);
 
   useEffect(() => {

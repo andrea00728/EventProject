@@ -21,7 +21,7 @@ const images = [
   "/images/couple-443600_1280.jpg",
 ];
 
-const Publicacc = () => {
+const Public_Accueil = () => {
   const [current, setCurrent] = useState(0);
   const [isModalOpen, setModalOpen] = useState(false); // État pour le authModal
   const intervalRef = useRef(null);
@@ -31,6 +31,8 @@ const Publicacc = () => {
   const contactRef = useRef(null);
   const testimonyRef = useRef(null);
   const plansRef = useRef(null);
+  const successRef = useRef(null);
+  const aboutRef = useRef(null);aboutRef
   const [eventCount,setEventCount] = useState(0);
   
   const [organisateurCount,setOrganisateurCount] = useState(0);
@@ -38,6 +40,9 @@ const Publicacc = () => {
     const hash = window.location.hash;
     if (hash === "#service" && serviceRef.current) {
       serviceRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+    if (hash === "#success" && successRef.current) {
+      successRef.current.scrollIntoView({ behavior: "smooth" });
     }
     if (hash === "#contact" && contactRef.current) {
       contactRef.current.scrollIntoView({ behavior: "smooth" });
@@ -307,7 +312,7 @@ const Publicacc = () => {
       </section>
 
        {/* Section Événements de Succès - Design Pro avec gestion d'images */}
-        <section id="success">
+        <section id="success" ref={successRef}>
             <div className="bg-gradient-to-b from-gray-50 to-white">
                 <SuccessEvent />
             </div>
@@ -320,7 +325,7 @@ const Publicacc = () => {
       </section>
 
       {/* Section À Propos */}
-        <section id="about">
+        <section id="about" ref={aboutRef}>
             <div className="bg-gradient-to-b from-gray-50 to-white">
                 <Aboutus />
             </div>
@@ -382,4 +387,4 @@ const Publicacc = () => {
   );
 };
 
-export default Publicacc;
+export default Public_Accueil;
