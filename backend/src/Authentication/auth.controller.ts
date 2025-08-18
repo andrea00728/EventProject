@@ -57,40 +57,24 @@ export class AuthController {
    * 
    */
   @Get('google/callback')
-@UseGuards(AuthGuard('google'))
-async googleAuthRedirect(@Req() req, @Res() res) {
-  // 1. Déstructurez les deux jetons
-  const { access_token, refresh_token } = await this.authService.login(req.user);
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req, @Res() res) {
+    const tokenResponse = await this.authService.login(req.user);
+    const { access_token } = tokenResponse;
+    const user = {
+      id: req.user.id,
+      email: req.user.email,
+      name: req.user.name,
+      photo: req.user.photo || '',
+      role: req.user.role || 'organisateur',
+      isInPersonnel: req.user.isInPersonnel || false,
+    };
+  
+    const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}&isInPersonnel=${encodeURIComponent(user.isInPersonnel)}`;
 
-  const user = {
-    id: req.user.id,
-    email: req.user.email,
-    name: req.user.name,
-    photo: req.user.photo || '',
-    role: req.user.role || 'organisateur',
-    isInPersonnel: req.user.isInPersonnel || false,
-  };
-
-  // 2. Ajoutez le jeton de rafraîchissement à l'URL de redirection
-  const redirectUrl = `http://localhost:5173/callback?token=${access_token}&refresh_token=${refresh_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}&isInPersonnel=${encodeURIComponent(user.isInPersonnel)}`;
-
-  return res.redirect(redirectUrl);
-}
-
-
-   @Post('refresh')
-  /**
-   * Génère un nouveau couple de jetons d'accès et de rafraîchissement
-   * en échange d'un jeton de rafraîchissement valide
-   * @param refreshToken Jeton de rafraîchissement
-   * @returns Un objet contenant les deux nouveaux jetons
-   * @throws UnauthorizedException si le jeton est invalide ou a expiré
-   */
-  async refresh(@Body('refresh_token') refreshToken: string) {
-    return this.authService.refreshToken(refreshToken);
+    return res.redirect(redirectUrl);
   }
 
-  
 
 @Post('logout')
 async logout(@Req() req: Request, @Res() res: Response) {
