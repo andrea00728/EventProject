@@ -18,7 +18,7 @@ const Demo = () => {
     };
     return(
         <>
-            <section className="relative w-full min-h-screen flex flex-col md:flex-row items-center justify-center gap-8 px-6 md:px-20 py-16 bg-gray-50">
+            <section className="relative w-full min-h-20vw flex flex-col md:flex-row items-center justify-center gap-8 px-6 md:px-5 py-10 bg-gray-50">
             {/* Vidéo à gauche */}
                 {showVideo && (
                     <div className="relative w-full md:w-1/2 rounded-2xl overflow-hidden shadow-2xl">

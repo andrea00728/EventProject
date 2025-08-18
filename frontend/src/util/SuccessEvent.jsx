@@ -146,7 +146,7 @@ const SuccessEvent = () => {
                     </div>
                 ) : allEvents.length > 0 ? (
                     <>
-                        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-5">
                         {allEvents.map((event) => (
                             <div key={event.id} className="group bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/60 hover:border-blue-300/60 transition-all duration-300 hover:shadow-xl hover:shadow-blue-100/30 hover:-translate-y-1">
             
