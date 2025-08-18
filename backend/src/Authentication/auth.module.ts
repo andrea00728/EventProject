@@ -12,11 +12,13 @@ import { Personnel } from 'src/entities/Personnel';
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
 import { PresenceGateway } from 'src/gateway/presence.gateway';
+import { NotificationEntity } from 'src/entities/notification.entity';
+import { ContactMessage } from 'src/entities/ContactMessage';
 
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User,Personnel, Evenement,Forfait]),
+    TypeOrmModule.forFeature([User,Personnel, Evenement,Forfait,NotificationEntity,ContactMessage]),
     PassportModule,
     JwtModule.register({
       secret: 'andreanadjasylvanoilaina',
