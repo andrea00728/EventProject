@@ -284,19 +284,19 @@ export default function DemoTable() {
           <div className="bg-white p-6 rounded-xl shadow-lg w-[400px]">
             <h2 className="text-xl font-semibold mb-4">Modifier {editingTable.nom}</h2>
             <input
-              value={editingTable.nom}
+              defaultValue={editingTable.nom}
               onChange={(e) => handleTableChange(editingTable.id, "nom", e.target.value)}
               className="w-full border rounded px-2 py-1 mb-2"
             />
             <input
               type="number"
-              value={editingTable.capacite}
+              defaultValue={editingTable.capacite}
               onChange={(e) => handleTableChange(editingTable.id, "capacite", e.target.value)}
               min="1"
               className="w-full border rounded px-2 py-1 mb-2"
             />
             <select
-              value={editingTable.type}
+              defaultValue={editingTable.type}
               onChange={(e) => handleTableChange(editingTable.id, "type", e.target.value)}
               className="w-full border rounded px-2 py-1 mb-2"
             >
