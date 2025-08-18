@@ -76,8 +76,6 @@ import UserStats from "../pages/Admin/cards.jsx";
 import Tablecreation from "../pages/TableOrganisation/Tablecreation.jsx";
 import Publicacc from "../pages/Merge.jsx";
 
-
-
 const router=createBrowserRouter([
    
   {

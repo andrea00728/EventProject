@@ -18,7 +18,6 @@ import {
 } from "react-icons/fa";
 import io from "socket.io-client";
 
-/* Optional: hide scrollbar for this page */
 const noScrollbarCSS = `
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -94,7 +93,7 @@ const PaiementPage = () => {
       const filteredData = raw.filter((c) => c.status !== "canceled");
 
       const formatted = filteredData.map((c) => {
-        const tableInfo = c.table ? `Table ${c.table.numero}` : "N/A";
+        const tableInfo = c.table ? `Table ${c.table.nom}` : "N/A"; 
         const total = parseFloat(c.total || 0).toFixed(2);
         const amountPaid = parseFloat(c.amountPaid || 0).toFixed(2);
         const createdAt = c.orderDate
@@ -228,26 +227,44 @@ const PaiementPage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setCommandes((prev) => prev.map((cmd) => (cmd.id === id ? { ...cmd, paymentStatus: newStatus } : cmd)));
-      setSnackbar({ open: true, message: `Statut de la commande #${id} mis à jour.`, severity: "success" });
+      setCommandes((prev) =>
+        prev.map((cmd) => (cmd.id === id ? { ...cmd, paymentStatus: newStatus } : cmd))
+      );
+      setSnackbar({
+        open: true,
+        message: `Statut de la commande #${id} mis à jour.`,
+        severity: "success",
+      });
 
       if (socketRef.current) {
         socketRef.current.emit("paymentStatusChanged", { id, paymentStatus: backendStatus });
       }
     } catch (error) {
       console.error("Erreur handlePaymentStatusChange:", error);
-      setSnackbar({ open: true, message: "Échec de la mise à jour du statut.", severity: "error" });
+      setSnackbar({
+        open: true,
+        message: "Échec de la mise à jour du statut.",
+        severity: "error",
+      });
     }
   };
 
   const handleProcessPayment = async (id) => {
     const row = commandes.find((c) => c.id === id);
     if (!row) {
-      setSnackbar({ open: true, message: "Commande introuvable pour le paiement.", severity: "error" });
+      setSnackbar({
+        open: true,
+        message: "Commande introuvable pour le paiement.",
+        severity: "error",
+      });
       return;
     }
     if (row.paymentStatus === "paye") {
-      setSnackbar({ open: true, message: "Cette commande est déjà payée.", severity: "info" });
+      setSnackbar({
+        open: true,
+        message: "Cette commande est déjà payée.",
+        severity: "info",
+      });
       return;
     }
 
@@ -258,14 +275,22 @@ const PaiementPage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchCommandes();
-      setSnackbar({ open: true, message: `Paiement de la commande #${id} effectué.`, severity: "success" });
+      setSnackbar({
+        open: true,
+        message: `Paiement de la commande #${id} effectué.`,
+        severity: "success",
+      });
 
       if (socketRef.current) {
         socketRef.current.emit("paymentStatusChanged", { id, paymentStatus: "paid" });
       }
     } catch (error) {
       console.error("Erreur handleProcessPayment:", error);
-      setSnackbar({ open: true, message: "Échec du traitement du paiement.", severity: "error" });
+      setSnackbar({
+        open: true,
+        message: "Échec du traitement du paiement.",
+        severity: "error",
+      });
     }
   };
 
@@ -295,12 +320,15 @@ const PaiementPage = () => {
 
       let sequentialNumber = row.id;
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/invoices/next-sequence`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/invoices/next-sequence`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         if (response?.data?.nextSequence) sequentialNumber = response.data.nextSequence;
       } catch (err) {
-        console.warn("Pas de sequence invoice, fallback -> order id");
+        console.warn("Pas de séquence pour la facture, utilisation de l'ID de commande");
       }
 
       const invoiceNumber = `FACT-${year}-${padSequential(sequentialNumber)}`;
@@ -377,10 +405,18 @@ const PaiementPage = () => {
       printWindow.print();
       printWindow.close();
 
-      setSnackbar({ open: true, message: "Facture générée avec succès.", severity: "success" });
+      setSnackbar({
+        open: true,
+        message: "Facture générée avec succès.",
+        severity: "success",
+      });
     } catch (err) {
       console.error("Erreur handlePrintInvoice:", err);
-      setSnackbar({ open: true, message: "Erreur lors de la génération de la facture.", severity: "error" });
+      setSnackbar({
+        open: true,
+        message: "Erreur lors de la génération de la facture.",
+        severity: "error",
+      });
     }
   };
 
@@ -412,7 +448,12 @@ const PaiementPage = () => {
       headerName: "Table",
       width: 120,
       renderCell: (params) => (
-        <Chip label={params.value} color={params.value === "N/A" ? "default" : "primary"} size="small" />
+        <Chip
+          label={params.value}
+          color={params.value === "N/A" ? "default" : "primary"}
+          size="small"
+          className="font-medium rounded-full"
+        />
       ),
     },
     {
@@ -502,11 +543,31 @@ const PaiementPage = () => {
 
   if (loading) {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-screen bg-gray-50 flex items-center justify-center"
+      >
         <div className="flex items-center space-x-2 text-gray-500">
-          <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          <svg
+            className="animate-spin h-5 w-5"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            ></path>
           </svg>
           <span className="text-lg font-semibold">Chargement des données...</span>
         </div>
@@ -526,7 +587,10 @@ const PaiementPage = () => {
           <h2 className="text-4xl font-extrabold text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
             Gestion des Paiements
           </h2>
-          <Link to="/caisse" className="flex items-center px-4 py-2 bg-slate-800 text-white rounded-full shadow-lg">
+          <Link
+            to="/caisse"
+            className="flex items-center px-4 py-2 bg-slate-800 text-white rounded-full shadow-lg"
+          >
             <FaArrowLeft className="mr-2" />
             Retour
           </Link>
@@ -581,9 +645,24 @@ const PaiementPage = () => {
 
           <div className="flex-grow flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
             <div className="flex gap-2">
-              <Chip label="Tous" clickable color={filterStatus === "all" ? "primary" : "default"} onClick={() => setFilterStatus("all")} />
-              <Chip label="Payé" clickable color={filterStatus === "paye" ? "success" : "default"} onClick={() => setFilterStatus("paye")} />
-              <Chip label="Non Payé" clickable color={filterStatus === "non_paye" ? "error" : "default"} onClick={() => setFilterStatus("non_paye")} />
+              <Chip
+                label="Tous"
+                clickable
+                color={filterStatus === "all" ? "primary" : "default"}
+                onClick={() => setFilterStatus("all")}
+              />
+              <Chip
+                label="Payé"
+                clickable
+                color={filterStatus === "paye" ? "success" : "default"}
+                onClick={() => setFilterStatus("paye")}
+              />
+              <Chip
+                label="Non Payé"
+                clickable
+                color={filterStatus === "non_paye" ? "error" : "default"}
+                onClick={() => setFilterStatus("non_paye")}
+              />
             </div>
 
             <motion.button
@@ -599,7 +678,12 @@ const PaiementPage = () => {
           </div>
         </div>
 
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4, duration: 0.6 }} className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+          className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100"
+        >
           <DataGrid
             rows={filteredCommandes}
             columns={columns}
@@ -627,8 +711,17 @@ const PaiementPage = () => {
         </motion.div>
       </div>
 
-      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} variant="filled" className="w-full shadow-lg"
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          variant="filled"
+          className="w-full shadow-lg"
           sx={{
             background:
               snackbar.severity === "success"

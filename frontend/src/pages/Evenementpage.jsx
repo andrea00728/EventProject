@@ -63,7 +63,11 @@ export default function Evenemenpage() {
             onBack={() => setCurrentStep(1)}
           />
         )}
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> origin/dev_Claudio
         {currentStep === 3 && (
           <Inviteform
             eventId={evenementData.eventId}

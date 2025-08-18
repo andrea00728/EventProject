@@ -35,7 +35,6 @@ import {
   FaExchangeAlt,
 } from "react-icons/fa";
 
-// Enregistrement des composants Chart.js
 ChartJS.register(
   BarElement,
   LineElement,
@@ -48,7 +47,6 @@ ChartJS.register(
   ArcElement
 );
 
-// CSS pour masquer la barre de défilement pour les éléments avec la classe `no-scrollbar`
 const noScrollbarCSS = `
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -63,15 +61,13 @@ const style = document.createElement("style");
 style.textContent = noScrollbarCSS;
 document.head.appendChild(style);
 
-// --- Composant principal ---
 const RevenuPage = () => {
-  // États de l'application
   const [revenus, setRevenus] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalPending, setTotalPending] = useState(0);
   const [totalRefunded, setTotalRefunded] = useState(0);
   const [categoryBreakdown, setCategoryBreakdown] = useState({});
-  const [periode, setPeriode] = useState("jour"); // État inutilisé, peut être retiré ou utilisé
+  const [periode, setPeriode] = useState("jour");
   const [loading, setLoading] = useState(true);
   const [isRefunding, setIsRefunding] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,12 +78,10 @@ const RevenuPage = () => {
   const [itemsPerPage] = useState(5);
   const [chartType, setChartType] = useState("bar");
 
-  // Hooks et services
   const { token } = useStateContext();
   const navigate = useNavigate();
   const socket = useSocket();
 
-  // Constantes de style pour les graphiques
   const COLORS = {
     paid: ["rgba(34, 197, 94, 0.8)", "rgba(74, 222, 128, 0.8)"],
     pending: ["rgba(234, 179, 8, 0.8)", "rgba(250, 204, 21, 0.8)"],
@@ -98,12 +92,10 @@ const RevenuPage = () => {
     ],
   };
 
-  // Mise à jour du token pour le service de revenus
   useEffect(() => {
     revenuService.setAuthToken(token);
   }, [token]);
 
-  // Vérification de l'authentification et récupération de l'ID utilisateur
   useEffect(() => {
     async function fetchUserId() {
       if (!token) {
@@ -125,7 +117,6 @@ const RevenuPage = () => {
     fetchUserId();
   }, [token, navigate]);
 
-  // Fonction pour récupérer les revenus
   const fetchRevenus = useCallback(async () => {
     if (!token) {
       toast.error("Veuillez vous connecter pour accéder aux revenus");
@@ -167,7 +158,7 @@ const RevenuPage = () => {
             : order.paymentStatus === "refunded"
             ? "Remboursé"
             : "Non payé",
-        paymentMethod: order.paymentMethod || "Inconnu",
+        paymentMethod: "Espèces",
         date: order.orderDate
           ? new Date(order.orderDate).toLocaleString("fr-FR", {
               dateStyle: "short",
@@ -178,10 +169,9 @@ const RevenuPage = () => {
         items: Array.isArray(order.items) ? order.items : [],
       }));
 
-      const total = formattedRevenus.reduce(
-        (sum, order) => sum + parseFloat(order.total),
-        0
-      );
+      const total = formattedRevenus
+        .filter((order) => order.paymentStatus !== "Remboursé")
+        .reduce((sum, order) => sum + parseFloat(order.total), 0);
       const pending = formattedRevenus
         .filter((order) => order.paymentStatus === "Non payé")
         .reduce((sum, order) => sum + parseFloat(order.total), 0);
@@ -234,7 +224,6 @@ const RevenuPage = () => {
     }
   }, [token, navigate]);
 
-  // Fonction de remboursement avec confirmation
   const handleRefund = useCallback(
     async (id) => {
       if (!window.confirm("Confirmer le remboursement de cette commande ?"))
@@ -279,10 +268,8 @@ const RevenuPage = () => {
     [socket, navigate, fetchRevenus]
   );
 
-  // Utilisation de `debounce` pour éviter les clics multiples rapides
   const handleRefundDebounced = useMemo(() => debounce(handleRefund, 300), [handleRefund]);
 
-  // Filtrage des revenus
   const filteredRevenus = useMemo(() => {
     return revenus.filter((rev) => {
       const matchSearch =
@@ -304,7 +291,6 @@ const RevenuPage = () => {
     });
   }, [revenus, searchTerm, filterPeriod, filterStatus]);
 
-  // Exportation des données en CSV
   const exportToCSV = useCallback(() => {
     const headers = [
       "ID",
@@ -339,7 +325,6 @@ const RevenuPage = () => {
     toast.success("Exportation CSV réussie");
   }, [filteredRevenus]);
 
-  // Exportation des données en PDF
   const exportToPDF = useCallback(() => {
     const doc = new jsPDF();
     doc.setFontSize(16);
@@ -387,41 +372,109 @@ const RevenuPage = () => {
     toast.success("Exportation PDF réussie");
   }, [filteredRevenus, totalRevenue, totalPending, totalRefunded, categoryBreakdown]);
 
-  // Génération d'une facture PDF pour une commande spécifique
   const generateInvoicePDF = (order) => {
+    console.log("Données de la commande :", order);
+    console.log("Items de la commande :", order.items);
     const doc = new jsPDF();
-    doc.setFontSize(22);
-    doc.text(`Facture Commande #${String(order.id)}`, 20, 20);
+    doc.setFont("Helvetica", "normal");
+    const primaryColor = [99, 102, 241];
+    const accentColor = [255, 255, 255];
+    const textColor = [33, 33, 33];
+
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, 210, 40, "F");
+    doc.setFontSize(24);
+    doc.setTextColor(...accentColor);
+    doc.setFont("Helvetica", "bold");
+    doc.text("FACTURE", 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Numéro de facture: FACT-${new Date().getFullYear()}-${String(order.id).padStart(5, "0")}`, 20, 30);
 
     doc.setFontSize(12);
-    doc.text(`Date: ${order.date}`, 20, 30);
-    doc.text(`Client: ${order.nom} (${order.email})`, 20, 36);
-    doc.text(`Statut: ${order.paymentStatus}`, 20, 42);
-    doc.text(`Méthode de paiement: ${order.paymentMethod}`, 20, 48);
+    doc.setFont("Helvetica", "bold");
+    doc.text("Informations de la commande", 20, 50);
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(...primaryColor);
+    doc.line(20, 52, 190, 52);
+
+    doc.setFontSize(10);
+    doc.setFont("Helvetica", "normal");
+    doc.setTextColor(...textColor);
+    doc.text(`Client: ${order.nom || "Anonyme"}`, 20, 60);
+    doc.text(`Email: ${order.email || "-"}`, 20, 66);
+    doc.text(`Date: ${order.date || "-"}`, 20, 72);
+    doc.text(`Statut: ${order.paymentStatus || "Inconnu"}`, 20, 78);
+    doc.text(`Méthode de paiement: Espèces`, 20, 84);
 
     autoTable(doc, {
-      startY: 60,
+      startY: 94,
       head: [["Produit", "Catégorie", "Prix unitaire (€)", "Quantité", "Sous-total (€)"]],
-      body: order.items.map(item => [
-        item.menuItem?.name || 'N/A',
-        item.menuItem?.category || 'N/A',
-        parseFloat(item.price || 0).toFixed(2),
-        item.quantity,
-        parseFloat(item.subtotal || 0).toFixed(2),
-      ]),
-      theme: "striped",
-      styles: { fontSize: 10, cellPadding: 3 },
-      headStyles: { fillColor: [99, 102, 241], textColor: [255, 255, 255] },
+      body: order.items.map((item) => {
+        const price = parseFloat(item.price || item.unitPrice || 0).toFixed(2);
+        console.log("Item price:", price);
+        return [
+          item.menuItem?.name || "N/A",
+          item.menuItem?.category || "N/A",
+          price,
+          item.quantity || 0,
+          parseFloat(item.subtotal || 0).toFixed(2),
+        ];
+      }),
+      theme: "grid",
+      styles: {
+        font: "Helvetica",
+        fontSize: 10,
+        textColor: textColor,
+        cellPadding: 4,
+        lineColor: [200, 200, 200],
+        lineWidth: 0.2,
+      },
+      headStyles: {
+        fillColor: primaryColor,
+        textColor: accentColor,
+        fontStyle: "bold",
+        halign: "center",
+      },
+      columnStyles: {
+        0: { cellWidth: 60 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 30, halign: "right" },
+        3: { cellWidth: 20, halign: "center" },
+        4: { cellWidth: 30, halign: "right" },
+      },
+      didDrawPage: (data) => {
+        doc.setFontSize(8);
+        doc.setTextColor(...textColor);
+        doc.text(
+          `Page ${data.pageNumber}`,
+          190,
+          doc.internal.pageSize.height - 10,
+          { align: "right" }
+        );
+      },
     });
 
-    const finalY = doc.lastAutoTable.finalY;
-    doc.setFontSize(14);
-    doc.text(`Total de la commande: €${order.total}`, 20, finalY + 15);
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.setFont("Helvetica", "bold");
+    doc.text("Résumé", 20, finalY);
+    doc.setLineWidth(0.5);
+    doc.line(20, finalY + 2, 190, finalY + 2);
+
+    doc.setFontSize(10);
+    doc.setFont("Helvetica", "normal");
+    doc.text(`Total de la commande: €${parseFloat(order.total || 0).toFixed(2)}`, 20, finalY + 10);
+    doc.text(`Montant payé: €${parseFloat(order.amountPaid || 0).toFixed(2)}`, 20, finalY + 16);
+    doc.text(
+      `Reste à payer: €${(parseFloat(order.total || 0) - parseFloat(order.amountPaid || 0)).toFixed(2)}`,
+      20,
+      finalY + 22
+    );
+
     doc.save(`facture_commande_${String(order.id)}.pdf`);
     toast.success("Facture PDF générée avec succès");
   };
 
-  // Logique de pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredRevenus.slice(indexOfFirstItem, indexOfLastItem);
@@ -436,7 +489,6 @@ const RevenuPage = () => {
     [totalPages]
   );
 
-  // Création d'un dégradé pour les graphiques
   const createGradient = (ctx, chartArea, colors) => {
     const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
     colors.forEach((color, index) => {
@@ -445,7 +497,6 @@ const RevenuPage = () => {
     return gradient;
   };
 
-  // Données pour le graphique en anneau (Pie)
   const pieChartData = useMemo(() => {
     const labels = Object.keys(categoryBreakdown);
     const data = Object.values(categoryBreakdown);
@@ -461,7 +512,6 @@ const RevenuPage = () => {
     };
   }, [categoryBreakdown]);
 
-  // Données pour le graphique à barres (Bar)
   const barChartData = useMemo(
     () => ({
       labels: ["Payé", "Non payé", "Remboursé"],
@@ -469,7 +519,7 @@ const RevenuPage = () => {
         {
           label: "Revenus",
           data: [
-            parseFloat(totalRevenue) - parseFloat(totalPending) - parseFloat(totalRefunded),
+            parseFloat(totalRevenue),
             parseFloat(totalPending),
             parseFloat(totalRefunded),
           ],
@@ -500,7 +550,6 @@ const RevenuPage = () => {
     [totalRevenue, totalPending, totalRefunded]
   );
 
-  // Données pour le graphique en ligne (Line)
   const timeSeriesChartData = useMemo(
     () => ({
       labels: timeSeriesData.map((item) => item.date),
@@ -537,7 +586,6 @@ const RevenuPage = () => {
     [timeSeriesData]
   );
 
-  // Options pour les graphiques
   const chartOptions = useMemo(
     () => ({
       responsive: true,
@@ -592,7 +640,6 @@ const RevenuPage = () => {
     []
   );
 
-  // Effet pour le chargement initial des données et la gestion des WebSockets
   useEffect(() => {
     if (!token) {
       navigate("/login");
@@ -620,7 +667,6 @@ const RevenuPage = () => {
     return socketCleanup;
   }, [token, socket, navigate, fetchRevenus]);
 
-  // Composant pour afficher le statut avec une pastille de couleur
   const StatusPill = ({ status }) => {
     let colorClass, text;
     switch (status) {
@@ -647,7 +693,6 @@ const RevenuPage = () => {
     );
   };
 
-  // --- Rendu du composant ---
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -656,7 +701,6 @@ const RevenuPage = () => {
       className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8 font-inter no-scrollbar"
     >
       <div className="max-w-7xl mx-auto flex flex-col space-y-6">
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
             Tableau de Bord des Revenus
@@ -670,7 +714,6 @@ const RevenuPage = () => {
             Retour
           </Link>
         </div>
-        {/* Key Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             {
@@ -710,7 +753,6 @@ const RevenuPage = () => {
             </motion.div>
           ))}
         </div>
-        {/* Filters and Actions */}
         <div className="bg-white rounded-3xl shadow-xl p-5 flex flex-wrap gap-4 items-center border border-gray-200">
           <div className="relative w-full sm:w-1/3">
             <input
@@ -788,7 +830,6 @@ const RevenuPage = () => {
             </motion.button>
           </div>
         </div>
-        {/* Charts and Table */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -934,7 +975,6 @@ const RevenuPage = () => {
                 </tbody>
               </table>
             </div>
-            {/* Pagination */}
             <div className="flex justify-between items-center mt-6">
               <span className="text-sm text-gray-600">
                 Page {currentPage} sur {totalPages}
