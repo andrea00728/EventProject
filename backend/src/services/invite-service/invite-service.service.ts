@@ -49,6 +49,15 @@ export class GuestService {
     return user;
   }
 
+
+
+  /**
+   * 
+   * @param dto 
+   * @param eventId 
+   * @param userId 
+   * @returns 
+   */
   async createGuest(dto: CreateInviteDto, eventId: number, userId?: string | null): Promise<Invite> {
     const evenement = await this.evenementRepository.findOne({ where: { id: eventId } });
     if (!evenement) {
@@ -71,12 +80,12 @@ export class GuestService {
       throw new BadRequestException(`L'email ${dto.email} est deja utilisé par un membre du personnel de votre evenement ${evenement.nom}.`);
     }
 
-    let Existing_user:User |null = null;
+    let Existing_user:User |  null = null;
      if(userId){
        Existing_user = await this.findOneById(userId);
      }
     if(Existing_user && Existing_user.email === dto.email){
-      throw new BadRequestException(`L'email ${dto.email} est deja utilisé par vous.`);
+      throw new BadRequestException(`L'email ${dto.email} est votre email.`);
     }
 
     const { table, place } = await this.findNextAvailablePlace(eventId);
@@ -101,6 +110,14 @@ export class GuestService {
   }
 
   // Limite des invités par utilisateur / public
+  /**
+   * 
+   * @param eventId 
+   * @param userId 
+   * @param newInviteCount 
+   * @returns 
+   */
+
   async checkInviteLimit(eventId: number, userId: string, newInviteCount: number): Promise<void> {
     // Bypass pour invités publics (userId = 'public-guest')
     if (userId === 'public-guest') return;
@@ -235,7 +252,19 @@ async importGuests(file: Express.Multer.File, eventId: number,userId:string): Pr
             errors.push(`L'email ${record.email} est déjà utilisé pour cet événement`);
             continue;
           }
-
+          const Existing_personnel = await this.personnelService.findOneByUserEmailAndEvent(record.email, eventId);
+          if(Existing_personnel){
+            errors.push(`L'email ${record.email} est deja utilisé par un membre du personnel de votre evenement ${evenement.nom}.`);
+            continue;
+          }
+          let Existing_user:User |  null = null;
+          if(userId){
+            Existing_user = await this.findOneById(userId);
+          }
+          if(Existing_user && Existing_user.email === record.email){
+            throw new BadRequestException(`L'email ${record.email} est votre email.`);
+            continue;
+          }
           let table: any = null;
           let place: number | null = null;
 
