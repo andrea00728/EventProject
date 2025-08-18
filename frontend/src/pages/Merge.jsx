@@ -16,6 +16,8 @@ import Aboutus from "../util/Aboutus";
 import NosForfaits from "../util/nosForfaits";
 import Footer from "./footer";
 
+import Demo from "../util/Dem";
+
 const images = [
   "/images/music-7238254_1280.jpg",
   "/images/birthday.jpeg",
@@ -314,7 +316,8 @@ const Publicacc = () => {
                     {/* <div className="transform hover:-translate-y-2 transition-all duration-300 cursor-pointer">
                     <ButtonConnexion />
                     </div> */}
-                    <button
+                    <a
+                    href="#demo"
                     className="relative overflow-hidden group flex items-center justify-center bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 text-white px-7 py-3 w-[90%] h-[50px] sm:w-80 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 text-base font-semibold tracking-wide focus:outline-none focus:ring-4 focus:ring-blue-200/50 border-2 border-transparent cursor-pointer"
                     style={{
                       backgroundImage: `linear-gradient(to right, rgb(31, 41, 55), rgb(17, 24, 39)), linear-gradient(to right, rgb(59, 130, 246), rgb(147, 51, 234), rgb(236, 72, 153))`,
@@ -342,7 +345,7 @@ const Publicacc = () => {
                         d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m6-9V8a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h12a3 3 0 013 3z"
                       />
                     </svg>
-                  </button>
+                  </a>
                 </motion.div>
 
                 {/* Statistiques */}
@@ -429,6 +432,15 @@ const Publicacc = () => {
             </div>
         </section>
 
+
+        <section id="demo" >
+            <div className="bg-gradient-to-b from-gray-50 to-white">
+                <Demo />
+            </div>
+        </section>
+
+        
+
         {/* Section Événements de Succès - Design Pro avec gestion d'images */}
         <section id="success">
             <div className="bg-gradient-to-b from-gray-50 to-white">
@@ -442,7 +454,7 @@ const Publicacc = () => {
             </div>
         </section>
         
-        <section id="plans" ref={contactRef}>
+        <section id="forfaits" ref={contactRef}>
             <div className="bg-gradient-to-b from-gray-50 to-white">
                 <NosForfaits />
             </div>

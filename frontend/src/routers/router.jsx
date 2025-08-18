@@ -550,8 +550,7 @@ const router=createBrowserRouter([
       },
       {
         path: "/pagepublic",
-        // element: <Pagepublic />,
-        element:<Publicacc/>
+        element:<Publicacc/>  
       },
       {
         path: "/connexion",

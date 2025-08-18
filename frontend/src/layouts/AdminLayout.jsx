@@ -152,8 +152,7 @@ export default function AdminLayout() {
             sender: 'Admin',
             timestamp: new Date(Date.now() - 25 * 60000),
             isAdmin: true,
-          },
-          
+          }
         ]);
       }
     }, [conversation]);
