@@ -1,4 +1,3 @@
-// src/components/MenuListWithCart.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -8,7 +7,7 @@ import CartDrawer from './CartDrawer';
 import InvoiceModal from './InvoiceModal';
 
 const MenuListWithCart = () => {
-  const slug = useParams();
+  const { slug } = useParams(); 
   const navigate = useNavigate();
 
   const [menus, setMenus] = useState([]);
@@ -37,18 +36,14 @@ const MenuListWithCart = () => {
         navigate('/pagepublic');
         return;
       }
-      console.log(slug);
 
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/qr/${slug.slug}/info`);
-        console.log(response.data);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/qr/${slug}/info`);
         setSelectedEvent(response.data.eventId);
         setSelectedTable(response.data.tableId);
         setCurrentSlug(slug);
-        console.log('Short link info:', response.data.eventId);
-        console.log('Short table info:', response.data.tableId);
       } catch (error) {
-        console.error(error);
+        console.error('Erreur lors de la récupération des infos du lien:', error);
         setMessage('Impossible de récupérer les informations du lien.');
         setTimeout(() => setMessage(''), 3000);
         navigate('/pagepublic');
@@ -60,43 +55,61 @@ const MenuListWithCart = () => {
 
   // Charger les menus
   useEffect(() => {
-  const fetchMenus = async () => {
-    if (!selectedEvent) return;
+    const fetchMenus = async () => {
+      if (!selectedEvent) return;
 
-    try {
-      setIsLoading(true);
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      try {
+        setIsLoading(true);
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-      // On suppose que res.data est un tableau de menus avec items
-      const formattedMenus = res.data.map(menu => ({
-        ...menu,
-        items: menu.items.map(item => ({
-          ...item,
-        })),
-      }));
+        const formattedMenus = res.data.map(menu => ({
+          ...menu,
+          items: menu.items.map(item => ({
+            ...item,
+          })),
+        }));
 
-      setMenus(formattedMenus);
-    } catch (error) {
-      console.error(error);
-      setMessage('Oups, impossible de charger les menus.');
-      setTimeout(() => setMessage(''), 3000);
-    } finally {
-      setIsLoading(false);
-    }
+        setMenus(formattedMenus);
+      } catch (error) {
+        console.error('Erreur lors du chargement des menus:', error);
+        setMessage('Oups, impossible de charger les menus.');
+        setTimeout(() => setMessage(''), 3000);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMenus();
+  }, [selectedEvent, token]);
+
+  // Fonction pour vider le panier
+  const clearCart = () => {
+    // Restaurer les stocks des items dans les menus
+    const updatedMenus = menus.map(menu => ({
+      ...menu,
+      items: menu.items.map(item => {
+        const cartItem = cart.find(ci => ci.id === item.id);
+        return cartItem ? { ...item, stock: item.stock + cartItem.quantity } : item;
+      }),
+    }));
+    setMenus(updatedMenus);
+    setCart([]); // Vider le panier
+    setMessage('Commande validée et panier vidé !');
+    setTimeout(() => setMessage(''), 3000);
   };
-
-  fetchMenus();
-}, [selectedEvent, token]);
-
 
   // Fonctions Panier
   const addToCart = (item) => {
     const existing = cart.find(ci => ci.id === item.id);
     const quantityInCart = existing ? existing.quantity : 0;
 
-    if (item.stock <= 0) return;
+    if (item.stock <= 0) {
+      setMessage(`Stock épuisé pour "${item.name}".`);
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
 
     const updatedMenus = menus.map(menu => ({
       ...menu,
@@ -210,7 +223,7 @@ const MenuListWithCart = () => {
       setIsInvoiceOpen(true);
     } else {
       setMessage('Votre panier est vide.');
-      setTimeout(() => setMessage(''), 3000);         
+      setTimeout(() => setMessage(''), 3000);
     }
   };
 
@@ -222,19 +235,6 @@ const MenuListWithCart = () => {
         cartLength={cart.length}
         onCartOpen={() => setIsCartOpen(true)}
       />
-      {/* <div className="flex flex-wrap gap-4 mb-6 text-sm">
-
-        <input
-          type="number"
-          placeholder="Prix min"
-          value={minPrice}
-          onChange={(e) => setMinPrice(e.target.value)}
-          className="px-2 py-1 border rounded-md shadow-sm"
-        />
-          type="number"
-          className="px-2 py-1 border rounded-md shadow-sm"
-        />
-      </div> */}
 
       {message && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
@@ -250,7 +250,7 @@ const MenuListWithCart = () => {
         <>
           <div>
             <h2 className="text-2xl font-bold mb-4">Menu pour l'événement {selectedEvent}</h2>
-            <div className='w-sceen flex items-center justify-center'>
+            <div className="w-screen flex items-center justify-center">
               <MenuGrid menus={paginatedMenus} addToCart={addToCart} formatPrice={formatPrice} />
             </div>
 
@@ -259,8 +259,7 @@ const MenuListWithCart = () => {
                 {Array.from({ length: totalPages }).map((_, i) => (
                   <button
                     key={i}
-                    className={`px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'
-                      }`}
+                    className={`px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     onClick={() => setCurrentPage(i + 1)}
                   >
                     {i + 1}
@@ -292,6 +291,7 @@ const MenuListWithCart = () => {
         selectedEvent={selectedEvent}
         selectedTable={selectedTable}
         currentSlug={currentSlug}
+        onValidateSuccess={clearCart} 
       />
     </div>
   );

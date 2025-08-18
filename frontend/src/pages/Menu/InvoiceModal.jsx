@@ -10,8 +10,8 @@ const InvoiceModal = ({
   formatPrice,
   selectedEvent,
   selectedTable,
+  currentSlug,
   onValidateSuccess,
-  onCancel, 
 }) => {
   const token = localStorage.getItem('token');
   const [email, setEmail] = useState('');
@@ -68,7 +68,8 @@ const InvoiceModal = ({
             prenom: 'Automatique',
             email,
             sex: 'M',
-          }
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         setInviteExists(false);
         setSuccess('Nouvel invité enregistré avec succès.');
@@ -76,7 +77,7 @@ const InvoiceModal = ({
 
       setIsEmailChecked(true);
     } catch (err) {
-      console.error(err);
+      console.error('Erreur lors de la vérification de l\'email:', err);
       setError('Erreur lors de la vérification ou création de l\'invité.');
       setIsEmailChecked(false);
     } finally {
@@ -113,12 +114,11 @@ const InvoiceModal = ({
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert('Commande validée avec succès !');
-
-      if (onValidateSuccess) onValidateSuccess();
+      setSuccess('Commande validée avec succès !');
+      if (onValidateSuccess) onValidateSuccess(); // Appelle clearCart pour vider le panier
       onClose();
     } catch (err) {
-      console.error(err);
+      console.error('Erreur lors de la validation de la commande:', err);
       setError('Erreur lors de la validation de la commande.');
     } finally {
       setIsSubmitting(false);
@@ -140,15 +140,11 @@ const InvoiceModal = ({
     doc.text(`Date : ${new Date().toLocaleDateString('fr-FR')}`, margin, y);
     y += 8;
 
-    if (selectedEvent?.nom) {
-      doc.text(`Événement : ${selectedEvent.nom}`, margin, y);
-      y += 8;
-    }
+    doc.text(`Événement : ${eventId}`, margin, y);
+    y += 8;
 
-    if (selectedTable?.nom) {
-      doc.text(`Table : ${selectedTable.nom}`, margin, y);
-      y += 8;
-    }
+    doc.text(`Table : ${tableId}`, margin, y);
+    y += 8;
 
     doc.text(`Client : ${email}`, margin, y);
     y += 12;
@@ -239,10 +235,7 @@ const InvoiceModal = ({
           </button>
           <button
             className="flex-1 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
-            onClick={() => {
-              if (onCancel) onCancel(); 
-              onClose();
-            }}
+            onClick={onClose}
             disabled={isSubmitting}
           >
             Fermer
