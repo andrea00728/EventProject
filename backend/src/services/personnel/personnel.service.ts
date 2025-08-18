@@ -87,22 +87,6 @@ async confirmEmail(token: string): Promise<string> {
 }
 
 
-/**
- * Refuses a personnel invitation for an event.
- *
- * This function decodes a JWT token to extract the user's email and event ID,
- * and attempts to find the corresponding personnel entry with a status of "attent"
- * (pending). If the personnel entry is found and its status is pending, the entry
- * is removed and a notification is sent. If the entry is not found or its status
- * is not pending, appropriate exceptions are thrown.
- *
- * @param token - A JWT token containing the user's email and event ID.
- * @returns A promise that resolves to a success message if the invitation is refused.
- * @throws NotFoundException if the invitation is not found or already processed.
- * @throws BadRequestException if the token is invalid or expired, or if the invitation
- *         is already confirmed or refused.
- */
-
 async RefuseEmail(token: string): Promise<string> {
   try {
     const decoded = this.jwtService.verify(token);
@@ -136,22 +120,6 @@ async RefuseEmail(token: string): Promise<string> {
 }
 
 
-/**
- * Creates a new personnel entry for the given event and user.
- * 
- * This function attempts to find the specified event by its ID and the
- * user ID. If the event is found, it creates a personnel entry with the
- * status "attent" (pending) and sends a notification to all users. 
- * It generates a JWT token for confirmation and refusal actions and
- * sends an email to the personnel's email address with links to confirm
- * or refuse the role.
- *
- * @param dto - Data transfer object containing personnel details.
- * @param userId - The ID of the user creating the personnel entry.
- * @returns A promise that resolves to the newly created Personnel object.
- * @throws BadRequestException if the event is not found for the user.
- */
-
 async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
   const evenement = await this.evenementRepository.findOne({
     where: {
@@ -165,13 +133,47 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
     throw new BadRequestException("Événement non trouvé pour cet utilisateur.");
   }
 
+
+  // Vérification si l'utilisateur a déjà un rôle dans cet événement
+  const existingPersonnel = await this.personnelRepository.findOne({
+    where: {
+      email: dto.email,
+      evenement: { id: Number(dto.evenementId) },
+    },
+  });
+
+  if (existingPersonnel) {
+    throw new BadRequestException(`L'utilisateur ${dto.email} a deja un rôle dans cet événement.`);
+  }
+
+  // Vérification des chevauchements de dates avec d'autres événements
+  const personnelEvents = await this.personnelRepository.find({
+    where: {
+      email: dto.email,
+    },
+    relations: ['evenement'],
+  });
+
+  const isDateConflict = personnelEvents.some((personnel) => {
+    const otherEvent = personnel.evenement;
+    // Vérifier si les dates de l'événement actuel chevauchent celles d'un autre événement
+    return (
+      evenement.date <= otherEvent.date_fin &&
+      evenement.date_fin >= otherEvent.date
+    );
+  });
+  if (isDateConflict) {
+    throw new BadRequestException(`L'utilisateur ${dto.email} a déjà un rôle dans un autre événement à ces dates.`);
+  }
+  
+
   //  Création du personnel avec statut "pending"
   const personnel = this.personnelRepository.create({
     nom: dto.nom,
     email: dto.email,
     role: dto.role,
     evenement,
-    status: 'attent', 
+    status: 'attent',
   });
 
   const savedPersonnel = await this.personnelRepository.save(personnel);
@@ -185,8 +187,8 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
     { expiresIn: '2d' }
   );
 
-  const confirmationLink = `https://mastertable.site/personnel/response?token=${token}&action=confirm`;
-  const refuseLink = `https://mastertable.site/personnel/response?token=${token}&action=refuse`;
+  const confirmationLink = `http://localhost:5173/personnel/response?token=${token}&action=confirm`;
+  const refuseLink = `http://localhost:5173/personnel/response?token=${token}&action=refuse`;
 
   const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -215,19 +217,6 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
   return savedPersonnel;
 }
 
-/**
- * Finds a personnel entry by user email and event ID.
- *
- * This function searches the personnel repository for a record
- * that matches the given email and event ID, returning the
- * corresponding Personnel object if found.
- *
- * @param email - The email of the personnel to find.
- * @param eventId - The ID of the event associated with the personnel.
- * @returns A promise that resolves to the Personnel object if found,
- *          or null if no matching record is found.
- */
-
 async findOneByUserEmailAndEvent(email: string, eventId: number): Promise<Personnel | null> {
   return await this.personnelRepository.findOne({
     where: {
@@ -246,17 +235,6 @@ async findOneByUserEmailAndEvent(email: string, eventId: number): Promise<Person
  * 
  */
 
-  /**
-   * Finds a personnel entry by user email.
-   *
-   * This function searches the personnel repository for a record
-   * that matches the given email, returning the corresponding
-   * Personnel object if found.
-   *
-   * @param email - The email of the personnel to find.
-   * @returns A promise that resolves to the Personnel object if found,
-   *          or null if no matching record is found.
-   */
 async findOneByUserEmail(email: string): Promise<Personnel | null> {
   return await this.personnelRepository.findOne({
     where: {
@@ -266,12 +244,6 @@ async findOneByUserEmail(email: string): Promise<Personnel | null> {
   });
 }
 
-  /**
-   * Finds the count of personnel entries associated with the given event ID.
-   *
-   * @param evenementId - The ID of the event for which to count personnel.
-   * @returns A promise that resolves to the count of personnel entries for the given event.
-   */
 async findCountPersonnelByEvenement(evenementId: number): Promise<number> {
     const count = await this.personnelRepository.count({
       where: {
@@ -282,7 +254,4 @@ async findCountPersonnelByEvenement(evenementId: number): Promise<number> {
     });
     return count;
   }
-
-
-
 }
