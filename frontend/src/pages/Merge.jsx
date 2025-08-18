@@ -4,13 +4,14 @@ import NosService from "../util/nosService";
 import Testimonials from "../util/testimony";
 import Contact from "../util/contact";
 import ButtonConnexion from "../util/buttonconnexion";
-import { getCountEvents } from "../services/evenementServ";
+import {  getCountEvents } from "../services/evenementServ";
 import { FormaNumber } from "../services/controll_champs/controll_limite";
 import { getUserCount } from "../services/userService";
+
 import { AuthModal } from "../components/Modal/authModal";
 import NosForfaits from '../util/nosForfaits';
-// import Card from '../components/Card';
-
+import SuccessEvent from "../util/SuccessEvent";
+import Aboutus from "../util/Aboutus";
 
 const images = [
   "/images/music-7238254_1280.jpg",
@@ -22,7 +23,7 @@ const images = [
 
 const Publicacc = () => {
   const [current, setCurrent] = useState(0);
-  const [isModalOpen, setModalOpen] = useState(false);
+  const [isModalOpen, setModalOpen] = useState(false); // État pour le authModal
   const intervalRef = useRef(null);
   const touchStartX = useRef(0);
   const accueilRef = useRef(null);
@@ -31,13 +32,22 @@ const Publicacc = () => {
   const testimonyRef = useRef(null);
   const plansRef = useRef(null);
   const [eventCount,setEventCount] = useState(0);
+  
   const [organisateurCount,setOrganisateurCount] = useState(0);
-
   useEffect(() => {
     const hash = window.location.hash;
-    if (hash === "#service" && serviceRef.current) serviceRef.current.scrollIntoView({ behavior: "smooth" });
-    if (hash === "#contact" && contactRef.current) contactRef.current.scrollIntoView({ behavior: "smooth" });
-    if (hash === "#testimony" && testimonyRef.current) testimonyRef.current.scrollIntoView({ behavior: "smooth" });
+    if (hash === "#service" && serviceRef.current) {
+      serviceRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+    if (hash === "#contact" && contactRef.current) {
+      contactRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+    if (hash === "#testimony" && testimonyRef.current) {
+      testimonyRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+    if (hash === "#plans" && plansRef.current) {
+      testimonyRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   }, []);
 
   useEffect(() => {
@@ -47,39 +57,30 @@ const Publicacc = () => {
 
   const startAutoPlay = () => {
     stopAutoPlay();
-    intervalRef.current = setInterval(() => next(), 2000);
+    intervalRef.current = setInterval(() => {
+      next();
+    }, 2000);
   };
 
   const stopAutoPlay = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
 
-  const Card = ({ title, price, invitations, events, duration, active, expire }) => {
-    return (
-      <div className={`rounded-xl shadow-lg p-6 border ${
-          active ? "bg-yellow-400 border-yellow-500 relative" : "bg-white border-gray-200"
-        }`}>
-        {active && (
-          <div className="absolute top-3 right-3 bg-white text-yellow-600 px-3 py-1 rounded-full text-xs font-bold">
-            Actif
-          </div>
-        )}
-        <h3 className="text-xl font-bold mb-4">{title}</h3>
-        <p className="text-2xl font-extrabold mb-2">{price}</p>
-        <p>Invitations : {invitations}</p>
-        <p>Événements : {events}</p>
-        <p>Durée : {duration}</p>
-        {active && expire && <p className="mt-2 text-sm">Expire le : {expire}</p>}
-      </div>
-    );
+  const prev = () =>
+    setCurrent((prev) => (prev - 1 + images.length) % images.length);
+
+  const next = () =>
+    setCurrent((prev) => (prev + 1) % images.length);
+
+  const goTo = (index) => setCurrent(index);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
   };
 
-  const prev = () => setCurrent((prev) => (prev - 1 + images.length) % images.length);
-  const next = () => setCurrent((prev) => (prev + 1) % images.length);
-  const goTo = (index) => setCurrent(index);
-  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEnd = (e) => {
-    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    const touchEndX = e.changedTouches[0].clientX;
+    const delta = touchEndX - touchStartX.current;
     if (delta > 50) prev();
     else if (delta < -50) next();
   };
@@ -87,28 +88,48 @@ const Publicacc = () => {
   useEffect(()=>{
     const fetchData = async () => {
       try{
-        const count = await getCountEvents();
-        setEventCount(count);
-      }catch(err){ console.log(err) } 
+         const count = await getCountEvents();
+      setEventCount(count);
+      }catch(err){
+        console.log(err)
+      } 
     };
     fetchData();
   },[]);
 
   useEffect(()=>{
     const fetchDataUserCount= async () =>{
-      try{
-        const count =await getUserCount();
-        setOrganisateurCount(count);
-      }catch(err){ console.log(err) }
+     try{
+
+      const count =await getUserCount();
+      setOrganisateurCount(count);
+     }catch(err){
+      console.log(err)
+     }
     };
     fetchDataUserCount();
-  },[]);
+    },[]);
 
+    const renderStars= (currentRating, interactive = false) => {
+      return [...Array(5)].map((_, index) => (
+        <FaStar
+          key={index}
+          onClick={interactive ? () => setRating(index + 1) : undefined}
+          onMouseEnter={interactive ? () => setHoverRating(index + 1) : undefined}
+          onMouseLeave={interactive ? () => setHoverRating(0) : undefined}
+          className={`${interactive ? "cursor-pointer" : ""} transition-all duration-300 transform ${
+            index < (interactive ? hoverRating || rating : currentRating)
+              ? "text-yellow-400 scale-110 drop-shadow-lg"
+              : "text-gray-300"
+          } ${interactive && index < (hoverRating || rating) ? "hover:scale-125" : ""}`}
+          size={interactive ? 32 : 20}
+        />
+      ));
+    };
   return (
     <>
-      <AuthModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
 
-      {/* Slider Principal */}
+      <AuthModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
       <section id="pagepublic" ref={accueilRef}>
         <div
           className="relative w-full h-screen overflow-hidden"
@@ -117,7 +138,9 @@ const Publicacc = () => {
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
+          {/* Background avec overlay gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/60 z-10" />
+
           <div className="relative h-full rounded-lg">
             <AnimatePresence>
               <motion.img
@@ -133,8 +156,10 @@ const Publicacc = () => {
             </AnimatePresence>
           </div>
 
+          {/* Contenu principal */}
           <div className="absolute inset-0 flex items-center justify-center z-20">
             <div className="text-center space-y-8 max-w-4xl px-6">
+              {/* Badge animé */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -146,6 +171,7 @@ const Publicacc = () => {
                 </span>
               </motion.div>
 
+              {/* Titre principal */}
               <motion.h1
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -162,6 +188,7 @@ const Publicacc = () => {
                 </span>
               </motion.h1>
 
+              {/* Sous-titre */}
               <motion.p
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -172,14 +199,16 @@ const Publicacc = () => {
                 <span className="font-semibold text-orange-300"> Votre expérience commence ici.</span>
               </motion.p>
 
+              {/* Boutons d'action */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.9 }}
                 className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8"
               >
+
                 <button
-                  onClick={() => setModalOpen(true)}
+                  onClick={() => setModalOpen(true)} // Ouvrir le modal à la cliqué
                   className="group relative bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white px-10 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-orange-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[200px] cursor-pointer"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-3">
@@ -216,54 +245,103 @@ const Publicacc = () => {
             </div>
           </div>
 
-          {/* Contrôles du slider */}
-          <button onClick={prev} className="absolute left-6 top-1/2 -translate-y-1/2 z-30 w-12 h-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-2xl hover:bg-white/20 hover:scale-110 transition-all duration-300 flex items-center justify-center" aria-label="Previous">
+          {/* Indicateurs élégants */}
+          {/* <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30">
+            <div className="flex space-x-4 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => goTo(i)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    i === current 
+                      ? "bg-white scale-125 shadow-lg" 
+                      : "bg-white/50 hover:bg-white/70"
+                  }`}
+                  aria-label={`Slide ${i + 1}`}
+                />
+              ))}
+            </div>
+          </div> */}
+
+          {/* Contrôles stylisés */}
+          <button
+            onClick={prev}
+            className="absolute left-6 top-1/2 -translate-y-1/2 z-30 w-12 h-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-2xl hover:bg-white/20 hover:scale-110 transition-all duration-300 flex items-center justify-center"
+            aria-label="Previous"
+          >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <button onClick={next} className="absolute right-6 top-1/2 -translate-y-1/2 z-30 w-12 h-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-2xl hover:bg-white/20 hover:scale-110 transition-all duration-300 flex items-center justify-center" aria-label="Next">
+          <button
+            onClick={next}
+            className="absolute right-6 top-1/2 -translate-y-1/2 z-30 w-12 h-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-2xl hover:bg-white/20 hover:scale-110 transition-all duration-300 flex items-center justify-center"
+            aria-label="Next"
+          >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
+
+          {/* Effet de scroll vers le bas */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 1.3, repeat: Infinity, repeatType: "reverse" }}
+            className="absolute bottom-16 left-1/2 transform -translate-x-1/2 z-20"
+          >
+            <div className="flex flex-col items-center text-white/60">
+              <span className="text-xs font-medium mb-2 tracking-wide">Découvrez plus</span>
+              <svg className="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      
-      {/* Sections existantes */}
       <section id="service" ref={serviceRef}>
         <div className="bg-gradient-to-b from-gray-50 to-white">
           <NosService />
         </div>
       </section>
 
-      <section id="testimony" ref={testimonyRef}>
+       {/* Section Événements de Succès - Design Pro avec gestion d'images */}
+        <section id="success">
+            <div className="bg-gradient-to-b from-gray-50 to-white">
+                <SuccessEvent />
+            </div>
+        </section>
+
+      <section id="testimony" ref={testimonyRef} >
         <div className="bg-gradient-to-b from-gray-50 to-white">
           <Testimonials />
         </div>
       </section>
 
-      <section id="plans" ref={plansRef}>
-        <div className="bg-gradient-to-b from-gray-50 to-white">
-          <NosForfaits />
-        </div>
-      </section>
+      {/* Section À Propos */}
+        <section id="about">
+            <div className="bg-gradient-to-b from-gray-50 to-white">
+                <Aboutus />
+            </div>
+        </section>
 
+      <section id="plans" ref={plansRef}>
+          <div className="bg-gradient-to-b from-gray-50 to-white">
+            <NosForfaits />
+          </div>
+      </section>
 
       <section id="contact" ref={contactRef}>
         <div className="bg-gradient-to-b from-gray-50 to-white">
           <Contact />
         </div>
       </section>
-
-      
-
-      {/* Footer */}
       <footer className="bg-gray-700 p-5">
         <div className="">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-4">
+              {/* Logo/Nom */}
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-[#FB9E3A] to-orange-400 rounded-xl flex items-center justify-center">
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -272,12 +350,30 @@ const Publicacc = () => {
                 </div>
                 <span className="text-xl font-black text-white">Rapex group</span>
               </div>
-              <p className="text-slate-400 text-sm">© 2025. Tous droits réservés</p>
+              <p className="text-slate-400 text-sm">
+                © 2025. Tous droits réservés
+              </p>
             </div>
+
             <div className="flex items-center gap-6 text-sm">
-              <a href="#" className="text-slate-400 hover:text-white transition-colors hover:underline">Politique de confidentialité</a>
-              <a href="#" className="text-slate-400 hover:text-white transition-colors hover:underline">Conditions d'utilisation</a>
-              <a href="#" className="text-slate-400 hover:text-white transition-colors hover:underline">Support</a>
+              <a
+                href="#"
+                className="text-slate-400 hover:text-white transition-colors hover:underline"
+              >
+                Politique de confidentialité
+              </a>
+              <a
+                href="#"
+                className="text-slate-400 hover:text-white transition-colors hover:underline"
+              >
+                Conditions d'utilisation
+              </a>
+              <a
+                href="#"
+                className="text-slate-400 hover:text-white transition-colors hover:underline"
+              >
+                Support
+              </a>
             </div>
           </div>
         </div>

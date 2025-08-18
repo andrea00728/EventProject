@@ -9,6 +9,9 @@ import { FormaNumber } from "../services/controll_champs/controll_limite";
 import { getUserCount } from "../services/userService";
 
 import { AuthModal } from "../components/Modal/authModal";
+import NosForfaits from '../util/nosForfaits';
+import SuccessEvent from "../util/SuccessEvent";
+import Aboutus from "../util/Aboutus";
 
 const images = [
   "/images/music-7238254_1280.jpg",
@@ -27,6 +30,9 @@ const Public_Accueil = () => {
   const serviceRef = useRef(null);
   const contactRef = useRef(null);
   const testimonyRef = useRef(null);
+  const plansRef = useRef(null);
+  const successRef = useRef(null);
+   const aboutRef = useRef(null);aboutRef
   const [eventCount,setEventCount] = useState(0);
   
   const [organisateurCount,setOrganisateurCount] = useState(0);
@@ -35,10 +41,16 @@ const Public_Accueil = () => {
     if (hash === "#service" && serviceRef.current) {
       serviceRef.current.scrollIntoView({ behavior: "smooth" });
     }
+    if (hash === "#success" && successRef.current) {
+      successRef.current.scrollIntoView({ behavior: "smooth" });
+    }
     if (hash === "#contact" && contactRef.current) {
       contactRef.current.scrollIntoView({ behavior: "smooth" });
     }
     if (hash === "#testimony" && testimonyRef.current) {
+      testimonyRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+    if (hash === "#plans" && plansRef.current) {
       testimonyRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, []);
@@ -299,10 +311,30 @@ const Public_Accueil = () => {
         </div>
       </section>
 
+       {/* Section Événements de Succès - Design Pro avec gestion d'images */}
+        <section id="success" ref={successRef}>
+            <div className="bg-gradient-to-b from-gray-50 to-white">
+                <SuccessEvent />
+            </div>
+        </section>
+
       <section id="testimony" ref={testimonyRef} >
         <div className="bg-gradient-to-b from-gray-50 to-white">
           <Testimonials />
         </div>
+      </section>
+
+      {/* Section À Propos */}
+        <section id="about" ref={aboutRef}>
+            <div className="bg-gradient-to-b from-gray-50 to-white">
+                <Aboutus />
+            </div>
+        </section>
+
+      <section id="plans" ref={plansRef}>
+          <div className="bg-gradient-to-b from-gray-50 to-white">
+            <NosForfaits />
+          </div>
       </section>
 
       <section id="contact" ref={contactRef}>
