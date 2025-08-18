@@ -8,11 +8,13 @@ import {  getCountEvents } from "../services/evenementServ";
 import { FormaNumber } from "../services/controll_champs/controll_limite";
 import { getUserCount } from "../services/userService";
 import { getAllEvents } from '../services/evenementServ';
-import { FaAward, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaClock, FaMapPin } from "react-icons/fa";
 
 
 import { AuthModal } from "../components/Modal/authModal";
-import SuccessEvent from "./SuccessEvent";
+import SuccessEvent from "../util/SuccessEvent";
+import Aboutus from "../util/Aboutus";
+import NosForfaits from "../util/nosForfaits";
+import Footer from "./footer";
 
 const images = [
   "/images/music-7238254_1280.jpg",
@@ -439,11 +441,18 @@ const Publicacc = () => {
                 <Testimonials />
             </div>
         </section>
+        
+        <section id="plans" ref={contactRef}>
+            <div className="bg-gradient-to-b from-gray-50 to-white">
+                <NosForfaits />
+            </div>
+        </section>
 
-        <section id="plans" ref={plansRef}>
-          <div className="bg-gradient-to-b from-gray-50 to-white">
-            <NosForfaits />
-          </div>
+        {/* Section À Propos */}
+        <section id="about">
+            <div className="bg-gradient-to-b from-gray-50 to-white">
+                <Aboutus />
+            </div>
         </section>
 
         <section id="contact" ref={contactRef}>

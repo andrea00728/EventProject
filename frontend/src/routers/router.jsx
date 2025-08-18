@@ -75,6 +75,7 @@ import LoginPage from "../pages/Admin/LoginPage.jsx";
 import UserStats from "../pages/Admin/cards.jsx";
 import Tablecreation from "../pages/TableOrganisation/Tablecreation.jsx";
 import Publicacc from "../pages/Merge.jsx";
+import PublicLayout from "../layouts/PublicLayout.jsx";
 
 const router=createBrowserRouter([
    
@@ -503,9 +504,45 @@ const router=createBrowserRouter([
       },
     ],
   },
+  // {
+  //   path: "/",
+  //   element: <GuestLayout />,
+  //   children: [
+  //     {
+  //       path: "/",
+  //       element: <Navigate to="/pagepublic" />,
+  //     },
+  //     {
+  //       path: "/pagepublic",
+  //       // element: <Pagepublic />,
+  //       element:<Public_Accueil/>
+  //     },
+  //     {
+  //       path: "/connexion",
+  //       element: <Connexionorganisateur />,
+  //     },
+  //     {
+  //       path: "/callback",
+  //       element: <Connnexiongoogle />,
+  //     },
+  //     {
+  //       path: "/inscription",
+  //       element: <Inscription />,
+  //     },
+  //     {
+  //     path: "/evenements-publics",
+  //     element: <PublicEvents />,
+  //     },
+  //     {
+  //       path: "/evenement/:slug",
+  //       element: <PageEvenementDetail />,
+  //     },
+
+  //   ],
+  // },
   {
     path: "/",
-    element: <GuestLayout />,
+    element: <PublicLayout />,
     children: [
       {
         path: "/",
@@ -514,7 +551,7 @@ const router=createBrowserRouter([
       {
         path: "/pagepublic",
         // element: <Pagepublic />,
-        element:<Public_Accueil/>
+        element:<Publicacc/>
       },
       {
         path: "/connexion",
