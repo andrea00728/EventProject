@@ -8,6 +8,9 @@ import { getCountEvents } from "../services/evenementServ";
 import { FormaNumber } from "../services/controll_champs/controll_limite";
 import { getUserCount } from "../services/userService";
 import { AuthModal } from "../components/Modal/authModal";
+import NosForfaits from '../util/nosForfaits';
+// import Card from '../components/Card';
+
 
 const images = [
   "/images/music-7238254_1280.jpg",
@@ -26,6 +29,7 @@ const Publicacc = () => {
   const serviceRef = useRef(null);
   const contactRef = useRef(null);
   const testimonyRef = useRef(null);
+  const plansRef = useRef(null);
   const [eventCount,setEventCount] = useState(0);
   const [organisateurCount,setOrganisateurCount] = useState(0);
 

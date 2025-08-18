@@ -1,4 +1,26 @@
 export default function NosForfaits() {
+
+  // Définition de Card avant le return
+  const Card = ({ title, price, invitations, events, duration, active, expire }) => {
+    return (
+      <div className={`rounded-xl shadow-lg p-6 border ${
+          active ? "bg-yellow-400 border-yellow-500 relative" : "bg-white border-gray-200"
+        }`}>
+        {active && (
+          <div className="absolute top-3 right-3 bg-white text-yellow-600 px-3 py-1 rounded-full text-xs font-bold">
+            Actif
+          </div>
+        )}
+        <h3 className="text-xl font-bold mb-4">{title}</h3>
+        <p className="text-2xl font-extrabold mb-2">{price}</p>
+        <p>Invitations : {invitations}</p>
+        <p>Événements : {events}</p>
+        <p>Durée : {duration}</p>
+        {active && expire && <p className="mt-2 text-sm">Expire le : {expire}</p>}
+      </div>
+    );
+  };
+
   return (
     <>
       <section className="relative bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 py-24 px-4 rounded-3xl shadow-2xl overflow-hidden">
