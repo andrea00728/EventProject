@@ -9,17 +9,12 @@ import {
   Req,
   UnauthorizedException,
   Delete,
-  UploadedFile,
-  UseInterceptors
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateEventDto } from 'src/dto/CreateEvenementDTO';
 import { Evenement } from 'src/entities/Evenement';
 import { EvenementService } from 'src/services/evenement/evenement.service';
 import { ForfaitService } from 'src/services/forfait/forfait.service';
-import * as path from 'path';
-import * as fs from 'fs';
 
 @Controller('evenements')
 export class EvenementController {
@@ -30,12 +25,7 @@ export class EvenementController {
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
-  @UseInterceptors(FileInterceptor('image')) // <-- accepte un fichier nommé "image"
-  async create(
-    @UploadedFile() file: Express.Multer.File,
-    @Body() dto: CreateEventDto,
-    @Req() req: any
-  ): Promise<Evenement> {
+  async create(@Body() dto: CreateEventDto, @Req() req: any): Promise<Evenement> {
     const userIdFromToken = req.user?.sub;
     if (!userIdFromToken) {
       throw new UnauthorizedException('Utilisateur non authentifié');
@@ -49,18 +39,6 @@ export class EvenementController {
     }
     dto.utilisateur_id = userIdFromToken;
 
-    // Si un fichier image est présent, on le sauvegarde
-    if (file) {
-      const uploadDir = path.join(__dirname, '../../../uploads/events');
-      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-      const fileName = `${Date.now()}-${file.originalname}`;
-      const filePath = path.join(uploadDir, fileName);
-      fs.writeFileSync(filePath, file.buffer);
-
-      dto.imageUrl = `/uploads/events/${fileName}`; // chemin relatif pour l’URL
-    }
-
     try {
       return await this.evenementService.create(dto);
     } catch (error) {
@@ -71,9 +49,9 @@ export class EvenementController {
     }
   }
 
-  // Les autres routes restent inchangées
   @Get('/me')
   @UseGuards(AuthGuard('jwt'))
+  @Get('publics')
   async findUserEvenement(@Req() req: any): Promise<Evenement[]> {
     const userIdFromToken = req.user?.sub;
     if (!userIdFromToken) {
@@ -116,9 +94,12 @@ export class EvenementController {
   async findManagerEvents(@Param('id') id: string) {
     return this.evenementService.findManagerEvents(id);   
   }
+ 
 
   @Get('/events/statistics')
-  async findCountForAllEventStats(): Promise<any> {
+  //@UseGuards(AuthGuard('jwt'))  
+  async findCountForAllEventStats() : Promise<any> {
     return this.evenementService.findCountForAllEventStats();   
   }
+
 }

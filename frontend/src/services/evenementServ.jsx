@@ -1,5 +1,6 @@
 import axiosClient from "../api/axios-client";
 
+
 /**
  * Crée un événement lié à l'utilisateur connecté.
  * @param {Object} eventData - Les données de l'événement (nom, type, theme, date, locationId, salleId)
@@ -12,17 +13,12 @@ import axiosClient from "../api/axios-client";
 
 export const createEvent = async (eventData) => {
   try {
-    const response = await axiosClient.post("/evenements", eventData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const response = await axiosClient.post('/evenements', eventData);
     return response.data;
   } catch (error) {
-    throw error;
+    throw error; // pour que le frontend récupère le message
   }
 };
-
 
 
 /**

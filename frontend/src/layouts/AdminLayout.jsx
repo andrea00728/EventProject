@@ -150,7 +150,13 @@ export default function AdminLayout() {
             timestamp: new Date(Date.now() - 25 * 60000),
             isAdmin: true,
           },
-          
+          {
+            id: 3,
+            text: "J'aimerais avoir plus d'informations sur l'événement de demain.",
+            sender: typeof conversation.content === 'object' ? conversation.content.from : 'Utilisateur',
+            timestamp: new Date(Date.now() - 20 * 60000),
+            isAdmin: false,
+          },
         ]);
       }
     }, [conversation]);
@@ -389,40 +395,10 @@ export default function AdminLayout() {
       setShowMessages(false);
     };
 
-    const handleDeleteMessage = async (id) => {
-      try {
-        // Appel à ton backend pour supprimer en base
-        const response = await fetch(`http://localhost:3000/contact_messages/${id}`, {
-          method: "DELETE",
-        });
-
-        if (!response.ok) {
-          throw new Error("Erreur lors de la suppression");
-        }
-
-        // Mise à jour locale après confirmation de la suppression
-        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== id));
-
-      } catch (error) {
-        console.error("Suppression impossible :", error);
-      }
+    const handleDeleteMessage = (idToDelete) => {
+      const updatedMessages = messages.filter(msg => msg.id !== idToDelete);
+      setMessages(updatedMessages);
     };
-
-    const handleDeleteNotification = async (id) => {
-      try {
-        const response = await fetch(`http://localhost:3000/notification/${id}`, {
-          method: 'DELETE'
-        });
-
-        if (!response.ok) throw new Error('Erreur lors de la suppression');
-
-        setNotifications(prev => prev.filter(notif => notif.id !== id));
-      } catch (error) {
-        console.error('Suppression impossible :', error);
-      }
-    };
-
-
 
     const pageBg = darkMode
       ? "bg-gray-900 text-gray-200"
@@ -453,9 +429,7 @@ export default function AdminLayout() {
               count={notifications.length}
               items={notifications}
               noScroll={true}
-              onDelete={handleDeleteNotification}
             />
-
             <Dropdown
               ref={msgRef}
               show={showMessages}

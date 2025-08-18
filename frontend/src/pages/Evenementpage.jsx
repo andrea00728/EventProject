@@ -63,7 +63,7 @@ export default function Evenemenpage() {
             onBack={() => setCurrentStep(1)}
           />
         )}
-
+  
         {currentStep === 3 && (
           <Inviteform
             eventId={evenementData.eventId}

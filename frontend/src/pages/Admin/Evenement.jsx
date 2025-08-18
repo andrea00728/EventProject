@@ -456,7 +456,7 @@ export default function EvenementAd() {
 
 
   return (
-    <div className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${pageBg}`}>
+    <div className={`min-h-100vh p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${pageBg}`}>
 
       {/* Section Statistiques */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

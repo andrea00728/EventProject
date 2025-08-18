@@ -158,8 +158,6 @@ const TestimonialsSection = () => {
             </p>
           </div>
         )}
-
-        
       </div>
     </section>
   );

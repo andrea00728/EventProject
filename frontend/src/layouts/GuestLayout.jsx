@@ -45,7 +45,7 @@ export default function GuestLayout() {
               <img src={Logo} alt="Logo" className="w-10 h-10" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-2xl font-bold text-blue-700">EventPro</h1>
+              <h1 className="text-2xl font-bold text-blue-700">Master Table</h1>
               <p className="text-xs text-gray-500">Créateurs d'événements</p>
             </div>
           </div>
@@ -135,7 +135,7 @@ export default function GuestLayout() {
               }}
               className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl"
             >
-              {isPublicEventsPage ? "Retour à l'  accueil" : "Événements publics"}
+              {isPublicEventsPage ? "Retour à l'accueil" : "Événements publics"}
             </button>
           </div>
         </motion.div>

@@ -14,7 +14,6 @@ import Apropos from "../pages/apropos";
 import PublicEvents from "../pages/PublicEvents"; // adapte le chemin si besoin
 // import PagePublic from "../pages/PagePublic";
 import PageEvenementDetail from "../pages/PageEvenementDetail";
-
 // import Table3DScene from "../components/table3D";
 import ChoixModeInvite from "../layouts/ChoixModeInvite";
 import Inviteform from "../pages/choixModInvite/inviteForm";
@@ -75,7 +74,7 @@ import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Ev
 import LoginPage from "../pages/Admin/LoginPage.jsx";
 import UserStats from "../pages/Admin/cards.jsx";
 import Tablecreation from "../pages/TableOrganisation/Tablecreation.jsx";
-
+import Publicacc from "../pages/Merge.jsx";
 
 
 const router=createBrowserRouter([
@@ -234,6 +233,10 @@ const router=createBrowserRouter([
       {
         path: "/statistiques",
         element: <StatistiquesPage />,
+      },
+      {
+        path: "/revenu",
+        element: <RevenuPage />,
       },
       {
         path: "/evenement/tables",
@@ -568,6 +571,10 @@ const router=createBrowserRouter([
   {
     path: "/login-site/super/admin",
     element: <LoginPage />,
+  },
+  {
+    path: "/Merge",
+    element: <Publicacc />,
   },
 ]);
 

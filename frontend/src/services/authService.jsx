@@ -1,10 +1,12 @@
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || `http://localhost:3000`;
 
-// Enregistrement de l'utilisateur
-export const registerUser = async (userData) => {
+export const registerUser = async (userData, file) => {
     const formData = new FormData();
     for (const key in userData) {
         formData.append(key, userData[key]);
+    }
+    if (file) {
+        formData.append('photo', file);
     }
 
     const response = await fetch(`${apiBaseUrl}/auth/register`, {
@@ -19,6 +21,8 @@ export const registerUser = async (userData) => {
 
     return await response.json();
 };
+
+
 
 // Connexion de l'utilisateur
 export const loginUser = async (userData) => {

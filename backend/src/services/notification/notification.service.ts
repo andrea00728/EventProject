@@ -49,9 +49,4 @@ export class NotificationService {
         return response;
     }
 
-    async delete(id: number) {
-    return await this.notificationRepository.delete(id);
-    }
-
-
 }

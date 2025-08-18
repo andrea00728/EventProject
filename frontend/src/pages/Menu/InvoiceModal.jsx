@@ -10,6 +10,8 @@ const InvoiceModal = ({
   formatPrice,
   selectedEvent,
   selectedTable,
+  onValidateSuccess,
+  onCancel, 
 }) => {
   const token = localStorage.getItem('token');
   const [email, setEmail] = useState('');
@@ -20,8 +22,8 @@ const InvoiceModal = ({
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  const eventId =  selectedEvent || 33;
-  const tableId = selectedTable || 57 ;
+  const eventId = selectedEvent || 33;
+  const tableId = selectedTable || 57;
 
   useEffect(() => {
     if (isOpen) {
@@ -33,14 +35,14 @@ const InvoiceModal = ({
     }
   }, [isOpen]);
 
-  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateEmail = (email) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleEmailCheck = async () => {
     if (!validateEmail(email)) {
       setError('Veuillez saisir un email valide.');
       return;
     }
-
     if (!eventId) {
       setError('Aucun événement sélectionné.');
       return;
@@ -52,15 +54,13 @@ const InvoiceModal = ({
 
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/guests/check/${eventId}?email=${encodeURIComponent(email)}`,
-          // { headers: { Authorization: `Bearer ${token}` } }
+        `${import.meta.env.VITE_API_BASE_URL}/guests/check/${eventId}?email=${encodeURIComponent(email)}`
       );
 
       if (res.data.exists) {
         setInviteExists(true);
         setSuccess('Invité existant pour cet événement.');
       } else {
-        // Création de l'invité si non trouvé
         await axios.post(
           `${import.meta.env.VITE_API_BASE_URL}/guests/${eventId}`,
           {
@@ -68,8 +68,7 @@ const InvoiceModal = ({
             prenom: 'Automatique',
             email,
             sex: 'M',
-          },
-          // { headers: { Authorization: `Bearer ${token}` } }
+          }
         );
         setInviteExists(false);
         setSuccess('Nouvel invité enregistré avec succès.');
@@ -86,12 +85,10 @@ const InvoiceModal = ({
   };
 
   const handleSubmit = async () => {
-    console.log('Email . ',email)
     if (!eventId || !tableId || !email) {
       setError('Événement, table ou email manquant.');
       return;
     }
-
     if (!isEmailChecked) {
       setError('Veuillez vérifier l’email avant de valider.');
       return;
@@ -117,6 +114,8 @@ const InvoiceModal = ({
       );
 
       alert('Commande validée avec succès !');
+
+      if (onValidateSuccess) onValidateSuccess();
       onClose();
     } catch (err) {
       console.error(err);
@@ -240,7 +239,10 @@ const InvoiceModal = ({
           </button>
           <button
             className="flex-1 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
-            onClick={onClose}
+            onClick={() => {
+              if (onCancel) onCancel(); 
+              onClose();
+            }}
             disabled={isSubmitting}
           >
             Fermer

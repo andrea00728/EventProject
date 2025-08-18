@@ -11,4 +11,10 @@ export class NotificationGateway{
         console.log('Envoi notification:', notification);
         this.server.emit('notification',notification);
     }
+
+    //Notification Message pour l'admin
+    emitNotificationMessage(payload : any){
+        console.log('Envoi notification message:', payload);
+        this.server.emit('notificationMessageAdmin', payload);
+    }
 }

@@ -1,23 +1,21 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { Repository, QueryFailedError, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User } from './entities/auth.entity';
 import { CreateUserDto } from './dto/create-auth.dto';
 import { Personnel } from 'src/entities/Personnel';
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
+import { QueryFailedError } from 'typeorm';
 import admin from 'src/firebase/firebase-admin';
 import { NotificationEntity } from 'src/entities/notification.entity';
 import { ContactMessage } from 'src/entities/ContactMessage';
-import axios from 'axios';
-
+import * as bcrypt from 'bcrypt'
 
 @Injectable()
 export class AuthService {
-  emailVerificationService: any;
-  
 
   constructor(
     private readonly jwtService: JwtService,
@@ -31,24 +29,16 @@ export class AuthService {
     private readonly forfaitRepository: Repository<Forfait>,
     @InjectRepository(NotificationEntity)
     private readonly notificationRepository: Repository<NotificationEntity>,
-    @InjectRepository(ContactMessage)
+    @InjectRepository(ContactMessage)                              // <-- Ajouté ici
     private readonly contact_messages: Repository<ContactMessage>,
   ) { }
 
-
-  async replyToMessage(email: string, message: string) {
-    const isValidEmail = await this.emailVerificationService.verifyEmailWithAPI(email);
-    if (!isValidEmail) {
-      throw new Error('Email invalide ou injoignable');
-    }
-    // TODO: envoyer le message par email (nodemailer, etc.)
-  }
-  
   async validateUser(profile: any): Promise<any> {
     const { emails, displayName, photos } = profile;
     const email = emails[0].value;
+    console.log('Google Profile Data:', { email, displayName, photos });
 
-    // Vérification dans Personnel
+    // Vérifier si l'utilisateur est dans la table Personnel
     const personnel = await this.personnelRepository.findOne({
       where: { email },
       relations: ['evenement'],
@@ -56,6 +46,7 @@ export class AuthService {
 
     const isInPersonnel = !!personnel;
     const isdetectedRole = isInPersonnel ? personnel.role : 'organisateur';
+    console.log('Rôle détecté:', { isInPersonnel, isdetectedRole });
 
     let user = await this.userRepository.findOne({ where: { email } });
 
@@ -76,6 +67,7 @@ export class AuthService {
       });
 
       await this.userRepository.save(user);
+      console.log('Nouvel utilisateur créé:', { id: user.id, email, role: user.role });
     }
 
     if (isdetectedRole === 'organisateur') {
@@ -85,11 +77,15 @@ export class AuthService {
         type: 'info',
       });
       await this.notificationRepository.save(notification);
-    } else {
+    }
+
+    else {
+      // Mettre à jour name, photo et role
       user.name = displayName || null;
       user.photo = photos?.[0]?.value || null;
-      user.role = isdetectedRole;
+      user.role = isdetectedRole; // Synchroniser le rôle
       await this.userRepository.save(user);
+      console.log('Utilisateur mis à jour:', { id: user.id, email, role: user.role });
     }
 
     return {
@@ -102,6 +98,45 @@ export class AuthService {
     };
   }
 
+  //REGISTRE MANUEL BY LIOKA
+  async registerUser(data: { name: string; email: string; password: string; photo?: string }) {
+    const { name, email, password, photo } = data;
+
+    // Vérifier si email existe déjà
+    const existing = await this.userRepository.findOne({ where: { email } });
+    if (existing) {
+      throw new BadRequestException('Cet email est déjà utilisé');
+    }
+
+    // Récupérer le forfait freemium
+    const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
+    if (!freemium) {
+      throw new BadRequestException('Forfait freemium non trouvé');
+    }
+
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Créer l'utilisateur
+    const newUser = this.userRepository.create({
+      id: uuidv4(),
+      name,
+      email,
+      password: hashedPassword,
+      photo: photo || null, // nom du fichier
+      role: 'organisateur',
+      forfait: freemium,
+    });
+
+    await this.userRepository.save(newUser);
+
+    return {
+      message: 'Utilisateur créé avec succès',
+      userId: newUser.id,
+    };
+  }
+
+
   async login(user: any) {
     const payload = {
       email: user.email,
@@ -110,10 +145,43 @@ export class AuthService {
       name: user.name,
       photo: user.photo,
     };
+    console.log('JWT Payload:', payload);
     return {
       access_token: this.jwtService.sign(payload),
     };
   }
+
+  //Login user manuel
+  async loginUser(email: string, password: string) {
+    // Chercher l'utilisateur
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      throw new BadRequestException('Email ou mot de passe incorrect');
+    }
+
+    // Vérifier le mot de passe
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new BadRequestException('Email ou mot de passe incorrect');
+    }
+
+    // Générer un JWT
+    const payload = { id: user.id, email: user.email, role: user.role };
+    const token = this.jwtService.sign(payload);
+
+    return {
+      message: 'Connexion réussie',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        photo: user.photo
+      }
+    };
+  }
+
 
   async createUser(dto: CreateUserDto) {
     const user = this.userRepository.create(dto);
@@ -129,6 +197,7 @@ export class AuthService {
   }
 
   async logout(user: any) {
+    const token = this.jwtService.sign({}, { expiresIn: '1s' });
     return { message: 'Déconnexion réussie' };
   }
 
@@ -140,7 +209,9 @@ export class AuthService {
   }
 
   async deleteManager(id: string): Promise<{ message: string }> {
-    const manager = await this.userRepository.findOne({ where: { id } });
+    const manager = await this.userRepository.findOne({
+      where: { id },
+    });
 
     if (!manager) {
       throw new NotFoundException(`Manager avec ID ${id} non trouvé`);
@@ -158,65 +229,105 @@ export class AuthService {
 
   async updateStatus(userId: string, isOnline: boolean): Promise<void> {
     try {
-      const manager = await this.userRepository.findOne({ where: { id: userId } });
-      if (!manager) return;
+      const manager = await this.userRepository.findOne({
+        where: { id: userId },
+      });
+
+      if (!manager) {
+        // Aucun utilisateur trouvé : on ne fait rien
+        return;
+      }
+
       await this.userRepository.update(userId, {
         isOnline,
         ...(isOnline ? { lastLogin: new Date() } : { lastLogout: new Date() }),
       });
     } catch (error) {
       if (error instanceof QueryFailedError && error.driverError?.code === '22P02') {
+        // Silence complet ou log discret si tu veux :
+        // console.warn(`[updateStatus] UUID invalide ignoré : ${userId}`);
         return;
       }
+
+      // Sinon, log les autres erreurs pour debugging
+      // console.error(`Erreur inattendue updateStatus userId = ${userId}`, error);
     }
   }
 
-  async getIdForToken(userEmail: string) {
-    if (!userEmail) return "Id non trouvé";
 
-    const user = await this.userRepository.findOne({ where: { email: userEmail } });
+  async getIdForToken(userEmail) {
+    if (!userEmail) {
+      return "Id non trouvé";
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { email: userEmail },
+    });
+
     if (!user) return "Organisateur non trouvé";
+
     return user.id;
   }
 
   async findCountUsers(): Promise<number> {
-    return this.userRepository.count({ where: { role: 'organisateur' } });
+    const count = await this.userRepository.count({
+      where: { role: 'organisateur' },
+    });
+    return count;
   }
 
   async findOrgStats(): Promise<any> {
-    const countOrg = this.userRepository.count({ where: { role: 'organisateur' } });
-    const lastFiveOrganizers = this.userRepository.find({
+    const countOrg = this.userRepository.count({
       where: { role: 'organisateur' },
-      order: { createdAt: 'DESC' },
-      take: 5,
-      relations: ['forfait'],
     });
 
-    const [count, lastOrganizers] = await Promise.all([countOrg, lastFiveOrganizers]);
+    const lastFiveOrganizers = this.userRepository.find({
+      where: { role: 'organisateur' },
+      order: { createdAt: 'DESC' }, // Assure-toi que la colonne `createdAt` existe bien
+      take: 5,
+      relations: ['forfait'], // optionnel, selon ce que tu veux afficher
+    });
 
-    return { count, lastOrganizers };
+    const [count, lastOrganizers] = await Promise.all([
+      countOrg,
+      lastFiveOrganizers,
+    ]);
+
+    return {
+      count,
+      lastOrganizers,
+    };
   }
 
   async loginWithFirebase(idToken: string) {
     try {
+      // 1. Vérifier et décoder le token Firebase
       const decodedToken = await admin.auth().verifyIdToken(idToken);
       const email = decodedToken.email;
       const displayName = decodedToken.name || 'Admin';
       const photoURL = decodedToken.picture || null;
 
+      // 2. Chercher l'admin existant
       let adminUser = await this.userRepository.findOne({
         where: { email, role: 'admin' },
       });
 
       if (!adminUser) {
-        const adminCount = await this.userRepository.count({ where: { role: 'admin' } });
-        if (adminCount > 0) throw new UnauthorizedException('Un admin existe déjà');
+        // 3. Vérifier s'il existe déjà un autre admin
+        const adminCount = await this.userRepository.count({
+          where: { role: 'admin' },
+        });
 
+        if (adminCount > 0) {
+          throw new UnauthorizedException('Un admin existe déjà');
+        }
+
+        // 4. Créer un nouvel admin
         adminUser = this.userRepository.create({
           id: uuidv4(),
           email,
           name: displayName,
-          photo: photoURL,
+          photo: photoURL ?? null, // Si jamais photoURL est undefined, mets null
           role: 'admin',
           isOnline: true,
           lastLogin: new Date(),
@@ -225,14 +336,17 @@ export class AuthService {
         await this.userRepository.save(adminUser);
       }
 
+      // 5. Créer le payload pour JWT backend
       const payload = {
-        sub: adminUser.id,
+        sub: adminUser.id, // id de ta base
         email: adminUser.email,
         role: adminUser.role,
       };
 
+      // 6. Générer un JWT signé par ton backend
       const access_token = this.jwtService.sign(payload);
 
+      // 7. Retourner token + user (optionnel)
       return {
         access_token,
         user: {
@@ -244,43 +358,58 @@ export class AuthService {
         },
       };
     } catch (error) {
+      console.error('Login with Firebase error:', error);
       throw new UnauthorizedException('Token Firebase invalide ou autre erreur');
     }
   }
-
   async findUserStats(): Promise<any> {
     const countTotal = this.userRepository.count();
-    const countOnline = this.userRepository.count({ where: { isOnline: true } });
-    const [count, onlineCount] = await Promise.all([countTotal, countOnline]);
+    const countOnline = this.userRepository.count({
+      where: { isOnline: true },
+    });
+
+    const [count, onlineCount] = await Promise.all([
+      countTotal,
+      countOnline
+    ]);
 
     const onlinePercentage = count > 0 ? ((onlineCount / count) * 100).toFixed(2) : '0.00';
 
-    return { count, onlinePercentage: `${onlinePercentage}` };
+    return {
+      count,
+      onlinePercentage: `${onlinePercentage}`,
+    };
   }
 
   async findSessionTimeStats(): Promise<any> {
+    // Sélectionner les champs nécessaires, y compris role et lastLogin
     const users = await this.userRepository.find({
-      where: { isOnline: false },
+      where: { isOnline: false }, // On ne prend que les utilisateurs déconnectés pour avoir lastLogout
       select: ['id', 'email', 'lastLogin', 'lastLogout', 'role'],
     });
 
     const sessionStats = users
-      .filter(u => u.lastLogin && u.lastLogout && new Date(u.lastLogout) > new Date(u.lastLogin))
+      .filter(user => user.lastLogin && user.lastLogout && new Date(user.lastLogout) > new Date(user.lastLogin)) // Vérifier que lastLogout > lastLogin
       .map(user => {
-        const durationMs = new Date(user.lastLogout).getTime() - new Date(user.lastLogin).getTime();
-        const durationMinutes = durationMs / (1000 * 60);
+        const sessionDurationMs = new Date(user.lastLogout).getTime() - new Date(user.lastLogin).getTime();
+        const sessionDurationMinutes = sessionDurationMs / (1000 * 60); // Convertir en minutes
+        console.log(`User ${user.email}: lastLogin=${user.lastLogin}, lastLogout=${user.lastLogout}, duration=${sessionDurationMinutes}`); // Log pour débogage
         return {
           id: user.id,
           email: user.email,
-          lastSessionDuration: durationMinutes.toFixed(2),
-          sessionStartTime: user.lastLogin,
-          role: user.role,
+          lastSessionDuration: sessionDurationMinutes.toFixed(2), // Durée en minutes, arrondie
+          sessionStartTime: user.lastLogin, // Ajouter lastLogin comme sessionStartTime
+          role: user.role, // Ajouter le rôle
         };
       });
 
+    // Calcul de la somme totale des durées
     const totalDuration = sessionStats.reduce((sum, stat) => sum + parseFloat(stat.lastSessionDuration), 0);
+
+    // Calcul de la moyenne globale
     const averageDuration = sessionStats.length > 0 ? (totalDuration / sessionStats.length).toFixed(2) : '0.00';
 
+    // Ajout du pourcentage pour chaque utilisateur
     const sessionStatsWithPercentage = sessionStats.map(stat => ({
       ...stat,
       percentageOfTotalTime: totalDuration > 0 ? ((parseFloat(stat.lastSessionDuration) / totalDuration) * 100).toFixed(2) : '0.00',
@@ -288,8 +417,8 @@ export class AuthService {
 
     return {
       totalUsersWithSessions: sessionStats.length,
-      averageSessionDuration: averageDuration,
-      individualStats: sessionStatsWithPercentage,
+      averageSessionDuration: averageDuration, // Moyenne globale en minutes
+      individualStats: sessionStatsWithPercentage, // Stats par utilisateur avec pourcentage
     };
   }
 
@@ -301,7 +430,10 @@ export class AuthService {
       .groupBy('user.role')
       .getRawMany();
 
-    return result.map(r => ({ role: r.role, count: parseInt(r.count) }));
+    return result.map(r => ({
+      role: r.role,
+      count: parseInt(r.count),
+    }));
   }
 
   async getMonthlyRegistrations(): Promise<{ month: string; count: number }[]> {
@@ -331,25 +463,22 @@ export class AuthService {
       const found = monthlyResults.find(r => r.month.toLowerCase() === month.toLowerCase());
       return {
         month,
-        count: found ? parseInt(found.count) : 0,
+        count: found ? parseInt(found.count) : 0
       };
     });
 
-    formattedData.push({ month: '3 derniers mois', count: lastThreeMonthsCount });
+    formattedData.push({
+      month: '3 derniers mois',
+      count: lastThreeMonthsCount
+    });
 
     return formattedData;
   }
 
+
+
   async getNotifications(): Promise<NotificationEntity[]> {
     return this.notificationRepository.find({
-      order: { date: 'DESC' },
-      take: 10,
-    });
-  }
-
-  async getUnreadNotifications(): Promise<NotificationEntity[]> {
-    return this.notificationRepository.find({
-      where: { isRead: false },
       order: { date: 'DESC' },
       take: 10,
     });
@@ -361,19 +490,5 @@ export class AuthService {
       order: { createdAt: 'DESC' },
     });
   }
-
- // auth.service.ts
-  async deleteMessage(id: number): Promise<void> {
-    await this.contact_messages.delete(id);
-  }
-
-
-
-  async markNotificationsRead(ids: number[]): Promise<void> {
-    if (!ids || ids.length === 0) return;
-    await this.notificationRepository.update(ids, { isRead: true });
-  }
-
-  
 
 }
