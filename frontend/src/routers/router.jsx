@@ -74,6 +74,7 @@ import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Ev
 import LoginPage from "../pages/Admin/LoginPage.jsx";
 import UserStats from "../pages/Admin/cards.jsx";
 import Tablecreation from "../pages/TableOrganisation/Tablecreation.jsx";
+import Publicacc from "../pages/Merge.jsx";
 
 
 
@@ -571,6 +572,10 @@ const router=createBrowserRouter([
   {
     path: "/login-site/super/admin",
     element: <LoginPage />,
+  },
+  {
+    path: "/Merge",
+    element: <Publicacc />,
   },
 ]);
 
