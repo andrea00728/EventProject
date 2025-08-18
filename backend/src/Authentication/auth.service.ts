@@ -292,4 +292,22 @@ async logout(token: string, res: Response): Promise<{ message: string }> {
   }
 
 
+
+
+  // /**
+  //  * 
+  //  * @param email 
+  //  * @param eventId 
+  //  * @returns 
+  //  * Finds a user entry by user email and event ID.
+  //  */
+  // async findOneById(userId: string): Promise<User > {
+  //   const user = await this.userRepository.findOne({ where: { id:userId } });
+
+  //   if (!user) {
+  //     throw new NotFoundException(`L'utilisateur avec l'ID ${userId} n'a pas été trouvé.`);
+  //   }
+
+  //   return user;
+  // }
 }

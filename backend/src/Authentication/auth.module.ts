@@ -25,5 +25,6 @@ import { PresenceGateway } from 'src/gateway/presence.gateway';
   ],
   controllers: [AuthController],
   providers: [AuthService, GoogleStrategy,JwtStrategy, PresenceGateway],
+  exports:[AuthService],
 })
 export class AuthModule {}
