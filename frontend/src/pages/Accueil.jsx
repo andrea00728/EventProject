@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import Footer from "./footer";
-import { FaAward, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaClock, FaMapPin } from "react-icons/fa";
+import { FaAward, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaClock } from "react-icons/fa";
 import TestimonialsSection from "../util/testimonialsSection";
 import { getAllEvents } from '../services/evenementServ';
+import tutorialVideo from "../assets/demo.mp4"; // import de la vidéo
 
 export default function Accueil() {
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
 
-
-    const getEventIcon = (type) => {
+  const getEventIcon = (type) => {
     const icons = {
       'mariage': '💒',
       'anniversaire': '🎂',
@@ -22,10 +23,9 @@ export default function Accueil() {
       'reunion': '👥',
       'default': '🎉'
     };
-    
     return icons[type?.toLowerCase()] || icons.default;
   };
-  // Récupération de tous les événements (succès) au chargement du composant
+
   useEffect(() => {
     const fetchAllEvents = async () => {
       try {
@@ -38,7 +38,6 @@ export default function Accueil() {
           throw new Error('La réponse du serveur n\'est pas un tableau');
         }
 
-        // Trier par date décroissante et limiter à 4 événements les plus récents
         const sortedEvents = events
           .sort((a, b) => new Date(b.date) - new Date(a.date))
           .slice(0, 4);
@@ -46,21 +45,15 @@ export default function Accueil() {
 
       } catch (err) {
         console.error('❌ Erreur détaillée:', err);
-
-        // Gestion d'erreur plus précise
         let errorMessage = 'Erreur lors du chargement des événements';
 
         if (err.response) {
-          // Le serveur a répondu avec un code d'erreur
           errorMessage = `Erreur serveur: ${err.response.status} - ${err.response.data?.message || err.response.statusText}`;
         } else if (err.request) {
-          // La requête a été faite mais pas de réponse
           errorMessage = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
         } else if (err.message) {
-          // Erreur dans la configuration de la requête
           errorMessage = `Erreur de configuration: ${err.message}`;
         }
-
         setError(errorMessage);
       } finally {
         setLoading(false);
@@ -70,7 +63,6 @@ export default function Accueil() {
     fetchAllEvents();
   }, []);
 
-  // Fonction pour formater la date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
@@ -80,7 +72,6 @@ export default function Accueil() {
     });
   };
 
-  // Fonction pour formater l'heure
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('fr-FR', {
@@ -89,7 +80,6 @@ export default function Accueil() {
     });
   };
 
-  // Fonction pour obtenir les couleurs selon le type d'événement
   const getEventTypeColor = (type) => {
     const colors = {
       'conférence': 'from-blue-500 to-indigo-600',
@@ -107,7 +97,7 @@ export default function Accueil() {
     <>
       {/* Section Hero */}
       <section className="relative bg-gradient-to-br from-slate-50 via-blue-50/50 to-indigo-50/30 py-32 px-4 overflow-hidden">
-        {/* Décorations améliorées */}
+        {/* décorations */}
         <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-r from-[#FB9E3A]/15 to-orange-400/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-20 right-10 w-64 h-64 bg-gradient-to-l from-indigo-300/20 to-purple-300/15 rounded-full blur-2xl animate-pulse delay-1000" />
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-violet-200/10 to-fuchsia-200/10 rounded-full blur-3xl" />
@@ -115,13 +105,11 @@ export default function Accueil() {
         <div className="container mx-auto flex flex-col lg:flex-row items-center justify-between gap-20 max-w-7xl relative z-10">
           {/* Contenu textuel */}
           <div className="flex-1 max-w-2xl text-center lg:text-left space-y-8">
-            {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-indigo-100 rounded-full px-4 py-2 text-sm font-medium text-indigo-700 shadow-sm">
               <div className="w-2 h-2 bg-[#FB9E3A] rounded-full animate-pulse"></div>
               Plateforme d'organisation événementielle
             </div>
 
-            {/* Titre principal */}
             <h1 className="text-5xl lg:text-7xl font-black text-slate-800 leading-[1.1] tracking-tight">
               Organisez vos
               <span className="block text-7xl bg-clip-text bg-gradient-to-r from-[#FB9E3A] via-orange-500 to-amber-500 drop-shadow-sm">
@@ -132,13 +120,11 @@ export default function Accueil() {
               </span>
             </h1>
 
-            {/* Description */}
             <p className="text-slate-600 text-xl lg:text-2xl leading-relaxed font-normal max-w-xl">
               Une plateforme complète et intuitive pour créer, gérer et promouvoir vos événements
               <span className="font-semibold text-slate-700"> sans effort</span>.
             </p>
 
-            {/* Boutons d'action */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <button className="group relative bg-gradient-to-r from-[#6B46C1] via-purple-600 to-indigo-600 text-white px-8 py-4 rounded-2xl font-bold text-lg tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25 active:scale-95">
                 <span className="relative z-10">Commencer gratuitement</span>
@@ -159,7 +145,6 @@ export default function Accueil() {
           {/* Image */}
           <div className="flex-1 flex justify-center lg:justify-end relative">
             <div className="relative">
-              {/* Cercle décoratif derrière l'image */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#FB9E3A]/20 to-indigo-400/20 rounded-full scale-110 blur-xl"></div>
 
               <div className="relative bg-white/30 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/40">
@@ -169,20 +154,70 @@ export default function Accueil() {
                   className="w-full max-w-lg h-auto drop-shadow-lg hover:scale-105 transition-transform duration-500"
                 />
               </div>
-
-              {/* Éléments flottants */}
-              <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-lg p-3 animate-bounce delay-500">
-                <div className="w-6 h-6 bg-gradient-to-br from-[#FB9E3A] to-orange-400 rounded-full"></div>
-              </div>
-              <div className="absolute -bottom-6 -left-6 bg-white rounded-2xl shadow-lg p-4 animate-pulse">
-                <div className="w-6 h-6 bg-gradient-to-br from-[#FB9E3A] to-orange-400 rounded-full"></div>
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Section Événements de Succès - Design Pro avec gestion d'images */}
+      <section className="relative w-full h-screen overflow-hidden">
+        {/* Vidéo en arrière-plan */}
+        <video
+          src={tutorialVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute top-1/2 left-1/2 w-full h-full object-cover -translate-x-1/2 -translate-y-1/2 z-0"
+        />
+
+        {/* Overlay assombrissant */}
+        <div className="absolute inset-0 bg-black/30 z-0" />
+
+        {/* Texte Démo en haut à gauche */}
+        <div className="absolute top-6 left-6 z-10">
+          <div className="bg-white/80 backdrop-blur-sm text-slate-800 text-xs font-semibold px-3 py-1 rounded-lg shadow-md flex items-center gap-2">
+            <span className="text-red-500 text-sm">●</span>
+            <span>Ceci est une démonstration directe</span>
+            <span className="text-[10px] text-gray-700">
+              Explorez les fonctionnalités sans risque.
+            </span>
+          </div>
+        </div>
+
+        {/* Badge Démo en bas à droite */}
+        <div className="absolute bottom-6 right-6 z-10">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="bg-white/90 backdrop-blur-sm text-slate-800 text-sm font-semibold px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 hover:scale-105 transition-transform"
+          >
+            <span className="text-red-500 text-lg">●</span>
+            Démonstration en direct
+          </button>
+        </div>
+      </section>
+
+      {/* Modal plein écran */}
+      {isOpen && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
+          <div className="relative w-full h-full bg-white flex flex-col items-center justify-center">
+            {/* Bouton fermer */}
+            <button
+              onClick={() => setIsOpen(false)}
+              className="absolute top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors"
+            >
+              ✕
+            </button>
+
+            {/* Contenu du modal */}
+            <h1 className="text-3xl font-bold text-gray-900">
+              Page de démonstration
+            </h1>
+          </div>
+        </div>
+      )}
+
+
+      {/* Section Événements de Succès */}
       <section className="bg-gradient-to-br from-slate-50 via-white to-blue-50/20 py-20">
         <div className="container mx-auto max-w-6xl px-6">
           <div className="text-center mb-14">
@@ -330,8 +365,6 @@ export default function Accueil() {
         </div>
       </section>
 
-
-
       {/* Section À Propos */}
       <section className="bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-800 py-24">
         {/* Décorations de fond light */}
@@ -437,6 +470,7 @@ export default function Accueil() {
           </div>
         </div>
       </section>
+
 
       <section className="testimony">
         <TestimonialsSection />
