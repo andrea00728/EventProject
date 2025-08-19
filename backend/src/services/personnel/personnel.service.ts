@@ -254,4 +254,17 @@ async findCountPersonnelByEvenement(evenementId: number): Promise<number> {
     });
     return count;
   }
+
+  /**
+   * 
+   * @returns 
+   * utilise pour filtre a partire des historique les personnel disponnible
+   */
+  async findAvailablePersonnel(): Promise<Personnel[]> {
+  return this.personnelRepository.find({
+    where: { isActive: true },
+  });
+}
+
+
 }

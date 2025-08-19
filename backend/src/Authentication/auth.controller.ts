@@ -80,18 +80,27 @@ export class AuthController {
   }
 
 
+// @Post('logout')
+// async logout(@Req() req: Request, @Res() res: Response) {
+//   try {
+//     const token = req.cookies?.jwt || req.headers['authorization']?.split(' ')[1];
 
-  @Post('logout')
-  async logout(@Req() req, @Res() res) {
-    const user = req.user;
-    await this.authService.logout(user);
-    res.clearCookie('access_token', {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: false,
-    });
-    return res.status(200).json({ message: 'Déconnecté avec succès' });
-  }
+//     if (!token) {
+//       return res.status(HttpStatus.UNAUTHORIZED).json({ message: 'Aucun token fourni' });
+//     }
+
+//     const result = await this.authService.logout(token, res);
+
+//     return res.status(HttpStatus.OK).json(result);
+//   } catch (error) {
+//     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+//       message: 'Erreur lors de la déconnexion',
+//       error: error.message,
+//     });
+//   }
+// }
+
+
 
   @Get('ManagerList')
   async getManagerList() {

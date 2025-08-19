@@ -76,7 +76,7 @@ export default function Profil() {
 
 
   const handleLogOut = () => {
-    sessionStorage.removeItem("ACCES_TOKEN");
+    localStorage.removeItem("ACCES_TOKEN");
     window.location.href = "/pagepublic";
   };
 

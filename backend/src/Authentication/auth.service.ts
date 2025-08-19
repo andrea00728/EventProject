@@ -193,10 +193,6 @@ export class AuthService {
     return this.userRepository.save(user);
   }
 
-  async logout(user: any) {
-    const token = this.jwtService.sign({}, { expiresIn: '1s' });
-    return { message: 'Déconnexion réussie' };
-  }
 
   async getManagerList(): Promise<any> {
     return this.userRepository.find({
@@ -488,4 +484,22 @@ export class AuthService {
     });
   }
 
+
+
+  // /**
+  //  * 
+  //  * @param email 
+  //  * @param eventId 
+  //  * @returns 
+  //  * Finds a user entry by user email and event ID.
+  //  */
+  // async findOneById(userId: string): Promise<User > {
+  //   const user = await this.userRepository.findOne({ where: { id:userId } });
+
+  //   if (!user) {
+  //     throw new NotFoundException(`L'utilisateur avec l'ID ${userId} n'a pas été trouvé.`);
+  //   }
+
+  //   return user;
+  // }
 }
