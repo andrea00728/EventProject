@@ -14,6 +14,7 @@ import NosForfaits from "../util/nosForfaits";
 import Footer from "./footer";
 import Demo from "../util/Dem"; // ✅ Composant modal vidéo
 import DemoTable from "../util/demo";
+import { useStateContext } from "../context/ContextProvider";
 
 const images = [
   "/images/music-7238254_1280.jpg",
@@ -29,6 +30,7 @@ const Publicacc = () => {
   const [error, setError] = useState(null);
   const [current, setCurrent] = useState(0);
   const [isModalOpen, setModalOpen] = useState(false);
+  const {token} = useStateContext()
 
   // ✅ Nouvel état pour le modal Demo
   const [isDemoOpen, setIsDemoOpen] = useState(false);
@@ -47,7 +49,7 @@ const Publicacc = () => {
   const [organisateurCount, setOrganisateurCount] = useState(0);
 
   // ✅ Vérifie si l'utilisateur est connecté (via localStorage)
-  const isAuthenticated = Boolean(localStorage.getItem("token"));
+  const isAuthenticated = Boolean(token);
 
   // Charger les événements
   useEffect(() => {
