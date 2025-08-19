@@ -90,6 +90,11 @@ const router=createBrowserRouter([
     {
       path: "/pagepublic",
       element: <Publicacc />
+    }
+    ,
+    {
+      path: "/accueil",
+      element: <Accueil />
     },
     {
       path: "/evenement",
