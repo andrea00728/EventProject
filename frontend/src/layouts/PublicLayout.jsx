@@ -62,7 +62,6 @@ export default function PublicLayout() {
       transition: { duration: 0.2, ease: "easeOut" },
     },
   };
-
   const menuVariants = {
     open: { opacity: 1, height: "auto", transition: { duration: 0.9 } },
     closed: { opacity: 0, height: 0, transition: { duration: 0.9 } },
@@ -173,7 +172,7 @@ export default function PublicLayout() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                 >
-                  <Link
+                  <a
                     to={item.path}
                     className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2"
                     onMouseEnter={() =>
@@ -196,13 +195,13 @@ export default function PublicLayout() {
                       whileHover={{ width: "70%" }}
                       transition={{ duration: 0.3 }}
                     />
-                  </Link>
+                  </a>
 
                   {item.subMenus && (
                     <AnimatePresence>
                       {isEvenementHovered && (
                         <motion.div
-                          className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-40"
+                          className="absolute top-full left-1/2 -translate-x-1/2 -ml-31 pt-2 z-40"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
@@ -211,7 +210,7 @@ export default function PublicLayout() {
                         >
                           <motion.div
                             className="bg-white/98 backdrop-blur-xl shadow-2xl shadow-gray-900/15 rounded-xl border border-gray-200/60"
-                            style={{ width: "1200px" }}
+                            style={{ width: "1200px" }} // reste large
                             variants={subMenuVariants}
                             initial="hidden"
                             animate="visible"

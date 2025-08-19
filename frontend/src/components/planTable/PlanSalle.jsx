@@ -294,8 +294,8 @@ export default function PlanSalle({ event, tables, setTables }) {
     <div className="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center p-4">
       <div className="relative w-[800px] h-[600px] bg-white border border-gray-300 rounded-2xl shadow-2xl overflow-hidden">
         <div className="absolute top-4 left-1/2 -translate-x-1/2 text-xl font-extrabold text-indigo-700 tracking-wide drop-shadow-lg">
-           Plan des Tables 
-          <br/>
+          Plan des Tables
+          <br />
           {/* {selectedPlace && (
             <span className="ml-4 text-yellow-600 font-semibold">
               Invité sélectionné : {selectedPlace.guestName}

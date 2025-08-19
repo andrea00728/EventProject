@@ -49,7 +49,7 @@ function Chair({ number, style }) {
   );
 }
 
-export default function Demo() {
+export default function DemoTable() {
   const [tables, setTables] = useState([]);
   const [form, setForm] = useState({ nom: "", capacite: "", nombre: "" });
   const [selectedType, setSelectedType] = useState(TABLE_TYPES[0].value);

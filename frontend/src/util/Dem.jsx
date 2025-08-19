@@ -24,7 +24,7 @@ const Demo = () => {
   return (
     <>
       {/* Section principale */}
-      <section className="relative w-full min-h-screen flex flex-col md:flex-row items-center justify-center gap-8 px-6 md:px-20 py-16 bg-gray-50">
+      <section className="relative w-full min-h-screen flex flex-col md:flex-row items-center justify-center gap-12 px-6 md:px-12 py-16 bg-gray-50">
         {/* Vidéo à gauche */}
         {showVideo && (
           <div className="relative w-full md:w-1/2 rounded-2xl overflow-hidden shadow-2xl">
@@ -47,16 +47,15 @@ const Demo = () => {
         )}
 
         {/* Description + Boutons à droite */}
-        <div className="flex-1 flex flex-col gap-4">
-          <h2 className="text-3xl md:text-5xl font-bold text-gray-900">
-            Ceci est une démonstration directe
+        <div className="flex-1 flex flex-col gap-6">
+          <h2 className="text-3xl md:text-5xl font-bold text-gray-900 text-center">
+            Découvrez notre plateforme en action
           </h2>
-          <p className="text-gray-700 text-sm md:text-base">
-            Explorez les fonctionnalités de notre plateforme comme vous le souhaitez.
-            Vous pouvez regarder la vidéo en petit écran ou en plein écran selon vos préférences.
+          <p className="text-gray-700 text-sm md:text-base text-center">
+            Plongez au cœur de notre plateforme grâce à cette démonstration interactive. Découvrez ses fonctionnalités clés en naviguant à votre rythme. Que vous préfériez une vue compacte ou une immersion en plein écran, la vidéo s'adapte à vos besoins pour une expérience optimale.
           </p>
 
-          <div className="flex gap-4 mt-4">
+          <div className="flex gap-4 mt-4 align-center justify-center">
             {/* Bouton pour ouvrir le modal */}
             <button
               onClick={() => setIsOpen(true)}
