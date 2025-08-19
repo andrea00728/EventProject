@@ -1,6 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import jsPDF from 'jspdf';
+import PropTypes from 'prop-types';
+import FocusTrap from 'focus-trap-react';
+
+const InvoiceForm = ({ email, setEmail, handleEmailCheck, isLoading, isEmailChecked, validateEmail }) => (
+  <div className="flex gap-2 mb-4">
+    <input
+      type="email"
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+      placeholder="client@example.com"
+      className="w-full px-3 py-2 border rounded-md"
+      disabled={isLoading}
+      aria-label="Adresse email"
+    />
+    <button
+      onClick={handleEmailCheck}
+      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+      disabled={!validateEmail(email) || isLoading}
+      aria-label={isLoading ? 'Vérification en cours' : 'Vérifier l’email'}
+    >
+      {isLoading ? '...' : 'Vérifier'}
+    </button>
+  </div>
+);
 
 const InvoiceModal = ({
   isOpen,
@@ -35,10 +59,9 @@ const InvoiceModal = ({
     }
   }, [isOpen]);
 
-  const validateEmail = (email) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleEmailCheck = async () => {
+  const handleEmailCheck = useCallback(async () => {
     if (!validateEmail(email)) {
       setError('Veuillez saisir un email valide.');
       return;
@@ -77,15 +100,15 @@ const InvoiceModal = ({
 
       setIsEmailChecked(true);
     } catch (err) {
-      console.error('Erreur lors de la vérification de l\'email:', err);
-      setError('Erreur lors de la vérification ou création de l\'invité.');
+      const errorMessage = err.response?.data?.message || 'Erreur lors de la vérification ou création de l\'invité.';
+      setError(errorMessage);
       setIsEmailChecked(false);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [email, eventId, token]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!eventId || !tableId || !email) {
       setError('Événement, table ou email manquant.');
       return;
@@ -94,6 +117,8 @@ const InvoiceModal = ({
       setError('Veuillez vérifier l’email avant de valider.');
       return;
     }
+
+    if (!window.confirm('Voulez-vous valider cette commande ?')) return;
 
     setIsSubmitting(true);
     setError(null);
@@ -115,15 +140,15 @@ const InvoiceModal = ({
       );
 
       setSuccess('Commande validée avec succès !');
-      if (onValidateSuccess) onValidateSuccess(); // Appelle clearCart pour vider le panier
+      if (onValidateSuccess) onValidateSuccess();
       onClose();
     } catch (err) {
-      console.error('Erreur lors de la validation de la commande:', err);
-      setError('Erreur lors de la validation de la commande.');
+      const errorMessage = err.response?.data?.message || 'Erreur lors de la validation de la commande.';
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [eventId, tableId, email, isEmailChecked, cart, token, onValidateSuccess, onClose]);
 
   const generatePDF = () => {
     const doc = new jsPDF();
@@ -170,80 +195,106 @@ const InvoiceModal = ({
     doc.save(`facture-${Date.now()}.pdf`);
   };
 
+  useEffect(() => {
+    const handleEsc = (event) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-semibold mb-4">Facture</h2>
+    <FocusTrap active={isOpen}>
+      <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-xl shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto relative modal-content">
+          <h2 className="text-xl font-semibold mb-4">Facture</h2>
 
-        {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
-        {success && <p className="text-green-600 text-sm mb-2">{success}</p>}
+          {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
+          {success && <p className="text-green-600 text-sm mb-2">{success}</p>}
 
-        <label className="block mb-1 text-sm font-medium">Votre email :</label>
-        <div className="flex gap-2 mb-4">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => {
+          <label className="block mb-1 text-sm font-medium" htmlFor="email-input">
+            Votre email :
+          </label>
+          <InvoiceForm
+            email={email}
+            setEmail={(e) => {
               setEmail(e.target.value);
               setIsEmailChecked(false);
               setError(null);
               setSuccess(null);
             }}
-            placeholder="client@example.com"
-            className="w-full px-3 py-2 border rounded-md"
-            disabled={isSubmitting}
+            handleEmailCheck={handleEmailCheck}
+            isLoading={isLoading}
+            isEmailChecked={isEmailChecked}
+            validateEmail={validateEmail}
           />
-          <button
-            onClick={handleEmailCheck}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-            disabled={!validateEmail(email) || isLoading}
-          >
-            {isLoading ? '...' : 'Vérifier'}
-          </button>
-        </div>
 
-        <div className="space-y-2 mb-4">
-          {cart.map((item) => (
-            <div key={item.id} className="flex justify-between">
-              <span>{item.name} x{item.quantity}</span>
-              <span>{formatPrice(item.price * item.quantity)} €</span>
+          <div className="space-y-2 mb-4">
+            {cart.map((item) => (
+              <div key={item.id} className="flex justify-between">
+                <span>{item.name} x{item.quantity}</span>
+                <span>{formatPrice(item.price * item.quantity)} €</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-between font-bold text-lg border-t pt-4">
+            <span>Total</span>
+            <span>{formatPrice(totalPrice)} €</span>
+          </div>
+
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <button
+              className="flex-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+              onClick={handleSubmit}
+              disabled={isSubmitting || !isEmailChecked}
+              aria-label={isSubmitting ? 'Validation en cours' : 'Valider la commande'}
+            >
+              {isSubmitting ? 'Validation...' : 'Valider'}
+            </button>
+            <button
+              className="flex-1 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+              onClick={generatePDF}
+              disabled={!cart.length}
+              aria-label="Télécharger la facture en PDF"
+            >
+              Télécharger PDF
+            </button>
+            <button
+              className="flex-1 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+              onClick={onClose}
+              disabled={isSubmitting}
+              aria-label="Fermer la fenêtre"
+            >
+              Fermer
+            </button>
+          </div>
+
+          {isSubmitting && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/50">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-600"></div>
             </div>
-          ))}
-        </div>
-
-        <div className="flex justify-between font-bold text-lg border-t pt-4">
-          <span>Total</span>
-          <span>{formatPrice(totalPrice)} €</span>
-        </div>
-
-        <div className="mt-6 flex flex-col sm:flex-row gap-3">
-          <button
-            className="flex-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-            onClick={handleSubmit}
-            disabled={isSubmitting || !isEmailChecked}
-          >
-            {isSubmitting ? 'Validation...' : 'Valider'}
-          </button>
-          <button
-            className="flex-1 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-            onClick={generatePDF}
-            disabled={!cart.length}
-          >
-            Télécharger PDF
-          </button>
-          <button
-            className="flex-1 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
-            onClick={onClose}
-            disabled={isSubmitting}
-          >
-            Fermer
-          </button>
+          )}
         </div>
       </div>
-    </div>
+    </FocusTrap>
   );
+};
+
+InvoiceModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  cart: PropTypes.array.isRequired,
+  totalPrice: PropTypes.number.isRequired,
+  formatPrice: PropTypes.func.isRequired,
+  selectedEvent: PropTypes.number,
+  selectedTable: PropTypes.number,
+  currentSlug: PropTypes.string,
+  onValidateSuccess: PropTypes.func,
 };
 
 export default InvoiceModal;
