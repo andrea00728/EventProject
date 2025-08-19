@@ -8,7 +8,7 @@ export default function RoleSelector() {
   const choisirRole = (role) => {
     setUser({ ...user, role }); 
     if (role === "organisateur") {
-      navigate("/accueil");
+      navigate("/pagepublic");
     } else if (role === "accueil") {
       navigate("/personnelAccueil");
     } else if (role === "caissier") {
