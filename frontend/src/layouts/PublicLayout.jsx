@@ -173,34 +173,31 @@ export default function PublicLayout() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                 >
-                  <a
-                    to={item.path}
-                    className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2"
-                    onMouseEnter={() =>
-                      item.name === "Evenement" && setIsEvenementHovered(true)
-                    }
-                    onMouseLeave={() =>
-                      item.name === "Evenement" && setIsEvenementHovered(false)
-                    }
-                    onClick={(e) => {
-                      if (item.path.startsWith("#")) {
-                        handleSmoothScroll(e, item.path);
+                  {item.path.startsWith("#") ? (
+                    <a
+                      href={item.path}
+                      className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2"
+                      onClick={(e) => handleSmoothScroll(e, item.path)}
+                    >
+                      <span className="relative z-10">{item.name}</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300"></span>
+                    </a>
+                  ) : (
+                    <Link
+                      to={item.path}
+                      className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2"
+                      onMouseEnter={() =>
+                        item.name === "Evenement" && setIsEvenementHovered(true)
                       }
-                    }}
-                  >
-                    <span className="relative z-10">{item.name}</span>
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300"></span>
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r rounded-xl opacity-0 group-hover:opacity-100"
-                      transition={{ duration: 0.3 }}
-                    />
-                    <motion.div
-                      className="absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 bg-gradient-to-r from-[#6B46C1] to-indigo-500 rounded-full"
-                      initial={{ width: 0 }}
-                      whileHover={{ width: "70%" }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </a>
+                      onMouseLeave={() =>
+                        item.name === "Evenement" && setIsEvenementHovered(false)
+                      }
+                    >
+                      <span className="relative z-10">{item.name}</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300"></span>
+                    </Link>
+                  )}
+
 
                   {item.subMenus && (
                     <AnimatePresence>
@@ -307,19 +304,16 @@ export default function PublicLayout() {
           >
             <div className="w-6 h-6 relative flex flex-col justify-center items-center">
               <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
-                  isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"
-                }`}
+                className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"
+                  }`}
               ></span>
               <span
-                className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${
-                  isMenuOpen ? "opacity-0" : "opacity-100"
-                }`}
+                className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${isMenuOpen ? "opacity-0" : "opacity-100"
+                  }`}
               ></span>
               <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
-                  isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
-                }`}
+                className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
+                  }`}
               ></span>
             </div>
           </button>
