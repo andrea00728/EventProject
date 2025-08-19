@@ -6,6 +6,7 @@ import Logo from "../assets/LogoMaster.png";
 import { FaUser } from "react-icons/fa";
 import Profil from "../util/profils";
 import { AuthModal } from "../components/Modal/authModal";
+import { getUserForfait } from "../services/forfaitService";
 
 export default function PublicLayout() {
   const { token, role, user } = useStateContext();
@@ -14,6 +15,7 @@ export default function PublicLayout() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isEvenementHovered, setIsEvenementHovered] = useState(false);
   const [isSubMenuOpenMobile, setIsSubMenuOpenMobile] = useState(false);
+  const [forfait, setForfait] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,57 +28,6 @@ export default function PublicLayout() {
     { path: "#forfaits", name: "Forfaits" },
     { path: "#contact", name: "Contact" },
   ]);
-
-  const navItems1 = [
-    { path: "/pagepublic", name: "Accueil" },
-    {
-      path: "/pagepublic",
-      name: "Evenement",
-      subMenus: [
-        {
-          path: "/evenement",
-          name: "Organisations",
-          icon: "/red-carpet.png",
-          description: "Gérez et organisez tous vos événements avec efficacité",
-        },
-        {
-          path: "/evenement/evenement",
-          name: "Événements",
-          icon: "/file.png",
-          description: "Créez et planifiez vos événements en quelques clics",
-        },
-        {
-          path: "/evenement/tables",
-          name: "Tables",
-          icon: "/chair.png",
-          description: "Configurez la disposition et l'agencement des tables",
-        },
-        {
-          path: "/evenement/invites",
-          name: "Invités",
-          icon: "/guest.png",
-          description: "Gérez votre liste d'invités et leurs informations",
-        },
-        {
-          path: "/evenement/invitation",
-          name: "Invitations",
-          icon: "/invitation.png",
-          description:
-            "Envoyez des invitations personnalisées et suivez les réponses",
-        },
-        {
-          path: "/evenement/personnel",
-          name: "Personnel",
-          icon: "/invitation.png",
-          description:
-            "Coordonnez votre équipe et assignez les rôles et tâches",
-        },
-      ],
-    },
-    { path: "#service", name: "Service" },
-    { path: "#testimony", name: "Témoignages" },
-    { path: "#forfaits", name: "Forfaits" },
-  ];
 
   if (role) {
     switch (role) {
@@ -98,13 +49,8 @@ export default function PublicLayout() {
   }
 
   useEffect(() => {
-    if (token) {
-      if (user?.isInPersonnel) {
-        navigate("/choix-role", { replace: true });
-      }
-      setNavItems(navItems1);
-      setConnected(true);
-    } else {
+    // 🟢 1. Gestion connexion
+    if (!token) {
       setConnected(false);
       setNavItems([
         { path: "#pagepublic", name: "Accueil" },
@@ -113,8 +59,99 @@ export default function PublicLayout() {
         { path: "#forfaits", name: "Forfaits" },
         { path: "#contact", name: "Contact" },
       ]);
+      return; // ✅ stop ici si pas connecté
     }
-  }, [token, role, user, navigate]);
+
+    // Si token présent
+    setConnected(true);
+
+    if (user?.isInPersonnel) {
+      navigate("/choix-role", { replace: true });
+    }
+
+    // 🟢 2. Récupération du forfait
+    const fetchForfait = async () => {
+      try {
+        const data = await getUserForfait(token);
+        setForfait(data.forfait);
+      } catch (err) {
+        console.error("❌ Erreur lors de la récupération du forfait :", err);
+      }
+    };
+    fetchForfait();
+  }, [token, user?.isInPersonnel, navigate]);
+
+  useEffect(() => {
+    if (!token) return; // pas connecté → menu déjà géré plus haut
+
+    const navItemsAuth = [
+      { path: "/pagepublic", name: "Accueil" },
+      {
+        path: "/pagepublic",
+        name: "Evenement",
+        subMenus: [
+          {
+            path: "/evenement",
+            name: "Organisations",
+            icon: "/red-carpet.png",
+            description:
+              "Gérez et organisez tous vos événements avec efficacité",
+          },
+          {
+            path: "/evenement/evenement",
+            name: "Événements",
+            icon: "/file.png",
+            description: "Créez et planifiez vos événements en quelques clics",
+          },
+          {
+            path: "/evenement/tables",
+            name: "Tables",
+            icon: "/chair.png",
+            description: "Configurez la disposition et l'agencement des tables",
+          },
+          {
+            path: "/evenement/invites",
+            name: "Invités",
+            icon: "/guest.png",
+            description: "Gérez votre liste d'invités et leurs informations",
+          },
+          {
+            path: "/evenement/invitation",
+            name: "Invitations",
+            icon: "/invitation.png",
+            description:
+              "Envoyez des invitations personnalisées et suivez les réponses",
+          },
+
+          // 🟢 Ajout uniquement si premium
+          ...(["pro", "premium", "gold"].includes(forfait?.nom || "")
+            ? [
+                {
+                  path: "/evenement/personnel",
+                  name: "Personnel",
+                  icon: "/invitation.png",
+                  description:
+                    "Coordonnez votre équipe et assignez les rôles et tâches",
+                },
+                {
+                  path: "/evenement/restauration",
+                  name: "Restauration",
+                  icon: "/payment-method.png",
+                  description:
+                    "Gérez les menus et services de restauration premium",
+                },
+              ]
+            : []),
+        ],
+      },
+      { path: "#service", name: "Service" },
+      { path: "#testimony", name: "Témoignages" },
+      { path: "#forfaits", name: "Forfaits" },
+    ];
+
+    setNavItems(navItemsAuth);
+    console.log(forfait?.nom)
+  }, [token, forfait]);
 
   const handleSmoothScroll = (e, target) => {
     e.preventDefault();
