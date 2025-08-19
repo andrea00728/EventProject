@@ -21,7 +21,10 @@ import Dropdown from "./Dropdown";
 import LogoutModal from "../pages/Admin/LogoutModal";
 import { logout } from "../services/firebase/authService";
 import { format } from "date-fns";
+import { getUserIdForToken } from "../services/userService";
 import { fr } from "date-fns/locale";
+import io from "socket.io-client";
+import { useSocket } from "../socket";
 
 export default function AdminLayout() {
   const { token, role, isLoading, setToken, setUser } = useStateContext();
@@ -149,14 +152,7 @@ export default function AdminLayout() {
             sender: 'Admin',
             timestamp: new Date(Date.now() - 25 * 60000),
             isAdmin: true,
-          },
-          {
-            id: 3,
-            text: "J'aimerais avoir plus d'informations sur l'événement de demain.",
-            sender: typeof conversation.content === 'object' ? conversation.content.from : 'Utilisateur',
-            timestamp: new Date(Date.now() - 20 * 60000),
-            isAdmin: false,
-          },
+          }
         ]);
       }
     }, [conversation]);
@@ -317,41 +313,6 @@ export default function AdminLayout() {
     };
 
     useEffect(() => {
-      const handleClickOutside = (event) => {
-        if (notifRef.current && !notifRef.current.contains(event.target)) {
-          setShowNotifications(false);
-        }
-        if (msgRef.current && !msgRef.current.contains(event.target)) {
-          setShowMessages(false);
-        }
-        if (profileRef.current && !profileRef.current.contains(event.target)) {
-          setShowProfile(false);
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    useEffect(() => {
-      const fetchNotifications = async () => {
-        try {
-          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/notifications`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          if (!response.ok) throw new Error("Erreur lors de la récupération des notifications");
-          const data = await response.json();
-          setNotifications(data);
-        } catch (error) {
-          console.error("Erreur lors de la récupération des notifications :", error);
-          setNotifications([]);
-        }
-      };
-      fetchNotifications();
-    }, [token]);
-
-    useEffect(() => {
       const fetchMessages = async () => {
         try {
           const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/messages`, {
@@ -376,9 +337,85 @@ export default function AdminLayout() {
           setMessages([]);
         }
       };
+      const fetchNotifications = async () => {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/notifications`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (!response.ok) throw new Error("Erreur lors de la récupération des notifications");
+          const data = await response.json();
+          setNotifications(data);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des notifications :", error);
+          setNotifications([]);
+        }
+      };
+      
+      let newSocket;
 
+      async function connectSocket() {
+        const userId = await getUserIdForToken();
+        if (!userId) return;
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/messages`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) throw new Error("Erreur lors de la récupération des messages");
+        const data = await response.json();
+
+        newSocket = useSocket()
+        
+        if (!newSocket) throw new Error("Erreur de connexion");
+
+        newSocket.on("notificationMessageAdmin", (value) => {
+          console.log('nana ', value)
+          const formatted1 = data.map(msg => ({
+            ...msg,
+            from: `${msg.firstName} ${msg.lastName}`,
+            text: msg.message,
+            read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+          }))
+          const formatted2 = value.data.map(msg => ({
+            ...msg,
+            from: `${msg.firstName} ${msg.lastName}`,
+            text: msg.message,
+            read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+          }))
+          setMessages([...formatted1, ...formatted2]);
+        });
+      }
+
+      fetchNotifications();
       fetchMessages();
+      connectSocket();
+
+      return () => {
+        if (newSocket) {
+          newSocket.disconnect();
+        }
+      };
     }, [token]);
+
+
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (notifRef.current && !notifRef.current.contains(event.target)) {
+          setShowNotifications(false);
+        }
+        if (msgRef.current && !msgRef.current.contains(event.target)) {
+          setShowMessages(false);
+        }
+        if (profileRef.current && !profileRef.current.contains(event.target)) {
+          setShowProfile(false);
+        }
+      };
+
+      document.removeEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const markMessageAsRead = (message) => {
       setMessages(prevMessages =>
@@ -395,10 +432,25 @@ export default function AdminLayout() {
       setShowMessages(false);
     };
 
-    const handleDeleteMessage = (idToDelete) => {
-      const updatedMessages = messages.filter(msg => msg.id !== idToDelete);
-      setMessages(updatedMessages);
+    const handleDeleteMessage = async (id) => {
+      try {
+        // Appel à ton backend pour supprimer en base
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) {
+          throw new Error("Erreur lors de la suppression");
+        }
+
+        // Mise à jour locale après confirmation de la suppression
+        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== id));
+
+      } catch (error) {
+        console.error("Suppression impossible :", error);
+      }
     };
+
 
     const pageBg = darkMode
       ? "bg-gray-900 text-gray-200"

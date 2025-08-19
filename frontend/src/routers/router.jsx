@@ -74,25 +74,22 @@ import TableToCreateBy_Event from "../pages/TableOrganisation/TableToCreateBy_Ev
 import LoginPage from "../pages/Admin/LoginPage.jsx";
 import UserStats from "../pages/Admin/cards.jsx";
 import Tablecreation from "../pages/TableOrganisation/Tablecreation.jsx";
-
+import Publicacc from "../pages/Merge.jsx";
+import PublicLayout from "../layouts/PublicLayout.jsx";
 
 const router=createBrowserRouter([
    
   {
   path: "/",
-  element: (
-    <ProtectedRoute allowedRoles={["organisateur", "caissier", "cuisinier"]}>
-      <DefaultLayout />
-    </ProtectedRoute>
-  ),
+  element: <PublicLayout />,
   children: [
     {
       path: "/",
-      element: <Navigate to="/accueil" />
+      element: <Navigate to="/pagepublic" />
     },
     {
-      path: "/accueil",
-      element: <Accueil />
+      path: "/pagepublic",
+      element: <Publicacc />
     },
     {
       path: "/evenement",
@@ -193,8 +190,6 @@ const router=createBrowserRouter([
         }
       ]
     },
-
-   
      {
       path:'/forfait/success',
       element:<ForfaitSuccess/>
@@ -202,6 +197,26 @@ const router=createBrowserRouter([
     {
       path:'/forfaits',
       element:<ForfaitActive/>
+    },
+    {
+      path: "/connexion",
+      element: <Connexionorganisateur />,
+    },
+    {
+      path: "/callback",
+      element: <Connnexiongoogle />,
+    },
+    {
+      path: "/inscription",
+      element: <Inscription />,
+    },
+    {
+    path: "/evenements-publics",
+    element: <PublicEvents />,
+    },
+    {
+      path: "/evenement/:slug",
+      element: <PageEvenementDetail />,
     },
   ]
 },
@@ -503,42 +518,6 @@ const router=createBrowserRouter([
     ],
   },
   {
-    path: "/",
-    element: <GuestLayout />,
-    children: [
-      {
-        path: "/",
-        element: <Navigate to="/pagepublic" />,
-      },
-      {
-        path: "/pagepublic",
-        // element: <Pagepublic />,
-        element:<Public_Accueil/>
-      },
-      {
-        path: "/connexion",
-        element: <Connexionorganisateur />,
-      },
-      {
-        path: "/callback",
-        element: <Connnexiongoogle />,
-      },
-      {
-        path: "/inscription",
-        element: <Inscription />,
-      },
-      {
-      path: "/evenements-publics",
-      element: <PublicEvents />,
-      },
-      {
-        path: "/evenement/:slug",
-        element: <PageEvenementDetail />,
-      },
-
-    ],
-  },
-  {
     path:"/choix-role",
     element:<RoleSelector/>
   },
@@ -569,6 +548,10 @@ const router=createBrowserRouter([
   {
     path: "/login-site/super/admin",
     element: <LoginPage />,
+  },
+  {
+    path: "/Merge",
+    element: <Publicacc />,
   },
 ]);
 
