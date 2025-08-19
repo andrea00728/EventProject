@@ -66,6 +66,11 @@ import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 
 import { NotificationController } from './controllers/notification/notification.controller';
 import { NotificationEntity } from './entities/notification.entity';
+import { TasksService } from './services/tasks/tasks.service';
+import { TasksModule } from './modules/tasks/tasks.module';
+import { TasksController } from './controllers/tasks/tasks.controller';
+
+
 
 @Module({
   imports: [
@@ -77,7 +82,10 @@ import { NotificationEntity } from './entities/notification.entity';
     ScheduleModule.forRoot(),
 
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
+      imports: [
+        ConfigModule,
+        ScheduleModule.forRoot(),
+      ],
       useFactory: (configService: ConfigService) => {
         const dbHost = configService.get<string>('DB_HOST');
         const dbPort = configService.get<number>('DB_PORT');
@@ -174,8 +182,9 @@ import { NotificationEntity } from './entities/notification.entity';
     CommentaireModule,
     SatisfactionModule,
     FavoriteModule,
+    TasksModule,
   ],
-  controllers: [ProfileController],
+  controllers: [ProfileController, TasksController],
   providers: [],
 })
 export class AppModule {}
