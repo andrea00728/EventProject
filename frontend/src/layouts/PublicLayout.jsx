@@ -157,7 +157,10 @@ export default function PublicLayout() {
       transition: { duration: 0.2, ease: "easeOut" },
     },
   };
-
+  const menuVariants = {
+    open: { opacity: 1, height: "auto", transition: { duration: 0.9 } },
+    closed: { opacity: 0, height: 0, transition: { duration: 0.9 } },
+  };
 
   return (
     <>
@@ -363,6 +366,46 @@ export default function PublicLayout() {
               </button>
             )}
           </nav>
+          <AnimatePresence>
+            {isMenuOpen && (
+              <motion.nav
+                className="md:hidden border-t border-slate-700/30 py-4"
+                variants={menuVariants}
+                initial="closed"
+                animate="open"
+                exit="closed"
+              >
+                {navItems.map((item) => (
+                  <div
+                    key={item.name}
+                    className=" bg-white/95 backdrop-blur-xl shadow-2xl shadow-purple-200/50 rounded-3xl py-2 absolute top-20 right-10"
+                  >
+                    {item.subMenus && (
+                      <div className=" ml-4 mt-2 space-y-1">
+                        {item.subMenus.map((subItem) => (
+                          <Link
+                            key={subItem.path}
+                            to={subItem.path}
+                            className="flex items-center gap-3 px-4 py-2 text-sm text-slate-400 hover:text-slate-300 hover:bg-slate-800/30 rounded-lg transition-colors duration-200"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            {subItem.icon && (
+                              <img
+                                src={subItem.icon}
+                                alt={subItem.name}
+                                className="w-5 h-5"
+                              />
+                            )}
+                            {subItem.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </motion.nav>
+            )}
+          </AnimatePresence>
           {/* Bouton menu mobile */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
