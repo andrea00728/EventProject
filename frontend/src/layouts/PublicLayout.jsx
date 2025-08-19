@@ -1,13 +1,23 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useStateContext } from "../context/ContextProvider";
-import { Link, Navigate, Outlet, useNavigate, useLocation } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  Outlet,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import { motion } from "framer-motion";
 import Logo from "../assets/LogoMaster.png";
-import ButtonConnexion from "../util/buttonconnexion";
+import { FaUser } from "react-icons/fa";
+import Profil from "../util/profils";
+import { AuthModal } from "../components/Modal/authModal";
 
 export default function PublicLayout() {
   const { token, role, user } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [connected, setConnected] = useState(false);
+  const [isModalOpen, setModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -21,6 +31,20 @@ export default function PublicLayout() {
     { path: "#forfaits", name: "Forfaits" },
     { path: "#contact", name: "Contact" },
   ];
+  useEffect(() => {
+    if (token) {
+      if (user?.isInPersonnel) return <Navigate to="/choix-role" replace />;
+      if (role === "organisateur") return <Navigate to="/pagepublic" replace />;
+      navItems = [
+        { path: "#pagepublic", name: "Accueil" },
+        { path: "#", name: "Evénement" },
+        { path: "#service", name: "Service" },
+        { path: "#testimony", name: "Témoignages" },
+        { path: "#forfaits", name: "Forfaits" },
+      ];
+      setConnected(true);
+    }
+  }, [token]);
 
   const handleSmoothScroll = (e, target) => {
     e.preventDefault();
@@ -31,24 +55,10 @@ export default function PublicLayout() {
     }
   };
 
-  if (token) {
-    navItems = [
-    { path: "#pagepublic", name: "Accueil" },
-    { path: "#", name: "Evénement" },
-    { path: "#service", name: "Service" },
-    { path: "#testimony", name: "Témoignages" },
-    { path: "#forfaits", name: "Forfaits" },
-    { path: "#contact", name: "Contact" },
-  ];
-    // if (user?.isInPersonnel) return <Navigate to="/choix-role" replace />;
-    // if (role === "organisateur") return <Navigate to="/accueil" replace />;
-  }
-
   return (
     <>
       <header className="w-screen bg-white/90 backdrop-blur-xl shadow border-b fixed top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          
           {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
@@ -62,24 +72,31 @@ export default function PublicLayout() {
 
           {/* Nav desktop */}
           <nav className="hidden lg:flex items-center gap-8">
-            {!isPublicEventsPage && navItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.path}
-                onClick={(e) => handleSmoothScroll(e, item.path)}
-                className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition"
-              >
-                {item.name}
-              </a>
-            ))}
+            {!isPublicEventsPage &&
+              navItems.map((item) => (
+                <a
+                  key={item.name}
+                  href={item.path}
+                  onClick={(e) => handleSmoothScroll(e, item.path)}
+                  className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition"
+                >
+                  {item.name}
+                </a>
+              ))}
 
-            {/* Bouton dynamique */}
-            {/* <button
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg transition"
-            >
-              Se connecter
-            </button> */}
-            <ButtonConnexion />
+            {connected ? (
+              <div className="">
+                <Profil />
+              </div>
+            ) : (
+              <button
+               onClick={() => setModalOpen(true)}
+               className="flex items-center gap-3 w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl"
+               >
+                Se connecter{" "}
+                <FaUser className="w-5 h-5 text-white relative z-10 group-hover:translate-x-1 transition-transform duration-300" />
+              </button>
+            )}
           </nav>
 
           {/* Bouton menu mobile */}
@@ -100,9 +117,7 @@ export default function PublicLayout() {
               ></span>
               <span
                 className={`block h-0.5 w-6 bg-gray-700 transform transition ${
-                  isMenuOpen
-                    ? "-rotate-45 -translate-y-1.5"
-                    : "translate-y-1.5"
+                  isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
                 }`}
               ></span>
             </div>
@@ -120,21 +135,31 @@ export default function PublicLayout() {
           className="lg:hidden bg-white shadow border-t overflow-hidden"
         >
           <div className="px-4 py-4 space-y-3">
-            {!isPublicEventsPage && navItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.path}
-                onClick={(e) => {
-                  handleSmoothScroll(e, item.path);
-                  setIsMenuOpen(false);
-                }}
-                className="block px-4 py-2 text-gray-700 hover:bg-blue-50 rounded"
-              >
-                {item.name}
-              </a>
-            ))}
+            {!isPublicEventsPage &&
+              navItems.map((item) => (
+                <a
+                  key={item.name}
+                  href={item.path}
+                  onClick={(e) => {
+                    handleSmoothScroll(e, item.path);
+                    setIsMenuOpen(false);
+                  }}
+                  className="block px-4 py-2 text-gray-700 hover:bg-blue-50 rounded"
+                >
+                  {item.name}
+                </a>
+              ))}
 
-            <ButtonConnexion />
+            {connected ? (
+              <div className="">
+                <Profil />
+              </div>
+            ) : (
+              <button className="flex items-center gap-3 w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl">
+                Se connecter{" "}
+                <FaUser className="w-5 h-5 text-white relative z-10 group-hover:translate-x-1 transition-transform duration-300" />
+              </button>
+            )}
           </div>
         </motion.div>
       </header>
@@ -143,6 +168,7 @@ export default function PublicLayout() {
       <main>
         <Outlet />
       </main>
+      <AuthModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} isSignIn={true}/>
     </>
   );
 }

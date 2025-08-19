@@ -57,7 +57,7 @@ function ConnexionGoogle() {
       //     navigate("/pagepublic", { replace: true });
       //     break;
       // }
-      navigate("/accuei")
+      navigate("/pagepublic", { replace: true });
     }
     } else {
       console.warn(" Token ou rôle manquant");
