@@ -107,7 +107,7 @@ export class LocationController {
     return this.locationService.getCoordinates();
   }
 
-  @Get('geocode')
+  @Get('geocode/search')
   async geocode(@Query('q') query: string) {
     if (!query) {
       throw new BadRequestException('Un terme de recherche est requis');
