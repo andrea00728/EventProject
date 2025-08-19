@@ -38,8 +38,10 @@ const Publicacc = () => {
   const touchStartX = useRef(0);
   const accueilRef = useRef(null);
   const serviceRef = useRef(null);
+  const forfaitRef = useRef(null)
   const contactRef = useRef(null);
   const testimonyRef = useRef(null);
+  const footerRef = useRef(null);
 
   const [eventCount, setEventCount] = useState(0);
   const [organisateurCount, setOrganisateurCount] = useState(0);
@@ -295,7 +297,7 @@ const Publicacc = () => {
         </div>
       </section>
 
-      <section id="forfaits" ref={contactRef}>
+      <section id="forfaits" ref={forfaitRef}>
         <div className="bg-gradient-to-b from-gray-50 to-white">
           <NosForfaits />
         </div>
@@ -313,7 +315,7 @@ const Publicacc = () => {
         </div>
       </section>
 
-      <section id="footer" ref={contactRef}>
+      <section id="footer" ref={footerRef}>
         <div className="bg-gradient-to-b from-gray-50 to-white">
           <Footer />
         </div>
