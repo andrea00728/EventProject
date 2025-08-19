@@ -28,97 +28,96 @@ export default function PublicLayout() {
   ]);
 
   // Redirection selon le rôle
-  if (role) {
-    switch (role) {
-      case "accueil":
-        navigate("/personnelAccueil", { replace: true });
-        break;
-      case "caissier":
-        navigate("/personnelCaisse", { replace: true });
-        break;
-      case "cuisinier":
-        navigate("/personnelCuisine", { replace: true });
-        break;
-      case "organisateur":
-        navigate("/pagepublic", { replace: true });
-        break;
-      default:
-        navigate("/pagepublic", { replace: true });
-        break;
-    }
-  }
+  const navItems1 = [
+    { path: "/pagepublic", name: "Accueil" },
+    {
+      path: "/pagepublic",
+      name: "Evenement",
+      subMenus: [
+        {
+          path: "/evenement",
+          name: "Organisations",
+          icon: "/red-carpet.png",
+          description: "Gérez et organisez tous vos événements avec efficacité",
+        },
+        {
+          path: "/evenement/evenement",
+          name: "Événements",
+          icon: "/file.png",
+          description: "Créez et planifiez vos événements en quelques clics",
+        },
+        {
+          path: "/evenement/tables",
+          name: "Tables",
+          icon: "/chair.png",
+          description: "Configurez la disposition et l'agencement des tables",
+        },
+        {
+          path: "/evenement/invites",
+          name: "Invités",
+          icon: "/guest.png",
+          description: "Gérez votre liste d'invités et leurs informations",
+        },
+        {
+          path: "/evenement/invitation",
+          name: "Invitations",
+          icon: "/invitation.png",
+          description:
+            "Envoyez des invitations personnalisées et suivez les réponses",
+        },
+        {
+          path: "/evenement/personnel",
+          name: "Personnel",
+          icon: "/invitation.png",
+          description:
+            "Coordonnez votre équipe et assignez les rôles et tâches",
+        },
+        //  Afficher seulement pour les forfaits premium
+        // ...(["pro", "premium", "gold"].includes(forfait?.nom)
+        //   ? [
+        //       {
+        //         path: "/evenement/restauration",
+        //         name: "Restauration",
+        //         icon: "/payment-method.png",
+        //         description:
+        //           "Gérez les menus et services de restauration premium",
+        //       },
+        //     ]
+        //   : []),
+      ],
+    },
+    { path: "#service", name: "Service" },
+    { path: "#testimony", name: "Témoignages" },
+    { path: "#forfaits", name: "Forfaits" },
+  ];
 
   // Gestion des rôles et de la connexion
   useEffect(() => {
+    if (role) {
+      switch (role) {
+        case "accueil":
+          navigate("/personnelAccueil", { replace: true });
+          break;
+        case "caissier":
+          navigate("/personnelCaisse", { replace: true });
+          break;
+        case "cuisinier":
+          navigate("/personnelCuisine", { replace: true });
+          break;
+        case "organisateur":
+          navigate("/pagepublic", { replace: true });
+          break;
+        default:
+          navigate("/pagepublic", { replace: true });
+          break;
+      }
+    }
+
     if (token) {
       if (user?.isInPersonnel) {
         navigate("/choix-role", { replace: true });
       }
-      const navItems = [
-        { path: "/accueil", name: "Accueil" },
-        {
-          path: "/accueil",
-          name: "Evenement",
-          subMenus: [
-            {
-              path: "/evenement",
-              name: "Organisations",
-              icon: "/red-carpet.png",
-              description:
-                "Gérez et organisez tous vos événements avec efficacité",
-            },
-            {
-              path: "/evenement/evenement",
-              name: "Événements",
-              icon: "/file.png",
-              description:
-                "Créez et planifiez vos événements en quelques clics",
-            },
-            {
-              path: "/evenement/tables",
-              name: "Tables",
-              icon: "/chair.png",
-              description:
-                "Configurez la disposition et l'agencement des tables",
-            },
-            {
-              path: "/evenement/invites",
-              name: "Invités",
-              icon: "/guest.png",
-              description: "Gérez votre liste d'invités et leurs informations",
-            },
-            {
-              path: "/evenement/invitation",
-              name: "Invitations",
-              icon: "/invitation.png",
-              description:
-                "Envoyez des invitations personnalisées et suivez les réponses",
-            },
-            {
-              path: "/evenement/personnel",
-              name: "Personnel",
-              icon: "/invitation.png",
-              description:
-                "Coordonnez votre équipe et assignez les rôles et tâches",
-            },
-            //  Afficher seulement pour les forfaits premium
-            // ...(["pro", "premium", "gold"].includes(forfait?.nom)
-            //   ? [
-            //       {
-            //         path: "/evenement/restauration",
-            //         name: "Restauration",
-            //         icon: "/payment-method.png",
-            //         description:
-            //           "Gérez les menus et services de restauration premium",
-            //       },
-            //     ]
-            //   : []),
-          ],
-        },
-        { path: "/apropos", name: "A propos" },
-      ];
-      setNavItems(navItems);
-
+      setNavItems(navItems1);
       setConnected(true);
     } else {
       setConnected(false);
@@ -142,7 +141,6 @@ export default function PublicLayout() {
       setIsSubMenuOpenMobile(false);
     }
   };
-
   const subMenuVariants = {
     hidden: {
       opacity: 0,
@@ -159,6 +157,7 @@ export default function PublicLayout() {
       transition: { duration: 0.2, ease: "easeOut" },
     },
   };
+
 
   return (
     <>
