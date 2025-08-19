@@ -11,7 +11,12 @@ export default function Profil() {
 
   const modalVariants = {
     hidden: { opacity: 0, scale: 0.8, y: 50 },
-    visible: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", damping: 20, stiffness: 300 } },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: { type: "spring", damping: 20, stiffness: 300 },
+    },
     exit: { opacity: 0, scale: 0.9, y: 20, transition: { duration: 0.2 } },
   };
 
@@ -27,16 +32,16 @@ export default function Profil() {
   const [confirmLogOut, setConfirmLogOut] = useState(false);
 
   // States pour édition
-  const [editName, setEditName] = useState("");
-  const [editEmail, setEditEmail] = useState("");
+  const [editName, setEditName] = useState(user.name || "Utilisateur");
+  const [editEmail, setEditEmail] = useState(user.email || "email@example.com");
 
   // Initialiser les champs d'édition dès que l'user est disponible
-  useEffect(() => {
-    if (user) {
-      setEditName(user.name || "Utilisateur");
-      setEditEmail(user.email || "email@example.com");
-    }
-  }, [user]);
+  // useEffect(() => {
+  //   if (user) {
+  //     setEditName(user.name || "Utilisateur");
+  //     setEditEmail(user.email || "email@example.com");
+  //   }
+  // }, [user]);
 
   if (isLoading) return <p>Chargement...</p>;
 
@@ -101,10 +106,14 @@ export default function Profil() {
 
               {/* User Info */}
               <div className="text-center mb-6 sm:mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 break-words">{user?.name || "Utilisateur"}</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 break-words">
+                  {user?.name || "Utilisateur"}
+                </h2>
                 <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 flex items-center justify-center gap-2 break-all">
                   <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="truncate">{user?.email || "email@example.com"}</span>
+                  <span className="truncate">
+                    {user?.email || "email@example.com"}
+                  </span>
                 </p>
                 <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                   <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
@@ -172,10 +181,14 @@ export default function Profil() {
                   >
                     <X size={18} className="sm:w-5 sm:h-5" />
                   </motion.button>
-                  <h2 className="text-lg sm:text-xl font-bold text-center">Confirmation</h2>
+                  <h2 className="text-lg sm:text-xl font-bold text-center">
+                    Confirmation
+                  </h2>
                 </div>
                 <div className="p-6 sm:p-8 text-center">
-                  <p className="text-gray-700 mb-6 sm:mb-8">Êtes-vous sûr de vouloir vous déconnecter ?</p>
+                  <p className="text-gray-700 mb-6 sm:mb-8">
+                    Êtes-vous sûr de vouloir vous déconnecter ?
+                  </p>
                   <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                     <motion.button
                       onClick={handleLogOut}
@@ -230,24 +243,32 @@ export default function Profil() {
                   >
                     <X size={18} className="sm:w-5 sm:h-5" />
                   </motion.button>
-                  <h2 className="text-lg sm:text-xl font-bold text-center">Paramètres</h2>
+                  <h2 className="text-lg sm:text-xl font-bold text-center">
+                    Paramètres
+                  </h2>
                 </div>
                 <div className="p-6 sm:p-8">
                   {/* Content similaire à ton ancien code */}
                   <div className="space-y-4">
-                    <label className="block text-sm font-medium text-gray-700">Notifications</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Notifications
+                    </label>
                     <select className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                       <option>Activées</option>
                       <option>Désactivées</option>
                     </select>
 
-                    <label className="block text-sm font-medium text-gray-700">Thème</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Thème
+                    </label>
                     <select className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                       <option>Clair</option>
                       <option>Sombre</option>
                     </select>
 
-                    <label className="block text-sm font-medium text-gray-700">Langue</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Langue
+                    </label>
                     <select className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                       <option>Français</option>
                       <option>Anglais</option>
@@ -295,7 +316,9 @@ export default function Profil() {
                   >
                     <X size={18} className="sm:w-5 sm:h-5" />
                   </motion.button>
-                  <h2 className="text-lg sm:text-xl font-bold text-center">Éditer mon profil</h2>
+                  <h2 className="text-lg sm:text-xl font-bold text-center">
+                    Éditer mon profil
+                  </h2>
                 </div>
                 <div className="p-6 sm:p-8 space-y-4">
                   <input
