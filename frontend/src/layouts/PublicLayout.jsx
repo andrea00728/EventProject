@@ -1,12 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useStateContext } from "../context/ContextProvider";
-import {
-  Link,
-  Navigate,
-  Outlet,
-  useNavigate,
-  useLocation,
-} from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import Logo from "../assets/LogoMaster.png";
 import { FaUser } from "react-icons/fa";
@@ -23,29 +17,61 @@ export default function PublicLayout() {
 
   const isPublicEventsPage = location.pathname === "/evenements-publics";
 
-  // Items de nav avec scroll smooth
-  let navItems = [
+  // navItems par défaut
+  const [navItems, setNavItems] = useState([
     { path: "#pagepublic", name: "Accueil" },
     { path: "#service", name: "Service" },
     { path: "#testimony", name: "Témoignages" },
     { path: "#forfaits", name: "Forfaits" },
     { path: "#contact", name: "Contact" },
-  ];
+  ]);
+  if (role) {
+      switch (role) {
+        case "accueil":
+          navigate("/personnelAccueil", { replace: true });
+          break;
+        case "caissier":
+          navigate("/personnelCaisse", { replace: true });
+          break;
+        case "cuisinier":
+          navigate("/personnelCuisine", { replace: true });
+          break;
+        case "organisateur":
+          navigate("/pagepublic", { replace: true });
+          break;
+        default:
+          navigate("/pagepublic", { replace: true });
+          break;
+      }
+    }
+
+  // Gestion des rôles et de la connexion
   useEffect(() => {
     if (token) {
-      if (user?.isInPersonnel) return <Navigate to="/choix-role" replace />;
-      if (role === "organisateur") return <Navigate to="/pagepublic" replace />;
-      navItems = [
+      if (user?.isInPersonnel) {
+        navigate("/choix-role", { replace: true });
+      }
+      setNavItems([
         { path: "#pagepublic", name: "Accueil" },
         { path: "#", name: "Evénement" },
         { path: "#service", name: "Service" },
         { path: "#testimony", name: "Témoignages" },
         { path: "#forfaits", name: "Forfaits" },
-      ];
+      ]);
       setConnected(true);
+    } else {
+      setConnected(false);
+      setNavItems([
+        { path: "#pagepublic", name: "Accueil" },
+        { path: "#service", name: "Service" },
+        { path: "#testimony", name: "Témoignages" },
+        { path: "#forfaits", name: "Forfaits" },
+        { path: "#contact", name: "Contact" },
+      ]);
     }
-  }, [token]);
+  }, [token, role, user, navigate]);
 
+  // Scroll smooth
   const handleSmoothScroll = (e, target) => {
     e.preventDefault();
     const element = document.querySelector(target);
@@ -85,16 +111,14 @@ export default function PublicLayout() {
               ))}
 
             {connected ? (
-              <div className="">
-                <Profil />
-              </div>
+              <Profil />
             ) : (
               <button
-               onClick={() => setModalOpen(true)}
-               className="flex items-center gap-3 w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl"
-               >
+                onClick={() => setModalOpen(true)}
+                className="flex items-center gap-3 w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl"
+              >
                 Se connecter{" "}
-                <FaUser className="w-5 h-5 text-white relative z-10 group-hover:translate-x-1 transition-transform duration-300" />
+                <FaUser className="w-5 h-5 text-white relative z-10 transition-transform duration-300" />
               </button>
             )}
           </nav>
@@ -151,13 +175,14 @@ export default function PublicLayout() {
               ))}
 
             {connected ? (
-              <div className="">
-                <Profil />
-              </div>
+              <Profil />
             ) : (
-              <button className="flex items-center gap-3 w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl">
+              <button
+                onClick={() => setModalOpen(true)}
+                className="flex items-center gap-3 w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl"
+              >
                 Se connecter{" "}
-                <FaUser className="w-5 h-5 text-white relative z-10 group-hover:translate-x-1 transition-transform duration-300" />
+                <FaUser className="w-5 h-5 text-white relative z-10 transition-transform duration-300" />
               </button>
             )}
           </div>
@@ -168,7 +193,11 @@ export default function PublicLayout() {
       <main>
         <Outlet />
       </main>
-      <AuthModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} isSignIn={true}/>
+      <AuthModal
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        isSignIn={true}
+      />
     </>
   );
 }
