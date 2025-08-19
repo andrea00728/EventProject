@@ -65,7 +65,7 @@ export default function DefaultLayout() {
     {
       path: "/accueil",
       name: "Evenement",
-      subMenus: getConditionalSubMenus(forfait), // Utilisez la fonction utilitaire
+      subMenus: getConditionalSubMenus(forfait),
     },
     { path: "/apropos", name: "A propos" },
   ];
@@ -288,6 +288,13 @@ export default function DefaultLayout() {
                       key={item.name}
                       className="bg-white/95 backdrop-blur-xl shadow-2xl shadow-purple-200/50 rounded-3xl py-2 absolute top-20 right-10"
                     >
+                      <Link
+                        to={item.path}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-slate-400 hover:text-slate-300 hover:bg-slate-800/30 rounded-lg transition-colors duration-200"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {item.name}
+                      </Link>
                       {item.subMenus && (
                         <div className="ml-4 mt-2 space-y-1">
                           {item.subMenus.map((subItem) => (

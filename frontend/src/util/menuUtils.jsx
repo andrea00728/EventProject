@@ -30,41 +30,30 @@ export const getConditionalSubMenus = (forfait) => {
       icon: "/invitation.png",
       description: "Envoyez des invitations personnalisées et suivez les réponses",
     },
+    {
+      path: "/evenement/personnel",
+      name: "Personnel",
+      icon: "/personnel.png",
+      description: "Coordonnez votre équipe et assignez les rôles et tâches",
+    },
+    {
+      path: "/evenement/restauration",
+      name: "Restauration",
+      icon: "/restauration.png",
+      description: "Gérez les services de restauration pour vos événements",
+    },
   ];
 
-  if (!forfait) {
+  const forfaitName = forfait ? forfait.toLowerCase() : "default";
+  console.log("Forfait utilisé pour sous-menus :", forfaitName); // Log pour débogage
+
+  if (forfaitName === "freemium") {
+    return baseSubMenus.filter(
+      (item) => item.name !== "Personnel" && item.name !== "Restauration"
+    );
+  } else if (forfaitName === "starter") {
+    return baseSubMenus.filter((item) => item.name !== "Restauration");
+  } else {
     return baseSubMenus;
   }
-
-  if (forfait.nom === "starter") {
-    return [
-      ...baseSubMenus,
-      {
-        path: "/evenement/personnel",
-        name: "Personnel",
-        icon: "/invitation.png",
-        description: "Coordonnez votre équipe et assignez les rôles et tâches",
-      },
-    ];
-  }
-
-  if (["pro", "premium", "gold"].includes(forfait.nom)) {
-    return [
-      ...baseSubMenus,
-      {
-        path: "/evenement/personnel",
-        name: "Personnel",
-        icon: "/invitation.png",
-        description: "Coordonnez votre équipe et assignez les rôles et tâches",
-      },
-      {
-        path: "/evenement/restauration",
-        name: "Restauration",
-        icon: "/payment-method.png",
-        description: "Gérez les menus et services de restauration premium",
-      },
-    ];
-  }
-
-  return baseSubMenus;
 };
