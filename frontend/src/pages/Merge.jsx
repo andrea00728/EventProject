@@ -235,8 +235,13 @@ const Publicacc = () => {
 
                 {/* ✅ Bouton Voir Démo (ouvre le modal Demo) */}
                 <button
-                  onClick={() => setIsDemoOpen(true)}
-                  className="group relative bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white px-10 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-green-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[200px] cursor-pointer"
+                    onClick={() => {
+                        const section = document.getElementById('demo');
+                        if (section) {
+                            section.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }}
+                    className="group relative bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white px-10 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-green-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[200px] cursor-pointer"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-3">
                     Voir démo
