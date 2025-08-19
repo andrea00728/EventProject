@@ -980,9 +980,8 @@ const LocationSalle = () => {
                   className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition ${darkMode ? "bg-gray-700 border-gray-600 focus:ring-blue-500 text-white" : "border-gray-300 focus:ring-indigo-500"}`}
                 />
                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                  <button onClick={handleGeocode} className={`p-3 rounded-lg flex-1 ${gradientButton}`}>Géocoder</button>
+                  <button onClick={handleGeocode} className={`p-3 rounded-lg flex-1 ${gradientButton}`}>Chercher</button>
                   <button onClick={handleSave} disabled={!geocodeResult} className={`p-3 rounded-lg flex-1 disabled:opacity-50 ${gradientButton}`}>Sauvegarder</button>
-                  <button onClick={handleRefresh} className={`p-3 rounded-lg flex-1 ${gradientButton}`}><MdRefresh className="inline mr-1" />Rafraîchir la liste</button>
                   <button onClick={handleResetGeocode} className={`p-3 rounded-lg flex-1 ${gradientButton}`}>Réinitialiser</button>
                 </div>
                 <div className={`p-4 rounded-lg border ${darkMode ? "bg-gray-700 border-gray-600 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-800"}`}>
