@@ -8,11 +8,9 @@ import ChatWidget from "../pages/ChatWidget";
 import { getUserForfait } from "../services/forfaitService";
 import { ToastContainer } from "react-toastify";
 import Logo from "../assets/LogoMaster.png";
-import { Bell } from "lucide-react";
 import NotificationComponent from "../util/notification";
-import { getUserIdForToken } from "../services/userService";
-import { io } from "socket.io-client";
 import NotificationListener from "../util/Notification/notification_global";
+import { getConditionalSubMenus } from "../util/menuUtils";
 
 export default function DefaultLayout() {
   const { token, role, isLoading } = useStateContext();
@@ -21,66 +19,45 @@ export default function DefaultLayout() {
   const [forfait, setForfait] = useState(null);
   const [showForfaitModal, setShowForfaitModal] = useState(false);
 
-  // Définir les sous-menus de base
-  const baseSubMenus = [
-    {
-      path: "/evenement",
-      name: "Organisations",
-      icon: "/red-carpet.png",
-      description: "Gérez et organisez tous vos événements avec efficacité",
-    },
-    {
-      path: "/evenement/evenement",
-      name: "Événements",
-      icon: "/file.png",
-      description: "Créez et planifiez vos événements en quelques clics",
-    },
-    {
-      path: "/evenement/tables",
-      name: "Tables",
-      icon: "/chair.png",
-      description: "Configurez la disposition et l'agencement des tables",
-    },
-    {
-      path: "/evenement/invites",
-      name: "Invités",
-      icon: "/guest.png",
-      description: "Gérez votre liste d'invités et leurs informations",
-    },
-    {
-      path: "/evenement/invitation",
-      name: "Invitations",
-      icon: "/invitation.png",
-      description: "Envoyez des invitations personnalisées et suivez les réponses",
-    },
-  ];
+  useEffect(() => {
+    const fetchAndSetForfait = async () => {
+      try {
+        const data = await getUserForfait(token);
+        setForfait(data.forfait);
+      } catch (err) {
+        console.error("Erreur lors de la récupération du forfait", err);
+      }
+    };
 
-  // Ajouter les éléments conditionnels en fonction du forfait
-  const conditionalSubMenus = [];
-  if (!forfait) {
-    // Sans forfait : exclure "Personnel" et "Restauration"
-    conditionalSubMenus.push(...baseSubMenus);
-  } else if (forfait?.nom === "starter") {
-    // Forfait starter : inclure "Personnel", exclure "Restauration"
-    conditionalSubMenus.push(...baseSubMenus, {
-      path: "/evenement/personnel",
-      name: "Personnel",
-      icon: "/invitation.png",
-      description: "Coordonnez votre équipe et assignez les rôles et tâches",
-    });
-  } else if (["pro", "premium", "gold"].includes(forfait?.nom)) {
-    // Forfaits pro, premium, gold : inclure "Personnel" et "Restauration"
-    conditionalSubMenus.push(...baseSubMenus, {
-      path: "/evenement/personnel",
-      name: "Personnel",
-      icon: "/invitation.png",
-      description: "Coordonnez votre équipe et assignez les rôles et tâches",
-    }, {
-      path: "/evenement/restauration",
-      name: "Restauration",
-      icon: "/payment-method.png",
-      description: "Gérez les menus et services de restauration premium",
-    });
+    if (token && !isLoading) {
+      fetchAndSetForfait();
+    }
+
+    const handleForfaitUpdate = () => {
+      fetchAndSetForfait();
+    };
+
+    window.addEventListener("forfaitUpdated", handleForfaitUpdate);
+    return () => {
+      window.removeEventListener("forfaitUpdated", handleForfaitUpdate);
+    };
+  }, [token, isLoading]);
+
+  if (isLoading) return <div>Chargement ...</div>;
+
+  if (!token) return <Navigate to="/pagepublic" replace />;
+
+  switch (role) {
+    case "organisateur":
+      break;
+    case "accueil":
+      return <Navigate to="/personnelAccueil" replace />;
+    case "caissier":
+      return <Navigate to="/personnelCaisse" replace />;
+    case "cuisinier":
+      return <Navigate to="/personnelCuisine" replace />;
+    default:
+      return <Navigate to="/pagepublic" replace />;
   }
 
   const navItems = [
@@ -88,7 +65,7 @@ export default function DefaultLayout() {
     {
       path: "/accueil",
       name: "Evenement",
-      subMenus: conditionalSubMenus,
+      subMenus: getConditionalSubMenus(forfait), // Utilisez la fonction utilitaire
     },
     { path: "/apropos", name: "A propos" },
   ];
@@ -115,58 +92,11 @@ export default function DefaultLayout() {
     closed: { opacity: 0, height: 0, transition: { duration: 0.9 } },
   };
 
-  // Déplacer useEffect après la définition des variables pour éviter les problèmes de hooks
-  useEffect(() => {
-    const fetchAndSetForfait = async () => {
-      try {
-        const data = await getUserForfait(token);
-        setForfait(data.forfait);
-      } catch (err) {
-        console.error("Erreur lors de la récupération du forfait", err);
-      }
-    };
-
-    if (token && !isLoading) {
-      fetchAndSetForfait();
-    }
-
-    // Mettre à jour dynamiquement après activation
-    const handleForfaitUpdate = () => {
-      fetchAndSetForfait();
-    };
-
-    window.addEventListener("forfaitUpdated", handleForfaitUpdate);
-    return () => {
-      window.removeEventListener("forfaitUpdated", handleForfaitUpdate);
-    };
-  }, [token, isLoading]);
-
-  // Vérifications de redirection après tous les hooks
-  if (isLoading) return <div>Chargement ...</div>;
-
-  if (!token) return <Navigate to="/pagepublic" replace />;
-
-  // Rediriger selon rôle
-  switch (role) {
-    case "organisateur":
-      break;
-    case "accueil":
-      return <Navigate to="/personnelAccueil" replace />;
-    case "caissier":
-      return <Navigate to="/personnelCaisse" replace />;
-    case "cuisinier":
-      return <Navigate to="/personnelCuisine" replace />;
-    default:
-      return <Navigate to="/pagepublic" replace />;
-  }
-
   return (
     <>
       <header className="w-screen backdrop-blur-md fixed top-0 z-50">
         <div className="max-w-screen mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Top Bar avec logo et actions */}
           <div className="h-18 px-10 pt-5 flex items-center justify-between">
-            {/* Logo Section */}
             <motion.div
               className="flex items-center gap-4"
               initial={{ opacity: 0, x: -20 }}
@@ -344,7 +274,6 @@ export default function DefaultLayout() {
               </div>
             </nav>
 
-            {/* Mobile Navigation */}
             <AnimatePresence>
               {isMenuOpen && (
                 <motion.nav
@@ -386,7 +315,6 @@ export default function DefaultLayout() {
               )}
             </AnimatePresence>
 
-            {/* Actions Section */}
             <div className="flex items-center gap-3">
               <motion.button
                 onClick={() => setShowForfaitModal(true)}

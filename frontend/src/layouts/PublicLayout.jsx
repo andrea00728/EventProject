@@ -12,6 +12,7 @@ import NotificationComponent from "../util/notification";
 import ChatWidget from "../pages/ChatWidget";
 import { ToastContainer } from "react-toastify";
 import NotificationListener from "../util/Notification/notification_global";
+import { getConditionalSubMenus } from "../util/menuUtils"; 
 
 export default function PublicLayout() {
   const { token, role, user, isLoading } = useStateContext();
@@ -27,48 +28,23 @@ export default function PublicLayout() {
   const isPublicEventsPage = location.pathname === "/evenements-publics";
   const isPublicPage = location.pathname === "/pagepublic" || location.pathname === "/pagepublic/";
 
-  console.log("PublicLayout Context:", { token, role, user, pathname: location.pathname });
-
-  const baseSubMenus = [
-    {
-      path: "/evenement",
-      name: "Organisations",
-      icon: "/red-carpet.png",
-      description: "Gérez et organisez tous vos événements avec efficacité",
-    },
-    {
-      path: "/evenement/evenement",
-      name: "Événements",
-      icon: "/file.png",
-      description: "Créez et planifiez vos événements en quelques clics",
-    },
-    {
-      path: "/evenement/tables",
-      name: "Tables",
-      icon: "/chair.png",
-      description: "Configurez la disposition et l'agencement des tables",
-    },
-    {
-      path: "/evenement/invites",
-      name: "Invités",
-      icon: "/guest.png",
-      description: "Gérez votre liste d'invités et leurs informations",
-    },
-    {
-      path: "/evenement/invitation",
-      name: "Invitations",
-      icon: "/invitation.png",
-      description: "Envoyez des invitations personnalisées et suivez les réponses",
-    },
-  ];
-
-  const [navItems, setNavItems] = useState([
-    { path: "#pagepublic", name: "Accueil" },
-    { path: "#service", name: "Service" },
-    { path: "#testimony", name: "Témoignages" },
-    { path: "#forfaits", name: "Forfaits" },
-    { path: "#contact", name: "Contact" },
-  ]);
+  const navItems = token
+    ? [
+        { path: "/accueil", name: "Accueil" },
+        {
+          path: "/accueil",
+          name: "Evenement",
+          subMenus: getConditionalSubMenus(forfait), // Utilisez la fonction utilitaire
+        },
+        { path: "/apropos", name: "A propos" },
+      ]
+    : [
+        { path: "#pagepublic", name: "Accueil" },
+        { path: "#service", name: "Service" },
+        { path: "#testimony", name: "Témoignages" },
+        { path: "#forfaits", name: "Forfaits" },
+        { path: "#contact", name: "Contact" },
+      ];
 
   const subMenuVariants = {
     hidden: {
@@ -97,7 +73,7 @@ export default function PublicLayout() {
       onClick={() => setModalOpen(true)}
       className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl"
     >
-      Se connecter <FaUser className="w-5 h-5 text-white" />
+      Se connecter <FaUser className="w-5 h-5 schemaorg.apache.org/Thing" />
     </button>
   );
 
@@ -105,82 +81,36 @@ export default function PublicLayout() {
     const fetchAndSetForfait = async () => {
       try {
         const data = await getUserForfait(token);
-        console.log("Forfait fetched:", data.forfait);
         setForfait(data.forfait || null);
+        setConnected(true);
       } catch (err) {
         console.error("Erreur lors de la récupération du forfait:", err);
         setForfait(null);
+        setConnected(false);
       }
     };
 
     if (token && !isLoading) {
       fetchAndSetForfait();
-      setConnected(true);
-      const conditionalSubMenus = [];
-      if (!forfait) {
-        conditionalSubMenus.push(...baseSubMenus);
-      } else if (forfait?.nom === "starter") {
-        conditionalSubMenus.push(...baseSubMenus, {
-          path: "/evenement/personnel",
-          name: "Personnel",
-          icon: "/invitation.png",
-          description: "Coordonnez votre équipe et assignez les rôles et tâches",
-        });
-      } else if (["pro", "premium", "gold"].includes(forfait?.nom)) {
-        conditionalSubMenus.push(
-          ...baseSubMenus,
-          {
-            path: "/evenement/personnel",
-            name: "Personnel",
-            icon: "/invitation.png",
-            description: "Coordonnez votre équipe et assignez les rôles et tâches",
-          },
-          {
-            path: "/evenement/restauration",
-            name: "Restauration",
-            icon: "/payment-method.png",
-            description: "Gérez les menus et services de restauration premium",
-          }
-        );
-      }
-      setNavItems([
-        { path: "/accueil", name: "Accueil" },
-        {
-          path: "/accueil",
-          name: "Evenement",
-          subMenus: conditionalSubMenus,
-        },
-        { path: "/apropos", name: "A propos" },
-      ]);
-
-      // Mettre à jour dynamiquement après activation
-      const handleForfaitUpdate = () => {
-        fetchAndSetForfait();
-      };
-
-      window.addEventListener("forfaitUpdated", handleForfaitUpdate);
-      return () => {
-        window.removeEventListener("forfaitUpdated", handleForfaitUpdate);
-      };
     } else {
       setConnected(false);
       setForfait(null);
-      setNavItems([
-        { path: "#pagepublic", name: "Accueil" },
-        { path: "#service", name: "Service" },
-        { path: "#testimony", name: "Témoignages" },
-        { path: "#forfaits", name: "Forfaits" },
-        { path: "#contact", name: "Contact" },
-      ]);
     }
-  }, [token, isLoading, forfait, navigate]);
 
-  // Vérifications de redirection après tous les hooks
+    const handleForfaitUpdate = () => {
+      fetchAndSetForfait();
+    };
+
+    window.addEventListener("forfaitUpdated", handleForfaitUpdate);
+    return () => {
+      window.removeEventListener("forfaitUpdated", handleForfaitUpdate);
+    };
+  }, [token, isLoading]);
+
   if (isLoading) return <div>Chargement ...</div>;
 
   if (token && !isPublicPage) {
     if (user?.isInPersonnel) {
-      console.log("Redirecting to /choix-role due to isInPersonnel");
       return <Navigate to="/choix-role" replace />;
     }
     switch (role) {
