@@ -6,14 +6,6 @@ import { Query } from '@nestjs/common';
 export class LocationController {
   constructor(private readonly locationService: LocationService) {}
 
-  @Post()
-  async createLocation(@Body('nom') nom: string) {
-    if (!nom) {
-      throw new BadRequestException('Le nom du lieu est requis');
-    }
-    return this.locationService.createLocation(nom);
-  }
-
   @Get()
   findLocations(@Query('search') search?: string) {
     if (search) {

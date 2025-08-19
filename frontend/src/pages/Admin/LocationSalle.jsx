@@ -175,25 +175,25 @@ const LocationSalle = () => {
   };
 
   // Create a new location
-  const handleCreateLocation = async (e) => {
-    e.preventDefault();
-    if (!newLocationName.trim()) {
-      setError("Le nom du lieu est requis");
-      return;
-    }
-    try {
-      setIsLoading(true);
-      await axios.post(API_URL, { nom: newLocationName });
-      setNewLocationName("");
-      await fetchLocations();
-      setError(null);
-    } catch (err) {
-      setError(err.response?.data?.message || "Erreur lors de la création du lieu");
-      console.error("Create location error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const handleCreateLocation = async (e) => {
+  //   e.preventDefault();
+  //   if (!newLocationName.trim()) {
+  //     setError("Le nom du lieu est requis");
+  //     return;
+  //   }
+  //   try {
+  //     setIsLoading(true);
+  //     await axios.post(API_URL, { nom: newLocationName });
+  //     setNewLocationName("");
+  //     await fetchLocations();
+  //     setError(null);
+  //   } catch (err) {
+  //     setError(err.response?.data?.message || "Erreur lors de la création du lieu");
+  //     console.error("Create location error:", err);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   // Update a location
   const handleUpdateLocation = async (id) => {
@@ -326,14 +326,36 @@ const LocationSalle = () => {
     }
   };
 
+  console.log("Voici les resultats du géocode:", geocodeResult);
+  // const handleSave = async () => {
+  //   if (!geocodeResult) return;
+  //   try {
+  //     await axios.post(`${API_URL}/save`, geocodeResult);
+  //     setGeocodeAddress("");
+  //     setGeocodeResult(null);
+  //     setGeocodeResultText("");
+  //     await fetchLocations();
+  //   } catch (err) {
+  //     setError("Erreur lors de la sauvegarde de la localisation.");
+  //     console.error("Save error:", err);
+  //   }
+  // };
   const handleSave = async () => {
     if (!geocodeResult) return;
     try {
-      await axios.post(API_URL, geocodeResult);
+      const response = await axios.post(`${API_URL}/save`, {
+        query: `${geocodeResult.nom}, ${geocodeResult.latitude}, ${geocodeResult.longitude}`
+      });
       setGeocodeAddress("");
       setGeocodeResult(null);
       setGeocodeResultText("");
       await fetchLocations();
+      // Mettre à jour la carte avec les données renvoyées
+      if (response.data.latitude && response.data.longitude) {
+        if (mapRef.current) {
+          mapRef.current.setView([parseFloat(response.data.latitude), parseFloat(response.data.longitude)], 13);
+        }
+      }
     } catch (err) {
       setError("Erreur lors de la sauvegarde de la localisation.");
       console.error("Save error:", err);
