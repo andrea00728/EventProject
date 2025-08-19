@@ -44,9 +44,6 @@ const MapClickHandler = ({ setGeocodeResult, setGeocodeResultText }) => {
         .openPopup();
       markerRef.current = marker; // Stocker le nouveau marqueur
 
-      // Recentrer la carte sur le point cliqué
-      map.setView([lat, lng], 13);
-
       // Effectuer le géocodage inversé
       try {
         const response = await fetch(
