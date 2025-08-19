@@ -12,7 +12,7 @@ import SuccessEvent from "../util/SuccessEvent";
 import Aboutus from "../util/Aboutus";
 import NosForfaits from "../util/nosForfaits";
 import Footer from "./footer";
-import Demo from "../util/Dem"; // ✅ Composant modal vidéo
+import Demo from "../util/Dem"; 
 
 const images = [
   "/images/music-7238254_1280.jpg",
