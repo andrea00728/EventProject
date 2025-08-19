@@ -4,6 +4,8 @@ import Confidentialite from "../util/Confidentialite";
 import NosService from "../util/nosService";
 import Footer from "./footer";
 
+
+
 export default function Pagepublic() {
   const loginwithgoogle = () => {};
 

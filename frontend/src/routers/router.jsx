@@ -81,19 +81,15 @@ const router=createBrowserRouter([
    
   {
   path: "/",
-  element: (
-    <ProtectedRoute allowedRoles={["organisateur", "caissier", "cuisinier"]}>
-      <DefaultLayout />
-    </ProtectedRoute>
-  ),
+  element: <PublicLayout />,
   children: [
     {
       path: "/",
-      element: <Navigate to="/accueil" />
+      element: <Navigate to="/pagepublic" />
     },
     {
-      path: "/accueil",
-      element: <Accueil />
+      path: "/pagepublic",
+      element: <Publicacc />
     },
     {
       path: "/evenement",
@@ -194,8 +190,6 @@ const router=createBrowserRouter([
         }
       ]
     },
-
-   
      {
       path:'/forfait/success',
       element:<ForfaitSuccess/>
@@ -203,6 +197,26 @@ const router=createBrowserRouter([
     {
       path:'/forfaits',
       element:<ForfaitActive/>
+    },
+    {
+      path: "/connexion",
+      element: <Connexionorganisateur />,
+    },
+    {
+      path: "/callback",
+      element: <Connnexiongoogle />,
+    },
+    {
+      path: "/inscription",
+      element: <Inscription />,
+    },
+    {
+    path: "/evenements-publics",
+    element: <PublicEvents />,
+    },
+    {
+      path: "/evenement/:slug",
+      element: <PageEvenementDetail />,
     },
   ]
 },
@@ -502,77 +516,6 @@ const router=createBrowserRouter([
         path: "/LocationSalle",
         element: <LocationSalle />,
       },
-    ],
-  },
-  // {
-  //   path: "/",
-  //   element: <GuestLayout />,
-  //   children: [
-  //     {
-  //       path: "/",
-  //       element: <Navigate to="/pagepublic" />,
-  //     },
-  //     {
-  //       path: "/pagepublic",
-  //       // element: <Pagepublic />,
-  //       element:<Public_Accueil/>
-  //     },
-  //     {
-  //       path: "/connexion",
-  //       element: <Connexionorganisateur />,
-  //     },
-  //     {
-  //       path: "/callback",
-  //       element: <Connnexiongoogle />,
-  //     },
-  //     {
-  //       path: "/inscription",
-  //       element: <Inscription />,
-  //     },
-  //     {
-  //     path: "/evenements-publics",
-  //     element: <PublicEvents />,
-  //     },
-  //     {
-  //       path: "/evenement/:slug",
-  //       element: <PageEvenementDetail />,
-  //     },
-
-  //   ],
-  // },
-  {
-    path: "/",
-    element: <PublicLayout />,
-    children: [
-      {
-        path: "/",
-        element: <Navigate to="/pagepublic" />,
-      },
-      {
-        path: "/pagepublic",
-        element:<Publicacc/>  
-      },
-      {
-        path: "/connexion",
-        element: <Connexionorganisateur />,
-      },
-      {
-        path: "/callback",
-        element: <Connnexiongoogle />,
-      },
-      {
-        path: "/inscription",
-        element: <Inscription />,
-      },
-      {
-      path: "/evenements-publics",
-      element: <PublicEvents />,
-      },
-      {
-        path: "/evenement/:slug",
-        element: <PageEvenementDetail />,
-      },
-
     ],
   },
   {

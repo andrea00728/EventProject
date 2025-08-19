@@ -1,12 +1,6 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useStateContext } from "../context/ContextProvider";
-import {
-  Link,
-  Navigate,
-  Outlet,
-  useNavigate,
-  useLocation,
-} from "react-router-dom";
+import { Outlet, useNavigate, useLocation, Link, Navigate } from "react-router-dom"; // ✅ ajout de Navigate ici
 import { motion } from "framer-motion";
 import Logo from "../assets/LogoMaster.png";
 import { FaUser } from "react-icons/fa";
@@ -61,6 +55,7 @@ export default function PublicLayout() {
     }
   }, [token, user, role, navigate]);
 
+  // Scroll smooth
   const handleSmoothScroll = (e, target) => {
     e.preventDefault();
     const element = document.querySelector(target);
@@ -70,7 +65,7 @@ export default function PublicLayout() {
     }
   };
 
-  // Redirection conditionnelle dans le rendu principal
+  // Redirections conditionnelles
   if (!user && token) {
     return <div>Chargement de l'utilisateur...</div>;
   }
