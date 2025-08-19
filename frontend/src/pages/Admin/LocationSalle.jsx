@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import {
   MdLocationCity,
@@ -14,11 +14,77 @@ import {
   MdExpandLess,
   MdSearch,
   MdFilterList,
-  MdRefresh
+  MdRefresh,
+  MdFullscreen,
+  MdFullscreenExit
 } from "react-icons/md";
 import { TbAlertTriangle } from "react-icons/tb";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDarkMode } from "../../context/DarkModeContext";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+
+// Component to handle map click events
+const MapClickHandler = ({ setGeocodeResult, setGeocodeResultText }) => {
+  const map = useMap();
+  const markerRef = useRef(null); // Référence pour stocker le marqueur actuel
+
+  useEffect(() => {
+    const handleClick = async (e) => {
+      const { lat, lng } = e.latlng;
+
+      // Supprimer l'ancien marqueur s'il existe
+      if (markerRef.current) {
+        map.removeLayer(markerRef.current);
+      }
+
+      // Ajouter un nouveau marqueur
+      const marker = L.marker([lat, lng]).addTo(map)
+        .bindPopup(`Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)}`)
+        .openPopup();
+      markerRef.current = marker; // Stocker le nouveau marqueur
+
+      // Recentrer la carte sur le point cliqué
+      map.setView([lat, lng], 13);
+
+      // Effectuer le géocodage inversé
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`
+        );
+        const data = await response.json();
+        if (data.display_name) {
+          setGeocodeResult({
+            nom: data.display_name,
+            latitude: lat,
+            longitude: lng
+          });
+          setGeocodeResultText(`Lieu cliqué : ${data.display_name} (Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)})`);
+        } else {
+          setGeocodeResult({ nom: `Lat: ${lat}, Lon: ${lng}`, latitude: lat, longitude: lng });
+          setGeocodeResultText(`Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)} (Adresse non trouvée)`);
+        }
+      } catch (err) {
+        console.error("Erreur reverse geocoding:", err);
+        setGeocodeResult({ nom: `Lat: ${lat}, Lon: ${lng}`, latitude: lat, longitude: lng });
+        setGeocodeResultText(`Erreur lors du géocodage inversé (Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)})`);
+      }
+    };
+
+    map.on("click", handleClick);
+
+    // Nettoyer l'événement et le marqueur au démontage
+    return () => {
+      map.off("click", handleClick);
+      if (markerRef.current) {
+        map.removeLayer(markerRef.current);
+        markerRef.current = null;
+      }
+    };
+  }, [map, setGeocodeResult, setGeocodeResultText]);
+
+  return null;
+};
 
 const API_URL = `${import.meta.env.VITE_API_BASE_URL}/locations`;
 
@@ -41,6 +107,12 @@ const LocationSalle = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { darkMode } = useDarkMode();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [geocodeAddress, setGeocodeAddress] = useState("");
+  const [geocodeResult, setGeocodeResult] = useState(null);
+  const [geocodeResultText, setGeocodeResultText] = useState("");
+  const [isModalFullScreen, setIsModalFullScreen] = useState(false);
+  const mapRef = useRef(null); // Référence pour la carte
 
   // Fetch all locations with memoization
   const fetchLocations = useCallback(async () => {
@@ -50,7 +122,7 @@ const LocationSalle = () => {
       const response = await axios.get(API_URL);
       setLocations(response.data);
       setError(null);
-      
+
       // Initialize expanded state for each location
       const expandedState = {};
       response.data.forEach(loc => {
@@ -72,14 +144,14 @@ const LocationSalle = () => {
 
   // Filter locations based on search term and active tab
   const filteredLocations = locations.filter(location => {
-    const matchesSearch = location.nom.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      (location.salles && location.salles.some(salle => 
+    const matchesSearch = location.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (location.salles && location.salles.some(salle =>
         salle.nom.toLowerCase().includes(searchTerm.toLowerCase())));
-    
+
     if (activeTab === "all") return matchesSearch;
     if (activeTab === "withRooms") return matchesSearch && location.salles && location.salles.length > 0;
     if (activeTab === "withoutRooms") return matchesSearch && (!location.salles || location.salles.length === 0);
-    
+
     return matchesSearch;
   });
 
@@ -175,7 +247,7 @@ const LocationSalle = () => {
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          `Erreur lors de la suppression de la ${type}`
+        `Erreur lors de la suppression de la ${type}`
       );
       console.error("Delete error:", err);
     } finally {
@@ -229,6 +301,82 @@ const LocationSalle = () => {
     }
   };
 
+  const handleGeocode = async () => {
+    if (!geocodeAddress.trim()) {
+      setGeocodeResultText("Veuillez entrer une adresse valide.");
+      return;
+    }
+    try {
+      console.log("Geocoding address:", geocodeAddress); // Debug log
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(geocodeAddress)}`);
+      const data = await response.json();
+      console.log("Geocode response:", data); // Debug log
+      if (data.length > 0) {
+        const { lat, lon, display_name } = data[0];
+        setGeocodeResult({ nom: display_name, latitude: lat, longitude: lon });
+        setGeocodeResultText(`Nom: ${display_name}, Latitude: ${lat}, Longitude: ${lon}`);
+        // Recentrer la carte sur le résultat du géocodage
+        if (mapRef.current) {
+          mapRef.current.setView([parseFloat(lat), parseFloat(lon)], 13);
+        }
+      } else {
+        setGeocodeResult(null);
+        setGeocodeResultText("Aucun résultat trouvé pour cette adresse.");
+      }
+    } catch (err) {
+      setGeocodeResultText("Erreur lors du géocodage. Veuillez réessayer.");
+      console.error("Geocode error:", err);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!geocodeResult) return;
+    try {
+      await axios.post(API_URL, geocodeResult);
+      setGeocodeAddress("");
+      setGeocodeResult(null);
+      setGeocodeResultText("");
+      await fetchLocations();
+    } catch (err) {
+      setError("Erreur lors de la sauvegarde de la localisation.");
+      console.error("Save error:", err);
+    }
+  };
+
+  const handleRefresh = async () => {
+    await fetchLocations();
+  };
+
+  const handleEditInModal = async (id, currentNom) => {
+    const newNom = prompt("Entrez le nouveau nom :", currentNom);
+    if (newNom && newNom.trim() && newNom !== currentNom) {
+      try {
+        await axios.put(`${API_URL}/${id}`, { nom: newNom });
+        await fetchLocations();
+      } catch (err) {
+        console.error("Edit error:", err);
+      }
+    }
+  };
+
+  const handleDeleteInModal = async (id) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette localisation ?")) {
+      try {
+        await axios.delete(`${API_URL}/${id}`);
+        await fetchLocations();
+      } catch (err) {
+        console.error("Delete error:", err);
+      }
+    }
+  };
+
+  // Reset geocode states
+  const handleResetGeocode = () => {
+    setGeocodeAddress("");
+    setGeocodeResult(null);
+    setGeocodeResultText("");
+  };
+
   // Skeleton loader for locations
   const LocationSkeleton = () => (
     <div className={`p-6 rounded-lg shadow-xs border ${darkMode ? "bg-gray-700 border-gray-600" : "bg-white border-gray-100"}`}>
@@ -279,7 +427,7 @@ const LocationSalle = () => {
     hidden: { scale: 0.8, opacity: 0, transition: { duration: 0.2 } },
   };
 
-  const gradientTitle = darkMode 
+  const gradientTitle = darkMode
     ? "bg-gradient-to-r from-blue-400 via-violet-400 to-purple-300 bg-clip-text text-transparent"
     : "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";
 
@@ -294,16 +442,6 @@ const LocationSalle = () => {
         <div className={`shadow-sm border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
           {/* Panel Header */}
           <div className={`px-6 py-4 border-b ${darkMode ? "bg-gray-900 border-gray-700" : "bg-gray-50 border-none"}`}>
-            {/* <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="flex items-center">
-                <h2 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
-                  <MdLocationCity className={`mr-2 sm:mr-3 ${darkMode ? "text-blue-400" : "text-blue-700"}`} /> 
-                  Gestion des Lieux & Salles
-                </h2>
-              </div>
-            </div> */}
-
-            {/* Tabs */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-2 mb-1">
               <div className={`mt-4 flex space-x-1 border-b ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
                 <button
@@ -350,14 +488,14 @@ const LocationSalle = () => {
 
           {/* Error Message */}
           {error && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               className={`mx-6 mt-4 p-4 rounded-lg border flex items-start ${darkMode ? "bg-red-900 bg-opacity-30 border-red-800 text-red-200" : "bg-red-50 border-red-200 text-red-700"}`}
             >
               <div className="flex-1">{error}</div>
-              <button 
+              <button
                 onClick={() => setError(null)}
                 className={darkMode ? "text-red-300 hover:text-red-100 ml-2" : "text-red-700 hover:text-red-900 ml-2"}
               >
@@ -369,29 +507,16 @@ const LocationSalle = () => {
           {/* Create Location Form */}
           <div className={`p-6 border-b ${darkMode ? "bg-gray-900 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
             <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-              <MdAdd className={`mr-2 ${darkMode ? "text-blue-400" : "text-indigo-600"}`} /> 
+              <MdAdd className={`mr-2 ${darkMode ? "text-blue-400" : "text-indigo-600"}`} />
               Ajouter un nouveau lieu
             </h3>
-            <form onSubmit={handleCreateLocation} className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  value={newLocationName}
-                  onChange={(e) => setNewLocationName(e.target.value)}
-                  placeholder="Nom du lieu (ex: Ivato)"
-                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition ${darkMode ? "bg-gray-700 border-gray-600 focus:ring-blue-500 text-white" : "border-gray-300 focus:ring-indigo-500"}`}
-                />
-                <p className={`mt-1 text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Minimum 3 caractères</p>
-              </div>
-              <button
-                type="submit"
-                disabled={!newLocationName.trim() || newLocationName.trim().length < 3}
-                className={`p-3 rounded-lg transition duration-200 flex items-center justify-center shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${gradientButton}`}
-              >
-                <MdAdd className="text-xl" />
-                <span className="ml-2">Ajouter Lieu</span>
-              </button>
-            </form>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className={`p-3 rounded-lg transition duration-200 flex items-center justify-center shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${gradientButton}`}
+            >
+              <MdAdd className="text-xl" />
+              <span className="ml-2">Ajouter Lieu</span>
+            </button>
           </div>
 
           {/* Bulk Actions */}
@@ -530,7 +655,7 @@ const LocationSalle = () => {
                     </div>
                   </div>
 
-                  {/* Location Content (Animated) */}
+                  {/* Add Location */}
                   <AnimatePresence>
                     {expandedLocations[location.id] && (
                       <motion.div
@@ -542,7 +667,7 @@ const LocationSalle = () => {
                       >
                         {/* Add Salle Form */}
                         {selectedLocationId === location.id ? (
-                          <motion.div 
+                          <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             className={`mb-6 p-4 rounded-lg border ${darkMode ? "bg-blue-900 bg-opacity-30 border-blue-800" : "bg-blue-50 border-blue-100"}`}
@@ -715,11 +840,10 @@ const LocationSalle = () => {
             variants={backdropVariants}
           >
             <motion.div
-              className={`rounded-2xl shadow-2xl p-8 max-w-md w-full relative border transition-colors duration-300 ${
-                darkMode
-                  ? "bg-gray-800 text-gray-100 border-gray-700"
-                  : "bg-white text-gray-900 border-gray-200"
-              }`}
+              className={`rounded-2xl shadow-2xl p-8 max-w-md w-full relative border transition-colors duration-300 ${darkMode
+                ? "bg-gray-800 text-gray-100 border-gray-700"
+                : "bg-white text-gray-900 border-gray-200"
+                }`}
               variants={modalVariants}
             >
               <button
@@ -727,41 +851,36 @@ const LocationSalle = () => {
                   setShowDeleteModal(false);
                   setDeleteItem(null);
                 }}
-                className={`absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors ${
-                  darkMode ? "dark:text-gray-400 dark:hover:text-gray-200" : ""
-                }`}
+                className={`absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? "dark:text-gray-400 dark:hover:text-gray-200" : ""
+                  }`}
               >
                 <MdClose size={24} />
               </button>
 
               <div className="flex flex-col items-center text-center">
                 <div
-                  className={`mb-4 p-3 rounded-full transition-colors duration-300 ${
-                    darkMode ? "bg-red-900" : "bg-red-100"
-                  }`}
+                  className={`mb-4 p-3 rounded-full transition-colors duration-300 ${darkMode ? "bg-red-900" : "bg-red-100"
+                    }`}
                 >
                   <TbAlertTriangle className="text-red-500 text-5xl" />
                 </div>
 
                 <h2
-                  className={`text-2xl font-bold mb-2 transition-colors duration-300 ${
-                    darkMode ? "text-gray-100" : "text-gray-900"
-                  }`}
+                  className={`text-2xl font-bold mb-2 transition-colors duration-300 ${darkMode ? "text-gray-100" : "text-gray-900"
+                    }`}
                 >
                   Confirmer la suppression
                 </h2>
 
                 <p
-                  className={`transition-colors duration-300 ${
-                    darkMode ? "text-gray-400" : "text-gray-600"
-                  } mb-6`}
+                  className={`transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-600"
+                    } mb-6`}
                 >
                   Êtes-vous sûr de vouloir supprimer{" "}
                   {deleteItem.type === "location" ? "le lieu" : "la salle"}{" "}
                   <span
-                    className={`font-extrabold transition-colors duration-300 ${
-                      darkMode ? "text-gray-200" : "text-gray-800"
-                    }`}
+                    className={`font-extrabold transition-colors duration-300 ${darkMode ? "text-gray-200" : "text-gray-800"
+                      }`}
                   >
                     "{deleteItem.nom}"
                   </span>{" "}
@@ -775,25 +894,119 @@ const LocationSalle = () => {
                       setShowDeleteModal(false);
                       setDeleteItem(null);
                     }}
-                    className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                      darkMode
-                        ? "bg-gray-700 hover:bg-gray-600 text-gray-200"
-                        : "bg-gray-200 hover:bg-gray-300 text-gray-800"
-                    }`}
+                    className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${darkMode
+                      ? "bg-gray-700 hover:bg-gray-600 text-gray-200"
+                      : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+                      }`}
                   >
                     Annuler
                   </button>
                   <button
                     onClick={handleConfirmDelete}
-                    className={`flex-1 px-6 py-3 rounded-xl flex items-center justify-center font-semibold transition-all duration-300 ${
-                      darkMode
-                        ? "bg-red-700 hover:bg-red-600 text-white shadow-lg shadow-red-700/30"
-                        : "bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/30"
-                    }`}
+                    className={`flex-1 px-6 py-3 rounded-xl flex items-center justify-center font-semibold transition-all duration-300 ${darkMode
+                      ? "bg-red-700 hover:bg-red-600 text-white shadow-lg shadow-red-700/30"
+                      : "bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/30"
+                      }`}
                   >
                     <MdDelete className="mr-2 text-xl" />
                     Supprimer
                   </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Location Modal */}
+      <AnimatePresence>
+        {showAddModal && (
+          <motion.div
+            className="fixed inset-0 flex justify-center items-center z-50 bg-black/70 p-4"
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={backdropVariants}
+          >
+            <motion.div
+              className={`rounded-2xl shadow-2xl p-8 relative border transition-colors duration-300 ${isModalFullScreen ? 'fixed inset-0 rounded-none overflow-auto' : 'max-w-4xl w-full'
+                } ${darkMode ? "bg-gray-800 text-gray-100 border-gray-700" : "bg-white text-gray-900 border-gray-200"}`}
+              variants={modalVariants}
+            >
+              <div className="absolute top-4 right-4 flex space-x-2">
+                <button
+                  onClick={() => setIsModalFullScreen(!isModalFullScreen)}
+                  className={`text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? "dark:text-gray-400 dark:hover:text-gray-200" : ""}`}
+                >
+                  {isModalFullScreen ? <MdFullscreenExit size={24} /> : <MdFullscreen size={24} />}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddModal(false);
+                    handleResetGeocode();
+                  }}
+                  className={`text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? "dark:text-gray-400 dark:hover:text-gray-200" : ""}`}
+                >
+                  <MdClose size={24} />
+                </button>
+              </div>
+
+              <div className="flex flex-col space-y-4">
+                <h2 className={`text-2xl font-bold ${gradientTitle}`}>Chercher un lieu</h2>
+                <input
+                  type="text"
+                  value={geocodeAddress}
+                  onChange={(e) => setGeocodeAddress(e.target.value)}
+                  placeholder="Entrez l'adresse ou cliquez sur la carte"
+                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition ${darkMode ? "bg-gray-700 border-gray-600 focus:ring-blue-500 text-white" : "border-gray-300 focus:ring-indigo-500"}`}
+                />
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                  <button onClick={handleGeocode} className={`p-3 rounded-lg flex-1 ${gradientButton}`}>Géocoder</button>
+                  <button onClick={handleSave} disabled={!geocodeResult} className={`p-3 rounded-lg flex-1 disabled:opacity-50 ${gradientButton}`}>Sauvegarder</button>
+                  <button onClick={handleRefresh} className={`p-3 rounded-lg flex-1 ${gradientButton}`}><MdRefresh className="inline mr-1" />Rafraîchir la liste</button>
+                  <button onClick={handleResetGeocode} className={`p-3 rounded-lg flex-1 ${gradientButton}`}>Réinitialiser</button>
+                </div>
+                <div className={`p-4 rounded-lg border ${darkMode ? "bg-gray-700 border-gray-600 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-800"}`}>
+                  Résultat : {geocodeResultText || "Aucun résultat pour le moment."}
+                </div>
+                <div className="h-96 rounded-lg overflow-hidden">
+                  <MapContainer
+                    center={geocodeResult ? [parseFloat(geocodeResult.latitude), parseFloat(geocodeResult.longitude)] : [48.8566, 2.3522]} // Paris par défaut
+                    zoom={13}
+                    style={{ height: "100%", width: "100%" }}
+                    className={darkMode ? "leaflet-dark" : ""}
+                    ref={mapRef}
+                  >
+                    <TileLayer
+                      url={darkMode ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    />
+                    <MapClickHandler
+                      setGeocodeAddress={setGeocodeAddress}
+                      setGeocodeResult={setGeocodeResult}
+                      setGeocodeResultText={setGeocodeResultText}
+                    />
+                    {geocodeResult && (
+                      <Marker position={[parseFloat(geocodeResult.latitude), parseFloat(geocodeResult.longitude)]}>
+                        <Popup>{geocodeResult.nom}</Popup>
+                      </Marker>
+                    )}
+                  </MapContainer>
+                </div>
+                <div>
+                  <h3 className={`text-lg font-semibold ${darkMode ? "text-gray-300" : "text-gray-700"}`}>Localisations enregistrées :</h3>
+                  <ul className="space-y-2 mt-2">
+                    {locations.map((loc) => (
+                      <li key={loc.id} className={`flex justify-between items-center p-2 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-50"}`}>
+                        <span className="truncate">{loc.nom}</span>
+                        <div className="flex space-x-2">
+                          <button onClick={() => handleEditInModal(loc.id, loc.nom)} className={`p-1 rounded ${darkMode ? "text-blue-400 hover:bg-gray-600" : "text-blue-600 hover:bg-blue-100"}`}><MdEdit /></button>
+                          <button onClick={() => handleDeleteInModal(loc.id)} className={`p-1 rounded ${darkMode ? "text-red-400 hover:bg-gray-600" : "text-red-600 hover:bg-red-100"}`}><MdDelete /></button>
+                        </div>
+                      </li>
+                    ))}
+                    {locations.length === 0 && <li className={`text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Aucune localisation enregistrée.</li>}
+                  </ul>
                 </div>
               </div>
             </motion.div>
