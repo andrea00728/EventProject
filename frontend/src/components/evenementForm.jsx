@@ -16,13 +16,11 @@ function LocationAutocomplete({ locations, form, setForm }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const containerRef = useRef(null);
 
-  // Met à jour inputValue quand form.locationId change
   useEffect(() => {
     const loc = locations.find((l) => l.id === form.locationId);
     setInputValue(loc ? loc.nom : "");
   }, [form.locationId, locations]);
 
-  // Filtrer suggestions selon inputValue (non sensible à la casse)
   useEffect(() => {
     if (!inputValue.trim()) {
       setFilteredLocations([]);
@@ -34,7 +32,6 @@ function LocationAutocomplete({ locations, form, setForm }) {
     setFilteredLocations(filtered);
   }, [inputValue, locations]);
 
-  // Fermer suggestions si clic en dehors
   useEffect(() => {
     function handleClickOutside(event) {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
@@ -61,7 +58,7 @@ function LocationAutocomplete({ locations, form, setForm }) {
         onChange={(e) => {
           setInputValue(e.target.value);
           setShowSuggestions(true);
-          setForm({ ...form, locationId: "", salleId: "" }); // reset locationId tant que rien sélectionné
+          setForm({ ...form, locationId: "", salleId: "" });
         }}
         onFocus={() => inputValue && setShowSuggestions(true)}
         placeholder="Commencez à taper un lieu..."
@@ -94,7 +91,7 @@ export default function Evenementform({ onNext }) {
     date_fin: "",
     locationId: "",
     salleId: "",
-    isPublic: false,
+    imageFile: null, // image nullable
   });
 
   const [locations, setLocations] = useState([]);
@@ -123,9 +120,15 @@ export default function Evenementform({ onNext }) {
   const handleChange = (e) => {
     setForm({
       ...form,
-      [e.target.name]: e.target.type === "checkbox" ? e.target.checked : e.target.value,
+      [e.target.name]: e.target.value,
     });
   };
+
+  const handleFileChange = (e) => {
+    setForm({ ...form, imageFile: e.target.files[0] || null });
+  };
+
+  const selectedSalleName = () => salles.find((s) => s.id === form.salleId)?.nom || "";
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -136,7 +139,20 @@ export default function Evenementform({ onNext }) {
     }
 
     try {
-      const event = await createEvent({ ...form, isPublic: form.isPublic });
+      const formData = new FormData();
+      formData.append("nom", form.nom);
+      formData.append("type", form.type);
+      formData.append("theme", form.theme);
+      formData.append("date", form.date);
+      formData.append("date_fin", form.date_fin);
+      formData.append("locationId", form.locationId);
+      formData.append("salleId", form.salleId);
+      formData.append("isPublic", form.isPublic);
+      if (form.image) {
+        formData.append("image", form.image); // fichier
+      }
+
+      const event = await createEvent(formData);
       onNext && onNext({ eventId: event.id });
     } catch (error) {
       const errorMessage =
@@ -144,8 +160,6 @@ export default function Evenementform({ onNext }) {
       setError(errorMessage);
     }
   };
-
-  const selectedSalleName = () => salles.find((s) => s.id === form.salleId)?.nom || "";
 
   return (
     <div className="w-400 max-w-3xl mx-auto mt-12 px-6">
@@ -165,16 +179,14 @@ export default function Evenementform({ onNext }) {
             <input
               name="nom"
               value={form.nom}
-              onChange={(e) => {
-                setForm({ ...form, nom: textControll(e.target.value) });
-              }}
+              onChange={(e) => setForm({ ...form, nom: textControll(e.target.value) })}
               placeholder="Ex: Mariage de Sarah & Paul"
               required
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
             />
           </div>
 
-         <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700 mb-1">Type d'événement</label>
             <input
               name="type"
@@ -186,7 +198,6 @@ export default function Evenementform({ onNext }) {
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 cursor-pointer focus:ring-2 focus:ring-pink-400 transition"
             />
           </div>
-
 
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700 mb-1">Thème</label>
@@ -224,7 +235,7 @@ export default function Evenementform({ onNext }) {
             />
           </div>
 
-          {/* Champ Lieu avec autocomplete */}
+          {/* Champ Lieu */}
           <LocationAutocomplete locations={locations} form={form} setForm={setForm} />
 
           <div className="flex flex-col gap-2">
@@ -242,16 +253,17 @@ export default function Evenementform({ onNext }) {
             />
           </div>
 
+          {/* Upload image (nullable) */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Événement public ?</label>
+            <label className="text-sm font-semibold text-gray-700 mb-1">Image de l'événement (facultatif)</label>
             <input
-              type="checkbox"
-              name="isPublic"
-              checked={form.isPublic}
-              onChange={handleChange}
+              type="file"
+              accept="image/*"
+              onChange={(e) => setForm({ ...form, imageFile: e.target.files[0] })}
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
             />
           </div>
+
 
           <div className="col-span-1 md:col-span-2 mt-4">
             <button

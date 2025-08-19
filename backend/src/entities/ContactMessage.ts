@@ -20,6 +20,9 @@ export class ContactMessage {
     @Column('text')
     message: string;
 
+    @Column({ default: false })   // <-- Nouveau champ pour marquer la lecture
+    isRead: boolean;
+
     @CreateDateColumn()
     createdAt: Date;
 }
