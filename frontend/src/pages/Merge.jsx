@@ -13,6 +13,9 @@ import { getAllEvents } from '../services/evenementServ';
 import { AuthModal } from "../components/Modal/authModal";
 import SuccessEvent from "../util/SuccessEvent";
 import Aboutus from "../util/Aboutus";
+import NosForfaits from "../util/nosForfaits";
+import Footer from "./footer";
+
 import Demo from "../util/Dem";
 
 const images = [
@@ -310,9 +313,39 @@ const Publicacc = () => {
                     <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-amber-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </button>
 
-                    <div className="transform hover:-translate-y-2 transition-all duration-300 cursor-pointer">
+                    {/* <div className="transform hover:-translate-y-2 transition-all duration-300 cursor-pointer">
                     <ButtonConnexion />
-                    </div>
+                    </div> */}
+                    <a
+                    href="#demo"
+                    className="relative overflow-hidden group flex items-center justify-center bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 text-white px-7 py-3 w-[90%] h-[50px] sm:w-80 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 text-base font-semibold tracking-wide focus:outline-none focus:ring-4 focus:ring-blue-200/50 border-2 border-transparent cursor-pointer"
+                    style={{
+                      backgroundImage: `linear-gradient(to right, rgb(31, 41, 55), rgb(17, 24, 39)), linear-gradient(to right, rgb(59, 130, 246), rgb(147, 51, 234), rgb(236, 72, 153))`,
+                      backgroundOrigin: "border-box",
+                      backgroundClip: "padding-box, border-box",
+                    }}
+                  >
+                    {/* Effet lumineux animé */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+
+                    {/* Texte */}
+                    <span className="relative z-10 mr-2">Voir la démo</span>
+
+                    {/* Icône */}
+                    <svg
+                      className="w-5 h-5 text-white relative z-10 group-hover:translate-x-1 transition-transform duration-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m6-9V8a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h12a3 3 0 013 3z"
+                      />
+                    </svg>
+                  </a>
                 </motion.div>
 
                 {/* Statistiques */}
@@ -420,6 +453,12 @@ const Publicacc = () => {
                 <Testimonials />
             </div>
         </section>
+        
+        <section id="forfaits" ref={contactRef}>
+            <div className="bg-gradient-to-b from-gray-50 to-white">
+                <NosForfaits />
+            </div>
+        </section>
 
         {/* Section À Propos */}
         <section id="about">
@@ -429,51 +468,15 @@ const Publicacc = () => {
         </section>
 
         <section id="contact" ref={contactRef}>
-            <div className="bg-gradient-to-b from-gray-50 to-white">
+          <div className="bg-gradient-to-b from-gray-50 to-white">
             <Contact />
-            </div>
+          </div>
         </section>
-        <footer className="bg-gray-700 p-5">
-            <div className="">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div className="flex items-center gap-4">
-                {/* Logo/Nom */}
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-[#FB9E3A] to-orange-400 rounded-xl flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    </div>
-                    <span className="text-xl font-black text-white">Rapex group</span>
-                </div>
-                <p className="text-slate-400 text-sm">
-                    © 2025. Tous droits réservés
-                </p>
-                </div>
-
-                <div className="flex items-center gap-6 text-sm">
-                <a
-                    href="#"
-                    className="text-slate-400 hover:text-white transition-colors hover:underline"
-                >
-                    Politique de confidentialité
-                </a>
-                <a
-                    href="#"
-                    className="text-slate-400 hover:text-white transition-colors hover:underline"
-                >
-                    Conditions d'utilisation
-                </a>
-                <a
-                    href="#"
-                    className="text-slate-400 hover:text-white transition-colors hover:underline"
-                >
-                    Support
-                </a>
-                </div>
-            </div>
-            </div>
-        </footer>
+        <section id="footer" ref={contactRef}>
+          <div className="bg-gradient-to-b from-gray-50 to-white">
+            <Footer />
+          </div>
+        </section>
         </>
     );
 };

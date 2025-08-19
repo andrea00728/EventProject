@@ -3,8 +3,9 @@ import { useStateContext } from "../context/ContextProvider";
 import { Link, Navigate, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import Logo from "../assets/LogoMaster.png";
+import ButtonConnexion from "../util/buttonconnexion";
 
-export default function GuestLayout() {
+export default function PublicLayout() {
   const { token, role, user } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -13,10 +14,11 @@ export default function GuestLayout() {
   const isPublicEventsPage = location.pathname === "/evenements-publics";
 
   // Items de nav avec scroll smooth
-  const navItems = [
+  let navItems = [
     { path: "#pagepublic", name: "Accueil" },
     { path: "#service", name: "Service" },
     { path: "#testimony", name: "Témoignages" },
+    { path: "#forfaits", name: "Forfaits" },
     { path: "#contact", name: "Contact" },
   ];
 
@@ -30,8 +32,16 @@ export default function GuestLayout() {
   };
 
   if (token) {
-    if (user?.isInPersonnel) return <Navigate to="/choix-role" replace />;
-    if (role === "organisateur") return <Navigate to="/accueil" replace />;
+    navItems = [
+    { path: "#pagepublic", name: "Accueil" },
+    { path: "#", name: "Evénement" },
+    { path: "#service", name: "Service" },
+    { path: "#testimony", name: "Témoignages" },
+    { path: "#forfaits", name: "Forfaits" },
+    { path: "#contact", name: "Contact" },
+  ];
+    // if (user?.isInPersonnel) return <Navigate to="/choix-role" replace />;
+    // if (role === "organisateur") return <Navigate to="/accueil" replace />;
   }
 
   return (
@@ -64,15 +74,12 @@ export default function GuestLayout() {
             ))}
 
             {/* Bouton dynamique */}
-            <button
-              onClick={() => {
-                navigate(isPublicEventsPage ? "/pagepublic" : "/evenements-publics");
-                setIsMenuOpen(false);
-              }}
+            {/* <button
               className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg transition"
             >
-              {isPublicEventsPage ? "Retour à l'accueil" : "Événements publics"}
-            </button>
+              Se connecter
+            </button> */}
+            <ButtonConnexion />
           </nav>
 
           {/* Bouton menu mobile */}
@@ -127,16 +134,7 @@ export default function GuestLayout() {
               </a>
             ))}
 
-            {/* Bouton mobile dynamique */}
-            <button
-              onClick={() => {
-                navigate(isPublicEventsPage ? "/pagepublic" : "/evenements-publics");
-                setIsMenuOpen(false);
-              }}
-              className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl"
-            >
-              {isPublicEventsPage ? "Retour à l'accueil" : "Événements publics"}
-            </button>
+            <ButtonConnexion />
           </div>
         </motion.div>
       </header>
