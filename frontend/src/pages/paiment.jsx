@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   CreditCard,
@@ -12,6 +13,8 @@ import {
   Smartphone,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useStateContext } from "../context/ContextProvider"; // Pour récupérer le token
+import { updateForfait } from "../services/forfaitService";
 
 const plans = {
   freemium: {
@@ -81,6 +84,7 @@ const plans = {
   },
 };
 
+
 const paymentMethods = [
   { id: "card", name: "Carte bancaire", icon: CreditCard },
   { id: "paypal", name: "PayPal", icon: DollarSign },
@@ -89,20 +93,39 @@ const paymentMethods = [
 ];
 
 const PaymentPage = ({ forfait, onClose }) => {
+  const { token } = useStateContext();
   const [selectedPlan, setSelectedPlan] = useState(forfait?.nom.toLowerCase() || "pro");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("card");
+  const [loading, setLoading] = useState(false);
 
   if (!forfait) return null;
 
   const selectedPlanDetails = plans[selectedPlan];
   const PlanIcon = selectedPlanDetails.icon;
 
-  const handlePayment = () => {
-    if (selectedPaymentMethod === "paypal") {
-      const paypalUrl = "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=TON_BUTTON_ID";
-      window.open(paypalUrl, "_blank");
-    } else {
-      alert(`Paiement via ${selectedPaymentMethod} à implémenter`);
+  const handlePayment = async () => {
+    if (!token) {
+      alert("Vous devez être connecté pour effectuer un paiement.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (selectedPaymentMethod === "paypal") {
+        const data = await updateForfait(token, selectedPlan);
+        if (data.approvalUrl) {
+          window.open(data.approvalUrl, "_blank");
+        } else {
+          alert("Erreur lors de la création du paiement PayPal");
+        }
+      } else {
+        alert(`Paiement via ${selectedPaymentMethod} à implémenter`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la tentative de paiement.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -146,10 +169,11 @@ const PaymentPage = ({ forfait, onClose }) => {
                   <button
                     key={key}
                     onClick={() => setSelectedPlan(key)}
-                    className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all duration-300 shadow ${isSelected
-                      ? `${plan.buttonColor} text-white shadow-lg scale-105`
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
+                    className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all duration-300 shadow ${
+                      isSelected
+                        ? `${plan.buttonColor} text-white shadow-lg scale-105`
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
                   >
                     <IconComp className="w-5 h-5" />
                     {plan.name}
@@ -183,7 +207,11 @@ const PaymentPage = ({ forfait, onClose }) => {
                 <ul className="space-y-3">
                   {selectedPlanDetails.features.map((feature, i) => (
                     <li key={i} className="flex items-center gap-3">
-                      <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${selectedPlanDetails.buttonColor.split(" ")[0]}`}>
+                      <div
+                        className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
+                          selectedPlanDetails.buttonColor.split(" ")[0]
+                        }`}
+                      >
                         <Check className="w-4 h-4 text-white" />
                       </div>
                       <span className="text-gray-700">{feature}</span>
@@ -192,7 +220,7 @@ const PaymentPage = ({ forfait, onClose }) => {
                 </ul>
               </div>
 
-              {/* methode de paiement */}
+              {/* Méthode de paiement */}
               <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col gap-6">
                 <div>
                   <h4 className="font-bold text-gray-900 mb-3">Méthode de paiement</h4>
@@ -203,10 +231,9 @@ const PaymentPage = ({ forfait, onClose }) => {
                       return (
                         <div
                           key={method.id}
-                          className={`border-2 rounded-xl p-4 flex flex-col items-center cursor-pointer transition-all duration-300 ${isSelected
-                            ? "border-blue-500 bg-blue-50 shadow-md"
-                            : "border-gray-200 hover:bg-gray-50"
-                            }`}
+                          className={`border-2 rounded-xl p-4 flex flex-col items-center cursor-pointer transition-all duration-300 ${
+                            isSelected ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-200 hover:bg-gray-50"
+                          }`}
                           onClick={() => setSelectedPaymentMethod(method.id)}
                         >
                           <IconComp className={`w-7 h-7 mb-2 ${isSelected ? "text-blue-600" : "text-gray-400"}`} />
@@ -221,9 +248,10 @@ const PaymentPage = ({ forfait, onClose }) => {
 
                 <button
                   onClick={handlePayment}
+                  disabled={loading}
                   className={`w-full py-4 rounded-xl font-bold text-white text-lg transition-transform duration-300 hover:scale-105 shadow-lg ${selectedPlanDetails.buttonColor}`}
                 >
-                  {selectedPlan === "freemium" ? "Commencer gratuitement" : "Confirmer l'abonnement"}
+                  {loading ? "Chargement..." : selectedPlan === "freemium" ? "Commencer gratuitement" : "Confirmer l'abonnement"}
                 </button>
               </div>
             </div>
