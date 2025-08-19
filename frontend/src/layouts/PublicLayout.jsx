@@ -27,7 +27,6 @@ export default function PublicLayout() {
     { path: "#contact", name: "Contact" },
   ]);
 
-  // Redirection selon le rôle
   const navItems1 = [
     { path: "/pagepublic", name: "Accueil" },
     {
@@ -72,18 +71,6 @@ export default function PublicLayout() {
           description:
             "Coordonnez votre équipe et assignez les rôles et tâches",
         },
-        //  Afficher seulement pour les forfaits premium
-        // ...(["pro", "premium", "gold"].includes(forfait?.nom)
-        //   ? [
-        //       {
-        //         path: "/evenement/restauration",
-        //         name: "Restauration",
-        //         icon: "/payment-method.png",
-        //         description:
-        //           "Gérez les menus et services de restauration premium",
-        //       },
-        //     ]
-        //   : []),
       ],
     },
     { path: "#service", name: "Service" },
@@ -91,7 +78,6 @@ export default function PublicLayout() {
     { path: "#forfaits", name: "Forfaits" },
   ];
 
-  // Gestion des rôles et de la connexion
   useEffect(() => {
     if (role) {
       switch (role) {
@@ -131,7 +117,6 @@ export default function PublicLayout() {
     }
   }, [token, role, user, navigate]);
 
-  // Scroll smooth
   const handleSmoothScroll = (e, target) => {
     e.preventDefault();
     const element = document.querySelector(target);
@@ -141,6 +126,7 @@ export default function PublicLayout() {
       setIsSubMenuOpenMobile(false);
     }
   };
+
   const subMenuVariants = {
     hidden: {
       opacity: 0,
@@ -157,7 +143,6 @@ export default function PublicLayout() {
       transition: { duration: 0.2, ease: "easeOut" },
     },
   };
-
 
   return (
     <>
@@ -196,24 +181,13 @@ export default function PublicLayout() {
                     }
                   >
                     <span className="relative z-10">{item.name}</span>
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300"></span>
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r rounded-xl opacity-0 group-hover:opacity-100"
-                      transition={{ duration: 0.3 }}
-                    />
-                    <motion.div
-                      className="absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 bg-gradient-to-r from-[#6B46C1] to-indigo-500 rounded-full"
-                      initial={{ width: 0 }}
-                      whileHover={{ width: "70%" }}
-                      transition={{ duration: 0.3 }}
-                    />
                   </Link>
 
                   {item.subMenus && (
                     <AnimatePresence>
                       {isEvenementHovered && (
                         <motion.div
-                          className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-40"
+                          className="absolute top-full left-1/2 -translate-x-1/2 -ml-31 pt-2 z-40"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
@@ -222,13 +196,13 @@ export default function PublicLayout() {
                         >
                           <motion.div
                             className="bg-white/98 backdrop-blur-xl shadow-2xl shadow-gray-900/15 rounded-xl border border-gray-200/60"
-                            style={{ width: "1200px" }}
+                            style={{ width: "1200px" }} // reste large
                             variants={subMenuVariants}
                             initial="hidden"
                             animate="visible"
                             exit="hidden"
                           >
-                            {/* En-tête compact */}
+                            {/* En-tête */}
                             <div className="px-6 py-4 border-b border-gray-100">
                               <div className="flex items-center justify-between">
                                 <div>
@@ -245,7 +219,7 @@ export default function PublicLayout() {
                               </div>
                             </div>
 
-                            {/* Grille des éléments - plus compacte */}
+                            {/* Grille */}
                             <div className="p-6">
                               <div className="grid grid-cols-4 gap-4">
                                 {item.subMenus.map((subItem, subIndex) => (
@@ -265,7 +239,6 @@ export default function PublicLayout() {
                                         setIsEvenementHovered(false)
                                       }
                                     >
-                                      {/* Icône et titre sur une ligne */}
                                       <div className="flex items-center gap-3 mb-2">
                                         <div className="flex-shrink-0 p-2.5 bg-gray-50 rounded-lg border border-gray-200 group-hover:border-purple-300 group-hover:bg-purple-50 transition-all duration-300">
                                           {subItem.icon && (
@@ -280,68 +253,12 @@ export default function PublicLayout() {
                                           {subItem.name}
                                         </h4>
                                       </div>
-                                      <div>
-                                        <p className="text-xs text-gray-600">
-                                          {subItem.description}
-                                        </p>
-                                      </div>
-
-                                      {/* Action discrète */}
-                                      <div className="flex items-center justify-end">
-                                        <div className="opacity-0 group-hover:opacity-100 transition-all duration-300">
-                                          <svg
-                                            className="w-3.5 h-3.5 text-purple-600"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M9 5l7 7-7 7"
-                                            />
-                                          </svg>
-                                        </div>
-                                      </div>
+                                      <p className="text-xs text-gray-600">
+                                        {subItem.description}
+                                      </p>
                                     </Link>
                                   </motion.div>
                                 ))}
-                              </div>
-                            </div>
-
-                            {/* Footer compact */}
-                            <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 rounded-b-xl">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-6 h-6 bg-gradient-to-r from-[#6B46C1] to-indigo-600 rounded-md flex items-center justify-center">
-                                    <svg
-                                      className="w-3 h-3 text-white"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                                      />
-                                    </svg>
-                                  </div>
-                                  <span className="text-sm font-medium text-gray-900">
-                                    Tableau de bord complet
-                                  </span>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                  <button className="text-sm bg-gradient-to-r from-[#6B46C1] to-indigo-600 text-white px-4 py-1.5 rounded-md hover:shadow-md transition-all duration-300 font-medium">
-                                    Nouveau
-                                  </button>
-                                  <button className="text-sm bg-white border border-gray-300 text-gray-700 px-4 py-1.5 rounded-md hover:bg-gray-50 transition-all duration-300">
-                                    Voir tout
-                                  </button>
-                                </div>
                               </div>
                             </div>
                           </motion.div>
@@ -363,26 +280,24 @@ export default function PublicLayout() {
               </button>
             )}
           </nav>
-          {/* Bouton menu mobile */}
+
+          {/* Mobile Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="lg:hidden p-2 rounded bg-white shadow"
           >
             <div className="w-6 h-6 relative flex flex-col justify-center items-center">
               <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
-                  isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"
-                }`}
+                className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"
+                  }`}
               ></span>
               <span
-                className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${
-                  isMenuOpen ? "opacity-0" : "opacity-100"
-                }`}
+                className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${isMenuOpen ? "opacity-0" : "opacity-100"
+                  }`}
               ></span>
               <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
-                  isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
-                }`}
+                className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
+                  }`}
               ></span>
             </div>
           </button>
