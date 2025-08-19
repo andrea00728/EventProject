@@ -4,11 +4,8 @@ import { FaAward, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaClock } from "react-
 import TestimonialsSection from "../util/testimonialsSection";
 import { getAllEvents } from '../services/evenementServ';
 import tutorialVideo from "../assets/demo.mp4"; // import de la vidéo
-<<<<<<< HEAD
 import SalleAvecFormulaire from '../util/demo';
 import Demo from '../util/demo';
-=======
->>>>>>> origin/lioka
 
 export default function Accueil() {
   const [allEvents, setAllEvents] = useState([]);
