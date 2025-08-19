@@ -1,6 +1,9 @@
 import { Rocket, Star, Gem, Crown } from "lucide-react";
 import { AuthModal } from "../components/Modal/authModal";
 import { useState } from "react";
+import Slider from 'react-slick';
+import "slick-carousel/slick/slick.css"; 
+import "slick-carousel/slick/slick-theme.css";
 
 export default function NosForfaits() {
 
@@ -64,8 +67,8 @@ export default function NosForfaits() {
             Nos offres s’adaptent à votre croissance. Que vous débutiez ou gériez des événements à grande échelle,
             sélectionnez la formule idéale et débloquez toutes nos fonctionnalités.
           </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+          
+          <div className="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
             <Card
               title="STARTER"
               price="10 €/mois"
@@ -99,6 +102,55 @@ export default function NosForfaits() {
               icon={<Crown className="w-10 h-10 text-yellow-600" strokeWidth={2.5} />}
               featured
             />
+          </div>
+
+          <div className="lg:hidden">
+            <Slider
+              dots={true}
+              infinite={false}
+              speed={500}
+              slidesToShow={1}
+              slidesToScroll={1}
+              arrows={false}
+              autoplay={true}
+              autoplaySpeed={3000}
+              className="slick-carousel-mobile"
+            >
+              {/* Les Cards seront les "slides" du carrousel */}
+              <Card
+                title="STARTER"
+                price="10 €/mois"
+                invitations="100"
+                events="5"
+                duration="180 jours"
+                icon={<Rocket className="w-10 h-10 text-blue-500" strokeWidth={2.5} />}
+              />
+              <Card
+                title="PRO"
+                price="25.99 €/mois"
+                invitations="500"
+                events="Illimité"
+                duration="180 jours"
+                icon={<Star className="w-10 h-10 text-purple-500" strokeWidth={2.5} />}
+              />
+              <Card
+                title="PREMIUM"
+                price="39.99 €/mois"
+                invitations="1000"
+                events="Illimité"
+                duration="180 jours"
+                icon={<Gem className="w-10 h-10 text-pink-500" strokeWidth={2.5} />}
+              />
+              <Card
+                title="GOLD"
+                price="59.99 €/mois"
+                invitations="Illimité"
+                events="Illimité"
+                duration="365 jours"
+                icon={<Crown className="w-10 h-10 text-yellow-600" strokeWidth={2.5} />}
+                featured
+              />
+            </Slider>
           </div>
 
           <p className="mt-16 text-center text-gray-500 text-sm">
