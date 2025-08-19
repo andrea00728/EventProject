@@ -13,6 +13,7 @@ import Aboutus from "../util/Aboutus";
 import NosForfaits from "../util/nosForfaits";
 import Footer from "./footer";
 import Demo from "../util/Dem"; // ✅ Composant modal vidéo
+import DemoTable from "../util/demo";
 
 const images = [
   "/images/music-7238254_1280.jpg",
@@ -31,6 +32,7 @@ const Publicacc = () => {
 
   // ✅ Nouvel état pour le modal Demo
   const [isDemoOpen, setIsDemoOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const intervalRef = useRef(null);
   const touchStartX = useRef(0);
@@ -227,7 +229,7 @@ const Publicacc = () => {
                     href="#demo"
                     className="group relative bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white px-10 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-blue-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[200px] cursor-pointer"
                   >
-                    <span className="relative z-10 flex items-center justify-center gap-3">
+                    <span className="relative z-10 flex items-center justify-center gap-3" >
                       Voir la vidéo
                     </span>
                   </a>
@@ -235,24 +237,37 @@ const Publicacc = () => {
 
                 {/* ✅ Bouton Voir Démo (ouvre le modal Demo) */}
                 <button
-                    onClick={() => {
-                        const section = document.getElementById('demo');
-                        if (section) {
-                            section.scrollIntoView({ behavior: 'smooth' });
-                        }
-                    }}
-                    className="group relative bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white px-10 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-green-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[200px] cursor-pointer"
+                  onClick={() => setIsOpen(true)}
+                  className="group relative bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white px-10 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-green-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[200px] cursor-pointer"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-3">
                     Voir démo
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </button>
+
               </motion.div>
             </div>
           </div>
         </div>
       </section>
+        {/* Modal plein écran */}
+        {isOpen && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
+            <div className="relative w-full h-full bg-white flex flex-col items-center justify-center">
+            {/* Bouton fermer */}
+            <button
+                onClick={() => setIsOpen(false)}
+                className="absolute top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors"
+            >
+                ✕
+            </button>
+
+            {/* Contenu du modal */}
+            <DemoTable/>
+            </div>
+        </div>
+        )}
 
       {/* Autres sections */}
       <section id="service" ref={serviceRef}>
