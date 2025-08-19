@@ -76,6 +76,7 @@ import UserStats from "../pages/Admin/cards.jsx";
 import Tablecreation from "../pages/TableOrganisation/Tablecreation.jsx";
 import Publicacc from "../pages/Merge.jsx";
 import PublicLayout from "../layouts/PublicLayout.jsx";
+import EventProtectLayout from "../layouts/eventProtectLayout.jsx";
 
 const router = createBrowserRouter([
   {
@@ -95,101 +96,170 @@ const router = createBrowserRouter([
         element: <Accueil />,
       },
       {
-        path: "/evenement",
-        element: <Evenemenpage />,
-      },
-      {
         path: "/apropos",
         element: <Apropos />,
       },
       {
-        path: "/evenement/invites",
-        element: <ChoixModeInvite />,
-        children: [
-          {
-            path: "creationInv",
-            element: <InviteformWithId />,
-          },
-          {
-            path: "",
-            element: <ImportGuestsCSV />,
-          },
-          {
-            path: "affichageInv",
-            element: <AffichageInvite />,
-          },
-        ],
-      },
-      {
-        path: "/evenement/invitation",
-        element: <InvitationLayout />,
-      },
-
-      {
-        path: "/evenement/tables",
-        element: <TableLayout />,
-        children: [
-          {
-            path: "creationTable",
-            element: <TableToCreateBy_Event />,
-          },
-          {
-            path: "",
-            element: <Listetable />,
-          },
-          {
-            path: "3Dtable",
-            element: <Affichage3dTable />,
-          },
-        ],
-      },
-      {
-        path: "/evenement/evenement",
-        element: <EventLayout />,
-        children: [
-          {
-            path: "eventpadding",
-            element: <EventPending />,
-          },
-          {
-            path: "",
-            element: <EventAccept />,
-          },
-        ],
-      },
-      {
-        path: "/evenement/personnel",
-        element: <OrganisationPersonnelLayout />,
-        children: [
-          {
-            path: "createPersonnel",
-            element: <CreationPersonnel />,
-          },
-          {
-            path: "",
-            element: <DashboardPersonnel />,
-          },
-          {
-            path: "organigramme",
-            element: <PersonnelOrganigrammeDashboard />,
-          },
-          {
-            path: "dashboardCaisse",
-            element: <DashboardCard />,
-          },
-        ],
-      },
-      {
-        path: "/evenement/restauration",
-        element: <RestaurationPage />,
+        path: "/evenement",
+        element: (
+          <ProtectedRoute allowedRoles={["organisateur"]}>
+            <EventProtectLayout />
+          </ProtectedRoute>
+        ),
         children: [
           {
             path: "",
-            element: <MenuRestauration />,
+            element: <Evenemenpage />,
           },
           {
-            path: "menuItem",
-            element: <MenuItemForm />,
+            path: "personnel",
+            element: <OrganisationPersonnelLayout />,
+            children: [
+              {
+                path: "createPersonnel",
+                element: <CreationPersonnel />,
+              },
+              {
+                path: "",
+                element: <DashboardPersonnel />,
+              },
+            ],
+          },
+          {
+            path: "restauration",
+            element: <MenuForm />,
+            // children: [
+            //   {
+            //     path: "createPersonnel",
+            //     element: <CreationPersonnel />,
+            //   },
+            //   {
+            //     path: "",
+            //     element: <DashboardPersonnel />,
+            //   },
+            // ],
+          },
+          {
+            path: "/evenement/evenement",
+            element: <EventLayout />,
+            children: [
+              {
+                path: "eventpadding",
+                element: <EventPending />,
+              },
+              {
+                path: "",
+                element: <EventAccept />,
+              },
+            ],
+          },
+          {
+            path: "tables",
+            element: <TableLayout />,
+            children: [
+              {
+                path: "creationTable",
+                element: <Tablecreation />,
+              },
+              {
+                path: "",
+                element: <Listetable />,
+              },
+              {
+                path: "3Dtable",
+                element: <Affichage3dTable />,
+              },
+            ],
+          },
+          {
+            path: "invites",
+            element: <ChoixModeInvite />,
+            children: [
+              {
+                path: "creationInv",
+                element: <InviteformWithId />,
+              },
+              {
+                path: "",
+                element: <ImportGuestsCSV />,
+              },
+              {
+                path: "affichageInv",
+                element: <AffichageInvite />,
+              },
+            ],
+          },
+          {
+            path: "invitation",
+            element: <InvitationLayout />,
+          },
+          {
+            path: "tables",
+            element: <TableLayout />,
+            children: [
+              {
+                path: "creationTable",
+                element: <TableToCreateBy_Event />,
+              },
+              {
+                path: "",
+                element: <Listetable />,
+              },
+              {
+                path: "3Dtable",
+                element: <Affichage3dTable />,
+              },
+            ],
+          },
+          {
+            path: "evenement",
+            element: <EventLayout />,
+            children: [
+              {
+                path: "eventpadding",
+                element: <EventPending />,
+              },
+              {
+                path: "",
+                element: <EventAccept />,
+              },
+            ],
+          },
+          {
+            path: "restauration",
+            element: <RestaurationPage />,
+            children: [
+              {
+                path: "",
+                element: <MenuRestauration />,
+              },
+              {
+                path: "menuItem",
+                element: <MenuItemForm />,
+              },
+            ],
+          },
+          {
+            path: "personnel",
+            element: <OrganisationPersonnelLayout />,
+            children: [
+              {
+                path: "createPersonnel",
+                element: <CreationPersonnel />,
+              },
+              {
+                path: "",
+                element: <DashboardPersonnel />,
+              },
+              {
+                path: "organigramme",
+                element: <PersonnelOrganigrammeDashboard />,
+              },
+              {
+                path: "dashboardCaisse",
+                element: <DashboardCard />,
+              },
+            ],
           },
         ],
       },
@@ -254,66 +324,6 @@ const router = createBrowserRouter([
       {
         path: "/revenu",
         element: <RevenuPage />,
-      },
-      {
-        path: "/evenement/tables",
-        element: <TableLayout />,
-        children: [
-          {
-            path: "creationTable",
-            element: <Tablecreation />,
-          },
-          {
-            path: "",
-            element: <Listetable />,
-          },
-          {
-            path: "3Dtable",
-            element: <Affichage3dTable />,
-          },
-        ],
-      },
-      {
-        path: "/evenement/evenement",
-        element: <EventLayout />,
-        children: [
-          {
-            path: "eventpadding",
-            element: <EventPending />,
-          },
-          {
-            path: "",
-            element: <EventAccept />,
-          },
-        ],
-      },
-      {
-        path: "/evenement/personnel",
-        element: <OrganisationPersonnelLayout />,
-        children: [
-          {
-            path: "createPersonnel",
-            element: <CreationPersonnel />,
-          },
-          {
-            path: "",
-            element: <DashboardPersonnel />,
-          },
-        ],
-      },
-      {
-        path: "/evenement/restauration",
-        element: <MenuForm />,
-        // children: [
-        //   {
-        //     path: "createPersonnel",
-        //     element: <CreationPersonnel />,
-        //   },
-        //   {
-        //     path: "",
-        //     element: <DashboardPersonnel />,
-        //   },
-        // ],
       },
       {
         path: "/paypal-success",
