@@ -133,13 +133,47 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
     throw new BadRequestException("Événement non trouvé pour cet utilisateur.");
   }
 
+
+  // Vérification si l'utilisateur a déjà un rôle dans cet événement
+  const existingPersonnel = await this.personnelRepository.findOne({
+    where: {
+      email: dto.email,
+      evenement: { id: Number(dto.evenementId) },
+    },
+  });
+
+  if (existingPersonnel) {
+    throw new BadRequestException(`L'utilisateur ${dto.email} a deja un rôle dans cet événement.`);
+  }
+
+  // Vérification des chevauchements de dates avec d'autres événements
+  const personnelEvents = await this.personnelRepository.find({
+    where: {
+      email: dto.email,
+    },
+    relations: ['evenement'],
+  });
+
+  const isDateConflict = personnelEvents.some((personnel) => {
+    const otherEvent = personnel.evenement;
+    // Vérifier si les dates de l'événement actuel chevauchent celles d'un autre événement
+    return (
+      evenement.date <= otherEvent.date_fin &&
+      evenement.date_fin >= otherEvent.date
+    );
+  });
+  if (isDateConflict) {
+    throw new BadRequestException(`L'utilisateur ${dto.email} a déjà un rôle dans un autre événement à ces dates.`);
+  }
+  
+
   //  Création du personnel avec statut "pending"
   const personnel = this.personnelRepository.create({
     nom: dto.nom,
     email: dto.email,
     role: dto.role,
     evenement,
-    status: 'attent', 
+    status: 'attent',
   });
 
   const savedPersonnel = await this.personnelRepository.save(personnel);

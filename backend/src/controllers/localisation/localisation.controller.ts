@@ -1,21 +1,10 @@
-// src/location/location.controller.ts
 import { Controller, Post, Body, Get, Param, BadRequestException, Put, Delete } from '@nestjs/common';
 import { LocationService } from 'src/services/localisation-service/localisation-service.service';
 import { Query } from '@nestjs/common';
 
-
 @Controller('locations')
 export class LocationController {
   constructor(private readonly locationService: LocationService) {}
-
-  // Créer un lieu
-  @Post()
-  async createLocation(@Body('nom') nom: string) {
-    if (!nom) {
-      throw new BadRequestException('Le nom du lieu est requis');
-    }
-    return this.locationService.createLocation(nom);
-  }
 
   @Get()
   findLocations(@Query('search') search?: string) {
@@ -25,56 +14,104 @@ export class LocationController {
     return this.locationService.findAllLocations();
   }
 
-  // Récupérer tous les lieux
   @Get()
   findAllLocations() {
     return this.locationService.findAllLocations();
   }
 
-  // Récupérer un lieu par ID
   @Get(':id')
-  findLocationById(@Param('id') id: string) {
-    return this.locationService.findLocationById(+id);
+  async findLocationById(@Param('id') id: string) {
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum) || idNum <= 0) {
+      throw new BadRequestException('L\'ID doit être un entier positif valide');
+    }
+    return this.locationService.findLocationById(idNum);
   }
 
-  // Créer une salle
   @Post(':locationId/salles')
   async createSalle(@Param('locationId') locationId: string, @Body('nom') nom: string) {
     if (!nom) {
       throw new BadRequestException('Le nom de la salle est requis');
     }
-    return this.locationService.createSalle(nom, +locationId);
+    const idNum = parseInt(locationId, 10);
+    if (isNaN(idNum) || idNum <= 0) {
+      throw new BadRequestException('L\'ID du lieu doit être un entier positif valide');
+    }
+    return this.locationService.createSalle(nom, idNum);
   }
 
-  // Récupérer les salles d'un lieu
   @Get(':locationId/salles')
   findSallesByLocation(@Param('locationId') locationId: string) {
-    return this.locationService.findSallesByLocation(+locationId);
+    const idNum = parseInt(locationId, 10);
+    if (isNaN(idNum) || idNum <= 0) {
+      throw new BadRequestException('L\'ID du lieu doit être un entier positif valide');
+    }
+    return this.locationService.findSallesByLocation(idNum);
   }
 
-  // Récupérer une salle par ID
   @Get('salles/:id')
   findSalleById(@Param('id') id: string) {
-    return this.locationService.findSalleById(+id);
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum) || idNum <= 0) {
+      throw new BadRequestException('L\'ID de la salle doit être un entier positif valide');
+    }
+    return this.locationService.findSalleById(idNum);
   }
 
   @Put(':id')
   async updateLocation(@Param('id') id: string, @Body('nom') nom: string) {
-  return this.locationService.updateLocation(+id, nom);
-}
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum) || idNum <= 0) {
+      throw new BadRequestException('L\'ID doit être un entier positif valide');
+    }
+    return this.locationService.updateLocation(idNum, nom);
+  }
 
-@Delete(':id')
-async deleteLocation(@Param('id') id: string) {
-  return this.locationService.deleteLocation(+id);
-}
+  @Delete(':id')
+  async deleteLocation(@Param('id') id: string) {
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum) || idNum <= 0) {
+      throw new BadRequestException('L\'ID doit être un entier positif valide');
+    }
+    return this.locationService.deleteLocation(idNum);
+  }
 
-@Put('salles/:id')
-async updateSalle(@Param('id') id: string, @Body('nom') nom: string) {
-  return this.locationService.updateSalle(+id, nom);
-}
+  @Put('salles/:id')
+  async updateSalle(@Param('id') id: string, @Body('nom') nom: string) {
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum) || idNum <= 0) {
+      throw new BadRequestException('L\'ID de la salle doit être un entier positif valide');
+    }
+    return this.locationService.updateSalle(idNum, nom);
+  }
 
-@Delete('salles/:id')
-async deleteSalle(@Param('id') id: string) {
-  return this.locationService.deleteSalle(+id);
-}
+  @Delete('salles/:id')
+  async deleteSalle(@Param('id') id: string) {
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum) || idNum <= 0) {
+      throw new BadRequestException('L\'ID de la salle doit être un entier positif valide');
+    }
+    return this.locationService.deleteSalle(idNum);
+  }
+
+  @Get('coordinates')
+  getLocations() {
+    return this.locationService.getCoordinates();
+  }
+
+  @Get('geocode/search')
+  async geocode(@Query('q') query: string) {
+    if (!query) {
+      throw new BadRequestException('Un terme de recherche est requis');
+    }
+    return this.locationService.geocodeLocation(query);
+  }
+
+  @Post('save')
+  async saveLocation(@Body('query') query: string) {
+    if (!query) {
+      throw new BadRequestException('Un terme de recherche est requis');
+    }
+    return this.locationService.saveSelectedLocation(query);
+  }
 }

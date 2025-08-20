@@ -1,4 +1,3 @@
-// src/location/location.service.ts
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Evenement } from 'src/entities/Evenement';
@@ -6,20 +5,20 @@ import { Localisation } from 'src/entities/Location';
 import { Salle } from 'src/entities/salle';
 import { DataSource, Repository } from 'typeorm';
 import { ILike } from 'typeorm';
-
+import { HttpService } from '@nestjs/axios';
+import { AxiosResponse } from 'axios';
 
 @Injectable()
 export class LocationService {
-
   constructor(
     @InjectRepository(Localisation)
     private readonly locationRepository: Repository<Localisation>,
     @InjectRepository(Salle)
     private readonly salleRepository: Repository<Salle>,
-
     @InjectRepository(Evenement)
-    private evenementRepository: Repository<Evenement>,
+    private readonly evenementRepository: Repository<Evenement>,
     private dataSource: DataSource,
+    private httpService: HttpService,
   ) {}
 
   // Créer un lieu
@@ -31,7 +30,6 @@ export class LocationService {
     const location = this.locationRepository.create({ nom });
     return this.locationRepository.save(location);
   }
-
 
   async findLocationsBySearch(search: string): Promise<Localisation[]> {
     return this.locationRepository.find({
@@ -84,7 +82,7 @@ export class LocationService {
   }
 
   async updateLocation(id: number, nom: string): Promise<Localisation> {
-    const location = await this.findLocationById(id); // Reuses existing method to check if location exists
+    const location = await this.findLocationById(id);
     if (!nom) {
       throw new BadRequestException('Le nom du lieu est requis');
     }
@@ -101,7 +99,7 @@ export class LocationService {
   }
 
   async updateSalle(id: number, nom: string): Promise<Salle> {
-    const salle = await this.findSalleById(id); // Reuses existing method to check if salle exists
+    const salle = await this.findSalleById(id);
     if (!nom) {
       throw new BadRequestException('Le nom de la salle est requis');
     }
@@ -109,15 +107,12 @@ export class LocationService {
     return this.salleRepository.save(salle);
   }
 
-
-  // src/services/localisation-service/localisation-service.service.ts
   async deleteSalle(id: number): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // Check for dependent evenement records
       const evenementCount = await this.evenementRepository.count({ where: { salleId: id } });
       if (evenementCount > 0) {
         throw new BadRequestException(
@@ -125,7 +120,6 @@ export class LocationService {
         );
       }
 
-      // Delete the salle record
       await queryRunner.manager.delete(Salle, { id });
 
       await queryRunner.commitTransaction();
@@ -135,5 +129,49 @@ export class LocationService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  getCoordinates() {
+    return [
+      { lat: 48.8566, lng: 2.3522, name: 'Paris' },
+      { lat: 51.5074, lng: -0.1278, name: 'London' },
+    ];
+  }
+
+  async geocodeLocation(query: string): Promise<any> {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=1`;
+    try {
+      const response = await this.httpService.get(url).toPromise();
+      if (!response) {
+        throw new BadRequestException('Erreur lors de la géocodage : Réponse indéfinie');
+      }
+      if (response.data && response.data.length > 0) {
+        const result = response.data[0];
+        return {
+          lat: parseFloat(result.lat),
+          lon: parseFloat(result.lon),
+          displayName: result.display_name,
+        };
+      } else {
+        throw new BadRequestException('Aucun résultat trouvé pour cette recherche');
+      }
+    } catch (error) {
+      throw new BadRequestException('Erreur lors de la géocodage : ' + (error.message || 'Erreur inconnue'));
+    }
+  }
+
+  async saveSelectedLocation(query: string): Promise<Localisation> {
+    const geocodeResult = await this.geocodeLocation(query);
+    const existingLocation = await this.locationRepository.findOne({ where: { nom: geocodeResult.displayName } });
+    if (existingLocation) {
+      return existingLocation;
+    }
+
+    const newLocation = this.locationRepository.create({
+      nom: geocodeResult.displayName,
+      latitude: geocodeResult.lat,
+      longitude: geocodeResult.lon,
+    });
+    return this.locationRepository.save(newLocation);
   }
 }

@@ -1,13 +1,4 @@
-// entity/Evenement.ts
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  OneToMany,
-  JoinColumn,
-  Unique
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, Unique } from 'typeorm';
 import { Localisation } from './Location';
 import { Salle } from './salle';
 import { TableEvent } from './Table';
@@ -20,7 +11,8 @@ import { Balance } from './balance.entity';
 import { Payment } from './payment.entity';
 import { Favorite } from './Favorite';
 
-@Unique(['nom','user'])
+
+@Unique(['nom', 'user'])
 @Entity()
 export class Evenement {
   @PrimaryGeneratedColumn()
@@ -41,8 +33,6 @@ export class Evenement {
   @Column({ nullable: true })
   date_fin: Date;
 
-  @Column({ nullable: true })
-  createdAt: Date;
 
   @ManyToOne(() => Localisation, (localisation) => localisation.salles)
   location: Localisation;
@@ -55,22 +45,6 @@ export class Evenement {
 
   @Column({ nullable: true })
   salleId: number;
-
-  @ManyToOne(() => User, (user) => user.evenement, { nullable: false, onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'utilisateur_id' })
-  user: User;
-
-  @Column({ type: 'float', nullable: true })
-  montanttransaction?: number;
-
-  @Column({ type:'boolean', default: false })
-  isPublic: boolean;
-
-  @Column({ nullable:true })
-  imageUrl?: string;
-
-  @Column({ nullable: true })
-  maxGuest?: number;
 
   @OneToMany(() => TableEvent, (table) => table.event, { onDelete: 'CASCADE' })
   tables: TableEvent[];
@@ -93,6 +67,28 @@ export class Evenement {
   @OneToMany(() => Payment, (payment) => payment.event)
   payments: Payment[];
 
+  /**
+   * natoko anio ko lony
+   */
+  // @ManyToOne(()=>User,(user)=>user.id,{nullable:false})
+  // @JoinColumn({name:'utilisateur_id'})
+  // user:User
+
+  @ManyToOne(() => User, (user) => user.evenement, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'utilisateur_id' })
+  user: User;
+
+
+  @Column({ type: 'float', nullable: true })
+  montanttransaction?: number;
+
+  @Column({ nullable: true })
+  createdAt: Date;
+
+  @Column({ type: 'boolean', default: false })
+  isPublic: boolean;
+
   @OneToMany(() => Favorite, (favorite) => favorite.evenement, { onDelete: 'CASCADE' })
   favorites: Favorite[];
+  maxGuest: number;
 }

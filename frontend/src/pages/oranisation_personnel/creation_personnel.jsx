@@ -25,14 +25,14 @@ export default function CreationPersonnel() {
   const [eventError, setEventError] = useState("");
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
-  const[isValid,setIsValid]=useState(null);
+  const [isValid, setIsValid] = useState(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const data = await getMyEvents(token);
         setEvents(data);
-        if(data.length>0){
+        if (data.length > 0) {
           setSelectedEvent(data[0].id);
           setForm({ ...form, event: data[0].id });
         }
@@ -76,20 +76,20 @@ export default function CreationPersonnel() {
    */
 
   useEffect(() => {
-  clearTimeout(debouceTimeout); 
+    clearTimeout(debouceTimeout);
 
-  if (!form.email.trim()) {
-    setIsValid(null);
-    return;
-  }
+    if (!form.email.trim()) {
+      setIsValid(null);
+      return;
+    }
 
-  debouceTimeout = setTimeout(async () => {
-    const valid = await checkEmail(form.email.trim());
-    setIsValid(valid);
-  }, 800); 
+    debouceTimeout = setTimeout(async () => {
+      const valid = await checkEmail(form.email.trim());
+      setIsValid(valid);
+    }, 800);
 
-  return () => clearTimeout(debouceTimeout);
-}, [form.email]);
+    return () => clearTimeout(debouceTimeout);
+  }, [form.email]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -109,7 +109,7 @@ export default function CreationPersonnel() {
     //   return;
     // }
 
-    if(isValid===false){
+    if (isValid === false) {
       setError("adresse email incorrecte ou inexistante.");
       setLoading(false);
       return;
@@ -130,10 +130,26 @@ export default function CreationPersonnel() {
       setSuccess(" Invitation envoyée au personnel. En attente de confirmation.");
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
-      setError(
-        error.response?.data?.message ||
-        " Erreur lors de la création du personnel."
-      );
+      // Gestion des erreurs spécifiques du backend
+      const errorMessage = error.response?.data?.message;
+      console.log("voici l'erreur", errorMessage);
+      
+      if (errorMessage === "Cet utilisateur a déjà un rôle dans cet événement.") {
+        setError("Cet utilisateur a déjà un rôle dans cet événement.");
+      } else if (
+        errorMessage ===
+        "L'utilisateur est déjà assigné à un autre événement pendant cette période."
+      ) {
+        setError(
+          "L'utilisateur est déjà assigné à un autre événement pendant cette période."
+        );
+      } else if (errorMessage === "Événement non trouvé pour cet utilisateur.") {
+        setError("Événement non trouvé pour cet utilisateur.");
+      } else {
+        setError(
+          errorMessage || "Erreur lors de la création du personnel."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -165,8 +181,8 @@ export default function CreationPersonnel() {
                 key={event.id}
                 onClick={() => handleSelectEvent(event.id)}
                 className={`flex-shrink-0 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${selectedEvent === event.id
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                   }`}
               >
                 {event.nom || `Événement ${event.id}`}
@@ -230,7 +246,7 @@ export default function CreationPersonnel() {
                       type="text"
                       name="nom"
                       value={form.nom}
-                      onChange={(e)=>setForm({...form,nom:textControll(e.target.value)})}
+                      onChange={(e) => setForm({ ...form, nom: textControll(e.target.value) })}
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       placeholder="Entrez le nom complet"

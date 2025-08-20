@@ -123,7 +123,7 @@ const PaymentPage = ({ forfait, onClose }) => {
           setError("URL de paiement PayPal non valide.");
         }
       } else {
-        setError(`Paiement via ${selectedPaymentMethod} non implémenté.`);
+        setError(`Paiement via ${selectedPaymentMethod} non implémenté pour le moment.`);
       }
     } catch (err) {
       console.error(err);
@@ -131,7 +131,6 @@ const PaymentPage = ({ forfait, onClose }) => {
     } finally {
       setLoading(false);
     }
-
   }, [token, selectedPlan, selectedPaymentMethod]);
 
   if (!selectedPlanDetails) {
@@ -256,8 +255,9 @@ const PaymentPage = ({ forfait, onClose }) => {
                     return (
                       <div
                         key={method.id}
-                        className={`border-2 rounded-xl p-4 flex flex-col items-center cursor-pointer transition-all duration-300 ${isSelected ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-200 hover:bg-gray-50"
-                          }`}
+                        className={`border-2 rounded-xl p-4 flex flex-col items-center cursor-pointer transition-all duration-300 ${
+                          isSelected ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-200 hover:bg-gray-50"
+                        }`}
                         onClick={() => setSelectedPaymentMethod(method.id)}
                       >
                         <IconComp className={`w-7 h-7 mb-2 ${isSelected ? "text-blue-600" : "text-gray-400"}`} />

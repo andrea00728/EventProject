@@ -84,3 +84,15 @@ button.btn-primary:hover {
   background-color: #9e9d9e;
 }
 
+.leaflet-container {
+  background: #fff; /* Fond clair par défaut */
+}
+
+.leaflet-dark .leaflet-container {
+  background: #2d3748; /* Fond sombre pour le mode sombre */
+}
+
+.leaflet-dark .leaflet-tile {
+  filter: brightness(0.8) invert(0.9);
+}
+
