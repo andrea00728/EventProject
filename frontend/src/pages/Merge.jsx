@@ -142,133 +142,133 @@ const Publicacc = () => {
       <AuthModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
 
       <section id="pagepublic" ref={accueilRef}>
-      <div
-        className="relative w-full h-screen overflow-hidden"
-        onMouseEnter={() => clearInterval()} // stop autoplay (simplifié)
-      >
-        {/* Background avec overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/60 z-10" />
+        <div
+          className="relative w-full h-screen overflow-hidden"
+          onMouseEnter={() => clearInterval()} // stop autoplay (simplifié)
+        >
+          {/* Background avec overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/60 z-10" />
 
-        {/* Carousel */}
-        <div className="relative h-full">
-          <AnimatePresence>
-            <motion.img
-              key={images[current]}
-              src={images[current]}
-              alt={`Slide ${current + 1}`}
-              className="absolute inset-0 w-full h-full object-cover"
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
-            />
-          </AnimatePresence>
-        </div>
+          {/* Carousel */}
+          <div className="relative h-full">
+            <AnimatePresence>
+              <motion.img
+                key={images[current]}
+                src={images[current]}
+                alt={`Slide ${current + 1}`}
+                className="absolute inset-0 w-full h-full object-cover"
+                initial={{ opacity: 0, scale: 1.1 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.8, ease: "easeInOut" }}
+              />
+            </AnimatePresence>
+          </div>
 
-        {/* Contenu principal */}
-        <div className="absolute inset-0 flex items-center justify-center z-20">
-          <div className="text-center space-y-6 sm:space-y-8 max-w-4xl px-4 sm:px-6 lg:px-8">
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full shadow-xl"
-            >
-              <span className="text-white text-xs sm:text-sm font-semibold tracking-wide">
-                Événements d'exception
-              </span>
-            </motion.div>
-
-            {/* Titre */}
-            <motion.h1
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-              className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight tracking-tight"
-            >
-              <span className="bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-400 bg-clip-text text-transparent">
-                Vivez
-              </span>{" "}
-              des moments
-              <br />
-              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                inoubliables
-              </span>
-            </motion.h1>
-
-            {/* Sous-titre */}
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.7 }}
-              className="text-white/90 text-base sm:text-lg md:text-xl lg:text-2xl font-light leading-relaxed max-w-2xl mx-auto"
-            >
-              Créez, organisez et participez à des événements qui marquent les esprits.
-              <span className="font-semibold text-orange-300"> Votre expérience commence ici.</span>
-            </motion.p>
-
-            {/* Boutons dynamiques */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.9 }}
-              className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center pt-6 sm:pt-8"
-            >
-              {!isAuthenticated ? (
-                <button
-                  onClick={() => setModalOpen(true)}
-                  className="group relative bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white px-6 sm:px-8 lg:px-10 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg shadow-2xl hover:shadow-orange-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[160px] sm:min-w-[200px] cursor-pointer"
-                >
-                  <span className="relative z-10 flex items-center justify-center gap-3">
-                    Inscription
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-amber-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </button>
-              ) : (
-                <a
-                  href="#demo"
-                  className="group relative bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white px-6 sm:px-8 lg:px-10 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg shadow-2xl hover:shadow-blue-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[160px] sm:min-w-[200px] cursor-pointer"
-                >
-                  <span className="relative z-10 flex items-center justify-center gap-3">
-                    Voir la vidéo
-                  </span>
-                </a>
-              )}
-
-              {/* ✅ Bouton Voir Démo (ouvre le modal Demo) */}
-              <button
-                onClick={() => setIsOpen(true)}
-                className="group relative bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white px-6 sm:px-8 lg:px-10 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg shadow-2xl hover:shadow-green-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[160px] sm:min-w-[200px] cursor-pointer"
+          {/* Contenu principal */}
+          <div className="absolute inset-0 flex items-center justify-center z-20">
+            <div className="text-center space-y-6 sm:space-y-8 max-w-4xl px-4 sm:px-6 lg:px-8">
+              {/* Badge */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full shadow-xl"
               >
-                <span className="relative z-10 flex items-center justify-center gap-3">
-                  Voir démo
+                <span className="text-white text-xs sm:text-sm font-semibold tracking-wide">
+                  Événements d'exception
                 </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </motion.div>
+
+              {/* Titre */}
+              <motion.h1
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+                className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight tracking-tight"
+              >
+                <span className="bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-400 bg-clip-text text-transparent">
+                  Vivez
+                </span>{" "}
+                des moments
+                <br />
+                <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  inoubliables
+                </span>
+              </motion.h1>
+
+              {/* Sous-titre */}
+              <motion.p
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.7 }}
+                className="text-white/90 text-base sm:text-lg md:text-xl lg:text-2xl font-light leading-relaxed max-w-2xl mx-auto"
+              >
+                Créez, organisez et participez à des événements qui marquent les esprits.
+                <span className="font-semibold text-orange-300"> Votre expérience commence ici.</span>
+              </motion.p>
+
+              {/* Boutons dynamiques */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.9 }}
+                className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center pt-6 sm:pt-8"
+              >
+                {!isAuthenticated ? (
+                  <button
+                    onClick={() => setModalOpen(true)}
+                    className="group relative bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white px-6 sm:px-8 lg:px-10 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg shadow-2xl hover:shadow-orange-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[160px] sm:min-w-[200px] cursor-pointer"
+                  >
+                    <span className="relative z-10 flex items-center justify-center gap-3">
+                      Inscription
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-amber-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </button>
+                ) : (
+                  <a
+                    href="#demo"
+                    className="group relative bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white px-6 sm:px-8 lg:px-10 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg shadow-2xl hover:shadow-blue-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[160px] sm:min-w-[200px] cursor-pointer"
+                  >
+                    <span className="relative z-10 flex items-center justify-center gap-3">
+                      Voir la vidéo
+                    </span>
+                  </a>
+                )}
+
+                {/* ✅ Bouton Voir Démo (ouvre le modal Demo) */}
+                <button
+                  onClick={() => setIsOpen(true)}
+                  className="group relative bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white px-6 sm:px-8 lg:px-10 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg shadow-2xl hover:shadow-green-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[160px] sm:min-w-[200px] cursor-pointer"
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-3">
+                    Voir démo
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </button>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal plein écran */}
+        {isOpen && (
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
+            <div className="relative w-full h-full bg-white flex flex-col items-center justify-center">
+              {/* Bouton fermer */}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="absolute top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors"
+              >
+                ✕
               </button>
-            </motion.div>
-          </div>
-        </div>
-      </div>
 
-      {/* Modal plein écran */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
-          <div className="relative w-full h-full bg-white flex flex-col items-center justify-center">
-            {/* Bouton fermer */}
-            <button
-              onClick={() => setIsOpen(false)}
-              className="absolute top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors"
-            >
-              ✕
-            </button>
-
-            {/* Contenu du modal */}
-            <DemoTable />
+              {/* Contenu du modal */}
+              <DemoTable />
+            </div>
           </div>
-        </div>
-      )}
-    </section>
+        )}
+      </section>
 
       {/* Autres sections */}
       <section id="service" ref={serviceRef}>
