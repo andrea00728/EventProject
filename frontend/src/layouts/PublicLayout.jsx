@@ -8,6 +8,7 @@ import Profil from "../util/profils";
 import { AuthModal } from "../components/Modal/authModal";
 import { getUserForfait } from "../services/forfaitService";
 import { getConditionalSubMenus } from "../util/menuUtils";
+import { useSocket } from "../socket";
 
 export default function PublicLayout() {
   const { token, role, user } = useStateContext();
@@ -20,6 +21,7 @@ export default function PublicLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const isPublicEventsPage = location.pathname === "/evenements-publics";
+  const socket = useSocket()
 
   const defaultNavItems = [
     { path: "#pagepublic", name: "Accueil" },
@@ -47,6 +49,8 @@ export default function PublicLayout() {
     if (token) {
       fetchAndSetForfait();
       setConnected(true);
+      if (!socket) return;
+      socket.on('connect', () => console.log('Socket connectée : ', socket.id));
     } else {
       setConnected(false);
       setForfait(null);
@@ -362,12 +366,8 @@ export default function PublicLayout() {
 
       <div className="h-20" />
       <main>
-        <NotificationListener />
-        <ToastContainer position="top-right" />
         <Outlet />
-        <ChatWidget />
         <AuthModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} isSignIn={true} />
-        <ChangeStatus />
       </main>
     </>
   );

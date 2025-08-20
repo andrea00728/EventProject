@@ -410,9 +410,8 @@ export default function Organisateur() {
 
     socket.on("organizer_connected", ({ userId }) => {
       // console.log("📡 SuperAdmin reçoit organizer_connected :", userId);
-
+      
       setData((prev) => {
-        const match = prev.find((m) => m.id === userId);
         return prev.map((m) =>
           m.id === userId
             ? { ...m, isOnline: true, lastLogin: new Date().toISOString() }
