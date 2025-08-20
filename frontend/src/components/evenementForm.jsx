@@ -82,7 +82,7 @@ function LocationAutocomplete({ locations, form, setForm }) {
   );
 }
 
-export default function Evenementform({ onNext }) {
+export default function Evenementform({ onNext , isPublic}) {
   const [form, setForm] = useState({
     nom: "",
     type: "",
@@ -92,6 +92,7 @@ export default function Evenementform({ onNext }) {
     locationId: "",
     salleId: "",
     imageFile: null, // image nullable
+    isPublic: isPublic || false,
   });
 
   const [locations, setLocations] = useState([]);
