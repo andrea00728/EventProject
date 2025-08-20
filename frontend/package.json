@@ -61,6 +61,7 @@
     "react-organizational-chart": "^2.2.1",
     "react-player": "^3.3.1",
     "react-router-dom": "^7.8.1",
+    "react-select": "^5.10.2",
     "react-slick": "^0.31.0",
     "react-slider": "^2.0.6",
     "react-toastify": "^11.0.5",
