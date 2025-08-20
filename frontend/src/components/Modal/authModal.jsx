@@ -3,9 +3,10 @@ import { X, Mail, Lock, User, Upload, Eye, EyeOff, Camera, Check } from "lucide-
 import { loginUser, registerUser } from "../../services/authService";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import ButtonConnexion from "../../util/buttonconnexion";
 
-export const AuthModal = ({ isOpen, onClose }) => {
-    const [isSignUp, setIsSignUp] = useState(true);
+export const AuthModal = ({ isOpen, onClose, isSignIn=false }) => {
+    const [isSignUp, setIsSignUp] = useState(!isSignIn);
     const [showPassword, setShowPassword] = useState(false);
     const [photoPreview, setPhotoPreview] = useState(null);
     const [formData, setFormData] = useState({
@@ -69,7 +70,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
                     localStorage.setItem('token', result.token);
                     toast.success("Connexion réussie !");
                     setTimeout(() => {
-                        navigate("/accueil");
+                        navigate("/pagepublic");
                         onClose();
                     }, 500);
                 } else {
@@ -226,6 +227,8 @@ export const AuthModal = ({ isOpen, onClose }) => {
                             >
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
+
+
                         </div>
 
                         {/* Message d'erreur */}
@@ -267,6 +270,9 @@ export const AuthModal = ({ isOpen, onClose }) => {
                                 )}
                             </div>
                         </button>
+                        <div className="transform hover:-translate-y-2 transition-all duration-300 cursor-pointer">
+                            <ButtonConnexion />
+                        </div>
                     </div>
 
                     {/* Lien de basculement */}
@@ -285,6 +291,8 @@ export const AuthModal = ({ isOpen, onClose }) => {
                         >
                             {isSignUp ? "Se connecter" : "Créer un compte"}
                         </button>
+
+                        
                     </div>
 
                     {/* Conditions d'utilisation */}

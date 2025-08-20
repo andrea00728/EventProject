@@ -15,6 +15,8 @@ dist-ssr
 *.local
 public
 
+.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -24,4 +26,7 @@ public
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+*.sw?   
+socket.js
+.env
+

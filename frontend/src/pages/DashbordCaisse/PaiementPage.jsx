@@ -584,7 +584,7 @@ const PaiementPage = () => {
     >
       <div className="max-w-7xl mx-auto flex flex-col space-y-6">
         <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-xl">
-          <h2 className="text-4xl font-extrabold text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+          <h2 className="text-4xl font-extrabold text-gray-900 bg-clip-text  bg-gradient-to-r from-indigo-600 to-purple-600">
             Gestion des Paiements
           </h2>
           <Link

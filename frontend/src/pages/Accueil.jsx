@@ -1,18 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Footer from "./footer";
-import { FaAward, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaClock, FaMapPin } from "react-icons/fa";
+import { FaAward, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaClock } from "react-icons/fa";
 import TestimonialsSection from "../util/testimonialsSection";
-import { getAllEvents, getCountEvents } from '../services/evenementServ';
-import { FormaNumber } from '../services/controll_champs/controll_limite';
-import { findCount_pourcentage, findCountSatisfied } from '../services/testimonyService';
-import IMage from '../../public/undraw_having-fun_kkeu.svg';
+import { getAllEvents } from '../services/evenementServ';
+import tutorialVideo from "../assets/demo.mp4"; // import de la vidéo
+import SalleAvecFormulaire from '../util/demo';
+import Demo from '../util/demo';
+
 export default function Accueil() {
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [showVideo, setShowVideo] = useState(true);
 
+  const videoRef = useRef(null);
 
-    const getEventIcon = (type) => {
+  const toggleFullScreen = () => {
+    if (videoRef.current) {
+      if (!document.fullscreenElement) {
+        videoRef.current.requestFullscreen().catch(err => console.log(err));
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  };
+
+  const getEventIcon = (type) => {
     const icons = {
       'mariage': '💒',
       'anniversaire': '🎂',
@@ -24,7 +38,6 @@ export default function Accueil() {
       'reunion': '👥',
       'default': '🎉'
     };
-    
     return icons[type?.toLowerCase()] || icons.default;
   };
   // Récupération de tous les événements (succès) au chargement du composant
@@ -40,7 +53,6 @@ export default function Accueil() {
           throw new Error('La réponse du serveur n\'est pas un tableau');
         }
 
-        // Trier par date décroissante et limiter à 4 événements les plus récents
         const sortedEvents = events
           .sort((a, b) => new Date(b.date) - new Date(a.date))
           .slice(0, 4);
@@ -48,21 +60,15 @@ export default function Accueil() {
 
       } catch (err) {
         console.error('❌ Erreur détaillée:', err);
-
-        // Gestion d'erreur plus précise
         let errorMessage = 'Erreur lors du chargement des événements';
 
         if (err.response) {
-          // Le serveur a répondu avec un code d'erreur
           errorMessage = `Erreur serveur: ${err.response.status} - ${err.response.data?.message || err.response.statusText}`;
         } else if (err.request) {
-          // La requête a été faite mais pas de réponse
           errorMessage = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
         } else if (err.message) {
-          // Erreur dans la configuration de la requête
           errorMessage = `Erreur de configuration: ${err.message}`;
         }
-
         setError(errorMessage);
       } finally {
         setLoading(false);
@@ -108,7 +114,6 @@ export default function Accueil() {
     count_pourcentage();
   }, []);
 
-  // Fonction pour formater la date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
@@ -118,7 +123,6 @@ export default function Accueil() {
     });
   };
 
-  // Fonction pour formater l'heure
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('fr-FR', {
@@ -127,7 +131,6 @@ export default function Accueil() {
     });
   };
 
-  // Fonction pour obtenir les couleurs selon le type d'événement
   const getEventTypeColor = (type) => {
     const colors = {
       'conférence': 'from-blue-500 to-indigo-600',
@@ -145,7 +148,7 @@ export default function Accueil() {
     <>
       {/* Section Hero */}
       <section className="relative bg-gradient-to-br from-slate-50 via-blue-50/50 to-indigo-50/30 py-32 px-4 overflow-hidden">
-        {/* Décorations améliorées */}
+        {/* décorations */}
         <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-r from-[#FB9E3A]/15 to-orange-400/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-20 right-10 w-64 h-64 bg-gradient-to-l from-indigo-300/20 to-purple-300/15 rounded-full blur-2xl animate-pulse delay-1000" />
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-violet-200/10 to-fuchsia-200/10 rounded-full blur-3xl" />
@@ -153,13 +156,11 @@ export default function Accueil() {
         <div className="container mx-auto flex flex-col lg:flex-row items-center justify-between gap-20 max-w-7xl relative z-10">
           {/* Contenu textuel */}
           <div className="flex-1 max-w-2xl text-center lg:text-left space-y-8">
-            {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-indigo-100 rounded-full px-4 py-2 text-sm font-medium text-indigo-700 shadow-sm">
               <div className="w-2 h-2 bg-[#FB9E3A] rounded-full animate-pulse"></div>
               Plateforme d'organisation événementielle
             </div>
 
-            {/* Titre principal */}
             <h1 className="text-5xl lg:text-7xl font-black text-slate-800 leading-[1.1] tracking-tight">
               Organisez vos
               <span className="block text-7xl bg-clip-text bg-gradient-to-r from-[#FB9E3A] via-orange-500 to-amber-500 drop-shadow-sm">
@@ -170,13 +171,11 @@ export default function Accueil() {
               </span>
             </h1>
 
-            {/* Description */}
             <p className="text-slate-600 text-xl lg:text-2xl leading-relaxed font-normal max-w-xl">
               Une plateforme complète et intuitive pour créer, gérer et promouvoir vos événements
               <span className="font-semibold text-slate-700"> sans effort</span>.
             </p>
 
-            {/* Boutons d'action */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <button className="group relative bg-gradient-to-r from-[#6B46C1] via-purple-600 to-indigo-600 text-white px-8 py-4 rounded-2xl font-bold text-lg tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25 active:scale-95">
                 <span className="relative z-10">Commencer gratuitement</span>
@@ -197,7 +196,6 @@ export default function Accueil() {
           {/* Image */}
           <div className="flex-1 flex justify-center lg:justify-end relative">
             <div className="relative">
-              {/* Cercle décoratif derrière l'image */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#FB9E3A]/20 to-indigo-400/20 rounded-full scale-110 blur-xl"></div>
 
               <div className="relative bg-white/30 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/40">
@@ -207,20 +205,93 @@ export default function Accueil() {
                   className="w-full max-w-lg h-auto drop-shadow-lg hover:scale-105 transition-transform duration-500"
                 />
               </div>
-
-              {/* Éléments flottants */}
-              <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-lg p-3 animate-bounce delay-500">
-                <div className="w-6 h-6 bg-gradient-to-br from-[#FB9E3A] to-orange-400 rounded-full"></div>
-              </div>
-              <div className="absolute -bottom-6 -left-6 bg-white rounded-2xl shadow-lg p-4 animate-pulse">
-                <div className="w-6 h-6 bg-gradient-to-br from-[#FB9E3A] to-orange-400 rounded-full"></div>
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Section Événements de Succès - Design Pro avec gestion d'images */}
+      {/* Section principale */}
+      <section className="relative w-full min-h-screen flex flex-col md:flex-row items-center justify-center gap-8 px-6 md:px-20 py-16 bg-gray-50">
+        {/* Vidéo à gauche */}
+        {showVideo && (
+          <div className="relative w-full md:w-1/2 rounded-2xl overflow-hidden shadow-2xl">
+            <video
+              ref={videoRef}
+              src={tutorialVideo}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-64 md:h-full object-cover rounded-2xl"
+            />
+            <button
+              onClick={toggleFullScreen}
+              className="absolute bottom-3 right-3 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-md text-sm font-semibold shadow hover:bg-white transition"
+            >
+              {document.fullscreenElement ? "Quitter plein écran" : "Plein écran"}
+            </button>
+          </div>
+        )}
+
+        {/* Description + Boutons à droite */}
+        <div className="flex-1 flex flex-col gap-4">
+          <h2 className="text-3xl md:text-5xl font-bold text-gray-900">
+            Ceci est une démonstration directe
+          </h2>
+          <p className="text-gray-700 text-sm md:text-base">
+            Explorez les fonctionnalités de notre plateforme comme vous le souhaitez.
+            Vous pouvez regarder la vidéo en petit écran ou en plein écran selon vos préférences.
+          </p>
+
+          <div className="flex gap-4 mt-4">
+            {/* Bouton pour ouvrir le modal */}
+            <button
+              onClick={() => setIsOpen(true)}
+              className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-semibold hover:scale-105 transition"
+            >
+              Voir la démo
+            </button>
+
+            {/* Bouton pour afficher/masquer la vidéo */}
+            <button
+              onClick={() => setShowVideo(!showVideo)}
+              className="bg-gray-200 text-gray-900 px-5 py-3 rounded-xl font-semibold hover:scale-105 transition"
+            >
+              {showVideo ? "Masquer la vidéo" : "Voir la vidéo"}
+            </button>
+
+            {/* Bouton pour télécharger la vidéo */}
+            <a
+              href={tutorialVideo}
+              download="demonstration.mp4"
+              className="bg-green-600 text-white px-5 py-3 rounded-xl font-semibold hover:scale-105 transition flex items-center justify-center"
+            >
+              Télécharger la vidéo
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Modal plein écran */}
+      {isOpen && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
+          <div className="relative w-full h-full bg-white flex flex-col items-center justify-center overflow-scroll">
+            {/* Bouton fermer */}
+            <button
+              onClick={() => setIsOpen(false)}
+              className="absolute top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors"
+            >
+              ✕
+            </button>
+
+            {/* Contenu du modal */}
+            <Demo/>
+          </div>
+        </div>
+      )}
+
+
+      {/* Section Événements de Succès */}
       <section className="bg-gradient-to-br from-slate-50 via-white to-blue-50/20 py-20">
         <div className="container mx-auto max-w-6xl px-6">
           <div className="text-center mb-14">
@@ -368,8 +439,6 @@ export default function Accueil() {
         </div>
       </section>
 
-
-
       {/* Section À Propos */}
       <section className="bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-800 py-24">
         {/* Décorations de fond light */}
@@ -475,6 +544,7 @@ export default function Accueil() {
           </div>
         </div>
       </section>
+
 
       <section className="testimony">
         <TestimonialsSection />

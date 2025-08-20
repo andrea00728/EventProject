@@ -1,401 +1,290 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-    CreditCard,
-    Check,
-    Star,
-    Clock,
-    Users,
-    Gift,
-    Zap,
-    Crown,
-    DollarSign,
-    Smartphone,
+  CreditCard,
+  Check,
+  Star,
+  Clock,
+  Users,
+  Gift,
+  Zap,
+  Crown,
+  DollarSign,
+  Smartphone,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useStateContext } from "../context/ContextProvider";
+import { updateForfait } from "../services/forfaitService";
 
-// Définition du type pour un plan
 const plans = {
-    freemium: {
-        name: "Plan Freemium",
-        price: "0€",
-        duration: "/mois",
-        icon: Gift,
-        color: "gray",
-        bgColor: "bg-gray-50",
-        borderColor: "border-gray-200",
-        textColor: "text-gray-700",
-        buttonColor: "bg-gray-600 hover:bg-gray-700",
-        iconBg: "bg-gray-100",
-        features: [
-            "Accès basique",
-            "Support communautaire",
-            "1 utilisateur",
-            "Fonctionnalités limitées",
-        ],
-    },
-    starter: {
-        name: "Plan Starter",
-        price: "19€",
-        duration: "/mois",
-        icon: Users,
-        color: "blue",
-        bgColor: "bg-blue-50",
-        borderColor: "border-blue-200",
-        textColor: "text-blue-700",
-        buttonColor: "bg-blue-600 hover:bg-blue-700",
-        iconBg: "bg-blue-100",
-        features: [
-            "Accès standard",
-            "Support email",
-            "3 utilisateurs",
-            "Statistiques de base",
-        ],
-    },
-    pro: {
-        name: "Plan Pro",
-        price: "49€",
-        duration: "/mois",
-        icon: Zap,
-        color: "purple",
-        bgColor: "bg-purple-50",
-        borderColor: "border-purple-200",
-        textColor: "text-purple-700",
-        buttonColor: "bg-purple-600 hover:bg-purple-700",
-        iconBg: "bg-purple-100",
-        features: [
-            "Accès avancé",
-            "Support prioritaire",
-            "10 utilisateurs",
-            "Analytiques avancées",
-            "Intégrations",
-        ],
-    },
-    premium: {
-        name: "Plan Premium",
-        price: "89€",
-        duration: "/mois",
-        icon: Star,
-        color: "emerald",
-        bgColor: "bg-emerald-50",
-        borderColor: "border-emerald-200",
-        textColor: "text-emerald-700",
-        buttonColor: "bg-emerald-600 hover:bg-emerald-700",
-        iconBg: "bg-emerald-100",
-        features: [
-            "Accès complet",
-            "Support dédié",
-            "50 utilisateurs",
-            "Rapports personnalisés",
-            "API complète",
-        ],
-    },
-    gold: {
-        name: "Plan Gold",
-        price: "149€",
-        duration: "/mois",
-        icon: Crown,
-        color: "yellow",
-        bgColor: "bg-yellow-50",
-        borderColor: "border-[#FB9E3A]",
-        textColor: "text-yellow-700",
-        buttonColor: "bg-yellow-600 hover:bg-yellow-700",
-        iconBg: "bg-yellow-100",
-        features: [
-            "Accès illimité",
-            "Support 24/7",
-            "Utilisateurs illimités",
-            "Fonctionnalités exclusives",
-            "Personnalisation complète",
-        ],
-    },
+  freemium: {
+    name: "Freemium",
+    icon: Star,
+    price: "0€",
+    duration: "/mois",
+    features: ["Fonctionnalité basique 1", "Fonctionnalité basique 2"],
+    buttonColor: "bg-gray-500 hover:bg-gray-600",
+    bgColor: "bg-gray-100",
+    iconBg: "bg-gray-200",
+    textColor: "text-gray-800",
+  },
+  starter: {
+    name: "Starter",
+    icon: Clock,
+    price: "9.99€",
+    duration: "/mois",
+    features: ["Toutes les fonctionnalités Freemium", "Support prioritaire"],
+    buttonColor: "bg-blue-500 hover:bg-blue-600",
+    bgColor: "bg-blue-100",
+    iconBg: "bg-blue-200",
+    textColor: "text-blue-800",
+  },
+  pro: {
+    name: "Pro",
+    icon: Users,
+    price: "19.99€",
+    duration: "/mois",
+    features: ["Toutes les fonctionnalités Starter", "Accès avancé", "Analyses détaillées"],
+    buttonColor: "bg-green-500 hover:bg-green-600",
+    bgColor: "bg-green-100",
+    iconBg: "bg-green-200",
+    textColor: "text-green-800",
+  },
+  premium: {
+    name: "Premium",
+    icon: Gift,
+    price: "29.99€",
+    duration: "/mois",
+    features: ["Toutes les fonctionnalités Pro", "Outils premium", "Personnalisation"],
+    buttonColor: "bg-purple-500 hover:bg-purple-600",
+    bgColor: "bg-purple-100",
+    iconBg: "bg-purple-200",
+    textColor: "text-purple-800",
+  },
+  gold: {
+    name: "Gold",
+    icon: Crown,
+    price: "49.99€",
+    duration: "/mois",
+    features: ["Toutes les fonctionnalités Premium", "Support VIP", "Fonctionnalités exclusives"],
+    buttonColor: "bg-yellow-500 hover:bg-yellow-600",
+    bgColor: "bg-yellow-100",
+    iconBg: "bg-yellow-200",
+    textColor: "text-yellow-800",
+  },
 };
 
-const PaymentPage = () => {
+const paymentMethods = [
+  { id: "card", name: "Carte bancaire", icon: CreditCard },
+  { id: "paypal", name: "PayPal", icon: DollarSign },
+  { id: "mobile-money", name: "Mobile Money", icon: Smartphone },
+  { id: "stripe", name: "Stripe", icon: Zap },
+];
 
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("card");
+const PaymentPage = ({ forfait, onClose }) => {
+  const { token } = useStateContext();
+  const navigate = useNavigate();
+  const [selectedPlan, setSelectedPlan] = useState(
+    forfait && forfait.nom ? forfait.nom.toLowerCase() : "pro"
+  );
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("card");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    const paymentMethods = [
-        {
-            id: "card",
-            name: "Carte bancaire",
-            icon: CreditCard,
-        },
-        {
-            id: "paypal",
-            name: "PayPal",
-            icon: DollarSign,
-        },
-        {
-            id: "mobile-money",
-            name: "Mobile Money",
-            icon: Smartphone,
-        },
-        {
-            id: "stripe",
-            name: "Stripe",
-            icon: Zap,
-        },
-    ];
+  const selectedPlanDetails = plans[selectedPlan];
 
-    const [isOpenPaiement, setIsOpenPaiement] = useState(false)
+  const handlePayment = useCallback(async () => {
+    if (!token) {
+      setError("Vous devez être connecté pour effectuer un paiement.");
+      return;
+    }
 
-    const [selectedPlan, setSelectedPlan] = useState("pro");
+    if (selectedPlan === "freemium") {
+      try {
+        await updateForfait(token, selectedPlan);
+        setError(null);
+        alert("Plan Freemium activé avec succès !");
+      } catch (err) {
+        setError("Erreur lors de l'activation du plan Freemium.");
+      }
+      return;
+    }
 
-    const selectedPlanDetails = plans[selectedPlan];
-    const PlanIcon = selectedPlanDetails.icon;
+    setLoading(true);
+    setError(null);
+    try {
+      if (selectedPaymentMethod === "paypal") {
+        const res = await updateForfait(token, selectedPlan);
+        // Ajout du console.log pour vérifier l'URL
+        console.log("URL retournée par updateForfait:", res?.url || "Aucune URL retournée");
+        if (res?.url && typeof res.url === "string" && res.url.startsWith("https://")) {
+          window.open(res.url, "_blank");
+        } else {
+          setError("URL de paiement PayPal non valide.");
+        }
+      } else {
+        setError(`Paiement via ${selectedPaymentMethod} non implémenté pour le moment.`);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Erreur lors de la tentative de paiement.");
+    } finally {
+      setLoading(false);
+    }
+  }, [token, selectedPlan, selectedPaymentMethod]);
 
-    const basePrice = parseInt(selectedPlanDetails.price.replace("€", ""));
-    const serviceFee = selectedPlan === "freemium" ? 0 : 5;
-    const vatAmount = Math.round((basePrice + serviceFee) * 0.2);
-    const total = `${basePrice + serviceFee + vatAmount}€`;
-
-    const items = [
-        { label: "Abonnement mensuel", amount: selectedPlanDetails.price },
-        { label: "Frais de service", amount: `${serviceFee}€` },
-        { label: "TVA (20%)", amount: `${vatAmount}€` },
-    ];
-
+  if (!selectedPlanDetails) {
     return (
-        <>
-            {/* <button className="bg-gray-100 px-5 py-2 rounded-md" onClick={() => setIsOpenPaiement(true)}>grille paiment</button> */}
-
-            <AnimatePresence>
-                {isOpenPaiement && (
-                    <div
-                        className="fixed h-screen top-0 flex items-center justify-center inset-0 z-50 bg-black/60"
-                        onClick={() => setIsOpenPaiement(false)}
-                    >
-                        <motion.div
-                            className="bg-white w-screen h-full sm:max-w-5xl sm:h-[95vh] rounded-none sm:rounded-2xl shadow-2xl p-4 sm:p-8 overflow-y-auto"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.4, ease: "easeOut" }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="relative max-w-screen mx-auto">
-                                {/* Bouton de fermeture */}
-                                <button
-                                    className="absolute top-4 right-4 text-gray-600 hover:text-gray-800"
-                                    onClick={() => setIsOpenPaiement(false)}
-                                >
-                                    <svg
-                                        className="w-7 h-7"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M6 18L18 6M6 6l12 12"
-                                        />
-                                    </svg>
-                                </button>
-
-
-
-                                {/* Section 2: Détails et paiement */}
-                                <div className="py-10 sm:py-12 bg-gray-50">
-                                    <div className="px-4 sm:px-6">
-                                        {/* Sélecteur de plans en en-tête */}
-                                        <div className="mb-8">
-                                            <div className="flex flex-wrap justify-center gap-4">
-                                                {Object.entries(plans).map(([key, plan]) => {
-                                                    const IconComponent = plan.icon;
-                                                    return (
-                                                        <button
-                                                            key={key}
-                                                            onClick={() => setSelectedPlan(key)}
-                                                            className={`flex items-center space-x-2 px-5 py-2 rounded-lg font-medium transition-all duration-300 ${selectedPlan === key
-                                                                ? `${plan.buttonColor} text-white shadow-md`
-                                                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                                                }`}
-                                                        >
-                                                            <IconComponent className="w-5 h-5" />
-                                                            <span>{plan.name}</span>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                            {/* Section Plan */}
-                                            <div>
-                                                <div className="mb-6">
-                                                    <p className="text-sm text-gray-500 mb-2">Plan sélectionné</p>
-                                                    <h2 className="text-2xl font-bold text-gray-900">{selectedPlanDetails.name}</h2>
-                                                </div>
-                                                <div className={`${selectedPlanDetails.bgColor} rounded-xl p-6 mb-6`}>
-                                                    <div className="flex items-center justify-between mb-6">
-                                                        <div className="flex items-center space-x-4">
-                                                            <div className="p-3 rounded-xl bg-white shadow-sm">
-                                                                <PlanIcon className={`w-8 h-8 ${selectedPlanDetails.textColor}`} />
-                                                            </div>
-                                                            <div>
-                                                                <span className={`text-3xl font-bold ${selectedPlanDetails.textColor}`}>
-                                                                    {selectedPlanDetails.price}
-                                                                </span>
-                                                                <span className="text-gray-600 ml-2">{selectedPlanDetails.duration}</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center text-gray-600">
-                                                            <Clock className="w-5 h-5 mr-2" />
-                                                            <span className="text-sm">
-                                                                {selectedPlan === "freemium" ? "Gratuit à vie" : "Facturation mensuelle"}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <h4 className={`font-bold text-lg mb-4 ${selectedPlanDetails.textColor}`}>
-                                                            Fonctionnalités incluses :
-                                                        </h4>
-                                                        <div className="space-y-4">
-                                                            {selectedPlanDetails.features.map((feature, index) => (
-                                                                <div key={index} className="flex items-center">
-                                                                    <div
-                                                                        className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mr-3 ${selectedPlanDetails.buttonColor.split(" ")[0]
-                                                                            }`}
-                                                                    >
-                                                                        <Check className="w-4 h-4 text-white" />
-                                                                    </div>
-                                                                    <span className="text-gray-700 font-medium">{feature}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {/* Informations importantes */}
-                                                <div className="bg-white rounded-xl p-6">
-                                                    <h4 className="font-bold text-gray-900 mb-4">Informations importantes</h4>
-                                                    <ul className="space-y-3">
-                                                        {selectedPlan === "freemium" ? (
-                                                            <>
-                                                                <li className="flex items-start">
-                                                                    <span className="text-green-500 mr-3 mt-1">•</span>
-                                                                    <span className="text-gray-700">Accès gratuit permanent</span>
-                                                                </li>
-                                                                <li className="flex items-start">
-                                                                    <span className="text-green-500 mr-3 mt-1">•</span>
-                                                                    <span className="text-gray-700">Mise à niveau possible</span>
-                                                                </li>
-                                                                <li className="flex items-start">
-                                                                    <span className="text-green-500 mr-3 mt-1">•</span>
-                                                                    <span className="text-gray-700">Support communautaire</span>
-                                                                </li>
-                                                                <li className="flex items-start">
-                                                                    <span className="text-green-500 mr-3 mt-1">•</span>
-                                                                    <span className="text-gray-700">Fonctionnalités de base</span>
-                                                                </li>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <li className="flex items-start">
-                                                                    <span className="text-blue-500 mr-3 mt-1">•</span>
-                                                                    <span className="text-gray-700">Renouvellement automatique</span>
-                                                                </li>
-                                                                <li className="flex items-start">
-                                                                    <span className="text-blue-500 mr-3 mt-1">•</span>
-                                                                    <span className="text-gray-700">Facture envoyée par email</span>
-                                                                </li>
-                                                                <li className="flex items-start">
-                                                                    <span className="text-blue-500 mr-3 mt-1">•</span>
-                                                                    <span className="text-gray-700">Support client 24/7</span>
-                                                                </li>
-                                                                <li className="flex items-start">
-                                                                    <span className="text-blue-500 mr-3 mt-1">•</span>
-                                                                    <span className="text-gray-700">Garantie satisfait ou remboursé 30 jours</span>
-                                                                </li>
-                                                            </>
-                                                        )}
-                                                    </ul>
-                                                </div>
-                                            </div>
-
-                                            {/* Section Récapitulatif */}
-                                            <div>
-                                                <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
-                                                    <div className="flex items-center mb-6">
-                                                        <div className="p-3 bg-green-100 rounded-lg mr-4">
-                                                            <CreditCard className="w-6 h-6 text-green-600" />
-                                                        </div>
-                                                        <h2 className="text-2xl font-bold text-gray-900">Récapitulatif</h2>
-                                                    </div>
-                                                    <div className="space-y-4 mb-6">
-                                                        {items.map((item, index) => (
-                                                            <div key={index} className="flex justify-between items-center py-2">
-                                                                <span className="text-gray-600 font-medium">{item.label}</span>
-                                                                <span className="font-bold text-gray-900">{item.amount}</span>
-                                                            </div>
-                                                        ))}
-                                                        <hr className="border-gray-200 my-4" />
-                                                        <div className="flex justify-between items-center py-2">
-                                                            <span className="text-lg font-bold text-gray-900">Total</span>
-                                                            <span className={`text-2xl font-bold ${selectedPlanDetails.textColor}`}>
-                                                                {total}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    {/* Méthodes de paiement */}
-                                                    <div className="mb-6">
-                                                        <h4 className="font-bold text-gray-900 mb-4">Méthode de paiement</h4>
-                                                        <div className="grid grid-cols-2 gap-4">
-                                                            {paymentMethods.map((method) => {
-                                                                const IconComponent = method.icon;
-                                                                const isSelected = selectedPaymentMethod === method.id;
-
-                                                                return (
-                                                                    <div
-                                                                        key={method.id}
-                                                                        className={`border-2 rounded-lg p-4 text-center cursor-pointer transition-all duration-300 ${isSelected
-                                                                                ? "border-blue-500 bg-blue-50"
-                                                                                : "border-gray-200 opacity-50 hover:opacity-75"
-                                                                            }`}
-                                                                        onClick={() => setSelectedPaymentMethod(method.id)}
-                                                                    >
-                                                                        <IconComponent
-                                                                            className={`w-7 h-7 mx-auto mb-2 ${isSelected ? "text-blue-600" : "text-gray-500"
-                                                                                }`}
-                                                                        />
-                                                                        <span
-                                                                            className={`text-sm font-medium ${isSelected ? "text-blue-700" : "text-gray-500"
-                                                                                }`}
-                                                                        >
-                                                                            {method.name}
-                                                                        </span>
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </div>
-                                                    {/* Bouton d'action */}
-                                                    <button
-                                                        className={`w-full py-4 px-6 rounded-lg font-bold text-white text-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg ${selectedPlanDetails.buttonColor}`}
-                                                    >
-                                                        {selectedPlan === "freemium" ? "Commencer gratuitement" : "Confirmer l'abonnement"}
-                                                    </button>
-                                                    <div className="text-center mt-4">
-                                                        <p className="text-sm text-gray-500">
-                                                            {selectedPlan === "freemium"
-                                                                ? "Aucun engagement requis"
-                                                                : "Annulation possible à tout moment"}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-        </>
-
+      <div className="text-red-500 text-center p-4">
+        Plan sélectionné non valide. Veuillez choisir un plan valide.
+      </div>
     );
+  }
+
+  const PlanIcon = selectedPlanDetails.icon;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <motion.div
+          className="bg-white w-full sm:max-w-5xl sm:h-[95vh] rounded-xl shadow-2xl p-6 sm:p-10 overflow-y-auto relative"
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -50 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="absolute top-5 right-5 text-gray-500 hover:text-gray-800 transition"
+            onClick={onClose}
+            aria-label="Fermer la fenêtre de paiement"
+          >
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {error && (
+            <div className="text-red-500 mb-4 p-3 bg-red-100 rounded">
+              {error}
+              {error.includes("PayPal") && (
+                <button
+                  className="ml-2 text-blue-600 underline"
+                  onClick={handlePayment}
+                >
+                  Réessayer
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="mb-8">
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">{selectedPlanDetails.name}</h2>
+            <p className="text-gray-600 text-lg">Choisissez votre plan et méthode de paiement</p>
+          </div>
+
+          <div className="flex flex-wrap gap-3 mb-8">
+            {Object.entries(plans).map(([key, plan]) => {
+              const IconComp = plan.icon;
+              const isSelected = selectedPlan === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setSelectedPlan(key)}
+                  className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all duration-300 shadow ${
+                    isSelected
+                      ? `${plan.buttonColor} text-white shadow-lg scale-105`
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <IconComp className="w-5 h-5" />
+                  {plan.name}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-8">
+            <div className={`${selectedPlanDetails.bgColor} rounded-2xl p-6 shadow-lg`}>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className={`p-4 rounded-xl ${selectedPlanDetails.iconBg} shadow-inner`}>
+                    <PlanIcon className={`w-8 h-8 ${selectedPlanDetails.textColor}`} />
+                  </div>
+                  <div>
+                    <span className={`text-3xl font-bold ${selectedPlanDetails.textColor}`}>
+                      {selectedPlanDetails.price}
+                    </span>
+                    <span className="text-gray-600 ml-2">{selectedPlanDetails.duration}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Clock className="w-5 h-5" />
+                  <span>{selectedPlan === "freemium" ? "Gratuit mais limité" : "Facturation mensuelle"}</span>
+                </div>
+              </div>
+
+              <h4 className={`font-bold text-lg mb-4 ${selectedPlanDetails.textColor}`}>Fonctionnalités :</h4>
+              <ul className="space-y-3">
+                {selectedPlanDetails.features.map((feature, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <div
+                      className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
+                        selectedPlanDetails.buttonColor.split(" ")[0]
+                      }`}
+                    >
+                      <Check className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-gray-700">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col gap-6">
+              <div>
+                <h4 className="font-bold text-gray-900 mb-3">Méthode de paiement</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  {paymentMethods.map((method) => {
+                    const IconComp = method.icon;
+                    const isSelected = selectedPaymentMethod === method.id;
+                    return (
+                      <div
+                        key={method.id}
+                        className={`border-2 rounded-xl p-4 flex flex-col items-center cursor-pointer transition-all duration-300 ${
+                          isSelected ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-200 hover:bg-gray-50"
+                        }`}
+                        onClick={() => setSelectedPaymentMethod(method.id)}
+                      >
+                        <IconComp className={`w-7 h-7 mb-2 ${isSelected ? "text-blue-600" : "text-gray-400"}`} />
+                        <span className={`text-sm font-medium ${isSelected ? "text-blue-700" : "text-gray-500"}`}>
+                          {method.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <button
+                onClick={handlePayment}
+                disabled={loading}
+                className={`w-full py-4 rounded-xl font-bold text-white text-lg transition-transform duration-300 hover:scale-105 shadow-lg ${selectedPlanDetails.buttonColor}`}
+              >
+                {loading ? "Chargement..." : selectedPlan === "freemium" ? "Commencer gratuitement" : "Confirmer l'abonnement"}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
 };
 
 export default PaymentPage;

@@ -109,7 +109,7 @@ export default function DefaultLayout() {
         {
           path: "/evenement/personnel",
           name: "Personnel",
-          icon: "/community-center.png",
+          icon: "/invitation.png",
           description: "Coordonnez votre équipe et assignez les rôles et tâches"
         },
         //  Afficher seulement pour les forfaits premium
