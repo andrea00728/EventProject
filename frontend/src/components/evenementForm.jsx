@@ -296,18 +296,6 @@ export default function Evenementform({ onNext , isPublic}) {
                 } focus:ring-2 focus:ring-indigo-200 transition`}
             />
           </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Événement public ?</label>
-            <input
-              type="checkbox"
-              name="isPublic"
-              checked={form.isPublic}
-              onChange={handleChange}
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
-            />
-          </div>
-
           <div className="col-span-1 md:col-span-2 mt-4">
             <button
               type="submit"

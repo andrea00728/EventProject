@@ -22,18 +22,20 @@ export const ContextProvider = ({ children }) => {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
+        setIsLoading(false); // Déplacer ici pour garantir que l'état est prêt
       } catch (error) {
         console.error("Erreur lors du parsing du USER :", error);
+        setIsLoading(false); // Optionnel : gérer l'erreur différemment si nécessaire
       }
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false); 
   }, []);
 
   const setToken = (newToken) => {
     _setToken(newToken);
     if (newToken) {
       sessionStorage.setItem("ACCESS_TOKEN", newToken);
-      setIsLoading(false);
     } else {
       sessionStorage.removeItem("ACCESS_TOKEN");
     }
@@ -53,7 +55,8 @@ export const ContextProvider = ({ children }) => {
       value={{
         user,
         token,
-        role: user?.role || null, 
+        role: user?.role || null,
+        isLoading,
         setUser: setUserAndStore,
         setToken,
       }}
