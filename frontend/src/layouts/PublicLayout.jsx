@@ -6,6 +6,7 @@ import Logo from "../assets/LogoMaster.png";
 import { FaUser } from "react-icons/fa";
 import Profil from "../util/profils";
 import { AuthModal } from "../components/Modal/authModal";
+import { getUserForfait } from "../services/forfaitService";
 
 export default function PublicLayout() {
   const { token, role, user } = useStateContext();
@@ -14,6 +15,7 @@ export default function PublicLayout() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isEvenementHovered, setIsEvenementHovered] = useState(false);
   const [isSubMenuOpenMobile, setIsSubMenuOpenMobile] = useState(false);
+  const [forfait, setForfait] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,57 +28,6 @@ export default function PublicLayout() {
     { path: "#forfaits", name: "Forfaits" },
     { path: "#contact", name: "Contact" },
   ]);
-
-  const navItems1 = [
-    { path: "/pagepublic", name: "Accueil" },
-    {
-      path: "/pagepublic",
-      name: "Evenement",
-      subMenus: [
-        {
-          path: "/evenement",
-          name: "Organisations",
-          icon: "/red-carpet.png",
-          description: "Gérez et organisez tous vos événements avec efficacité",
-        },
-        {
-          path: "/evenement/evenement",
-          name: "Événements",
-          icon: "/file.png",
-          description: "Créez et planifiez vos événements en quelques clics",
-        },
-        {
-          path: "/evenement/tables",
-          name: "Tables",
-          icon: "/chair.png",
-          description: "Configurez la disposition et l'agencement des tables",
-        },
-        {
-          path: "/evenement/invites",
-          name: "Invités",
-          icon: "/guest.png",
-          description: "Gérez votre liste d'invités et leurs informations",
-        },
-        {
-          path: "/evenement/invitation",
-          name: "Invitations",
-          icon: "/invitation.png",
-          description:
-            "Envoyez des invitations personnalisées et suivez les réponses",
-        },
-        {
-          path: "/evenement/personnel",
-          name: "Personnel",
-          icon: "/invitation.png",
-          description:
-            "Coordonnez votre équipe et assignez les rôles et tâches",
-        },
-      ],
-    },
-    { path: "#service", name: "Service" },
-    { path: "#testimony", name: "Témoignages" },
-    { path: "#forfaits", name: "Forfaits" },
-  ];
 
   if (role) {
     switch (role) {
@@ -98,13 +49,8 @@ export default function PublicLayout() {
   }
 
   useEffect(() => {
-    if (token) {
-      if (user?.isInPersonnel) {
-        navigate("/choix-role", { replace: true });
-      }
-      setNavItems(navItems1);
-      setConnected(true);
-    } else {
+    // 🟢 1. Gestion connexion
+    if (!token) {
       setConnected(false);
       setNavItems([
         { path: "#pagepublic", name: "Accueil" },
@@ -113,8 +59,99 @@ export default function PublicLayout() {
         { path: "#forfaits", name: "Forfaits" },
         { path: "#contact", name: "Contact" },
       ]);
+      return; // ✅ stop ici si pas connecté
     }
-  }, [token, role, user, navigate]);
+
+    // Si token présent
+    setConnected(true);
+
+    if (user?.isInPersonnel) {
+      navigate("/choix-role", { replace: true });
+    }
+
+    // 🟢 2. Récupération du forfait
+    const fetchForfait = async () => {
+      try {
+        const data = await getUserForfait(token);
+        setForfait(data.forfait);
+      } catch (err) {
+        console.error("❌ Erreur lors de la récupération du forfait :", err);
+      }
+    };
+    fetchForfait();
+  }, [token, user?.isInPersonnel, navigate]);
+
+  useEffect(() => {
+    if (!token) return; // pas connecté → menu déjà géré plus haut
+
+    const navItemsAuth = [
+      { path: "/pagepublic", name: "Accueil" },
+      {
+        path: "/pagepublic",
+        name: "Evenement",
+        subMenus: [
+          {
+            path: "/evenement",
+            name: "Organisations",
+            icon: "/red-carpet.png",
+            description:
+              "Gérez et organisez tous vos événements avec efficacité",
+          },
+          {
+            path: "/evenement/evenement",
+            name: "Événements",
+            icon: "/file.png",
+            description: "Créez et planifiez vos événements en quelques clics",
+          },
+          {
+            path: "/evenement/tables",
+            name: "Tables",
+            icon: "/chair.png",
+            description: "Configurez la disposition et l'agencement des tables",
+          },
+          {
+            path: "/evenement/invites",
+            name: "Invités",
+            icon: "/guest.png",
+            description: "Gérez votre liste d'invités et leurs informations",
+          },
+          {
+            path: "/evenement/invitation",
+            name: "Invitations",
+            icon: "/invitation.png",
+            description:
+              "Envoyez des invitations personnalisées et suivez les réponses",
+          },
+
+          // 🟢 Ajout uniquement si premium
+          ...(["pro", "premium", "gold"].includes(forfait?.nom || "")
+            ? [
+                {
+                  path: "/evenement/personnel",
+                  name: "Personnel",
+                  icon: "/invitation.png",
+                  description:
+                    "Coordonnez votre équipe et assignez les rôles et tâches",
+                },
+                {
+                  path: "/evenement/restauration",
+                  name: "Restauration",
+                  icon: "/payment-method.png",
+                  description:
+                    "Gérez les menus et services de restauration premium",
+                },
+              ]
+            : []),
+        ],
+      },
+      { path: "#service", name: "Service" },
+      { path: "#testimony", name: "Témoignages" },
+      { path: "#forfaits", name: "Forfaits" },
+    ];
+
+    setNavItems(navItemsAuth);
+    console.log(forfait?.nom)
+  }, [token, forfait]);
 
   const handleSmoothScroll = (e, target) => {
     e.preventDefault();
@@ -173,34 +210,31 @@ export default function PublicLayout() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                 >
-                  <a
-                    to={item.path}
-                    className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2"
-                    onMouseEnter={() =>
-                      item.name === "Evenement" && setIsEvenementHovered(true)
-                    }
-                    onMouseLeave={() =>
-                      item.name === "Evenement" && setIsEvenementHovered(false)
-                    }
-                    onClick={(e) => {
-                      if (item.path.startsWith("#")) {
-                        handleSmoothScroll(e, item.path);
+                  {item.path.startsWith("#") ? (
+                    <a
+                      href={item.path}
+                      className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2"
+                      onClick={(e) => handleSmoothScroll(e, item.path)}
+                    >
+                      <span className="relative z-10">{item.name}</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300"></span>
+                    </a>
+                  ) : (
+                    <Link
+                      to={item.path}
+                      className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2"
+                      onMouseEnter={() =>
+                        item.name === "Evenement" && setIsEvenementHovered(true)
                       }
-                    }}
-                  >
-                    <span className="relative z-10">{item.name}</span>
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300"></span>
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r rounded-xl opacity-0 group-hover:opacity-100"
-                      transition={{ duration: 0.3 }}
-                    />
-                    <motion.div
-                      className="absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 bg-gradient-to-r from-[#6B46C1] to-indigo-500 rounded-full"
-                      initial={{ width: 0 }}
-                      whileHover={{ width: "70%" }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </a>
+                      onMouseLeave={() =>
+                        item.name === "Evenement" && setIsEvenementHovered(false)
+                      }
+                    >
+                      <span className="relative z-10">{item.name}</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300"></span>
+                    </Link>
+                  )}
+
 
                   {item.subMenus && (
                     <AnimatePresence>
@@ -307,19 +341,16 @@ export default function PublicLayout() {
           >
             <div className="w-6 h-6 relative flex flex-col justify-center items-center">
               <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
-                  isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"
-                }`}
+                className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"
+                  }`}
               ></span>
               <span
-                className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${
-                  isMenuOpen ? "opacity-0" : "opacity-100"
-                }`}
+                className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${isMenuOpen ? "opacity-0" : "opacity-100"
+                  }`}
               ></span>
               <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
-                  isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
-                }`}
+                className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
+                  }`}
               ></span>
             </div>
           </button>
