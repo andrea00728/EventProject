@@ -370,7 +370,7 @@ const GestionCommandesPage = () => {
               <span className="mr-2">
                 {showCanceled ? <FaTimes /> : <FaSync />}
               </span>
-              {showCanceled ? "Masquer Annulées" : "Voir Annulées"}
+              {showCanceled ? "Masquer Commandes Annulées" : "Voir Commandes Annulées"}
             </motion.button>
           </div>
         </div>
