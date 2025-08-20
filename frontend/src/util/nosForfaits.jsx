@@ -5,19 +5,20 @@ import { AuthModal } from "../components/Modal/authModal";
 import { useStateContext } from "../context/ContextProvider";
 import { getUserForfait } from "../services/forfaitService";
 
-
 const iconMap = {
   STARTER: <Rocket className="w-10 h-10 text-blue-500" strokeWidth={2.5} />,
   PRO: <Star className="w-10 h-10 text-purple-500" strokeWidth={2.5} />,
   PREMIUM: <Gem className="w-10 h-10 text-pink-500" strokeWidth={2.5} />,
   GOLD: <Crown className="w-10 h-10 text-yellow-600" strokeWidth={2.5} />,
 };
+
 const defaultColorMap = {
   STARTER: "from-blue-400 to-blue-500",
   PRO: "from-purple-400 to-purple-500",
   PREMIUM: "from-pink-400 to-pink-500",
   GOLD: "from-yellow-400 to-yellow-500",
 };
+
 const textColorMap = {
   STARTER: "text-blue-500",
   PRO: "text-purple-500",
@@ -25,6 +26,12 @@ const textColorMap = {
   GOLD: "text-yellow-500",
 };
 
+const ringColorMap = {
+  STARTER: "focus:ring-blue-200",
+  PRO: "focus:ring-purple-200",
+  PREMIUM: "focus:ring-pink-200",
+  GOLD: "focus:ring-yellow-200",
+};
 
 export default function NosForfaits() {
   const { token } = useStateContext();
@@ -85,22 +92,30 @@ export default function NosForfaits() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
         {forfaits.map((f) => {
-          // ✅ Normalisation des noms pour éviter les problèmes de majuscules/minuscules
           const isActive =
             activeForfait && f.nom.toUpperCase() === activeForfait.nom.toUpperCase();
-          const isDisabled = activeForfait && !isActive;
+
+          const isDisabled =
+            activeForfait &&
+            activeForfait.nom.toUpperCase() !== "FREEMIUM" &&
+            !isActive;
 
           return (
             <div
               key={f.id}
-              className={`relative rounded-2xl shadow-lg p-8 border transition-transform ${isActive
-                ? `bg-gradient-to-br ${defaultColorMap[f.nom]} border-white text-white scale-105`
-                : `bg-white border-gray-200 hover:-translate-y-2 hover:shadow-2xl`
-                }`}
+              className={`relative rounded-2xl shadow-lg p-8 border transition-transform ${
+                isActive
+                  ? `bg-gradient-to-br ${defaultColorMap[f.nom]} border-white text-white scale-105`
+                  : "bg-white border-gray-200 hover:-translate-y-2 hover:shadow-2xl"
+              }`}
             >
               <div className="flex justify-center mb-4">{iconMap[f.nom]}</div>
               <h3 className="text-2xl font-extrabold mb-4">{f.nom}</h3>
-              <p className={`text-3xl font-bold mb-6 ${isActive ? "text-white" : "text-gray-800"}`}>
+              <p
+                className={`text-3xl font-bold mb-6 ${
+                  isActive ? "text-white" : "text-gray-800"
+                }`}
+              >
                 {f.price}
               </p>
 
@@ -121,8 +136,7 @@ export default function NosForfaits() {
                   <button
                     type="button"
                     disabled
-                    className={`w-full py-3 px-5 rounded-xl font-semibold shadow cursor-default bg-white ${textColorMap[f.nom]}  border-2 border-white`}
-
+                    className={`w-full py-3 px-5 rounded-xl font-semibold shadow cursor-default bg-white ${textColorMap[f.nom]} border-2 border-white`}
                   >
                     Expire le{" "}
                     {expirationDate
@@ -134,16 +148,16 @@ export default function NosForfaits() {
                     type="button"
                     disabled={isDisabled}
                     onClick={() => handleAcheter(f)}
-                    className={`w-full py-3 px-5 rounded-xl font-semibold transition-all duration-300 shadow focus:outline-none focus:ring ${isDisabled
-                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                      : `bg-gradient-to-r ${defaultColorMap[f.nom]} text-white hover:opacity-90 focus:ring-${f.nom.toLowerCase()}-200`
-                      }`}
+                    className={`w-full py-3 px-5 rounded-xl font-semibold transition-all duration-300 shadow focus:outline-none ${
+                      isDisabled
+                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                        : `bg-gradient-to-r ${defaultColorMap[f.nom]} text-white hover:opacity-90 ${ringColorMap[f.nom]}`
+                    }`}
                   >
                     Acheter ce forfait
                   </button>
                 )
               ) : (
-                // si pas encore connecté
                 <button
                   type="button"
                   onClick={() => setModalOpen(true)}
@@ -152,8 +166,6 @@ export default function NosForfaits() {
                   Acheter ce forfait
                 </button>
               )}
-
-
             </div>
           );
         })}
@@ -164,7 +176,11 @@ export default function NosForfaits() {
       )}
 
       {isModalOpen && (
-        <AuthModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} isSignIn={true} />
+        <AuthModal
+          isOpen={isModalOpen}
+          onClose={() => setModalOpen(false)}
+          isSignIn={true}
+        />
       )}
     </section>
   );
