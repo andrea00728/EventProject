@@ -39,22 +39,27 @@ export default function Evenemenpage() {
     );
   }
 
-  // Mode PUBLIC → afficher juste le formulaire
+  // Mode PUBLIC → afficher juste le formulaire (isPublic = true)
   if (mode === "public") {
     return (
       <div className="flex flex-col items-center">
-        <Evenementform onNext={(data) => console.log("Public créé :", data)} />
+        <Evenementform
+          isPublic={true}
+          onNext={(data) => console.log("Public créé :", data)}
+        />
       </div>
     );
   }
 
-  // Mode PRIVE → afficher le stepper avec les étapes
+  // Mode PRIVE → afficher le stepper avec les étapes (isPublic = false)
   return (
     <div className="bg-[#ffffff] flex flex-col items-center">
       <div>
         <Stepper currentStep={currentStep} />
 
-        {currentStep === 1 && <Evenementform onNext={handleNext} />}
+        {currentStep === 1 && (
+          <Evenementform isPublic={false} onNext={handleNext} />
+        )}
 
         {currentStep === 2 && (
           <Table
@@ -63,7 +68,7 @@ export default function Evenemenpage() {
             onBack={() => setCurrentStep(1)}
           />
         )}
-  
+
         {currentStep === 3 && (
           <Inviteform
             eventId={evenementData.eventId}
