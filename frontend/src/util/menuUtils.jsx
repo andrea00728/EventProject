@@ -45,8 +45,7 @@ export const getConditionalSubMenus = (forfait) => {
   ];
 
   const forfaitName = forfait ? forfait.toLowerCase() : "default";
-  console.log("Forfait utilisé pour sous-menus :", forfaitName); // Log pour débogage
-
+  console.log("Forfait utilisé pour sous-menus :", forfaitName); 
   if (forfaitName === "freemium") {
     return baseSubMenus.filter(
       (item) => item.name !== "Personnel" && item.name !== "Restauration"
