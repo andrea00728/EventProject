@@ -24,7 +24,7 @@ const SuccessEvent = () => {
 
         const sortedEvents = events
           .sort((a, b) => new Date(b.date) - new Date(a.date))
-          .slice(0, 4);
+        //   .slice(0, 4);
         setAllEvents(sortedEvents);
       } catch (err) {
         console.error("❌ Erreur détaillée:", err);
