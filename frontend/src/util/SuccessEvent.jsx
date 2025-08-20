@@ -163,8 +163,8 @@ const SuccessEvent = () => {
                                         }}
                                         />
                                     ) : (
-                                        <div className="w-full h-full bg-gradient-to-br from-purple-500 to-fuchsia-600 relative flex items-center justify-center">
-                                        <div className="absolute inset-0 bg-black/30"></div>
+                                        <div className="w-full h-full bg-gradient-to-br from-blue-500 via-purple-500 to-fuchsia-600 relative flex items-center justify-center">
+                                        <div className="absolute inset-0 bg-black/10"></div>
                                         <div className="text-white/90 text-6xl group-hover:scale-110 transition-transform duration-500 ease-in-out">
                                             {getEventIcon(event.type)}
                                         </div>
@@ -273,8 +273,8 @@ const SuccessEvent = () => {
                                             }}
                                         />
                                         ) : (
-                                        <div className="w-full h-full bg-gradient-to-br from-purple-500 to-fuchsia-600 relative flex items-center justify-center">
-                                            <div className="absolute inset-0 bg-black/30"></div>
+                                        <div className="w-full h-full bg-gradient-to-br from-blue-500 via-purple-500 to-fuchsia-600 relative flex items-center justify-center">
+                                            <div className="absolute inset-0 bg-black/10"></div>
                                             <div className="text-white/90 text-6xl">
                                             {getEventIcon(event.type)}
                                             </div>
