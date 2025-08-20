@@ -25,6 +25,7 @@ import { ChevronDown } from "lucide-react";
 import { io } from "socket.io-client";
 import { SOCKET_URL } from "../../socket";
 import { getUserIdForToken } from "../../services/userService";
+import { useStateContext } from "../../context/ContextProvider";
 
 // Composant StatsCard
 const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
@@ -311,7 +312,7 @@ export default function Organisateur() {
   const [showProfile, setShowProfile] = useState(false);
 
   const { darkMode, toggleDarkMode } = useDarkMode();
-  const { user } = useStateContext()
+  const { user } = useStateContext();
 
   const notifRef = useRef(null);
   const msgRef = useRef(null);

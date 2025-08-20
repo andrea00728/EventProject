@@ -115,11 +115,11 @@ export default function InviteFormWithId({ onBack }) {
     }
    
 
-    const emailValid= await checkEmail(form.email.trim());
+    // const emailValid= await checkEmail(form.email.trim());
 
-    if(!emailValid){
-      setError("l'adresse email saisi n'existe pas");
-    }
+    // if(!emailValid){
+    //   setError("l'adresse email saisi n'existe pas");
+    // }
     if (!form.sex) {
       newValidationErrors.sex = "Le sexe est requis.";
     }

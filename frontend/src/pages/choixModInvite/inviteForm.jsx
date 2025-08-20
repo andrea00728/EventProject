@@ -14,7 +14,7 @@ export default function Inviteform({ onBack }) {
   const [error, setError] = useState(null);
   const { token } = useStateContext();
   const [loading, setLoading] = useState(false);
-  const [isValid, setIsValid] = useState(null);
+  // const [isValid, setIsValid] = useState(null);
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -26,21 +26,21 @@ export default function Inviteform({ onBack }) {
    * 
    */
 
-  useEffect(()=>{
-    clearTimeout(debouceTimeout);
+  // useEffect(()=>{
+  //   clearTimeout(debouceTimeout);
 
-    if(!form.email.trim()){
-      setIsValid(null);
-      return;
-    }
+  //   if(!form.email.trim()){
+  //     setIsValid(null);
+  //     return;
+  //   }
 
-    debouceTimeout= setTimeout(async()=>{
-      const emailValid = await checkEmail(form.email.trim());
-      setIsValid(emailValid);
-    },800);
+  //   debouceTimeout= setTimeout(async()=>{
+  //     const emailValid = await checkEmail(form.email.trim());
+  //     setIsValid(emailValid);
+  //   },800);
 
-    return ()=>clearTimeout(debouceTimeout);
-  },[form.email]);
+  //   return ()=>clearTimeout(debouceTimeout);
+  // },[form.email]);
 
 
   const onSubmit = async (e) => {
@@ -48,11 +48,11 @@ export default function Inviteform({ onBack }) {
     setLoading(true);
     // const emailValid = await checkEmail(form.email.trim());
 
-    if (isValid === false) {
-      setError("adresse email incorrecte ou inexistante.");
-      setLoading(false);
-      return;
-    }
+    // if (isValid === false) {
+    //   setError("adresse email incorrecte ou inexistante.");
+    //   setLoading(false);
+    //   return;
+    // }
     try {
       await createInvite(form, token);
       setForm({ nom: "", prenom: "", email: "", sex: "" });
