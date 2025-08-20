@@ -115,15 +115,15 @@ const PaymentPage = ({ forfait, onClose }) => {
     try {
       if (selectedPaymentMethod === "paypal") {
         const res = await updateForfait(token, selectedPlan);
-        // Ajout du console.log pour vérifier l'URL
-        console.log("URL retournée par updateForfait:", res?.url || "Aucune URL retournée");
+        console.log("URL PayPal:", res?.url || "Aucune URL");
+
         if (res?.url && typeof res.url === "string" && res.url.startsWith("https://")) {
-          window.open(res.url, "_blank");
+          window.open(res.url, "_blank", "width=800,height=600");
         } else {
           setError("URL de paiement PayPal non valide.");
         }
       } else {
-        setError(`Paiement via ${selectedPaymentMethod} non implémenté pour le moment.`);
+        setError(`Paiement via ${selectedPaymentMethod} non implémenté.`);
       }
     } catch (err) {
       console.error(err);
@@ -131,6 +131,7 @@ const PaymentPage = ({ forfait, onClose }) => {
     } finally {
       setLoading(false);
     }
+
   }, [token, selectedPlan, selectedPaymentMethod]);
 
   if (!selectedPlanDetails) {
@@ -197,11 +198,10 @@ const PaymentPage = ({ forfait, onClose }) => {
                 <button
                   key={key}
                   onClick={() => setSelectedPlan(key)}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all duration-300 shadow ${
-                    isSelected
+                  className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all duration-300 shadow ${isSelected
                       ? `${plan.buttonColor} text-white shadow-lg scale-105`
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
+                    }`}
                 >
                   <IconComp className="w-5 h-5" />
                   {plan.name}
@@ -235,9 +235,8 @@ const PaymentPage = ({ forfait, onClose }) => {
                 {selectedPlanDetails.features.map((feature, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <div
-                      className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
-                        selectedPlanDetails.buttonColor.split(" ")[0]
-                      }`}
+                      className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${selectedPlanDetails.buttonColor.split(" ")[0]
+                        }`}
                     >
                       <Check className="w-4 h-4 text-white" />
                     </div>
@@ -257,9 +256,8 @@ const PaymentPage = ({ forfait, onClose }) => {
                     return (
                       <div
                         key={method.id}
-                        className={`border-2 rounded-xl p-4 flex flex-col items-center cursor-pointer transition-all duration-300 ${
-                          isSelected ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-200 hover:bg-gray-50"
-                        }`}
+                        className={`border-2 rounded-xl p-4 flex flex-col items-center cursor-pointer transition-all duration-300 ${isSelected ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-200 hover:bg-gray-50"
+                          }`}
                         onClick={() => setSelectedPaymentMethod(method.id)}
                       >
                         <IconComp className={`w-7 h-7 mb-2 ${isSelected ? "text-blue-600" : "text-gray-400"}`} />
