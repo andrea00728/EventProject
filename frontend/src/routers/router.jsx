@@ -315,7 +315,7 @@ const router = createBrowserRouter([
         path: "/paypal-success",
         element: <PaypalSuccess />,
       },
-      ,
+      
       {
         path: "/forfait/success",
         element: <ForfaitSuccess />,
@@ -390,7 +390,6 @@ const router = createBrowserRouter([
       },
     ],
   },
-
   /***
    *
    *
