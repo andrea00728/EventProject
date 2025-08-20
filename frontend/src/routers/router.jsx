@@ -140,20 +140,6 @@ const router = createBrowserRouter([
             // ],
           },
           {
-            path: "/evenement/evenement",
-            element: <EventLayout />,
-            children: [
-              {
-                path: "eventpadding",
-                element: <EventPending />,
-              },
-              {
-                path: "",
-                element: <EventAccept />,
-              },
-            ],
-          },
-          {
             path: "tables",
             element: <TableLayout />,
             children: [
