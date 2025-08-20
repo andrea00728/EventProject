@@ -53,8 +53,8 @@ export default function Evenemenpage() {
 
   // Mode PRIVE → afficher le stepper avec les étapes (isPublic = false)
   return (
-    <div className="bg-[#ffffff] flex flex-col items-center">
-      <div>
+    <div className="bg-[#ffffff] min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 md:p-8">
+      <div className="w-full max-w-4xl">
         <Stepper currentStep={currentStep} />
 
         {currentStep === 1 && (

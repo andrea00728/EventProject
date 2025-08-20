@@ -163,7 +163,7 @@ export default function Evenementform({ onNext , isPublic}) {
   };
 
   return (
-    <div className="w-400 max-w-3xl mx-auto mt-12 px-6">
+    <div className="w-full max-w-3xl mx-auto mt-12 px-6">
       <div className="bg-white rounded-3xl shadow-2xl p-10 border border-gray-100">
         <h2 className="text-4xl font-extrabold text-center mb-2 text-indigo-800 tracking-tight">
           Créer un événement
@@ -264,7 +264,6 @@ export default function Evenementform({ onNext , isPublic}) {
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
             />
           </div>
-
 
           <div className="col-span-1 md:col-span-2 mt-4">
             <button
