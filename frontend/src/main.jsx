@@ -7,6 +7,17 @@ import { DarkModeProvider } from './context/DarkModeContext.jsx'
 
 import router from './routers/router.jsx'
 import './App.css'
+import 'leaflet/dist/leaflet.css'
+import L from "leaflet";
+import icon from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
+
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
 
 // Point d'entrée de l'application React
 createRoot(document.getElementById('root')).render(
