@@ -13,6 +13,7 @@ node_modules
 dist
 dist-ssr
 public
+assets
 *.local
 
 .env
@@ -26,4 +27,7 @@ public
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+*.sw?   
+socket.js
+.env
+
