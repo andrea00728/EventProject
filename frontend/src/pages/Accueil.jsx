@@ -3,9 +3,7 @@ import Footer from "./footer";
 import { FaAward, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaClock } from "react-icons/fa";
 import TestimonialsSection from "../util/testimonialsSection";
 import { getAllEvents } from '../services/evenementServ';
-import tutorialVideo from "../assets/demo.mp4"; // import de la vidéo
-import SalleAvecFormulaire from '../util/demo';
-import Demo from '../util/demo';
+import tutorialVideo from "../assets/demo.mp4";
 
 export default function Accueil() {
   const [allEvents, setAllEvents] = useState([]);

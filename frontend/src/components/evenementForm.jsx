@@ -1,6 +1,28 @@
 import React, { useEffect, useState, useRef } from "react";
 import { createEvent, getLocations, getSallesByLocation } from "../services/evenementServ";
 import { textControll } from "../services/controll_champs/controll_champs";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// Fix Leaflet marker icon
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+});
+
+// Custom blue marker icon
+const blueIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+  iconRetinaUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 const EVENT_TYPES = [
   { value: "mariage", label: "Mariage", color: "bg-[#6B46C1]/5 text-[#6B46C1]" },
@@ -10,77 +32,80 @@ const EVENT_TYPES = [
   { value: "autre", label: "Autre", color: "bg-gray-50 text-gray-600" },
 ];
 
-function LocationAutocomplete({ locations, form, setForm }) {
-  const [inputValue, setInputValue] = useState("");
-  const [filteredLocations, setFilteredLocations] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const containerRef = useRef(null);
+// function LocationAutocomplete({ locations, form, setForm }) {
+//   const [inputValue, setInputValue] = useState("");
+//   const [filteredLocations, setFilteredLocations] = useState([]);
+//   const [showSuggestions, setShowSuggestions] = useState(false);
+//   const containerRef = useRef(null);
 
-  useEffect(() => {
-    const loc = locations.find((l) => l.id === form.locationId);
-    setInputValue(loc ? loc.nom : "");
-  }, [form.locationId, locations]);
+//   // Met à jour inputValue quand form.locationId change
+//   useEffect(() => {
+//     const loc = locations.find((l) => l.id === form.locationId);
+//     setInputValue(loc ? loc.nom : "");
+//   }, [form.locationId, locations]);
 
-  useEffect(() => {
-    if (!inputValue.trim()) {
-      setFilteredLocations([]);
-      return;
-    }
-    const filtered = locations.filter((loc) =>
-      loc.nom.toLowerCase().startsWith(inputValue.toLowerCase())
-    );
-    setFilteredLocations(filtered);
-  }, [inputValue, locations]);
+//   // Filtrer suggestions selon inputValue (non sensible à la casse)
+//   useEffect(() => {
+//     if (!inputValue.trim()) {
+//       setFilteredLocations([]);
+//       return;
+//     }
+//     const filtered = locations.filter((loc) =>
+//       loc.nom.toLowerCase().startsWith(inputValue.toLowerCase())
+//     );
+//     setFilteredLocations(filtered);
+//   }, [inputValue, locations]);
 
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
-        setShowSuggestions(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+//   // Fermer suggestions si clic en dehors
+//   useEffect(() => {
+//     function handleClickOutside(event) {
+//       if (containerRef.current && !containerRef.current.contains(event.target)) {
+//         setShowSuggestions(false);
+//       }
+//     }
+//     document.addEventListener("mousedown", handleClickOutside);
+//     return () => document.removeEventListener("mousedown", handleClickOutside);
+//   }, []);
 
-  const handleSelect = (loc) => {
-    setInputValue(loc.nom);
-    setForm({ ...form, locationId: loc.id, salleId: "" });
-    setShowSuggestions(false);
-  };
+//   const handleSelect = (loc) => {
+//     setInputValue(loc.nom);
+//     setForm({ ...form, locationId: loc.id, salleId: "" });
+//     setShowSuggestions(false);
+//   };
 
-  return (
-    <div className="relative flex flex-col gap-1.5" ref={containerRef}>
-      <label className="text-sm font-semibold text-gray-800">Lieu</label>
-      <input
-        type="text"
-        className="border border-gray-200 rounded-xl px-4 py-3.5 bg-white focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent transition-all duration-200 shadow-sm hover:shadow focus:shadow-md placeholder:text-gray-400"
-        value={inputValue}
-        onChange={(e) => {
-          setInputValue(e.target.value);
-          setShowSuggestions(true);
-          setForm({ ...form, locationId: "", salleId: "" });
-        }}
-        onFocus={() => inputValue && setShowSuggestions(true)}
-        placeholder="Commencez à taper un lieu..."
-        autoComplete="off"
-        required
-      />
-      {showSuggestions && filteredLocations.length > 0 && (
-        <ul className="absolute z-30 top-full mt-1.5 w-full bg-white border border-gray-100 rounded-xl shadow-lg max-h-64 overflow-y-auto">
-          {filteredLocations.map((loc) => (
-            <li
-              key={loc.id}
-              className="px-4 py-3 text-gray-800 hover:bg-[#6B46C1]/5 hover:text-[#6B46C1] cursor-pointer transition-colors duration-150"
-              onMouseDown={() => handleSelect(loc)}
-            >
-              {loc.nom}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
+//   return (
+//     <div className="flex flex-col gap-2 relative" ref={containerRef}>
+//       <label className="text-sm font-semibold text-gray-700 mb-1">Lieu</label>
+//       <input
+//         type="text"
+//         className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+//         value={inputValue}
+//         onChange={(e) => {
+//           setInputValue(e.target.value);
+//           setShowSuggestions(true);
+//           setForm({ ...form, locationId: "", salleId: "" }); // reset locationId tant que rien sélectionné
+//         }}
+//         onFocus={() => inputValue && setShowSuggestions(true)}
+//         placeholder="Commencez à taper un lieu..."
+//         autoComplete="off"
+//         required
+//       />
+//       {showSuggestions && filteredLocations.length > 0 && (
+//         <ul className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-300 rounded-xl shadow max-h-60 overflow-y-auto">
+//           {filteredLocations.map((loc) => (
+//             <li
+//               key={loc.id}
+//               className="px-4 py-2 hover:bg-indigo-100 cursor-pointer"
+//               onMouseDown={() => handleSelect(loc)}
+//             >
+//               {loc.nom}
+//             </li>
+//           ))}
+//         </ul>
+//       )}
+//     </div>
+//   );
+// }
 
 export default function Evenementform({ onNext , isPublic}) {
   const [form, setForm] = useState({
@@ -91,7 +116,6 @@ export default function Evenementform({ onNext , isPublic}) {
     date_fin: "",
     locationId: "",
     salleId: "",
-    imageFile: null, // image nullable
     isPublic: isPublic || false,
   });
 
@@ -99,7 +123,11 @@ export default function Evenementform({ onNext , isPublic}) {
   const [salles, setSalles] = useState([]);
   const [modalSalleOpen, setModalSalleOpen] = useState(false);
   const [modalTypeOpen, setModalTypeOpen] = useState(false);
+  const [modalLieuOpen, setModalLieuOpen] = useState(false);
+  const [searchLieu, setSearchLieu] = useState("");
+  const [selectedLieu, setSelectedLieu] = useState(null);
   const [error, setError] = useState(null);
+  const mapRef = useRef(null);
 
   useEffect(() => {
     getLocations()
@@ -121,15 +149,9 @@ export default function Evenementform({ onNext , isPublic}) {
   const handleChange = (e) => {
     setForm({
       ...form,
-      [e.target.name]: e.target.value,
+      [e.target.name]: e.target.type === "checkbox" ? e.target.checked : e.target.value,
     });
   };
-
-  const handleFileChange = (e) => {
-    setForm({ ...form, imageFile: e.target.files[0] || null });
-  };
-
-  const selectedSalleName = () => salles.find((s) => s.id === form.salleId)?.nom || "";
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -140,25 +162,35 @@ export default function Evenementform({ onNext , isPublic}) {
     }
 
     try {
-      const formData = new FormData();
-      formData.append("nom", form.nom);
-      formData.append("type", form.type);
-      formData.append("theme", form.theme);
-      formData.append("date", form.date);
-      formData.append("date_fin", form.date_fin);
-      formData.append("locationId", form.locationId);
-      formData.append("salleId", form.salleId);
-      formData.append("isPublic", form.isPublic);
-      if (form.image) {
-        formData.append("image", form.image); // fichier
-      }
-
-      const event = await createEvent(formData);
+      const event = await createEvent({ ...form, isPublic: form.isPublic });
       onNext && onNext({ eventId: event.id });
     } catch (error) {
       const errorMessage =
         error?.response?.data?.message || "Erreur lors de la création de l'événement.";
       setError(errorMessage);
+    }
+  };
+
+  const selectedSalleName = () => salles.find((s) => s.id === form.salleId)?.nom || "";
+  const selectedLocationName = () => locations.find((l) => l.id === form.locationId)?.nom || "";
+
+  const filteredLocations = locations.filter((loc) =>
+    loc.nom.toLowerCase().includes(searchLieu.toLowerCase())
+  );
+
+  const handleSelectLieu = (loc) => {
+    setSelectedLieu(loc);
+    if (mapRef.current && loc.latitude && loc.longitude) {
+      mapRef.current.setView([parseFloat(loc.latitude), parseFloat(loc.longitude)], 13);
+    }
+  };
+
+  const handleConfirmLieu = () => {
+    if (selectedLieu) {
+      setForm({ ...form, locationId: selectedLieu.id, salleId: "" });
+      setModalLieuOpen(false);
+      setSelectedLieu(null);
+      setSearchLieu("");
     }
   };
 
@@ -184,7 +216,9 @@ export default function Evenementform({ onNext , isPublic}) {
             <input
               name="nom"
               value={form.nom}
-              onChange={(e) => setForm({ ...form, nom: textControll(e.target.value) })}
+              onChange={(e) => {
+                setForm({ ...form, nom: textControll(e.target.value) });
+              }}
               placeholder="Ex: Mariage de Sarah & Paul"
               required
               className="border border-gray-200 rounded-xl px-4 py-3.5 bg-white focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent transition-all duration-200 shadow-sm hover:shadow focus:shadow-md placeholder:text-gray-400"
@@ -203,6 +237,7 @@ export default function Evenementform({ onNext , isPublic}) {
               className="border border-gray-200 rounded-xl px-4 py-3.5 bg-white cursor-pointer focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent transition-all duration-200 shadow-sm hover:shadow focus:shadow-md placeholder:text-gray-400"
             />
           </div>
+
 
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700 mb-1">Thème</label>
@@ -240,10 +275,20 @@ export default function Evenementform({ onNext , isPublic}) {
             />
           </div>
 
-          <LocationAutocomplete locations={locations} form={form} setForm={setForm} />
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-gray-800">Salle</label>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Lieu</label>
+            <input
+              type="text"
+              value={selectedLocationName()}
+              readOnly
+              onClick={() => setModalLieuOpen(true)}
+              placeholder="Sélectionnez un lieu"
+              required
+              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 cursor-pointer focus:ring-2 focus:ring-indigo-200 transition"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Salle</label>
             <input
               type="text"
               value={selectedSalleName()}
@@ -251,24 +296,10 @@ export default function Evenementform({ onNext , isPublic}) {
               disabled={!form.locationId}
               onClick={() => form.locationId && setModalSalleOpen(true)}
               placeholder="Salle"
-              className={`border border-gray-200 rounded-xl px-4 py-3.5 ${
-                form.locationId ? "cursor-pointer bg-white" : "bg-gray-50"
-              } focus:ring-2 focus:ring-[#6B46C1] focus:border-transparent transition-all duration-200 shadow-sm hover:shadow focus:shadow-md placeholder:text-gray-400`}
+              className={`border border-gray-300 rounded-xl px-5 py-3 ${form.locationId ? "cursor-pointer bg-gray-50" : "bg-gray-200"
+                } focus:ring-2 focus:ring-indigo-200 transition`}
             />
           </div>
-          <div className="flex flex-col items-start gap-3">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Événement public ?</label>
-            <input
-              type="checkbox"
-              name="isPublic"
-              checked={form.isPublic}
-              onChange={handleChange}
-              className="size-5 rounded border-gray-300 shadow-sm"
-            />
-            <label className="text-sm font-semibold text-gray-800">Événement public</label>
-          </div>
-
-
           <div className="col-span-1 md:col-span-2 mt-4">
             <button
               type="submit"
@@ -307,6 +338,100 @@ export default function Evenementform({ onNext , isPublic}) {
           </div>
         </div>
       )}
+      {/* Modal de la carte */}
+      {modalLieuOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative w-full max-w-7xl bg-white shadow-2xl rounded-2xl p-8">
+            <button
+              className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"
+              onClick={() => {
+                setModalLieuOpen(false);
+                setSearchLieu("");
+                setSelectedLieu(null);
+              }}
+            >
+              ×
+            </button>
+            <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">Choisissez un lieu</h3>
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Liste des lieux à gauche */}
+              <div className="w-full md:w-1/2 flex flex-col gap-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchLieu}
+                    onChange={(e) => setSearchLieu(e.target.value)}
+                    placeholder="Rechercher un lieu..."
+                    className="w-full border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+                  />
+                </div>
+                <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-xl">
+                  {filteredLocations.length > 0 ? (
+                    filteredLocations.map((loc) => (
+                      <div
+                        key={loc.id}
+                        onClick={() => handleSelectLieu(loc)}
+                        className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
+                          }`}
+                      >
+                        {loc.nom}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-gray-500 text-center">
+                      Aucun lieu trouvé
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleConfirmLieu}
+                    disabled={!selectedLieu}
+                    className="flex-1 bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Confirmer
+                  </button>
+                  <button
+                    onClick={() => {
+                      setModalLieuOpen(false);
+                      setSearchLieu("");
+                      setSelectedLieu(null);
+                    }}
+                    className="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-xl shadow hover:bg-gray-300 transition"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+              {/* Carte à droite */}
+              <div className="w-full md:w-1/2 h-96 rounded-lg overflow-hidden">
+                <MapContainer
+                  center={[48.8566, 2.3522]} // Paris par défaut
+                  zoom={13}
+                  style={{ height: "100%", width: "100%" }}
+                  ref={mapRef}
+                  dragging={true}
+                  zoomControl={true}
+                  scrollWheelZoom={false}
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  />
+                  {selectedLieu && selectedLieu.latitude && selectedLieu.longitude && (
+                    <Marker
+                      position={[parseFloat(selectedLieu.latitude), parseFloat(selectedLieu.longitude)]}
+                      icon={blueIcon}
+                    >
+                      <Popup>{selectedLieu.nom}</Popup>
+                    </Marker>
+                  )}
+                </MapContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {modalTypeOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm">
@@ -319,9 +444,8 @@ export default function Evenementform({ onNext , isPublic}) {
                 <button
                   key={type.value}
                   type="button"
-                  className={`flex flex-col items-center justify-center rounded-xl p-4 border border-transparent hover:border-[#6B46C1]/50 transition-all duration-150 ${type.color} shadow-sm hover:shadow-md ${
-                    form.type === type.value ? "ring-2 ring-[#6B46C1]/50" : ""
-                  }`}
+                  className={`flex flex-col items-center justify-center rounded-xl p-6 border-2 border-transparent hover:border-pink-400 transition ${type.color} shadow-md hover:shadow-lg focus:outline-none ${form.type === type.value ? "ring-2 ring-pink-400" : ""
+                    }`}
                   onClick={() => {
                     setForm({ ...form, type: type.value });
                     setModalTypeOpen(false);

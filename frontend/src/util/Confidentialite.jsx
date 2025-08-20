@@ -2,25 +2,52 @@ import React, { useState } from 'react';
 import { FaDatabase, FaTable, FaShare } from 'react-icons/fa';
 import { MdOutlineSecurity, MdArrowLeft, MdArrowRight } from "react-icons/md";
 import { LuUserCheck } from "react-icons/lu";
-import Modal from './Modal';
-import IM from '../../public/network-maintenance-graphic.jpg';
-import IMAGE from '../../public/marketers-with-magnifier-research-marketing-opportunities-chart-marketing-research-marketing-analysis-market-opportunities-and-problems-concept-flat-modern-illustration-vector.jpg';
-import AM from '../../public/stock-market-data-analysis-team-of-statistical-analysts-or-businesspeople-analyzing-statistical-information-trendy-illustration-vector.jpg';
-import ImageO from '../../public/pngtree-data-secure-people-protect-cybersecurity-picture-image_8729665.png';
-import ImageZ from '../../public/istockphoto-1314379517-612x612.jpg';
-const Confidentialite = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalContent, setModalContent] = useState('');
-    const [modalTitle, setModalTitle] = useState('');
-    const [modalIcon, setModalIcon] = useState(null);
-    const [index, setIndex] = useState(0);
 
-    const sections = [
-        {
-            title: "Informations que nous collectons",
-            icon: <FaDatabase className='mr-2 mb-1 inline text-indigo-600' size={28} />,
-            image: {IMAGE},
-            fullText: `
+// Importation explicite des images (ajustez les chemins selon votre structure)
+import Image1 from '../assets/marketers-with-magnifier-research-marketing-opportunities-chart-marketing-research-marketing-analysis-market-opportunities-and-problems-concept-flat-modern-illustration-vector.jpg';
+import Image2 from '../assets/stock-market-data-analysis-team-of-statistical-analysts-or-businesspeople-analyzing-statistical-information-trendy-illustration-vector.jpg';
+import Image3 from '../assets/network-maintenance-graphic.jpg';
+import Image4 from '../assets/pngtree-data-secure-people-protect-cybersecurity-picture-image_8729665.png';
+import Image5 from '../assets/istockphoto-1314379517-612x612.jpg';
+
+// Composant Modal basique
+const Modal = ({ isOpen, onClose, icon, title, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            {icon}
+            <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-xl font-bold"
+          >
+            &times;
+          </button>
+        </div>
+        <div className="text-gray-600">{children}</div>
+      </div>
+    </div>
+  );
+};
+
+const Confidentialite = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState('');
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalIcon, setModalIcon] = useState(null);
+  const [index, setIndex] = useState(0);
+
+  const sections = [
+    {
+      title: "Informations que nous collectons",
+      icon: <FaDatabase className='mr-2 mb-1 inline text-indigo-600' size={28} />,
+      image: Image1,
+      fullText: `
 Nous pouvons collecter différents types d'informations vous concernant, y compris :
 
 Informations personnelles identifiables (IPI) : Lors de l'inscription/création de compte : Nom, prénom, adresse e-mail, numéro de téléphone, mot de passe.
@@ -36,18 +63,18 @@ Données de communication : Contenu des messages que vous envoyez via notre plat
 Historique de vos interactions avec notre support client.
 
 Cookies et technologies similaires : Nous utilisons des cookies et des balises web pour suivre l'activité sur notre Service et conserver certaines informations. Les cookies sont de petits fichiers de données placés sur votre appareil.
-            `,
-            truncatedText: `
+      `,
+      truncatedText: `
 Nous pouvons collecter différents types d'informations vous concernant, y compris :
 
 Informations personnelles identifiables (IPI) : Lors de l'inscription/création de compte : Nom, prénom, adresse e-mail, numéro de téléphone, mot de passe.
-            `
-        },
-        {
-            title: "Comment nous utilisons vos informations",
-            icon: <FaTable className='mr-2 mb-1 inline text-indigo-600' size={28} />,
-            image: {AM},
-            fullText: `
+      `
+    },
+    {
+      title: "Comment nous utilisons vos informations",
+      icon: <FaTable className='mr-2 mb-1 inline text-indigo-600' size={28} />,
+      image: Image2,
+      fullText: `
 Nous utilisons les informations collectées à diverses fins :
 
 Fournir et maintenir le Service : Créer et gérer votre compte, traiter les paiements, héberger vos événements, gérer les inscriptions. 
@@ -61,18 +88,18 @@ Analyser l'utilisation du Service : Effectuer des recherches et des analyses pou
 Sécurité : Détecter et prévenir la fraude, les abus et les activités illégales, protéger la sécurité de nos utilisateurs et de notre plateforme. 
 
 Respect des obligations légales : Nous conformer aux lois et réglementations applicables.
-            `,
-            truncatedText: `
+      `,
+      truncatedText: `
 Nous utilisons les informations collectées à diverses fins :
 
 Fournir et maintenir le Service : Créer et gérer votre compte, traiter les paiements, héberger vos événements, gérer les inscriptions. 
-            `
-        },
-        {
-            title: "Partage et divulgation de vos informations",
-            icon: <FaShare className='mr-2 mb-1 inline text-indigo-600' size={28} />,
-            image: {IM},
-            fullText: `
+      `
+    },
+    {
+      title: "Partage et divulgation de vos informations",
+      icon: <FaShare className='mr-2 mb-1 inline text-indigo-600' size={28} />,
+      image: Image3,
+      fullText: `
 Nous ne vendons ni ne louons vos informations personnelles à des tiers. Nous pouvons partager vos informations dans les situations suivantes :
 
 Avec les organisateurs d'événements : Si vous êtes un participant, les informations nécessaires à votre inscription et à votre participation (nom, e-mail, réponses aux questions personnalisées de l'événement) seront partagées avec l'organisateur de l'événement concerné. 
@@ -84,29 +111,29 @@ Fournisseurs de services tiers : Nous pouvons partager vos informations avec des
 Obligations légales : Nous pouvons divulguer vos informations si la loi l'exige ou si nous pensons de bonne foi qu'une telle action est nécessaire pour se conformer à une obligation légale, protéger nos droits ou notre propriété, prévenir des activités illégales ou protéger la sécurité personnelle des utilisateurs. 
 
 Transferts d'entreprise : En cas de fusion, acquisition, restructuration ou vente d'actifs, vos informations peuvent être transférées dans le cadre de cette transaction. Nous vous informerons avant que vos informations ne soient transférées et ne soient soumises à une politique de confidentialité différente.
-            `,
-            truncatedText: `
+      `,
+      truncatedText: `
 Nous ne vendons ni ne louons vos informations personnelles à des tiers. Nous pouvons partager vos informations dans les situations suivantes :
 
 Avec les organisateurs d'événements : Si vous êtes un participant, les informations nécessaires à votre inscription et à votre participation (nom, e-mail, réponses aux questions personnalisées de l'événement) seront partagées avec l'organisateur de l'événement concerné. 
-            `,
-        },
-        {
-            title: "Sécurité des données",
-            icon: <MdOutlineSecurity className='mr-2 mb-1 inline text-indigo-600' size={28} />,
-            image: {ImageO},
-            fullText: `
+      `
+    },
+    {
+      title: "Sécurité des données",
+      icon: <MdOutlineSecurity className='mr-2 mb-1 inline text-indigo-600' size={28} />,
+      image: Image4,
+      fullText: `
 Nous mettons en œuvre des mesures de sécurité techniques et organisationnelles appropriées pour protéger vos informations personnelles contre l'accès non autorisé, la divulgation, l'altération ou la destruction. Cependant, aucune méthode de transmission sur Internet ou de stockage électronique n'est 100% sécurisée. Par conséquent, bien que nous nous efforcions de protéger vos informations personnelles, nous ne pouvons garantir leur sécurité absolue.
-            `,
-            truncatedText: `
+      `,
+      truncatedText: `
 Nous mettons en œuvre des mesures de sécurité techniques et organisationnelles appropriées pour protéger vos informations personnelles contre l'accès non autorisé,
-            `,
-        },
-        {
-            title: "Vos droits",
-            icon: <LuUserCheck className='mr-2 mb-1 inline text-indigo-600' size={28} />,
-            image: {ImageZ},
-            fullText: `
+      `
+    },
+    {
+      title: "Vos droits",
+      icon: <LuUserCheck className='mr-2 mb-1 inline text-indigo-600' size={28} />,
+      image: Image5,
+      fullText: `
 Conformément à la législation applicable sur la protection des données, vous disposez de certains droits concernant vos informations personnelles :
 
 Droit d'accès : Vous avez le droit de demander une copie des informations personnelles que nous détenons à votre sujet.
@@ -122,94 +149,94 @@ Droit à la portabilité des données : Vous avez le droit de recevoir vos infor
 Droit d'opposition : Vous avez le droit de vous opposer au traitement de vos informations personnelles dans certaines situations. 
 
 Pour exercer ces droits, veuillez nous contacter à [votre adresse e-mail de contact] ou via les coordonnées fournies ci-dessous. Nous répondrons à votre demande conformément aux lois applicables.
-            `,
-            truncatedText: `
+      `,
+      truncatedText: `
 Conformément à la législation applicable sur la protection des données, vous disposez de certains droits concernant vos informations personnelles :
 
 Droit d'accès : Vous avez le droit de demander une copie des informations personnelles que nous détenons à votre sujet.
-            `,
-        },
-    ];
+      `
+    }
+  ];
 
-    const openModal = (Key) => {
-        setModalTitle(sections[Key].title);
-        setModalContent(sections[Key].fullText);
-        setModalIcon(sections[Key].icon);
-        setIsModalOpen(true);
-    };
+  const openModal = (key) => {
+    setModalTitle(sections[key].title);
+    setModalContent(sections[key].fullText);
+    setModalIcon(sections[key].icon);
+    setIsModalOpen(true);
+  };
 
-    const closeModal = () => {
-        setIsModalOpen(false);
-        setModalIcon(null);
-        setModalContent('');
-        setModalTitle('');
-    };
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalIcon(null);
+    setModalContent('');
+    setModalTitle('');
+  };
 
-    const handleNext = () => {
-        setIndex((prev) => (prev === sections.length - 1 ? 0 : prev + 1));
-    };
+  const handleNext = () => {
+    setIndex((prev) => (prev === sections.length - 1 ? 0 : prev + 1));
+  };
 
-    const handlePrevious = () => {
-        setIndex((prev) => (prev === 0 ? sections.length - 1 : prev - 1));
-    };
+  const handlePrevious = () => {
+    setIndex((prev) => (prev === 0 ? sections.length - 1 : prev - 1));
+  };
 
-    return (
-        <section className="relative py-16 px-2 sm:px-8 bg-gradient-to-br from-[#f8fafc] via-[#eef2ff] to-white rounded-3xl shadow-2xl max-w-5xl mx-auto my-16">
-            <h1 className="text-center text-4xl font-extrabold text-indigo-800 mb-4 tracking-tight drop-shadow-sm">
-                Politique de confidentialité
-            </h1>
-            <h2 className="text-center text-lg text-gray-500 font-normal max-w-2xl mx-auto mb-10">
-                Votre vie privée est très importante pour nous. Cette Politique de Confidentialité explique comment MasterTable collecte, utilise, divulgue et protège vos informations lorsque vous utilisez notre site de gestion d'événements.
-            </h2>
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-                <button
-                    onClick={handlePrevious}
-                    className="text-4xl text-indigo-300 hover:text-indigo-600 transition p-2 rounded-full shadow-md bg-white"
-                    aria-label="Précédent"
-                >
-                    <MdArrowLeft />
-                </button>
-                <div className="flex-1 px-6 py-8 bg-white rounded-2xl shadow-xl flex flex-col items-center max-w-2xl">
-                    <h2 className="font-bold text-gray-800 text-2xl mb-6 flex items-center gap-2">
-                        {sections[index].icon}
-                        <span>{sections[index].title}</span>
-                    </h2>
-                    <div className={`flex flex-col md:flex-row items-center gap-8`}>
-                        <img
-                            className="w-full max-w-[320px] rounded-xl shadow border border-indigo-100"
-                            src={sections[index].image}
-                            alt=""
-                        />
-                        <p className="w-full md:w-2/3 text-base text-[#4E4E4E] whitespace-pre-line mt-6 md:mt-0">
-                            {sections[index].truncatedText}
-                            ...
-                            <span
-                                className="mx-1 text-indigo-700 cursor-pointer hover:underline font-semibold"
-                                onClick={() => openModal(index)}
-                            >
-                                Afficher plus
-                            </span>
-                        </p>
-                    </div>
-                    <Modal
-                        isOpen={isModalOpen}
-                        onClose={closeModal}
-                        icon={modalIcon}
-                        title={modalTitle}
-                    >
-                        <p className="whitespace-pre-line">{modalContent}</p>
-                    </Modal>
-                </div>
-                <button
-                    onClick={handleNext}
-                    className="text-4xl text-indigo-300 hover:text-indigo-600 transition p-2 rounded-full shadow-md bg-white"
-                    aria-label="Suivant"
-                >
-                    <MdArrowRight />
-                </button>
-            </div>
-        </section>
-    );
+  return (
+    <section className="relative py-16 px-2 sm:px-8 bg-gradient-to-br from-[#f8fafc] via-[#eef2ff] to-white rounded-3xl shadow-2xl max-w-5xl mx-auto my-16">
+      <h1 className="text-center text-4xl font-extrabold text-indigo-800 mb-4 tracking-tight drop-shadow-sm">
+        Politique de confidentialité
+      </h1>
+      <h2 className="text-center text-lg text-gray-500 font-normal max-w-2xl mx-auto mb-10">
+        Votre vie privée est très importante pour nous. Cette Politique de Confidentialité explique comment MasterTable collecte, utilise, divulgue et protège vos informations lorsque vous utilisez notre site de gestion d'événements.
+      </h2>
+      <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+        <button
+          onClick={handlePrevious}
+          className="text-4xl text-indigo-300 hover:text-indigo-600 transition p-2 rounded-full shadow-md bg-white"
+          aria-label="Précédent"
+        >
+          <MdArrowLeft />
+        </button>
+        <div className="flex-1 px-6 py-8 bg-white rounded-2xl shadow-xl flex flex-col items-center max-w-2xl">
+          <h2 className="font-bold text-gray-800 text-2xl mb-6 flex items-center gap-2">
+            {sections[index].icon}
+            <span>{sections[index].title}</span>
+          </h2>
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <img
+              className="w-full max-w-[320px] rounded-xl shadow border border-indigo-100"
+              src={sections[index].image}
+              alt={sections[index].title}
+            />
+            <p className="w-full md:w-2/3 text-base text-[#4E4E4E] whitespace-pre-line mt-6 md:mt-0">
+              {sections[index].truncatedText}
+              ...
+              <span
+                className="mx-1 text-indigo-700 cursor-pointer hover:underline font-semibold"
+                onClick={() => openModal(index)}
+              >
+                Afficher plus
+              </span>
+            </p>
+          </div>
+          <Modal
+            isOpen={isModalOpen}
+            onClose={closeModal}
+            icon={modalIcon}
+            title={modalTitle}
+          >
+            <p className="whitespace-pre-line">{modalContent}</p>
+          </Modal>
+        </div>
+        <button
+          onClick={handleNext}
+          className="text-4xl text-indigo-300 hover:text-indigo-600 transition p-2 rounded-full shadow-md bg-white"
+          aria-label="Suivant"
+        >
+          <MdArrowRight />
+        </button>
+      </div>
+    </section>
+  );
 };
 
 export default Confidentialite;

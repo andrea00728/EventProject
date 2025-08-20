@@ -10,6 +10,7 @@ const EventAccept = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  3
   const [error, setError] = useState(null);
 
   useEffect(() => {
