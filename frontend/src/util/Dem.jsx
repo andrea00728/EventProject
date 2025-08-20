@@ -47,7 +47,7 @@ const Demo = () => {
         )}
 
         {/* Description + Boutons à droite */}
-        <div className="flex-1 flex flex-col gap-6">
+        <div className="flex-1 flex flex-col gap-4">
             <h2 className="text-3xl md:text-5xl font-bold text-gray-900 text-center">
                 Découvrez notre plateforme en action
             </h2>

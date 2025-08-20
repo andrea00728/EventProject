@@ -180,7 +180,7 @@ export default function Evenementform({ onNext, isPublic }) {
   };
 
   return (
-    <div className="w-400 max-w-3xl mx-auto mt-12 px-6">
+    <div className="w-full max-w-3xl mx-auto mt-12 px-6">
       <div className="bg-white rounded-3xl shadow-2xl p-10 border border-gray-100">
         <h2 className="text-4xl font-extrabold text-center mb-2 text-indigo-800 tracking-tight">
           Créer un événement

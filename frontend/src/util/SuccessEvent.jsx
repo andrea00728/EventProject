@@ -24,7 +24,7 @@ const SuccessEvent = () => {
 
         const sortedEvents = events
           .sort((a, b) => new Date(b.date) - new Date(a.date))
-          .slice(0, 4);
+        //   .slice(0, 4);
         setAllEvents(sortedEvents);
       } catch (err) {
         console.error("❌ Erreur détaillée:", err);
@@ -121,7 +121,7 @@ const SuccessEvent = () => {
   };
 
   return (
-    <div className="container mx-auto max-w-6xl px-6">
+    <div className="container mx-auto max-w-6xl">
       <div className="text-center mb-14">
         <div className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-blue-200/50 rounded-full px-5 py-2.5 text-sm font-semibold text-blue-700 shadow-sm mb-6">
           <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
@@ -147,11 +147,11 @@ const SuccessEvent = () => {
         </div>
       ) : allEvents.length > 0 ? (
         <>
-          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {allEvents.map((event) => {
+          <div className="hidden md:flex flex-wrap justify-center gap-8 w-full">
+            {allEvents.slice(0, 4).map((event) => {
               const { status, color, text } = getEventStatus(event);
               return (
-                <div key={event.id} className="group perspective-1000">
+                <div key={event.id} className="group perspective-1000  flex-1 min-w-0 max-w-[280px]">
                   <div className="relative transform-gpu transition-all duration-700 ease-in-out hover:rotate-y-3 hover:-translate-y-2 hover:scale-[1.02] shadow-xl hover:shadow-2xl hover:shadow-purple-200/50 rounded-2xl overflow-hidden bg-white/70 border border-white/80">
                     <div className="relative h-48 overflow-hidden">
                       {event.image ? (
@@ -257,6 +257,17 @@ const SuccessEvent = () => {
               );
             })}
           </div>
+
+        {allEvents.length > 4 && (
+            <div className="text-center mt-12">
+                <button className="inline-flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 transition-colors px-6 py-3 text-sm font-semibold text-white shadow-lg">
+                    Voir plus d'événements
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 ml-2">
+                        <path fillRule="evenodd" d="M3.293 7.293a1 1 0 011.414 0L10 12.586l5.293-5.293a1 1 0 111.414 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        )}
 
           <div className="md:hidden">
             <Slider {...sliderSettings}>
