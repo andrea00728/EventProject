@@ -4,6 +4,8 @@ import { FaAward, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaClock } from "react-
 import TestimonialsSection from "../util/testimonialsSection";
 import { getAllEvents } from '../services/evenementServ';
 import tutorialVideo from "../assets/demo.mp4"; // import de la vidéo
+import SalleAvecFormulaire from '../util/demo';
+import Demo from '../util/demo';
 
 export default function Accueil() {
   const [allEvents, setAllEvents] = useState([]);
@@ -237,7 +239,7 @@ export default function Accueil() {
       {/* Modal plein écran */}
       {isOpen && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
-          <div className="relative w-full h-full bg-white flex flex-col items-center justify-center">
+          <div className="relative w-full h-full bg-white flex flex-col items-center justify-center overflow-scroll">
             {/* Bouton fermer */}
             <button
               onClick={() => setIsOpen(false)}
@@ -247,9 +249,7 @@ export default function Accueil() {
             </button>
 
             {/* Contenu du modal */}
-            <h1 className="text-3xl font-bold text-gray-900">
-              Page de démonstration
-            </h1>
+            <Demo/>
           </div>
         </div>
       )}
