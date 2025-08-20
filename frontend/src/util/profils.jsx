@@ -227,7 +227,7 @@ export default function Profil() {
             exit="hidden"
             onClick={() => setOpenSettings(false)}
           >
-            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center top-100">
               <motion.div
                 className="bg-white/95 backdrop-blur-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-white/20 max-w-xs sm:max-w-md w-full mx-4 overflow-hidden"
                 variants={modalVariants}
@@ -300,7 +300,7 @@ export default function Profil() {
             exit="hidden"
             onClick={() => setOpenEditProfil(false)}
           >
-            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center top-100">
               <motion.div
                 className="bg-white/95 backdrop-blur-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-white/20 max-w-xs sm:max-w-md w-full mx-4 overflow-hidden"
                 variants={modalVariants}
