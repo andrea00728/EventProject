@@ -7,6 +7,10 @@ import { FaUser } from "react-icons/fa";
 import Profil from "../util/profils";
 import { AuthModal } from "../components/Modal/authModal";
 import { getUserForfait } from "../services/forfaitService";
+import ChangeStatus from "../util/ChangeStatus";
+import NotificationListener from "../util/Notification/notification_global";
+import { ToastContainer } from "react-toastify";
+import ChatWidget from "../pages/ChatWidget";
 
 export default function PublicLayout() {
   const { token, role, user } = useStateContext();
@@ -150,7 +154,7 @@ export default function PublicLayout() {
     ];
 
     setNavItems(navItemsAuth);
-    console.log(forfait?.nom)
+    console.log(forfait?.nom);
   }, [token, forfait]);
 
   const handleSmoothScroll = (e, target) => {
@@ -227,14 +231,14 @@ export default function PublicLayout() {
                         item.name === "Evenement" && setIsEvenementHovered(true)
                       }
                       onMouseLeave={() =>
-                        item.name === "Evenement" && setIsEvenementHovered(false)
+                        item.name === "Evenement" &&
+                        setIsEvenementHovered(false)
                       }
                     >
                       <span className="relative z-10">{item.name}</span>
                       <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300"></span>
                     </Link>
                   )}
-
 
                   {item.subMenus && (
                     <AnimatePresence>
@@ -341,16 +345,19 @@ export default function PublicLayout() {
           >
             <div className="w-6 h-6 relative flex flex-col justify-center items-center">
               <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"
-                  }`}
+                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
+                  isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"
+                }`}
               ></span>
               <span
-                className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${isMenuOpen ? "opacity-0" : "opacity-100"
-                  }`}
+                className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${
+                  isMenuOpen ? "opacity-0" : "opacity-100"
+                }`}
               ></span>
               <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
-                  }`}
+                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
+                  isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
+                }`}
               ></span>
             </div>
           </button>
@@ -430,14 +437,13 @@ export default function PublicLayout() {
 
       <div className="h-20" />
       <main>
+        <NotificationListener />
+        <ToastContainer position="top-right" />
         <Outlet />
+        <ChatWidget />
+        <AuthModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} isSignIn={true} />
+        <ChangeStatus />
       </main>
-
-      <AuthModal
-        isOpen={isModalOpen}
-        onClose={() => setModalOpen(false)}
-        isSignIn={true}
-      />
     </>
   );
 }

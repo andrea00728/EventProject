@@ -227,7 +227,7 @@ export class AuthService {
     return { message: 'Organisateur supprimé avec succès' };
   }
 
-  async updateStatus(userId: string, isOnline: boolean): Promise<void> {
+  async updateStatus(userId: string, isOnline: boolean = true): Promise<void> {
     try {
       const manager = await this.userRepository.findOne({ where: { id: userId } });
       if (!manager) return;

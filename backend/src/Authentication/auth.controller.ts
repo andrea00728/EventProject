@@ -177,6 +177,12 @@ export class AuthController {
   async deleteMessage(@Param('id', ParseIntPipe) id: number) {
     await this.authService.deleteMessage(id);
   }
+  
+  @Get('/changeStatus')
+  @UseGuards(AuthGuard('jwt'))
+  async changeStatus(@Req() req: any): Promise<any> {
+    return req;
+  }
 
 
 }

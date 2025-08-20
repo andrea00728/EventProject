@@ -10,6 +10,16 @@ export const getUserIdForToken = async (token) => {
   return response.data;
 };
 
+export const changeStatusService = async (token) => {
+  const response = await axiosClient.get("/auth/changeStatus",{
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
+
+
 /**
  * 
  * @returns 
