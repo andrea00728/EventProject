@@ -4,11 +4,18 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { getAllEvents } from "../services/evenementServ";
 import { FaCalendarAlt, FaClock } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const SuccessEvent = () => {
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const navigate =useNavigate()
+
+  const handleRedirect = () => {
+      navigate("/evenements-publics");
+  };
 
   useEffect(() => {
     const fetchAllEvents = async () => {
@@ -260,7 +267,10 @@ const SuccessEvent = () => {
 
         {allEvents.length > 4 && (
             <div className="text-center mt-12">
-                <button className="inline-flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 transition-colors px-6 py-3 text-sm font-semibold text-white shadow-lg">
+                <button
+                    onClick={handleRedirect} 
+                    className="inline-flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 transition-colors px-6 py-3 text-sm font-semibold text-white shadow-lg"
+                >
                     Voir plus d'événements
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 ml-2">
                         <path fillRule="evenodd" d="M3.293 7.293a1 1 0 011.414 0L10 12.586l5.293-5.293a1 1 0 111.414 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414z" clipRule="evenodd" />
