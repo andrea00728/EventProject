@@ -70,7 +70,7 @@ export const AuthModal = ({ isOpen, onClose, isSignIn=false }) => {
                     localStorage.setItem('token', result.token);
                     toast.success("Connexion réussie !");
                     setTimeout(() => {
-                        navigate("/accueil");
+                        navigate("/pagepublic");
                         onClose();
                     }, 500);
                 } else {
