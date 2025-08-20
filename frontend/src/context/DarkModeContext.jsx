@@ -4,12 +4,12 @@ const DarkModeContext = createContext();
 
 export function DarkModeProvider({ children }) {
   const [darkMode, setDarkMode] = useState(
-    localStorage.getItem("ACCESS_THEME") !== null 
-      ? (localStorage.getItem("ACCESS_THEME") == "true" ? true : false )
+    sessionStorage.getItem("ACCESS_THEME") !== null 
+      ? (sessionStorage.getItem("ACCESS_THEME") == "true" ? true : false )
       : getThemeColor()
   );
   const toggleDarkMode = () => {
-    localStorage.setItem("ACCESS_THEME", darkMode === true ? false : true);
+    sessionStorage.setItem("ACCESS_THEME", darkMode === true ? false : true);
     setDarkMode((prev) => {
       return !prev;
     });
