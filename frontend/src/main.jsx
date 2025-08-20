@@ -8,6 +8,9 @@ import { DarkModeProvider } from './context/DarkModeContext.jsx'
 import router from './routers/router.jsx'
 import './App.css'
 import 'leaflet/dist/leaflet.css'
+import "react-toastify/dist/ReactToastify.css"; // 👈 styles toastify
+import { ToastContainer } from "react-toastify"; // 👈 importer le container
+
 import L from "leaflet";
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
@@ -25,6 +28,14 @@ createRoot(document.getElementById('root')).render(
     <DarkModeProvider>
       <ContextProvider>
         <RouterProvider router={router} />
+        <ToastContainer  // 👈 placé ici, global à toute l'app
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          pauseOnHover
+        />
       </ContextProvider>
     </DarkModeProvider>
   </StrictMode>
