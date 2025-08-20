@@ -158,6 +158,7 @@ Droit d'accès : Vous avez le droit de demander une copie des informations perso
     }
   ];
 
+  //
   const openModal = (key) => {
     setModalTitle(sections[key].title);
     setModalContent(sections[key].fullText);
