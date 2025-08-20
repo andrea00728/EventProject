@@ -186,10 +186,9 @@ const PaymentPage = ({ forfait, onClose }) => {
 
           <div className="mb-8">
             <h2 className="text-3xl font-extrabold text-gray-900 mb-4">{selectedPlanDetails.name}</h2>
-            <p className="text-gray-600 text-lg">Choisissez votre plan et méthode de paiement</p>
           </div>
 
-          <div className="flex flex-wrap gap-3 mb-8">
+          {/* <div className="flex flex-wrap gap-3 mb-8">
             {Object.entries(plans).map(([key, plan]) => {
               const IconComp = plan.icon;
               const isSelected = selectedPlan === key;
@@ -207,7 +206,7 @@ const PaymentPage = ({ forfait, onClose }) => {
                 </button>
               );
             })}
-          </div>
+          </div> */}
 
           <div className="grid lg:grid-cols-2 gap-8">
             <div className={`${selectedPlanDetails.bgColor} rounded-2xl p-6 shadow-lg`}>
