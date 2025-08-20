@@ -636,7 +636,7 @@ export default function AdminLayout() {
                       }`}
                     >
                       <p className="font-medium">Connecté en tant que</p>
-                      <p className="truncate">admin@example.com</p>
+                      <p className="truncate">{user?.name || "Admin"}</p>
                     </div>
                     <div
                       className={`border-t ${
@@ -644,6 +644,7 @@ export default function AdminLayout() {
                       }`}
                     ></div>
                     <button
+                      onClick={handleRedirect}
                       className={`w-full text-left px-3 py-2 text-sm ${
                         darkMode
                           ? "hover:bg-gray-700 text-gray-200"
