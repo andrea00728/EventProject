@@ -1,32 +1,29 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useStateContext } from '../context/ContextProvider';
+import { useStateContext } from "../context/ContextProvider";
+import axiosClient from "../api/axios-client";
+import { useNavigate } from "react-router-dom";
 
-export default function LogoutButton() {
-  const { setUser, setToken, user, token } = useStateContext();
+const LogoutButton = () => {
+  const { setUser, setIsAuthenticated } = useStateContext();
   const navigate = useNavigate();
 
-const handleLogout = () => {
-  console.log("Déconnexion lancée");
-  setToken(null);
-  setUser(null);
-  localStorage.removeItem('ACCESS_TOKEN');
-  localStorage.removeItem('USER');
-  console.log("ACCESS_TOKEN supprimé", localStorage.getItem('ACCESS_TOKEN'));
-  console.log("USER supprimé", localStorage.getItem('USER'));
-   window.location.href = '/pagepublic';
-};
-
-
-  useEffect(() => {
-    if (!token && !user) {
-      navigate('/pagepublic', { replace: true });
+  const handleLogout = async () => {
+    try {
+      await axiosClient.post("/auth/logout");
+      setUser(null);
+      setIsAuthenticated(false);
+      navigate("/pagepublic", { replace: true });
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+      setUser(null);
+      setIsAuthenticated(false);
+      navigate("/pagepublic", { replace: true });
     }
-  }, [token, user, navigate]);
+  };
 
   return (
-    <button onClick={handleLogout}>
+    <button onClick={handleLogout} className="logout-button">
       Déconnexion
     </button>
   );
-}
+};
+export default LogoutButton;

@@ -5,14 +5,15 @@ import { HttpExceptionFilter } from './Exception/http-exception.filter';
 import * as express from 'express';
 import { join } from 'path';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as cookieParser from 'cookie-parser';
+
 import { TasksService } from './services/tasks/tasks.service';
+import cookieParser from 'cookie-parser';
 
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.use(cookieParser());
+ app.use(cookieParser())
   // Configuration de Swagger
   const config = new DocumentBuilder()
     .setTitle('Commentaire API')

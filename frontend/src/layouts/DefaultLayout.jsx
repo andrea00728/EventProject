@@ -19,7 +19,7 @@ import NotificationListener from "../util/Notification/notification_global";
 
 
 export default function DefaultLayout() {
-  const { token, role, isLoading } = useStateContext();
+  const { isAuthenticated,role, isLoading } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEvenementHovered, setIsEvenementHovered] = useState(false);
   const [forfait, setForfait] = useState(null);
@@ -29,7 +29,7 @@ export default function DefaultLayout() {
   if (isLoading) return <div>Chargement ...</div>;
 
   // 🔐 Rediriger si non connecté
-  if (!token) return <Navigate to="/pagepublic" replace />;
+  if (!isAuthenticated) return <Navigate to="/pagepublic" replace />;
 
   // Rediriger selon rôle
   switch (role) {
@@ -49,7 +49,7 @@ export default function DefaultLayout() {
   useEffect(() => {
     const fetchAndSetForfait = async () => {
       try {
-        const data = await getUserForfait(token);
+        const data = await getUserForfait();
         setForfait(data.forfait);
       } catch (err) {
         console.error("Erreur lors de la récupération du forfait", err);
@@ -60,14 +60,17 @@ export default function DefaultLayout() {
 
     // Mettre à jour dynamiquement après activation
     const handleForfaitUpdate = () => {
-      fetchAndSetForfait();
+      if(isAuthenticated){
+        fetchAndSetForfait();
+      }
+      
     };
 
     window.addEventListener("forfaitUpdated", handleForfaitUpdate);
     return () => {
       window.removeEventListener("forfaitUpdated", handleForfaitUpdate);
     };
-  }, [token]);
+  }, [isAuthenticated]);
 
   //  Configuration dynamique du menu
   const navItems = [

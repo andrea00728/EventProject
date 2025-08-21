@@ -28,18 +28,14 @@ export const createInvite = async (inviteData) => {
 
 
 
-export const createInviteForSpecificEvent = async (inviteData, token) => {
-  if (!token) throw new Error("Utilisateur non authentifié");
+export const createInviteForSpecificEvent = async (inviteData) => {
+
   const eventId = inviteData.eventId;
   if (!eventId) {
     throw new Error("L'ID de l'événement est manquant pour la création de l'invité.");
   }
   try {
-    const response = await axiosClient.post(`/guests/${eventId}`, inviteData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axiosClient.post(`/guests/${eventId}`, inviteData);
     return response.data;
   } catch (error) {
     console.error(`Erreur lors de la création de l'invité pour l'événement ${eventId}:`, error);
@@ -47,16 +43,12 @@ export const createInviteForSpecificEvent = async (inviteData, token) => {
   }
 };
 
-export const getGuestsByEvent = async (eventId, token) => {
-  if (!token) throw new Error("Utilisateur non authentifié");
+export const getGuestsByEvent = async (eventId) => {
+
   if (!eventId) throw new Error("L'ID de l'événement est manquant pour la récupération des invités.");
 
   try {
-    const response = await axiosClient.get(`/guests/event/${eventId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axiosClient.get(`/guests/event/${eventId}`);
     return response.data;
   } catch (error) {
     console.error("Erreur lors de la récupération des invités par Event:", error);
@@ -64,16 +56,11 @@ export const getGuestsByEvent = async (eventId, token) => {
   }
 };
 
-export const getGuestsByEventId = async (eventId, token) => {
-  if (!token) throw new Error("Utilisateur non authentifié");
+export const getGuestsByEventId = async (eventId) => {
   if (!eventId) throw new Error("L'ID de l'événement est manquant pour la récupération des invités.");
 
   try {
-    const response = await axiosClient.get(`/guests/${eventId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axiosClient.get(`/guests/${eventId}`);
     return response.data;
   } catch (error) {
     console.error("Erreur lors de la récupération des invités par Event ID:", error);
@@ -105,20 +92,14 @@ export const createPublicInvite = async (inviteData) => {
 
 
 // NOUVEAU : Fonction pour importer des invités depuis un fichier CSV pour le DERNIER événement de l'utilisateur
-export const importGuestsToLastEvent = async (file, token) => {
-  if (!token) throw new Error("Utilisateur non authentifié");
+export const importGuestsToLastEvent = async (file) => {
   if (!file) throw new Error("Aucun fichier fourni pour l'importation.");
 
   const formData = new FormData();
   formData.append('file', file); // 'file' doit correspondre au nom attendu par @UploadedFile() dans NestJS
 
   try {
-    const response = await axiosClient.post('/guests/import-last-event', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data', // Essentiel pour l'envoi de fichiers
-        Authorization: `Bearer ${token}`
-      }
-    });
+    const response = await axiosClient.post('/guests/import-last-event', formData);
     return response.data;
   } catch (error) {
     console.error("Erreur lors de l'importation des invités pour le dernier événement:", error);
@@ -127,8 +108,7 @@ export const importGuestsToLastEvent = async (file, token) => {
 };
 
 // NOUVEAU : Fonction pour importer des invités depuis un fichier CSV pour un ÉVÉNEMENT SPÉCIFIQUE
-export const importGuestsToSpecificEvent = async (file, eventId, token) => {
-  if (!token) throw new Error("Utilisateur non authentifié");
+export const importGuestsToSpecificEvent = async (file, eventId) => {
   if (!eventId) throw new Error("L'ID de l'événement est manquant pour l'importation.");
   if (!file) throw new Error("Aucun fichier fourni pour l'importation.");
 
@@ -136,11 +116,7 @@ export const importGuestsToSpecificEvent = async (file, eventId, token) => {
   formData.append("file", file);
 
   try {
-    const response = await axiosClient.post(`/guests/import/${eventId}`, formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axiosClient.post(`/guests/import/${eventId}`, formData);
     return response.data;
   } catch (error) {
     console.error(`Erreur lors de l'importation des invités pour l'événement ${eventId}:`, error);
@@ -153,14 +129,10 @@ export const importGuestsToSpecificEvent = async (file, eventId, token) => {
  * suppresion invite
  */
 
-export const deleteGuest = async (guestId, token) => {
+export const deleteGuest = async (guestId) => {
   if (!token) throw new Error("Utilisateur non authentifié");
   try {
-    const response = await axiosClient.delete(`/guests/${guestId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axiosClient.delete(`/guests/${guestId}`);
     return response.data;
   } catch (error) {
     console.error("Erreur lors de la suppression de l'invité :", error);
@@ -176,11 +148,7 @@ export const deleteGuest = async (guestId, token) => {
   if (!guestId) throw new Error("ID de l'invité manquant");
 
   try {
-    const response = await axiosClient.put(`/guests/${guestId}`, data, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axiosClient.put(`/guests/${guestId}`, data);
     return response.data;
   } catch (error) {
     console.error("Erreur lors de la mise à jour de l'invité :", error);
@@ -253,14 +221,10 @@ export async function getTablesByEventId(eventId, token) {
   }
 }
 
-export async function assignGuestToTable(guestId, tableId, place, token) {
+export async function assignGuestToTable(guestId, tableId, place) {
   if (!token) throw new Error("Utilisateur non authentifié");
   try {
-    const response = await axiosClient.post(`/guests/${guestId}/assign`, { tableId, place }, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axiosClient.post(`/guests/${guestId}/assign`, { tableId, place });
     return response.data;
   } catch (error) {
     console.error("Erreur lors de l'assignation :", error);

@@ -12,12 +12,20 @@ import { Personnel } from 'src/entities/Personnel';
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
 import { PresenceGateway } from 'src/gateway/presence.gateway';
+import { RedisModule } from '@liaoliaots/nestjs-redis';
 
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User,Personnel, Evenement,Forfait]),
+    RedisModule.forRoot({
+      config:{
+        host:'localhost',
+        port:6379,
+      },
+    }),
     PassportModule,
+
     JwtModule.register({
       secret: 'andreanadjasylvanoilaina',
       signOptions: { expiresIn: '60m' },

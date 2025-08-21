@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,7 +9,10 @@ import { Personnel } from 'src/entities/Personnel';
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
 import { QueryFailedError } from 'typeorm';
-import { Response } from 'express';
+import {Request, Response } from 'express';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import { Redis  } from 'ioredis';
+
 
 @Injectable()
 export class AuthService {
@@ -24,6 +27,8 @@ export class AuthService {
     private readonly eventRepository: Repository<Evenement>,
     @InjectRepository(Forfait)
     private readonly forfaitRepository: Repository<Forfait>,
+    @InjectRedis()
+    private readonly redis:Redis ,
   ) { }
 
   async validateUser(profile: any): Promise<any> {
@@ -80,7 +85,31 @@ export class AuthService {
     };
   }
 
-  async login(user: any) {
+  // async login(user: any) {
+  //   const payload = {
+  //     email: user.email,
+  //     sub: user.id,
+  //     role: user.role,
+  //     name: user.name,
+  //     photo: user.photo,
+  //   };
+  //   console.log('JWT Payload:', payload);
+  //   return {
+  //     access_token: this.jwtService.sign(payload),
+  //   };
+  // }
+
+
+  /**
+   * 
+   * @param user 
+   * @param res 
+   * @returns 
+   * 
+   * amelioration pour login pout utilise cookies
+   */
+
+    async login(user: any,res: Response) {
     const payload = {
       email: user.email,
       sub: user.id,
@@ -88,41 +117,145 @@ export class AuthService {
       name: user.name,
       photo: user.photo,
     };
+    const access_token= this.jwtService.sign(payload,{expiresIn:'1h'});
+    const refresh_token= this.jwtService.sign(payload,{expiresIn:'7d'});
+    res.cookie('jwt',access_token,{
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge:60*60*60*1000,
+    });
     console.log('JWT Payload:', payload);
+
+    //utilise pour actualise le token
+
+    res.cookie('refresh_token',refresh_token,{
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge:7*24*60*60*1000,
+    })
+
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token,refresh_token
     };
   }
 
 
+  /**
+   * 
+   * @param req 
+   * @param res 
+   * @returns 
+   * 
+   * pour frech le token 
+   * 
+   */
+  @Post('refresh')
+async refreshToken(@Req() req: Request, @Res() res: Response) {
+  const refreshToken = req.cookies['refresh_token'];
 
-async logout(token: string, res: Response): Promise<{ message: string }> {
-    try {
-      // Verify token (optional, for additional security)
-      await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWT_SECRET || 'your-secret-key',
-      });
-
-      // Add token to blacklist
-      this.tokenBlacklist.add(token);
-
-      // Clear the JWT cookie
-      res.clearCookie('jwt', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-      });
-
-      return { message: 'Déconnexion réussie' };
-    } catch (error) {
-      throw new Error('Token invalide ou erreur lors de la déconnexion');
-    }
+  if (!refreshToken || await this.isTokenBlacklisted(refreshToken)) {
+    throw new UnauthorizedException('Refresh token invalide');
   }
+
+  const payload = await this.jwtService.verifyAsync(refreshToken);
+
+  const newAccessToken = this.jwtService.sign(
+    {
+      email: payload.email,
+      sub: payload.sub,
+      role: payload.role,
+      name: payload.name,
+      photo: payload.photo,
+    },
+    { expiresIn: '1h' },
+  );
+
+  res.cookie('jwt', newAccessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 60 * 60 * 1000,
+  });
+
+  return { access_token: newAccessToken };
+}
+
+
+/**
+ * 
+ * @param token 
+ * @param res 
+ * @returns 
+ * 
+ * deconnexion
+ */
+async logout(req: Request, res: Response): Promise<{ message: string }> {
+  try {
+    const jwtCookie = req.cookies['jwt']; // Récupérer le jeton directement du cookie
+    if (!jwtCookie) {
+      throw new Error('Aucun jeton fourni');
+    }
+
+    await this.jwtService.verifyAsync(jwtCookie, {
+      secret: process.env.JWT_SECRET || 'your-secret-key',
+    });
+
+    await this.redis.set(`blacklist:${jwtCookie}`, 'true', 'EX', 24 * 60 * 60);
+
+    // ... Le reste de votre code pour effacer les cookies
+    res.clearCookie('jwt', { /* options */ });
+    res.clearCookie('refresh_token', { /* options */ });
+
+    return { message: 'Déconnexion réussie' };
+  } catch (error) {
+    throw new Error('Token invalide ou erreur lors de la déconnexion');
+  }
+}
+
+// async logout(token: string, res: Response): Promise<{ message: string }> {
+//     try {
+//       // Verify token (optional, for additional security)
+//       await this.jwtService.verifyAsync(token, {
+//         secret: process.env.JWT_SECRET || 'your-secret-key',
+//       });
+
+//       // Add token to blacklist
+//       this.tokenBlacklist.add(token);
+
+//       // Clear the JWT cookie
+//       res.clearCookie('jwt', {
+//         httpOnly: true,
+//         secure: process.env.NODE_ENV === 'production',
+//         sameSite: 'strict',
+//       });
+
+//       return { message: 'Déconnexion réussie' };
+//     } catch (error) {
+//       throw new Error('Token invalide ou erreur lors de la déconnexion');
+//     }
+//   }
 
   // Method to check if a token is blacklisted (for use in auth guard)
-  isTokenBlacklisted(token: string): boolean {
-    return this.tokenBlacklist.has(token);
-  }
+  // isTokenBlacklisted(token: string): boolean {
+  //   return this.tokenBlacklist.has(token);
+  // }
+
+
+  /**
+   * 
+   * @param token 
+   * @returns 
+   * 
+   * blacklist token
+   */
+
+  async isTokenBlacklisted(token: string): Promise<boolean> {
+  const isBlacklisted = await this.redis.get(`blacklist:${token}`);
+  return !!isBlacklisted;
+}
+
 
 
 
