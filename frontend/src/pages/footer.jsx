@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { FaFacebook, FaInstagram, FaPhone } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
-import ConditionsUtilisation from "../util/ConditionUtilisation";
+import ConditionsUtilisation from "../util/ConditionsUtilisation";
 import Support from "../util/Support";
+import { Modal } from "../util/Support"; 
 
 function Footer({ onShowConfidentialite }) {
   const [showConditions, setShowConditions] = useState(false);
-  const [showSupport, setShowSupport] = useState(false); 
+  const [showSupport, setShowSupport] = useState(false);
 
   return (
     <footer className="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 text-white py-10 overflow-hidden">
@@ -55,7 +56,6 @@ function Footer({ onShowConfidentialite }) {
                   >
                     <MdEmail className="w-5 h-5 text-white group-hover:text-blue-400 transition-colors" />
                   </a>
-
                   <a
                     href="https://facebook.com"
                     target="_blank"
@@ -108,7 +108,7 @@ function Footer({ onShowConfidentialite }) {
                 Conditions d'utilisation
               </button>
               <button
-                onClick={() => setShowSupport(true)} 
+                onClick={() => setShowSupport(true)}
                 className="text-slate-400 hover:text-white transition-colors hover:underline"
               >
                 Support
@@ -118,11 +118,14 @@ function Footer({ onShowConfidentialite }) {
         </div>
       </div>
 
-      {/* Modals */}
-      <ConditionsUtilisation
+      {/* Modales */}
+      <Modal
         isOpen={showConditions}
         onClose={() => setShowConditions(false)}
-      />
+        title="Conditions d'utilisation"
+      >
+        <ConditionsUtilisation />
+      </Modal>
 
       <Support
         isOpen={showSupport}

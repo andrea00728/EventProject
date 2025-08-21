@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { FaLifeRing, FaPhone, FaEnvelope } from 'react-icons/fa';
 
-const Modal = ({ isOpen, onClose, title, children }) => {
+export const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
 
   return (
@@ -46,7 +46,10 @@ const Support = ({ isOpen, onClose }) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {supportInfo.map((item, idx) => (
           <div key={idx} className="bg-gray-50 p-4 rounded-xl shadow hover:shadow-lg transition cursor-pointer">
-            <div className="flex items-center gap-2 mb-2">{item.icon}<h3 className="font-semibold text-lg">{item.title}</h3></div>
+            <div className="flex items-center gap-2 mb-2">
+              {item.icon}
+              <h3 className="font-semibold text-lg">{item.title}</h3>
+            </div>
             <p className="text-gray-600 text-sm">{item.text}</p>
           </div>
         ))}
