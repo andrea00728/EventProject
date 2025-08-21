@@ -1,5 +1,7 @@
 import { Link, Outlet } from "react-router-dom";
+import { useState } from 'react';
 import ChatWidget from "../pages/ChatWidget";
+import { RxCaretRight, RxCaretLeft } from 'react-icons/rx';
 
 export default function EventLayout() {
     const choixItems = [
@@ -23,11 +25,42 @@ export default function EventLayout() {
         },
     ];
 
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
+
     return (
-        <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-            {/* Sidebar - Complètement fixe */}
-            <aside className="w-80 bg-white/90 backdrop-blur-sm border-r border-slate-200/60 shadow-2xl flex flex-col fixed h-screen z-30">
-                {/* Header - Fixe */}
+        <div className="relative flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+            {/* Bouton de menu pour les petits écrans (visible uniquement sur mobile) */}
+            <div className={`
+                    absolute top-4 z-40 lg:hidden
+                    transform transition-transform duration-300
+                    ${isMenuOpen ? 'left-80' : 'left-2'}
+                `}>
+                <button
+                    onClick={toggleMenu}
+                    className="p-3 bg-white/30 backdrop-blur-sm shadow-xl border border-slate-200/60 transition-all hover:scale-105 transform hover:-rotate-12"
+                >
+                    {isMenuOpen ? (
+                        <RxCaretLeft className="w-6 h-6 text-slate-700" />
+                    ) : (
+                        <RxCaretRight className="w-6 h-6 text-slate-700" />
+                    )}
+                </button>
+            </div>
+
+            {/* Sidebar : cachée par défaut, s'anime pour apparaître, visible sur les grands écrans */}
+            <aside
+                className={`
+                    fixed h-screen w-80 bg-white/90 backdrop-blur-sm border-r border-slate-200/60 shadow-2xl flex flex-col z-30
+                    transform transition-transform duration-300
+                    ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+                    lg:translate-x-0
+                `}
+            >
+                {/* Header */}
                 <div className="p-6 border-b border-slate-200/60 flex-shrink-0">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -46,7 +79,7 @@ export default function EventLayout() {
                     </p>
                 </div>
 
-                {/* Navigation - Contenu central flexible */}
+                {/* Navigation */}
                 <nav className="flex-1 p-6 min-h-0">
                     <ul className="space-y-3">
                         {choixItems.map((item, index) => (
@@ -57,23 +90,25 @@ export default function EventLayout() {
                                         group flex items-center gap-3 px-4 py-4 rounded-xl
                                         text-slate-700 hover:text-white font-medium
                                         transition-all duration-300 transform hover:scale-[1.02]
-                                        ${index === 0 
-                                            ? 'hover:bg-gradient-to-r hover:from-orange-500 hover:to-amber-500 hover:shadow-xl hover:shadow-orange-500/25' 
+                                        ${index === 0
+                                            ? 'hover:bg-gradient-to-r hover:from-orange-500 hover:to-amber-500 hover:shadow-xl hover:shadow-orange-500/25'
                                             : 'hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:shadow-xl hover:shadow-blue-500/25'
                                         }
                                         relative overflow-hidden border border-transparent
                                         hover:border-white/20
                                     `}
+                                    onClick={toggleMenu} // Ferme le menu après avoir cliqué sur un lien
                                 >
                                     <div className={`
                                         p-2.5 rounded-lg transition-all duration-300 flex-shrink-0
-                                        ${index === 0 
-                                            ? 'bg-orange-100 group-hover:bg-white/20' 
+                                        ${index === 0
+                                            ? 'bg-orange-100 group-hover:bg-white/20'
                                             : 'bg-blue-100 group-hover:bg-white/20'
                                         }
                                     `}>
                                         <div className={`
-                                            ${index === 0 ? 'text-orange-600' : 'text-blue-600'} 
+                                            w-5 h-5
+                                            ${index === 0 ? 'text-orange-600' : 'text-blue-600'}
                                             group-hover:text-white transition-colors duration-300
                                         `}>
                                             {item.icon}
@@ -108,7 +143,7 @@ export default function EventLayout() {
                     </div>
                 </nav>
 
-                {/* Footer - Fixe */}
+                {/* Footer */}
                 <div className="p-6 border-t border-slate-200/60 flex-shrink-0">
                     <div className="bg-gradient-to-r from-slate-100 to-slate-200 rounded-xl p-4">
                         <div className="flex items-center gap-3">
@@ -126,8 +161,8 @@ export default function EventLayout() {
                 </div>
             </aside>
 
-            {/* Main Content - Avec margin pour compenser la sidebar fixe */}
-            <main className="flex-1 flex flex-col ml-80 overflow-hidden">
+            {/* Main Content */}
+            <main className="flex-1 flex flex-col overflow-hidden lg:ml-80">
                 <div className="flex-1 overflow-auto">
                     <Outlet />
                 </div>
