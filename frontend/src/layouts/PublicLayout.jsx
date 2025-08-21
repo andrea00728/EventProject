@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useStateContext } from "../context/ContextProvider";
-import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
+import { Outlet, useNavigate, useLocation, Link, Navigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "../assets/LogoMaster.png";
 import { FaUser } from "react-icons/fa";
@@ -81,24 +81,20 @@ export default function PublicLayout() {
     }
   }, [forfait, token]);
 
-  if (role) {
-    switch (role) {
-      case "accueil":
-        navigate("/personnelAccueil", { replace: true });
-        break;
-      case "caissier":
-        navigate("/personnelCaisse", { replace: true });
-        break;
-      case "cuisinier":
-        navigate("/personnelCuisine", { replace: true });
-        break;
-      case "organisateur":
-        break;
-      default:
-        navigate("/pagepublic", { replace: true });
-        break;
+
+  useEffect(() => {
+  if (token) {
+    console.log("Token:", token, "User:", user, "Role:", role); // Debug log
+    if (user.role !== "organisateur") {
+      navigate("/choix-role", { replace: true });
+    } else {
+      navigate("/pagepublic", { replace: true });
     }
   }
+}, [token, user, role, navigate]);
+
+
+
 
   const subMenuVariants = {
     hidden: {

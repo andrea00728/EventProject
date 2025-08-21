@@ -38,6 +38,7 @@ export const loginUser = async (userData) => {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Erreur de connexion');
     }
+    console.log("voici l'info du token", response)
 
     return await response.json(); // Assurez-vous que cela renvoie { access_token: "votre_token" }
 };
