@@ -42,16 +42,14 @@ export default function PublicLayout() {
     }
   }, [location]);
 
-  // Récupération du forfait et gestion de la connexion
   useEffect(() => {
     const fetchAndSetForfait = async () => {
       try {
         const data = await getUserForfait(token);
-        console.log("Données de getUserForfait :", data); // Log pour débogage
-        setForfait(data.forfait || { nom: "Default" }); // Valeur par défaut
+        setForfait(data.forfait || { nom: "Default" });
       } catch (err) {
-        console.error("Erreur lors de la récupération du forfait", Electrek);
-        setForfait({ nom: "Default" }); // Valeur par défaut en cas d'erreur
+        console.error("Erreur lors de la récupération du forfait", err);
+        setForfait({ nom: "Default" });
       }
     };
 
@@ -67,9 +65,7 @@ export default function PublicLayout() {
     }
   }, [token, role, user, navigate]);
 
-  // Mise à jour des navItems en fonction du forfait
   useEffect(() => {
-    console.log("Forfait actuel :", forfait); // Log pour débogage
     if (token && forfait) {
       setNavItems([
         { path: "/pagepublic#pagepublic", name: "Accueil" },
@@ -83,9 +79,8 @@ export default function PublicLayout() {
         { path: "/pagepublic#forfaits", name: "Forfaits" },
       ]);
     }
-  }, [forfait]);
+  }, [forfait, token]);
 
-  // Redirection en fonction du rôle
   if (role) {
     switch (role) {
       case "accueil":
@@ -129,14 +124,24 @@ export default function PublicLayout() {
 
   const handleDirection = (item) => {
     if (item.path.includes("#")) {
-      const id = item.path.split("#")[1]; // ex: "forfaits"
+      const id = item.path.split("#")[1];
       const element = document.getElementById(id);
       if (element) {
         element.scrollIntoView({ behavior: "smooth" });
       }
-    }else{
+    } else {
       navigate(item.path);
     }
+  };
+
+  const handleSmoothScroll = (e, path) => {
+    e.preventDefault();
+    const id = path.split("#")[1];
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+    setIsMenuOpen(false);
   };
 
   return (
@@ -153,6 +158,7 @@ export default function PublicLayout() {
             </div>
           </div>
 
+          {/* Menu de navigation pour grand écran (desktop) */}
           <nav className="hidden md:flex items-center justify-center py-3 relative">
             <div className="flex items-center gap-1">
               {navItems.map((item, index) => (
@@ -166,14 +172,8 @@ export default function PublicLayout() {
                   <Link
                     to={item.path}
                     className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2"
-                    onMouseEnter={() => {
-                      console.log("Survol :", item.name); // Log pour débogage
-                      item.name === "Evenement" && setIsEvenementHovered(true);
-                    }}
-                    onMouseLeave={() => {
-                      console.log("Sortie survol :", item.name); // Log pour débogage
-                      item.name === "Evenement" && setIsEvenementHovered(false);
-                    }}
+                    onMouseEnter={() => item.name === "Evenement" && setIsEvenementHovered(true)}
+                    onMouseLeave={() => item.name === "Evenement" && setIsEvenementHovered(false)}
                     onClick={() => handleDirection(item)}
                   >
                     <span className="relative z-10">{item.name}</span>
@@ -201,19 +201,14 @@ export default function PublicLayout() {
                             <div className="px-6 py-4 border-b border-gray-100">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <h3 className="text-lg font-bold text-gray-900">
-                                    Gestion d'événements
-                                  </h3>
-                                  <p className="text-xs text-gray-600">
-                                    Organisez vos événements professionnellement
-                                  </p>
+                                  <h3 className="text-lg font-bold text-gray-900">Gestion d'événements</h3>
+                                  <p className="text-xs text-gray-600">Organisez vos événements professionnellement</p>
                                 </div>
                                 <div className="text-xs bg-gradient-to-r from-[#6B46C1]/10 to-purple-600/10 text-purple-700 px-3 py-1 rounded-full border border-purple-200">
                                   {item.subMenus.length} modules
                                 </div>
                               </div>
                             </div>
-
                             <div className="p-6">
                               <div className="grid grid-cols-4 gap-4">
                                 {item.subMenus.map((subItem, subIndex) => (
@@ -221,17 +216,12 @@ export default function PublicLayout() {
                                     key={subItem.path}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{
-                                      duration: 0.2,
-                                      delay: subIndex * 0.03,
-                                    }}
+                                    transition={{ duration: 0.2, delay: subIndex * 0.03 }}
                                   >
                                     <Link
                                       to={subItem.path}
                                       className="group block p-4 bg-white hover:bg-gradient-to-br hover:from-gray-50 hover:to-purple-50/30 rounded-lg transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:shadow-md"
-                                      onClick={() =>
-                                        setIsEvenementHovered(false)
-                                      }
+                                      onClick={() => setIsEvenementHovered(false)}
                                     >
                                       <div className="flex items-center gap-3 mb-2">
                                         <div className="flex-shrink-0 p-2.5 bg-gray-50 rounded-lg border border-gray-200 group-hover:border-purple-300 group-hover:bg-purple-50 transition-all duration-300">
@@ -247,9 +237,7 @@ export default function PublicLayout() {
                                           {subItem.name}
                                         </h4>
                                       </div>
-                                      <p className="text-xs text-gray-600">
-                                        {subItem.description}
-                                      </p>
+                                      <p className="text-xs text-gray-600">{subItem.description}</p>
                                     </Link>
                                   </motion.div>
                                 ))}
@@ -268,37 +256,36 @@ export default function PublicLayout() {
             ) : (
               <button
                 onClick={() => setModalOpen(true)}
-                className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl"
+                className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl ml-4"
               >
                 Se connecter <FaUser className="w-5 h-5 text-white" />
               </button>
             )}
           </nav>
 
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 rounded bg-white shadow"
-          >
-            <div className="w-6 h-6 relative flex flex-col justify-center items-center">
-              <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
-                  isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"
-                }`}
-              ></span>
-              <span
-                className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${
-                  isMenuOpen ? "opacity-0" : "opacity-100"
-                }`}
-              ></span>
-              <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
-                  isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
-                }`}
-              ></span>
-            </div>
-          </button>
+          {/* Bouton burger pour écrans mobiles */}
+          <div className="flex items-center gap-2 md:hidden">
+            {connected ? (
+              <Profil />
+            ) : (
+              <button onClick={() => setModalOpen(true)} className="p-2 rounded bg-white shadow">
+                <FaUser className="w-5 h-5 text-gray-700" />
+              </button>
+            )}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-2 rounded bg-white shadow"
+            >
+              <div className="w-6 h-6 relative flex flex-col justify-center items-center">
+                <span className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"}`}></span>
+                <span className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${isMenuOpen ? "opacity-0" : "opacity-100"}`}></span>
+                <span className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"}`}></span>
+              </div>
+            </button>
+          </div>
         </div>
 
+        {/* Menu burger pour écrans mobiles (visible seulement si isMenuOpen est true) */}
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{
@@ -306,75 +293,59 @@ export default function PublicLayout() {
             height: isMenuOpen ? "auto" : 0,
           }}
           transition={{ duration: 0.3 }}
-          className="lg:hidden bg-white shadow border-t overflow-hidden"
+          className="md:hidden bg-white shadow border-t overflow-hidden"
         >
           <div className="px-4 py-4 space-y-3">
-            {!isPublicEventsPage &&
-              navItems.map((item) => (
-                <div key={item.name}>
-                  {!item.subMenus ? (
-                    <a
-                      href={item.path}
-                      onClick={(e) => handleSmoothScroll(e, item.path)}
-                      className="block px-4 py-2 text-gray-700 hover:bg-blue-50 rounded"
+            {navItems.map((item) => (
+              <div key={item.name}>
+                {!item.subMenus ? (
+                  <a
+                    href={item.path}
+                    onClick={(e) => handleSmoothScroll(e, item.path)}
+                    className="block px-4 py-2 text-gray-700 hover:bg-blue-50 rounded"
+                  >
+                    {item.name}
+                  </a>
+                ) : (
+                  <div>
+                    <button
+                      onClick={() => setIsSubMenuOpenMobile(!isSubMenuOpenMobile)}
+                      className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-blue-50 rounded"
                     >
                       {item.name}
-                    </a>
-                  ) : (
-                    <div>
-                      <button
-                        onClick={() => {
-                          console.log("Toggle sous-menu mobile :", item.name); // Log pour débogage
-                          setIsSubMenuOpenMobile(!isSubMenuOpenMobile);
-                        }}
-                        className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-blue-50 rounded"
-                      >
-                        {item.name}
-                        <span>{isSubMenuOpenMobile ? "▲" : "▼"}</span>
-                      </button>
-                      <AnimatePresence>
-                        {isSubMenuOpenMobile && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="pl-4"
-                          >
-                            {item.subMenus.map((sub) => (
-                              <Link
-                                key={sub.path}
-                                to={sub.path}
-                                className="block px-4 py-2 text-gray-600 hover:text-blue-600 transition"
-                                onClick={() => {
-                                  setIsMenuOpen(false);
-                                  setIsSubMenuOpenMobile(false);
-                                }}
-                              >
-                                {sub.name}
-                              </Link>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-            {connected ? (
-              <Profil />
-            ) : (
-              <button
-                onClick={() => setModalOpen(true)}
-                className="flex items-center gap-3 w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl"
-              >
-                Se connecter <FaUser className="w-5 h-5 text-white" />
-              </button>
-            )}
+                      <span>{isSubMenuOpenMobile ? "▲" : "▼"}</span>
+                    </button>
+                    <AnimatePresence>
+                      {isSubMenuOpenMobile && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="pl-4"
+                        >
+                          {item.subMenus.map((sub) => (
+                            <Link
+                              key={sub.path}
+                              to={sub.path}
+                              className="block px-4 py-2 text-gray-600 hover:text-blue-600 transition"
+                              onClick={() => {
+                                setIsMenuOpen(false);
+                                setIsSubMenuOpenMobile(false);
+                              }}
+                            >
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </motion.div>
       </header>
-
       <div className="h-20" />
       <main>
         <Outlet />
