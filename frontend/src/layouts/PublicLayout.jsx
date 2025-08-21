@@ -21,7 +21,7 @@ export default function PublicLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const isPublicEventsPage = location.pathname === "/evenements-publics";
-  const socket = useSocket()
+  const socket = useSocket();
 
   const defaultNavItems = [
     { path: "#pagepublic", name: "Accueil" },
@@ -32,6 +32,15 @@ export default function PublicLayout() {
   ];
 
   const [navItems, setNavItems] = useState(defaultNavItems);
+
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.querySelector(location.hash);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  }, [location]);
 
   // Récupération du forfait et gestion de la connexion
   useEffect(() => {
@@ -50,7 +59,7 @@ export default function PublicLayout() {
       fetchAndSetForfait();
       setConnected(true);
       if (!socket) return;
-      socket.on('connect', () => console.log('Socket connectée : ', socket.id));
+      socket.on("connect", () => console.log("Socket connectée : ", socket.id));
     } else {
       setConnected(false);
       setForfait(null);
@@ -96,16 +105,6 @@ export default function PublicLayout() {
     }
   }
 
-  const handleSmoothScroll = (e, target) => {
-    e.preventDefault();
-    const element = document.querySelector(target);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-      setIsMenuOpen(false);
-      setIsSubMenuOpenMobile(false);
-    }
-  };
-
   const subMenuVariants = {
     hidden: {
       opacity: 0,
@@ -126,6 +125,18 @@ export default function PublicLayout() {
   const menuVariants = {
     open: { opacity: 1, height: "auto", transition: { duration: 0.9 } },
     closed: { opacity: 0, height: 0, transition: { duration: 0.9 } },
+  };
+
+  const handleDirection = (item) => {
+    if (item.path.includes("#")) {
+      const id = item.path.split("#")[1]; // ex: "forfaits"
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }else{
+      navigate(item.path);
+    }
   };
 
   return (
@@ -152,8 +163,8 @@ export default function PublicLayout() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                 >
-                  <a
-                    href={item.path}
+                  <Link
+                    to={item.path}
                     className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2"
                     onMouseEnter={() => {
                       console.log("Survol :", item.name); // Log pour débogage
@@ -163,12 +174,10 @@ export default function PublicLayout() {
                       console.log("Sortie survol :", item.name); // Log pour débogage
                       item.name === "Evenement" && setIsEvenementHovered(false);
                     }}
-                    onClick={(e) =>
-                      item.path.startsWith("#") && handleSmoothScroll(e, item.path)
-                    }
+                    onClick={() => handleDirection(item)}
                   >
                     <span className="relative z-10">{item.name}</span>
-                  </a>
+                  </Link>
 
                   {item.subMenus && (
                     <AnimatePresence>
@@ -220,7 +229,9 @@ export default function PublicLayout() {
                                     <Link
                                       to={subItem.path}
                                       className="group block p-4 bg-white hover:bg-gradient-to-br hover:from-gray-50 hover:to-purple-50/30 rounded-lg transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:shadow-md"
-                                      onClick={() => setIsEvenementHovered(false)}
+                                      onClick={() =>
+                                        setIsEvenementHovered(false)
+                                      }
                                     >
                                       <div className="flex items-center gap-3 mb-2">
                                         <div className="flex-shrink-0 p-2.5 bg-gray-50 rounded-lg border border-gray-200 group-hover:border-purple-300 group-hover:bg-purple-50 transition-all duration-300">
@@ -367,7 +378,11 @@ export default function PublicLayout() {
       <div className="h-20" />
       <main>
         <Outlet />
-        <AuthModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} isSignIn={true} />
+        <AuthModal
+          isOpen={isModalOpen}
+          onClose={() => setModalOpen(false)}
+          isSignIn={true}
+        />
       </main>
     </>
   );
