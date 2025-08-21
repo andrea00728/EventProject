@@ -24,11 +24,11 @@ export default function PublicLayout() {
   const socket = useSocket();
 
   const defaultNavItems = [
-    { path: "#pagepublic", name: "Accueil" },
-    { path: "#service", name: "Service" },
-    { path: "#testimony", name: "Témoignages" },
-    { path: "#forfaits", name: "Forfaits" },
-    { path: "#contact", name: "Contact" },
+    { path: "/pagepublic#pagepublic", name: "Accueil" },
+    { path: "/pagepublic#service", name: "Service" },
+    { path: "/pagepublic#testimony", name: "Témoignages" },
+    { path: "/pagepublic#forfaits", name: "Forfaits" },
+    { path: "/pagepublic#contact", name: "Contact" },
   ];
 
   const [navItems, setNavItems] = useState(defaultNavItems);
