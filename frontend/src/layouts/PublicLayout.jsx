@@ -8,6 +8,7 @@ import Profil from "../util/profils";
 import { AuthModal } from "../components/Modal/authModal";
 import { getUserForfait } from "../services/forfaitService";
 import { getConditionalSubMenus } from "../util/menuUtils";
+import { useSocket } from "../socket";
 
 export default function PublicLayout() {
   const { token, role, user } = useStateContext();
@@ -20,6 +21,7 @@ export default function PublicLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const isPublicEventsPage = location.pathname === "/evenements-publics";
+  const socket = useSocket();
 
   const defaultNavItems = [
     { path: "#pagepublic", name: "Accueil" },
@@ -30,6 +32,15 @@ export default function PublicLayout() {
   ];
 
   const [navItems, setNavItems] = useState(defaultNavItems);
+
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.querySelector(location.hash);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  }, [location]);
 
   // Récupération du forfait et gestion de la connexion
   useEffect(() => {
@@ -47,6 +58,8 @@ export default function PublicLayout() {
     if (token) {
       fetchAndSetForfait();
       setConnected(true);
+      if (!socket) return;
+      socket.on("connect", () => console.log("Socket connectée : ", socket.id));
     } else {
       setConnected(false);
       setForfait(null);
@@ -59,15 +72,15 @@ export default function PublicLayout() {
     console.log("Forfait actuel :", forfait); // Log pour débogage
     if (token && forfait) {
       setNavItems([
-        { path: "/pagepublic", name: "Accueil" },
+        { path: "/pagepublic#pagepublic", name: "Accueil" },
         {
-          path: "/pagepublic",
+          path: "#",
           name: "Evenement",
           subMenus: getConditionalSubMenus(forfait.nom || "Default"),
         },
-        { path: "#service", name: "Service" },
-        { path: "#testimony", name: "Témoignages" },
-        { path: "#forfaits", name: "Forfaits" },
+        { path: "/pagepublic#service", name: "Service" },
+        { path: "/pagepublic#testimony", name: "Témoignages" },
+        { path: "/pagepublic#forfaits", name: "Forfaits" },
       ]);
     }
   }, [forfait]);
@@ -92,16 +105,6 @@ export default function PublicLayout() {
     }
   }
 
-  const handleSmoothScroll = (e, target) => {
-    e.preventDefault();
-    const element = document.querySelector(target);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-      setIsMenuOpen(false);
-      setIsSubMenuOpenMobile(false);
-    }
-  };
-
   const subMenuVariants = {
     hidden: {
       opacity: 0,
@@ -122,6 +125,18 @@ export default function PublicLayout() {
   const menuVariants = {
     open: { opacity: 1, height: "auto", transition: { duration: 0.9 } },
     closed: { opacity: 0, height: 0, transition: { duration: 0.9 } },
+  };
+
+  const handleDirection = (item) => {
+    if (item.path.includes("#")) {
+      const id = item.path.split("#")[1]; // ex: "forfaits"
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }else{
+      navigate(item.path);
+    }
   };
 
   return (
@@ -159,9 +174,7 @@ export default function PublicLayout() {
                       console.log("Sortie survol :", item.name); // Log pour débogage
                       item.name === "Evenement" && setIsEvenementHovered(false);
                     }}
-                    onClick={(e) =>
-                      item.path.startsWith("#") && handleSmoothScroll(e, item.path)
-                    }
+                    onClick={() => handleDirection(item)}
                   >
                     <span className="relative z-10">{item.name}</span>
                   </Link>
@@ -216,7 +229,9 @@ export default function PublicLayout() {
                                     <Link
                                       to={subItem.path}
                                       className="group block p-4 bg-white hover:bg-gradient-to-br hover:from-gray-50 hover:to-purple-50/30 rounded-lg transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:shadow-md"
-                                      onClick={() => setIsEvenementHovered(false)}
+                                      onClick={() =>
+                                        setIsEvenementHovered(false)
+                                      }
                                     >
                                       <div className="flex items-center gap-3 mb-2">
                                         <div className="flex-shrink-0 p-2.5 bg-gray-50 rounded-lg border border-gray-200 group-hover:border-purple-300 group-hover:bg-purple-50 transition-all duration-300">
@@ -266,16 +281,19 @@ export default function PublicLayout() {
           >
             <div className="w-6 h-6 relative flex flex-col justify-center items-center">
               <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"
-                  }`}
+                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
+                  isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"
+                }`}
               ></span>
               <span
-                className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${isMenuOpen ? "opacity-0" : "opacity-100"
-                  }`}
+                className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${
+                  isMenuOpen ? "opacity-0" : "opacity-100"
+                }`}
               ></span>
               <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
-                  }`}
+                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
+                  isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
+                }`}
               ></span>
             </div>
           </button>
@@ -360,13 +378,12 @@ export default function PublicLayout() {
       <div className="h-20" />
       <main>
         <Outlet />
+        <AuthModal
+          isOpen={isModalOpen}
+          onClose={() => setModalOpen(false)}
+          isSignIn={true}
+        />
       </main>
-
-      <AuthModal
-        isOpen={isModalOpen}
-        onClose={() => setModalOpen(false)}
-        isSignIn={true}
-      />
     </>
   );
 }
