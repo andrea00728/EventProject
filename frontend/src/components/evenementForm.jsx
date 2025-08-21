@@ -338,7 +338,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
             />
           </div>
 
-          <div className="col-span-1 md:col-span-2 mt-4 flex gap-4">
+          <div className="col-span-1 md:col-span-2 mt-4 flex flex-col md:flex-row gap-4">
             <button
               type="submit"
               className="w-full bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition"
@@ -348,7 +348,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
 
             <button
               type="button"
-              onClick={() => isExit()} // ici tu peux gérer la réinitialisation ou navigation
+              onClick={() => isExit()} // réinitialisation ou navigation
               className="w-full bg-gray-300 text-gray-700 font-bold py-3 rounded-xl shadow hover:bg-gray-400 transition"
             >
               Annuler
