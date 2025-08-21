@@ -15,6 +15,7 @@ import Demo from "../util/Dem";
 import DemoTable from "../util/demo";
 import { useStateContext } from "../context/ContextProvider";
 import TestimonialsSection from "../util/testimonialsSection";
+import Confidentialite from "../util/Confidentialite";
 
 const images = [
   "/images/music-7238254_1280.jpg",

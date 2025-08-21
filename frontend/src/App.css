@@ -96,3 +96,6 @@ button.btn-primary:hover {
   filter: brightness(0.8) invert(0.9);
 }
 
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
