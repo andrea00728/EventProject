@@ -21,11 +21,16 @@ import Dropdown from "./Dropdown";
 import LogoutModal from "../pages/Admin/LogoutModal";
 import { logout } from "../services/firebase/authService";
 import { format } from "date-fns";
+import { getUserIdForToken } from "../services/userService";
 import { fr } from "date-fns/locale";
+import { useSocket } from "../socket";
+import { SOCKET_URL } from "../socket";
+import { io } from "socket.io-client";
 
 export default function AdminLayout() {
-  const { token, role, isLoading, setToken, setUser } = useStateContext();
+  const { token, role, isLoading, setToken, setUser, user } = useStateContext();
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -36,7 +41,7 @@ export default function AdminLayout() {
       setIsMobile(window.innerWidth < 768);
       if (window.innerWidth >= 768) setSidebarOpen(false);
     };
-    
+
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -129,7 +134,7 @@ export default function AdminLayout() {
   const currentPageIcon = currentPage ? currentPage.icon : null;
 
   const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
-    const [newMessage, setNewMessage] = useState('');
+    const [newMessage, setNewMessage] = useState("");
     const [messages, setMessages] = useState([]);
     const messagesEndRef = useRef(null);
 
@@ -138,18 +143,34 @@ export default function AdminLayout() {
         setMessages([
           {
             id: 1,
-            text: typeof conversation.content === 'object' ? conversation.content.text : conversation,
-            sender: typeof conversation.content === 'object' ? conversation.content.from : 'Utilisateur',
+            text:
+              typeof conversation.content === "object"
+                ? conversation.content.text
+                : conversation,
+            sender:
+              typeof conversation.content === "object"
+                ? conversation.content.from
+                : "Utilisateur",
             timestamp: new Date(Date.now() - 30 * 60000),
             isAdmin: false,
           },
           {
             id: 2,
             text: "Bonjour ! Comment puis-je vous aider ?",
-            sender: 'Admin',
+            sender: "Admin",
             timestamp: new Date(Date.now() - 25 * 60000),
             isAdmin: true,
-          }
+          },
+          {
+            id: 3,
+            text: "J'aimerais avoir plus d'informations sur l'événement de demain.",
+            sender:
+              typeof conversation.content === "object"
+                ? conversation.content.from
+                : "Utilisateur",
+            timestamp: new Date(Date.now() - 20 * 60000),
+            isAdmin: false,
+          },
         ]);
       }
     }, [conversation]);
@@ -168,19 +189,19 @@ export default function AdminLayout() {
         const message = {
           id: messages.length + 1,
           text: newMessage,
-          sender: 'Admin',
+          sender: "Admin",
           timestamp: new Date(),
           isAdmin: true,
         };
         setMessages([...messages, message]);
-        setNewMessage('');
+        setNewMessage("");
       }
     };
 
     const formatTime = (date) => {
-      return new Intl.DateTimeFormat('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit',
+      return new Intl.DateTimeFormat("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
       }).format(date);
     };
 
@@ -190,29 +211,31 @@ export default function AdminLayout() {
       <div className="fixed inset-0 bg-gray-900 bg-opacity-30 z-[60] flex items-center justify-center p-4">
         <div
           className={`w-full max-w-2xl h-[80vh] rounded-lg shadow-xl ${
-            darkMode ? 'bg-gray-800 text-gray-200' : 'bg-white text-gray-900'
+            darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
           } flex flex-col`}
         >
           <div
             className={`p-4 border-b ${
-              darkMode ? 'border-gray-700' : 'border-gray-200'
+              darkMode ? "border-gray-700" : "border-gray-200"
             } flex items-center justify-between`}
           >
             <div className="flex items-center gap-3">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  darkMode ? 'bg-gray-700' : 'bg-gray-100'
+                  darkMode ? "bg-gray-700" : "bg-gray-100"
                 }`}
               >
                 <FaUser className="text-sm" />
               </div>
               <div>
                 <h3 className="font-semibold">
-                  {typeof conversation?.content === 'object' ? conversation.content.from : 'Utilisateur'}
+                  {typeof conversation?.content === "object"
+                    ? conversation.content.from
+                    : "Utilisateur"}
                 </h3>
                 <p
                   className={`text-sm ${
-                    darkMode ? 'text-gray-400' : 'text-gray-500'
+                    darkMode ? "text-gray-400" : "text-gray-500"
                   }`}
                 >
                   En ligne
@@ -230,25 +253,27 @@ export default function AdminLayout() {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.isAdmin ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${
+                  message.isAdmin ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
                   className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                     message.isAdmin
-                      ? 'bg-blue-500 text-white'
+                      ? "bg-blue-500 text-white"
                       : darkMode
-                      ? 'bg-gray-700 text-gray-200'
-                      : 'bg-gray-200 text-gray-900'
+                      ? "bg-gray-700 text-gray-200"
+                      : "bg-gray-200 text-gray-900"
                   }`}
                 >
                   <p className="text-sm">{message.text}</p>
                   <p
                     className={`text-xs mt-1 ${
                       message.isAdmin
-                        ? 'text-blue-100'
+                        ? "text-blue-100"
                         : darkMode
-                        ? 'text-gray-400'
-                        : 'text-gray-500'
+                        ? "text-gray-400"
+                        : "text-gray-500"
                     }`}
                   >
                     {formatTime(message.timestamp)}
@@ -261,7 +286,7 @@ export default function AdminLayout() {
           <form
             onSubmit={handleSendMessage}
             className={`p-4 border-t ${
-              darkMode ? 'border-gray-700' : 'border-gray-200'
+              darkMode ? "border-gray-700" : "border-gray-200"
             }`}
           >
             <div className="flex gap-2">
@@ -272,8 +297,8 @@ export default function AdminLayout() {
                 placeholder="Tapez votre message..."
                 className={`flex-1 px-3 py-2 rounded-lg border ${
                   darkMode
-                    ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400'
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    ? "bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400"
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                 } focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
               <button
@@ -296,13 +321,11 @@ export default function AdminLayout() {
     const [showConversationModal, setShowConversationModal] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [notifications, setNotifications] = useState([]);
-    const {user} = useStateContext();
-
+    const [messages, setMessages] = useState([]);
+    const { user } = useStateContext();
     const notifRef = useRef(null);
     const msgRef = useRef(null);
     const profileRef = useRef(null);
-    const [messages, setMessages] = useState([]);
-
     const navigate = useNavigate();
 
     const handleRedirect = () => {
@@ -321,11 +344,100 @@ export default function AdminLayout() {
           setShowProfile(false);
         }
       };
+
+      let newSocket;
+
+      async function connectSocket() {
+        const userId = await getUserIdForToken();
+        if (!userId) return;
+
+        newSocket = io(SOCKET_URL, {
+          transports: ["websocket"],
+          auth: { userId },
+        });
+
+        newSocket.on("notificationMessageAdmin", (data) => {
+          console.log("📦 Mis à jour du message : ", data);
+        });
+
+        newSocket.on("notifRegister", (data) => {
+          console.log("📦 Mis à jour notification admin : ", data);
+          setNotifications((prevNotifications) => {
+            const isDuplicate = prevNotifications.some(
+              (notif) =>
+                notif.id === data.id || JSON.stringify(notif) === JSON.stringify(data)
+            );
+            if (isDuplicate) {
+              console.log("Notification dupliquée ignorée :", data);
+              return prevNotifications;
+            }
+            return [...prevNotifications, data];
+          });
+        });
+      }
+
+      connectSocket();
+
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        if (newSocket) {
+          newSocket.disconnect();
+        }
+      };
     }, []);
 
     useEffect(() => {
+      const fetchNotifications = async () => {
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          if (!response.ok)
+            throw new Error("Erreur lors de la récupération des notifications");
+          const data = await response.json();
+          setNotifications(data);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des notifications :", error);
+          setNotifications([]);
+        }
+      };
+      fetchNotifications();
+    }, [token]);
+
+    useEffect(() => {
+      const fetchMessages = async () => {
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          if (!response.ok)
+            throw new Error("Erreur lors de la récupération des messages");
+          const data = await response.json();
+
+          const formatted = data.map((msg) => ({
+            ...msg,
+            from: `${msg.firstName} ${msg.lastName}`,
+            text: msg.message,
+            read: msg.read || false,
+          }));
+
+          setMessages(formatted);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des messages :", error);
+          setMessages([]);
+        }
+      };
       const fetchNotifications = async () => {
         try {
           const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/notifications`, {
@@ -341,45 +453,78 @@ export default function AdminLayout() {
           setNotifications([]);
         }
       };
-      fetchNotifications();
-    }, [token]);
+      
+      let newSocket;
 
-    useEffect(() => {
-      const fetchMessages = async () => {
-        try {
-          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/messages`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          if (!response.ok) throw new Error("Erreur lors de la récupération des messages");
-          const data = await response.json();
+      async function connectSocket() {
+        const userId = await getUserIdForToken();
+        if (!userId) return;
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/messages`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) throw new Error("Erreur lors de la récupération des messages");
+        const data = await response.json();
 
-          // Adapter le format au même style que ton tableau statique
-          const formatted = data.map(msg => ({
+        newSocket = useSocket()
+        
+        if (!newSocket) throw new Error("Erreur de connexion");
+
+        newSocket.on("notificationMessageAdmin", (value) => {
+          console.log('nana ', value)
+          const formatted1 = data.map(msg => ({
             ...msg,
             from: `${msg.firstName} ${msg.lastName}`,
             text: msg.message,
             read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
-          }));
+          }))
+          const formatted2 = value.data.map(msg => ({
+            ...msg,
+            from: `${msg.firstName} ${msg.lastName}`,
+            text: msg.message,
+            read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+          }))
+          setMessages([...formatted1, ...formatted2]);
+        });
+      }
 
-          setMessages(formatted);
-        } catch (error) {
-          console.error("Erreur lors de la récupération des messages :", error);
-          setMessages([]);
+      fetchNotifications();
+      fetchMessages();
+      connectSocket();
+
+      return () => {
+        if (newSocket) {
+          newSocket.disconnect();
+        }
+      };
+    }, [token]);
+
+
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (notifRef.current && !notifRef.current.contains(event.target)) {
+          setShowNotifications(false);
+        }
+        if (msgRef.current && !msgRef.current.contains(event.target)) {
+          setShowMessages(false);
+        }
+        if (profileRef.current && !profileRef.current.contains(event.target)) {
+          setShowProfile(false);
         }
       };
 
-      fetchMessages();
-    }, [token]);
+      document.removeEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const markMessageAsRead = (message) => {
-      setMessages(prevMessages =>
-        prevMessages.map(msg =>
-          msg.id === message.id ? { ...msg, read: true } : msg
-        )
-      );
-    };
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.id === message.id ? { ...msg, read: true } : msg
+        )
+      );
+    };
 
     const handleMessageClick = (item) => {
       setSelectedConversation({ content: item });
@@ -388,10 +533,25 @@ export default function AdminLayout() {
       setShowMessages(false);
     };
 
-    const handleDeleteMessage = (idToDelete) => {
-      const updatedMessages = messages.filter(msg => msg.id !== idToDelete);
-      setMessages(updatedMessages);
+    const handleDeleteMessage = async (id) => {
+      try {
+        // Appel à ton backend pour supprimer en base
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) {
+          throw new Error("Erreur lors de la suppression");
+        }
+
+        // Mise à jour locale après confirmation de la suppression
+        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== id));
+
+      } catch (error) {
+        console.error("Suppression impossible :", error);
+      }
     };
+
 
     const pageBg = darkMode
       ? "bg-gray-900 text-gray-200"
@@ -406,9 +566,7 @@ export default function AdminLayout() {
             className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}
           >
             {currentPageIcon && (
-              <span className="mr-2 sm:mr-3 text-blue-700">
-                {currentPageIcon}
-              </span>
+              <span className="mr-2 sm:mr-3 text-blue-700">{currentPageIcon}</span>
             )}
             {currentPageName}
           </h2>
@@ -429,7 +587,7 @@ export default function AdminLayout() {
               setShow={setShowMessages}
               icon={<FaEnvelope className="text-lg sm:text-xl" />}
               label="Messages"
-              count={messages.filter(msg => !msg.read).length}
+              count={messages.filter((msg) => !msg.read).length}
               items={messages}
               onDelete={handleDeleteMessage}
               onItemClick={handleMessageClick}
@@ -439,45 +597,58 @@ export default function AdminLayout() {
               <button
                 onClick={() => setShowProfile(!showProfile)}
                 className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
-                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
                 }`}
                 aria-label="Menu profil"
               >
                 <div className="relative">
-                  {<img src={user.photo} alt="" className="w-8 rounded-[50%]" /> || <FaUser className="w-5 h-5" />}
+                  {user?.photo ? (
+                    <img
+                      src={user.photo}
+                      alt=""
+                      className="w-8 rounded-[50%]"
+                    />
+                  ) : (
+                    <FaUser className="w-5 h-5" />
+                  )}
                 </div>
-                <span className="hidden sm:inline text-sm font-medium">{ user.name || Admin}</span>
+                <span className="hidden sm:inline text-sm font-medium">
+                  {user?.name || "Admin"}
+                </span>
                 <ChevronDown
                   className={`w-4 h-4 transition-transform duration-200 ${
-                    showProfile ? 'rotate-180' : ''
+                    showProfile ? "rotate-180" : ""
                   }`}
                 />
               </button>
               {showProfile && (
                 <div
                   className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
-                    darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                    darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
                   } z-50 transition-all duration-200 ${
-                    window.innerWidth < 640 ? 'left-4 right-4' : 'right-0'
+                    window.innerWidth < 640 ? "left-4 right-4" : "right-0"
                   }`}
                 >
                   <div className="p-2">
                     <div
                       className={`px-3 py-2 text-sm ${
-                        darkMode ? 'text-gray-300' : 'text-gray-700'
+                        darkMode ? "text-gray-300" : "text-gray-700"
                       }`}
                     >
                       <p className="font-medium">Connecté en tant que</p>
-                      <p className="truncate">admin@example.com</p>
+                      <p className="truncate">{user?.name || "Admin"}</p>
                     </div>
                     <div
                       className={`border-t ${
-                        darkMode ? 'border-gray-700' : 'border-gray-200'
+                        darkMode ? "border-gray-700" : "border-gray-200"
                       }`}
                     ></div>
                     <button
+                      onClick={handleRedirect}
                       className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-800'
+                        darkMode
+                          ? "hover:bg-gray-700 text-gray-200"
+                          : "hover:bg-gray-100 text-gray-800"
                       } transition-colors duration-150`}
                     >
                       Mon profil
@@ -485,20 +656,24 @@ export default function AdminLayout() {
                     <button
                       onClick={handleRedirect}
                       className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-800'
+                        darkMode
+                          ? "hover:bg-gray-700 text-gray-200"
+                          : "hover:bg-gray-100 text-gray-800"
                       } transition-colors duration-150`}
                     >
                       Paramètres
                     </button>
                     <div
                       className={`border-t ${
-                        darkMode ? 'border-gray-700' : 'border-gray-200'
+                        darkMode ? "border-gray-700" : "border-gray-200"
                       }`}
                     ></div>
                     <button
                       onClick={handleLogout}
                       className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode ? 'hover:bg-gray-700 text-red-400' : 'hover:bg-gray-100 text-red-600'
+                        darkMode
+                          ? "hover:bg-gray-700 text-red-400"
+                          : "hover:bg-gray-100 text-red-600"
                       } transition-colors duration-150`}
                     >
                       Déconnexion
@@ -510,11 +685,17 @@ export default function AdminLayout() {
             <button
               onClick={toggleDarkMode}
               className={`p-2 rounded-full ${
-                darkMode ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                darkMode
+                  ? "bg-gray-700 text-yellow-300 hover:bg-gray-600"
+                  : "bg-gray-100 text-gray-800 hover:bg-gray-200"
               } transition-colors duration-200`}
               aria-label="Toggle dark mode"
             >
-              {darkMode ? <FaSun className="text-lg" /> : <FaMoon className="text-lg" />}
+              {darkMode ? (
+                <FaSun className="text-lg" />
+              ) : (
+                <FaMoon className="text-lg" />
+              )}
             </button>
           </div>
         </header>
@@ -529,7 +710,7 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className={`flex h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`flex h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
       {sidebarOpen && isMobile && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
@@ -538,7 +719,9 @@ export default function AdminLayout() {
       )}
       <button
         className={`fixed z-30 top-4 left-4 p-2 rounded-lg transition-all duration-300 md:hidden ${
-          darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-white text-gray-600 hover:bg-gray-100'
+          darkMode
+            ? "bg-gray-700 text-gray-200 hover:bg-gray-600"
+            : "bg-white text-gray-600 hover:bg-gray-100"
         } shadow-md hover:scale-105`}
         onClick={() => setSidebarOpen(!sidebarOpen)}
       >
@@ -546,8 +729,10 @@ export default function AdminLayout() {
       </button>
       <aside
         className={`fixed z-50 top-0 left-0 h-full w-64 transition-all duration-300 ease-in-out ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 md:relative md:w-72 ${darkMode ? 'bg-gray-800' : 'bg-gray-200'}`}
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0 md:relative md:w-72 ${
+          darkMode ? "bg-gray-800" : "bg-gray-200"
+        }`}
       >
         <div className="flex flex-col h-full">
           <div className="p-5 flex items-center justify-between">
@@ -576,22 +761,20 @@ export default function AdminLayout() {
                     to={item.path}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 transform ${
                       location.pathname === item.path
-                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg scale-[1.02]'
-                        : `${
-                            darkMode
-                              ? 'text-gray-200 hover:bg-gray-700 hover:text-white'
-                              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                          } hover:translate-x-1 hover:scale-[1.02]`
-                    }`}
+                        ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg scale-[1.02]"
+                        : darkMode
+                        ? "text-gray-200 hover:bg-gray-700 hover:text-white"
+                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    } hover:translate-x-1 hover:scale-[1.02]`}
                     onClick={() => isMobile && setSidebarOpen(false)}
                   >
                     <span
                       className={`text-lg transition-transform duration-300 ${
                         location.pathname === item.path
-                          ? 'text-white scale-110'
+                          ? "text-white scale-110"
                           : darkMode
-                          ? 'text-gray-300 group-hover:scale-110'
-                          : 'text-gray-500 group-hover:scale-110'
+                          ? "text-gray-300 group-hover:scale-110"
+                          : "text-gray-500 group-hover:scale-110"
                       }`}
                     >
                       {item.icon}
@@ -608,8 +791,8 @@ export default function AdminLayout() {
                 onClick={toggleDarkMode}
                 className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 transform ${
                   darkMode
-                    ? 'bg-gray-700 text-blue-300 hover:bg-gray-600 hover:scale-[1.02]'
-                    : 'bg-gray-100 text-blue-600 hover:bg-gray-200 hover:scale-[1.02]'
+                    ? "bg-gray-700 text-blue-300 hover:bg-gray-600 hover:scale-[1.02]"
+                    : "bg-gray-100 text-blue-600 hover:bg-gray-200 hover:scale-[1.02]"
                 }`}
               >
                 {darkMode ? (
@@ -628,8 +811,8 @@ export default function AdminLayout() {
                 onClick={handleLogout}
                 className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 transform ${
                   darkMode
-                    ? 'text-red-300 hover:bg-gray-700 hover:bg-opacity-50 hover:scale-[1.02]'
-                    : 'text-red-500 hover:bg-red-50 hover:scale-[1.02]'
+                    ? "text-red-300 hover:bg-gray-700 hover:bg-opacity-50 hover:scale-[1.02]"
+                    : "text-red-500 hover:bg-red-50 hover:scale-[1.02]"
                 }`}
               >
                 <FaSignOutAlt className="text-lg transition-transform duration-300 hover:translate-x-1" />
@@ -638,7 +821,7 @@ export default function AdminLayout() {
             </div>
             <p
               className={`text-xs text-center transition-colors duration-300 ${
-                darkMode ? 'text-gray-400' : 'text-gray-500'
+                darkMode ? "text-gray-400" : "text-gray-500"
               }`}
             >
               © {new Date().getFullYear()} Master Table
@@ -648,8 +831,12 @@ export default function AdminLayout() {
       </aside>
       <div className="flex-1 flex flex-col overflow-hidden">
         <AdminHeader currentPageName={currentPageName} darkMode={darkMode} />
-        <main className={`flex-1 overflow-auto scrollable ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-          <div className={`h-full ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <main
+          className={`flex-1 overflow-auto scrollable p-0 ${
+            darkMode ? "bg-gray-900" : "bg-gray-50"
+          }`}
+        >
+          <div className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
             <Outlet />
           </div>
         </main>

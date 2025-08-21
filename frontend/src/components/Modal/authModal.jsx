@@ -5,8 +5,8 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import ButtonConnexion from "../../util/buttonconnexion";
 
-export const AuthModal = ({ isOpen, onClose }) => {
-    const [isSignUp, setIsSignUp] = useState(true);
+export const AuthModal = ({ isOpen, onClose, isSignIn=false }) => {
+    const [isSignUp, setIsSignUp] = useState(!isSignIn);
     const [showPassword, setShowPassword] = useState(false);
     const [photoPreview, setPhotoPreview] = useState(null);
     const [formData, setFormData] = useState({
@@ -70,7 +70,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
                     localStorage.setItem('token', result.token);
                     toast.success("Connexion réussie !");
                     setTimeout(() => {
-                        navigate("/accueil");
+                        navigate("/pagepublic");
                         onClose();
                     }, 500);
                 } else {

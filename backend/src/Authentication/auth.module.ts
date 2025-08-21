@@ -13,6 +13,7 @@ import { Forfait } from 'src/entities/Forfait';
 import { PresenceGateway } from 'src/gateway/presence.gateway';
 import { NotificationEntity } from 'src/entities/notification.entity';
 import { ContactMessage } from 'src/entities/ContactMessage';
+import { NotificationGateway } from 'src/gateway/notification.gateway';
 
 @Module({
   imports: [
@@ -31,6 +32,6 @@ import { ContactMessage } from 'src/entities/ContactMessage';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, JwtStrategy, PresenceGateway],
+  providers: [AuthService, GoogleStrategy, JwtStrategy, PresenceGateway, NotificationGateway],
 })
 export class AuthModule {}

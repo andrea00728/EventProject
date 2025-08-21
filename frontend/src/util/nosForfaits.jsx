@@ -1,128 +1,280 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect } from "react";
+import { Rocket, Star, Gem, Crown, Info } from "lucide-react";
+import PaymentPage from "../pages/paiment";
 import { AuthModal } from "../components/Modal/authModal";
+import { useStateContext } from "../context/ContextProvider";
+import { getUserForfait } from "../services/forfaitService";
+import { Event, MobileFriendly } from "@mui/icons-material";
+import { Calendar } from "react-feather";
+
+const iconMap = {
+  STARTER: <Rocket className="w-12 h-12 text-blue-500" strokeWidth={2.5} />,
+  PRO: <Star className="w-12 h-12 text-purple-500" strokeWidth={2.5} />,
+  PREMIUM: <Gem className="w-12 h-12 text-pink-500" strokeWidth={2.5} />,
+  GOLD: <Crown className="w-12 h-12 text-yellow-600" strokeWidth={2.5} />,
+};
+
+const defaultColorMap = {
+  STARTER: "from-blue-400 to-blue-500",
+  PRO: "from-purple-400 to-purple-500",
+  PREMIUM: "from-pink-400 to-pink-500",
+  GOLD: "from-yellow-400 to-yellow-500",
+};
+
+const textColorMap = {
+  STARTER: "text-blue-500",
+  PRO: "text-purple-500",
+  PREMIUM: "text-pink-500",
+  GOLD: "text-yellow-500",
+};
 
 export default function NosForfaits() {
-  const [showModal, setShowModal] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
+  const { token } = useStateContext();
+  const [activeForfait, setActiveForfait] = useState(null);
+  const [expirationDate, setExpirationDate] = useState(null);
   const [selectedForfait, setSelectedForfait] = useState(null);
+  const [isOpenPaiement, setIsOpenPaiement] = useState(false);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [isDetailsOpen, setDetailsOpen] = useState(false);
 
-  // Composant Carte
-  const Card = ({ title, price, invitations, events, duration }) => {
-    return (
-      <motion.div
-        whileHover={{ scale: 1.03 }}
-        transition={{ duration: 0.3 }}
-        onClick={() => {
-          setSelectedForfait(title);
-          setShowModal(true);
-        }}
-        className="relative rounded-xl shadow-lg p-6 border group cursor-pointer bg-white border-gray-200 transition-all duration-300 hover:shadow-lg hover:shadow-yellow-200"
-      >
-        <h3 className="text-xl font-bold mb-4">{title}</h3>
-        <p className="text-2xl font-extrabold mb-2">{price}</p>
-        <p>Invitations : {invitations}</p>
-        <p>Événements : {events}</p>
-        <p>Durée : {duration}</p>
+  const forfaits = [
+    { id: 1, nom: "STARTER", price: "$10", invitations: 10, events: 2, duration: "1 mois" },
+    { id: 2, nom: "PRO", price: "$20", invitations: 50, events: 5, duration: "3 mois" },
+    { id: 3, nom: "PREMIUM", price: "$50", invitations: 200, events: 20, duration: "6 mois" },
+    { id: 4, nom: "GOLD", price: "$100", invitations: 500, events: 50, duration: "12 mois" },
+  ];
 
-        {/* Overlay au survol */}
-        <div className="absolute inset-0 bg-white/90 rounded-xl p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center shadow-lg">
-          <h4 className="text-xl font-bold mb-2">{title} Details</h4>
-          <p className="text-sm mb-1">Profitez pleinement de ce forfait pour organiser vos événements.</p>
-          <p className="text-sm mb-1">Support prioritaire et accès à toutes les fonctionnalités.</p>
-          <p className="text-sm">Annulation possible à tout moment.</p>
-        </div>
-      </motion.div>
-    );
+  useEffect(() => {
+    const fetchUserForfait = async () => {
+      if (!token) return;
+      try {
+        const userForfait = await getUserForfait(token);
+        if (userForfait?.forfait) {
+          setActiveForfait(userForfait.forfait);
+          setExpirationDate(userForfait.forfaitExpirationDate);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Impossible de charger votre forfait actif.");
+      }
+    };
+    fetchUserForfait();
+  }, [token]);
+
+  const handleAcheter = (forfait) => {
+    setSelectedForfait(forfait);
+    setIsOpenPaiement(true);
+  };
+
+  const handleClosePayment = () => {
+    setIsOpenPaiement(false);
+    setSelectedForfait(null);
+  };
+
+  const handleVoirDetails = (forfait) => {
+    setSelectedForfait(forfait);
+    setDetailsOpen(true);
   };
 
   return (
-    <>
-      <section className="relative bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 py-24 px-4 rounded-3xl shadow-2xl overflow-hidden">
-        {/* Orbes lumineux */}
-        <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-r from-[#FB9E3A]/10 to-orange-400/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-10 right-10 w-64 h-64 bg-gradient-to-l from-indigo-400/15 to-purple-400/10 rounded-full blur-2xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-violet-300/5 to-fuchsia-300/5 rounded-full blur-3xl" />
+    <section className="container mx-auto py-16 px-4">
+      <div className="text-center mb-12">
+        <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+          Plans &{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-500 to-pink-500">
+            Tarifs
+          </span>
+        </h2>
+        <p className="text-gray-500 max-w-xl mx-auto">
+          Choisissez le forfait qui correspond le mieux à vos besoins et profitez de fonctionnalités exclusives.
+        </p>
+      </div>
 
-        <div className="container mx-auto text-center max-w-7xl relative z-10">
-          <h2 className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent text-5xl sm:text-6xl font-extrabold mb-6 animate-fadeIn tracking-tight">
-            NOS FORFAITS
-          </h2>
+      {/* Cartes forfaits */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        {forfaits.map((f) => {
+          const isActive =
+            activeForfait && f.nom.toUpperCase() === activeForfait.nom.toUpperCase();
+          const isDisabled =
+            activeForfait &&
+            activeForfait.nom.toUpperCase() !== "FREEMIUM" &&
+            !isActive;
 
-          <p className="text-gray-700 text-xl sm:text-2xl font-light leading-relaxed max-w-3xl mx-auto mb-12 animate-fadeIn">
-            Choisissez le forfait qui correspond le mieux à vos besoins.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 animate-fadeIn">
-            <Card title="STARTER" price="10 €/mois" invitations="100" events="5" duration="91 jours" />
-            <Card title="PRO" price="25.99 €/mois" invitations="500" events="10" duration="182 jours" />
-            <Card title="PREMIUM" price="39.99 €/mois" invitations="1000" events="15" duration="273 jours" />
-            <Card title="GOLD" price="59.99 €/mois" invitations="Illimité" events="20" duration="370 jours" />
-          </div>
-
-          <p className="mt-12 text-center text-gray-500 text-sm animate-fadeIn">
-            🔒 Paiement sécurisé • 💳 Toutes cartes acceptées • 🔄 Résiliation à tout moment
-          </p>
-        </div>
-      </section>
-
-      {/* Modal Confirmation */}
-      <AnimatePresence>
-        {showModal && !showLogin && (
-          <motion.div
-            className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-white rounded-xl shadow-xl p-6 w-96"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ duration: 0.3 }}
+          return (
+            <div
+              key={f.id}
+              className={`relative rounded-3xl shadow-lg p-8 border transition-transform transform hover:-translate-y-2 hover:shadow-2xl ${isActive
+                ? `bg-gradient-to-br ${defaultColorMap[f.nom]} text-white scale-105 border-white`
+                : "bg-white border-gray-200 text-gray-800"
+                }`}
             >
-              <h2 className="text-lg font-semibold mb-4">
-                Voulez-vous acheter le forfait <span className="font-bold">{selectedForfait}</span> ?
-              </h2>
-              <div className="flex justify-end space-x-4">
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 transition"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={() => {
-                    setShowLogin(true);
-                  }}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-                >
-                  Oui
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <div className="flex justify-center mb-4">{iconMap[f.nom]}</div>
+              <h3 className="text-2xl font-extrabold mb-2">{f.nom}</h3>
+              <p className={`text-3xl font-bold mb-4 ${isActive ? "text-white" : "text-gray-900"}`}>
+                {f.price}
+              </p>
 
-      {/* Nouveau formulaire AuthModal */}
-      <AuthModal
-        isOpen={showLogin}
-        onClose={() => {
-          setShowLogin(false);
-          setShowModal(false);
-        }}
-      />
+              <ul className="text-sm space-y-2 mb-6">
+                <li>Invitations : <span className="font-semibold">{f.invitations}</span></li>
+                <li>Événements : <span className="font-semibold">{f.events}</span></li>
+                <li>Durée : <span className="font-semibold">{f.duration}</span></li>
+              </ul>
 
-      {/* Animation fadeIn */}
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeIn { animation: fadeIn 0.8s ease-out forwards; }
-      `}</style>
-    </>
+              {token ? (
+                isActive ? (
+                  <button
+                    disabled
+                    className={`w-full py-3 rounded-xl font-semibold shadow cursor-default bg-white ${textColorMap[f.nom]} border-2 border-white transition-all`}
+                  >
+                    Expire le {expirationDate ? new Date(expirationDate).toLocaleDateString() : "N/A"}
+                  </button>
+                ) : (
+                  <div className="flex gap-2  sm:flex-row">
+                  <button
+                    onClick={() => handleVoirDetails(f)}
+                    className={`absolute top-0 right-0 flex items-center justify-center w-12 h-12 rounded-full`}>
+                    <Info className="w-6 h-6 " /> {/* icône info centrée */}
+                  </button>
+                  <button
+                    onClick={() => handleAcheter(f)}
+                    disabled={isDisabled}
+                    className={`w-full py-3 rounded-xl font-semibold shadow transition-all duration-300 focus:outline-none focus:ring ${isDisabled
+                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                      : `bg-gradient-to-r ${defaultColorMap[f.nom]} text-white hover:opacity-90`
+                      }`}
+                  >
+                    Acheter 
+                  </button>
+                </div>
+                )
+              ) : (
+                <div className="flex gap-2  sm:flex-row">
+                  <button
+                    onClick={() => handleVoirDetails(f)}
+                    className={`absolute top-0 right-0 flex items-center justify-center w-12 h-12 rounded-full`}>
+
+                    <Info className="w-6 h-6 " /> {/* icône info centrée */}
+                  </button>
+                  <button
+                    onClick={() => setModalOpen(true)}
+                    className={`flex-1 py-3 rounded-xl font-semibold text-white shadow bg-gradient-to-r ${defaultColorMap[f.nom]} hover:opacity-90 transition`}
+                  >
+                    Acheter
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Modal détails forfait */}
+      {isDetailsOpen && selectedForfait && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          {/* Fond semi-transparent + blur pour le focus sur la modal */}
+
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8 relative overflow-hidden animate-fadeIn">
+            {/* Conteneur principal de la modal : arrondi, ombre, padding responsive */}
+
+            {/* Bandeau coloré en haut */}
+            <div
+              className={`absolute inset-x-0 top-0 h-2 rounded-t-3xl bg-gradient-to-r ${defaultColorMap[selectedForfait.nom]}`}
+            ></div>
+            {/* Barre colorée en haut de la modal correspondant au forfait */}
+
+            {/* Titre et prix */}
+            <div className="text-center mb-6">
+              <h3 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
+                {selectedForfait.nom}
+              </h3>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">
+                {selectedForfait.price}
+              </p>
+            </div>
+            {/* Affiche le nom et le prix du forfait, responsive selon la taille écran */}
+
+            {/* Infos détaillées */}
+            <ul className="space-y-4 text-gray-700 leading-relaxed">
+              {/* Chaque <li> correspond à une section d'information avec icône et texte */}
+
+              {/* Invitations */}
+              <li className="flex items-start gap-3">
+                <MobileFriendly className="text-blue-500 w-5 h-5 flex-shrink-0 mt-1" />
+                <div>
+                  <span className="font-semibold">Invitations :</span>{" "}
+                  {selectedForfait.invitations > 0
+                    ? `Envoyez jusqu’à ${selectedForfait.invitations} invitations personnalisées à vos proches.`
+                    : "Invitations illimitées incluses pour tous vos événements."}
+                </div>
+              </li>
+
+              {/* Événements */}
+              <li className="flex items-start gap-3">
+                <Event className="text-purple-500 w-5 h-5 flex-shrink-0 mt-1" />
+                <div>
+                  <span className="font-semibold">Événements :</span>{" "}
+                  {selectedForfait.events > 0
+                    ? `Organisez jusqu’à ${selectedForfait.events} événements privés ou publics.`
+                    : "Nombre d’événements illimité, sans restriction."}
+                </div>
+              </li>
+
+              {/* Durée */}
+              <li className="flex items-start gap-3">
+                <Calendar className="text-pink-500 w-5 h-5 flex-shrink-0 mt-1" />
+                <div>
+                  <span className="font-semibold">Durée :</span>{" "}
+                  Profitez de ce forfait pendant <span className="font-semibold">{selectedForfait.duration}</span>, avec accès complet à toutes les fonctionnalités.
+                </div>
+              </li>
+
+              {/* Avantages exclusifs */}
+              <li className="flex items-start gap-3">
+                <Star className="text-yellow-500 w-5 h-5 flex-shrink-0 mt-1" />
+                <div>
+                  <span className="font-semibold">Avantages exclusifs :</span>{" "}
+                  Accédez à des fonctionnalités premium : gestion avancée des invités, rapports détaillés et support prioritaire.
+                </div>
+              </li>
+
+              {/* Idéal pour */}
+              <li className="flex items-start gap-3">
+                <Rocket className="text-green-500 w-5 h-5 flex-shrink-0 mt-1" />
+                <div>
+                  <span className="font-semibold">Idéal pour :</span>{" "}
+                  {selectedForfait.nom === "STARTER" && "Petits événements privés ou débutants."}
+                  {selectedForfait.nom === "PRO" && "Organisateurs réguliers d’événements de taille moyenne."}
+                  {selectedForfait.nom === "PREMIUM" && "Événements professionnels et groupes étendus."}
+                  {selectedForfait.nom === "GOLD" && "Entreprises ou organisateurs ambitieux cherchant toutes les fonctionnalités."}
+                </div>
+              </li>
+            </ul>
+
+            {/* Bouton fermer */}
+            <button
+              onClick={() => setDetailsOpen(false)}
+              className="mt-6 w-full py-3 rounded-2xl font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:opacity-90 transition-shadow shadow-lg"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
+
+      {/* Paiement */}
+      {isOpenPaiement && selectedForfait && (
+        <PaymentPage forfait={selectedForfait} onClose={handleClosePayment} />
+      )}
+
+      {/* Auth modal désactivé pour l’instant */}
+      {isModalOpen && (
+        <AuthModal
+          isOpen={isModalOpen}
+          onClose={() => setModalOpen(false)}
+          isSignIn={true}
+        />
+      )}
+    </section>
   );
 }
