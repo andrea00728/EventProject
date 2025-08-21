@@ -325,6 +325,7 @@ export default function AdminLayout() {
     const msgRef = useRef(null);
     const profileRef = useRef(null);
     const navigate = useNavigate();
+    const [messages, setMessages] = useState([]);
 
     const handleRedirect = () => {
       navigate("/AdminParametre");
