@@ -383,55 +383,34 @@ export default function AdminLayout() {
         }
       };
 
-      async function connectSocket() {
-        const userId = await getUserIdForToken();
-        if (!userId) return;
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        if (!response.ok)
-          throw new Error("Erreur lors de la récupération des messages");
-        const data = await response.json();
-        try {
-
-          if (!socket) return; 
-
-          socket.on("notificationMessageAdmin", (value) => {
-            console.log("nana ", value);
-            const formatted1 = data.map((msg) => ({
-              ...msg,
-              from: `${msg.firstName} ${msg.lastName}`,
-              text: msg.message,
-              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
-            }));
-            const formatted2 = value.data.map((msg) => ({
-              ...msg,
-              from: `${msg.firstName} ${msg.lastName}`,
-              text: msg.message,
-              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
-            }));
-            setMessages([...formatted1, ...formatted2]);
-          });
-        } catch (error) {
-          console.error("Erreur de connexion au socket :", error);
-        }
-      }
-
       fetchNotifications();
       fetchMessages();
-      connectSocket();
+    }, [token]);
+
+    useEffect(() => {
+      if (socket) {
+        socket.on("connect", () => {
+          console.log("Connecté au socket");
+        });
+
+        socket.on("notificationMessageAdmin", (value) => {
+          console.log("Message reçue :", value);
+          const formatted = value.data.map((msg) => ({
+            ...msg,
+            from: `${msg.firstName} ${msg.lastName}`,
+            text: msg.message,
+            read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+          }));
+          setMessages([...messages, ...formatted]);
+        });
+      }
 
       return () => {
         if (socket) {
           socket.disconnect();
         }
       };
-    }, [token]);
+    }, [socket]);
 
     useEffect(() => {
       const handleClickOutside = (event) => {
@@ -502,7 +481,9 @@ export default function AdminLayout() {
             className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}
           >
             {currentPageIcon && (
-              <span className="mr-2 sm:mr-3 text-blue-700">{currentPageIcon}</span>
+              <span className="mr-2 sm:mr-3 text-blue-700">
+                {currentPageIcon}
+              </span>
             )}
             {currentPageName}
           </h2>
@@ -713,8 +694,8 @@ export default function AdminLayout() {
                         location.pathname === item.path
                           ? "text-white scale-110"
                           : darkMode
-                          ? "text-gray-300 group-hover:scale-110"
-                          : "text-gray-500 group-hover:scale-110"
+                            ? "text-gray-300 group-hover:scale-110"
+                            : "text-gray-500 group-hover:scale-110"
                       }`}
                     >
                       {item.icon}
