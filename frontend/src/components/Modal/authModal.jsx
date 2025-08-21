@@ -4,8 +4,9 @@ import { loginUser, registerUser } from "../../services/authService";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import ButtonConnexion from "../../util/buttonconnexion";
+import { useStateContext } from "../../context/ContextProvider";
 
-export const AuthModal = ({ isOpen, onClose, isSignIn=false }) => {
+export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
     const [isSignUp, setIsSignUp] = useState(!isSignIn);
     const [showPassword, setShowPassword] = useState(false);
     const [photoPreview, setPhotoPreview] = useState(null);
@@ -46,6 +47,8 @@ export const AuthModal = ({ isOpen, onClose, isSignIn=false }) => {
         }
     };
 
+    const { setUser } = useStateContext(); // Ajouter ceci dans AuthModal
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
@@ -66,17 +69,12 @@ export const AuthModal = ({ isOpen, onClose, isSignIn=false }) => {
 
                 console.log("Résultat de la connexion : ", result);
 
-                if (result.token) {
-                    localStorage.setItem('token', result.token);
-                    toast.success("Connexion réussie !");
-                    setTimeout(() => {
-                        navigate("/pagepublic");
-                        onClose();
-                    }, 500);
+                if (token) {
+                    if (user?.isInPersonnel) return <Navigate to="/choix-role" replace />;
+                    if (role === "organisateur") return <Navigate to="/accueil" replace />;
                 } else {
                     throw new Error("Token absent dans la réponse.");
                 }
-
             }
         } catch (err) {
             console.log("Erreur :", err);
@@ -85,7 +83,6 @@ export const AuthModal = ({ isOpen, onClose, isSignIn=false }) => {
             setLoading(false);
         }
     };
-
 
     const removePhoto = () => {
         setPhotoPreview(null);
@@ -292,7 +289,7 @@ export const AuthModal = ({ isOpen, onClose, isSignIn=false }) => {
                             {isSignUp ? "Se connecter" : "Créer un compte"}
                         </button>
 
-                        
+
                     </div>
 
                     {/* Conditions d'utilisation */}
