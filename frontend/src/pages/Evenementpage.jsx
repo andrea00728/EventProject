@@ -23,9 +23,9 @@ export default function Evenemenpage() {
   // Choix du mode
   if (!mode) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-6">
+      <div className="flex flex-col items-center justify-center min-h-full gap-6 mt-50">
         <h1 className="text-2xl font-bold">Choisissez le type d'événement</h1>
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4">
           <button
             className="px-6 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
             onClick={() => setMode("public")}
@@ -49,8 +49,8 @@ export default function Evenemenpage() {
       <div className="flex flex-col items-center">
         <Evenementform
           isPublic={true}
-          isExit={handleExit}
           onNext={(data) => console.log("Public créé :", data)}
+          isExit={handleExit}
         />
       </div>
     );

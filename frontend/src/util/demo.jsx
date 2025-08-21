@@ -1,3 +1,4 @@
+import { Plus, RefreshCcw } from "lucide-react";
 import { useState } from "react";
 
 const TABLE_TYPES = [
@@ -28,10 +29,23 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
     const spacingX = tableWidth / (perSide + 1);
     const spacingY = tableHeight / (perSide + 1);
 
-    for (let i = 0; i < perSide && count < capacity; i++, count++) positions.push({ left: `${(i + 1) * spacingX}px`, top: "-10px" });
-    for (let i = 0; i < perSide && count < capacity; i++, count++) positions.push({ left: `${tableWidth + 10}px`, top: `${(i + 1) * spacingY}px` });
-    for (let i = 0; i < perSide && count < capacity; i++, count++) positions.push({ left: `${tableWidth - (i + 1) * spacingX}px`, top: `${tableHeight + 10}px` });
-    for (let i = 0; i < perSide && count < capacity; i++, count++) positions.push({ left: "-10px", top: `${tableHeight - (i + 1) * spacingY}px` });
+    for (let i = 0; i < perSide && count < capacity; i++, count++)
+      positions.push({ left: `${(i + 1) * spacingX}px`, top: "-10px" });
+    for (let i = 0; i < perSide && count < capacity; i++, count++)
+      positions.push({
+        left: `${tableWidth + 10}px`,
+        top: `${(i + 1) * spacingY}px`,
+      });
+    for (let i = 0; i < perSide && count < capacity; i++, count++)
+      positions.push({
+        left: `${tableWidth - (i + 1) * spacingX}px`,
+        top: `${tableHeight + 10}px`,
+      });
+    for (let i = 0; i < perSide && count < capacity; i++, count++)
+      positions.push({
+        left: "-10px",
+        top: `${tableHeight - (i + 1) * spacingY}px`,
+      });
   }
 
   return positions;
@@ -57,7 +71,8 @@ export default function Demo() {
   const [editingTable, setEditingTable] = useState(null);
   const [ajoutTable, setAjoutTable] = useState(false);
 
-  const handleFormChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleFormChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleAddTable = (e) => {
     e.preventDefault();
@@ -88,7 +103,11 @@ export default function Demo() {
     const img = new Image();
     img.src = "";
     e.dataTransfer.setDragImage(img, 0, 0);
-    setTables((prev) => prev.map((t) => (t.id === id ? { ...t, dragging: true } : { ...t, dragging: false })));
+    setTables((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, dragging: true } : { ...t, dragging: false }
+      )
+    );
   };
 
   const handleDragEnd = (id, e) => {
@@ -103,7 +122,11 @@ export default function Demo() {
     const boundedY = Math.max(0, Math.min(y, maxY));
 
     setTables((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, pos: { left: boundedX, top: boundedY }, dragging: false } : t))
+      prev.map((t) =>
+        t.id === id
+          ? { ...t, pos: { left: boundedX, top: boundedY }, dragging: false }
+          : t
+      )
     );
   };
 
@@ -129,23 +152,63 @@ export default function Demo() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100 p-8 gap-8">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 p-4 lg:p-8 gap-4 lg:gap-8 overflow-auto">
       {/* Formulaire */}
       {!showDragZone && (
-        <div className="w-[400px]">
-          <form onSubmit={handleAddTable} className="p-6 bg-white shadow-lg rounded-xl border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">Créer une Table</h2>
+        <div className="w-full max-w-md lg:w-[400px] mx-auto">
+          <form
+            onSubmit={handleAddTable}
+            className="p-6 bg-white shadow-lg rounded-xl border border-gray-200"
+          >
+            <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">
+              Créer une Table
+            </h2>
             <div className="grid grid-cols-1 gap-4">
-              <input name="nom" value={form.nom} onChange={handleFormChange} placeholder="Nom table" className="w-full border rounded-lg px-3 py-2" />
-              <input name="capacite" type="number" value={form.capacite} onChange={handleFormChange} required min="1" placeholder="Capacité" className="w-full border rounded-lg px-3 py-2" />
-              <input name="nombre" type="number" value={form.nombre} onChange={handleFormChange} required min="1" placeholder="Nombre de tables" className="w-full border rounded-lg px-3 py-2" />
-              <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="w-full border rounded-lg px-3 py-2">
+              <input
+                name="nom"
+                value={form.nom}
+                onChange={handleFormChange}
+                placeholder="Nom table"
+                className="w-full border rounded-lg px-3 py-2"
+              />
+              <input
+                name="capacite"
+                type="number"
+                value={form.capacite}
+                onChange={handleFormChange}
+                required
+                min="1"
+                placeholder="Capacité"
+                className="w-full border rounded-lg px-3 py-2"
+              />
+              <input
+                name="nombre"
+                type="number"
+                value={form.nombre}
+                onChange={handleFormChange}
+                required
+                min="1"
+                placeholder="Nombre de tables"
+                className="w-full border rounded-lg px-3 py-2"
+              />
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2"
+              >
                 {TABLE_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
                 ))}
               </select>
             </div>
-            <button type="submit" className="w-full mt-6 bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700">Ajouter</button>
+            <button
+              type="submit"
+              className="w-full mt-6 bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700 cursor-pointer"
+            >
+              Ajouter
+            </button>
           </form>
         </div>
       )}
@@ -153,40 +216,128 @@ export default function Demo() {
       {/* Zone Drag & Drop */}
       {showDragZone && (
         <>
-          {/* Boutons fixes */}
-          <button onClick={() => setAjoutTable(true)} className="fixed top-4 left-4 bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700 z-50">Ajouter des tables</button>
-          <button onClick={() => setTables([])} className="fixed top-16 left-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 z-50">Réinitialiser</button>
-
           {/* Formulaire modal ajout */}
           {ajoutTable && (
             <div className="fixed inset-0 bg-black/30 backdrop-blur-lg flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-xl shadow-lg w-[400px]">
-                <h2 className="text-xl font-semibold mb-4">Ajouter des Tables</h2>
+              <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
+                <h2 className="text-xl font-semibold mb-4">
+                  Ajouter des Tables
+                </h2>
                 <form onSubmit={handleAddTable}>
-                  <input name="nom" value={form.nom} onChange={handleFormChange} placeholder="Nom de la table" required className="w-full border rounded-lg px-3 py-2 mb-4" />
-                  <input name="capacite" type="number" value={form.capacite} onChange={handleFormChange} placeholder="Capacité" required min="1" className="w-full border rounded-lg px-3 py-2 mb-4" />
-                  <input name="nombre" type="number" value={form.nombre} onChange={handleFormChange} placeholder="Nombre de tables" required min="1" className="w-full border rounded-lg px-3 py-2 mb-4" />
-                  <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="w-full border rounded-lg px-3 py-2 mb-4">
-                    {TABLE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  <input
+                    name="nom"
+                    value={form.nom}
+                    onChange={handleFormChange}
+                    placeholder="Nom de la table"
+                    required
+                    className="w-full border rounded-lg px-3 py-2 mb-4"
+                  />
+                  <input
+                    name="capacite"
+                    type="number"
+                    value={form.capacite}
+                    onChange={handleFormChange}
+                    placeholder="Capacité"
+                    required
+                    min="1"
+                    className="w-full border rounded-lg px-3 py-2 mb-4"
+                  />
+                  <input
+                    name="nombre"
+                    type="number"
+                    value={form.nombre}
+                    onChange={handleFormChange}
+                    placeholder="Nombre de tables"
+                    required
+                    min="1"
+                    className="w-full border rounded-lg px-3 py-2 mb-4"
+                  />
+                  <select
+                    value={selectedType}
+                    onChange={(e) => setSelectedType(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 mb-4"
+                  >
+                    {TABLE_TYPES.map((t) => (
+                      <option key={t.value} value={t.value}>
+                        {t.label}
+                      </option>
+                    ))}
                   </select>
-                  <button type="submit" className="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700">Ajouter</button>
+                  <button
+                    type="submit"
+                    className="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700 cursor-pointer"
+                  >
+                    Ajouter
+                  </button>
                 </form>
-                <button onClick={() => setAjoutTable(false)} className="mt-4 w-full bg-gray-300 text-gray-800 font-semibold py-2 rounded-lg hover:bg-gray-400">Fermer</button>
+                <button
+                  onClick={() => setAjoutTable(false)}
+                  className="mt-4 w-full bg-gray-300 text-gray-800 font-semibold py-2 rounded-lg hover:bg-gray-400 cursor-pointer"
+                >
+                  Fermer
+                </button>
               </div>
             </div>
           )}
 
+          {/* Boutons fixes flottants */}
+          <div className="fixed bottom-4 left-4 flex flex-col gap-2 z-50">
+            {/* Bouton Ajouter des tables */}
+            <button
+              onClick={() => setAjoutTable(true)}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="hidden sm:inline">Ajouter des tables</span>
+            </button>
+
+            {/* Bouton Réinitialiser */}
+            <button
+              onClick={() => setTables([])}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg cursor-pointer shadow flex items-center justify-center sm:justify-start gap-2 transition"
+            >
+              <RefreshCcw className="w-5 h-5" />
+              <span className="hidden sm:inline">Réinitialiser</span>
+            </button>
+          </div>
+
+
           {/* Zone tables */}
           <div className="flex-1 flex items-center justify-center relative">
-            <div className="relative w-[800px] h-[500px] bg-white border border-gray-300 rounded-2xl shadow-2xl overflow-hidden">
+            <div className="relative w-full h-[60vh] lg:w-[800px] lg:h-[500px] bg-white border overflow-auto border-gray-300 rounded-2xl shadow-2xl">
               {tables.map((table) => (
-                <div key={table.id} draggable onDragStart={(e) => handleDragStart(table.id, e)} onDragEnd={(e) => handleDragEnd(table.id, e)}
-                     className="absolute cursor-grab active:cursor-grabbing"
-                     style={{ left: table.pos.left, top: table.pos.top, width: table.width, height: table.height, zIndex: table.dragging ? 50 : 10 }}
-                     onDoubleClick={() => handleOpenEdit(table)}>
-                  <div className={`border-4 border-indigo-400 shadow-md flex items-center justify-center ${table.type === "ronde" || table.type === "ovale" ? "rounded-full" : "rounded-md"} w-full h-full bg-pink-200 relative`}>
-                    <span className="font-bold text-indigo-700">{table.nom}</span>
-                    {getChairPositions(table.type, table.capacite, table.width, table.height).map((pos, i) => <Chair key={i} number={i + 1} style={pos} />)}
+                <div
+                  key={table.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(table.id, e)}
+                  onDragEnd={(e) => handleDragEnd(table.id, e)}
+                  className="absolute cursor-grab active:cursor-grabbing"
+                  style={{
+                    left: table.pos.left,
+                    top: table.pos.top,
+                    width: table.width,
+                    height: table.height,
+                    zIndex: table.dragging ? 50 : 10,
+                  }}
+                  onDoubleClick={() => handleOpenEdit(table)}
+                >
+                  <div
+                    className={`border-4 border-indigo-400 shadow-md flex items-center justify-center ${table.type === "ronde" || table.type === "ovale"
+                      ? "rounded-full"
+                      : "rounded-md"
+                      } w-full h-full bg-pink-200 relative`}
+                  >
+                    <span className="font-bold text-indigo-700">
+                      {table.nom}
+                    </span>
+                    {getChairPositions(
+                      table.type,
+                      table.capacite,
+                      table.width,
+                      table.height
+                    ).map((pos, i) => (
+                      <Chair key={i} number={i + 1} style={pos} />
+                    ))}
                   </div>
                 </div>
               ))}
@@ -195,43 +346,103 @@ export default function Demo() {
         </>
       )}
 
-      {/* Modal Modification */}
+      {/* Modal Modification */}  
       {editingTable && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-[400px]">
-            <h2 className="text-xl font-semibold mb-4">Modifier {editingTable.nom}</h2>
-            <input defaultValue={editingTable.nom} onChange={(e) => handleTableChange(editingTable.id, "nom", e.target.value)} className="w-full border rounded px-2 py-1 mb-2" />
-            <input type="number" defaultValue={editingTable.capacite} onChange={(e) => handleTableChange(editingTable.id, "capacite", e.target.value)} min="1" className="w-full border rounded px-2 py-1 mb-2" />
-            <select defaultValue={editingTable.type} onChange={(e) => handleTableChange(editingTable.id, "type", e.target.value)} className="w-full border rounded px-2 py-1 mb-2">
-              {TABLE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
+            <h2 className="text-xl font-semibold mb-4">
+              Modifier {editingTable.nom}
+            </h2>
+            <input
+              defaultValue={editingTable.nom}
+              onChange={(e) =>
+                handleTableChange(editingTable.id, "nom", e.target.value)
+              }
+              className="w-full border rounded px-2 py-1 mb-2"
+            />
+            <input
+              type="number"
+              defaultValue={editingTable.capacite}
+              onChange={(e) =>
+                handleTableChange(editingTable.id, "capacite", e.target.value)
+              }
+              min="1"
+              className="w-full border rounded px-2 py-1 mb-2"
+            />
+            <select
+              defaultValue={editingTable.type}
+              onChange={(e) =>
+                handleTableChange(editingTable.id, "type", e.target.value)
+              }
+              className="w-full border rounded px-2 py-1 mb-2"
+            >
+              {TABLE_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
             </select>
-            <div className="flex justify-end gap-2 mt-4">
-              <button className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" onClick={handleCloseEdit}>Annuler</button>
-              <button className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" onClick={handleCloseEdit}>OK</button>
-              <button className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                      onClick={() => { setTables((prev) => prev.filter((t) => t.id !== editingTable.id)); handleCloseEdit(); }}>
+            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-4">
+              <button
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 cursor-pointer"
+                onClick={handleCloseEdit}
+              >
+                Annuler
+              </button>
+              <button
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 cursor-pointer"
+                onClick={handleCloseEdit}
+              >
+                OK
+              </button>
+              <button
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
+                onClick={() => {
+                  setTables((prev) =>
+                    prev.filter((t) => t.id !== editingTable.id)
+                  );
+                  handleCloseEdit();
+                }}
+              >
                 Supprimer
               </button>
             </div>
           </div>
         </div>
       )}
-       <div className="max-w-xl mx-auto p-6 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-200 animate-fade-in animate-slide-up">
-                <h2 className="text-2xl font-extrabold text-indigo-700 mb-4 tracking-wide drop-shadow-sm">
-                    Instructions
-                </h2>
-                <ul className="list-disc list-inside space-y-2 text-gray-700 prose prose-sm">
-                    <li>Remplissez le formulaire à gauche pour ajouter une table. Une fois créée, vous pouvez la faire glisser dans la zone de droite.</li>
-                    <li>Double-cliquez sur une table pour modifier son nom, sa capacité ou son type.</li>
-                    <li>Les chaises sont automatiquement positionnées autour de la table selon sa forme et sa capacité.</li>
-                    <li>Les tables rondes et ovales ont des chaises disposées en cercle, tandis que les tables rectangulaires et carrées ont des chaises sur les côtés.</li>
-                    <li>Vous pouvez ajouter plusieurs tables en remplissant le formulaire plusieurs fois.</li>
-                    <li>Les tables sont initialement positionnées pour éviter les chevauchements, mais vous pouvez les déplacer manuellement si nécessaire.</li>
-                </ul>
-                <p className="mt-4 text-sm text-gray-500 italic">
-                    Astuce : utilisez le drag & drop pour ajuster la position des tables et obtenir un plan parfait !
-                </p>
-            </div>
+
+      {/* Instructions */}
+      <div className="max-w-full sm:max-w-xl w-full  mx-auto p-3 sm:p-6 animate-fade-in animate-slide-up">
+        <h2 className="text-base sm:text-2xl font-extrabold text-indigo-700 mb-3 sm:mb-4 tracking-wide drop-shadow-sm">
+          Instructions
+        </h2>
+
+        <ul className="list-disc list-inside space-y-1 sm:space-y-2 text-gray-700 prose prose-sm sm:prose">
+          <li>
+            Remplissez le formulaire à gauche pour ajouter une table. Une fois créée, vous pouvez la faire glisser dans la zone de droite.
+          </li>
+          <li>
+            Double-cliquez sur une table pour modifier son nom, sa capacité ou son type.
+          </li>
+          <li>
+            Les chaises sont automatiquement positionnées autour de la table selon sa forme et sa capacité.
+          </li>
+          <li>
+            Les tables rondes et ovales ont des chaises disposées en cercle, tandis que les tables rectangulaires et carrées ont des chaises sur les côtés.
+          </li>
+          <li>
+            Vous pouvez ajouter plusieurs tables en remplissant le formulaire plusieurs fois.
+          </li>
+          <li>
+            Les tables sont initialement positionnées pour éviter les chevauchements, mais vous pouvez les déplacer manuellement si nécessaire.
+          </li>
+        </ul>
+
+        <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-500 italic">
+          Astuce : utilisez le drag & drop pour ajuster la position des tables et obtenir un plan parfait !
+        </p>
+      </div>
+
     </div>
   );
 }

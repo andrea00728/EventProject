@@ -14,6 +14,7 @@ const TestimonialsSection = () => {
   const [success, setSuccess] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+
   // Get user and token from context
   const { user, token } = useStateContext();
 
@@ -40,6 +41,7 @@ const TestimonialsSection = () => {
       await createTestimony(payload,token);
       console.log("commentaire cree avec success");
       setSuccess('commentaire cree avec success');
+      setComment("");
       setRating(0);
       setHoverRating(0);
       const updatedTestimonials = await findthreeRecent();
