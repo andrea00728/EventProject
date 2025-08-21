@@ -6,13 +6,12 @@ import Contact from "../util/contact";
 import { getCountEvents } from "../services/evenementServ";
 import { getUserCount } from "../services/userService";
 import { getAllEvents } from "../services/evenementServ";
-
 import { AuthModal } from "../components/Modal/authModal";
 import SuccessEvent from "../util/SuccessEvent";
 import Aboutus from "../util/Aboutus";
 import NosForfaits from "../util/nosForfaits";
 import Footer from "./footer";
-import Demo from "../util/Dem"; // ✅ Composant modal vidéo
+import Demo from "../util/Dem";
 import DemoTable from "../util/demo";
 import { useStateContext } from "../context/ContextProvider";
 import TestimonialsSection from "../util/testimonialsSection";
@@ -25,6 +24,27 @@ const images = [
   "/images/couple-443600_1280.jpg",
 ];
 
+// Composant Modal pour Confidentialite
+const Modal = ({ isOpen, onClose, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-6 max-w-5xl w-full mx-4 max-h-[80vh] overflow-y-auto shadow-xl">
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-xl font-bold"
+          >
+            &times;
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+};
+
 const Publicacc = () => {
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,20 +56,17 @@ const Publicacc = () => {
   // ✅ Nouvel état pour le modal Demo
   const [isDemoOpen, setIsDemoOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isConfidentialiteOpen, setIsConfidentialiteOpen] = useState(false); // Nouvel état pour la modale Confidentialite
 
   const intervalRef = useRef(null);
   const touchStartX = useRef(0);
   const accueilRef = useRef(null);
   const serviceRef = useRef(null);
-  const forfaitRef = useRef(null)
+  const forfaitRef = useRef(null);
   const contactRef = useRef(null);
   const testimonyRef = useRef(null);
   const footerRef = useRef(null);
 
-  const [eventCount, setEventCount] = useState(0);
-  const [organisateurCount, setOrganisateurCount] = useState(0);
-
-  // ✅ Vérifie si l'utilisateur est connecté (via localStorage)
   const isAuthenticated = Boolean(token);
 
   // Charger les événements
@@ -58,14 +75,11 @@ const Publicacc = () => {
       try {
         setLoading(true);
         setError(null);
-
         const events = await getAllEvents();
         if (!Array.isArray(events)) throw new Error("La réponse n'est pas un tableau");
-
         const sortedEvents = events
           .sort((a, b) => new Date(b.date) - new Date(a.date))
           .slice(0, 4);
-
         setAllEvents(sortedEvents);
       } catch (err) {
         console.error("❌ Erreur:", err);
@@ -74,7 +88,6 @@ const Publicacc = () => {
         setLoading(false);
       }
     };
-
     fetchAllEvents();
   }, []);
 
@@ -141,6 +154,9 @@ const Publicacc = () => {
   return (
     <>
       <AuthModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
+      <Modal isOpen={isConfidentialiteOpen} onClose={() => setIsConfidentialiteOpen(false)}>
+        <Confidentialite />
+      </Modal>
 
       <section id="pagepublic" ref={accueilRef}>
         <div
@@ -280,7 +296,6 @@ const Publicacc = () => {
 
       <section id="demo">
         <div className="bg-gradient-to-b from-gray-50 to-white">
-          {/* ✅ Modal Demo réutilisé */}
           <Demo isOpen={isDemoOpen} onClose={() => setIsDemoOpen(false)} />
         </div>
       </section>
@@ -325,7 +340,7 @@ const Publicacc = () => {
 
       <section id="footer" ref={footerRef}>
         <div className="bg-gradient-to-b from-gray-50 to-white">
-          <Footer />
+          <Footer onShowConfidentialite={() => setIsConfidentialiteOpen(true)} />
         </div>
       </section>
     </>
