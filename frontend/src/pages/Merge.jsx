@@ -15,6 +15,7 @@ import Footer from "./footer";
 import Demo from "../util/Dem"; // ✅ Composant modal vidéo
 import DemoTable from "../util/demo";
 import { useStateContext } from "../context/ContextProvider";
+import TestimonialsSection from "../util/testimonialsSection";
 
 const images = [
   "/images/music-7238254_1280.jpg",
@@ -30,7 +31,7 @@ const Publicacc = () => {
   const [error, setError] = useState(null);
   const [current, setCurrent] = useState(0);
   const [isModalOpen, setModalOpen] = useState(false);
-  const {token} = useStateContext()
+  const { token } = useStateContext()
 
   // ✅ Nouvel état pour le modal Demo
   const [isDemoOpen, setIsDemoOpen] = useState(false);
@@ -292,7 +293,15 @@ const Publicacc = () => {
 
       <section id="testimony" ref={testimonyRef}>
         <div className="bg-gradient-to-b from-gray-50 to-white">
-          <Testimonials />
+          {!isAuthenticated ? (
+            <Testimonials />
+          ) : (
+            <>
+              <Testimonials />
+              <TestimonialsSection />
+            </>
+          )
+          }
         </div>
       </section>
 
