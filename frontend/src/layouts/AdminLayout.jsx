@@ -38,8 +38,9 @@ import io from "socket.io-client";
 import { useSocket } from "../socket";
 
 export default function AdminLayout() {
-  const { token, role, isLoading, setToken, setUser } = useStateContext();
+  const { token, role, isLoading, setToken, setUser, user } = useStateContext();
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -323,8 +324,6 @@ export default function AdminLayout() {
     const notifRef = useRef(null);
     const msgRef = useRef(null);
     const profileRef = useRef(null);
-    const [messages, setMessages] = useState([]);
-
     const navigate = useNavigate();
 
     const handleRedirect = () => {
@@ -502,9 +501,7 @@ export default function AdminLayout() {
             className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}
           >
             {currentPageIcon && (
-              <span className="mr-2 sm:mr-3 text-blue-700">
-                {currentPageIcon}
-              </span>
+              <span className="mr-2 sm:mr-3 text-blue-700">{currentPageIcon}</span>
             )}
             {currentPageName}
           </h2>
@@ -715,8 +712,8 @@ export default function AdminLayout() {
                         location.pathname === item.path
                           ? "text-white scale-110"
                           : darkMode
-                            ? "text-gray-300 group-hover:scale-110"
-                            : "text-gray-500 group-hover:scale-110"
+                          ? "text-gray-300 group-hover:scale-110"
+                          : "text-gray-500 group-hover:scale-110"
                       }`}
                     >
                       {item.icon}
