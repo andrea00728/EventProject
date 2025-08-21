@@ -112,13 +112,15 @@ const PaymentPage = ({ forfait, onClose }) => {
 
     setLoading(true);
     setError(null);
+
     try {
       if (selectedPaymentMethod === "paypal") {
         const res = await updateForfait(token, selectedPlan);
         console.log("URL PayPal:", res?.url || "Aucune URL");
 
         if (res?.url && typeof res.url === "string" && res.url.startsWith("https://")) {
-          window.open(res.url, "_blank", "width=800,height=600");
+          // Redirection dans le même onglet
+          window.location.href = res.url;
         } else {
           setError("URL de paiement PayPal non valide.");
         }
@@ -132,6 +134,7 @@ const PaymentPage = ({ forfait, onClose }) => {
       setLoading(false);
     }
   }, [token, selectedPlan, selectedPaymentMethod]);
+
 
   if (!selectedPlanDetails) {
     return (
@@ -153,13 +156,14 @@ const PaymentPage = ({ forfait, onClose }) => {
         onClick={onClose}
       >
         <motion.div
-          className="bg-white w-full sm:max-w-5xl sm:h-[95vh] rounded-xl shadow-2xl p-6 sm:p-10 overflow-y-auto relative"
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -50 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          onClick={(e) => e.stopPropagation()}
-        >
+  className="bg-white w-full h-full sm:max-w-5xl sm:h-[85vh] rounded-xl shadow-2xl p-6 sm:p-10 
+             overflow-auto sm:relative fixed top-0 left-0 sm:top-auto sm:left-auto sm:m-auto"
+  initial={{ opacity: 0, y: -50 }}
+  animate={{ opacity: 1, y: 0 }}
+  exit={{ opacity: 0, y: -50 }}
+  transition={{ duration: 0.4, ease: "easeOut" }}
+  onClick={(e) => e.stopPropagation()}
+>
           <button
             className="absolute top-5 right-5 text-gray-500 hover:text-gray-800 transition"
             onClick={onClose}
@@ -254,9 +258,8 @@ const PaymentPage = ({ forfait, onClose }) => {
                     return (
                       <div
                         key={method.id}
-                        className={`border-2 rounded-xl p-4 flex flex-col items-center cursor-pointer transition-all duration-300 ${
-                          isSelected ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-200 hover:bg-gray-50"
-                        }`}
+                        className={`border-2 rounded-xl p-4 flex flex-col items-center cursor-pointer transition-all duration-300 ${isSelected ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-200 hover:bg-gray-50"
+                          }`}
                         onClick={() => setSelectedPaymentMethod(method.id)}
                       >
                         <IconComp className={`w-7 h-7 mb-2 ${isSelected ? "text-blue-600" : "text-gray-400"}`} />

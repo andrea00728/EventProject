@@ -241,7 +241,7 @@ export default function Accueil() {
             {/* Bouton fermer */}
             <button
               onClick={() => setIsOpen(false)}
-              className="absolute top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors"
+              className="absolute top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors z-50 cursor-pointer"
             >
               ✕
             </button>
