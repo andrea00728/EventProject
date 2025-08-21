@@ -13,7 +13,10 @@ node_modules
 dist
 dist-ssr
 public
+assets
 *.local
+
+.env
 
 # Editor directories and files
 .vscode/*
@@ -24,4 +27,7 @@ public
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+*.sw?   
+socket.js
+.env
+

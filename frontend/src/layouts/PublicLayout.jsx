@@ -8,6 +8,7 @@ import Profil from "../util/profils";
 import { AuthModal } from "../components/Modal/authModal";
 import { getUserForfait } from "../services/forfaitService";
 import { getConditionalSubMenus } from "../util/menuUtils";
+import { useSocket } from "../socket";
 
 export default function PublicLayout() {
   const { token, role, user } = useStateContext();
@@ -20,6 +21,7 @@ export default function PublicLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const isPublicEventsPage = location.pathname === "/evenements-publics";
+  const socket = useSocket()
 
   const defaultNavItems = [
     { path: "#pagepublic", name: "Accueil" },
@@ -47,6 +49,8 @@ export default function PublicLayout() {
     if (token) {
       fetchAndSetForfait();
       setConnected(true);
+      if (!socket) return;
+      socket.on('connect', () => console.log('Socket connectée : ', socket.id));
     } else {
       setConnected(false);
       setForfait(null);
@@ -266,16 +270,19 @@ export default function PublicLayout() {
           >
             <div className="w-6 h-6 relative flex flex-col justify-center items-center">
               <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"
-                  }`}
+                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
+                  isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"
+                }`}
               ></span>
               <span
-                className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${isMenuOpen ? "opacity-0" : "opacity-100"
-                  }`}
+                className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${
+                  isMenuOpen ? "opacity-0" : "opacity-100"
+                }`}
               ></span>
               <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
-                  }`}
+                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
+                  isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
+                }`}
               ></span>
             </div>
           </button>
@@ -360,13 +367,8 @@ export default function PublicLayout() {
       <div className="h-20" />
       <main>
         <Outlet />
+        <AuthModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} isSignIn={true} />
       </main>
-
-      <AuthModal
-        isOpen={isModalOpen}
-        onClose={() => setModalOpen(false)}
-        isSignIn={true}
-      />
     </>
   );
 }
