@@ -140,20 +140,6 @@ const router = createBrowserRouter([
             // ],
           },
           {
-            path: "/evenement/evenement",
-            element: <EventLayout />,
-            children: [
-              {
-                path: "eventpadding",
-                element: <EventPending />,
-              },
-              {
-                path: "",
-                element: <EventAccept />,
-              },
-            ],
-          },
-          {
             path: "tables",
             element: <TableLayout />,
             children: [
@@ -405,14 +391,15 @@ const router = createBrowserRouter([
     ],
   },
 
-/***
- * 
- * 
- * Rout pour tout les fonctionnalite du personnel de la cuisine
- * 
- * 
- * 
- */
+  /***
+   *
+   *
+   * Rout pour tout les fonctionnalite du personnel de la cuisine
+   *
+   *
+   *
+   */
+
   {
     path: "/",
     element: <InvitePage />,

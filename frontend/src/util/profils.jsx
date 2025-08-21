@@ -192,9 +192,7 @@ export default function Profil() {
             exit="hidden"
             onClick={() => setConfirmLogOut(false)}
           >
-            {/* Backdrop avec effet de flou */}
-            <div className="absolute inset-0 h-screen flex items-center justify-center bg-black/30 backdrop-blur-sm">
-              {/* Contenu du modal */}
+            <div className="absolute top-0 inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center">
               <motion.div
                 className="relative bg-white/95 backdrop-blur-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-white/20 max-w-xs sm:max-w-md w-full mx-4 overflow-hidden"
                 variants={modalVariants}

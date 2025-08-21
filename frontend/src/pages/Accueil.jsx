@@ -4,7 +4,7 @@ import { FaAward, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaClock } from "react-
 import TestimonialsSection from "../util/testimonialsSection";
 import { getAllEvents } from '../services/evenementServ';
 import tutorialVideo from "../assets/demo.mp4";
-
+import IMage from "../../public/undraw_having-fun_kkeu.svg";
 export default function Accueil() {
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -277,7 +277,7 @@ export default function Accueil() {
             {/* Bouton fermer */}
             <button
               onClick={() => setIsOpen(false)}
-              className="absolute top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors"
+              className="absolute top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors z-50 cursor-pointer"
             >
               ✕
             </button>
