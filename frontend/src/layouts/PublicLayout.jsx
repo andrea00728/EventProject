@@ -47,11 +47,11 @@ export default function PublicLayout() {
     const fetchAndSetForfait = async () => {
       try {
         const data = await getUserForfait(token);
-        console.log("Données de getUserForfait :", data); 
-        setForfait(data.forfait || { nom: "Default" });
+        console.log("Données de getUserForfait :", data); // Log pour débogage
+        setForfait(data.forfait || { nom: "Default" }); // Valeur par défaut
       } catch (err) {
-        console.error("Erreur lors de la récupération du forfait", err);
-        setForfait({ nom: "Default" });
+        console.error("Erreur lors de la récupération du forfait", Electrek);
+        setForfait({ nom: "Default" }); // Valeur par défaut en cas d'erreur
       }
     };
 
@@ -69,6 +69,7 @@ export default function PublicLayout() {
 
   // Mise à jour des navItems en fonction du forfait
   useEffect(() => {
+    console.log("Forfait actuel :", forfait); // Log pour débogage
     if (token && forfait) {
       setNavItems([
         { path: "/pagepublic#pagepublic", name: "Accueil" },
@@ -121,14 +122,19 @@ export default function PublicLayout() {
     },
   };
 
+  const menuVariants = {
+    open: { opacity: 1, height: "auto", transition: { duration: 0.9 } },
+    closed: { opacity: 0, height: 0, transition: { duration: 0.9 } },
+  };
+
   const handleDirection = (item) => {
     if (item.path.includes("#")) {
-      const id = item.path.split("#")[1]; 
+      const id = item.path.split("#")[1]; // ex: "forfaits"
       const element = document.getElementById(id);
       if (element) {
         element.scrollIntoView({ behavior: "smooth" });
       }
-    } else {
+    }else{
       navigate(item.path);
     }
   };
@@ -136,8 +142,7 @@ export default function PublicLayout() {
   return (
     <>
       <header className="w-screen bg-white/90 backdrop-blur-xl shadow border-b fixed top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between relative">
-          {/* Logo */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
               <img src={Logo} alt="Logo" className="w-10 h-10" />
@@ -148,8 +153,7 @@ export default function PublicLayout() {
             </div>
           </div>
 
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center justify-center py-3 relative flex-1">
+          <nav className="hidden md:flex items-center justify-center py-3 relative">
             <div className="flex items-center gap-1">
               {navItems.map((item, index) => (
                 <motion.div
@@ -159,18 +163,103 @@ export default function PublicLayout() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                 >
-                  <button
+                  <Link
+                    to={item.path}
                     className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2"
-                    onMouseEnter={() =>
-                      item.name === "Evenement" && setIsEvenementHovered(true)
-                    }
-                    onMouseLeave={() =>
-                      item.name === "Evenement" && setIsEvenementHovered(false)
-                    }
+                    onMouseEnter={() => {
+                      console.log("Survol :", item.name); // Log pour débogage
+                      item.name === "Evenement" && setIsEvenementHovered(true);
+                    }}
+                    onMouseLeave={() => {
+                      console.log("Sortie survol :", item.name); // Log pour débogage
+                      item.name === "Evenement" && setIsEvenementHovered(false);
+                    }}
                     onClick={() => handleDirection(item)}
                   >
-                    {item.name}
-                  </button>
+                    <span className="relative z-10">{item.name}</span>
+                  </Link>
+
+                  {item.subMenus && (
+                    <AnimatePresence>
+                      {isEvenementHovered && (
+                        <motion.div
+                          className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-40"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          onMouseEnter={() => setIsEvenementHovered(true)}
+                          onMouseLeave={() => setIsEvenementHovered(false)}
+                        >
+                          <motion.div
+                            className="bg-white/98 backdrop-blur-xl shadow-2xl shadow-gray-900/15 rounded-xl border border-gray-200/60"
+                            style={{ width: "1200px" }}
+                            variants={subMenuVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="hidden"
+                          >
+                            <div className="px-6 py-4 border-b border-gray-100">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <h3 className="text-lg font-bold text-gray-900">
+                                    Gestion d'événements
+                                  </h3>
+                                  <p className="text-xs text-gray-600">
+                                    Organisez vos événements professionnellement
+                                  </p>
+                                </div>
+                                <div className="text-xs bg-gradient-to-r from-[#6B46C1]/10 to-purple-600/10 text-purple-700 px-3 py-1 rounded-full border border-purple-200">
+                                  {item.subMenus.length} modules
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="p-6">
+                              <div className="grid grid-cols-4 gap-4">
+                                {item.subMenus.map((subItem, subIndex) => (
+                                  <motion.div
+                                    key={subItem.path}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{
+                                      duration: 0.2,
+                                      delay: subIndex * 0.03,
+                                    }}
+                                  >
+                                    <Link
+                                      to={subItem.path}
+                                      className="group block p-4 bg-white hover:bg-gradient-to-br hover:from-gray-50 hover:to-purple-50/30 rounded-lg transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:shadow-md"
+                                      onClick={() =>
+                                        setIsEvenementHovered(false)
+                                      }
+                                    >
+                                      <div className="flex items-center gap-3 mb-2">
+                                        <div className="flex-shrink-0 p-2.5 bg-gray-50 rounded-lg border border-gray-200 group-hover:border-purple-300 group-hover:bg-purple-50 transition-all duration-300">
+                                          {subItem.icon && (
+                                            <img
+                                              src={subItem.icon}
+                                              alt={subItem.name}
+                                              className="w-5 h-5 group-hover:scale-110 transition-transform duration-300"
+                                            />
+                                          )}
+                                        </div>
+                                        <h4 className="text-sm font-semibold text-gray-900 group-hover:text-purple-700 transition-colors duration-300">
+                                          {subItem.name}
+                                        </h4>
+                                      </div>
+                                      <p className="text-xs text-gray-600">
+                                        {subItem.description}
+                                      </p>
+                                    </Link>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            </div>
+                          </motion.div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -184,89 +273,8 @@ export default function PublicLayout() {
                 Se connecter <FaUser className="w-5 h-5 text-white" />
               </button>
             )}
-
-            {/* Sous-menu centré */}
-            <AnimatePresence>
-              {isEvenementHovered && (
-                <motion.div
-                  className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-40"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onMouseEnter={() => setIsEvenementHovered(true)}
-                  onMouseLeave={() => setIsEvenementHovered(false)}
-                >
-                  <motion.div
-                    className="bg-white/98 backdrop-blur-xl shadow-2xl shadow-gray-900/15 rounded-xl border border-gray-200/60 w-[95vw] max-w-6xl"
-                    variants={subMenuVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                  >
-                    <div className="px-6 py-4 border-b border-gray-100">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900">
-                            Gestion d'événements
-                          </h3>
-                          <p className="text-xs text-gray-600">
-                            Organisez vos événements professionnellement
-                          </p>
-                        </div>
-                        <div className="text-xs bg-gradient-to-r from-[#6B46C1]/10 to-purple-600/10 text-purple-700 px-3 py-1 rounded-full border border-purple-200">
-                          Modules disponibles
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-6">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {navItems
-                          .find((i) => i.name === "Evenement")
-                          ?.subMenus.map((subItem, subIndex) => (
-                            <motion.div
-                              key={subItem.path}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{
-                                duration: 0.2,
-                                delay: subIndex * 0.03,
-                              }}
-                            >
-                              <Link
-                                to={subItem.path}
-                                className="group block p-4 bg-white hover:bg-gradient-to-br hover:from-gray-50 hover:to-purple-50/30 rounded-lg transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:shadow-md"
-                                onClick={() => setIsEvenementHovered(false)}
-                              >
-                                <div className="flex items-center gap-3 mb-2">
-                                  <div className="flex-shrink-0 p-2.5 bg-gray-50 rounded-lg border border-gray-200 group-hover:border-purple-300 group-hover:bg-purple-50 transition-all duration-300">
-                                    {subItem.icon && (
-                                      <img
-                                        src={subItem.icon}
-                                        alt={subItem.name}
-                                        className="w-5 h-5 group-hover:scale-110 transition-transform duration-300"
-                                      />
-                                    )}
-                                  </div>
-                                  <h4 className="text-sm font-semibold text-gray-900 group-hover:text-purple-700 transition-colors duration-300">
-                                    {subItem.name}
-                                  </h4>
-                                </div>
-                                <p className="text-xs text-gray-600">
-                                  {subItem.description}
-                                </p>
-                              </Link>
-                            </motion.div>
-                          ))}
-                      </div>
-                    </div>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </nav>
 
-          {/* Burger menu mobile */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="lg:hidden p-2 rounded bg-white shadow"
@@ -291,7 +299,6 @@ export default function PublicLayout() {
           </button>
         </div>
 
-        {/* Menu mobile */}
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{
@@ -308,6 +315,7 @@ export default function PublicLayout() {
                   {!item.subMenus ? (
                     <a
                       href={item.path}
+                      onClick={(e) => handleSmoothScroll(e, item.path)}
                       className="block px-4 py-2 text-gray-700 hover:bg-blue-50 rounded"
                     >
                       {item.name}
@@ -315,9 +323,10 @@ export default function PublicLayout() {
                   ) : (
                     <div>
                       <button
-                        onClick={() =>
-                          setIsSubMenuOpenMobile(!isSubMenuOpenMobile)
-                        }
+                        onClick={() => {
+                          console.log("Toggle sous-menu mobile :", item.name); // Log pour débogage
+                          setIsSubMenuOpenMobile(!isSubMenuOpenMobile);
+                        }}
                         className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-blue-50 rounded"
                       >
                         {item.name}
