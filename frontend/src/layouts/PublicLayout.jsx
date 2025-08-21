@@ -63,15 +63,15 @@ export default function PublicLayout() {
     console.log("Forfait actuel :", forfait); // Log pour débogage
     if (token && forfait) {
       setNavItems([
-        { path: "/pagepublic", name: "Accueil" },
+        { path: "/pagepublic#pagepublic", name: "Accueil" },
         {
-          path: "/pagepublic",
+          path: "#",
           name: "Evenement",
           subMenus: getConditionalSubMenus(forfait.nom || "Default"),
         },
-        { path: "#service", name: "Service" },
-        { path: "#testimony", name: "Témoignages" },
-        { path: "#forfaits", name: "Forfaits" },
+        { path: "/pagepublic#service", name: "Service" },
+        { path: "/pagepublic#testimony", name: "Témoignages" },
+        { path: "/pagepublic#forfaits", name: "Forfaits" },
       ]);
     }
   }, [forfait]);
@@ -152,8 +152,8 @@ export default function PublicLayout() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                 >
-                  <Link
-                    to={item.path}
+                  <a
+                    href={item.path}
                     className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2"
                     onMouseEnter={() => {
                       console.log("Survol :", item.name); // Log pour débogage
@@ -168,7 +168,7 @@ export default function PublicLayout() {
                     }
                   >
                     <span className="relative z-10">{item.name}</span>
-                  </Link>
+                  </a>
 
                   {item.subMenus && (
                     <AnimatePresence>
