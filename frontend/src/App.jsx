@@ -4,6 +4,8 @@ import Pagepublic from './pages/Pagepublic';
 import PublicEvents from './pages/PublicEvents';
 import NotFound from './pages/NotFound';
 
+import Public_Accueil from "./pages/Public_Accueil";
+
 function App() {
   return (
     <Router>
@@ -13,6 +15,8 @@ function App() {
         {/* Exemple : route pour un événement spécifique */}
         { <Route path="/evenement/:id" element={<EventDetail />} /> }
         <Route path="*" element={<NotFound />} />
+        <Route path="/" element={<Public_Accueil />} />
+        <Route path="/accueil" element={<Public_Accueil />} />
       </Routes>
     </Router>
   );

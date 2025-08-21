@@ -5,7 +5,7 @@ const apiBaseUrl = import.meta.env?.VITE_API_BASE_URL || 'http://localhost:3000'
 
 export default function ButtonConnexion() {
   const connecter = () => {
-    window.location.href = `${apiBaseUrl}/auth/google`;
+    window.location.href = `${apiBaseUrl}/auth/google?redirect=/accueil`;
   };
 
   return (
