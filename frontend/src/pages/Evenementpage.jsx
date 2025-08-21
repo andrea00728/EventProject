@@ -16,6 +16,10 @@ export default function Evenemenpage() {
     }
   };
 
+  const handleExit = () => {
+    setMode(null);
+  }
+
   // Choix du mode
   if (!mode) {
     return (
@@ -46,6 +50,7 @@ export default function Evenemenpage() {
         <Evenementform
           isPublic={true}
           onNext={(data) => console.log("Public créé :", data)}
+          isExit={handleExit}
         />
       </div>
     );
@@ -58,7 +63,7 @@ export default function Evenemenpage() {
         <Stepper currentStep={currentStep} />
 
         {currentStep === 1 && (
-          <Evenementform isPublic={false} onNext={handleNext} />
+          <Evenementform isPublic={false} onNext={handleNext} isExit={handleExit} />
         )}
 
         {currentStep === 2 && (

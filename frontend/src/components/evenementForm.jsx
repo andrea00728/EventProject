@@ -1,5 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
-import { createEvent, getLocations, getSallesByLocation } from "../services/evenementServ";
+import {
+  createEvent,
+  getLocations,
+  getSallesByLocation,
+} from "../services/evenementServ";
 import { textControll } from "../services/controll_champs/controll_champs";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -10,15 +14,18 @@ import Select from "react-select";
 // Fix Leaflet marker icon
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
 
 // Custom blue marker icon
 const blueIcon = new L.Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
-  iconRetinaUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+  iconRetinaUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -53,8 +60,14 @@ const EVENT_TYPES = [
   { value: "tournoi", label: "Tournoi" },
   { value: "remise_diplome", label: "Remise de diplôme" },
   { value: "soiree", label: "Soirée privée" },
-  { value: "enterrement_vie_garcon", label: "EVG (Enterrement de vie de garçon)" },
-  { value: "enterrement_vie_fille", label: "EVJF (Enterrement de vie de jeune fille)" },
+  {
+    value: "enterrement_vie_garcon",
+    label: "EVG (Enterrement de vie de garçon)",
+  },
+  {
+    value: "enterrement_vie_fille",
+    label: "EVJF (Enterrement de vie de jeune fille)",
+  },
   { value: "baby_shower", label: "Baby Shower" },
   { value: "gender_reveal", label: "Gender Reveal" },
   { value: "funerailles", label: "Funérailles / Commémoration" },
@@ -65,8 +78,6 @@ const EVENT_TYPES = [
   { value: "autre", label: "Autre" },
 ];
 
-
-
 // 👉 Styles personnalisés pour react-select
 const customStyles = {
   menu: (provided) => ({
@@ -76,7 +87,7 @@ const customStyles = {
   }),
 };
 
-export default function Evenementform({ onNext, isPublic }) {
+export default function Evenementform({ onNext, isPublic, isExit }) {
   const [form, setForm] = useState({
     nom: "",
     type: "",
@@ -119,7 +130,8 @@ export default function Evenementform({ onNext, isPublic }) {
   const handleChange = (e) => {
     setForm({
       ...form,
-      [e.target.name]: e.target.type === "checkbox" ? e.target.checked : e.target.value,
+      [e.target.name]:
+        e.target.type === "checkbox" ? e.target.checked : e.target.value,
     });
   };
 
@@ -134,7 +146,11 @@ export default function Evenementform({ onNext, isPublic }) {
     const finalType = form.type === "autre" ? customType : form.type;
 
     try {
-      const event = await createEvent({ ...form, type: finalType, isPublic: form.isPublic });
+      const event = await createEvent({
+        ...form,
+        type: finalType,
+        isPublic: form.isPublic,
+      });
       toast.success("Événement créé avec succès !");
       setForm({
         nom: "",
@@ -151,13 +167,16 @@ export default function Evenementform({ onNext, isPublic }) {
       onNext && onNext({ eventId: event.id });
     } catch (error) {
       const errorMessage =
-        error?.response?.data?.message || "Erreur lors de la création de l'événement.";
+        error?.response?.data?.message ||
+        "Erreur lors de la création de l'événement.";
       setError(errorMessage);
     }
   };
 
-  const selectedSalleName = () => salles.find((s) => s.id === form.salleId)?.nom || "";
-  const selectedLocationName = () => locations.find((l) => l.id === form.locationId)?.nom || "";
+  const selectedSalleName = () =>
+    salles.find((s) => s.id === form.salleId)?.nom || "";
+  const selectedLocationName = () =>
+    locations.find((l) => l.id === form.locationId)?.nom || "";
 
   const filteredLocations = locations.filter((loc) =>
     loc.nom.toLowerCase().includes(searchLieu.toLowerCase())
@@ -166,7 +185,10 @@ export default function Evenementform({ onNext, isPublic }) {
   const handleSelectLieu = (loc) => {
     setSelectedLieu(loc);
     if (mapRef.current && loc.latitude && loc.longitude) {
-      mapRef.current.setView([parseFloat(loc.latitude), parseFloat(loc.longitude)], 13);
+      mapRef.current.setView(
+        [parseFloat(loc.latitude), parseFloat(loc.longitude)],
+        13
+      );
     }
   };
 
@@ -191,9 +213,14 @@ export default function Evenementform({ onNext, isPublic }) {
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-        <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-7">
+        <form
+          onSubmit={onSubmit}
+          className="grid grid-cols-1 md:grid-cols-2 gap-7"
+        >
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Nom de l'événement</label>
+            <label className="text-sm font-semibold text-gray-700 mb-1">
+              Nom de l'événement
+            </label>
             <input
               name="nom"
               value={form.nom}
@@ -216,7 +243,9 @@ export default function Evenementform({ onNext, isPublic }) {
               options={EVENT_TYPES}
               value={EVENT_TYPES.find((t) => t.value === form.type) || null}
               onChange={(selected) =>
-                handleChange({ target: { name: "type", value: selected?.value || "" } })
+                handleChange({
+                  target: { name: "type", value: selected?.value || "" },
+                })
               }
               placeholder="Sélectionnez un type"
               styles={customStyles} // 👈 applique le scroll
@@ -237,7 +266,9 @@ export default function Evenementform({ onNext, isPublic }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Thème</label>
+            <label className="text-sm font-semibold text-gray-700 mb-1">
+              Thème
+            </label>
             <input
               name="theme"
               value={form.theme}
@@ -249,7 +280,9 @@ export default function Evenementform({ onNext, isPublic }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Date de début</label>
+            <label className="text-sm font-semibold text-gray-700 mb-1">
+              Date de début
+            </label>
             <input
               type="datetime-local"
               name="date"
@@ -261,7 +294,9 @@ export default function Evenementform({ onNext, isPublic }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Date de fin</label>
+            <label className="text-sm font-semibold text-gray-700 mb-1">
+              Date de fin
+            </label>
             <input
               type="datetime-local"
               name="date_fin"
@@ -273,7 +308,9 @@ export default function Evenementform({ onNext, isPublic }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Lieu</label>
+            <label className="text-sm font-semibold text-gray-700 mb-1">
+              Lieu
+            </label>
             <input
               type="text"
               value={selectedLocationName()}
@@ -285,7 +322,9 @@ export default function Evenementform({ onNext, isPublic }) {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">Salle</label>
+            <label className="text-sm font-semibold text-gray-700 mb-1">
+              Salle
+            </label>
             <input
               type="text"
               value={selectedSalleName()}
@@ -293,17 +332,26 @@ export default function Evenementform({ onNext, isPublic }) {
               disabled={!form.locationId}
               onClick={() => form.locationId && setModalSalleOpen(true)}
               placeholder="Salle"
-              className={`border border-gray-300 rounded-xl px-5 py-3 ${form.locationId ? "cursor-pointer bg-gray-50" : "bg-gray-200"
-                } focus:ring-2 focus:ring-indigo-200 transition`}
+              className={`border border-gray-300 rounded-xl px-5 py-3 ${
+                form.locationId ? "cursor-pointer bg-gray-50" : "bg-gray-200"
+              } focus:ring-2 focus:ring-indigo-200 transition`}
             />
           </div>
 
-          <div className="col-span-1 md:col-span-2 mt-4">
+          <div className="col-span-1 md:col-span-2 mt-4 flex flex-col md:flex-row gap-4">
             <button
               type="submit"
               className="w-full bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition"
             >
               Créer l'événement
+            </button>
+
+            <button
+              type="button"
+              onClick={() => isExit()} // réinitialisation ou navigation
+              className="w-full bg-gray-300 text-gray-700 font-bold py-3 rounded-xl shadow hover:bg-gray-400 transition"
+            >
+              Annuler
             </button>
           </div>
         </form>
@@ -319,7 +367,9 @@ export default function Evenementform({ onNext, isPublic }) {
             >
               ×
             </button>
-            <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">Choisissez une salle</h3>
+            <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">
+              Choisissez une salle
+            </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {salles.map((salle) => (
                 <div
@@ -352,7 +402,9 @@ export default function Evenementform({ onNext, isPublic }) {
             >
               ×
             </button>
-            <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">Choisissez un lieu</h3>
+            <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">
+              Choisissez un lieu
+            </h3>
             <div className="flex flex-col md:flex-row gap-4">
               {/* Liste des lieux */}
               <div className="w-full md:w-1/2 flex flex-col gap-4">
@@ -371,14 +423,17 @@ export default function Evenementform({ onNext, isPublic }) {
                       <div
                         key={loc.id}
                         onClick={() => handleSelectLieu(loc)}
-                        className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
-                          }`}
+                        className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${
+                          selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
+                        }`}
                       >
                         {loc.nom}
                       </div>
                     ))
                   ) : (
-                    <div className="px-4 py-3 text-gray-500 text-center">Aucun lieu trouvé</div>
+                    <div className="px-4 py-3 text-gray-500 text-center">
+                      Aucun lieu trouvé
+                    </div>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -417,14 +472,19 @@ export default function Evenementform({ onNext, isPublic }) {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                   />
-                  {selectedLieu && selectedLieu.latitude && selectedLieu.longitude && (
-                    <Marker
-                      position={[parseFloat(selectedLieu.latitude), parseFloat(selectedLieu.longitude)]}
-                      icon={blueIcon}
-                    >
-                      <Popup>{selectedLieu.nom}</Popup>
-                    </Marker>
-                  )}
+                  {selectedLieu &&
+                    selectedLieu.latitude &&
+                    selectedLieu.longitude && (
+                      <Marker
+                        position={[
+                          parseFloat(selectedLieu.latitude),
+                          parseFloat(selectedLieu.longitude),
+                        ]}
+                        icon={blueIcon}
+                      >
+                        <Popup>{selectedLieu.nom}</Popup>
+                      </Marker>
+                    )}
                 </MapContainer>
               </div>
             </div>
