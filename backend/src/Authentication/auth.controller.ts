@@ -178,6 +178,5 @@ export class AuthController {
     await this.authService.deleteMessage(id);
   }
 
-
 }
 
