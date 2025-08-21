@@ -2,8 +2,8 @@
 
 import axiosClient from "../api/axios-client"; // Assurez-vous que le chemin est correct
 
-const API_URL = 'https://api.mastertable.site/public-invites/add'; // backend public route
-const PUBLIC_API = 'https://api.mastertable.site/public-guest/create';
+const API_URL = 'https://localhost:3000/public-invites/add'; // backend public route
+const PUBLIC_API = 'https://localhost:3000/public-guest/create';
 
 // export const createInvite = async (inviteData) => {
 //   const token = localStorage.getItem("token");

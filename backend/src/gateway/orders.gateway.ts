@@ -9,7 +9,7 @@ import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.CLIENT_URL || 'https://mastertable.site',
+    origin: process.env.CLIENT_URL || 'https://localhost:5173',
     credentials: true,
   },
   //  path: '/socket.io',

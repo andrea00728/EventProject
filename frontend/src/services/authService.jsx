@@ -1,4 +1,4 @@
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.mastertable.site';
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:3000';
 
 export const registerUser = async (userData, file) => {
     const formData = new FormData();
