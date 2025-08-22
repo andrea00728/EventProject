@@ -83,15 +83,15 @@ export default function PublicLayout() {
 
 
   useEffect(() => {
-  if (token) {
-    console.log("Token:", token, "User:", user, "Role:", role); // Debug log
-    if (user.role !== "organisateur") {
+  if (token && user) {
+    // console.log("Token:", token, "User:", user, "Role:", role); // Debug log
+    if (user.role && user.role !== "organisateur") {
       navigate("/choix-role", { replace: true });
-    } else {
+    } else if (user.role && user.role === "organisateur") {
       navigate("/pagepublic", { replace: true });
     }
   }
-}, [token, user, role, navigate]);
+}, [token, user?.role, navigate]);
 
 
 
