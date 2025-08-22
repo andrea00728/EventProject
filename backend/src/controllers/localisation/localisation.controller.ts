@@ -114,4 +114,17 @@ export class LocationController {
     }
     return this.locationService.saveSelectedLocation(query);
   }
+
+  // Ajouter cette nouvelle route pour la mise à jour avec géocodage
+@Put('geocode/:id')
+async updateLocationWithGeocode(
+  @Param('id') id: string, 
+  @Body('query') query: string
+) {
+  const idNum = parseInt(id, 10);
+  if (isNaN(idNum) || idNum <= 0) {
+    throw new BadRequestException('L\'ID doit être un entier positif valide');
+  }
+  return this.locationService.updateLocationWithGeocode(idNum, query);
+}
 }
