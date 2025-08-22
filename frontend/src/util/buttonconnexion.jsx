@@ -1,7 +1,7 @@
 import { Google } from "@mui/icons-material";
 import { FaGoogle } from "react-icons/fa";
 
-const apiBaseUrl = import.meta.env?.VITE_API_BASE_URL || 'https://localhost:3000';
+const apiBaseUrl = import.meta.env?.VITE_API_BASE_URL || 'http://localhost:3000';
 
 export default function ButtonConnexion() {
   const connecter = () => {
