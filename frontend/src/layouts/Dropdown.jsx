@@ -27,8 +27,6 @@ const Dropdown = forwardRef(
       }
     };
 
-    const displayedItems = items.slice(0, 5);
-
     const handleViewMoreClick = (e) => {
         e.preventDefault();
         setShow(false);
@@ -36,6 +34,10 @@ const Dropdown = forwardRef(
             onViewMore();
         }
     };
+
+    const viewMoreButtonText = label === "Messages" 
+      ? "Voir tous les messages" 
+      : `Voir toutes les ${label.toLowerCase()}`;
 
     return (
       <div ref={dropdownRef} className="relative">
@@ -67,9 +69,9 @@ const Dropdown = forwardRef(
             <div className={`py-2 px-4 border-b ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
               <h3 className="font-semibold">{label}</h3>
             </div>
-            {displayedItems.length > 0 ? (
+            {items.length > 0 ? (
               <div className="max-h-80 overflow-y-auto">
-                {displayedItems.map((item, index) => {
+                {items.map((item, index) => {
                   const dateValue = item.date || item.createdAt;
                   const dateObject = new Date(dateValue);
                   const isValidDate = !isNaN(dateObject.getTime());
@@ -129,7 +131,7 @@ const Dropdown = forwardRef(
               </div>
             )}
             
-            {items.length > 5 && (
+            {onViewMore && items.length > 0 && (
               <div className={`p-2 border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
                 <button
                   onClick={handleViewMoreClick}
@@ -137,7 +139,7 @@ const Dropdown = forwardRef(
                     darkMode ? "text-blue-400 hover:bg-gray-700" : "text-blue-600 hover:bg-gray-100"
                   }`}
                 >
-                  Voir plus ({items.length - displayedItems.length} nouveaux)
+                   {viewMoreButtonText}
                 </button>
               </div>
             )}
