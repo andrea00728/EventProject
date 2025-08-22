@@ -62,14 +62,22 @@ export default function PublicLayout() {
     if (token) {
       fetchAndSetForfait();
       setConnected(true);
-      if (!socket) return;
-      socket.on("connect", () => console.log("Socket connectée : ", socket.id));
+
+      if (socket) {
+        const handleConnect = () =>
+          console.log("Socket connectée :", socket.id);
+        socket.on("connect", handleConnect);
+
+        return () => {
+          socket.off("connect", handleConnect);
+        };
+      }
     } else {
       setConnected(false);
       setForfait(null);
       setNavItems(defaultNavItems);
     }
-  }, [token, role, user, navigate]);
+  }, [token]); 
 
   useEffect(() => {
     if (token && forfait) {
@@ -88,14 +96,14 @@ export default function PublicLayout() {
   }, [forfait, token]);
 
   useEffect(() => {
-    if (token && user) {
-      if (user.role && user.role !== "organisateur") {
+    if (token && user?.role) {
+      if (user.role !== "organisateur" && location.pathname !== "/choix-role") {
         navigate("/choix-role", { replace: true });
-      } else {
+      } else if (user.role === "organisateur") {
         navigate("/pagepublic", { replace: true });
       }
     }
-  }, [token, user, role, navigate]);
+  }, [token, user?.role, navigate]); 
 
   const subMenuVariants = {
     hidden: {
