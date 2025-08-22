@@ -11,14 +11,14 @@ export function useSocket() {
     let newSocket;
 
     async function connectSocket() {
-      const userId = await getUserIdForToken();
-      if (!userId) return;
+        const userId = await getUserIdForToken();
+        if (!userId) return;
 
-      newSocket = io(SOCKET_URL, {
-        transports: ['websocket'],
-        auth: { userId },
-      });
-      setSocket(newSocket);
+        newSocket = io(SOCKET_URL, {
+          transports: ['websocket'],
+          auth: { userId },
+        });
+        setSocket(newSocket);
     }
 
     connectSocket();
