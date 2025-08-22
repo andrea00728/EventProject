@@ -6,7 +6,7 @@ import { useStateContext } from "../../context/ContextProvider";
 import { QrCodeValidation } from "../../services/invitationService";
 
 const QrScannerComponent = () => {
-  const { token } = useStateContext();
+  const {isAuthenticated } = useStateContext();
   const videoRef = useRef(null);
   const scannerRef = useRef(null);
   const lastCodeRef = useRef(null);
@@ -60,7 +60,7 @@ const QrScannerComponent = () => {
             didOpen: () => Swal.showLoading(),
           });
 
-          const result = await QrCodeValidation(payload, token);
+          const result = await QrCodeValidation(payload);
           Swal.fire("Succès", result.message, "success");
         } catch (err) {
           const raw = err.response?.data?.message || err.message || "Erreur inconnue";
@@ -123,7 +123,7 @@ const QrScannerComponent = () => {
   useEffect(() => {
     startScanner();
     return () => stopScanner();
-  }, [token]);
+  }, [isAuthenticated]);
 
   return (
     <div

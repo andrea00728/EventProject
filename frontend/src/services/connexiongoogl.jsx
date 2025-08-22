@@ -95,7 +95,7 @@ function ConnexionGoogle() {
         if (user.isInPersonnel) {
             navigate("/choix-role", { replace: true });
         } else {
-            navigate("/accueil", { replace: true });
+            navigate("/pagepublic", { replace: true });
         }
     } else {
         // Sinon, redirige vers la page publique

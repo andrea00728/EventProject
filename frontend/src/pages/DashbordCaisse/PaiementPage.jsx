@@ -32,7 +32,7 @@ const PaiementPage = () => {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const socketRef = useRef(null);
@@ -54,7 +54,7 @@ const PaiementPage = () => {
 
   const fetchCommandes = useCallback(async () => {
     setLoading(true);
-    if (!token) {
+    if (!isAuthenticated) {
       setSnackbar({
         open: true,
         message: "Veuillez vous connecter pour accéder aux paiements",
@@ -65,7 +65,7 @@ const PaiementPage = () => {
     }
 
     try {
-      const eventIdResponse = await getEventIdByEmail(token);
+      const eventIdResponse = await getEventIdByEmail();
       const eventId = eventIdResponse?.eventId;
       if (!eventId) {
         throw new Error("ID d'événement non trouvé ou invalide.");
@@ -73,10 +73,6 @@ const PaiementPage = () => {
 
       const response = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/orders/event/${eventId}`,
-        {
-          params: { include: "table,items,items.menuItem" },
-          headers: { Authorization: `Bearer ${token}` },
-        }
       );
 
       const raw = response.data;
@@ -138,13 +134,13 @@ const PaiementPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchCommandes();
 
     const setupWebSocket = async () => {
-      if (!token) {
+      if (!isAuthenticated) {
         setSnackbar({
           open: true,
           message: "Session expirée. Veuillez vous reconnecter.",
@@ -153,7 +149,7 @@ const PaiementPage = () => {
         return;
       }
       try {
-        const fetchedUserId = await getUserIdForToken(token);
+        const fetchedUserId = await getUserIdForToken();
         setUserId(fetchedUserId);
 
         if (!socketRef.current) {
@@ -211,7 +207,7 @@ const PaiementPage = () => {
         socketRef.current = null;
       }
     };
-  }, [token, fetchCommandes]);
+  }, [isAuthenticated, fetchCommandes]);
 
   const handlePaymentStatusChange = async (id, newStatus) => {
     const backendStatus = PAYMENT_STATUS_MAPPING.frontToBack[newStatus];
@@ -224,7 +220,6 @@ const PaiementPage = () => {
       await axios.patch(
         `${import.meta.env.VITE_API_BASE_URL}/orders/${id}/payment`,
         { paymentStatus: backendStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setCommandes((prev) =>
@@ -272,7 +267,6 @@ const PaiementPage = () => {
       await axios.patch(
         `${import.meta.env.VITE_API_BASE_URL}/orders/${id}/payment`,
         { paymentStatus: "paid" },
-        { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchCommandes();
       setSnackbar({
@@ -322,9 +316,7 @@ const PaiementPage = () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/invoices/next-sequence`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+         
         );
         if (response?.data?.nextSequence) sequentialNumber = response.data.nextSequence;
       } catch (err) {

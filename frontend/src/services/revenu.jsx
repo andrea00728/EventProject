@@ -59,10 +59,10 @@ const revenuService = {
   },
 
   // Définir le token pour les requêtes
-  setAuthToken(token) {
-    console.log("Setting auth token:", token ? "Token set" : "Token removed");
-    if (token) {
-      axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  setAuthToken(isAuthenticated) {
+    console.log("Setting auth token:", isAuthenticated ? "Token set" : "Token removed");
+    if (isAuthenticated) {
+      axiosInstance.defaults.headers.common["Authorization"] ;
     } else {
       delete axiosInstance.defaults.headers.common["Authorization"];
     }

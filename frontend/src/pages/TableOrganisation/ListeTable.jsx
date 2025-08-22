@@ -7,9 +7,10 @@ import Checkbox from "@mui/material/Checkbox";
 import { Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 import { FiPrinter, FiTrash2, FiPlus, FiCheck, FiX, FiAlertTriangle } from "react-icons/fi";
+import axiosClient from "../../api/axios-client";
 
 export default function ListeTable() {
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const [tables, setTables] = useState([]);
   const [selectedTableIds, setSelectedTableIds] = useState([]);
   const [error, setError] = useState(null);
@@ -29,14 +30,14 @@ export default function ListeTable() {
   // Fetch events when component mounts
   useEffect(() => {
     const fetchEvents = async () => {
-      if (!token) {
+      if (!isAuthenticated) {
         setEventError("Veuillez vous connecter pour voir vos événements.");
         setIsLoadingEvents(false);
         return;
       }
       setIsLoadingEvents(true);
       try {
-        const data = await getMyEvents(token);
+        const data = await getMyEvents();
         if (Array.isArray(data)) {
           setEvents(data);
           setEventError(null);
@@ -55,7 +56,7 @@ export default function ListeTable() {
       }
     };
     fetchEvents();
-  }, [token]);
+  }, [isAuthenticated]);
 
   // Fetch tables when an event is selected
   useEffect(() => {
@@ -69,11 +70,8 @@ export default function ListeTable() {
 
       try {
         setLoading(true);
-        const response = await axios.get(`/tables/event/${selectedEvent.id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await axiosClient.get(`/tables/event/${selectedEvent.id}`);
+
 
         if (Array.isArray(response.data)) {
           setTables(response.data);
@@ -99,7 +97,7 @@ export default function ListeTable() {
     };
 
     fetchTables();
-  }, [selectedEvent, token]);
+  }, [selectedEvent]);
 
   const handleCheckboxChange = (id) => {
     setSelectedTableIds((prev) =>
@@ -162,19 +160,11 @@ export default function ListeTable() {
 
       await Promise.all(
         selectedTableIds.map((tableId) =>
-          axios.delete(`/tables/${tableId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          })
+          axiosClient.delete(`/tables/${tableId}`)
         )
       );
 
-      const response = await axios.get(`/tables/event/${selectedEvent.id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axiosClient.get(`/tables/event/${selectedEvent.id}`);
 
       if (Array.isArray(response.data)) {
         setTables(response.data);

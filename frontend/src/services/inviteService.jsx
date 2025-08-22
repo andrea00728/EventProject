@@ -5,45 +5,10 @@ import axiosClient from "../api/axios-client"; // Assurez-vous que le chemin est
 const API_URL = 'http://localhost:3000/public-invites/add'; // backend public route
 const PUBLIC_API = 'http://localhost:3000/public-guest/create';
 
-// export const createInvite = async (inviteData) => {
-//   const token = localStorage.getItem("token");
 
-//   const headers = {
-//     'Content-Type': 'application/json',
-//     ...(token && { Authorization: `Bearer ${token}` }), // seulement si token présent
-//   };
-
-//   const response = await fetch('https://api.mastertable.site/public-guest/create', {
-//     method: 'POST',
-//     headers,
-//     body: JSON.stringify(inviteData),
-//   });
-
-//   if (!response.ok) throw new Error('Erreur lors de l’ajout de l’invité');
-//   return response.json();
-
-//   try {
-//     const response = await axiosClient.post("/guests/create", inviteData, {
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//       },
-//     });
-//     return response.data;
-//   } catch (error) {
-//     console.error("Erreur lors de la création de l'invité:", error);
-//     throw error;
-//   }
-// };
-
-export const createInvite = async (inviteData, token) => {
-  if (!token) throw new Error("Utilisateur non authentifié");
-
+export const createInvite = async (inviteData) => {
   try {
-    const response = await axiosClient.post("/guests/create", inviteData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axiosClient.post("/guests/create", inviteData);
     return response.data;
   } catch (error) {
     console.error("Erreur lors de la création de l'invité:", error);
@@ -133,7 +98,6 @@ export const importGuestsToSpecificEvent = async (file, eventId) => {
  */
 
 export const deleteGuest = async (guestId) => {
-  if (!token) throw new Error("Utilisateur non authentifié");
   try {
     const response = await axiosClient.delete(`/guests/${guestId}`);
     return response.data;
@@ -146,8 +110,7 @@ export const deleteGuest = async (guestId) => {
 /**
    * modifiction invite
    */
-  export const updateGuest = async (guestId, data, token) => {
-  if (!token) throw new Error("Utilisateur non authentifié");
+  export const updateGuest = async (guestId, data) => {
   if (!guestId) throw new Error("ID de l'invité manquant");
 
   try {
@@ -207,16 +170,12 @@ export const deleteGuest = async (guestId) => {
 // }
 
 
-export async function getTablesByEventId(eventId, token) {
+export async function getTablesByEventId(eventId) {
   if (!token) throw new Error("Utilisateur non authentifié");
   if (!eventId) throw new Error("L'ID de l'événement est manquant pour la récupération des tables.");
 
   try {
-    const response = await axiosClient.get(`/guests/tables/${eventId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axiosClient.get(`/guests/tables/${eventId}`);
     return response.data;
   } catch (error) {
     console.error("Erreur lors de la récupération des tables:", error);

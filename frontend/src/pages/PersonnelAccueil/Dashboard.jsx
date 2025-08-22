@@ -6,14 +6,14 @@ const DashboardpersAccueil = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        if (!token) throw new Error("Token manquant");
+        if (!isAuthenticated) throw new Error("Token manquant");
 
-        const data = await getCheckinStats(token); // 👈 plus besoin d'eventId
+        const data = await getCheckinStats(); // 👈 plus besoin d'eventId
         setStats(data);
       } catch (err) {
         console.error("Erreur API :", err.response?.data || err.message);
@@ -24,7 +24,7 @@ const DashboardpersAccueil = () => {
     };
 
     fetchStats();
-  }, [token]);
+  }, [isAuthenticated]);
 
   if (loading) return <p className="text-center text-gray-500">Chargement...</p>;
   if (error) return <p className="text-center text-red-500">Erreur : {error}</p>;

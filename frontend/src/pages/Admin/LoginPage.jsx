@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 
 const LoginPage = () => {
 
-  const { setToken, setUser } = useStateContext();
+  const { setUser } = useStateContext();
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState(null); 
 
@@ -16,7 +16,6 @@ const LoginPage = () => {
     setErrorMessage(null);  // Réinitialiser l'erreur
     try {
       const res = provider === "Google" ? await signInWithGoogle() : await signInWithFacebook();
-      setToken(res.access_token);
       setUser(res.user);
 
       navigate('/AdminAccueil');

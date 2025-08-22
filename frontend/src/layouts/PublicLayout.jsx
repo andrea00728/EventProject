@@ -11,7 +11,7 @@ import { getConditionalSubMenus } from "../util/menuUtils";
 import { useSocket } from "../socket";
 
 export default function PublicLayout() {
-  const { token, role, user } = useStateContext();
+  const { isAuthenticated, role, user } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [connected, setConnected] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
@@ -45,7 +45,7 @@ export default function PublicLayout() {
   useEffect(() => {
     const fetchAndSetForfait = async () => {
       try {
-        const data = await getUserForfait(token);
+        const data = await getUserForfait();
         setForfait(data.forfait || { nom: "Default" });
       } catch (err) {
         console.error("Erreur lors de la récupération du forfait", err);
@@ -53,7 +53,7 @@ export default function PublicLayout() {
       }
     };
 
-    if (token) {
+    if (isAuthenticated) {
       fetchAndSetForfait();
       setConnected(true);
       if (!socket) return;
@@ -63,10 +63,10 @@ export default function PublicLayout() {
       setForfait(null);
       setNavItems(defaultNavItems);
     }
-  }, [token, role, user, navigate]);
+  }, [isAuthenticated, role, user, navigate]);
 
   useEffect(() => {
-    if (token && forfait) {
+    if (isAuthenticated && forfait) {
       setNavItems([
         { path: "/pagepublic#pagepublic", name: "Accueil" },
         {
@@ -79,19 +79,19 @@ export default function PublicLayout() {
         { path: "/pagepublic#forfaits", name: "Forfaits" },
       ]);
     }
-  }, [forfait, token]);
+  }, [forfait, isAuthenticated]);
 
 
   useEffect(() => {
-  if (token) {
-    console.log("Token:", token, "User:", user, "Role:", role); // Debug log
+  if (isAuthenticated) {
+    console.log("Token:", isAuthenticated, "User:", user, "Role:", role); // Debug log
     if (user.role !== "organisateur") {
       navigate("/choix-role", { replace: true });
     } else {
       navigate("/pagepublic", { replace: true });
     }
   }
-}, [token, user, role, navigate]);
+}, [isAuthenticated, user, role, navigate]);
 
 
 

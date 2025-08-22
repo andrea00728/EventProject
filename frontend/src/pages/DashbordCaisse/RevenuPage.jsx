@@ -78,7 +78,7 @@ const RevenuPage = () => {
   const [itemsPerPage] = useState(5);
   const [chartType, setChartType] = useState("bar");
 
-  const { token } = useStateContext();
+  const { isAuthenticated} = useStateContext();
   const navigate = useNavigate();
   const socket = useSocket();
 
@@ -95,8 +95,8 @@ const RevenuPage = () => {
 
   // Mise à jour du token pour le service de revenus
   useEffect(() => {
-    revenuService.setAuthToken(token);
-  }, [token]);
+    revenuService.setAuthToken();
+  }, []);
 
   // Récupérer le userId à partir du token
   useEffect(() => {
