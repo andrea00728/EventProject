@@ -78,12 +78,64 @@ const EVENT_TYPES = [
   { value: "autre", label: "Autre" },
 ];
 
-// 👉 Styles personnalisés pour react-select
+// Liste des thèmes
+const EVENT_THEMES = [
+  { value: "chic", label: "Chic" },
+  { value: "boheme", label: "Bohème" },
+  { value: "classique", label: "Classique" },
+  { value: "rustique", label: "Rustique" },
+  { value: "moderne", label: "Moderne" },
+  { value: "vintage", label: "Vintage" },
+  { value: "tropical", label: "Tropical" },
+  { value: "glamour", label: "Glamour" },
+  { value: "minimaliste", label: "Minimaliste" },
+  { value: "industriel", label: "Industriel" },
+  { value: "romantique", label: "Romantique" },
+  { value: "nature", label: "Nature" },
+  { value: "festif", label: "Festif" },
+  { value: "autre", label: "Autre" },
+];
+
+// Styles personnalisés pour react-select
 const customStyles = {
+  control: (provided) => ({
+    ...provided,
+    borderRadius: "0.75rem",
+    border: "1px solid #d1d5db",
+    backgroundColor: "#f9fafb",
+    padding: "0.5rem",
+    boxShadow: "none",
+    "&:hover": {
+      borderColor: "#a5b4fc",
+    },
+    "&:focus-within": {
+      borderColor: "#a5b4fc",
+      boxShadow: "0 0 0 2px rgba(165, 180, 252, 0.5)",
+    },
+  }),
   menu: (provided) => ({
     ...provided,
-    maxHeight: 200, // limite la hauteur du menu
-    overflowY: "auto", // permet de scroller si trop long
+    maxHeight: 200,
+    overflowY: "auto",
+    borderRadius: "0.75rem",
+    border: "1px solid #e5e7eb",
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    backgroundColor: state.isSelected ? "#e0e7ff" : state.isFocused ? "#f3f4f6" : "white",
+    color: "#1f2937",
+    padding: "0.75rem 1rem",
+    "&:hover": {
+      backgroundColor: "#f3f4f6",
+    },
+  }),
+  placeholder: (provided) => ({
+    ...provided,
+    color: "#9ca3af",
+  }),
+  singleValue: (provided) => ({
+    ...provided,
+    color: "#1f2937",
   }),
 };
 
@@ -99,8 +151,8 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     isPublic: isPublic || false,
   });
 
-  const [customType, setCustomType] = useState(""); // pour gérer le champ libre quand "Autre" est choisi
-
+  const [customType, setCustomType] = useState("");
+  const [customTheme, setCustomTheme] = useState("");
   const [locations, setLocations] = useState([]);
   const [salles, setSalles] = useState([]);
   const [modalSalleOpen, setModalSalleOpen] = useState(false);
@@ -144,11 +196,13 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     }
 
     const finalType = form.type === "autre" ? customType : form.type;
+    const finalTheme = form.theme === "autre" ? customTheme : form.theme;
 
     try {
       const event = await createEvent({
         ...form,
         type: finalType,
+        theme: finalTheme,
         isPublic: form.isPublic,
       });
       toast.success("Événement créé avec succès !");
@@ -163,6 +217,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         isPublic: false,
       });
       setCustomType("");
+      setCustomTheme("");
 
       onNext && onNext({ eventId: event.id });
     } catch (error) {
@@ -229,16 +284,14 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               }}
               placeholder="Ex: Mariage de Sarah & Paul"
               required
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
             />
           </div>
 
-          {/* Type d'événement avec select */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700 mb-1">
               Type d'événement
             </label>
-
             <Select
               options={EVENT_TYPES}
               value={EVENT_TYPES.find((t) => t.value === form.type) || null}
@@ -248,11 +301,9 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                 })
               }
               placeholder="Sélectionnez un type"
-              styles={customStyles} // 👈 applique le scroll
-              isSearchable // 👈 active la recherche
+              styles={customStyles}
+              isSearchable
             />
-
-            {/* Champ libre si "Autre" est choisi */}
             {form.type === "autre" && (
               <input
                 type="text"
@@ -260,7 +311,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                 onChange={(e) => setCustomType(e.target.value)}
                 placeholder="Entrez votre type d'événement"
                 required
-                className="mt-2 border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-pink-400 transition"
+                className="mt-2 border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
               />
             )}
           </div>
@@ -269,14 +320,28 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
             <label className="text-sm font-semibold text-gray-700 mb-1">
               Thème
             </label>
-            <input
-              name="theme"
-              value={form.theme}
-              onChange={handleChange}
-              placeholder="Ex: Chic, Bohème, Classique..."
-              required
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+            <Select
+              options={EVENT_THEMES}
+              value={EVENT_THEMES.find((t) => t.value === form.theme) || null}
+              onChange={(selected) =>
+                handleChange({
+                  target: { name: "theme", value: selected?.value || "" },
+                })
+              }
+              placeholder="Sélectionnez un thème"
+              styles={customStyles}
+              isSearchable
             />
+            {form.theme === "autre" && (
+              <input
+                type="text"
+                value={customTheme}
+                onChange={(e) => setCustomTheme(e.target.value)}
+                placeholder="Entrez votre thème"
+                required
+                className="mt-2 border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+              />
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -289,7 +354,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               value={form.date}
               onChange={handleChange}
               required
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
             />
           </div>
 
@@ -303,7 +368,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               value={form.date_fin}
               onChange={handleChange}
               required
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
             />
           </div>
 
@@ -318,9 +383,10 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               onClick={() => setModalLieuOpen(true)}
               placeholder="Sélectionnez un lieu"
               required
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 cursor-pointer focus:ring-2 focus:ring-indigo-200 transition"
+              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 cursor-pointer focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
             />
           </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700 mb-1">
               Salle
@@ -331,10 +397,12 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               readOnly
               disabled={!form.locationId}
               onClick={() => form.locationId && setModalSalleOpen(true)}
-              placeholder="Salle"
-              className={`border border-gray-300 rounded-xl px-5 py-3 ${
-                form.locationId ? "cursor-pointer bg-gray-50" : "bg-gray-200"
-              } focus:ring-2 focus:ring-indigo-200 transition`}
+              placeholder="Sélectionnez une salle"
+              className={`border border-gray-300 rounded-xl px-5 py-3 text-gray-900 placeholder-gray-400 transition ${
+                form.locationId
+                  ? "cursor-pointer bg-gray-50 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+                  : "bg-gray-200 cursor-not-allowed"
+              }`}
             />
           </div>
 
@@ -348,7 +416,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
 
             <button
               type="button"
-              onClick={() => isExit()} // réinitialisation ou navigation
+              onClick={() => isExit()}
               className="w-full bg-gray-300 text-gray-700 font-bold py-3 rounded-xl shadow hover:bg-gray-400 transition"
             >
               Annuler
@@ -414,7 +482,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                     value={searchLieu}
                     onChange={(e) => setSearchLieu(e.target.value)}
                     placeholder="Rechercher un lieu..."
-                    className="w-full border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition"
+                    className="w-full border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
                   />
                 </div>
                 <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-xl">
