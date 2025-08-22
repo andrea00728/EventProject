@@ -6,10 +6,10 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 
 export default function DeleteGuestButton({ guestId, onDeleted }) {
-  const { isAuthenticated } = useStateContext();
+  const { token } = useStateContext();
 
   const handleDelete = async () => {
-    if (!isAuthenticated) {
+    if (!token) {
       alert("Utilisateur non authentifié");
       return;
     }
@@ -18,7 +18,7 @@ export default function DeleteGuestButton({ guestId, onDeleted }) {
     if (!confirm) return;
 
     try {
-      await deleteGuest(guestId);
+      await deleteGuest(guestId, token);
       alert("Invité supprimé avec succès !");
       onDeleted(guestId);
     } catch (error) {

@@ -8,21 +8,21 @@ import { FaCheckCircle } from 'react-icons/fa';
 import SuccessIllustration from '../../assets/undraw_mobile-payments_0u42.svg';
 
 const ForfaitActive = () => {
-  const { isAuthenticated } = useStateContext();
+  const { token } = useStateContext();
   const navigate = useNavigate();
   const [forfait, setForfait] = useState(null);
   const [expirationDate, setExpirationDate] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('');
+    if (!token) {
+      navigate('/login');
       return;
     }
 
     const fetchForfait = async () => {
       try {
-        const data = await getUserForfait();
+        const data = await getUserForfait(token);
         setForfait(data.forfait);
         setExpirationDate(data.forfaitExpirationDate);
       } catch (err) {
@@ -31,7 +31,7 @@ const ForfaitActive = () => {
     };
 
     fetchForfait();
-  }, [isAuthenticated, navigate]);
+  }, [token, navigate]);
 
   // Animations avec Framer Motion
   const containerVariants = {

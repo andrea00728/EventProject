@@ -14,7 +14,7 @@ import { updateGuest } from "../services/inviteService";
 import { useStateContext } from "../context/ContextProvider";
 
 export default function EditGuestButton({ guest, onUpdated }) {
-  const { isAuthenticated } = useStateContext();
+  const { token } = useStateContext();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({ ...guest });
 
@@ -24,7 +24,7 @@ export default function EditGuestButton({ guest, onUpdated }) {
 
   const handleUpdate = async () => {
     try {
-      const updated = await updateGuest(guest.id, formData);
+      const updated = await updateGuest(guest.id, formData, token);
       onUpdated(updated); 
       setOpen(false);
     } catch (err) {

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import OrderForm from './commande';
 
-const MenuItemForm = ({ menuId,  }) => {
+const MenuItemForm = ({ menuId, token }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -56,7 +56,12 @@ const MenuItemForm = ({ menuId,  }) => {
         formData.append('photo', photo);
       }
 
-      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/menus/${menuId}/items`, formData);
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/menus/${menuId}/items`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       setMessage('Item créé avec succès !');
       setItemCreated(true);

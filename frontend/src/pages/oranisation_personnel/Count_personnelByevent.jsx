@@ -10,12 +10,12 @@ export default function PersonnelCountDashboard() {
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [error, setError] = useState('');
-  const { isAuthenticated } = useStateContext();
+  const { token } = useStateContext();
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const data = await getMyEvents();
+        const data = await getMyEvents(token);
         setEvents(data);
         if(data.length > 0) {
           setSelectedEventId(data[0].id);
@@ -28,8 +28,8 @@ export default function PersonnelCountDashboard() {
       }
     };
 
-    if (isAuthenticated) fetchEvents();
-  }, [isAuthenticated]);
+    if (token) fetchEvents();
+  }, [token]);
 
   const handleEventClick = async (event) => {
     setSelectedEventId(event.id);
@@ -74,7 +74,7 @@ export default function PersonnelCountDashboard() {
       <div className="flex-1 overflow-y-auto">
         {selectedEventId && (
           <div className="p-6">
-            <ListePersonnel eventId={selectedEventId} token={isAuthenticated} />
+            <ListePersonnel eventId={selectedEventId} token={token} />
           </div>
         )}
       </div>

@@ -22,7 +22,7 @@ const EventOption = ({ event, onSelect }) => (
 );
 
 export default function AffichageInvite() {
-  const { isAuthenticated } = useStateContext();
+  const { token } = useStateContext();
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [selectedEventName, setSelectedEventName] = useState("");
@@ -32,9 +32,9 @@ export default function AffichageInvite() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!token) return;
     setIsLoading(true);
-    getMyEvents()
+    getMyEvents(token)
       .then((data) => {
         setEvents(data);
         setIsLoading(false);
@@ -44,12 +44,12 @@ export default function AffichageInvite() {
         setError("Erreur lors du chargement des événements.");
         setIsLoading(false);
       });
-  }, [isAuthenticated]);
+  }, [token]);
 
   useEffect(() => {
-    if (!selectedEventId || !isAuthenticated) return;
+    if (!selectedEventId || !token) return;
     setIsLoading(true);
-    getGuestsByEventId(selectedEventId)
+    getGuestsByEventId(selectedEventId, token)
       .then((guestsData) => {
         setGuests(guestsData);
         setIsLoading(false);
@@ -59,7 +59,7 @@ export default function AffichageInvite() {
         setError("Erreur lors du chargement des invités.");
         setIsLoading(false);
       });
-  }, [selectedEventId, isAuthenticated]);
+  }, [selectedEventId, token]);
 
   const handleEventSelect = (id, name) => {
     setSelectedEventId(id);

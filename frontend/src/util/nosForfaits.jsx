@@ -29,7 +29,7 @@ const textColorMap = {
 };
 
 export default function NosForfaits() {
-  const { isAuthenticated } = useStateContext();
+  const { token } = useStateContext();
   const [activeForfait, setActiveForfait] = useState(null);
   const [expirationDate, setExpirationDate] = useState(null);
   const [selectedForfait, setSelectedForfait] = useState(null);
@@ -46,9 +46,9 @@ export default function NosForfaits() {
 
   useEffect(() => {
     const fetchUserForfait = async () => {
-      if (!isAuthenticated) return;
+      if (!token) return;
       try {
-        const userForfait = await getUserForfait();
+        const userForfait = await getUserForfait(token);
         if (userForfait?.forfait) {
           setActiveForfait(userForfait.forfait);
           setExpirationDate(userForfait.forfaitExpirationDate);
@@ -59,7 +59,7 @@ export default function NosForfaits() {
       }
     };
     fetchUserForfait();
-  }, [isAuthenticated]);
+  }, [token]);
 
   const handleAcheter = (forfait) => {
     setSelectedForfait(forfait);
@@ -120,7 +120,7 @@ export default function NosForfaits() {
                 <li>Durée : <span className="font-semibold">{f.duration}</span></li>
               </ul>
 
-              {isAuthenticated ? (
+              {token ? (
                 isActive ? (
                   <button
                     disabled

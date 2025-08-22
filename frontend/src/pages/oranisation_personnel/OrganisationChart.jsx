@@ -15,7 +15,7 @@ const statusLabels = {
 
 const getAvatarUrl = () => Image;
 
-export default function OrganisationChart({ eventId, refreshTrigger }) {
+export default function OrganisationChart({ eventId, token, refreshTrigger }) {
   const [personnels, setPersonnels] = useState([]);
   const [error, setError] = useState("");
 
@@ -26,10 +26,10 @@ export default function OrganisationChart({ eventId, refreshTrigger }) {
   };
 
   useEffect(() => {
-    if (!eventId ) return;
+    if (!eventId || !token) return;
     const fetchPersonnels = async () => {
       try {
-        const data = await getPersonnelByEventId(eventId);
+        const data = await getPersonnelByEventId(eventId, token);
         setPersonnels(data);
       } catch (err) {
         setError("Erreur lors du chargement des personnels.");
@@ -38,7 +38,7 @@ export default function OrganisationChart({ eventId, refreshTrigger }) {
     fetchPersonnels();
     const interval = setInterval(fetchPersonnels, 6000);
     return () => clearInterval(interval);
-  }, [eventId, refreshTrigger]);
+  }, [eventId, token, refreshTrigger]);
 
   const renderNode = (person) => {
     const avatar = getAvatarUrl();

@@ -57,7 +57,7 @@ const EventSelectionModal = ({ events, onSelectEvent, onClose }) => {
 };
 
 export default function InviteFormWithId({ onBack }) {
-  const { isAuthenticated } = useStateContext();
+  const { token } = useStateContext();
   const [form, setForm] = useState({
     nom: "",
     prenom: "",
@@ -73,13 +73,13 @@ export default function InviteFormWithId({ onBack }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-    getMyEvents()
+    if (!token) return;
+    getMyEvents(token)
       .then((data) => setEvents(data))
       .catch((err) =>
         console.error("Erreur chargement événements pour le formulaire:", err)
       );
-  }, [isAuthenticated]);
+  }, [token]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -138,7 +138,7 @@ export default function InviteFormWithId({ onBack }) {
     setIsSubmitting(true);
 
     try {
-      const invite = await createInviteForSpecificEvent(form);
+      const invite = await createInviteForSpecificEvent(form, token);
       console.log("Invité créé avec succès:", invite);
       setForm({ nom: "", prenom: "", email: "", sex: "", eventId: null });
       setSelectedEventName("");

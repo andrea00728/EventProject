@@ -3,9 +3,9 @@ import { Navigate } from "react-router-dom";
 import DashboardpersCuisine from "../../pages/PersonnelCuisine/Dashboard";
 
 export default function PersonnelCuisine() {
-  const { isAuthenticated, token, role } = useStateContext();
+  const { token, role } = useStateContext();
 
-  if (!isAuthenticated) {
+  if (!token) {
     return <Navigate to="/pagepublic" replace />;
   }
 

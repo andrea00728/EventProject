@@ -182,7 +182,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace 
 }
 
 export default function PlanSalle({ event, tables, setTables }) {
-  const { isAuthenticated } = useStateContext();
+  const { token } = useStateContext();
   const [selectedPlace, setSelectedPlace] = useState(null);
 
   // Gestion du clic sur une place (invité)
@@ -206,7 +206,7 @@ export default function PlanSalle({ event, tables, setTables }) {
         return;
       }
 
-      reassignGuestToTable(selectedPlace.guestId, table.id, placeNumber)
+      reassignGuestToTable(selectedPlace.guestId, table.id, placeNumber, token)
         .then(() => {
           setTables((prevTables) =>
             prevTables.map((t) => {
@@ -256,7 +256,7 @@ export default function PlanSalle({ event, tables, setTables }) {
   // Gestion déplacement table
   const handleTableMove = async (tableId, position) => {
     try {
-      await updateTablePosition(tableId, position);
+      await updateTablePosition(tableId, position, token);
       if (setTables) {
         setTables((prev) =>
           prev.map((t) => (t.id === tableId ? { ...t, position } : t))
@@ -270,7 +270,7 @@ export default function PlanSalle({ event, tables, setTables }) {
   // Gestion rotation table
   const handleTableRotate = async (tableId, rotation) => {
     try {
-      await updateRotation(tableId, rotation);
+      await updateRotation(tableId, rotation, token);
       if (setTables) {
         setTables((prev) =>
           prev.map((t) => (t.id === tableId ? { ...t, rotation } : t))
@@ -286,7 +286,7 @@ export default function PlanSalle({ event, tables, setTables }) {
     const confirm = window.confirm("Supprimer cette table ?");
     if (!confirm) return;
     try {
-      await deleteTable(tableId);
+      await deleteTable(tableId, token);
       if (setTables) {
         setTables((prev) => prev.filter((t) => t.id !== tableId));
       }

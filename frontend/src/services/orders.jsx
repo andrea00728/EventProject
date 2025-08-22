@@ -5,11 +5,15 @@ export const getAllOrdersForOnEvent = async (id) => {
   return response.data;
 };
 
-export const updateOrderStatus = async (orderId, status) => {
+export const updateOrderStatus = async (orderId, status, token) => {
   try {
     const response = await axiosClient.patch(
       `/orders/${orderId}/status`,
-      { status } 
+      { status } , {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
   );
   } catch (error) {
     console.error('Erreur lors de la mise à jour:', error);

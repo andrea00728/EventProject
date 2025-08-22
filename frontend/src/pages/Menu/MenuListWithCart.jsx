@@ -50,7 +50,7 @@ const MenuListWithCart = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const itemsPerPage = 8;
-
+  const token = localStorage.getItem('token');
 
   // Catégories dynamiques
   const categories = useMemo(() => {
@@ -101,7 +101,9 @@ const MenuListWithCart = () => {
 
       try {
         setIsLoading(true);
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         const formattedMenus = res.data.map((menu) => ({
           ...menu,
@@ -123,7 +125,7 @@ const MenuListWithCart = () => {
     };
 
     fetchMenus();
-  }, [selectedEvent]);
+  }, [selectedEvent, token]);
 
   // Panier
   const clearCart = useCallback(() => {

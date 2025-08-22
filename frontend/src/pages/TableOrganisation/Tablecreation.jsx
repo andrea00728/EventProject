@@ -2,10 +2,9 @@ import { useState, useEffect } from "react";
 import { getMyEvents } from "../../services/evenementServ";
 import { useStateContext } from "../../context/ContextProvider";
 import { chiffreControll, getMaxCapacity } from "../../services/controll_champs/controll_champs";
-import { createTable } from "../../services/tableService";
 
-export default function Tablecreation() {
-  const { isAuthenticated } = useStateContext();
+export default function Tablecreation({ onSubmitTable }) {
+  const { token } = useStateContext();
 
   // Formulaire
   const [form, setForm] = useState({
@@ -33,7 +32,7 @@ export default function Tablecreation() {
     const fetchEvents = async () => {
       setIsLoadingEvents(true);
       try {
-        const data = await getMyEvents();
+        const data = await getMyEvents(token);
         setEvents(data);
       } catch (err) {
         setEventError(
@@ -44,8 +43,8 @@ export default function Tablecreation() {
       }
     };
 
-    if (isAuthenticated) fetchEvents();
-  }, [isAuthenticated]);
+    if (token) fetchEvents();
+  }, [token]);
 
   // Gestion changement du nombre → crée un tableau de noms vides
   const handleNombreChange = (e) => {
@@ -118,30 +117,31 @@ export default function Tablecreation() {
     }
 
     try {
-  const nomsFinal = form.noms.map((nom, index) =>
-    nom && nom.trim() !== "" ? nom : `Table ${index + 1}`
-  );
+      // Remplir les noms vides avec un nom par défaut
+      const nomsFinal = form.noms.map((nom, index) =>
+        nom && nom.trim() !== "" ? nom : `Table ${index + 1}`
+      );
 
-  const formDataArray = nomsFinal.map((nom) => ({
-    nom,
-    capacite: form.capacite,
-    type: form.type,
-    eventId: form.eventId
-  }));
+      const formDataArray = nomsFinal.map((nom) => ({
+        nom,
+        capacite: form.capacite,
+        type: form.type,
+        eventId: form.eventId
+      }));
 
-  await Promise.all(formDataArray.map((t) => createTable(t)));
+      await onSubmitTable(formDataArray);
 
-  setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: 0 });
-  setSelectedEvent(null);
-  setSuccessMessage("Tables créées avec succès");
-} catch (err) {
-  if (err.response?.data?.message?.includes("déjà utilisé")) {
-    setShowAlert(true);
-  } else {
-    setError(err.response?.data?.message || "Erreur lors de la création des tables");
-  }
-}
-
+      // Réinitialiser le formulaire
+      setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: 0 });
+      setSelectedEvent(null);
+      setSuccessMessage("Tables créées avec succès");
+    } catch (err) {
+      if (err.response?.data?.message?.includes("déjà utilisé")) {
+        setShowAlert(true);
+      } else {
+        setError(err.response?.data?.message || "Erreur lors de la création des tables");
+      }
+    }
   };
 
   return (

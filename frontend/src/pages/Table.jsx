@@ -12,7 +12,7 @@ const TABLE_TYPES = [
 ];
 
 export default function TableCreation({ eventId, onNext, onBack }) {
-  const { isAuthenticated } = useStateContext();
+  const { token } = useStateContext();
 
   const [tables, setTables] = useState([]);
   const [events, setEvents] = useState([]);
@@ -30,7 +30,7 @@ export default function TableCreation({ eventId, onNext, onBack }) {
     const fetchEvents = async () => {
       setIsLoadingEvents(true);
       try {
-        const data = await getMyEvents();
+        const data = await getMyEvents(token);
         setEvents(data);
       } catch (err) {
         setEventError(err.response?.data?.message || "Impossible de charger les événements");
@@ -38,14 +38,14 @@ export default function TableCreation({ eventId, onNext, onBack }) {
         setIsLoadingEvents(false);
       }
     };
-    if (isAuthenticated) fetchEvents();
-  }, [isAuthenticated]);
+    if (token) fetchEvents();
+  }, [token]);
 
   // Charger les tables existantes
   const loadTables = async () => {
-    if (!selectedEvent?.id || !isAuthenticated) return;
+    if (!selectedEvent?.id || !token) return;
     try {
-      const data = await getTablesByEventId(selectedEvent.id);
+      const data = await getTablesByEventId(selectedEvent.id, token);
       const withSeats = await Promise.all(
         data.map(async (t) => {
           const available = await getAvailableSeats(t.id);
@@ -60,7 +60,7 @@ export default function TableCreation({ eventId, onNext, onBack }) {
 
   useEffect(() => {
     if (selectedEvent) loadTables();
-  }, [selectedEvent, isAuthenticated]);
+  }, [selectedEvent, token]);
 
   // Gestion formulaire
   // const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -124,7 +124,7 @@ export default function TableCreation({ eventId, onNext, onBack }) {
         eventId: form.eventId
       }));
       for (const t of tablesArray) {
-        await createTable(t);
+        await createTable(t, token);
       }
       setSuccessMessage("Tables créées avec succès");
       setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: form.eventId });

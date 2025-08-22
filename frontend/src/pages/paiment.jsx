@@ -82,7 +82,7 @@ const paymentMethods = [
 ];
 
 const PaymentPage = ({ forfait, onClose }) => {
-  const { isAuthenticated } = useStateContext();
+  const { token } = useStateContext();
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState(
     forfait && forfait.nom ? forfait.nom.toLowerCase() : "pro"
@@ -94,14 +94,14 @@ const PaymentPage = ({ forfait, onClose }) => {
   const selectedPlanDetails = plans[selectedPlan];
 
   const handlePayment = useCallback(async () => {
-    if (!isAuthenticated) {
+    if (!token) {
       setError("Vous devez être connecté pour effectuer un paiement.");
       return;
     }
 
     if (selectedPlan === "freemium") {
       try {
-        await updateForfait( selectedPlan);
+        await updateForfait(token, selectedPlan);
         setError(null);
         alert("Plan Freemium activé avec succès !");
       } catch (err) {
@@ -115,7 +115,7 @@ const PaymentPage = ({ forfait, onClose }) => {
 
     try {
       if (selectedPaymentMethod === "paypal") {
-        const res = await updateForfait( selectedPlan);
+        const res = await updateForfait(token, selectedPlan);
         console.log("URL PayPal:", res?.url || "Aucune URL");
 
         if (res?.url && typeof res.url === "string" && res.url.startsWith("https://")) {
@@ -133,7 +133,7 @@ const PaymentPage = ({ forfait, onClose }) => {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, selectedPlan, selectedPaymentMethod]);
+  }, [token, selectedPlan, selectedPaymentMethod]);
 
 
   if (!selectedPlanDetails) {

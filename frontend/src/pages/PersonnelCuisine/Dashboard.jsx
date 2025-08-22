@@ -55,14 +55,14 @@ export default function DashboardpersCuisine() {
   const [error, setError] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [userId, setUserId] = useState(null)
-  const { user, isAuthenticated, setUser } = useStateContext();
+  const { user, token, setToken, setUser } = useStateContext();
 
     useEffect(() => {
     const fetchOrders = async () => {
       try {
-        if (!isAuthenticated) throw new Error(" manquant");
+        if (!token) throw new Error("Token manquant");
 
-        const eventId = await getEventIdByEmail();
+        const eventId = await getEventIdByEmail(token);
         const data = await getAllOrdersForOnEvent(eventId.eventId);
         
         setLoading(true);
@@ -77,7 +77,7 @@ export default function DashboardpersCuisine() {
     };
 
     const fetchData = async () => {
-      const UserId = await getUserIdForToken();
+      const UserId = await getUserIdForToken(token);
       setUserId(UserId)
 
         const newSocket = io("http://localhost:3000", {
@@ -98,10 +98,10 @@ export default function DashboardpersCuisine() {
 
     fetchOrders();
     fetchData()
-  }, [isAuthenticated]);
+  }, [token]);
 
   const changeDataBaseStatus = async (id, status) => {
-    await updateOrderStatus(id, status);
+    await updateOrderStatus(id, status, token);
   };
 
   const changerStatut = async (id, direction = "next") => {
@@ -156,6 +156,7 @@ export default function DashboardpersCuisine() {
 
   const handleLogoutConfirm = () => {
     setShowLogoutModal(false);
+    setToken(null);
     setUser(null);
   };
 

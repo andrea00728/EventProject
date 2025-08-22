@@ -9,8 +9,12 @@ import axiosClient from "../api/axios-client";
  * service pour la création des personnel
  * 
  */
-export const createPersonnel = async (data) => {
-  const response = await axiosClient.post("/personnel/create", data);
+export const createPersonnel = async (data, token) => {
+  const response = await axiosClient.post("/personnel/create", data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
   return response.data;
 }
 
@@ -25,8 +29,12 @@ export const createPersonnel = async (data) => {
  * 
  */
 
-export const getPersonnelByEventId = async (eventId) => {
-  const response = await axiosClient.get(`/personnel/by-event/${eventId}`);
+export const getPersonnelByEventId = async (eventId, token) => {
+  const response = await axiosClient.get(`/personnel/by-event/${eventId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
   return response.data;
 }
 
@@ -50,7 +58,11 @@ export const getPersonnelListByEventId = async (eventId) => {
  */
 
 export const CountPersonnelByEvent = async (eventId, token) => {
-  const response = await axiosClient.get(`/personnel/count/${eventId}`);
+  const response = await axiosClient.get(`/personnel/count/${eventId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
   return response.data;
 }
 

@@ -1,13 +1,9 @@
-// src/components/Profil.jsx
 import { useEffect, useState } from "react";
 import { useStateContext } from "../context/ContextProvider";
 import { Camera, LogOut, Mail, Settings, User, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import LogoutButton from "./DeconnexionGoogle"; // Assurez-vous d'importer le bon composant
 
 export default function Profil() {
-
-  // ... (votre code existant pour les variants)
 
   const backdropVariants = {
     hidden: { opacity: 0 },
@@ -48,14 +44,13 @@ export default function Profil() {
     tap: { scale: 0.95 }
   };
 
-  const { user, isLoading, handleLogout } = useStateContext();
+  const { user, isLoading } = useStateContext();
   const [userName, setUserName] = useState("Utilisateur");
   const [userEmail, setUserEmail] = useState("email@example.com");
   const [userPhoto, setUserPhoto] = useState("");
   const [openSettings, setOpenSettings] = useState(false);
   const [openEditProfil, setOpenEditProfil] = useState(false);
-  const [isOpenProfil, setIsOpenProfil] = useState(false)
-  const [confirmLogOut, setConfirmLogOut] = useState(false); // État pour la modale de déconnexion
+
 
   useEffect(() => {
     if (user) {
@@ -64,13 +59,25 @@ export default function Profil() {
       setUserPhoto(user.photo);
     }
   }, [user]);
-
   if (isLoading) return <p>Chargement...</p>;
 
-  // Fonction pour gérer la déconnexion
-  const handleConfirmLogOut = () => {
-    handleLogout(); // Appelle la fonction de déconnexion du contexte
-    setConfirmLogOut(false); // Ferme la modale
+  const [isOpenProfil, setIsOpenProfil] = useState(false)
+
+  const [confirmLogOut, setConfirmLogOut] = useState(false);
+  const handleDelete = () => {
+    if (confirmLogOut) {
+      // Logic to delete the event goes here
+      console.log("Event deleted");
+      setConfirmLogOut(false);
+    } else {
+      setConfirmLogOut(true);
+    }
+  };
+
+
+  const handleLogOut = () => {
+    localStorage.removeItem("ACCES_TOKEN");
+    window.location.href = "/pagepublic";
   };
 
   return (
@@ -92,7 +99,10 @@ export default function Profil() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
+              {/* Gradient Background Overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-pink-50/50 rounded-3xl" />
+
+              {/* Close Button */}
               <button
                 onClick={() => setIsOpenProfil(false)}
                 className="absolute top-3 right-3 sm:top-4 sm:right-4 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100/80 flex items-center justify-center transition-all duration-200 cursor-pointer z-10"
@@ -101,6 +111,7 @@ export default function Profil() {
               </button>
 
               <div className="relative z-10">
+                {/* Profile Picture Section */}
                 <div className="flex flex-col items-center mb-5 sm:mb-6">
                   <div className="relative group">
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full blur-md opacity-30 group-hover:opacity-50 transition-opacity duration-300" />
@@ -111,12 +122,15 @@ export default function Profil() {
                         className="w-full h-full rounded-full object-cover border-2 border-white"
                       />
                     </div>
+
+                    {/* Camera Icon Overlay */}
                     <div className="absolute bottom-0 right-0 w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-gray-100 group-hover:bg-blue-50 transition-colors duration-200 cursor-pointer">
                       <button><Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" /></button>
                     </div>
                   </div>
                 </div>
 
+                {/* User Info */}
                 <div className="text-center mb-6 sm:mb-8">
                   <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text break-words">
                     {userName}
@@ -125,12 +139,15 @@ export default function Profil() {
                     <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                     <span className="truncate">{userEmail}</span>
                   </p>
+
+                  {/* Status Badge */}
                   <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                     <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
                     En ligne
                   </div>
                 </div>
 
+                {/* Action Buttons */}
                 <div className="space-y-2.5 sm:space-y-3">
                   <button className="w-full flex items-center justify-center gap-2.5 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 transform hover:-translate-y-0.5 cursor-pointer text-sm sm:text-base"
                     onClick={() => setOpenSettings(true)}
@@ -146,11 +163,17 @@ export default function Profil() {
                     Editer mon profil
                   </button>
 
-                  {/* Bouton de déconnexion utilisant le nouveau composant */}
-                  <LogoutButton onOpenModal={() => setConfirmLogOut(true)} />
+                  <button
+                    className="w-full flex items-center justify-center gap-2.5 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white rounded-xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-red-500/25 transform hover:-translate-y-0.5 cursor-pointer text-sm sm:text-base"
+                    onClick={() => setConfirmLogOut(true)}
+                  >
+                    <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+                    Déconnexion
+                  </button>
                 </div>
               </div>
 
+              {/* Decorative Elements */}
               <div className="absolute top-3 left-3 sm:top-4 sm:left-4 w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-20" />
               <div className="absolute bottom-3 right-10 sm:bottom-4 sm:right-12 w-3 h-3 sm:w-4 sm:h-4 bg-gradient-to-br from-pink-400 to-red-500 rounded-full opacity-20" />
               <div className="absolute top-8 right-6 sm:top-12 sm:right-8 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gradient-to-br from-green-400 to-blue-500 rounded-full opacity-20" />
@@ -160,7 +183,6 @@ export default function Profil() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {/* Modale de confirmation de déconnexion existante */}
         {confirmLogOut && (
           <motion.div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -179,6 +201,7 @@ export default function Profil() {
                 exit="exit"
                 onClick={(e) => e.stopPropagation()}
               >
+                {/* Header avec dégradé */}
                 <div className="bg-gradient-to-r from-blue-600 to-purple-500 p-4 sm:p-6 text-white relative">
                   <motion.button
                     onClick={() => setConfirmLogOut(false)}
@@ -197,14 +220,16 @@ export default function Profil() {
                   </div>
                 </div>
 
+                {/* Corps du modal */}
                 <div className="p-6 sm:p-8 text-center">
                   <p className="text-base sm:text-lg text-gray-700 mb-6 sm:mb-8 leading-relaxed">
                     Êtes-vous sûr de vouloir vous déconnecter de votre session ?
                   </p>
 
+                  {/* Boutons d'action */}
                   <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                     <motion.button
-                      onClick={handleConfirmLogOut}
+                      onClick={handleLogOut}
                       className="px-6 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-400 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 min-w-[100px] cursor-pointer text-sm sm:text-base order-2 sm:order-1"
                       variants={buttonVariants}
                       whileHover="hover"
@@ -224,6 +249,8 @@ export default function Profil() {
                     </motion.button>
                   </div>
                 </div>
+
+                {/* Effet de brillance */}
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-pulse" />
               </motion.div>
             </div>
@@ -232,10 +259,76 @@ export default function Profil() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {/* Vos autres modales pour les paramètres et l'édition de profil */}
         {openSettings && (
           <div>
-            {/* ... (votre code pour la modale de paramètres) ... */}
+            {/* Settings Modal Content */}
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              variants={backdropVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              onClick={() => setOpenSettings(false)}
+            >
+              <div className="absolute inset-0 h-screen flex items-center justify-center bg-black/30 backdrop-blur-sm">
+                <motion.div
+                  className="bg-white/95 backdrop-blur-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-white/20 max-w-xs sm:max-w-md w-full mx-4 overflow-hidden"
+                  variants={modalVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="bg-gradient-to-r from-blue-600 to-purple-500 p-4 sm:p-6 text-white relative">
+                    <motion.button
+                      onClick={() => setOpenSettings(false)}
+                      className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 sm:p-2 hover:bg-white/20 rounded-full transition-colors"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <X size={18} className="sm:w-5 sm:h-5" />
+                    </motion.button>
+                    <h2 className="text-lg sm:text-xl font-bold text-center">Paramètres</h2>
+                  </div>
+
+                  {/* Settings Content */}
+                  <div className="p-6 sm:p-8">
+                    <div>
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Notifications</label>
+                        <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option>Activées</option>
+                          <option>Désactivées</option>
+                        </select>
+                      </div>
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Thème</label>
+                        <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option>Clair</option>
+                          <option>Sombre</option>
+                        </select>
+                      </div>
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Langue</label>
+                        <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option>Français</option>
+                          <option>Anglais</option>
+                          <option>Espagnol</option>
+                        </select>
+                      </div>
+                        <button
+                          className="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-colors duration-300"
+                          onClick={() => {
+                            setOpenSettings(false);
+                          }}
+                        >
+                          Enregistrer les modifications
+                        </button>
+                      </div>
+                    </div>
+                </motion.div>
+              </div>
+            </motion.div>
           </div>
         )}
       </AnimatePresence>
@@ -243,7 +336,65 @@ export default function Profil() {
       <AnimatePresence>
         {openEditProfil && (
           <div>
-            {/* ... (votre code pour la modale d'édition de profil) ... */}
+            {/* Edit Profile Modal Content */}
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              variants={backdropVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              onClick={() => setOpenEditProfil(false)}
+            >
+              <div className="absolute inset-0 h-screen flex items-center justify-center bg-black/30 backdrop-blur-sm">
+                <motion.div
+                  className="bg-white/95 backdrop-blur-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-white/20 max-w-xs sm:max-w-md w-full mx-4 overflow-hidden"
+                  variants={modalVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="bg-gradient-to-r from-blue-600 to-purple-500 p-4 sm:p-6 text-white relative">
+                    <motion.button
+                      onClick={() => setOpenEditProfil(false)}
+                      className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 sm:p-2 hover:bg-white/20 rounded-full transition-colors"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <X size={18} className="sm:w-5 sm:h-5" />
+                    </motion.button>
+                    <h2 className="text-lg sm:text-xl font-bold text-center">Éditer mon profil</h2>
+                  </div>
+
+                  <div className="p-6 sm:p-8">
+                    <div className="space-y-4">
+                      <input
+                        type="text"
+                        placeholder="Nom d'utilisateur"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email"
+                        value={userEmail}
+                        onChange={(e) => setUserEmail(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        className="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-colors duration-300"
+                        onClick={() => {
+                          setOpenEditProfil(false);
+                        }}
+                      >
+                        Enregistrer les modifications
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
           </div>
         )}
       </AnimatePresence>

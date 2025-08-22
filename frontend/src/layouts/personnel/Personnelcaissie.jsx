@@ -2,9 +2,9 @@ import { useStateContext } from "../../context/ContextProvider";
 import { Navigate, Outlet } from "react-router-dom";
 
 export default function PersonnelCaisse() {
-  const { isAuthenticated, role } = useStateContext();
+  const { token, role } = useStateContext();
 
-  if (!isAuthenticated) {
+  if (!token) {
     return <Navigate to="/pagepublic" replace />;
   }
   switch (role) {

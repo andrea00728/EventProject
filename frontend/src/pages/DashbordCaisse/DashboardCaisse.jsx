@@ -96,7 +96,7 @@ const LogoutToast = ({ onClose }) => (
 
 const Caisse = () => {
   const navigate = useNavigate();
-  const {  setUser, user } = useStateContext();
+  const { setToken, setUser, user } = useStateContext();
   const [showMenu, setShowMenu] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -104,6 +104,7 @@ const Caisse = () => {
   const handleLogout = () => {
     sessionStorage.removeItem("ACCESS_TOKEN");
     sessionStorage.removeItem("USER");
+    setToken(null);
     setUser(null);
     setConfirmLogout(false);
     setShowToast(true);

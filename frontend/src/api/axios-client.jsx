@@ -47,6 +47,9 @@ axiosClient.interceptors.response.use(
     const { response, config } = error;
     if (response?.status === 401 && !config._retry) {
       config._retry = true;
+      // La déconnexion est maintenant gérée par le ContextProvider
+      // Vous n'avez plus besoin de ces lignes ici
+      // window.location.href = "/pagepublic";
     } else if (!response) {
       console.error("Erreur réseau ou serveur indisponible :", error);
     }

@@ -13,17 +13,17 @@ import axiosClient from "../api/axios-client";
  * @param {string} token - Le token d'authentification
  * @returns {Promise<Object>} - La table cr e e
  */
-export const createTable = async (data) => {
+export const createTable = async (data, token) => {
 
-  const response = await axiosClient.post("/tables/create/by_event", data);
+  const response = await axiosClient.post("/tables/create/by_event", data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
   return response.data;
   }
 
-    export const createTableByIdevent = async (data, token) => {
-    const response = await axiosClient.post("/tables/create/by_event", data);
-    return response.data;
-  };
 
 /**
  * Recupre les tables lies  un  evenement.
@@ -32,8 +32,12 @@ export const createTable = async (data) => {
  * @returns {Promise<Array<Object>>} - Les tables lies  l' evenement.
  */
 
-export const getTablesByEventId = async (eventId) => {
-  const response = await axiosClient.get(`/tables/event/${eventId}`);
+export const getTablesByEventId = async (eventId, token) => {
+  const response = await axiosClient.get(`/tables/event/${eventId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
   return response.data;
 };
 
@@ -59,10 +63,15 @@ export const getAvailableSeats = async (tableId) => {
  * @param {string} token - Le token d'authentification.
  * @returns {Promise<Object>} - La table mise   jour.
  */
-export const updateTablePosition = async (tableId, position) => {
+export const updateTablePosition = async (tableId, position, token) => {
   const response = await axiosClient.patch(
     `/tables/${tableId}/position`,
      position ,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
   );
   return response.data;
 };
@@ -77,10 +86,15 @@ export const updateTablePosition = async (tableId, position) => {
  * 
  * service pour la rotation du table 
  */
-export const updateRotation = async (tableId, rotation) => {
+export const updateRotation = async (tableId, rotation, token) => {
   const response = await axiosClient.patch(
     `/tables/${tableId}/rotation`,
     { rotation },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
   );
   return response.data;
 };
@@ -93,8 +107,12 @@ export const updateRotation = async (tableId, rotation) => {
  * @returns 
  * service pour la suppression de table
  */
-export const deleteTable = async (tableId) => {
-  const response = await axiosClient.delete(`/tables/${tableId}`);
+export const deleteTable = async (tableId, token) => {
+  const response = await axiosClient.delete(`/tables/${tableId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
   return response.data;
 };
 
@@ -109,13 +127,18 @@ export const deleteTable = async (tableId) => {
  * @returns {Promise<Object>} - Les données de la réponse après réassignation.
  */
 
-export const reassignGuestToTable = async (guestId, tableId,place) => {
+export const reassignGuestToTable = async (guestId, tableId,place, token) => {
   const response = await axiosClient.patch(
     `/guests/${guestId}/reassign`,
     {
       tableId,
       place,
     },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
   );
   return response.data;
 };

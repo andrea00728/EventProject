@@ -15,7 +15,7 @@ const roles = [
 
 let debouceTimeout;
 export default function CreationPersonnel() {
-  const { isAuthenticated } = useStateContext();
+  const { token } = useStateContext();
   const [form, setForm] = useState({ nom: "", email: "", role: "", event: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -30,7 +30,7 @@ export default function CreationPersonnel() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const data = await getMyEvents();
+        const data = await getMyEvents(token);
         setEvents(data);
         if (data.length > 0) {
           setSelectedEvent(data[0].id);
@@ -44,8 +44,8 @@ export default function CreationPersonnel() {
         setIsLoadingEvents(false);
       }
     };
-    if (isAuthenticated) fetchEvents();
-  }, [isAuthenticated]);
+    if (token) fetchEvents();
+  }, [token]);
 
   const formatDateTime = (isoString) => {
     const date = new Date(isoString);
@@ -75,21 +75,21 @@ export default function CreationPersonnel() {
    * 
    */
 
-  // useEffect(() => {
-  //   clearTimeout(debouceTimeout);
+  useEffect(() => {
+    clearTimeout(debouceTimeout);
 
-  //   if (!form.email.trim()) {
-  //     setIsValid(null);
-  //     return;
-  //   }
+    if (!form.email.trim()) {
+      setIsValid(null);
+      return;
+    }
 
-  //   debouceTimeout = setTimeout(async () => {
-  //     const valid = await checkEmail(form.email.trim());
-  //     setIsValid(valid);
-  //   }, 800);
+    debouceTimeout = setTimeout(async () => {
+      const valid = await checkEmail(form.email.trim());
+      setIsValid(valid);
+    }, 800);
 
-  //   return () => clearTimeout(debouceTimeout);
-  // }, [form.email]);
+    return () => clearTimeout(debouceTimeout);
+  }, [form.email]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,7 +123,7 @@ export default function CreationPersonnel() {
           role: form.role,
           evenementId: Number(form.event),
         },
-      
+        token
       );
 
       setForm({ nom: "", email: "", role: "", event: form.event });

@@ -24,7 +24,7 @@ const GestionCommandesPage = () => {
     message: "",
     severity: "info",
   });
-  const { isAuthenticated } = useStateContext();
+  const { token } = useStateContext();
 
   // Mappage des statuts pour la cohérence entre le front-end et le back-end
   const STATUS_MAPPING = {
@@ -54,13 +54,14 @@ const GestionCommandesPage = () => {
   const fetchCommandes = useCallback(async () => {
     try {
       setLoading(true);
-      if (!isAuthenticated) throw new Error("Token manquant");
+      if (!token) throw new Error("Token manquant");
 
-      const eventId = await getEventIdByEmail();
+      const eventId = await getEventIdByEmail(token);
       const { data } = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/orders/event/${eventId.eventId}`,
         {
           params: { include: "table,items,items.menuItem" },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
@@ -86,7 +87,7 @@ const GestionCommandesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [token]);
 
   // Fonction pour mettre à jour une commande dans l'état local
   const updateCommande = useCallback((update) => {
@@ -110,6 +111,12 @@ const GestionCommandesPage = () => {
         const response = await axios.patch(
           `${import.meta.env.VITE_API_BASE_URL}/orders/${orderId}/status`,
           { status: STATUS_MAPPING.frontToBack[newStatus] },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
         );
 
         const socket = io(SOCKET_URL, {
@@ -133,7 +140,7 @@ const GestionCommandesPage = () => {
         });
       }
     },
-    [ updateCommande, userId]
+    [token, updateCommande, userId]
   );
 
   // Effet pour initialiser les données et la connexion WebSocket
@@ -142,7 +149,7 @@ const GestionCommandesPage = () => {
 
     const setupWebSocket = async () => {
       try {
-        const fetchedUserId = await getUserIdForToken();
+        const fetchedUserId = await getUserIdForToken(token);
         setUserId(fetchedUserId);
 
         socket = io(SOCKET_URL, {
@@ -208,7 +215,7 @@ const GestionCommandesPage = () => {
         console.log("🔌 WebSocket déconnecté");
       }
     };
-  }, [ fetchCommandes, updateCommande]);
+  }, [token, fetchCommandes, updateCommande]);
 
   // Filtrage des commandes en fonction de la sélection de l'utilisateur
   const filteredCommandes = commandes.filter((cmd) => {

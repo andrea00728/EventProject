@@ -47,7 +47,7 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
         }
     };
 
-    const { setUser,isAuthenticated } = useStateContext(); // Ajouter ceci dans AuthModal
+    const { setUser } = useStateContext(); // Ajouter ceci dans AuthModal
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -69,7 +69,7 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
 
                 console.log("Résultat de la connexion : ", result);
 
-                if (isAuthenticated) {
+                if (token) {
                     if (user?.isInPersonnel) return <Navigate to="/choix-role" replace />;
                     if (role === "organisateur") return <Navigate to="/accueil" replace />;
                 } else {
