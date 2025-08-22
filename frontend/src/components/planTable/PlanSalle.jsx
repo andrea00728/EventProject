@@ -129,12 +129,43 @@ function Table({ table, onMove, onRotate, onDelete, onDuplicate, onPlaceClick, s
     ovale: "bg-gradient-to-br from-yellow-100 to-yellow-300",
   };
 
+  /** mobile */
+  const touchStart = useRef(null);
+
+  const handleTouchStart = (e) => {
+    const touch = e.touches[0];
+    touchStart.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      offsetX: touch.clientX - pos.left,
+      offsetY: touch.clientY - pos.top,
+    };
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchStart.current) return;
+    const touch = e.touches[0];
+    const x = snapToGrid(touch.clientX - touchStart.current.offsetX);
+    const y = snapToGrid(touch.clientY - touchStart.current.offsetY);
+    setPos({ left: x, top: y });
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart.current) return;
+    onMove(table.id, pos);
+    touchStart.current = null;
+  };
+
+
   return (
     <div
       ref={ref}
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       className="absolute"
       style={{ left: pos.left, top: pos.top, zIndex: dragging ? 50 : 10 }}
     >
@@ -292,7 +323,8 @@ export default function PlanSalle({ event, tables, setTables }) {
 
   return (
     <div className="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center p-4">
-      <div className="relative w-[800px] h-[600px] bg-white border border-gray-300 rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative w-[800px] h-[600px] bg-white border border-gray-300 rounded-2xl shadow-2xl
+                  max-w-full max-h-[80vh] overflow-auto sm:overflow-hidden">
         <div className="absolute top-4 left-1/2 -translate-x-1/2 text-xl font-extrabold text-indigo-700 tracking-wide drop-shadow-lg">
           Plan des Tables
           <br />
