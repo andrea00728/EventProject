@@ -39,6 +39,7 @@ export default function PublicLayout() {
 
   const [navItems, setNavItems] = useState(defaultNavItems);
 
+  // Gérer le scroll vers une section de la page
   useEffect(() => {
     if (location.hash) {
       const element = document.querySelector(location.hash);
@@ -48,63 +49,51 @@ export default function PublicLayout() {
     }
   }, [location]);
 
+  // Gérer la connexion, le forfait et la navigation
   useEffect(() => {
-    const fetchAndSetForfait = async () => {
-      try {
-        const data = await getUserForfait(token);
-        setForfait(data.forfait || { nom: "Default" });
-      } catch (err) {
-        console.error("Erreur lors de la récupération du forfait", err);
-        setForfait({ nom: "Default" });
+    const handleUserSession = async () => {
+      if (token) {
+        setConnected(true);
+        if (!socket) return;
+        socket.on("connect", () => console.log("Socket connectée : ", socket.id));
+
+        // Vérification de la session et redirection
+        if (user && user.role && user.role !== "organisateur") {
+          navigate("/choix-role", { replace: true });
+        }
+        
+        // Récupération du forfait et mise à jour du menu
+        try {
+          const data = await getUserForfait(token);
+          const userForfait = data.forfait || { nom: "Default" };
+          setForfait(userForfait);
+          setNavItems([
+            { path: "/pagepublic#pagepublic", name: "Accueil" },
+            {
+              path: "#",
+              name: "Evenement",
+              subMenus: getConditionalSubMenus(userForfait.nom || "Default"),
+            },
+            { path: "/pagepublic#service", name: "Service" },
+            { path: "/pagepublic#testimony", name: "Témoignages" },
+            { path: "/pagepublic#forfaits", name: "Forfaits" },
+          ]);
+
+        } catch (err) {
+          console.error("Erreur lors de la récupération du forfait", err);
+          setForfait({ nom: "Default" });
+        }
+      } else {
+        setConnected(false);
+        setForfait(null);
+        setNavItems(defaultNavItems);
       }
     };
 
-    if (token) {
-      fetchAndSetForfait();
-      setConnected(true);
+    handleUserSession();
+  }, [token, user, navigate, socket]);
 
-      if (socket) {
-        const handleConnect = () =>
-          console.log("Socket connectée :", socket.id);
-        socket.on("connect", handleConnect);
-
-        return () => {
-          socket.off("connect", handleConnect);
-        };
-      }
-    } else {
-      setConnected(false);
-      setForfait(null);
-      setNavItems(defaultNavItems);
-    }
-  }, [token]); 
-
-  useEffect(() => {
-    if (token && forfait) {
-      setNavItems([
-        { path: "/pagepublic#pagepublic", name: "Accueil" },
-        {
-          path: "#",
-          name: "Evenement",
-          subMenus: getConditionalSubMenus(forfait.nom || "Default"),
-        },
-        { path: "/pagepublic#service", name: "Service" },
-        { path: "/pagepublic#testimony", name: "Témoignages" },
-        { path: "/pagepublic#forfaits", name: "Forfaits" },
-      ]);
-    }
-  }, [forfait, token]);
-
-  useEffect(() => {
-    if (token && user?.role) {
-      if (user.role !== "organisateur" && location.pathname !== "/choix-role") {
-        navigate("/choix-role", { replace: true });
-      } else if (user.role === "organisateur") {
-        navigate("/pagepublic", { replace: true });
-      }
-    }
-  }, [token, user?.role, navigate]); 
-
+  // Le reste du code...
   const subMenuVariants = {
     hidden: {
       opacity: 0,
