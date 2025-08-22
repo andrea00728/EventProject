@@ -52,7 +52,7 @@ const Publicacc = () => {
   const [error, setError] = useState(null);
   const [current, setCurrent] = useState(0);
   const [isModalOpen, setModalOpen] = useState(false);
-  const { token } = useStateContext()
+  const { isAuthenticated } = useStateContext()
 
   // ✅ Nouvel état pour le modal Demo
   const [isDemoOpen, setIsDemoOpen] = useState(false);
@@ -68,7 +68,7 @@ const Publicacc = () => {
   const testimonyRef = useRef(null);
   const footerRef = useRef(null);
 
-  const isAuthenticated = Boolean(token);
+  const isAuthent = Boolean(isAuthenticated);
 
   // Charger les événements
   useEffect(() => {
@@ -233,7 +233,7 @@ const Publicacc = () => {
                 transition={{ duration: 0.8, delay: 0.9 }}
                 className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center pt-6 sm:pt-8"
               >
-                {!isAuthenticated ? (
+                {!isAuthent ? (
                   <button
                     onClick={() => setModalOpen(true)}
                     className="group relative bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white px-6 sm:px-8 lg:px-10 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg shadow-2xl hover:shadow-orange-500/25 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden min-w-[160px] sm:min-w-[200px] cursor-pointer"
@@ -309,7 +309,7 @@ const Publicacc = () => {
 
       <section id="testimony" ref={testimonyRef}>
         <div className="bg-gradient-to-b from-gray-50 to-white">
-          {!isAuthenticated ? (
+          {!isAuthent ? (
             <Testimonials />
           ) : (
             <>

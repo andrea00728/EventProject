@@ -12,7 +12,7 @@ export default function Inviteform({ onBack }) {
     sex: "",
   });
   const [error, setError] = useState(null);
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const [loading, setLoading] = useState(false);
   // const [isValid, setIsValid] = useState(null);
   const handleChange = (e) => {
@@ -54,7 +54,7 @@ export default function Inviteform({ onBack }) {
     //   return;
     // }
     try {
-      await createInvite(form, token);
+      await createInvite(form);
       setForm({ nom: "", prenom: "", email: "", sex: "" });
       setError(null);
     } catch (err) {

@@ -3,12 +3,8 @@ import axiosClient from "../api/axios-client";
 
 
 
-export  const createTestimony =async (payload,token)=>{
-    const response= await axiosClient.post('/commentaire',payload,{
-        headers:{
-            Authorization:`Bearer ${token}`
-        }
-    });
+export  const createTestimony =async (payload)=>{
+    const response= await axiosClient.post('/commentaire',payload);
     return response.data;
 }
 

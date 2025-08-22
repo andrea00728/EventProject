@@ -7,7 +7,7 @@ export default function PageEvenementPublic() {
   const [evenements, setEvenements] = useState([]);
 
   useEffect(() => {
-    axios.get("https://api.mastertable.site/api/evenements/publics")
+    axios.get("http://localhost:3000/api/evenements/publics")
       .then((res) => setEvenements(res.data))
       .catch((err) => console.error("Erreur lors du chargement des événements publics :", err));
   }, []);

@@ -370,26 +370,26 @@ const router = createBrowserRouter([
    *
    *
    */
-  {
-    path: "/",
-    element: <PersonnelCaisse />,
-    children: [
-      {
-        path: "/",
-        element: <Navigate to="/personnelCaisse" />,
-      },
-      {
-        path: "/personnelCaisse",
-        element: (
-          <ProtectedRoute
-            allowedRoles={["caissier", "organisateur", "accueil", "cuisinier"]}
-          >
-            <DashboardCard />
-          </ProtectedRoute>
-        ),
-      },
-    ],
-  },
+  // {
+  //   path: "/",
+  //   element: <PersonnelCaisse />,
+  //   children: [
+  //     {
+  //       path: "/",
+  //       element: <Navigate to="/personnelCaisse" />,
+  //     },
+  //     {
+  //       path: "/personnelCaisse",
+  //       element: (
+  //         <ProtectedRoute
+  //           allowedRoles={["caissier", "organisateur", "accueil", "cuisinier"]}
+  //         >
+  //           <DashboardCard />
+  //         </ProtectedRoute>
+  //       ),
+  //     },
+  //   ],
+  // },
 
   /***
    *
