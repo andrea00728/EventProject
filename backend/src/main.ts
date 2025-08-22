@@ -7,6 +7,10 @@ import { join } from 'path';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 
+import { TasksService } from './services/tasks/tasks.service';
+import cookieParser from 'cookie-parser';
+
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
@@ -36,6 +40,8 @@ async function bootstrap() {
   app.useWebSocketAdapter(new CustomIoAdapter(app));
 
   // Swagger API documentation
+ app.use(cookieParser())
+  // Configuration de Swagger
   const config = new DocumentBuilder()
     .setTitle('Commentaire API')
     .setDescription('API pour gérer les commentaires avec authentification JWT')

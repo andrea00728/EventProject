@@ -1,5 +1,5 @@
 // auth.controller.ts
-import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param, UseInterceptors, UploadedFile, BadRequestException, HttpStatus, UnauthorizedException} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-auth.dto';
@@ -9,6 +9,9 @@ import { ContactMessage } from 'src/entities/ContactMessage';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { User } from './entities/auth.entity';
+import { Request, Response } from 'express';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -60,45 +63,59 @@ export class AuthController {
    * Hybride role
    * 
    */
-  @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req, @Res() res) {
-    const tokenResponse = await this.authService.login(req.user);
-    const { access_token } = tokenResponse;
-    const user = {
-      id: req.user.id,
-      email: req.user.email,
-      name: req.user.name,
-      photo: req.user.photo || '',
-      role: req.user.role || 'organisateur',
-      isInPersonnel: req.user.isInPersonnel || false,
-    };
+  // @Get('google/callback')
+  // @UseGuards(AuthGuard('google'))
+  // async googleAuthRedirect(@Req() req, @Res() res) {
+  //   const tokenResponse = await this.authService.login(req.user,res);
+  //   const { access_token } = tokenResponse;
+  //   const user = {
+  //     id: req.user.id,
+  //     email: req.user.email,
+  //     name: req.user.name,
+  //     photo: req.user.photo || '',
+  //     role: req.user.role || 'organisateur',
+  //     isInPersonnel: req.user.isInPersonnel || false,
+  //   };
   
-    const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}&isInPersonnel=${encodeURIComponent(user.isInPersonnel)}`;
+  //   const redirectUrl = `http://localhost:5173/callback?token=${access_token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&photo=${encodeURIComponent(user.photo)}&role=${encodeURIComponent(user.role)}&isInPersonnel=${encodeURIComponent(user.isInPersonnel)}`;
 
-    return res.redirect(redirectUrl);
+  //   return res.redirect(redirectUrl);
+  // }
+
+  // auth.controller.ts
+@Get('google/callback')
+@UseGuards(AuthGuard('google'))
+async googleAuthRedirect(@Req() req, @Res() res) {
+  // Le service de connexion définit déjà les cookies
+  await this.authService.login(req.user, res);
+
+  // Redirige simplement vers la page de rappel sans paramètres
+  const redirectUrl = `http://localhost:5173/callback`;
+
+  return res.redirect(redirectUrl);
+}
+
+@Post('logout')
+async logout(@Req() req: Request, @Res() res: Response) {
+  try {
+    const result = await this.authService.logout(req, res); // Passer l'objet de requête complet
+    return res.status(HttpStatus.OK).json(result);
+  } catch (error) {
+    return res.status(HttpStatus.UNAUTHORIZED).json({
+      message: error.message || 'Erreur lors de la déconnexion',
+    });
   }
+}
 
-
-// @Post('logout')
-// async logout(@Req() req: Request, @Res() res: Response) {
-//   try {
-//     const token = req.cookies?.jwt || req.headers['authorization']?.split(' ')[1];
-
-//     if (!token) {
-//       return res.status(HttpStatus.UNAUTHORIZED).json({ message: 'Aucun token fourni' });
-//     }
-
-//     const result = await this.authService.logout(token, res);
-
-//     return res.status(HttpStatus.OK).json(result);
-//   } catch (error) {
-//     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-//       message: 'Erreur lors de la déconnexion',
-//       error: error.message,
-//     });
-//   }
-// }
+ @UseGuards(JwtAuthGuard)
+  @Get('status')
+  async getAuthStatus(@Req() req) {
+    // Si ce point de terminaison est atteint, le JWT est valide
+    return {
+      isAuthenticated: true,
+      user: req.user, // Contient les informations de l'utilisateur du payload JWT
+    };
+  }
 
 
 
@@ -202,5 +219,26 @@ async login(@Body() body: any) {
   return this.authService.loginUser(email, password);
 }
 
+
+
+  /**
+   * 
+   * @param req 
+   * mis a jour d'aujourd'hui
+   * @returns 
+   */
+  @Get('validate-token')
+async validateToken(@Req() req: Request) {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token || await this.authService.isTokenBlacklisted(token)) {
+    throw new UnauthorizedException('Jeton invalide ou blacklisté');
+  }
+  return { valid: true };
+}
+
+
+
+ //Login user manuel
+  //Login user manuel
 
 }
