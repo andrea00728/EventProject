@@ -5,12 +5,10 @@ import { LocationController } from 'src/controllers/localisation/localisation.co
 import { Salle } from 'src/entities/salle'; // Assuming this exists based on SalleRepository
 import { Evenement } from 'src/entities/Evenement';
 import { Localisation } from 'src/entities/Location'; // Assuming this exists based on LocalisationRepository
-import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Salle, Evenement, Localisation]),
-    HttpModule
+    TypeOrmModule.forFeature([Salle, Evenement, Localisation]), // Include Evenement and Localisation
   ],
   providers: [LocationService],
   controllers: [LocationController],

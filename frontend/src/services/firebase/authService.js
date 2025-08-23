@@ -30,6 +30,7 @@ export const signInWithFacebook = async () => {
   return response.data;
 };
 
+
 export const handleRedirectResult = async () => {
   const auth = getAuth();
   const result = await getRedirectResult(auth);

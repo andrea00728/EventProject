@@ -26,10 +26,4 @@ export class ContactService {
             order: { createdAt: 'DESC' }
         });
     }
-
-    async delete(id: number) {
-    return await this.contactMessageRepository.delete(id);
-    }
-
-
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { getUserIdForToken } from './services/userService';
 
-export const SOCKET_URL = 'http://localhost:3000';
+export const SOCKET_URL = 'https://api.mastertable.site';
 
 export function useSocket() {
   const [socket, setSocket] = useState(null);

@@ -12,11 +12,6 @@ export class NotificationGateway{
         this.server.emit('notification',notification);
     }
 
-
-    emitNotifRegisterToAdmin(notifRegister:{title:string;message:string;type?:string;date?:string}){
-        console.log('Envoi notifRegister:', notifRegister);
-        this.server.emit('notifRegister',notifRegister);
-    }
     //Notification Message pour l'admin
     emitNotificationMessage(payload : any){
         console.log('Envoi notification message:', payload);
