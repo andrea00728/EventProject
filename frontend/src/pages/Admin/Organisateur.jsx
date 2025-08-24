@@ -23,9 +23,9 @@ import { useDarkMode } from "../../context/DarkModeContext";
 import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { ChevronDown } from "lucide-react";
 import { io } from "socket.io-client";
-import { SOCKET_URL } from "../../socket";
 import { getUserIdForToken } from "../../services/userService";
 import { useStateContext } from "../../context/ContextProvider";
+import { url } from "../../api/url";
 
 // Composant StatsCard
 const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
@@ -367,93 +367,7 @@ export default function Organisateur() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-
-  /**
-   * 
-   * debugg erreur 
-   * 
-   */
-  // useEffect(() => {
-  //   document.title = "Organisateur - Admin";
-  //   const fetchData = async () => {
-  //     try {
-  //       setLoading(true);
-  //       const data = await getManagerList();
-  //       setData(
-  //         data.map((org) => ({
-  //           ...org,
-  //           forfait: org.forfait || null,
-  //           createdAt: formatDate(org.createdAt),
-  //           forfaitexpirationdate: org.forfaitexpirationdate
-  //             ? formatDate(org.forfaitexpirationdate)
-  //             : "N/A",
-  //         }))
-  //       );
-  //     } catch (error) {
-  //       console.error(
-  //         "Erreur lors de la récupération des organisateurs :",
-  //         error
-  //       );
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchData();
-
-  
-
-  //   // const socket = io(`${import.meta.env.VITE_API_BASE_URL}`, {
-  //   //   auth: {
-  //   //     userId: userId, // très important : doit être l’ID réel de l’organisateur
-  //   //   },
-  //   // });
-
-  //   const socket = io(SOCKET_URL, {
-  //     const userId =  getUserIdForToken();
-  //     if (!userId) return;
-  //    path: '/socket.io/', 
-  //       // transports: ['websocket'],
-  //       transports: ['websocket', 'polling'],
-  //       auth: { userId },
-  //       // secure:true,
-  //   });
-
-  //   socket.on("connect", () => {
-  //     console.log("🟢 SuperAdmin connecté au WebSocket !");
-  //   });
-
-  //   socket.on("connect_error", (err) => {
-  //     console.error("❌ Erreur WebSocket SuperAdmin :", err.message);
-  //   });
-
-  //   socket.on("organizer_connected", ({ userId }) => {
-  //     // console.log("📡 SuperAdmin reçoit organizer_connected :", userId);
-
-  //     setData((prev) => {
-  //       const match = prev.find((m) => m.id === userId);
-  //       return prev.map((m) =>
-  //         m.id === userId
-  //           ? { ...m, isOnline: true, lastLogin: new Date().toISOString() }
-  //           : m
-  //       );
-  //     });
-  //   });
-
-  //   socket.on("organizer_disconnected", ({ userId }) => {
-  //     setData((prev) =>
-  //       prev.map((m) =>
-  //         m.id === userId
-  //           ? { ...m, isOnline: false, lastLogin: new Date().toISOString() }
-  //           : m
-  //       )
-  //     );
-  //   });
-
-  //   return () => {
-  //     socket.disconnect();
-  //   };
-  // }, []);
-
+  const socketRef = useRef(null);
   useEffect(() => {
   document.title = "Organisateur - Admin";
 
@@ -479,52 +393,42 @@ export default function Organisateur() {
   };
   fetchData();
 
-  let socket;
 
-  async function connectSocket() {
+
+const connectSocket = async () => {
     const userId = await getUserIdForToken();
-    if (!userId) return;
+    if (!userId || socketRef.current) return; // éviter doublon
 
-    socket = io(SOCKET_URL, {
-      path: '/socket.io/',
-      transports: ['websocket', 'polling'],
+    const socket = io(`${url}`, {
+      path: "/socket.io/",
+      transports: ["websocket", "polling"],
       auth: { userId },
-      // secure: true, // si besoin
     });
 
-    socket.on("connect", () => {
-      console.log("🟢 SuperAdmin connecté au WebSocket !");
-    });
-
-    socket.on("connect_error", (err) => {
-      console.error("❌ Erreur WebSocket SuperAdmin :", err.message);
-    });
+    socket.on("connect", () => console.log("🟢 SuperAdmin connecté !"));
 
     socket.on("organizer_connected", ({ userId }) => {
-      setData((prev) =>
-        prev.map((m) =>
-          m.id === userId
-            ? { ...m, isOnline: true, lastLogin: new Date().toISOString() }
-            : m
-        )
+      setData(prev =>
+        prev.map(m => m.id === userId ? { ...m, isOnline: true, lastLogin: new Date().toISOString() } : m)
       );
     });
 
     socket.on("organizer_disconnected", ({ userId }) => {
-      setData((prev) =>
-        prev.map((m) =>
-          m.id === userId
-            ? { ...m, isOnline: false, lastLogin: new Date().toISOString() }
-            : m
-        )
+      setData(prev =>
+        prev.map(m => m.id === userId ? { ...m, isOnline: false, lastLogin: new Date().toISOString() } : m)
       );
     });
-  }
+
+    socketRef.current = socket;
+  };
 
   connectSocket();
 
   return () => {
-    if (socket) socket.disconnect();
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
   };
 }, []);
 

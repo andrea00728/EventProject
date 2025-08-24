@@ -7,19 +7,13 @@ import axiosClient from "../api/axios-client";
  * @returns {Promise<string>} - Retourne l'URL de paiement PayPal
  * // Créer un lien de paiement PayPal
  */
-export const createPaypalPaymentLink = async (eventId, amount, token) => {
-  if (!token) throw new Error("Utilisateur non authentifié");
+export const createPaypalPaymentLink = async (eventId, amount) => {
   if (!eventId || !amount) throw new Error("eventId ou amount manquant");
 
   try {
     const response = await axiosClient.post(
       `/paiement/create?eventId=${eventId}&amount=${amount}`,
       {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
     );
     return response.data; // contient l'URL PayPal
   } catch (err) {
@@ -52,14 +46,9 @@ export const confirmPaypalSuccess = async (eventId, amount) => {
  * @returns {Promise<object>} - Retourne les détails du paiement
  * // Récupérer les détails d'un paiement existant
  */
-export const getPaymentDetails = async (eventId, token) => {
-  if (!token || !eventId) throw new Error("Paramètres manquants");
+export const getPaymentDetails = async (eventId) => {
   try {
-    const response = await axiosClient.get(`/paiement/details?eventId=${eventId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axiosClient.get(`/paiement/details?eventId=${eventId}`);
     return response.data;
   } catch (err) {
     console.error("Erreur lors de la récupération des détails du paiement :", err);

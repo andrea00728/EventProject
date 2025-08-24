@@ -1,8 +1,10 @@
+
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { getUserIdForToken } from './services/userService';
+import { url } from './api/url';
 
-export const SOCKET_URL = 'https://api.mastertable.site';
+
 
 export function useSocket() {
   const [socket, setSocket] = useState(null);
@@ -14,12 +16,9 @@ export function useSocket() {
       const userId = await getUserIdForToken();
       if (!userId) return;
 
-      newSocket = io(SOCKET_URL, {
-        path: '/socket.io/', 
-        // transports: ['websocket'],
-        transports: ['websocket', 'polling'],
+      newSocket = io(`${url}`, {
+         transports: ['websocket', 'polling'],
         auth: { userId },
-        // secure:true,
       });
       setSocket(newSocket);
     }

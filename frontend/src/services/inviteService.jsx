@@ -1,9 +1,10 @@
 // inviteService.js
 
 import axiosClient from "../api/axios-client"; // Assurez-vous que le chemin est correct
+import { url } from "../api/url";
 
-const API_URL = 'http://localhost:3000/public-invites/add'; // backend public route
-const PUBLIC_API = 'http://localhost:3000/public-guest/create';
+const API_URL = `${url}/public-invites/add`; // backend public route
+const PUBLIC_API = `${url}/public-guest/create`;
 
 // export const createInvite = async (inviteData) => {
 //   const token = localStorage.getItem("token");

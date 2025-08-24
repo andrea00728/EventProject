@@ -5,8 +5,8 @@ import Profil_Accueil from "../../util/profilAccueil";
 import LogoutButton from "../../util/DeconnexionGoogle";
 
 export default function PersonnelAccueil() {
-  const { token, role } = useStateContext();
-  if (!token) {
+  const { isAuthenticated, role } = useStateContext();
+  if (!isAuthenticated) {
     return <Navigate to="/pagepublic" replace />;
   }
 
@@ -102,4 +102,3 @@ export default function PersonnelAccueil() {
     </>
   );
 };
-

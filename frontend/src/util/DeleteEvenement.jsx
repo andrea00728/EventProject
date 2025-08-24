@@ -6,9 +6,9 @@ import { DeleteEvent } from "../services/evenementServ";
 
 
 export default function DeleteEventButton({ eventId, onDeleted }) {
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const handleDelete = async () => {
-    if (!token) {
+    if (!isAuthenticated) {
       alert("Utilisateur non authentifié");
       return;
     }
@@ -20,7 +20,7 @@ export default function DeleteEventButton({ eventId, onDeleted }) {
     if (!confirm) return;
 
     try {
-      await DeleteEvent(eventId, token);
+      await DeleteEvent(eventId);
       alert("Événement supprimé avec succès !");
       onDeleted(eventId); 
     } catch (error) {

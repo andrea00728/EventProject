@@ -14,7 +14,7 @@ const statusLabels = {
   pending: { label: "🕒 En attente", style: "bg-yellow-100 text-yellow-800" },
 };
 
-export default function ListePersonnel({ eventId, token, refreshTrigger }) {
+export default function ListePersonnel({ eventId, refreshTrigger }) {
   const [personnels, setPersonnels] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,12 +56,12 @@ export default function ListePersonnel({ eventId, token, refreshTrigger }) {
 
   // Chargement des données
   useEffect(() => {
-    if (!eventId || !token) return;
+    if (!eventId ) return;
     
     const fetchPersonnels = async () => {
       try {
         setLoading(true);
-        const data = await getPersonnelByEventId(eventId, token);
+        const data = await getPersonnelByEventId(eventId);
         setPersonnels(data);
         applyFilters(data);
       } catch (err) {
@@ -74,7 +74,7 @@ export default function ListePersonnel({ eventId, token, refreshTrigger }) {
     fetchPersonnels();
     const interval = setInterval(fetchPersonnels, 6000);
     return () => clearInterval(interval);
-  }, [eventId, token, refreshTrigger, applyFilters]);
+  }, [eventId, refreshTrigger, applyFilters]);
 
   // Application des filtres quand ils changent
   useEffect(() => {

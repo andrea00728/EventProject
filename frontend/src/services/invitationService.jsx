@@ -1,16 +1,11 @@
 
 import axiosClient from "../api/axios-client";
-export const QrCodeValidation = async (payload, token) => {
+export const QrCodeValidation = async (payload) => {
   try {
     const qrCodeString = JSON.stringify(payload);
     const response = await axiosClient.post(
       `/invitations/qrCodeVerification`,
       { qrCode: qrCodeString },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
     );
     return response.data;
   } catch (error) {
@@ -26,37 +21,20 @@ export const QrCodeValidation = async (payload, token) => {
  * 
  * 
  */
-export const getCheckinStats = async (token) => {
-  const response = await axiosClient.get("/guests/count/checkin", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export const getCheckinStats = async () => {
+  const response = await axiosClient.get("/guests/count/checkin");
   return response.data;
 };
 
-export const getEventIdByEmail = async (token) => {
-  const response = await axiosClient.get("/guests/geteventid/2", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export const getEventIdByEmail = async () => {
+  const response = await axiosClient.get("/guests/geteventid/2");
   return response.data;
 };
 
-export const createInvitation = async (eventId, token) => {
+export const createInvitation = async (eventId) => {
   const response = await axiosClient.post(
     '/invitations',
-    { eventId },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+    { eventId }
   );
   return response.data;
 };
-
-
-
-

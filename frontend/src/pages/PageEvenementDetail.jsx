@@ -2,12 +2,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import CardEvenement from "../components/CardEvenement";
+import axiosClient from "../api/axios-client";
 
 export default function PageEvenementPublic() {
   const [evenements, setEvenements] = useState([]);
 
   useEffect(() => {
-    axios.get("http://localhost:3000/api/evenements/publics")
+    axiosClient.get("/api/evenements/publics")
       .then((res) => setEvenements(res.data))
       .catch((err) => console.error("Erreur lors du chargement des événements publics :", err));
   }, []);
