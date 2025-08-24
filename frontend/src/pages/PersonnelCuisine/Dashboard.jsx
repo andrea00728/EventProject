@@ -29,6 +29,7 @@ import Spinner from "./Spinner";
 import BurgerMenu from "./BurgerMenu";
 import axiosClient from "../../api/axios-client";
 import { Navigate, useNavigate } from "react-router-dom";
+import { url } from "../../api/url";
 
 const formatDateTime = (dateString) => {
   const date = new Date(dateString);
@@ -102,7 +103,7 @@ export default function DashboardpersCuisine() {
       const UserId = await getUserIdForToken();
       setUserId(UserId);
 
-      const newSocket = io("http://localhost:3000", {
+      const newSocket = io(`${url}`, {
         auth: { userId: UserId },
         transports: ["websocket"],
         cors: { origin: "mastertable.site" },
@@ -127,7 +128,7 @@ export default function DashboardpersCuisine() {
   };
 
   const changerStatut = async (id, direction = "next") => {
-    const socket = io("http://localhost:3000", { auth: { userId } });
+    const socket = io(`${url}`, { auth: { userId } });
     const updatedOrder = commandes.find((c) => c.id === id);
     let newStatus = updatedOrder.status;
 

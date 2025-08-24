@@ -9,7 +9,7 @@ import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { getUserIdForToken } from "../../services/userService";
 import { FaArrowLeft, FaSync, FaTimes, FaSearch } from "react-icons/fa";
-import { SOCKET_URL } from "../../socket";
+import { url } from "../../api/url";
 
 const GestionCommandesPage = () => {
   // Déclarations d'état pour la gestion des commandes et de l'UI
@@ -112,7 +112,7 @@ const GestionCommandesPage = () => {
           { status: STATUS_MAPPING.frontToBack[newStatus] },
         );
 
-        const socket = io(SOCKET_URL, {
+        const socket = io(`${url}`, {
           auth: { userId },
         });
 
@@ -145,7 +145,7 @@ const GestionCommandesPage = () => {
         const fetchedUserId = await getUserIdForToken();
         setUserId(fetchedUserId);
 
-        socket = io(SOCKET_URL, {
+        socket = io(`${url}`, {
           auth: { userId: fetchedUserId },
           transports: ["websocket", "polling"],
           reconnection: true,

@@ -1,16 +1,7 @@
 import axios from "axios";
 import axiosClient from "../api/axios-client";
 
-// L'URL de base de votre API
-// const API_BASE_URL = "http://localhost:3000"; 
 
-// Crée une instance d'axios avec une configuration par défaut
-// const axiosInstance = axios.create({
-//   baseURL: API_BASE_URL,
-//   headers: {
-//     "Content-Type": "application/json",
-//   },
-// });
 
 // Service pour gérer les appels API liés aux revenus
 const revenuService = {

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { url } from '../api/url';
 
 export default function Contact() {
     const [formData, setFormData] = useState({
@@ -20,7 +21,7 @@ export default function Contact() {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:3000/contact_messages', {
+            const response = await fetch(`${url}/contact_messages`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

@@ -1,11 +1,12 @@
 import { Google } from "@mui/icons-material";
 import { FaGoogle } from "react-icons/fa";
+import { url } from "../api/url";
 
-const apiBaseUrl = import.meta.env?.VITE_API_BASE_URL || 'http://localhost:3000';
+
 
 export default function ButtonConnexion() {
   const connecter = () => {
-    window.location.href = `${apiBaseUrl}/auth/google`;
+    window.location.href = `${url}/auth/google`;
   };
 
   return (

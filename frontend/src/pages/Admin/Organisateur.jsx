@@ -23,9 +23,9 @@ import { useDarkMode } from "../../context/DarkModeContext";
 import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { ChevronDown } from "lucide-react";
 import { io } from "socket.io-client";
-import { SOCKET_URL } from "../../socket";
 import { getUserIdForToken } from "../../services/userService";
 import { useStateContext } from "../../context/ContextProvider";
+import { url } from "../../api/url";
 
 // Composant StatsCard
 const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
@@ -399,7 +399,7 @@ const connectSocket = async () => {
     const userId = await getUserIdForToken();
     if (!userId || socketRef.current) return; // éviter doublon
 
-    const socket = io(SOCKET_URL, {
+    const socket = io(`${url}`, {
       path: "/socket.io/",
       transports: ["websocket", "polling"],
       auth: { userId },

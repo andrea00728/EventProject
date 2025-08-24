@@ -6,7 +6,6 @@ import { useStateContext } from "../../context/ContextProvider";
 import { Link } from "react-router-dom";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { getUserIdForToken } from "../../services/userService";
-import { SOCKET_URL } from "../../socket";
 import { Snackbar, Alert, Chip } from "@mui/material";
 import {
   FaArrowLeft,
@@ -18,6 +17,7 @@ import {
 } from "react-icons/fa";
 import io from "socket.io-client";
 import axiosClient from "../../api/axios-client";
+import { url } from "../../api/url";
 
 const noScrollbarCSS = `
   .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -158,7 +158,7 @@ const fetchCommandes = useCallback(async () => {
         setUserId(fetchedUserId);
 
         if (!socketRef.current) {
-          socketRef.current = io(SOCKET_URL, {
+          socketRef.current = io(`${url}`, {
             auth: { userId: fetchedUserId },
             transports: ["websocket", "polling"],
             reconnection: true,
