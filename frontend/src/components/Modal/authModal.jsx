@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { X, Mail, Lock, User, Upload, Eye, EyeOff, Camera, Check } from "lucide-react";
+import { X, Mail, Lock, User, Eye, EyeOff, Camera, Check } from "lucide-react";
 import { loginUser, registerUser } from "../../services/authService";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // Assurez-vous d'importer useNavigate
 import ButtonConnexion from "../../util/buttonconnexion";
 import { useStateContext } from "../../context/ContextProvider";
 
 export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
+    // Tous les hooks sont appelés ici, au début du composant
     const [isSignUp, setIsSignUp] = useState(!isSignIn);
     const [showPassword, setShowPassword] = useState(false);
     const [photoPreview, setPhotoPreview] = useState(null);
@@ -16,12 +17,15 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
         password: "",
         photo: null,
     });
-
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
-    const navigate = useNavigate()
+    const navigate = useNavigate();
+    const { setUser, isAuthenticated, user } = useStateContext();
 
-    if (!isOpen) return null;
+    // La logique de rendu conditionnel est déplacée ici, après les hooks
+    if (!isOpen) {
+        return null;
+    }
 
     const handleChange = (e) => {
         const { name, value, files } = e.target;
@@ -47,8 +51,6 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
         }
     };
 
-    const { setUser,isAuthenticated } = useStateContext(); // Ajouter ceci dans AuthModal
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
@@ -70,8 +72,12 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
                 console.log("Résultat de la connexion : ", result);
 
                 if (isAuthenticated) {
-                    if (user?.isInPersonnel) return <Navigate to="/choix-role" replace />;
-                    if (role === "organisateur") return <Navigate to="/accueil" replace />;
+                    if (user?.isInPersonnel) {
+                        navigate("/choix-role", { replace: true });
+                    }
+                    if (user?.role === "organisateur") {
+                        navigate("/accueil", { replace: true });
+                    }
                 } else {
                     throw new Error("Token absent dans la réponse.");
                 }
@@ -224,8 +230,6 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
                             >
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
-
-
                         </div>
 
                         {/* Message d'erreur */}
@@ -288,8 +292,6 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
                         >
                             {isSignUp ? "Se connecter" : "Créer un compte"}
                         </button>
-
-
                     </div>
 
                     {/* Conditions d'utilisation */}

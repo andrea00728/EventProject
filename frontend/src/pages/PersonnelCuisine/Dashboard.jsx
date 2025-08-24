@@ -27,6 +27,8 @@ import { getUserIdForToken } from "../../services/userService";
 import OrderList from "./OrderList";
 import Spinner from "./Spinner";
 import BurgerMenu from "./BurgerMenu";
+import axiosClient from "../../api/axios-client";
+import { Navigate, useNavigate } from "react-router-dom";
 
 const formatDateTime = (dateString) => {
   const date = new Date(dateString);
@@ -40,13 +42,6 @@ const formatDateTime = (dateString) => {
   });
 };
 
-// // Spinner Component
-// const Spinner = () => (
-//   <div className="flex items-center justify-center h-64">
-//     <div className="w-12 h-12 border-4 border-t-4 border-gray-200 border-t-[#cfc6c4] rounded-full animate-spin"></div>
-//   </div>
-// );
-
 export default function DashboardpersCuisine() {
   const [activeTab, setActiveTab] = useState("commandes");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -54,17 +49,44 @@ export default function DashboardpersCuisine() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [userId, setUserId] = useState(null)
-  const { user, isAuthenticated, setUser } = useStateContext();
+  const [showToast, setShowToast] = useState(false);
+  const [userId, setUserId] = useState(null);
 
-    useEffect(() => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated, setUser, handleLogout } = useStateContext();
+
+  // ----- Déconnexion -----
+  const onLogoutClick = async () => {
+    try {
+      await axiosClient.post("/auth/logout");
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+    } finally {
+      sessionStorage.removeItem("ACCESS_TOKEN");
+      sessionStorage.removeItem("USER");
+      setUser(null);
+      if (handleLogout) handleLogout();
+      setShowLogoutModal(false);
+      setShowToast(true);
+      setTimeout(() => {
+        setShowToast(false);
+        navigate("/pagepublic", { replace: true });
+      }, 2000);
+    }
+  };
+
+  const handleLogoutInitiate = () => setShowLogoutModal(true);
+  const handleLogoutCancel = () => setShowLogoutModal(false);
+
+  // ----- Chargement des commandes -----
+  useEffect(() => {
     const fetchOrders = async () => {
       try {
-        if (!isAuthenticated) throw new Error(" manquant");
+        if (!isAuthenticated) throw new Error("Utilisateur non authentifié");
 
         const eventId = await getEventIdByEmail();
         const data = await getAllOrdersForOnEvent(eventId.eventId);
-        
+
         setLoading(true);
         setError(null);
         setCommandes(data);
@@ -75,46 +97,39 @@ export default function DashboardpersCuisine() {
         setLoading(false);
       }
     };
-
+    if(!isAuthenticated) return;
     const fetchData = async () => {
       const UserId = await getUserIdForToken();
-      setUserId(UserId)
+      setUserId(UserId);
 
-        const newSocket = io("http://localhost:3000", {
-          auth: { userId: UserId },
-          transports: ["websocket"],
-          cors: { origin: "mastertable.site" },
-        });
+      const newSocket = io("http://localhost:3000", {
+        auth: { userId: UserId },
+        transports: ["websocket"],
+        cors: { origin: "mastertable.site" },
+      });
 
-      socket.on("connect", () => {
+      newSocket.on("connect", () => {
         console.log("✅ Connecté au serveur WebSocket");
       });
 
-      // Pour écouter les mises à jour
-      // socket.on("order_status_updated", (data) => {
-      //   console.log("📦 Statut mis à jour :", data);
-      // });
+      newSocket.on("order_status_updated", (data) => {
+        console.log("📦 Statut mis à jour :", data);
+      });
     };
 
     fetchOrders();
-    fetchData()
+    fetchData();
   }, [isAuthenticated]);
 
+  // ----- Gestion du statut des commandes -----
   const changeDataBaseStatus = async (id, status) => {
     await updateOrderStatus(id, status);
   };
 
   const changerStatut = async (id, direction = "next") => {
-    const socket = io("http://localhost:3000", {
-      auth: {
-        userId: userId, 
-      },
-    });
+    const socket = io("http://localhost:3000", { auth: { userId } });
     const updatedOrder = commandes.find((c) => c.id === id);
     let newStatus = updatedOrder.status;
-
-
-    
 
     if (direction === "next") {
       if (newStatus === "pending") newStatus = "preparing";
@@ -132,6 +147,7 @@ export default function DashboardpersCuisine() {
     }
   };
 
+  // ----- Export Excel -----
   const exporterExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(
       commandes.map((commande) => ({
@@ -150,19 +166,7 @@ export default function DashboardpersCuisine() {
     XLSX.writeFile(workbook, "commandes_evenement.xlsx");
   };
 
-  const handleLogoutInitiate = () => {
-    setShowLogoutModal(true);
-  };
-
-  const handleLogoutConfirm = () => {
-    setShowLogoutModal(false);
-    setUser(null);
-  };
-
-  const handleLogoutCancel = () => {
-    setShowLogoutModal(false);
-  };
-
+  // ----- Statistiques -----
   const stats = {
     total: commandes.length,
     pending: commandes.filter((c) => c.status === "pending").length,
@@ -170,6 +174,10 @@ export default function DashboardpersCuisine() {
     served: commandes.filter((c) => c.status === "served").length,
   };
 
+  if (!isAuthenticated) {
+  return <Navigate to="/pagepublic" replace />;
+}
+  // ----- Rendu -----
   return (
     <div className="flex flex-col md:flex-row h-screen bg-[#fafafa]">
       {/* Sidebar */}
@@ -180,7 +188,7 @@ export default function DashboardpersCuisine() {
             className="flex flex-col items-center focus:outline-none group"
           >
             <img
-              src={`${user.photo}`}
+              src={user.photo}
               alt="Utilisateur"
               className="w-20 h-20 rounded-full border-4 border-white shadow-md mb-2"
             />
@@ -260,7 +268,7 @@ export default function DashboardpersCuisine() {
               </h1>
 
               {loading ? (
-                <Spinner /> // Replaced animate-pulse with Spinner component
+                <Spinner />
               ) : error ? (
                 <div className="flex flex-col items-center justify-center py-10 bg-red-50 rounded-xl shadow-md border border-red-300">
                   <div className="flex items-center space-x-3">
@@ -274,96 +282,79 @@ export default function DashboardpersCuisine() {
                   </p>
                 </div>
               ) : (
-                <>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse shadow-lg rounded-lg bg-white">
-                      <thead>
-                        <tr className="bg-[#f2f0ef] text-gray-700 uppercase text-sm">
-                          <th className="p-4">ID</th>
-                          <th className="p-4">Client</th>
-                          <th className="p-4">Table</th>
-                          <th className="p-4">Plats & Quantités</th>
-                          <th className="p-4">Date & Heure</th>
-                          <th className="p-4">Statut</th>
-                          <th className="p-4">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {commandes.map((commande) => (
-                          <tr
-                            key={commande.id}
-                            className="text-center border-t"
-                          >
-                            <td className="p-4">{commande.id}</td>
-                            <td className="p-4">
-                              <MdPerson className="inline mr-2 text-xl" />
-                              {commande.nom}
-                            </td>
-                            <td className="p-4">
-                              <MdTableRestaurant className="inline mr-2 text-xl" />
-                              {commande.table.numero}
-                            </td>
-                            <td className="p-4">
-                              {commande.items
-                                .map(
-                                  (p) => `${p.menuItem.name} (x${p.quantity})`
-                                )
-                                .join(", ")}
-                            </td>
-                            <td className="p-4">
-                              {formatDateTime(commande.orderDate)}
-                            </td>
-                            <td className="p-4 capitalize">
-                              {commande.status === "pending" && (
-                                <span className="flex items-center gap-1 justify-center text-yellow-500 font-semibold">
-                                  <MdPendingActions className="text-xl" /> En
-                                  attente
-                                </span>
-                              )}
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse shadow-lg rounded-lg bg-white">
+                    <thead>
+                      <tr className="bg-[#f2f0ef] text-gray-700 uppercase text-sm">
+                        <th className="p-4">ID</th>
+                        <th className="p-4">Client</th>
+                        <th className="p-4">Table</th>
+                        <th className="p-4">Plats & Quantités</th>
+                        <th className="p-4">Date & Heure</th>
+                        <th className="p-4">Statut</th>
+                        <th className="p-4">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {commandes.map((commande) => (
+                        <tr key={commande.id} className="text-center border-t">
+                          <td className="p-4">{commande.id}</td>
+                          <td className="p-4">
+                            <MdPerson className="inline mr-2 text-xl" />
+                            {commande.nom}
+                          </td>
+                          <td className="p-4">
+                            <MdTableRestaurant className="inline mr-2 text-xl" />
+                            {commande.table.numero}
+                          </td>
+                          <td className="p-4">
+                            {commande.items
+                              .map((p) => `${p.menuItem.name} (x${p.quantity})`)
+                              .join(", ")}
+                          </td>
+                          <td className="p-4">{formatDateTime(commande.orderDate)}</td>
+                          <td className="p-4 capitalize">
+                            {commande.status === "pending" && (
+                              <span className="flex items-center gap-1 justify-center text-yellow-500 font-semibold">
+                                <MdPendingActions className="text-xl" /> En attente
+                              </span>
+                            )}
+                            {commande.status === "preparing" && (
+                              <span className="flex items-center gap-1 justify-center text-orange-500 font-semibold">
+                                <MdKitchen className="text-xl" /> En préparation
+                              </span>
+                            )}
+                            {commande.status === "served" && (
+                              <span className="flex items-center gap-1 justify-center text-green-600 font-semibold">
+                                <MdDoneAll className="text-xl" /> Servie
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <div className="flex flex-col md:flex-row justify-center gap-2">
                               {commande.status === "preparing" && (
-                                <span className="flex items-center gap-1 justify-center text-orange-500 font-semibold">
-                                  <MdKitchen className="text-xl" /> En
-                                  préparation
-                                </span>
+                                <button
+                                  onClick={() => changerStatut(commande.id, "prev")}
+                                  className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg shadow-md font-semibold transition transform hover:scale-105 flex items-center gap-2"
+                                >
+                                  <MdPendingActions className="text-xl" /> Retour
+                                </button>
                               )}
-                              {commande.status === "served" && (
-                                <span className="flex items-center gap-1 justify-center text-green-600 font-semibold">
-                                  <MdDoneAll className="text-xl" /> Servie
-                                </span>
+                              {commande.status !== "served" && (
+                                <button
+                                  onClick={() => changerStatut(commande.id, "next")}
+                                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md font-semibold transition transform hover:scale-105 flex items-center gap-2"
+                                >
+                                  <MdDoneAll className="text-xl" /> Suivant
+                                </button>
                               )}
-                            </td>
-                            <td className="p-4">
-                              <div className="flex flex-col md:flex-row justify-center gap-2">
-                                {commande.status === "preparing" && (
-                                  <button
-                                    onClick={() =>
-                                      changerStatut(commande.id, "prev")
-                                    }
-                                    className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg shadow-md font-semibold transition transform hover:scale-105 flex items-center gap-2"
-                                  >
-                                    <MdPendingActions className="text-xl" />
-                                    Retour
-                                  </button>
-                                )}
-                                {commande.status !== "served" && (
-                                  <button
-                                    onClick={() =>
-                                      changerStatut(commande.id, "next")
-                                    }
-                                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md font-semibold transition transform hover:scale-105 flex items-center gap-2"
-                                  >
-                                    <MdDoneAll className="text-xl" />
-                                    Suivant
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </motion.div>
           )}
@@ -424,7 +415,7 @@ export default function DashboardpersCuisine() {
         </AnimatePresence>
       </div>
 
-      {/* Logout Confirmation Modal */}
+      {/* Modal de déconnexion */}
       <AnimatePresence>
         {showLogoutModal && (
           <motion.div
@@ -447,7 +438,7 @@ export default function DashboardpersCuisine() {
               </p>
               <div className="flex justify-center gap-4">
                 <button
-                  onClick={handleLogoutConfirm}
+                  onClick={onLogoutClick}
                   className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition transform hover:scale-105"
                 >
                   Oui, déconnecter
@@ -463,6 +454,13 @@ export default function DashboardpersCuisine() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Toast de confirmation */}
+      {showToast && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+          Déconnexion réussie !
+        </div>
+      )}
     </div>
   );
 }

@@ -85,7 +85,7 @@ export default function PublicLayout() {
   useEffect(() => {
   if (isAuthenticated) {
     console.log("Token:", isAuthenticated, "User:", user, "Role:", role); // Debug log
-    if (user.role !== "organisateur") {
+    if (user?.role !== "organisateur") {
       navigate("/choix-role", { replace: true });
     } else {
       navigate("/pagepublic", { replace: true });

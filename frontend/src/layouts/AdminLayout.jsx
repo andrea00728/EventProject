@@ -39,13 +39,14 @@ import io from "socket.io-client";
 import { useSocket } from "../socket";
 
 export default function AdminLayout() {
-  const { token, role, isLoading, setToken, setUser, user } = useStateContext();
+  const { isAuthenticated, role, isLoading, setUser, user } = useStateContext();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [messages,setMessages]=useState([]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -60,7 +61,7 @@ export default function AdminLayout() {
 
   if (isLoading) return <div>Chargement ...</div>;
 
-  if (!token) return <Navigate to="/pagepublic" replace />;
+  if (!isAuthenticated) return <Navigate to="/pagepublic" replace />;
 
   switch (role) {
     case "admin":
@@ -83,7 +84,6 @@ export default function AdminLayout() {
 
   const confirmLogout = () => {
     console.log("Déconnexion Confirmée");
-    setToken(null);
     setUser(null);
     logout();
     setShowLogoutModal(false);
@@ -337,11 +337,6 @@ export default function AdminLayout() {
         try {
           const response = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
           );
           if (!response.ok)
             throw new Error("Erreur lors de la récupération des messages");
@@ -365,11 +360,7 @@ export default function AdminLayout() {
         try {
           const response = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
+           
           );
           if (!response.ok)
             throw new Error("Erreur lors de la récupération des notifications");
@@ -389,11 +380,6 @@ export default function AdminLayout() {
         if (!userId) return;
         const response = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
         );
         if (!response.ok)
           throw new Error("Erreur lors de la récupération des messages");
@@ -432,7 +418,7 @@ export default function AdminLayout() {
           socket.disconnect();
         }
       };
-    }, [token]);
+    }, []);
 
     useEffect(() => {
       const handleClickOutside = (event) => {

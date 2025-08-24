@@ -3,7 +3,7 @@ import ImportGuestsCSVEvModif from '../../pages/choixModInvite/importationCsvEve
 import { useStateContext } from '../../context/ContextProvider';
 
 const PendingEventModal = ({ isOpen, onClose, event }) => {
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const [activeTab, setActiveTab] = useState('tables');
   const [isInviteFormOpen, setIsInviteFormOpen] = useState(false);
 
@@ -13,7 +13,6 @@ const PendingEventModal = ({ isOpen, onClose, event }) => {
     try {
       await fetch('/api/tables', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(tableForm),
       });
       onClose(); // Fermer après succès (à ajuster selon votre logique)

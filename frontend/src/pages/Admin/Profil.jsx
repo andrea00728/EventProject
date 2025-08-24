@@ -5,10 +5,11 @@ import { useStateContext } from "../../context/ContextProvider";
 import { MdSave } from "react-icons/md";
 import { FaSpinner } from "react-icons/fa";
 import axios from 'axios';
+import axiosClient from '../../api/axios-client';
 
 export default function SuperAdminProfileEdit() {
   const { darkMode } = useDarkMode();
-  const { user, token, setUser } = useStateContext(); 
+  const { user, isAuthenticated, setUser } = useStateContext(); 
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -21,7 +22,7 @@ export default function SuperAdminProfileEdit() {
 
   useEffect(() => {
     const fetchProfileData = async () => {
-      if (!user || !token) {
+      if (!user || !isAuthenticated) {
         setError("Impossible de récupérer les informations de l'utilisateur.");
         setLoading(false);
         return;
@@ -39,7 +40,7 @@ export default function SuperAdminProfileEdit() {
     };
 
     fetchProfileData();
-  }, [user, token]);
+  }, [user, isAuthenticated]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -78,10 +79,9 @@ export default function SuperAdminProfileEdit() {
     }
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/update-profile`, formData, {
+      const response = await axiosClient.post(`/auth/update-profile`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}`
         },
       });
 
