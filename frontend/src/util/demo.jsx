@@ -1,6 +1,8 @@
 import { Plus, RefreshCcw, User } from "lucide-react";
 import { useState, useRef } from "react";
 
+//Tyh le zy ry andrea ah
+
 const TABLE_TYPES = [
   { value: "ronde", label: "Table ronde", width: 80, height: 80 },
   { value: "rectangle", label: "Table rectangulaire", width: 112, height: 64 },
