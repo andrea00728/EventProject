@@ -102,8 +102,8 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
     <div
       className={`w-5 h-5 rounded-full absolute border border-white shadow-sm flex items-center justify-center text-[10px] font-bold text-white cursor-pointer transition-all duration-200 ${
         isOccupied 
-          ? 'bg-red-500 hover:bg-red-600' 
-          : 'bg-green-400 hover:bg-green-500'
+          ? "bg-gradient-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600" 
+          : "bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600"
       } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''} ${
         isMoving ? 'ring-2 ring-yellow-400 ring-offset-1 animate-pulse' : ''
       }`}
