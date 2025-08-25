@@ -321,13 +321,14 @@ export default function AdminLayout() {
     const [showConversationModal, setShowConversationModal] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [notifications, setNotifications] = useState([]);
-    const { user } = useStateContext();
+    const { user, token } = useStateContext();
     const socket = useSocket();
     const notifRef = useRef(null);
     const msgRef = useRef(null);
     const profileRef = useRef(null);
     const navigate = useNavigate();
     const [messages, setMessages] = useState([]);
+    
 
     const handleRedirect = () => {
       navigate("/AdminParametre");
