@@ -1,6 +1,5 @@
-import { Plus, RefreshCcw } from "lucide-react";
+import { Plus, RefreshCcw, User } from "lucide-react";
 import { useState } from "react";
-// import PlaceStatic from "./Place";
 
 const TABLE_TYPES = [
   { value: "ronde", label: "Table ronde", width: 80, height: 80 },
@@ -98,12 +97,19 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
   return positions;
 }
 
-function Chair({ number, style }) {
+function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMoving }) {
   return (
     <div
-      className="w-5 h-5 rounded-full bg-green-400 absolute border border-white shadow-sm flex items-center justify-center text-[10px] font-bold text-white"
+      className={`w-5 h-5 rounded-full absolute border border-white shadow-sm flex items-center justify-center text-[10px] font-bold text-white cursor-pointer transition-all duration-200 ${
+        isOccupied 
+          ? 'bg-red-500 hover:bg-red-600' 
+          : 'bg-green-400 hover:bg-green-500'
+      } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''} ${
+        isMoving ? 'ring-2 ring-yellow-400 ring-offset-1 animate-pulse' : ''
+      }`}
       style={style}
-      title={`Place ${number}`}
+      title={isOccupied ? `Place ${number} - ${guestName}` : `Place ${number} - Libre`}
+      onClick={onClick}
     >
       {number}
     </div>
@@ -112,14 +118,21 @@ function Chair({ number, style }) {
 
 export default function Demo() {
   const [tables, setTables] = useState([]);
+  const [guests, setGuests] = useState([]); // {id, name, tableId, chairIndex}
   const [form, setForm] = useState({ nom: "", capacite: "", nombre: "" });
+  const [guestForm, setGuestForm] = useState({ name: "", tableId: "" });
   const [selectedType, setSelectedType] = useState(TABLE_TYPES[0].value);
   const [showDragZone, setShowDragZone] = useState(false);
   const [editingTable, setEditingTable] = useState(null);
   const [ajoutTable, setAjoutTable] = useState(false);
+  const [ajoutGuest, setAjoutGuest] = useState(false);
+  const [movingGuest, setMovingGuest] = useState(null); // {guestId, sourceTableId, sourceChairIndex}
 
   const handleFormChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleGuestFormChange = (e) =>
+    setGuestForm({ ...guestForm, [e.target.name]: e.target.value });
 
   const handleAddTable = (e) => {
     e.preventDefault();
@@ -144,6 +157,82 @@ export default function Demo() {
     setForm({ nom: "", capacite: "", nombre: "" });
     setShowDragZone(true);
     setAjoutTable(false);
+  };
+
+  const handleAddGuest = (e) => {
+    e.preventDefault();
+    const table = tables.find(t => t.id === Number(guestForm.tableId));
+    if (!table) return;
+
+    // Trouver la première chaise libre
+    const occupiedChairs = guests.filter(g => g.tableId === table.id).map(g => g.chairIndex);
+    let freeChairIndex = -1;
+    
+    for (let i = 0; i < table.capacite; i++) {
+      if (!occupiedChairs.includes(i)) {
+        freeChairIndex = i;
+        break;
+      }
+    }
+
+    if (freeChairIndex === -1) {
+      alert("Aucune place libre sur cette table!");
+      return;
+    }
+
+    const newGuest = {
+      id: Date.now(),
+      name: guestForm.name,
+      tableId: table.id,
+      chairIndex: freeChairIndex
+    };
+
+    setGuests([...guests, newGuest]);
+    setGuestForm({ name: "", tableId: "" });
+    setAjoutGuest(false);
+  };
+
+  const handleChairClick = (tableId, chairIndex) => {
+    if (movingGuest) {
+      // Mode déplacement - déplacer l'invité vers cette chaise
+      const targetGuest = guests.find(g => g.tableId === tableId && g.chairIndex === chairIndex);
+      
+      if (targetGuest) {
+        alert("Cette chaise est déjà occupée!");
+        return;
+      }
+
+      setGuests(prev => 
+        prev.map(g => 
+          g.id === movingGuest.guestId 
+            ? { ...g, tableId, chairIndex }
+            : g
+        )
+      );
+      setMovingGuest(null);
+    } else {
+      // Mode sélection - sélectionner un invité à déplacer
+      const guest = guests.find(g => g.tableId === tableId && g.chairIndex === chairIndex);
+      if (guest) {
+        setMovingGuest({
+          guestId: guest.id,
+          sourceTableId: tableId,
+          sourceChairIndex: chairIndex
+        });
+      }
+    }
+  };
+
+  const cancelMove = () => {
+    setMovingGuest(null);
+  };
+
+  const isChairOccupied = (tableId, chairIndex) => {
+    return guests.some(g => g.tableId === tableId && g.chairIndex === chairIndex);
+  };
+
+  const getGuestForChair = (tableId, chairIndex) => {
+    return guests.find(g => g.tableId === tableId && g.chairIndex === chairIndex);
   };
 
   const handleDragStart = (id, e) => {
@@ -190,7 +279,13 @@ export default function Demo() {
             updatedTable.width = typeInfo.width;
             updatedTable.height = typeInfo.height;
           }
-          if (field === "capacite") updatedTable.capacite = Number(value) || 1;
+          if (field === "capacite") {
+            updatedTable.capacite = Number(value) || 1;
+            // Supprimer les invités dont les chaises n'existent plus
+            setGuests(prev => 
+              prev.filter(g => g.tableId !== id || g.chairIndex < updatedTable.capacite)
+            );
+          }
           return updatedTable;
         }
         return t;
@@ -235,8 +330,6 @@ export default function Demo() {
       )
     );
   };
-
-
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 p-4 lg:p-8 gap-4 lg:gap-8 overflow-auto">
@@ -303,7 +396,58 @@ export default function Demo() {
       {/* Zone Drag & Drop */}
       {showDragZone && (
         <>
-          {/* Formulaire modal ajout */}
+          {/* Modal Ajouter Invité */}
+          {ajoutGuest && (
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-lg flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
+                <h2 className="text-xl font-semibold mb-4">
+                  Ajouter un Invité
+                </h2>
+                <form onSubmit={handleAddGuest}>
+                  <input
+                    name="name"
+                    value={guestForm.name}
+                    onChange={handleGuestFormChange}
+                    placeholder="Nom de l'invité"
+                    required
+                    className="w-full border rounded-lg px-3 py-2 mb-4"
+                  />
+                  <select
+                    name="tableId"
+                    value={guestForm.tableId}
+                    onChange={handleGuestFormChange}
+                    required
+                    className="w-full border rounded-lg px-3 py-2 mb-4"
+                  >
+                    <option value="">Sélectionner une table</option>
+                    {tables.map((table) => {
+                      const occupiedSeats = guests.filter(g => g.tableId === table.id).length;
+                      const freeSeats = table.capacite - occupiedSeats;
+                      return (
+                        <option key={table.id} value={table.id} disabled={freeSeats === 0}>
+                          {table.nom} ({freeSeats} place{freeSeats !== 1 ? 's' : ''} libre{freeSeats !== 1 ? 's' : ''})
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <button
+                    type="submit"
+                    className="w-full bg-green-600 text-white font-semibold py-2 rounded-lg hover:bg-green-700 cursor-pointer"
+                  >
+                    Ajouter
+                  </button>
+                </form>
+                <button
+                  onClick={() => setAjoutGuest(false)}
+                  className="mt-4 w-full bg-gray-300 text-gray-800 font-semibold py-2 rounded-lg hover:bg-gray-400 cursor-pointer"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Modal ajout table */}
           {ajoutTable && (
             <div className="fixed inset-0 bg-black/30 backdrop-blur-lg flex items-center justify-center z-50">
               <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
@@ -369,6 +513,15 @@ export default function Demo() {
 
           {/* Boutons fixes flottants */}
           <div className="fixed bottom-4 left-4 flex flex-col gap-2 z-50">
+            {/* Bouton Ajouter invité */}
+            <button
+              onClick={() => setAjoutGuest(true)}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition"
+            >
+              <User className="w-5 h-5" />
+              <span className="hidden sm:inline">Ajouter invité</span>
+            </button>
+
             {/* Bouton Ajouter des tables */}
             <button
               onClick={() => setAjoutTable(true)}
@@ -380,18 +533,37 @@ export default function Demo() {
 
             {/* Bouton Réinitialiser */}
             <button
-              onClick={() => setTables([])}
+              onClick={() => {
+                setTables([]);
+                setGuests([]);
+                setMovingGuest(null);
+              }}
               className="bg-red-600 text-white px-4 py-2 rounded-lg cursor-pointer shadow flex items-center justify-center sm:justify-start gap-2 transition"
             >
               <RefreshCcw className="w-5 h-5" />
               <span className="hidden sm:inline">Réinitialiser</span>
             </button>
-          </div>
 
+            {/* Bouton Annuler déplacement */}
+            {movingGuest && (
+              <button
+                onClick={cancelMove}
+                className="bg-yellow-600 text-white px-4 py-2 rounded-lg cursor-pointer shadow flex items-center justify-center sm:justify-start gap-2 transition"
+              >
+                <span className="hidden sm:inline">Annuler déplacement</span>
+                <span className="sm:hidden">✕</span>
+              </button>
+            )}
+          </div>
 
           {/* Zone tables */}
           <div className="flex-1 flex items-center justify-center relative">
             <div className="relative w-full h-[60vh] lg:w-[800px] lg:h-[500px] bg-white border overflow-auto border-gray-300 rounded-2xl shadow-2xl">
+              {movingGuest && (
+                <div className="absolute top-4 left-4 bg-yellow-100 border border-yellow-300 text-yellow-800 px-3 py-2 rounded-lg z-40">
+                  Mode déplacement: Cliquez sur une chaise libre pour déplacer l'invité
+                </div>
+              )}
               {tables.map((table) => (
                 <div
                   key={table.id}
@@ -425,9 +597,25 @@ export default function Demo() {
                       table.capacite,
                       table.width,
                       table.height
-                    ).map((pos, i) => (
-                      <Chair key={i} number={i + 1} style={pos} />
-                    ))}
+                    ).map((pos, i) => {
+                      const isOccupied = isChairOccupied(table.id, i);
+                      const guest = getGuestForChair(table.id, i);
+                      const isSelected = movingGuest?.sourceTableId === table.id && movingGuest?.sourceChairIndex === i;
+                      const isMovingTarget = movingGuest && movingGuest.guestId !== guest?.id;
+                      
+                      return (
+                        <Chair 
+                          key={i} 
+                          number={i + 1} 
+                          style={pos}
+                          isOccupied={isOccupied}
+                          guestName={guest?.name}
+                          onClick={() => handleChairClick(table.id, i)}
+                          isSelected={isSelected}
+                          isMoving={isMovingTarget}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -488,6 +676,8 @@ export default function Demo() {
               <button
                 className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
                 onClick={() => {
+                  // Supprimer aussi tous les invités de cette table
+                  setGuests(prev => prev.filter(g => g.tableId !== editingTable.id));
                   setTables((prev) =>
                     prev.filter((t) => t.id !== editingTable.id)
                   );
@@ -501,7 +691,7 @@ export default function Demo() {
         </div>
       )}
 
-      {/* Instructions */}
+        {/* Instructions */}
       <div className="max-w-full sm:max-w-xl w-full  mx-auto p-3 sm:p-6 animate-fade-in animate-slide-up">
         <h2 className="text-base sm:text-2xl font-extrabold text-indigo-700 mb-3 sm:mb-4 tracking-wide drop-shadow-sm">
           Instructions
