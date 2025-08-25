@@ -14,7 +14,7 @@ const EventAccept = () => {
   const [error, setError] = useState(null);
 
  useEffect(() => {
-  // 🚦 Vérifier si l'utilisateur est authentifié.
+  // Vérifier si l'utilisateur est authentifié.
   // La logique du ContextProvider gère déjà le chargement et la récupération de l'état.
   if (!isAuthenticated) {
     setError("Authentification requise pour voir les événements.");
