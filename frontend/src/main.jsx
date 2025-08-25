@@ -10,6 +10,8 @@ import './App.css'
 import 'leaflet/dist/leaflet.css'
 import "react-toastify/dist/ReactToastify.css"; // 👈 styles toastify
 import { ToastContainer } from "react-toastify"; // 👈 importer le container
+import 'antd/dist/reset.css';
+
 
 import L from "leaflet";
 import icon from "leaflet/dist/images/marker-icon.png";
