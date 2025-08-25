@@ -23,8 +23,8 @@ import { useDarkMode } from "../../context/DarkModeContext";
 import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { ChevronDown } from "lucide-react";
 import { io } from "socket.io-client";
-import { SOCKET_URL } from "../../socket";
 import { getUserIdForToken } from "../../services/userService";
+import { url } from "../../api/url";
 
 // Composant StatsCard
 const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
@@ -484,7 +484,7 @@ export default function Organisateur() {
     const userId = await getUserIdForToken();
     if (!userId) return;
 
-    socket = io(SOCKET_URL, {
+    socket = io(`${url}`, {
       path: '/socket.io/',
       transports: ['websocket', 'polling'],
       auth: { userId },
