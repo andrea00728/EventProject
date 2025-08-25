@@ -29,7 +29,8 @@ import {
 } from "react-icons/md";
 import { useDarkMode } from "../context/DarkModeContext";
 import { useStateContext } from "../context/ContextProvider";
-import Dropdown from "./Dropdown";
+import Dropdown from "./Dropdown"; // Assurez-vous d'avoir ce composant
+import Modalist from "./modal"; // Importez le nouveau composant Modal
 import LogoutModal from "../pages/Admin/LogoutModal";
 import { logout } from "../services/firebase/authService";
 import { format } from "date-fns";
@@ -256,15 +257,17 @@ export default function AdminLayout() {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.isAdmin ? "justify-end" : "justify-start"}`}
+                className={`flex ${
+                  message.isAdmin ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
                   className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                     message.isAdmin
                       ? "bg-blue-500 text-white"
                       : darkMode
-                        ? "bg-gray-700 text-gray-200"
-                        : "bg-gray-200 text-gray-900"
+                      ? "bg-gray-700 text-gray-200"
+                      : "bg-gray-200 text-gray-900"
                   }`}
                 >
                   <p className="text-sm">{message.text}</p>
@@ -273,8 +276,8 @@ export default function AdminLayout() {
                       message.isAdmin
                         ? "text-blue-100"
                         : darkMode
-                          ? "text-gray-400"
-                          : "text-gray-500"
+                        ? "text-gray-400"
+                        : "text-gray-500"
                     }`}
                   >
                     {formatTime(message.timestamp)}
@@ -330,6 +333,10 @@ export default function AdminLayout() {
     const navigate = useNavigate();
     const [messages, setMessages] = useState([]);
 
+    // États pour les modaux
+    const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+    const [showMessagesModal, setShowMessagesModal] = useState(false);
+
     const handleRedirect = () => {
       navigate("/AdminParametre");
     };
@@ -349,12 +356,11 @@ export default function AdminLayout() {
             throw new Error("Erreur lors de la récupération des messages");
           const data = await response.json();
 
-          // Adapter le format au même style que ton tableau statique
           const formatted = data.map((msg) => ({
             ...msg,
             from: `${msg.firstName} ${msg.lastName}`,
             text: msg.message,
-            read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+            read: msg.read || false,
           }));
 
           setMessages(formatted);
@@ -363,6 +369,7 @@ export default function AdminLayout() {
           setMessages([]);
         }
       };
+
       const fetchNotifications = async () => {
         try {
           const response = await fetch(
@@ -402,7 +409,7 @@ export default function AdminLayout() {
             ...msg,
             from: `${msg.firstName} ${msg.lastName}`,
             text: msg.message,
-            read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+            read: msg.read || false,
           }));
           setMessages([...messages, ...formatted]);
         });
@@ -433,56 +440,56 @@ export default function AdminLayout() {
         document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const markMessageAsRead = (item) => {
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.id === item.id ? { ...msg, read: true } : msg
-        )
-      );
-      setNotifications((prev) =>
-        prev.map((notif) =>
-          notif.id === item.id ? { ...notif, read: true } : notif
-        )
-      );
+    const markAsRead = (id, type) => {
+      if (type === "notification") {
+        setNotifications(prev =>
+          prev.map(n => (n.id === id ? { ...n, read: true } : n))
+        );
+      } else if (type === "message") {
+        setMessages(prev =>
+          prev.map(m => (m.id === id ? { ...m, read: true } : m))
+        );
+      }
     };
+
 
 
     const handleMessageClick = (item) => {
-      // Fermer le dropdown des notifications
-      setShowNotifications(false);
-      // Fermer le dropdown des messages (optionnel, on rouvre juste après)
-      setShowMessages(false);
-
-      // Ouvrir le modal pour ce message
+      setOpenDropdown(null); // fermer dropdown
+      markAsRead(item.id, "message"); // <- id ici
       setSelectedConversation({ content: item });
-      markMessageAsRead(item);
       setShowConversationModal(true);
     };
+
     
 
 
     const handleNotificationClick = (item) => {
-      // Fermer le dropdown des messages
-      setShowMessages(false);
-      // Fermer le dropdown des notifications
-      setShowNotifications(false);
-
-      // Marquer la notification comme lue
-      markMessageAsRead(item);
-
-      // Ouvrir le modal pour cette notification
+      setOpenDropdown(null); // fermer dropdown
+      markAsRead(item.id, "notification"); // <- id ici
       setSelectedConversation({ content: item });
       setShowConversationModal(true);
     };
 
 
+    const [notifFilter, setNotifFilter] = useState('all');
+    const [msgFilter, setMsgFilter] = useState('all');
 
+    const filteredNotifications = notifFilter === 'all'
+      ? notifications
+      : notifFilter === 'unread'
+      ? notifications.filter(n => !n.read)
+      : notifications.filter(n => n.read);
 
-    
+    const filteredMessages = msgFilter === 'all'
+      ? messages
+      : msgFilter === 'unread'
+      ? messages.filter(m => !m.read)
+      : messages.filter(m => m.read);
 
+      
     const handleDeleteMessage = async (id) => {
       try {
-        // Appel à ton backend pour supprimer en base
         const response = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`,
           {
@@ -494,7 +501,6 @@ export default function AdminLayout() {
           throw new Error("Erreur lors de la suppression");
         }
 
-        // Mise à jour locale après confirmation de la suppression
         setMessages((prevMessages) =>
           prevMessages.filter((msg) => msg.id !== id)
         );
@@ -502,7 +508,7 @@ export default function AdminLayout() {
         console.error("Suppression impossible :", error);
       }
     };
-
+    
     // Suppression d'une notification
     const handleDeleteNotification = async (notificationId) => {
       try {
@@ -512,10 +518,6 @@ export default function AdminLayout() {
         console.error("Erreur lors de la suppression :", err);
       }
     };
-
-
-
-
 
     const pageBg = darkMode
       ? "bg-gray-900 text-gray-200"
@@ -537,7 +539,6 @@ export default function AdminLayout() {
             {currentPageName}
           </h2>
           <div className="flex items-center gap-3 sm:gap-6 relative">
-            {/* Notifications */}
             <Dropdown
               ref={notifRef}
               show={openDropdown === 'notifications'}
@@ -546,14 +547,20 @@ export default function AdminLayout() {
               }
               icon={<FaBell className="text-lg sm:text-xl" />}
               label="Notifications"
-              count={notifications.length}
-              items={notifications}
-              onDelete={handleDeleteNotification}
+              count={notifications.filter(n => !n.read).length}
+              items={filteredNotifications} // ici les items filtrés
               onItemClick={handleNotificationClick}
-              noScroll={true}
-            />
+              onDelete={handleDeleteNotification}
+              onViewMore={() => setShowNotificationsModal(true)}
+            >
+              {/* Boutons de filtre */}
+              <div className="flex gap-2 p-2">
+                <button onClick={() => setNotifFilter('all')}>Tout ({notifications.length})</button>
+                <button onClick={() => setNotifFilter('unread')}>Non lus ({notifications.filter(n => !n.read).length})</button>
+                <button onClick={() => setNotifFilter('read')}>Lus ({notifications.filter(n => n.read).length})</button>
+              </div>
+            </Dropdown>
 
-            {/* Messages */}
             <Dropdown
               ref={msgRef}
               show={openDropdown === 'messages'}
@@ -562,12 +569,19 @@ export default function AdminLayout() {
               }
               icon={<FaEnvelope className="text-lg sm:text-xl" />}
               label="Messages"
-              count={messages.filter((msg) => !msg.read).length}
-              items={messages}
-              onDelete={handleDeleteMessage}
+              count={messages.filter(m => !m.read).length}
+              items={filteredMessages} // ici aussi
               onItemClick={handleMessageClick}
-              noScroll={true}
-            />
+              onDelete={handleDeleteMessage}
+              onViewMore={() => setShowMessagesModal(true)}
+            >
+              <div className="flex gap-2 p-2">
+                <button onClick={() => setMsgFilter('all')}>Tout ({messages.length})</button>
+                <button onClick={() => setMsgFilter('unread')}>Non lus ({messages.filter(m => !m.read).length})</button>
+                <button onClick={() => setMsgFilter('read')}>Lus ({messages.filter(m => m.read).length})</button>
+              </div>
+            </Dropdown>
+
 
             <div ref={profileRef} className="relative">
               <button
@@ -681,6 +695,22 @@ export default function AdminLayout() {
           conversation={selectedConversation}
           darkMode={darkMode}
         />
+        <Modalist
+          show={showNotificationsModal}
+          onClose={() => setShowNotificationsModal(false)}
+          title="Toutes les notifications"
+          items={notifications}
+          onItemClick={handleNotificationClick}
+          onDelete={handleDeleteNotification}
+        />
+        <Modalist
+          show={showMessagesModal}
+          onClose={() => setShowMessagesModal(false)}
+          title="Tous les messages"
+          items={messages}
+          onItemClick={handleMessageClick}
+          onDelete={handleDeleteMessage}
+        />
       </>
     );
   };
@@ -710,7 +740,9 @@ export default function AdminLayout() {
       <aside
         className={`fixed z-50 top-0 left-0 h-full w-64 transition-all duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 md:relative md:w-72 ${darkMode ? "bg-gray-800" : "bg-gray-200"}`}
+        } md:translate-x-0 md:relative md:w-72 ${
+          darkMode ? "bg-gray-800" : "bg-gray-200"
+        }`}
       >
         <div className="flex flex-col h-full">
           <div className="p-5 flex items-center justify-between">
@@ -753,8 +785,8 @@ export default function AdminLayout() {
                         location.pathname === item.path
                           ? "text-white scale-110"
                           : darkMode
-                            ? "text-gray-300 group-hover:scale-110"
-                            : "text-gray-500 group-hover:scale-110"
+                          ? "text-gray-300 group-hover:scale-110"
+                          : "text-gray-500 group-hover:scale-110"
                       }`}
                     >
                       {item.icon}
@@ -814,9 +846,13 @@ export default function AdminLayout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <AdminHeader currentPageName={currentPageName} darkMode={darkMode} />
         <main
-          className={`flex-1 overflow-auto scrollable ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}
+          className={`flex-1 overflow-auto scrollable ${
+            darkMode ? "bg-gray-900" : "bg-gray-50"
+          }`}
         >
-          <div className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+          <div
+            className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}
+          >
             <Outlet />
           </div>
         </main>
