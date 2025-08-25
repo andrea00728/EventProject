@@ -8,7 +8,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import Logo from "../assets/LogoMaster.png";
+import Logo from "../assets/Logo_Mastertable_Rapex.jpeg";
 import { FaUser } from "react-icons/fa";
 import Profil from "../util/profils";
 import { AuthModal } from "../components/Modal/authModal";

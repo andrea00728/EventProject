@@ -739,7 +739,7 @@ export default function AdminLayout() {
           <div className="p-5 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <img
-                src="../../public/images/logo_4.png"
+                src="../../public/"
                 alt="Logo"
                 className="w-10 h-10 rounded-lg object-cover transition-transform duration-300 hover:scale-110"
               />
