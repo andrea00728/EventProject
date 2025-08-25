@@ -160,7 +160,8 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   const [searchLieu, setSearchLieu] = useState("");
   const [selectedLieu, setSelectedLieu] = useState(null);
   const [error, setError] = useState(null);
-  const mapRef = useRef(null);
+  const [map, setMap] = useState(null);
+
 
   useEffect(() => {
     getLocations()
@@ -238,14 +239,15 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   );
 
   const handleSelectLieu = (loc) => {
-    setSelectedLieu(loc);
-    if (mapRef.current && loc.latitude && loc.longitude) {
-      mapRef.current.setView(
-        [parseFloat(loc.latitude), parseFloat(loc.longitude)],
-        13
-      );
-    }
-  };
+  setSelectedLieu(loc);
+  if (map && loc.latitude && loc.longitude) {
+    map.setView(
+      [parseFloat(loc.latitude), parseFloat(loc.longitude)],
+      13
+    );
+  }
+};
+
 
   const handleConfirmLieu = () => {
     if (selectedLieu) {
@@ -531,7 +533,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                   center={[48.8566, 2.3522]} // Paris par défaut
                   zoom={13}
                   style={{ height: "100%", width: "100%" }}
-                  ref={mapRef}
+                  whenCreated={setMap}
                   dragging={true}
                   zoomControl={true}
                   scrollWheelZoom={false}
