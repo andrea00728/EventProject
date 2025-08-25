@@ -33,7 +33,7 @@ import Dropdown from "./Dropdown"; // Assurez-vous d'avoir ce composant
 import Modalist from "./modal"; // Importez le nouveau composant Modal
 import LogoutModal from "../pages/Admin/LogoutModal";
 import { logout } from "../services/firebase/authService";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import { getUserIdForToken } from "../services/userService";
 import { fr } from "date-fns/locale";
 import io from "socket.io-client";
@@ -325,14 +325,28 @@ export default function AdminLayout() {
     const [showConversationModal, setShowConversationModal] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [notifications, setNotifications] = useState([]);
+    const [messages, setMessages] = useState([]);
     const { user } = useStateContext();
     const socket = useSocket();
     const notifRef = useRef(null);
     const msgRef = useRef(null);
     const profileRef = useRef(null);
     const navigate = useNavigate();
-    const [messages, setMessages] = useState([]);
+    const [notifFilter, setNotifFilter] = useState("all");
+    const [msgFilter, setMsgFilter] = useState("all");
+    const [openDropdown, setOpenDropdown] = useState(null);
 
+    const filteredNotifications = notifications.filter(n => {
+      if (notifFilter === "all") return true;
+      if (notifFilter === "unread") return !n.read;
+      return n.read;
+    });
+
+    const filteredMessages = messages.filter(m => {
+      if (msgFilter === "all") return true;
+      if (msgFilter === "unread") return !m.read;
+      return m.read;
+    });
     // États pour les modaux
     const [showNotificationsModal, setShowNotificationsModal] = useState(false);
     const [showMessagesModal, setShowMessagesModal] = useState(false);
@@ -440,54 +454,42 @@ export default function AdminLayout() {
         document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const markAsRead = (id, type) => {
-      if (type === "notification") {
-        setNotifications(prev =>
-          prev.map(n => (n.id === id ? { ...n, read: true } : n))
-        );
-      } else if (type === "message") {
+    const markAsRead = async (id, type) => {
+      if (type === "message") {
         setMessages(prev =>
           prev.map(m => (m.id === id ? { ...m, read: true } : m))
         );
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ read: true }),
+        });
+      } else if (type === "notification") {
+        setNotifications(prev =>
+          prev.map(n => (n.id === id ? { ...n, read: true } : n))
+        );
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/notification/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ read: true }),
+        });
       }
     };
 
-
-
-    const handleMessageClick = (item) => {
-      setOpenDropdown(null); // fermer dropdown
-      markAsRead(item.id, "message"); // <- id ici
+    const handleMessageClick = async (item) => {
+      await markAsRead(item.id, "message");
+      setOpenDropdown(null);
       setSelectedConversation({ content: item });
       setShowConversationModal(true);
     };
 
-    
-
-
-    const handleNotificationClick = (item) => {
-      setOpenDropdown(null); // fermer dropdown
-      markAsRead(item.id, "notification"); // <- id ici
+    const handleNotificationClick = async (item) => {
+      await markAsRead(item.id, "notification");
+      setOpenDropdown(null);
       setSelectedConversation({ content: item });
-      setShowConversationModal(true);
     };
 
-
-    const [notifFilter, setNotifFilter] = useState('all');
-    const [msgFilter, setMsgFilter] = useState('all');
-
-    const filteredNotifications = notifFilter === 'all'
-      ? notifications
-      : notifFilter === 'unread'
-      ? notifications.filter(n => !n.read)
-      : notifications.filter(n => n.read);
-
-    const filteredMessages = msgFilter === 'all'
-      ? messages
-      : msgFilter === 'unread'
-      ? messages.filter(m => !m.read)
-      : messages.filter(m => m.read);
-
-      
+  
     const handleDeleteMessage = async (id) => {
       try {
         const response = await fetch(
@@ -539,6 +541,7 @@ export default function AdminLayout() {
             {currentPageName}
           </h2>
           <div className="flex items-center gap-3 sm:gap-6 relative">
+            {/* Dropdown Notifications */}
             <Dropdown
               ref={notifRef}
               show={openDropdown === 'notifications'}
@@ -548,19 +551,34 @@ export default function AdminLayout() {
               icon={<FaBell className="text-lg sm:text-xl" />}
               label="Notifications"
               count={notifications.filter(n => !n.read).length}
-              items={filteredNotifications} // ici les items filtrés
+              items={filteredNotifications}
               onItemClick={handleNotificationClick}
               onDelete={handleDeleteNotification}
               onViewMore={() => setShowNotificationsModal(true)}
             >
-              {/* Boutons de filtre */}
               <div className="flex gap-2 p-2">
-                <button onClick={() => setNotifFilter('all')}>Tout ({notifications.length})</button>
-                <button onClick={() => setNotifFilter('unread')}>Non lus ({notifications.filter(n => !n.read).length})</button>
-                <button onClick={() => setNotifFilter('read')}>Lus ({notifications.filter(n => n.read).length})</button>
+                <button
+                  onClick={() => setNotifFilter('all')}
+                  className={`px-3 py-1 rounded-full ${notifFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Tout ({notifications.length})
+                </button>
+                <button
+                  onClick={() => setNotifFilter('unread')}
+                  className={`px-3 py-1 rounded-full ${notifFilter === 'unread' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Non lus ({notifications.filter(n => !n.read).length})
+                </button>
+                <button
+                  onClick={() => setNotifFilter('read')}
+                  className={`px-3 py-1 rounded-full ${notifFilter === 'read' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Lus ({notifications.filter(n => n.read).length})
+                </button>
               </div>
             </Dropdown>
 
+            {/* Dropdown Messages */}
             <Dropdown
               ref={msgRef}
               show={openDropdown === 'messages'}
@@ -570,15 +588,30 @@ export default function AdminLayout() {
               icon={<FaEnvelope className="text-lg sm:text-xl" />}
               label="Messages"
               count={messages.filter(m => !m.read).length}
-              items={filteredMessages} // ici aussi
+              items={filteredMessages}
               onItemClick={handleMessageClick}
               onDelete={handleDeleteMessage}
               onViewMore={() => setShowMessagesModal(true)}
             >
               <div className="flex gap-2 p-2">
-                <button onClick={() => setMsgFilter('all')}>Tout ({messages.length})</button>
-                <button onClick={() => setMsgFilter('unread')}>Non lus ({messages.filter(m => !m.read).length})</button>
-                <button onClick={() => setMsgFilter('read')}>Lus ({messages.filter(m => m.read).length})</button>
+                <button
+                  onClick={() => setMsgFilter('all')}
+                  className={`px-3 py-1 rounded-full ${msgFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Tout ({messages.length})
+                </button>
+                <button
+                  onClick={() => setMsgFilter('unread')}
+                  className={`px-3 py-1 rounded-full ${msgFilter === 'unread' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Non lus ({messages.filter(m => !m.read).length})
+                </button>
+                <button
+                  onClick={() => setMsgFilter('read')}
+                  className={`px-3 py-1 rounded-full ${msgFilter === 'read' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Lus ({messages.filter(m => m.read).length})
+                </button>
               </div>
             </Dropdown>
 
