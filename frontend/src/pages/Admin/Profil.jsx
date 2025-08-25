@@ -4,14 +4,14 @@ import { useDarkMode } from "../../context/DarkModeContext";
 import { useStateContext } from "../../context/ContextProvider";
 import { MdSave } from "react-icons/md";
 import { FaSpinner } from "react-icons/fa";
-import axios from 'axios';
-import axiosClient from '../../api/axios-client';
+// import axios from 'axios';
 
 export default function SuperAdminProfileEdit() {
   const { darkMode } = useDarkMode();
-  const { user, isAuthenticated, setUser } = useStateContext(); 
+  const { user, token } = useStateContext();
   const [profile, setProfile] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     bio: '',
     photo: '',
@@ -22,16 +22,15 @@ export default function SuperAdminProfileEdit() {
 
   useEffect(() => {
     const fetchProfileData = async () => {
-      if (!user || !isAuthenticated) {
+      if (!user || !token) {
         setError("Impossible de récupérer les informations de l'utilisateur.");
         setLoading(false);
         return;
       }
 
       setProfile({
-        // firstName: user.firstName || '',
-        // lastName: user.lastName || '',
-        name: user.name,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
         email: user.email || '',
         bio: user.bio || '',
         photo: user.photo || 'https://via.placeholder.com/150',
@@ -40,7 +39,7 @@ export default function SuperAdminProfileEdit() {
     };
 
     fetchProfileData();
-  }, [user, isAuthenticated]);
+  }, [user, token]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,7 +50,7 @@ export default function SuperAdminProfileEdit() {
   };
 
   const handleFileChange = (e) => {
-    // Logique pour gérer le changement de fichier
+    // Logique pour gérer le changement de fichier (non implémentée pour la démo)
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -66,31 +65,13 @@ export default function SuperAdminProfileEdit() {
     e.preventDefault();
     setIsSaving(true);
     setError(null);
-    
-    const formData = new FormData();
-    formData.append('name', profile.name);
-    formData.append('bio', profile.bio);
-
-    if (profile.photo && profile.photo.startsWith('data:')) {
-        
-        const res = await fetch(profile.photo);
-        const blob = await res.blob();
-        formData.append('photo', blob);
-    }
-
     try {
-      const response = await axiosClient.post(`/auth/update-profile`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      setUser(response.data.user);
-
-      alert('Le profil a été mis à jour avec succès !');
+      // Simulation d'une requête API
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log('Profil à mettre à jour :', profile);
+      alert('Le profil a été sauvegardé avec succès !');
     } catch (err) {
-      console.error("Erreur de sauvegarde du profil :", err);
-      setError("Erreur lors de la sauvegarde du profil. Veuillez réessayer.");
+      setError("Erreur lors de la sauvegarde du profil.");
     } finally {
       setIsSaving(false);
     }
@@ -172,17 +153,17 @@ export default function SuperAdminProfileEdit() {
             <div className="grid md:grid-cols-2 gap-8">
               <div>
                 <div className="mb-6">
-                  <label htmlFor="firstName" className={labelClasses}>Nom de l'Admin</label>
+                  <label htmlFor="firstName" className={labelClasses}>Prénom</label>
                   <input
                     type="text"
                     id="firstName"
-                    name="name"
-                    value={profile.name}
+                    name="firstName"
+                    value={profile.firstName}
                     onChange={handleChange}
                     className={inputClasses(false)}
                   />
                 </div>
-                {/* <div className="mb-6">
+                <div className="mb-6">
                   <label htmlFor="lastName" className={labelClasses}>Nom</label>
                   <input
                     type="text"
@@ -192,7 +173,7 @@ export default function SuperAdminProfileEdit() {
                     onChange={handleChange}
                     className={inputClasses(false)}
                   />
-                </div> */}
+                </div>
                 <div className="mb-6">
                   <label htmlFor="email" className={labelClasses}>Adresse E-mail</label>
                   <input

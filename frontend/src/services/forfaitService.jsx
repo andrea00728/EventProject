@@ -72,12 +72,10 @@ export const getLastTransactions = async (/*token*/) => {
 }
 
 export const getRevenuMensuel = async (/*token*/) => {
-  // if (!token) throw new Error('Utilisateur non authentifié');
+
   try {
     const response = await axiosClient.get('/forfait/revenu-mensuel', /*{
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+   
     }*/);
     return response.data;
   } catch (error) {

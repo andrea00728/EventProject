@@ -321,7 +321,6 @@ export default function AdminLayout() {
     const [showConversationModal, setShowConversationModal] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [notifications, setNotifications] = useState([]);
-    const [messages, setMessages] = useState([]);
     const { user } = useStateContext();
     const socket = useSocket();
     const notifRef = useRef(null);

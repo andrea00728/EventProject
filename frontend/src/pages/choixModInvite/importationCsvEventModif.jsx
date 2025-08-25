@@ -3,7 +3,7 @@ import { importGuestsToSpecificEvent } from "../../services/inviteService";
 import { useStateContext } from "../../context/ContextProvider";
 
 export default function ImportGuestsCSVEvModif({ eventId, onImportSuccess }) {
-  const { isAuthenticated} = useStateContext();
+  const { token } = useStateContext();
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -27,7 +27,7 @@ export default function ImportGuestsCSVEvModif({ eventId, onImportSuccess }) {
 
     setLoading(true);
     try {
-      await importGuestsToSpecificEvent(file, eventId);
+      await importGuestsToSpecificEvent(file, eventId, token);
       setMessage("✅ Importation réussie !");
       setFile(null);
       if (onImportSuccess) onImportSuccess();

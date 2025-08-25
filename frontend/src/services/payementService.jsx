@@ -8,6 +8,7 @@ import axiosClient from "../api/axios-client";
  * // Créer un lien de paiement PayPal
  */
 export const createPaypalPaymentLink = async (eventId, amount) => {
+  if (!token) throw new Error("Utilisateur non authentifié");
   if (!eventId || !amount) throw new Error("eventId ou amount manquant");
 
   try {
@@ -47,6 +48,7 @@ export const confirmPaypalSuccess = async (eventId, amount) => {
  * // Récupérer les détails d'un paiement existant
  */
 export const getPaymentDetails = async (eventId) => {
+  if (!token || !eventId) throw new Error("Paramètres manquants");
   try {
     const response = await axiosClient.get(`/paiement/details?eventId=${eventId}`);
     return response.data;
