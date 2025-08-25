@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Pie, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -10,11 +10,12 @@ import {
   LineElement,
   PointElement,
 } from "chart.js";
-import { useStateContext } from "../../context/ContextProvider";  // Adjusted path, assuming context is in parent directory
+import { useStateContext } from "../../context/ContextProvider";
 import { useNavigate } from "react-router-dom";
-import { getEventIdByEmail } from "../../services/invitationService";  // Adjusted path
+import { getEventIdByEmail } from "../../services/invitationService";
 import { motion } from "framer-motion";
 import axiosClient from "../../api/axios-client";
+import { ArrowLeft } from 'lucide-react';
 
 // Enregistrement des éléments nécessaires pour Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, LineElement, PointElement);
@@ -48,6 +49,9 @@ const StatistiquesPage = () => {
   const [eventId, setEventId] = useState(null);
   const [eventDetails, setEventDetails] = useState(null);
   const [error, setError] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState('');
+  const [assignedEventId, setAssignedEventId] = useState(null);
   const { isAuthenticated } = useStateContext();
   const navigate = useNavigate();
 
@@ -60,7 +64,7 @@ const StatistiquesPage = () => {
     return gradient;
   };
 
-  // Options communes pour les graphiques (améliorées)
+  // Options communes pour les graphiques
   const baseChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -163,7 +167,7 @@ const StatistiquesPage = () => {
               gradient.addColorStop(1, "rgba(34, 197, 94, 0)");
               return gradient;
             },
-            fill: true, // Remplir la zone sous la ligne
+            fill: true,
             tension: 0.4,
             pointRadius: 6,
             pointHoverRadius: 10,
@@ -267,7 +271,32 @@ const StatistiquesPage = () => {
     },
   ];
 
-  // Logique de récupération des données
+  // Récupération de l'événement assigné
+  const fetchAssignedEvent = useCallback(async () => {
+    try {
+      const resp = await getEventIdByEmail();
+      if (resp?.eventId) {
+        setAssignedEventId(resp.eventId);
+        setSelectedEvent(resp.eventId);
+      }
+    } catch (e) {
+      console.error("Erreur récupération événement assigné :", e);
+      setError("Erreur lors de la récupération de l'événement assigné.");
+    }
+  }, []);
+
+  // Récupération des événements
+  const fetchEvents = useCallback(async () => {
+    try {
+      const res = await axiosClient.get(`/events`);
+      setEvents(res.data);
+    } catch (error) {
+      console.error('Erreur de chargement des événements :', error);
+      setError("Erreur lors de la récupération des événements.");
+    }
+  }, []);
+
+  // Récupération des détails de l'événement
   const fetchEventDetails = async (eventId) => {
     try {
       const response = await axiosClient.get(`/evenements/${eventId}`);
@@ -282,18 +311,19 @@ const StatistiquesPage = () => {
     }
   };
 
-  const fetchStatistics = async () => {
+  // Logique de récupération des statistiques
+  const fetchStatistics = useCallback(async () => {
     try {
       setLoading(true);
-      const event = await getEventIdByEmail();
-      if (!event?.eventId) {
-        throw new Error("ID d'événement non valide ou introuvable.");
+      const eventToUse = assignedEventId || selectedEvent;
+      if (!eventToUse) {
+        throw new Error("Aucun événement sélectionné ou assigné.");
       }
-      const eventId = event.eventId;
-      setEventId(eventId);
-      await fetchEventDetails(eventId);
+      setEventId(eventToUse);
+      await fetchEventDetails(eventToUse);
 
-      const ordersRes = await axiosClient.get(`/orders/event/${eventId}`);
+      // Récupération des commandes
+      const ordersRes = await axiosClient.get(`/orders/event/${eventToUse}`);
       const ordersData = ordersRes.data;
 
       const orderStats = ordersData.reduce((acc, order) => {
@@ -306,16 +336,17 @@ const StatistiquesPage = () => {
         return acc;
       }, { paid: 0, unpaid: 0 });
 
+      // Récupération des données de stock pour l'événement spécifique
       let stockItems = [];
       try {
-        const stockRes = await axiosClient.get(`/menus`);
+        const stockRes = await axiosClient.get(`/menus/event/${eventToUse}`);
         stockItems = Array.isArray(stockRes.data)
           ? stockRes.data.flatMap((menu) => (Array.isArray(menu.items) ? menu.items : []))
           : [];
       } catch (error) {
         console.error("Erreur lors de la récupération des menus :", error);
         if (error.response?.status === 404) {
-          console.warn("API /menus non trouvée, utilisation d'un tableau vide.");
+          console.warn("API /menus/event non trouvée, utilisation d'un tableau vide.");
         }
         stockItems = [];
       }
@@ -338,13 +369,20 @@ const StatistiquesPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [assignedEventId, selectedEvent]);
 
   useEffect(() => {
     if (isAuthenticated) {
+      fetchAssignedEvent();
+      fetchEvents();
+    }
+  }, [isAuthenticated, fetchAssignedEvent, fetchEvents]);
+
+  useEffect(() => {
+    if (isAuthenticated && (assignedEventId || selectedEvent)) {
       fetchStatistics();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, assignedEventId, selectedEvent, fetchStatistics]);
 
   // États de chargement et d'erreur
   if (error) {
@@ -410,18 +448,36 @@ const StatistiquesPage = () => {
               className="flex items-center px-4 py-2 bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 transition-all duration-300 focus:ring-4 focus:ring-indigo-300"
               aria-label="Retour à la page précédente"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-              </svg>
+              <ArrowLeft className="w-5 h-5 mr-2" />
               Retour
             </motion.button>
             <h1 className="text-3xl font-bold text-gray-800 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
               Tableau de bord – {eventDetails ? eventDetails.nom : "Événement non chargé"}
             </h1>
           </div>
-          <span className="text-sm text-gray-600 font-medium">
-            Mis à jour: {new Date().toLocaleString()}
-          </span>
+          <div className="flex items-center gap-4">
+            {!assignedEventId && (
+              <div className="w-full sm:w-48">
+                <label htmlFor="event-select" className="block text-base font-medium text-gray-900 mb-2">
+                  Événement
+                </label>
+                <select
+                  id="event-select"
+                  value={selectedEvent}
+                  onChange={(e) => setSelectedEvent(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
+                >
+                  <option value="">Tous les événements</option>
+                  {events.map(ev => (
+                    <option key={ev.id} value={ev.id}>{ev.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <span className="text-sm text-gray-600 font-medium">
+              Mis à jour: {new Date().toLocaleString()}
+            </span>
+          </div>
         </div>
 
         {/* Section des KPI Cards */}
@@ -485,7 +541,7 @@ const StatistiquesPage = () => {
           >
             <h3 className="text-xl font-bold text-gray-900 mb-2">Paiements & État du Stock</h3>
             <p className="text-sm text-gray-600 mb-6">
-              {totals.payments} paiements – {totals.stock} articles en stock
+              {totals.payments} paiements | {totals.stock} articles en stock
             </p>
             <div className="h-80 relative">
               <Line data={charts.combined.data} options={lineOptions} />
