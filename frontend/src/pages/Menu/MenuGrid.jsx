@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { toast } from 'react-toastify';
 
 const formatter = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
@@ -14,11 +13,9 @@ const MenuGrid = ({ menus, addToCart, formatPrice = (val) => formatter.format(va
 
   const handleAddToCart = (item) => {
     if (item.stock <= 0) {
-      toast.error(`Stock épuisé pour "${item.name}".`);
       return;
     }
     addToCart(item);
-    toast.success(`${item.name} ajouté au panier !`);
   };
 
   return (
