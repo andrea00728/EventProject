@@ -38,6 +38,7 @@ import { getUserIdForToken } from "../services/userService";
 import { fr } from "date-fns/locale";
 import io from "socket.io-client";
 import { useSocket } from "../socket";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminLayout() {
   const { isAuthenticated, role, isLoading, setUser, user, token } = useStateContext();
@@ -316,6 +317,75 @@ export default function AdminLayout() {
     );
   };
 
+  const NotificationModal = ({ show, onClose, notification, darkMode }) => {
+    // Si on n'a pas de notification ou si le modal est fermé, ne rien afficher
+    if (!show || !notification) return null;
+
+    return (
+      <AnimatePresence>
+        <motion.div
+          className="fixed inset-0 bg-gray-900 bg-opacity-30 z-[60] flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className={`w-full max-w-md rounded-lg shadow-xl ${
+              darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+            } flex flex-col`}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1, transition: { duration: 0.25 } }}
+            exit={{ scale: 0.8, opacity: 0, transition: { duration: 0.2 } }}
+          >
+            {/* Header avec image */}
+            <div
+              className={`p-4 border-b flex items-center justify-between ${
+                darkMode ? "border-gray-700" : "border-gray-200"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {notification.organizerImage && (
+                  <img
+                    src={notification.organizerImage}
+                    alt="Organisateur"
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                )}
+                <h3 className="font-semibold">{notification.title || "Notification"}</h3>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Contenu */}
+            <div className="p-4 space-y-2">
+              <p className="text-sm">{notification.message}</p>
+              {notification.time && (
+                <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  {notification.time}
+                </p>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t flex justify-end">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  };
+
   // ============= MODIFIÉ: AdminHeader avec modal =============
   const AdminHeader = ({ currentPageName, darkMode }) => {
     const [showNotifications, setShowNotifications] = useState(false);
@@ -331,10 +401,28 @@ export default function AdminLayout() {
     const profileRef = useRef(null);
     const navigate = useNavigate();
     const [messages, setMessages] = useState([]);
+    const [notifFilter, setNotifFilter] = useState("all");
+    const [msgFilter, setMsgFilter] = useState("all");
+    const [openDropdown, setOpenDropdown] = useState(null);
+    const [showNotificationModal, setShowNotificationModal] = useState(false);
+    const [selectedNotification, setSelectedNotification] = useState(null);
+
 
     // États pour les modaux
     const [showNotificationsModal, setShowNotificationsModal] = useState(false);
     const [showMessagesModal, setShowMessagesModal] = useState(false);
+
+    const filteredNotifications = notifications.filter(n => {
+      if (notifFilter === "all") return true;
+      if (notifFilter === "unread") return !n.read;
+      return n.read;
+    });
+
+    const filteredMessages = messages.filter(m => {
+      if (msgFilter === "all") return true;
+      if (msgFilter === "unread") return !m.read;
+      return m.read;
+    });
 
     const handleRedirect = () => {
       navigate("/AdminParametre");
@@ -368,17 +456,28 @@ export default function AdminLayout() {
         try {
           const response = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`,
-           
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
           );
           if (!response.ok)
             throw new Error("Erreur lors de la récupération des notifications");
+
           const data = await response.json();
-          setNotifications(data);
-        } catch (error) {
-          console.error(
-            "Erreur lors de la récupération des notifications :",
-            error
+
+          // 🔹 Récupère les lus depuis localStorage
+          const readIds = JSON.parse(localStorage.getItem("readNotifications")) || [];
+
+          // 🔹 Marque comme lu dans ton state
+          const merged = data.map((n) =>
+            readIds.includes(n.id) ? { ...n, is_read: true } : n
           );
+
+          setNotifications(merged);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des notifications :", error);
           setNotifications([]);
         }
       };
@@ -464,19 +563,33 @@ export default function AdminLayout() {
         document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const markMessageAsRead = (message) => {
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.id === message.id ? { ...msg, read: true } : msg
-        )
-      );
+    const markAsRead = async (id, type) => {
+      if (type === "message") {
+        setMessages(prev =>
+          prev.map(m => (m.id === id ? { ...m, read: true } : m))
+        );
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ read: true }),
+        });
+      } else if (type === "notification") {
+        setNotifications(prev =>
+          prev.map(n => (n.id === id ? { ...n, read: true } : n))
+        );
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/notification/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ read: true }),
+        });
+      }
     };
 
-    const handleMessageClick = (item) => {
+    const handleMessageClick = async (item) => {
+      await markAsRead(item.id, "message");
+      setOpenDropdown(null);
       setSelectedConversation({ content: item });
-      markMessageAsRead(item);
       setShowConversationModal(true);
-      setShowMessages(false);
     };
 
     const handleDeleteMessage = async (id) => {
@@ -501,32 +614,35 @@ export default function AdminLayout() {
     };
     
     // Logique pour les notifications
-    const handleNotificationClick = (item) => {
-      // Logic to handle notification click, e.g., redirect to event page
-      console.log("Notification cliquée :", item);
+    const handleNotificationClick = async (item) => {
+      await markAsRead(item.id, "notification");
+
+      // 🔹 Mets à jour localStorage
+      const readIds = JSON.parse(localStorage.getItem("readNotifications")) || [];
+      if (!readIds.includes(item.id)) {
+        readIds.push(item.id);
+        localStorage.setItem("readNotifications", JSON.stringify(readIds));
+      }
+
+      setOpenDropdown(null);
+      setSelectedConversation({ content: item });
+
+      // 🔹 Mets à jour ton state pour affichage instantané
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === item.id ? { ...n, is_read: true } : n))
+      );
+      setShowNotificationModal(true);      // on ouvre le modal
+
+
     };
 
-    const handleDeleteNotification = async (id) => {
+    // Suppression d'une notification
+    const handleDeleteNotification = async (notificationId) => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/auth/notifications/${id}`,
-          {
-            method: "DELETE",
-            headers: {
-                Authorization: `Bearer ${token}`,
-            }
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Erreur lors de la suppression de la notification");
-        }
-
-        setNotifications((prevNotifs) =>
-          prevNotifs.filter((notif) => notif.id !== id)
-        );
-      } catch (error) {
-        console.error("Suppression impossible :", error);
+        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/notification/${notificationId}`);
+        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      } catch (err) {
+        console.error("Erreur lors de la suppression :", err);
       }
     };
 
@@ -550,30 +666,83 @@ export default function AdminLayout() {
             {currentPageName}
           </h2>
           <div className="flex items-center gap-3 sm:gap-6 relative">
+
             <Dropdown
               ref={notifRef}
-              show={showNotifications}
-              setShow={setShowNotifications}
+              show={openDropdown === 'notifications'}
+              setShow={() =>
+                setOpenDropdown(openDropdown === 'notifications' ? null : 'notifications')
+              }
               icon={<FaBell className="text-lg sm:text-xl" />}
               label="Notifications"
-              count={notifications.filter((n) => !n.read).length}
-              items={notifications}
-              onItemClick={handleNotificationClick}
+              count={notifications.filter(n => !n.read).length}
+              items={filteredNotifications}
+              onItemClick={(item) => {
+                handleNotificationClick(item);
+                setSelectedNotification(item);   // on stocke la notif cliquée
+                setIsModalOpen(true);            // on ouvre le modal
+              }}
               onDelete={handleDeleteNotification}
-              onViewMore={() => setShowNotificationsModal(true)} // Ajout de la prop
-            />
+              onViewMore={() => setShowNotificationsModal(true)}
+            >
+              <div className="flex gap-2 p-2">
+                <button
+                  onClick={() => setNotifFilter('all')}
+                  className={`px-3 py-1 rounded-full ${notifFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Tout ({notifications.length})
+                </button>
+                <button
+                  onClick={() => setNotifFilter('unread')}
+                  className={`px-3 py-1 rounded-full ${notifFilter === 'unread' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Non lus ({notifications.filter(n => !n.read).length})
+                </button>
+                <button
+                  onClick={() => setNotifFilter('read')}
+                  className={`px-3 py-1 rounded-full ${notifFilter === 'read' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Lus ({notifications.filter(n => n.read).length})
+                </button>
+              </div>
+            </Dropdown>
+
             <Dropdown
               ref={msgRef}
-              show={showMessages}
-              setShow={setShowMessages}
+              show={openDropdown === 'messages'}
+              setShow={() =>
+                setOpenDropdown(openDropdown === 'messages' ? null : 'messages')
+              }
               icon={<FaEnvelope className="text-lg sm:text-xl" />}
               label="Messages"
-              count={messages.filter((msg) => !msg.read).length}
-              items={messages}
-              onDelete={handleDeleteMessage}
+              count={messages.filter(m => !m.read).length}
+              items={filteredMessages}
               onItemClick={handleMessageClick}
-              onViewMore={() => setShowMessagesModal(true)} // Ajout de la prop
-            />
+              onDelete={handleDeleteMessage}
+              onViewMore={() => setShowMessagesModal(true)}
+            >
+              <div className="flex gap-2 p-2">
+                <button
+                  onClick={() => setMsgFilter('all')}
+                  className={`px-3 py-1 rounded-full ${msgFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Tout ({messages.length})
+                </button>
+                <button
+                  onClick={() => setMsgFilter('unread')}
+                  className={`px-3 py-1 rounded-full ${msgFilter === 'unread' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Non lus ({messages.filter(m => !m.read).length})
+                </button>
+                <button
+                  onClick={() => setMsgFilter('read')}
+                  className={`px-3 py-1 rounded-full ${msgFilter === 'read' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Lus ({messages.filter(m => m.read).length})
+                </button>
+              </div>
+            </Dropdown>
+            
             <div ref={profileRef} className="relative">
               <button
                 onClick={() => setShowProfile(!showProfile)}
@@ -684,6 +853,12 @@ export default function AdminLayout() {
           show={showConversationModal}
           onClose={() => setShowConversationModal(false)}
           conversation={selectedConversation}
+          darkMode={darkMode}
+        />
+        <NotificationModal
+          show={showNotificationModal}
+          onClose={() => setShowNotificationModal(false)}
+          notification={selectedNotification}
           darkMode={darkMode}
         />
         <Modalist
