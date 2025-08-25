@@ -6,7 +6,7 @@ import { useStateContext } from "../../context/ContextProvider";
 
 export default function PaypalSuccess() {
   const [searchParams] = useSearchParams();
-  const { token } = useStateContext();
+  const { isAuthenticated} = useStateContext();
   const navigate = useNavigate();
   const eventId = searchParams.get("eventId");
   const amount = searchParams.get("amount");
@@ -16,10 +16,10 @@ export default function PaypalSuccess() {
 
   useEffect(() => {
     const handleConfirmation = async () => {
-      if (!eventId || !amount || !token) {
+      if (!eventId || !amount || !isAuthenticated) {
         setError("Paramètres manquants pour la confirmation (eventId, amount, ou token).");
         setIsLoading(false);
-        console.warn("Paramètres manquants :", { eventId, amount, token });
+        console.warn("Paramètres manquants :", { eventId, amount, isAuthenticated });
         return;
       }
 
@@ -58,7 +58,7 @@ export default function PaypalSuccess() {
             const fileBlob = new Blob([byteArray], { type: "text/csv" });
             const file = new File([fileBlob], "imported.csv", { type: "text/csv" });
 
-            const importResult = await importGuestsToSpecificEvent(file, eventId, token);
+            const importResult = await importGuestsToSpecificEvent(file, eventId);
             console.log("Résultat de l'importation :", importResult);
 
             if (importResult.imported && importResult.imported.length > 0) {
@@ -98,7 +98,7 @@ export default function PaypalSuccess() {
     };
 
     handleConfirmation();
-  }, [eventId, amount, token, navigate]);
+  }, [eventId, amount, isAuthenticated, navigate]);
 
   const handleRetry = () => {
     if (eventId) {

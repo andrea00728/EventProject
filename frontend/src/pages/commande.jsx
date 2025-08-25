@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
-import { useStateContext } from '../context/ContextProvider';
 
 const MenuListWithCart = () => {
   const { id } = useParams();
@@ -13,7 +12,7 @@ const MenuListWithCart = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
   const [isConfirmOrderModalOpen, setIsConfirmOrderModalOpen] = useState(false);
-  const {isAuthenticated}=useStateContext();
+  const token = localStorage.getItem('token');
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedTable, setSelectedTable] = useState(null);
   const [guestName, setGuestName] = useState('');
@@ -66,7 +65,9 @@ const MenuListWithCart = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/categories`);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/categories`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setCategories(['all', ...res.data]);
     } catch (error) {
       console.error(error);
@@ -75,7 +76,9 @@ const MenuListWithCart = () => {
 
   const fetchFavorites = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/favorites`);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/favorites`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setFavorites(res.data.map(item => item.id));
     } catch (error) {
       console.error(error);
@@ -84,7 +87,9 @@ const MenuListWithCart = () => {
 
   const fetchOrderHistory = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders/user`);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders/user`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setOrderHistory(res.data);
     } catch (error) {
       console.error(error);
@@ -285,7 +290,7 @@ const MenuListWithCart = () => {
         },
 
        
-     
+        // { headers: { Authorization: `Bearer ${token}` } }
       );
       if (await requestNotificationPermission()) {
         sendNotification(
@@ -385,11 +390,15 @@ const MenuListWithCart = () => {
   const toggleFavorite = async (itemId) => {
     try {
       if (favorites.includes(itemId)) {
-        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/favorites/${itemId}`);
+        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/favorites/${itemId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setFavorites(favorites.filter(id => id !== itemId));
         setMessage('Retiré des favoris.');
       } else {
-        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/favorites/${itemId}`, {});
+        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/favorites/${itemId}`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setFavorites([...favorites, itemId]);
         setMessage('Ajouté aux favoris.');
       }
@@ -406,6 +415,7 @@ const MenuListWithCart = () => {
       await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/menus/items/${itemId}/ratings`,
         { rating, comment },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessage('Évaluation enregistrée !');
       setTimeout(() => setMessage(''), 3000);

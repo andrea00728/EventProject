@@ -38,7 +38,3 @@ export const createInvitation = async (eventId) => {
   );
   return response.data;
 };
-
-
-
-
