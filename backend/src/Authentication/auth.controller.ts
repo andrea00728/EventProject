@@ -91,7 +91,6 @@ async googleAuthRedirect(@Req() req, @Res() res) {
 
   // Redirige simplement vers la page de rappel sans paramètres
   const redirectUrl = `https://mastertable.site/callback`;
-
   return res.redirect(redirectUrl);
 }
 

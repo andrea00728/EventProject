@@ -3,6 +3,7 @@ import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { useDarkMode } from '../../context/DarkModeContext';
 import { MdPeople, MdEvent, MdOutlinePerson, MdTrendingUp } from 'react-icons/md';
+import { url } from '../../api/url';
 
 const StatsCard = ({ title, value, icon: Icon, color = 'blue' }) => {
   const { darkMode } = useDarkMode();
@@ -50,7 +51,7 @@ const UserStats = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const rolesRes = await fetch('http://localhost:3000/auth/user-role-stats');
+        const rolesRes = await fetch(`${url}/auth/user-role-stats`);
         if (!rolesRes.ok) throw new Error('Erreur récupération des rôles');
         const rolesData = await rolesRes.json();
 
@@ -62,19 +63,19 @@ const UserStats = () => {
         setUserRate(totalUsers > 0 ? ((includedCount / totalUsers) * 100).toFixed(1) : '0.0');
         setOrganizerRate(totalUsers > 0 ? ((organizerCount / totalUsers) * 100).toFixed(1) : '0.0');
 
-        const eventRes = await fetch('http://localhost:3000/evenements/countEvent');
+        const eventRes = await fetch(`${url}/evenements/countEvent`);
         if (!eventRes.ok) throw new Error('Erreur récupération des événements');
         const totalEvents = await eventRes.json();
         setEventCount(totalEvents);
 
-        const revenueRes = await fetch('http://localhost:3000/forfait/revenu-mensuel');
+        const revenueRes = await fetch(`{url}/forfait/revenu-mensuel`);
         if (!revenueRes.ok) throw new Error('Erreur récupération des revenus');
         const revenueData = await revenueRes.json();
         const totalRevenueValue = revenueData.reduce((sum, f) => sum + f.total, 0);
         const formattedRevenue = totalRevenueValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
         setRevenueTotal(formattedRevenue);
 
-        const allEventsRes = await fetch('http://localhost:3000/evenements');
+        const allEventsRes = await fetch('${}/evenements');
         console.log('API Response Status:', allEventsRes.status); 
         const allEvents = await allEventsRes.json();
         console.log('Raw Events Data:', allEvents);
@@ -92,7 +93,7 @@ const UserStats = () => {
         console.log('Processed eventTypeData:', dataArray); 
         setEventTypeData(dataArray);
 
-        const registrationsRes = await fetch('http://localhost:3000/auth/monthly-registrations');
+        const registrationsRes = await fetch(`${url}/auth/monthly-registrations`);
         if (!registrationsRes.ok) throw new Error('Erreur récupération des inscriptions');
         const registrationsData = await registrationsRes.json();
         setRegistrationData(registrationsData);
