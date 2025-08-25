@@ -50,7 +50,6 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
 
   return positions;
 }
-
 function Chair({ number, style }) {
   return (
     <div
@@ -70,6 +69,8 @@ export default function Demo() {
   const [showDragZone, setShowDragZone] = useState(false);
   const [editingTable, setEditingTable] = useState(null);
   const [ajoutTable, setAjoutTable] = useState(false);
+  const [touchOffset, setTouchOffset] = useState({ x: 0, y: 0 });
+
 
   const handleFormChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -99,7 +100,7 @@ export default function Demo() {
     setAjoutTable(false);
   };
 
-  const handleDragStart = (id, e) => {
+    const handleDragStart = (id, e) => {
     const img = new Image();
     img.src = "";
     e.dataTransfer.setDragImage(img, 0, 0);
@@ -133,7 +134,7 @@ export default function Demo() {
   const handleOpenEdit = (table) => setEditingTable(table);
   const handleCloseEdit = () => setEditingTable(null);
 
-  const handleTableChange = (id, field, value) => {
+   const handleTableChange = (id, field, value) => {
     setTables((prev) =>
       prev.map((t) => {
         if (t.id === id) {
@@ -150,6 +151,92 @@ export default function Demo() {
       })
     );
   };
+
+  // Mobile touch drag
+  // const handleTouchStart = (id, e) => {
+  //   e.preventDefault(); // empêche le scroll pendant le drag
+  //   setTables((prev) =>
+  //     prev.map((t) =>
+  //       t.id === id ? { ...t, dragging: true } : { ...t, dragging: false }
+  //     )
+  //   );
+  // };
+
+  // const handleTouchMove = (id, e) => {
+  //   e.preventDefault();
+  //   const touch = e.touches[0];
+  //   const table = tables.find((t) => t.id === id);
+  //   if (!table) return;
+  //   const parentRect = e.target.parentNode.getBoundingClientRect();
+  //   const x = snapToGrid(touch.clientX - parentRect.left - table.width / 2);
+  //   const y = snapToGrid(touch.clientY - parentRect.top - table.height / 2);
+  //   const maxX = 800 - table.width;
+  //   const maxY = 500 - table.height;
+  //   const boundedX = Math.max(0, Math.min(x, maxX));
+  //   const boundedY = Math.max(0, Math.min(y, maxY));
+
+  //   setTables((prev) =>
+  //     prev.map((t) =>
+  //       t.id === id ? { ...t, pos: { left: boundedX, top: boundedY } } : t
+  //     )
+  //   );
+  // };
+
+  // const handleTouchEnd = (id) => {
+  //   setTables((prev) =>
+  //     prev.map((t) =>
+  //       t.id === id ? { ...t, dragging: false } : t
+  //     )
+  //   );
+  // };
+
+  // Mobile touch drag (sans preventDefault)
+  // --- Mobile touch drag ---
+const handleTouchStart = (id, e) => {
+  const touch = e.touches[0];
+  const table = tables.find((t) => t.id === id);
+  if (!table) return;
+
+  const parentRect = e.target.parentNode.getBoundingClientRect();
+  const offsetX = touch.clientX - parentRect.left - table.pos.left;
+  const offsetY = touch.clientY - parentRect.top - table.pos.top;
+
+  setTouchOffset({ x: offsetX, y: offsetY });
+
+  setTables((prev) =>
+    prev.map((t) =>
+      t.id === id ? { ...t, dragging: true } : { ...t, dragging: false }
+    )
+  );
+};
+
+const handleTouchMove = (id, e) => {
+  const touch = e.touches[0];
+  const table = tables.find((t) => t.id === id);
+  if (!table) return;
+
+  const parentRect = e.target.parentNode.getBoundingClientRect();
+  const x = snapToGrid(touch.clientX - parentRect.left - touchOffset.x);
+  const y = snapToGrid(touch.clientY - parentRect.top - touchOffset.y);
+
+  const maxX = 800 - table.width;
+  const maxY = 500 - table.height;
+  const boundedX = Math.max(0, Math.min(x, maxX));
+  const boundedY = Math.max(0, Math.min(y, maxY));
+
+  setTables((prev) =>
+    prev.map((t) =>
+      t.id === id ? { ...t, pos: { left: boundedX, top: boundedY } } : t
+    )
+  );
+};
+
+const handleTouchEnd = (id) => {
+  setTables((prev) =>
+    prev.map((t) => (t.id === id ? { ...t, dragging: false } : t))
+  );
+};
+
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 p-4 lg:p-8 gap-4 lg:gap-8 overflow-auto">
@@ -311,6 +398,9 @@ export default function Demo() {
                   draggable
                   onDragStart={(e) => handleDragStart(table.id, e)}
                   onDragEnd={(e) => handleDragEnd(table.id, e)}
+                  onTouchStart={(e) => handleTouchStart(table.id, e)}
+                  onTouchMove={(e) => handleTouchMove(table.id, e)}
+                  onTouchEnd={() => handleTouchEnd(table.id)}
                   className="absolute cursor-grab active:cursor-grabbing"
                   style={{
                     left: table.pos.left,
@@ -346,7 +436,7 @@ export default function Demo() {
         </>
       )}
 
-      {/* Modal Modification */}  
+      {/* Modal Modification */}
       {editingTable && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">

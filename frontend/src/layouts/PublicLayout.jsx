@@ -17,7 +17,7 @@ import { getConditionalSubMenus } from "../util/menuUtils";
 import { useSocket } from "../socket";
 
 export default function PublicLayout() {
-  const { token, role, user } = useStateContext();
+  const { isAuthenticated, role, user } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [connected, setConnected] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
@@ -51,47 +51,58 @@ export default function PublicLayout() {
 
   // Gérer la connexion, le forfait et la navigation
   useEffect(() => {
-    const handleUserSession = async () => {
-      if (token) {
-        setConnected(true);
-        if (!socket) return;
-        socket.on("connect", () => console.log("Socket connectée : ", socket.id));
-
-        // Vérification de la session et redirection
-        if (user && user.role && user.role !== "organisateur") {
-          navigate("/choix-role", { replace: true });
-        }
-        
-        // Récupération du forfait et mise à jour du menu
-        try {
-          const data = await getUserForfait(token);
-          const userForfait = data.forfait || { nom: "Default" };
-          setForfait(userForfait);
-          setNavItems([
-            { path: "/pagepublic#pagepublic", name: "Accueil" },
-            {
-              path: "#",
-              name: "Evenement",
-              subMenus: getConditionalSubMenus(userForfait.nom || "Default"),
-            },
-            { path: "/pagepublic#service", name: "Service" },
-            { path: "/pagepublic#testimony", name: "Témoignages" },
-            { path: "/pagepublic#forfaits", name: "Forfaits" },
-          ]);
-
-        } catch (err) {
-          console.error("Erreur lors de la récupération du forfait", err);
-          setForfait({ nom: "Default" });
-        }
-      } else {
-        setConnected(false);
-        setForfait(null);
-        setNavItems(defaultNavItems);
+    const fetchAndSetForfait = async () => {
+      try {
+        const data = await getUserForfait();
+        setForfait(data.forfait || { nom: "Default" });
+      } catch (err) {
+        console.error("Erreur lors de la récupération du forfait", err);
+        setForfait({ nom: "Default" });
       }
     };
 
-    handleUserSession();
-  }, [token, user, navigate, socket]);
+    if (isAuthenticated) {
+      fetchAndSetForfait();
+      setConnected(true);
+      if (!socket) return;
+      socket.on("connect", () => console.log("Socket connectée : ", socket.id));
+    } else {
+      setConnected(false);
+      setForfait(null);
+      setNavItems(defaultNavItems);
+    }
+  }, [isAuthenticated, role, user, navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated && forfait) {
+      setNavItems([
+        { path: "/pagepublic#pagepublic", name: "Accueil" },
+        {
+          path: "#",
+          name: "Evenement",
+          subMenus: getConditionalSubMenus(forfait.nom || "Default"),
+        },
+        { path: "/pagepublic#service", name: "Service" },
+        { path: "/pagepublic#testimony", name: "Témoignages" },
+        { path: "/pagepublic#forfaits", name: "Forfaits" },
+      ]);
+    }
+  }, [forfait, isAuthenticated]);
+
+
+  useEffect(() => {
+  if (isAuthenticated) {
+    console.log("Token:", isAuthenticated, "User:", user, "Role:", role); // Debug log
+    if (user?.role !== "organisateur") {
+      navigate("/choix-role", { replace: true });
+    } else {
+      navigate("/pagepublic", { replace: true });
+    }
+  }
+}, [isAuthenticated, user, role, navigate]);
+
+
+
 
   // Le reste du code...
   const subMenuVariants = {

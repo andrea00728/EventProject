@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { parse } from 'csv-parse';
@@ -11,6 +11,7 @@ import { TableEvent } from 'src/entities/Table';
 import { User } from 'src/Authentication/entities/auth.entity';
 import { NotificationService } from '../notification/notification.service';
 import { PersonnelService } from '../personnel/personnel.service';
+import { AuthService } from 'src/Authentication/auth.service';
 
 @Injectable()
 export class GuestService {
@@ -29,6 +30,34 @@ export class GuestService {
     private readonly personnelService:PersonnelService,
   ) {}
 
+
+
+    /**
+   * 
+   * @param email 
+   * @param eventId 
+   * @returns 
+   * Finds a user entry by user email and event ID.
+   */
+  async findOneById(userId: string): Promise<User > {
+    const user = await this.userRepository.findOne({ where: { id:userId } });
+
+    if (!user) {
+      throw new NotFoundException(`L'utilisateur avec l'ID ${userId} n'a pas été trouvé.`);
+    }
+
+    return user;
+  }
+
+
+
+  /**
+   * 
+   * @param dto 
+   * @param eventId 
+   * @param userId 
+   * @returns 
+   */
   async createGuest(dto: CreateInviteDto, eventId: number, userId?: string | null): Promise<Invite> {
     const evenement = await this.evenementRepository.findOne({ where: { id: eventId } });
     if (!evenement) {
@@ -42,9 +71,21 @@ export class GuestService {
     const existing = await this.guestRepository.findOne({
       where: { email: dto.email, event: { id: eventId } },
     });
-
-    if (existing) {
+     if (existing) {
       throw new BadRequestException(`L'email ${dto.email} est déjà utilisé.`);
+    }
+
+    const Existing_personnel = await this.personnelService.findOneByUserEmailAndEvent(dto.email, eventId);
+    if (Existing_personnel){
+      throw new BadRequestException(`L'email ${dto.email} est deja utilisé par un membre du personnel de votre evenement ${evenement.nom}.`);
+    }
+
+    let Existing_user:User |  null = null;
+     if(userId){
+       Existing_user = await this.findOneById(userId);
+     }
+    if(Existing_user && Existing_user.email === dto.email){
+      throw new BadRequestException(`L'email ${dto.email} est votre email.`);
     }
 
     const { table, place } = await this.findNextAvailablePlace(eventId);
@@ -69,6 +110,14 @@ export class GuestService {
   }
 
   // Limite des invités par utilisateur / public
+  /**
+   * 
+   * @param eventId 
+   * @param userId 
+   * @param newInviteCount 
+   * @returns 
+   */
+
   async checkInviteLimit(eventId: number, userId: string, newInviteCount: number): Promise<void> {
     // Bypass pour invités publics (userId = 'public-guest')
     if (userId === 'public-guest') return;
@@ -203,7 +252,19 @@ async importGuests(file: Express.Multer.File, eventId: number,userId:string): Pr
             errors.push(`L'email ${record.email} est déjà utilisé pour cet événement`);
             continue;
           }
-
+          const Existing_personnel = await this.personnelService.findOneByUserEmailAndEvent(record.email, eventId);
+          if(Existing_personnel){
+            errors.push(`L'email ${record.email} est deja utilisé par un membre du personnel de votre evenement ${evenement.nom}.`);
+            continue;
+          }
+          let Existing_user:User |  null = null;
+          if(userId){
+            Existing_user = await this.findOneById(userId);
+          }
+          if(Existing_user && Existing_user.email === record.email){
+            throw new BadRequestException(`L'email ${record.email} est votre email.`);
+            continue;
+          }
           let table: any = null;
           let place: number | null = null;
 

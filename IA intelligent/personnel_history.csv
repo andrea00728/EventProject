@@ -1,0 +1,12 @@
+event_id,duree_event,type_event,maxGuest,personnel_count,jours_apres_fin,action_personnel,action_event
+1,5,mariage,100,5,1,desactiver,desactiver
+2,3,reunion,50,2,0,garder,garder
+3,7,anniversaire,30,3,2,desactiver,desactiver
+4,2,engagement,20,1,0,garder,garder
+5,4,autre,40,4,1,desactiver,desactiver
+6,1,mariage,10,1,0,garder,garder
+7,6,reunion,60,6,3,desactiver,desactiver
+8,3,anniversaire,25,2,0,garder,garder
+9,10,mariage,200,10,10,supprimer,supprimer
+10,8,reunion,150,12,15,supprimer,supprimer
+11,12,autre,80,8,7,supprimer,supprimer

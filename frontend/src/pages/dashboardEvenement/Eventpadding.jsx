@@ -4,7 +4,7 @@ import { useStateContext } from '../../context/ContextProvider';
 import PendingEventModal from '../../components/Modal/EventModelPadding';
 
 const EventPending = () => {
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -12,7 +12,7 @@ const EventPending = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!token) {
+    if (!isAuthenticated) {
       setError("Aucun token d'authentification trouvé.");
       return;
     }
@@ -20,7 +20,7 @@ const EventPending = () => {
     const fetchEvents = async () => {
       setIsLoading(true);
       try {
-        const data = await getMyEvents(token);
+        const data = await getMyEvents();
         // Filtrer les événements sans tables ni invités
         const pendingEvents = data.filter(event => !event.tables?.length && !event.invites?.length);
         setEvents(pendingEvents);
@@ -34,7 +34,7 @@ const EventPending = () => {
     };
 
     fetchEvents();
-  }, [token]);
+  }, [isAuthenticated]);
 
   const openModal = (event) => {
     setSelectedEvent(event);

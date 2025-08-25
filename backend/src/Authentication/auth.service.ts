@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,6 +13,10 @@ import { NotificationEntity } from 'src/entities/notification.entity';
 import { ContactMessage } from 'src/entities/ContactMessage';
 import * as bcrypt from 'bcrypt'
 import axios from 'axios';
+import {Request, Response } from 'express';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import { Redis  } from 'ioredis';
+
 
 @Injectable()
 export class AuthService {
@@ -33,6 +37,8 @@ export class AuthService {
     private readonly notificationRepository: Repository<NotificationEntity>,
     @InjectRepository(ContactMessage)
     private readonly contact_messages: Repository<ContactMessage>,
+    @InjectRedis()
+    private readonly redis:Redis ,
   ) { }
 
 
@@ -76,16 +82,19 @@ export class AuthService {
       });
 
       await this.userRepository.save(user);
-    }
-
-    if (isdetectedRole === 'organisateur') {
+      console.log('Nouvel utilisateur créé:', { id: user.id, email, role: user.role });
+      
       const notification = this.notificationRepository.create({
         title: 'Nouvel organisateur inscrit',
         message: `L'organisateur ${displayName || email} s'est inscrit.`,
         type: 'info',
       });
       await this.notificationRepository.save(notification);
-    } else {
+    }
+
+
+    else {
+      // Mettre à jour name, photo et role
       user.name = displayName || null;
       user.photo = photos?.[0]?.value || null;
       user.role = isdetectedRole;
@@ -141,7 +150,19 @@ export class AuthService {
   }
 
 
-  async login(user: any) {
+
+
+
+  /**
+   * 
+   * @param user 
+   * @param res 
+   * @returns 
+   * 
+   * amelioration pour login pout utilise cookies
+   */
+
+    async login(user: any,res: Response) {
     const payload = {
       email: user.email,
       sub: user.id,
@@ -149,41 +170,147 @@ export class AuthService {
       name: user.name,
       photo: user.photo,
     };
+    const access_token= this.jwtService.sign(payload,{expiresIn:'1h'});
+    const refresh_token= this.jwtService.sign(payload,{expiresIn:'7d'});
+    res.cookie('jwt',access_token,{
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge:60*60*60*1000,
+    });
+    console.log('JWT Payload:', payload);
+
+    //utilise pour actualise le token
+
+    res.cookie('refresh_token',refresh_token,{
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge:7*24*60*60*1000,
+    })
+
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token,refresh_token
     };
   }
 
-  //Login user manuel
-  async loginUser(email: string, password: string) {
-    // Chercher l'utilisateur
-    const user = await this.userRepository.findOne({ where: { email } });
-    if (!user) {
-      throw new BadRequestException('Email ou mot de passe incorrect');
-    }
 
-    // Vérifier le mot de passe
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      throw new BadRequestException('Email ou mot de passe incorrect');
-    }
+  /**
+   * 
+   * @param req 
+   * @param res 
+   * @returns 
+   * 
+   * pour frech le token 
+   * 
+   */
+  @Post('refresh')
+async refreshToken(@Req() req: Request, @Res() res: Response) {
+  const refreshToken = req.cookies['refresh_token'];
 
-    // Générer un JWT
-    const payload = { id: user.id, email: user.email, role: user.role };
-    const token = this.jwtService.sign(payload);
-
-    return {
-      message: 'Connexion réussie',
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        photo: user.photo
-      }
-    };
+  if (!refreshToken || await this.isTokenBlacklisted(refreshToken)) {
+    throw new UnauthorizedException('Refresh token invalide');
   }
+
+  const payload = await this.jwtService.verifyAsync(refreshToken);
+
+  const newAccessToken = this.jwtService.sign(
+    {
+      email: payload.email,
+      sub: payload.sub,
+      role: payload.role,
+      name: payload.name,
+      photo: payload.photo,
+    },
+    { expiresIn: '1h' },
+  );
+
+  res.cookie('jwt', newAccessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 60 * 60 * 1000,
+  });
+
+  return { access_token: newAccessToken };
+}
+
+
+/**
+ * 
+ * @param token 
+ * @param res 
+ * @returns 
+ * 
+ * deconnexion
+ */
+async logout(req: Request, res: Response): Promise<{ message: string }> {
+  try {
+    const jwtCookie = req.cookies['jwt']; // Récupérer le jeton directement du cookie
+    if (!jwtCookie) {
+      throw new Error('Aucun jeton fourni');
+    }
+
+    await this.jwtService.verifyAsync(jwtCookie, {
+      secret: process.env.JWT_SECRET || 'your-secret-key',
+    });
+
+    await this.redis.set(`blacklist:${jwtCookie}`, 'true', 'EX', 24 * 60 * 60);
+
+    // ... Le reste de votre code pour effacer les cookies
+    res.clearCookie('jwt', { /* options */ });
+    res.clearCookie('refresh_token', { /* options */ });
+
+    return { message: 'Déconnexion réussie' };
+  } catch (error) {
+    throw new Error('Token invalide ou erreur lors de la déconnexion');
+  }
+}
+
+// async logout(token: string, res: Response): Promise<{ message: string }> {
+//     try {
+//       // Verify token (optional, for additional security)
+//       await this.jwtService.verifyAsync(token, {
+//         secret: process.env.JWT_SECRET || 'your-secret-key',
+//       });
+
+//       // Add token to blacklist
+//       this.tokenBlacklist.add(token);
+
+//       // Clear the JWT cookie
+//       res.clearCookie('jwt', {
+//         httpOnly: true,
+//         secure: process.env.NODE_ENV === 'production',
+//         sameSite: 'strict',
+//       });
+
+//       return { message: 'Déconnexion réussie' };
+//     } catch (error) {
+//       throw new Error('Token invalide ou erreur lors de la déconnexion');
+//     }
+//   }
+
+  // Method to check if a token is blacklisted (for use in auth guard)
+  // isTokenBlacklisted(token: string): boolean {
+  //   return this.tokenBlacklist.has(token);
+  // }
+
+
+  /**
+   * 
+   * @param token 
+   * @returns 
+   * 
+   * blacklist token
+   */
+
+  async isTokenBlacklisted(token: string): Promise<boolean> {
+  const isBlacklisted = await this.redis.get(`blacklist:${token}`);
+  return !!isBlacklisted;
+}
+
+
+
 
 
   async createUser(dto: CreateUserDto) {
@@ -199,9 +326,6 @@ export class AuthService {
     return this.userRepository.save(user);
   }
 
-  async logout(user: any) {
-    return { message: 'Déconnexion réussie' };
-  }
 
   async getManagerList(): Promise<any> {
     return this.userRepository.find({
@@ -432,18 +556,55 @@ export class AuthService {
     });
   }
 
- // auth.service.ts
-  async deleteMessage(id: number): Promise<void> {
-    await this.contact_messages.delete(id);
+
+
+  // /**
+  //  * 
+  //  * @param email 
+  //  * @param eventId 
+  //  * @returns 
+  //  * Finds a user entry by user email and event ID.
+  //  */
+  // async findOneById(userId: string): Promise<User > {
+  //   const user = await this.userRepository.findOne({ where: { id:userId } });
+
+  //   if (!user) {
+  //     throw new NotFoundException(`L'utilisateur avec l'ID ${userId} n'a pas été trouvé.`);
+  //   }
+
+  //   return user;
+  // }
+
+   async loginUser(email: string, password: string) {
+    // Chercher l'utilisateur
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      throw new BadRequestException('Email ou mot de passe incorrect');
+    }
+
+    // Vérifier le mot de passe
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new BadRequestException('Email ou mot de passe incorrect');
+    }
+
+    // Générer un JWT
+    const payload = { id: user.id, email: user.email, role: user.role };
+    const token = this.jwtService.sign(payload);
+
+    return {
+      message: 'Connexion réussie',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        photo: user.photo
+      }
+    };
   }
 
 
-
-  async markNotificationsRead(ids: number[]): Promise<void> {
-    if (!ids || ids.length === 0) return;
-    await this.notificationRepository.update(ids, { isRead: true });
-  }
-
-  
-
+   
 }

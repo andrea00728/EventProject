@@ -595,8 +595,9 @@ function EventChart({ darkMode, eventData }) {
         height={270}
         margin={{ top: 20, right: 10, bottom: 20, left: 5 }}
         width={480}
-        className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px] ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-          }`}
+        className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px] ${
+          darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+        }`}
       />
     </div>
   );

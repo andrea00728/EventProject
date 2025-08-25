@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+
 import jsPDF from 'jspdf';
 import PropTypes from 'prop-types';
 import FocusTrap from 'focus-trap-react';
+import { useStateContext } from '../../context/ContextProvider';
+import axiosClient from '../../api/axios-client';
 
 const InvoiceForm = ({ email, setEmail, handleEmailCheck, isLoading, isEmailChecked, validateEmail }) => (
   <div className="flex gap-2 mb-4">
@@ -37,7 +39,7 @@ const InvoiceModal = ({
   currentSlug,
   onValidateSuccess,
 }) => {
-  const token = localStorage.getItem('token');
+  const {isAuthenticated}=useStateContext();
   const [email, setEmail] = useState('');
   const [inviteExists, setInviteExists] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,23 +78,22 @@ const InvoiceModal = ({
     setSuccess(null);
 
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/guests/check/${eventId}?email=${encodeURIComponent(email)}`
+      const res = await axiosClient.get(
+        `/guests/check/${eventId}?email=${encodeURIComponent(email)}`
       );
 
       if (res.data.exists) {
         setInviteExists(true);
         setSuccess('Invité existant pour cet événement.');
       } else {
-        await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/guests/${eventId}`,
+        await axiosClient.post(
+          `/guests/${eventId}`,
           {
             nom: 'Client invité',
             prenom: 'Automatique',
             email,
             sex: 'M',
           },
-          { headers: { Authorization: `Bearer ${token}` } }
         );
         setInviteExists(false);
         setSuccess('Nouvel invité enregistré avec succès.');
@@ -106,7 +107,7 @@ const InvoiceModal = ({
     } finally {
       setIsLoading(false);
     }
-  }, [email, eventId, token]);
+  }, [email, eventId]);
 
   const handleSubmit = useCallback(async () => {
     if (!eventId || !tableId || !email) {
@@ -124,8 +125,8 @@ const InvoiceModal = ({
     setError(null);
 
     try {
-      await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/orders`,
+      await axiosClient.post(
+        `/orders`,
         {
           tableId,
           items: cart.map((item) => ({
@@ -136,7 +137,6 @@ const InvoiceModal = ({
           email,
           slug: crypto.randomUUID(),
         },
-        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setSuccess('Commande validée avec succès !');
@@ -148,7 +148,7 @@ const InvoiceModal = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [eventId, tableId, email, isEmailChecked, cart, token, onValidateSuccess, onClose]);
+  }, [eventId, tableId, email, isEmailChecked, cart, onValidateSuccess, onClose]);
 
   const generatePDF = () => {
     const doc = new jsPDF();

@@ -15,8 +15,8 @@ const TestimonialsSection = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
 
-  // Get user and token from context
-  const { user, token } = useStateContext();
+  // Get user and toke from context
+  const { user, isAuthenticated } = useStateContext();
 
   // Fetch recent testimonials from different users
   useEffect(() => {
@@ -38,7 +38,7 @@ const TestimonialsSection = () => {
       satisfaction:getSatisfactionLevel(rating),
     };
     try{
-      await createTestimony(payload,token);
+      await createTestimony(payload);
       console.log("commentaire cree avec success");
       setSuccess('commentaire cree avec success');
       setComment("");

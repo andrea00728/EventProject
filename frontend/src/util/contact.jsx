@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { url } from '../api/url';
 
 export default function Contact() {
     // La bonne pratique est d'utiliser un message d'état pour les retours utilisateur,
@@ -34,7 +35,7 @@ export default function Contact() {
         };
 
         try {
-            const response = await fetch(URL + '/contact_messages', {
+            const response = await fetch(`${url}/contact_messages`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(messagePayload) // Utiliser le payload avec la date
