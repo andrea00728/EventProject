@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useDarkMode } from "../context/DarkModeContext"; // <--- AJOUTEZ CETTE LIGNE
 import {
   createEvent,
   getLocations,
@@ -140,6 +141,7 @@ const customStyles = {
 };
 
 export default function Evenementform({ onNext, isPublic, isExit }) {
+  const { darkMode } = useDarkMode();
   const [form, setForm] = useState({
     nom: "",
     type: "",

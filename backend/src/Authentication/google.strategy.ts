@@ -16,7 +16,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     if (!clientID || !clientSecret) {
       throw new Error('Google client ID and secret must be defined');
     }
-
+    
     super({
       clientID,
       clientSecret,

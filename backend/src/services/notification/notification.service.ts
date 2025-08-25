@@ -49,4 +49,13 @@ export class NotificationService {
         return response;
     }
 
+    async delete(id: number): Promise<void> {
+    const notif = await this.notificationRepository.findOneBy({ id });
+    if (!notif) {
+        throw new Error(`Notification avec l'id ${id} introuvable`);
+    }
+    await this.notificationRepository.delete(id);
+    }
+
+
 }

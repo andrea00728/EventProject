@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
 import {
   Outlet,
   Link,
@@ -45,6 +46,8 @@ export default function AdminLayout() {
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null); // 'notifications', 'messages', null
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -166,11 +169,11 @@ export default function AdminLayout() {
           },
           {
             id: 2,
-            text: "Bonjour ! Comment puis-je vous aider ?",
-            sender: "Admin",
+            text: "Bonjour et bienvenue 👋. Merci de nous avoir contactés. Un conseiller prendra en charge votre demande dans les plus brefs délais. En attendant, n’hésitez pas à préciser l’objet de votre message.",
+            sender: "Support Automatique",
             timestamp: new Date(Date.now() - 25 * 60000),
             isAdmin: true,
-          },
+          }
         ]);
       }
     }, [conversation]);
@@ -430,20 +433,52 @@ export default function AdminLayout() {
         document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const markMessageAsRead = (message) => {
+    const markMessageAsRead = (item) => {
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
-          msg.id === message.id ? { ...msg, read: true } : msg
+          msg.id === item.id ? { ...msg, read: true } : msg
+        )
+      );
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          notif.id === item.id ? { ...notif, read: true } : notif
         )
       );
     };
 
+
     const handleMessageClick = (item) => {
+      // Fermer le dropdown des notifications
+      setShowNotifications(false);
+      // Fermer le dropdown des messages (optionnel, on rouvre juste après)
+      setShowMessages(false);
+
+      // Ouvrir le modal pour ce message
       setSelectedConversation({ content: item });
       markMessageAsRead(item);
       setShowConversationModal(true);
-      setShowMessages(false);
     };
+    
+
+
+    const handleNotificationClick = (item) => {
+      // Fermer le dropdown des messages
+      setShowMessages(false);
+      // Fermer le dropdown des notifications
+      setShowNotifications(false);
+
+      // Marquer la notification comme lue
+      markMessageAsRead(item);
+
+      // Ouvrir le modal pour cette notification
+      setSelectedConversation({ content: item });
+      setShowConversationModal(true);
+    };
+
+
+
+
+    
 
     const handleDeleteMessage = async (id) => {
       try {
@@ -468,6 +503,20 @@ export default function AdminLayout() {
       }
     };
 
+    // Suppression d'une notification
+    const handleDeleteNotification = async (notificationId) => {
+      try {
+        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/notification/${notificationId}`);
+        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      } catch (err) {
+        console.error("Erreur lors de la suppression :", err);
+      }
+    };
+
+
+
+
+
     const pageBg = darkMode
       ? "bg-gray-900 text-gray-200"
       : "bg-gray-50 text-gray-800";
@@ -488,20 +537,29 @@ export default function AdminLayout() {
             {currentPageName}
           </h2>
           <div className="flex items-center gap-3 sm:gap-6 relative">
+            {/* Notifications */}
             <Dropdown
               ref={notifRef}
-              show={showNotifications}
-              setShow={setShowNotifications}
+              show={openDropdown === 'notifications'}
+              setShow={() =>
+                setOpenDropdown(openDropdown === 'notifications' ? null : 'notifications')
+              }
               icon={<FaBell className="text-lg sm:text-xl" />}
               label="Notifications"
               count={notifications.length}
               items={notifications}
+              onDelete={handleDeleteNotification}
+              onItemClick={handleNotificationClick}
               noScroll={true}
             />
+
+            {/* Messages */}
             <Dropdown
               ref={msgRef}
-              show={showMessages}
-              setShow={setShowMessages}
+              show={openDropdown === 'messages'}
+              setShow={() =>
+                setOpenDropdown(openDropdown === 'messages' ? null : 'messages')
+              }
               icon={<FaEnvelope className="text-lg sm:text-xl" />}
               label="Messages"
               count={messages.filter((msg) => !msg.read).length}
@@ -510,6 +568,7 @@ export default function AdminLayout() {
               onItemClick={handleMessageClick}
               noScroll={true}
             />
+
             <div ref={profileRef} className="relative">
               <button
                 onClick={() => setShowProfile(!showProfile)}

@@ -1,4 +1,5 @@
-import { data } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // ✅ correct
+
 import axiosClient from "../api/axios-client";
 
 
