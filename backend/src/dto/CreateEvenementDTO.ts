@@ -1,10 +1,10 @@
+// dto/CreateEvenementDTO.ts
 import {
   IsBoolean,
   IsDateString,
   IsEnum,
   IsNotEmpty,
   IsNumber,
-  IsOptional,
   IsString,
   IsUUID
 } from 'class-validator';
@@ -45,15 +45,19 @@ export class CreateEventDto {
   @IsNumber()
   locationId: number;
 
-  @IsOptional()
-  @IsNumber()
-  montanttransaction?: number;
-
   @IsNotEmpty()
   @IsNumber()
   salleId: number;
 
   @IsNotEmpty()
   @IsBoolean()
-  isPublic: boolean;
+  isPublic: boolean; // toujours présent, valeur forcée depuis le frontend
+
+  @IsNotEmpty()
+  @IsNumber()
+  montanttransaction?: number;
+
+  @IsNotEmpty()
+  @IsString()
+  imageUrl?: string;
 }

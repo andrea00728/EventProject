@@ -30,7 +30,7 @@ export class AdminService {
 
       if (!adminUser) {
         
-        if(email !== process.env.ADMIN_EMAIL) {
+        if(email !== process.env.ADMIN_EMAIL_1 && email !== process.env.ADMIN_EMAIL_2) {
           throw new UnauthorizedException('Non autorisé : vous n\'êtes pas autorisé à vous connecter en tant qu\'admin');
         }
 
@@ -67,7 +67,7 @@ export class AdminService {
       };
     } catch (error) {
       console.error('Login with Firebase error:', error);
-      throw new UnauthorizedException('Token Firebase invalide ou autre erreur');
+      throw new UnauthorizedException('Token Firebase invalide ou autre erreur : ', error);
     }
   }
 }

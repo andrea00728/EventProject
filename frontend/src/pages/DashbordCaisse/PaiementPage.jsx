@@ -6,7 +6,6 @@ import { useStateContext } from "../../context/ContextProvider";
 import { Link } from "react-router-dom";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { getUserIdForToken } from "../../services/userService";
-import { SOCKET_URL } from "../../socket";
 import { Snackbar, Alert, Chip } from "@mui/material";
 import {
   FaArrowLeft,
@@ -17,6 +16,8 @@ import {
   FaSync,
 } from "react-icons/fa";
 import io from "socket.io-client";
+import axiosClient from "../../api/axios-client";
+import { url } from "../../api/url";
 
 const noScrollbarCSS = `
   .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -32,7 +33,7 @@ const PaiementPage = () => {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
-  const { token } = useStateContext();
+  const {isAuthenticated } = useStateContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const socketRef = useRef(null);
@@ -52,99 +53,99 @@ const PaiementPage = () => {
     { value: "non_paye", label: "Non Payé", color: "error" },
   ];
 
-  const fetchCommandes = useCallback(async () => {
-    setLoading(true);
-    if (!token) {
-      setSnackbar({
-        open: true,
-        message: "Veuillez vous connecter pour accéder aux paiements",
-        severity: "error",
-      });
-      setLoading(false);
+const fetchCommandes = useCallback(async () => {
+  setLoading(true);
+
+  if (!isAuthenticated) {
+    setSnackbar({
+      open: true,
+      message: "Veuillez vous connecter pour accéder aux paiements",
+      severity: "error",
+    });
+    setLoading(false);
+    return;
+  }
+
+  try {
+    const eventIdResponse = await getEventIdByEmail();
+    const eventId = eventIdResponse?.eventId;
+
+    if (!eventId) {
+      console.warn("ID d'événement non trouvé ou invalide.");
+      setCommandes([]);
       return;
     }
 
-    try {
-      const eventIdResponse = await getEventIdByEmail(token);
-      const eventId = eventIdResponse?.eventId;
-      if (!eventId) {
-        throw new Error("ID d'événement non trouvé ou invalide.");
-      }
+    const response = await axiosClient.get(`/orders/event/${eventId}`, { 
+      params: { include: "table,items,items.menuItem" }
+    });
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/orders/event/${eventId}`,
-        {
-          params: { include: "table,items,items.menuItem" },
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+    const raw = response?.data;
 
-      const raw = response.data;
-      if (!raw || !Array.isArray(raw)) {
-        setCommandes([]);
-        setSnackbar({
-          open: true,
-          message: "Aucune commande trouvée.",
-          severity: "info",
-        });
-        return;
-      }
-
-      const filteredData = raw.filter((c) => c.status !== "canceled");
-
-      const formatted = filteredData.map((c) => {
-        const tableInfo = c.table ? `Table ${c.table.nom}` : "N/A"; 
-        const total = parseFloat(c.total || 0).toFixed(2);
-        const amountPaid = parseFloat(c.amountPaid || 0).toFixed(2);
-        const createdAt = c.orderDate
-          ? new Date(c.orderDate).toLocaleString("fr-FR", {
-              dateStyle: "short",
-              timeStyle: "short",
-            })
-          : "-";
-        const paymentStatus =
-          PAYMENT_STATUS_MAPPING.backToFront[c.paymentStatus] || "non_paye";
-
-        return {
-          id: c.id,
-          nom: c.nom || "Anonyme",
-          email: c.email || "-",
-          table: tableInfo,
-          total,
-          amountPaid,
-          createdAt,
-          paymentStatus,
-          items: c.items || [],
-        };
-      });
-
-      setCommandes(formatted);
-    } catch (err) {
-      console.error("Erreur fetchCommandes:", err);
-      if (err?.response) {
-        setSnackbar({
-          open: true,
-          message: `Erreur serveur: ${err.response.status} - ${err.response.data?.message || "Erreur"}`,
-          severity: "error",
-        });
-      } else {
-        setSnackbar({
-          open: true,
-          message: err.message || "Erreur lors du chargement des commandes.",
-          severity: "error",
-        });
-      }
+    // ✅ Cas aucune commande
+    if (!Array.isArray(raw) || raw.length === 0) {
+      console.info("ℹ️ Aucune commande trouvée pour cet événement.");
       setCommandes([]);
-    } finally {
-      setLoading(false);
+      setSnackbar({
+        open: true,
+        message: "Aucune commande trouvée.",
+        severity: "info",
+      });
+      return;
     }
-  }, [token]);
+
+    // ✅ On enlève les commandes annulées
+    const filteredData = raw.filter((c) => c.status !== "canceled");
+
+    // ✅ On formate les données
+    const formatted = filteredData.map((c) => ({
+      id: c.id,
+      nom: c.nom || "Anonyme",
+      email: c.email || "-",
+      table: c.table ? `Table ${c.table.nom}` : "N/A",
+      total: parseFloat(c.total || 0).toFixed(2),
+      amountPaid: parseFloat(c.amountPaid || 0).toFixed(2),
+      createdAt: c.orderDate
+        ? new Date(c.orderDate).toLocaleString("fr-FR", {
+            dateStyle: "short",
+            timeStyle: "short",
+          })
+        : "-",
+      paymentStatus: PAYMENT_STATUS_MAPPING.backToFront[c.paymentStatus] || "non_paye",
+      items: c.items || [],
+    }));
+
+    setCommandes(formatted);
+
+  } catch (err) {
+    // ✅ Gestion du 404 pour pas générer d'erreur
+    if (err?.response?.status === 404) {
+      console.info("⚠️ Pas de commandes pour cet événement.");
+      setCommandes([]);
+      setSnackbar({
+        open: true,
+        message: "Aucune commande trouvée pour cet événement.",
+        severity: "info",
+      });
+    } else {
+      console.error("Erreur fetchCommandes:", err);
+      setCommandes([]);
+      setSnackbar({
+        open: true,
+        message: err.message || "Erreur lors du chargement des commandes.",
+        severity: "error",
+      });
+    }
+  } finally {
+    setLoading(false);
+  }
+}, [isAuthenticated]);
 
   useEffect(() => {
     fetchCommandes();
 
     const setupWebSocket = async () => {
-      if (!token) {
+      if (!isAuthenticated) {
         setSnackbar({
           open: true,
           message: "Session expirée. Veuillez vous reconnecter.",
@@ -153,11 +154,11 @@ const PaiementPage = () => {
         return;
       }
       try {
-        const fetchedUserId = await getUserIdForToken(token);
+        const fetchedUserId = await getUserIdForToken();
         setUserId(fetchedUserId);
 
         if (!socketRef.current) {
-          socketRef.current = io(SOCKET_URL, {
+          socketRef.current = io(`${url}`, {
             auth: { userId: fetchedUserId },
             transports: ["websocket", "polling"],
             reconnection: true,
@@ -211,7 +212,7 @@ const PaiementPage = () => {
         socketRef.current = null;
       }
     };
-  }, [token, fetchCommandes]);
+  }, [isAuthenticated, fetchCommandes]);
 
   const handlePaymentStatusChange = async (id, newStatus) => {
     const backendStatus = PAYMENT_STATUS_MAPPING.frontToBack[newStatus];
@@ -221,10 +222,10 @@ const PaiementPage = () => {
     }
 
     try {
-      await axios.patch(
-        `${import.meta.env.VITE_API_BASE_URL}/orders/${id}/payment`,
+      await axiosClient.patch(
+        `/orders/${id}/payment`,
         { paymentStatus: backendStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
+        // { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setCommandes((prev) =>
@@ -269,10 +270,10 @@ const PaiementPage = () => {
     }
 
     try {
-      await axios.patch(
-        `${import.meta.env.VITE_API_BASE_URL}/orders/${id}/payment`,
+      await axiosClient.patch(
+        `/orders/${id}/payment`,
         { paymentStatus: "paid" },
-        { headers: { Authorization: `Bearer ${token}` } }
+        // { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchCommandes();
       setSnackbar({
@@ -320,11 +321,11 @@ const PaiementPage = () => {
 
       let sequentialNumber = row.id;
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/invoices/next-sequence`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+        const response = await axiosClient.get(
+          `/invoices/next-sequence`,
+          // {
+          //   headers: { Authorization: `Bearer ${token}` },
+          // }
         );
         if (response?.data?.nextSequence) sequentialNumber = response.data.nextSequence;
       } catch (err) {
@@ -584,7 +585,7 @@ const PaiementPage = () => {
     >
       <div className="max-w-7xl mx-auto flex flex-col space-y-6">
         <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-xl">
-          <h2 className="text-4xl font-extrabold text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+          <h2 className="text-4xl font-extrabold text-gray-900 bg-clip-text  bg-gradient-to-r from-indigo-600 to-purple-600">
             Gestion des Paiements
           </h2>
           <Link

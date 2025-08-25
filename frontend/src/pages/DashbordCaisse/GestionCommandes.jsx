@@ -9,7 +9,7 @@ import { useStateContext } from "../../context/ContextProvider";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { getUserIdForToken } from "../../services/userService";
 import { FaArrowLeft, FaSync, FaTimes, FaSearch } from "react-icons/fa";
-import { SOCKET_URL } from "../../socket";
+import { url } from "../../api/url";
 
 const GestionCommandesPage = () => {
   // Déclarations d'état pour la gestion des commandes et de l'UI
@@ -24,7 +24,7 @@ const GestionCommandesPage = () => {
     message: "",
     severity: "info",
   });
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
 
   // Mappage des statuts pour la cohérence entre le front-end et le back-end
   const STATUS_MAPPING = {
@@ -54,14 +54,13 @@ const GestionCommandesPage = () => {
   const fetchCommandes = useCallback(async () => {
     try {
       setLoading(true);
-      if (!token) throw new Error("Token manquant");
+      if (!isAuthenticated) throw new Error("Token manquant");
 
-      const eventId = await getEventIdByEmail(token);
+      const eventId = await getEventIdByEmail();
       const { data } = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/orders/event/${eventId.eventId}`,
         {
           params: { include: "table,items,items.menuItem" },
-          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
@@ -87,7 +86,7 @@ const GestionCommandesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [isAuthenticated]);
 
   // Fonction pour mettre à jour une commande dans l'état local
   const updateCommande = useCallback((update) => {
@@ -104,22 +103,16 @@ const GestionCommandesPage = () => {
     );
   }, []);
 
-  // Fonction pour changer le statut d'une commande via l'API et le socket
+  // Fonction pour annuler une commande via l'API et le socket
   const handleStatusChange = useCallback(
     async (orderId, newStatus) => {
       try {
         const response = await axios.patch(
           `${import.meta.env.VITE_API_BASE_URL}/orders/${orderId}/status`,
           { status: STATUS_MAPPING.frontToBack[newStatus] },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
         );
 
-        const socket = io(SOCKET_URL, {
+        const socket = io(`${url}`, {
           auth: { userId },
         });
 
@@ -127,20 +120,20 @@ const GestionCommandesPage = () => {
 
         setSnackbar({
           open: true,
-          message: response.data?.message || "Commande mise à jour avec succès.",
+          message: response.data?.message || "Commande annulée avec succès.",
           severity: "success",
         });
         updateCommande({ id: orderId, status: STATUS_MAPPING.frontToBack[newStatus] });
       } catch (error) {
-        console.error("Erreur lors de la mise à jour du statut:", error);
+        console.error("Erreur lors de l'annulation de la commande:", error);
         setSnackbar({
           open: true,
-          message: error.response?.data?.message || "Erreur lors de la mise à jour de la commande.",
+          message: error.response?.data?.message || "Erreur lors de l'annulation de la commande.",
           severity: "error",
         });
       }
     },
-    [token, updateCommande, userId]
+    [ updateCommande, userId]
   );
 
   // Effet pour initialiser les données et la connexion WebSocket
@@ -149,10 +142,10 @@ const GestionCommandesPage = () => {
 
     const setupWebSocket = async () => {
       try {
-        const fetchedUserId = await getUserIdForToken(token);
+        const fetchedUserId = await getUserIdForToken();
         setUserId(fetchedUserId);
 
-        socket = io(SOCKET_URL, {
+        socket = io(`${url}`, {
           auth: { userId: fetchedUserId },
           transports: ["websocket", "polling"],
           reconnection: true,
@@ -215,7 +208,7 @@ const GestionCommandesPage = () => {
         console.log("🔌 WebSocket déconnecté");
       }
     };
-  }, [token, fetchCommandes, updateCommande]);
+  }, [ fetchCommandes, updateCommande]);
 
   // Filtrage des commandes en fonction de la sélection de l'utilisateur
   const filteredCommandes = commandes.filter((cmd) => {
@@ -277,44 +270,19 @@ const GestionCommandesPage = () => {
       sortable: false,
       renderCell: (params) => {
         const isCanceled = params.row.status === "annuler";
-        const isServed = params.row.status === "servir";
-        const isPreparing = params.row.status === "preparation";
-        const isPending = params.row.status === "en_attente";
 
         return (
-          <div className="flex space-x-2">
-            {isPending && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handleStatusChange(params.row.id, "preparation")}
-                className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full p-2 text-xs shadow-md hover:from-blue-600 hover:to-indigo-700 transition-all duration-300"
-                aria-label="Passer en préparation"
-              >
-                Préparer
-              </motion.button>
-            )}
-            {isPreparing && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handleStatusChange(params.row.id, "servir")}
-                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full p-2 text-xs shadow-md hover:from-green-600 hover:to-emerald-700 transition-all duration-300"
-                aria-label="Passer en servi"
-              >
-                Servir
-              </motion.button>
-            )}
+          <div className="flex items-center h-full space-x-2">
             {!isCanceled && (
-                <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleStatusChange(params.row.id, "annuler")}
-                    className="bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-full p-2 text-xs shadow-md hover:from-red-600 hover:to-rose-700 transition-all duration-300"
-                    aria-label="Annuler la commande"
-                >
-                    <FaTimes />
-                </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleStatusChange(params.row.id, "annuler")}
+                className="bg-gradient-to-r from-red-500 to-rose-600 text-white font-medium rounded-full px-3 py-1.5 text-sm shadow-md hover:from-red-600 hover:to-rose-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                aria-label="Annuler la commande"
+              >
+                <FaTimes className="inline-block" />
+              </motion.button>
             )}
           </div>
         );
@@ -360,43 +328,43 @@ const GestionCommandesPage = () => {
             />
           </div>
           <div className="flex-grow flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-              <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-full border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none bg-gray-50 text-gray-800 transition-all duration-300"
-              >
-                  <option value="all">Tous les statuts</option>
-                  {STATUS_OPTIONS.map((s) => (
-                      <option key={s.value} value={s.value}>
-                          {s.label}
-                      </option>
-                  ))}
-              </select>
-              <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={fetchCommandes}
-                  className="flex items-center justify-center w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full shadow-lg hover:from-blue-600 hover:to-indigo-700 focus:ring-4 focus:ring-blue-300 transition-all duration-300"
-              >
-                  <FaSync className="mr-2" />
-                  Actualiser
-              </motion.button>
-              <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowCanceled(!showCanceled)}
-                  className={`flex items-center justify-center w-full sm:w-auto px-4 py-2.5 rounded-full shadow-lg transition-all duration-300 ${
-                      showCanceled
-                          ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                          : "bg-white text-gray-700 hover:bg-gray-50"
-                  }`}
-                  aria-label={showCanceled ? "Masquer les commandes annulées" : "Afficher les commandes annulées"}
-              >
-                  <span className="mr-2">
-                      {showCanceled ? <FaTimes /> : <FaSync />}
-                  </span>
-                  {showCanceled ? "Masquer Annulées" : "Voir Annulées"}
-              </motion.button>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-full border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none bg-gray-50 text-gray-800 transition-all duration-300"
+            >
+              <option value="all">Tous les statuts</option>
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={fetchCommandes}
+              className="flex items-center justify-center w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full shadow-lg hover:from-blue-600 hover:to-indigo-700 focus:ring-4 focus:ring-blue-300 transition-all duration-300"
+            >
+              <FaSync className="mr-2" />
+              Actualiser
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowCanceled(!showCanceled)}
+              className={`flex items-center justify-center w-full sm:w-auto px-4 py-2.5 rounded-full shadow-lg transition-all duration-300 ${
+                showCanceled
+                  ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+              aria-label={showCanceled ? "Masquer les commandes annulées" : "Afficher les commandes annulées"}
+            >
+              <span className="mr-2">
+                {showCanceled ? <FaTimes /> : <FaSync />}
+              </span>
+              {showCanceled ? "Masquer Commandes Annulées" : "Voir Commandes Annulées"}
+            </motion.button>
           </div>
         </div>
 
@@ -417,7 +385,12 @@ const GestionCommandesPage = () => {
             autoHeight
             className="border-none"
             sx={{
-              "& .MuiDataGrid-cell": { fontSize: "0.875rem", color: "#4b5563" },
+              "& .MuiDataGrid-cell": {
+                fontSize: "0.875rem",
+                color: "#4b5563",
+                display: "flex",
+                alignItems: "center",
+              },
               "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: "#f9fafb",
                 color: "#1f2937",

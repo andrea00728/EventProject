@@ -17,6 +17,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
+import axiosClient from '../../api/axios-client';
 
 // Composant pour les indicateurs (utilisant Lucide-React pour les icônes)
 const StatCard = ({ title, value, icon: Icon, color }) => (
@@ -298,7 +299,7 @@ const StockPage = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
 
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const navigate = useNavigate();
 
   // Calcul des indicateurs de stock
@@ -309,7 +310,7 @@ const StockPage = () => {
 
   const fetchAssignedEvent = useCallback(async () => {
     try {
-      const resp = await getEventIdByEmail(token);
+      const resp = await getEventIdByEmail();
       if (resp?.eventId) {
         setAssignedEventId(resp.eventId);
         setSelectedEvent(resp.eventId);
@@ -317,29 +318,25 @@ const StockPage = () => {
     } catch (e) {
       console.error("Erreur récupération événement assigné :", e);
     }
-  }, [token]);
+  }, []);
 
   const fetchEvents = useCallback(async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/events`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axiosClient.get(`/events`);
       setEvents(res.data);
     } catch (error) {
       console.error('Erreur de chargement des événements :', error);
     }
-  }, [token]);
+  }, []);
 
   const fetchStockData = useCallback(async () => {
     try {
       setIsLoading(true);
       const eventToUse = assignedEventId || selectedEvent;
       const url = eventToUse
-        ? `${import.meta.env.VITE_API_BASE_URL}/menus/event/${eventToUse}`
-        : `${import.meta.env.VITE_API_BASE_URL}/menus`;
-      const res = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+        ? `/menus/event/${eventToUse}`
+        : `/menus`;
+      const res = await axiosClient.get(url);
 
       const stockData = res.data.flatMap(menu =>
         menu.items.map(item => ({
@@ -359,12 +356,12 @@ const StockPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [token, assignedEventId, selectedEvent]);
+  }, [ assignedEventId, selectedEvent]);
 
   useEffect(() => {
-    fetchEvents();
-    if (token) fetchAssignedEvent();
-  }, [fetchEvents, fetchAssignedEvent, token]);
+    // fetchEvents();
+    if (isAuthenticated) fetchAssignedEvent();
+  }, [, fetchAssignedEvent, isAuthenticated]);
 
   useEffect(() => {
     fetchStockData();
@@ -395,9 +392,7 @@ const StockPage = () => {
   // Sauvegarde des modifications
   const handleSaveEdit = async (updatedItem) => {
     try {
-      await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/menus/items/${updatedItem.id}`, updatedItem, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/menus/items/${updatedItem.id}`, updatedItem,);
       setSnackbar({ open: true, message: 'Article modifié avec succès.', severity: 'success' });
       handleCloseEditModal();
       fetchStockData();
@@ -417,9 +412,7 @@ const StockPage = () => {
     if (!itemToDelete) return;
 
     try {
-      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/menus/items/${itemToDelete.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/menus/items/${itemToDelete.id}`);
       setSnackbar({ open: true, message: 'Article supprimé.', severity: 'success' });
       fetchStockData();
     } catch (error) {

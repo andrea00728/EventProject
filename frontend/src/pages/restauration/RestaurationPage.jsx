@@ -3,26 +3,24 @@ import { Link, useLocation, Outlet } from "react-router-dom";
 import {
   Utensils,
   LayoutDashboard,
-  Menu as MenuIcon
 } from "lucide-react";
 import {
   Box,
-  Drawer,
-  IconButton,
-  AppBar,
-  Toolbar,
-  Typography,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Typography
 } from "@mui/material";
+import { RxCaretRight, RxCaretLeft } from "react-icons/rx";
 
-const drawerWidth = 256;
-
-const RestaurationPage = () => {
+export default function RestaurationPage() {
   const { pathname } = useLocation();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
 
   const choixItems = [
     { path: "", name: "Gestion des Menus", icon: <Utensils className="w-5 h-5" /> },
@@ -36,40 +34,79 @@ const RestaurationPage = () => {
         : "hover:bg-[#e6ebfc] text-gray-700"
     }`;
 
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setIsMenuOpen(false); // Ferme le menu après la navigation sur mobile
+    }
+  };
+
   return (
     <Box
+      className="relative flex h-screen bg-slate-100"
       sx={{
+        width: "100vw",
         minHeight: "100vh",
-        background: "#ffffff",
-        display: "flex",
-        flexDirection: "row",
+        position: "relative",
+        boxSizing: 'border-box'
       }}
     >
+      {/* Bouton de menu pour les petits écrans */}
+      <div className={`
+        absolute top-4 z-40 lg:hidden
+        transform transition-transform duration-300
+        ${isMenuOpen ? 'left-64' : 'left-2'}
+      `}>
+        <button
+          onClick={toggleMenu}
+          className="p-3 bg-white/70 backdrop-blur-sm shadow-lg border border-gray-200 transition-all hover:scale-105 transform hover:rotate-12"
+        >
+          {isMenuOpen ? (
+            <RxCaretLeft className="w-6 h-6 text-gray-700" />
+          ) : (
+            <RxCaretRight className="w-6 h-6 text-gray-700" />
+          )}
+        </button>
+      </div>
+
+      {/* Sidebar : cachée par défaut, s'anime pour apparaître, visible sur les grands écrans */}
       <Box
-        sx={{
-          width: 256,
-          backgroundColor: "white",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-          height: "100vh",
-          p: 3,
-          borderRight: "1px solid #e0e0e0",
-        }}
+        component="aside"
+        className={`
+          fixed h-screen w-64 bg-white/90 backdrop-blur-sm border-r border-gray-200 shadow-xl flex flex-col z-30
+          transform transition-transform duration-300
+          ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0
+        `}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 4 }}>
-          <LayoutDashboard className="w-6 h-6" />
-          <h2 className="text-xl font-bold text-[#2c3e50]">Restauration</h2>
-        </Box>
-        <Box sx={{ spaceY: 2 }}>
-          {choixItems.map(({ path, name, icon }) => (
-            <Link key={path} to={path} className={linkClass(path)}>
-              {icon}
-              {name}
-            </Link>
-          ))}
+        <Box sx={{ p: 3 }} className="h-full flex flex-col">
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 4 }}>
+            <LayoutDashboard className="w-6 h-6 text-[#2c3e50]" />
+            <Typography variant="h6" fontWeight="bold" color="#2c3e50">
+              Restauration
+            </Typography>
+          </Box>
+          <Box sx={{ spaceY: 2 }}>
+            {choixItems.map(({ path, name, icon }) => (
+              <Link key={path} to={path} className={linkClass(path)} onClick={handleLinkClick}>
+                {icon}
+                {name}
+              </Link>
+            ))}
+          </Box>
         </Box>
       </Box>
 
-      <Box sx={{ flex: 1, p: 4, overflow: "auto" }}>
+      {/* Contenu principal */}
+      <Box
+        component="main"
+        sx={{
+          flex: 1,
+          p: 4,
+          overflow: "auto",
+          boxSizing: 'border-box'
+        }}
+        className="flex-1 flex flex-col overflow-hidden lg:ml-64"
+      >
         <Box sx={{ p: 4, bgcolor: "white", borderRadius: 1, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", border: "1px solid #e0e0e0" }}>
           <Outlet />
         </Box>
@@ -77,5 +114,3 @@ const RestaurationPage = () => {
     </Box>
   );
 };
-
-export default RestaurationPage;

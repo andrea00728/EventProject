@@ -12,10 +12,12 @@ export class NotificationEntity{
     @Column()
     message:string;
 
-        
     @Column({ default: 'info' })
     type: 'info' | 'success' | 'error' | 'warning';
 
     @CreateDateColumn()
     date:Date;
+
+    @Column({ default: false })
+    isRead: boolean;   // <-- ajout du champ isRead
 }

@@ -1,6 +1,12 @@
 import axiosClient from "../api/axios-client";
 
 
+
+// export const getUserIdForToken = async () => {
+//   const response = await axiosClient.get("/auth/getId");
+//   return response.data;
+// };
+
 export const getUserIdForToken = async (token) => {
   const response = await axiosClient.get("/auth/getId",{
     headers: {
@@ -9,6 +15,7 @@ export const getUserIdForToken = async (token) => {
   });
   return response.data;
 };
+
 
 /**
  * 
@@ -20,11 +27,9 @@ export const getUserCount = async () => {
     return response.data;
 }
 
-export const getOrgStats = async (/*token*/) => {
+export const getOrgStats = async () => {
   const response = await axiosClient.get("/auth/org/stats"/*,{
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    
   }*/);
   return response.data;
 }

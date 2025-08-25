@@ -7,31 +7,47 @@ import ForfaitPage from "../pages/forfaitpage/forfaitpage";
 import ChatWidget from "../pages/ChatWidget";
 import { getUserForfait } from "../services/forfaitService";
 import { ToastContainer } from "react-toastify";
-import Logo from "../assets/LogoMaster.png"
-import { Bell } from "lucide-react";
- import NotificationComponent from "../util/notification";
-
-import { getUserIdForToken } from "../services/userService";
-
-
-import { io } from "socket.io-client";
+import Logo from "../assets/LogoMaster.png";
+import NotificationComponent from "../util/notification";
 import NotificationListener from "../util/Notification/notification_global";
-
+import { getConditionalSubMenus } from "../util/menuUtils";
 
 export default function DefaultLayout() {
-  const { token, role, isLoading } = useStateContext();
+  const { isAuthenticated,role, isLoading } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEvenementHovered, setIsEvenementHovered] = useState(false);
   const [forfait, setForfait] = useState(null);
   const [showForfaitModal, setShowForfaitModal] = useState(false);
 
-  //  Ne pas continuer si en chargement
+  useEffect(() => {
+    const fetchAndSetForfait = async () => {
+      try {
+        const data = await getUserForfait(token);
+        setForfait(data.forfait);
+      } catch (err) {
+        console.error("Erreur lors de la récupération du forfait", err);
+      }
+    };
+
+    if (token && !isLoading) {
+      fetchAndSetForfait();
+    }
+
+    const handleForfaitUpdate = () => {
+      fetchAndSetForfait();
+    };
+
+    window.addEventListener("forfaitUpdated", handleForfaitUpdate);
+    return () => {
+      window.removeEventListener("forfaitUpdated", handleForfaitUpdate);
+    };
+  }, [token, isLoading]);
+
   if (isLoading) return <div>Chargement ...</div>;
 
   // 🔐 Rediriger si non connecté
-  if (!token) return <Navigate to="/pagepublic" replace />;
+  if (!isAuthenticated) return <Navigate to="/pagepublic" replace />;
 
-  // Rediriger selon rôle
   switch (role) {
     case "organisateur":
       break;
@@ -49,7 +65,7 @@ export default function DefaultLayout() {
   useEffect(() => {
     const fetchAndSetForfait = async () => {
       try {
-        const data = await getUserForfait(token);
+        const data = await getUserForfait();
         setForfait(data.forfait);
       } catch (err) {
         console.error("Erreur lors de la récupération du forfait", err);
@@ -60,14 +76,17 @@ export default function DefaultLayout() {
 
     // Mettre à jour dynamiquement après activation
     const handleForfaitUpdate = () => {
-      fetchAndSetForfait();
+      if(isAuthenticated){
+        fetchAndSetForfait();
+      }
+      
     };
 
     window.addEventListener("forfaitUpdated", handleForfaitUpdate);
     return () => {
       window.removeEventListener("forfaitUpdated", handleForfaitUpdate);
     };
-  }, [token]);
+  }, [isAuthenticated]);
 
   //  Configuration dynamique du menu
   const navItems = [
@@ -75,55 +94,7 @@ export default function DefaultLayout() {
     {
       path: "/accueil",
       name: "Evenement",
-      subMenus: [
-        { 
-          path: "/evenement", 
-          name: "Organisations", 
-          icon: "/red-carpet.png",
-          description: "Gérez et organisez tous vos événements avec efficacité"
-        },
-        { 
-          path: "/evenement/evenement", 
-          name: "Événements", 
-          icon: "/file.png",
-          description: "Créez et planifiez vos événements en quelques clics"
-        },
-        { 
-          path: "/evenement/tables", 
-          name: "Tables", 
-          icon: "/chair.png",
-          description: "Configurez la disposition et l'agencement des tables"
-        },
-        { 
-          path: "/evenement/invites", 
-          name: "Invités", 
-          icon: "/guest.png",
-          description: "Gérez votre liste d'invités et leurs informations"
-        },
-        {
-          path: "/evenement/invitation",
-          name: "Invitations",
-          icon: "/invitation.png",
-          description: "Envoyez des invitations personnalisées et suivez les réponses"
-        },
-        {
-          path: "/evenement/personnel",
-          name: "Personnel",
-          icon: "/community-center.png",
-          description: "Coordonnez votre équipe et assignez les rôles et tâches"
-        },
-        //  Afficher seulement pour les forfaits premium
-        ...(
-          ["pro", "premium", "gold"].includes(forfait?.nom)
-            ? [{
-              path: "/evenement/restauration",
-              name: "Restauration",
-              icon: "/payment-method.png",
-              description: "Gérez les menus et services de restauration premium"
-            }]
-            : []
-        ),
-      ]
+      subMenus: getConditionalSubMenus(forfait),
     },
     { path: "/apropos", name: "A propos" },
   ];
@@ -152,12 +123,9 @@ export default function DefaultLayout() {
 
   return (
     <>
-
-      <header className="w-screen backdrop-blur-md fixed top-0 z-50 ">
+      <header className="w-screen backdrop-blur-md fixed top-0 z-50">
         <div className="max-w-screen mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Top Bar avec logo et actions */}
           <div className="h-18 px-10 pt-5 flex items-center justify-between">
-            {/* Logo Section */}
             <motion.div
               className="flex items-center gap-4"
               initial={{ opacity: 0, x: -20 }}
@@ -176,7 +144,6 @@ export default function DefaultLayout() {
                 </h1>
                 <p className="text-xs text-slate-400 -mt-1">Management Platform</p>
               </div>
-
             </motion.div>
 
             <nav className="hidden md:flex items-center justify-center py-3 relative">
@@ -228,7 +195,6 @@ export default function DefaultLayout() {
                               animate="visible"
                               exit="hidden"
                             >
-                              {/* En-tête compact */}
                               <div className="px-6 py-4 border-b border-gray-100">
                                 <div className="flex items-center justify-between">
                                   <div>
@@ -241,7 +207,6 @@ export default function DefaultLayout() {
                                 </div>
                               </div>
 
-                              {/* Grille des éléments - plus compacte */}
                               <div className="p-6">
                                 <div className="grid grid-cols-4 gap-4">
                                   {item.subMenus.map((subItem, subIndex) => (
@@ -253,10 +218,9 @@ export default function DefaultLayout() {
                                     >
                                       <Link
                                         to={subItem.path}
-                                        className="group block p-4 bg-white hover:bg-gradient-to-br hover:from-gray-50 hover:to-purple-50/30 rounded-lg transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:shadow-md"
+                                        className="group block p-4 bg-white hover:bg-gradient-to-br hover:from-gray-50 hover:to-purple-50/30 rounded-lg transition-all duration-300 border border-gray-200 hover:border-purple-200 hover:shadow-md"
                                         onClick={() => setIsEvenementHovered(false)}
                                       >
-                                        {/* Icône et titre sur une ligne */}
                                         <div className="flex items-center gap-3 mb-2">
                                           <div className="flex-shrink-0 p-2.5 bg-gray-50 rounded-lg border border-gray-200 group-hover:border-purple-300 group-hover:bg-purple-50 transition-all duration-300">
                                             {subItem.icon && (
@@ -272,16 +236,22 @@ export default function DefaultLayout() {
                                           </h4>
                                         </div>
                                         <div>
-                                          <p className="text-xs text-gray-600">
-                                            {subItem.description}
-                                          </p>
+                                          <p className="text-xs text-gray-600">{subItem.description}</p>
                                         </div>
-
-                                        {/* Action discrète */}
                                         <div className="flex items-center justify-end">
                                           <div className="opacity-0 group-hover:opacity-100 transition-all duration-300">
-                                            <svg className="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            <svg
+                                              className="w-3.5 h-3.5 text-purple-600"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M9 5l7 7-7 7"
+                                              />
                                             </svg>
                                           </div>
                                         </div>
@@ -291,18 +261,28 @@ export default function DefaultLayout() {
                                 </div>
                               </div>
 
-                              {/* Footer compact */}
                               <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 rounded-b-xl">
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
                                     <div className="w-6 h-6 bg-gradient-to-r from-[#6B46C1] to-indigo-600 rounded-md flex items-center justify-center">
-                                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                      <svg
+                                        className="w-3 h-3 text-white"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                                        />
                                       </svg>
                                     </div>
-                                    <span className="text-sm font-medium text-gray-900">Tableau de bord complet</span>
+                                    <span className="text-sm font-medium text-gray-900">
+                                      Tableau de bord complet
+                                    </span>
                                   </div>
-                                  
                                   <div className="flex items-center gap-2">
                                     <button className="text-sm bg-gradient-to-r from-[#6B46C1] to-indigo-600 text-white px-4 py-1.5 rounded-md hover:shadow-md transition-all duration-300 font-medium">
                                       Nouveau
@@ -318,13 +298,11 @@ export default function DefaultLayout() {
                         )}
                       </AnimatePresence>
                     )}
-
                   </motion.div>
                 ))}
               </div>
             </nav>
 
-            {/* Mobile Navigation */}
             <AnimatePresence>
               {isMenuOpen && (
                 <motion.nav
@@ -335,9 +313,19 @@ export default function DefaultLayout() {
                   exit="closed"
                 >
                   {navItems.map((item) => (
-                    <div key={item.name} className=" bg-white/95 backdrop-blur-xl shadow-2xl shadow-purple-200/50 rounded-3xl py-2 absolute top-20 right-10">
+                    <div
+                      key={item.name}
+                      className="bg-white/95 backdrop-blur-xl shadow-2xl shadow-purple-200/50 rounded-3xl py-2 absolute top-20 right-10"
+                    >
+                      <Link
+                        to={item.path}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-slate-400 hover:text-slate-300 hover:bg-slate-800/30 rounded-lg transition-colors duration-200"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {item.name}
+                      </Link>
                       {item.subMenus && (
-                        <div className=" ml-4 mt-2 space-y-1">
+                        <div className="ml-4 mt-2 space-y-1">
                           {item.subMenus.map((subItem) => (
                             <Link
                               key={subItem.path}
@@ -346,7 +334,11 @@ export default function DefaultLayout() {
                               onClick={() => setIsMenuOpen(false)}
                             >
                               {subItem.icon && (
-                                <img src={subItem.icon} alt={subItem.name} className="w-5 h-5" />
+                                <img
+                                  src={subItem.icon}
+                                  alt={subItem.name}
+                                  className="w-5 h-5"
+                                />
                               )}
                               {subItem.name}
                             </Link>
@@ -359,7 +351,6 @@ export default function DefaultLayout() {
               )}
             </AnimatePresence>
 
-            {/* Actions Section */}
             <div className="flex items-center gap-3">
               <motion.button
                 onClick={() => setShowForfaitModal(true)}
@@ -369,40 +360,59 @@ export default function DefaultLayout() {
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div className="relative flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
                   </svg>
                   <span className="text-sm">Forfaits</span>
                 </div>
               </motion.button>
 
-              {/* notification  */}
               <div>
-                <NotificationComponent/>
+                <NotificationComponent />
               </div>
 
-              <div className="">
+              <div>
                 <Profil />
               </div>
 
-              {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="md:hidden p-2 rounded-lg bg-gradient-to-r from-[#6B46C1]/10 to-indigo-600/10 border border-purple-200 text-purple-700 hover:text-white hover:bg-gradient-to-r hover:from-[#6B46C1] hover:via-purple-600 hover:to-indigo-600 hover:border-transparent transition-all duration-300"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               </button>
-            </div> 
-
+            </div>
           </div>
-
         </div>
-
       </header>
-      <div className="">
-        <ForfaitPage open={showForfaitModal} onClose={() => setShowForfaitModal(false)} />
+
+      <div>
+        <ForfaitPage
+          open={showForfaitModal}
+          onClose={() => setShowForfaitModal(false)}
+        />
       </div>
 
       <main className="max-w-screen mx-auto mt-24">
@@ -411,7 +421,6 @@ export default function DefaultLayout() {
         <Outlet />
         <ChatWidget />
       </main>
-
     </>
   );
 }

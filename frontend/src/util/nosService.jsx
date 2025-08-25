@@ -1,3 +1,6 @@
+import Organiser from '../../public/organiser.png';
+import LocatioN from '../../public/location.png';
+import Windding from '../../public/wedding-invitation.png';
 export default function NosService() {
   return (
     <>
@@ -75,7 +78,7 @@ export default function NosService() {
                 {/* Container image avec effet moderne */}
                 <div className="relative mb-8 p-6 bg-gradient-to-r from-orange-100 to-amber-100 rounded-2xl">
                   <img
-                    src="/src/assets/organiser.png"
+                    src={Organiser}
                     className="h-24 object-contain transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 filter group-hover:brightness-110"
                     alt="Organiser"
                   />
@@ -98,7 +101,7 @@ export default function NosService() {
               <div className="group flex flex-col items-center bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-gray-200/50 p-8 relative animate-fadeIn hover:bg-white/90 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
                 <div className="relative mb-8 p-6 bg-gradient-to-r from-blue-100 to-purple-100 rounded-2xl">
                   <img
-                    src="/src/assets/location.png"
+                    src={LocatioN}
                     className="h-24 object-contain transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 filter group-hover:brightness-110"
                     alt="Location"
                   />
@@ -120,7 +123,7 @@ export default function NosService() {
               <div className="group flex flex-col items-center bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-gray-200/50 p-8 relative animate-fadeIn hover:bg-white/90 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
                 <div className="relative mb-8 p-6 bg-gradient-to-r from-pink-100 to-purple-100 rounded-2xl">
                   <img
-                    src="/src/assets/wedding-invitation.png"
+                    src={Windding}
                     className="h-24 object-contain transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 filter group-hover:brightness-110"
                     alt="Invitation"
                   />

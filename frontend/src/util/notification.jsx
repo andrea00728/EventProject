@@ -1,8 +1,4 @@
-{/* <div className="notif mx-5 p-2 rounded-full  hover:scale-110 cursor-pointer duration-300">
-                <Bell className=""/>
-              </div> */}
-
-              import { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X, Check, Clock, AlertCircle, MessageSquare, UserPlus, Settings, Trash2 } from 'lucide-react';
 

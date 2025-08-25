@@ -1,4 +1,4 @@
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || `http://localhost:3000`;
+import { url } from "../api/url";
 
 export const registerUser = async (userData, file) => {
     const formData = new FormData();
@@ -9,7 +9,7 @@ export const registerUser = async (userData, file) => {
         formData.append('photo', file);
     }
 
-    const response = await fetch(`${apiBaseUrl}/auth/register`, {
+    const response = await fetch(`${url}/auth/register`, {
         method: 'POST',
         body: formData,
     });
@@ -26,7 +26,7 @@ export const registerUser = async (userData, file) => {
 
 // Connexion de l'utilisateur
 export const loginUser = async (userData) => {
-    const response = await fetch(`${apiBaseUrl}/auth/login`, {
+    const response = await fetch(`${url}/auth/login`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -38,6 +38,7 @@ export const loginUser = async (userData) => {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Erreur de connexion');
     }
+    console.log("voici l'info du token", response)
 
     return await response.json(); // Assurez-vous que cela renvoie { access_token: "votre_token" }
 };

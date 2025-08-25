@@ -309,7 +309,7 @@ export default function Dashboard() {
                   ({ name, email, photo, createdAt }, i) => (
                     <li
                       key={i}
-                      className="flex items-center gap-4 p-3 border-b border-gray-300 dark:border-gray-700 hover:bg-gray-400/30 dark:hover:bg-gray-700 cursor-pointer rounded-md"
+                      className="flex items-center gap-4 p-3 border-b border-gray-300 dark:border-gray-700 hover:bg-gray-400/30 dark:hover:bg-gray-400/30 cursor-pointer rounded-md"
                     >
                       {photo ? (
                         <img
@@ -323,7 +323,7 @@ export default function Dashboard() {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm sm:text-base ">
-                          <p className={`font-semibold text-base sm:text-lg text-gray-100 dark:text-gray-100 ${
+                          <p className={`font-semibold text-base sm:text-lg  ${
                             darkMode
                               ? "bg-transparent border-gray-700 text-gray-200"
                               : "bg-transparent border-gray-200 text-gray-900"
@@ -384,7 +384,7 @@ export default function Dashboard() {
                     {transactions.map(({ name, amount, date, photo }, i) => (
                       <tr
                         key={i}
-                        className="hover:bg-gray-400/30 dark:hover:bg-gray-700/30 transition duration-150 cursor-pointer rounded-md"
+                        className="hover:bg-gray-400/30 dark:hover:bg-gray-400/30 transition duration-150 cursor-pointer rounded-md"
                       >
                         <td className="p-3 flex items-center gap-3">
                           {photo ? (
@@ -595,8 +595,9 @@ function EventChart({ darkMode, eventData }) {
         height={270}
         margin={{ top: 20, right: 10, bottom: 20, left: 5 }}
         width={480}
-        className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px] ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-          }`}
+        className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px] ${
+          darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+        }`}
       />
     </div>
   );

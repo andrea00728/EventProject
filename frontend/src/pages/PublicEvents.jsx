@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import axiosClient from '../api/axios-client';
 
 const PublicEvents = () => {
   const [events, setEvents] = useState([]);
@@ -15,24 +16,40 @@ const PublicEvents = () => {
     email: ''
   });
   const [registrationStatus, setRegistrationStatus] = useState(null);
+  const [filter, setFilter] = useState("all"); // "all", "public", "private"
+  const [currentPage, setCurrentPage] = useState(1);
+  const eventsPerPage = 5;
+
 
   useEffect(() => {
-    const fetchPublicEvents = async () => {
+    const fetchEvents = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get('http://localhost:3000/evenements/publics');
+        const response = await axiosClient.get("/evenements");
         setEvents(response.data);
         setError(null);
-      } catch (error) {
-        console.error('Erreur lors de la récupération des événements publics :', error);
-        setError("Impossible de charger les événements publics. Veuillez réessayer plus tard.");
+      } catch (err) {
+        console.error(err);
+        setError("Impossible de charger les événements. Veuillez réessayer plus tard.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchPublicEvents();
+    fetchEvents();
   }, []);
+
+  const filteredEvents = events.filter(ev => {
+    if (filter === "public") return ev.isPublic === true;
+    if (filter === "private") return ev.isPublic === false;
+    return true; // "all"
+  });
+
+  const totalPages = Math.ceil(filteredEvents.length / eventsPerPage);
+  const currentEvents = filteredEvents.slice(
+    (currentPage - 1) * eventsPerPage,
+    currentPage * eventsPerPage
+  );
 
   const openEventModal = (event) => {
     setSelectedEvent(event);
@@ -69,8 +86,6 @@ const PublicEvents = () => {
       // Simulation d'envoi de données
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Ici vous pourriez faire un appel API réel :
-      // await axios.post(`http://localhost:3000/evenements/${selectedEvent.id}/inscriptions`, formData);
 
       setRegistrationStatus('success');
       setFormData({ nom: '', prenom: '', email: '' });
@@ -120,19 +135,32 @@ const PublicEvents = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-cyan-600 bg-clip-text text-transparent mb-4">
-            Événements Publics
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-indigo-600 to-cyan-600 bg-clip-text text-transparent mb-4">
+            Événements
           </h1>
           <p className="text-slate-600 text-lg max-w-2xl mx-auto">
-            Découvrez tous les événements ouverts au public
+            Découvrez tous les événements disponibles
           </p>
+        </div>
+
+        {/* Filtre */}
+        <div className="flex justify-center mb-8">
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="border border-slate-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="all">Tous les événements</option>
+            <option value="public">Événements publics</option>
+            <option value="private">Événements privés</option>
+          </select>
         </div>
 
         {/* Loading */}
         {isLoading && (
           <div className="flex flex-col items-center py-24">
             <div className="w-16 h-16 border-4 border-indigo-200 rounded-full animate-spin border-t-indigo-500"></div>
-            <p className="mt-4 text-slate-600 font-medium">Chargement des événements publics...</p>
+            <p className="mt-4 text-slate-600 font-medium">Chargement des événements...</p>
           </div>
         )}
 
@@ -156,60 +184,72 @@ const PublicEvents = () => {
         {/* Events */}
         {!isLoading && !error && (
           <>
-            {events.length === 0 ? (
+            {events.filter(ev => {
+              if (filter === "public") return ev.isPublic === true;
+              if (filter === "private") return ev.isPublic === false;
+              return true; // all
+            }).length === 0 ? (
               <div className="text-center py-16">
                 <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-slate-100 to-slate-200 rounded-full mb-6">
                   <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-slate-600 mb-2">Aucun événement public</h3>
+                <h3 className="text-xl font-semibold text-slate-600 mb-2">Aucun événement</h3>
                 <p className="text-slate-500">Revenez plus tard pour découvrir de nouveaux événements.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                {events.map((event) => (
-                  <div
-                    key={event.id}
-                    className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1 cursor-pointer"
-                    onClick={() => openEventModal(event)}
-                  >
-                    {/* Card Header */}
-                    <div className={`h-2 bg-gradient-to-r ${event.id % 3 === 0 ? 'from-indigo-500 to-cyan-500' :
-                      event.id % 3 === 1 ? 'from-pink-500 to-rose-500' :
-                        'from-emerald-500 to-lime-500'
-                      }`}
-                    ></div>
+                {events
+                  .filter(ev => {
+                    if (filter === "public") return ev.isPublic === true;
+                    if (filter === "private") return ev.isPublic === false;
+                    return true;
+                  })
+                  .map((event) => (
+                    <div
+                      key={event.id}
+                      className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1 cursor-pointer"
+                      onClick={() => openEventModal(event)}
+                    >
+                      {/* Card Header */}
+                      <div className={`h-2 bg-gradient-to-r ${event.id % 3 === 0 ? 'from-indigo-500 to-cyan-500' :
+                        event.id % 3 === 1 ? 'from-pink-500 to-rose-500' :
+                          'from-emerald-500 to-lime-500'
+                        }`}
+                      ></div>
 
-                    <div className="p-6">
-                      <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide mb-4">
-                        {event.nom}
-                      </h2>
+                      <div className="p-6">
+                        <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide mb-4">
+                          {event.nom}
+                        </h2>
 
-                      <div className="space-y-2">
-                        <p><span className="text-slate-500 font-medium">Type :</span> {event.type}</p>
-                        <p><span className="text-slate-500 font-medium">Thème :</span> {event.theme}</p>
-                        <p>
-                          <span className="text-slate-500 font-medium">Date :</span>{' '}
-                          {new Date(event.date).toLocaleDateString("fr-FR", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
-                        <p><span className="text-slate-500 font-medium">Lieu :</span> {event.location.nom || "Non précisé"}</p>
+                        <div className="space-y-2">
+                          <p><span className="text-slate-500 font-medium">Type :</span> {event.type}</p>
+                          <p><span className="text-slate-500 font-medium">Thème :</span> {event.theme}</p>
+                          <p>
+                            <span className="text-slate-500 font-medium">Date :</span>{' '}
+                            {new Date(event.date).toLocaleDateString("fr-FR", {
+                              weekday: "long",
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                          <p><span className="text-slate-500 font-medium">Lieu :</span> {event.location?.nom || "Non précisé"}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </>
         )}
       </div>
+
+
 
       {/* Event Modal */}
       {isEventModalOpen && selectedEvent && (

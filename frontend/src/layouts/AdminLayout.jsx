@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Outlet, Link, useLocation, Navigate, useNavigate } from "react-router-dom";
+import {
+  Outlet,
+  Link,
+  useLocation,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
 import {
   FaCogs,
   FaUsers,
@@ -10,30 +16,37 @@ import {
   FaSun,
   FaUser,
   FaPaperPlane,
+  // FaUserCircle
 } from "react-icons/fa";
 import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { FiLayout } from "react-icons/fi";
 import { ChevronDown, X } from "lucide-react";
-import { MdCalendarToday, MdHistory, MdQueryStats, MdRoom } from "react-icons/md";
+import {
+  MdCalendarToday,
+  MdHistory,
+  MdQueryStats,
+  MdRoom,
+} from "react-icons/md";
 import { useDarkMode } from "../context/DarkModeContext";
 import { useStateContext } from "../context/ContextProvider";
 import Dropdown from "./Dropdown";
 import LogoutModal from "../pages/Admin/LogoutModal";
 import { logout } from "../services/firebase/authService";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { getUserIdForToken } from "../services/userService";
-import { SOCKET_URL } from "../socket";
-import { io } from "socket.io-client";
+import { fr } from "date-fns/locale";
+import io from "socket.io-client";
+import { useSocket } from "../socket";
 
 export default function AdminLayout() {
-  const { token, role, isLoading, setToken, setUser, user } = useStateContext();
+  const { isAuthenticated, role, isLoading, setUser, user } = useStateContext();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [messages,setMessages]=useState([]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -48,7 +61,7 @@ export default function AdminLayout() {
 
   if (isLoading) return <div>Chargement ...</div>;
 
-  if (!token) return <Navigate to="/pagepublic" replace />;
+  if (!isAuthenticated) return <Navigate to="/pagepublic" replace />;
 
   switch (role) {
     case "admin":
@@ -71,7 +84,6 @@ export default function AdminLayout() {
 
   const confirmLogout = () => {
     console.log("Déconnexion Confirmée");
-    setToken(null);
     setUser(null);
     logout();
     setShowLogoutModal(false);
@@ -160,16 +172,6 @@ export default function AdminLayout() {
             timestamp: new Date(Date.now() - 25 * 60000),
             isAdmin: true,
           },
-          {
-            id: 3,
-            text: "J'aimerais avoir plus d'informations sur l'événement de demain.",
-            sender:
-              typeof conversation.content === "object"
-                ? conversation.content.from
-                : "Utilisateur",
-            timestamp: new Date(Date.now() - 20 * 60000),
-            isAdmin: false,
-          },
         ]);
       }
     }, [conversation]);
@@ -252,17 +254,15 @@ export default function AdminLayout() {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${
-                  message.isAdmin ? "justify-end" : "justify-start"
-                }`}
+                className={`flex ${message.isAdmin ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                     message.isAdmin
                       ? "bg-blue-500 text-white"
                       : darkMode
-                      ? "bg-gray-700 text-gray-200"
-                      : "bg-gray-200 text-gray-900"
+                        ? "bg-gray-700 text-gray-200"
+                        : "bg-gray-200 text-gray-900"
                   }`}
                 >
                   <p className="text-sm">{message.text}</p>
@@ -271,8 +271,8 @@ export default function AdminLayout() {
                       message.isAdmin
                         ? "text-blue-100"
                         : darkMode
-                        ? "text-gray-400"
-                        : "text-gray-500"
+                          ? "text-gray-400"
+                          : "text-gray-500"
                     }`}
                   >
                     {formatTime(message.timestamp)}
@@ -313,6 +313,7 @@ export default function AdminLayout() {
     );
   };
 
+  // ============= MODIFIÉ: AdminHeader avec modal =============
   const AdminHeader = ({ currentPageName, darkMode }) => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [showMessages, setShowMessages] = useState(false);
@@ -320,16 +321,123 @@ export default function AdminLayout() {
     const [showConversationModal, setShowConversationModal] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [notifications, setNotifications] = useState([]);
-    const [messages, setMessages] = useState([]);
     const { user } = useStateContext();
+    const socket = useSocket();
     const notifRef = useRef(null);
     const msgRef = useRef(null);
     const profileRef = useRef(null);
     const navigate = useNavigate();
+    const [messages, setMessages] = useState([]);
 
     const handleRedirect = () => {
       navigate("/AdminParametre");
     };
+
+    useEffect(() => {
+      const fetchMessages = async () => {
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
+          );
+          if (!response.ok)
+            throw new Error("Erreur lors de la récupération des messages");
+          const data = await response.json();
+
+          // Adapter le format au même style que ton tableau statique
+          const formatted = data.map((msg) => ({
+            ...msg,
+            from: `${msg.firstName} ${msg.lastName}`,
+            text: msg.message,
+            read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+          }));
+
+          setMessages(formatted);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des messages :", error);
+          setMessages([]);
+        }
+      };
+      const fetchNotifications = async () => {
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`,
+           
+          );
+          if (!response.ok)
+            throw new Error("Erreur lors de la récupération des notifications");
+          const data = await response.json();
+          setNotifications(data);
+        } catch (error) {
+          console.error(
+            "Erreur lors de la récupération des notifications :",
+            error
+          );
+          setNotifications([]);
+        }
+      };
+
+      async function connectSocket() {
+        const userId = await getUserIdForToken();
+        if (!userId) return;
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
+        );
+        if (!response.ok)
+          throw new Error("Erreur lors de la récupération des messages");
+        const data = await response.json();
+        try {
+
+          if (!socket) return; 
+
+          socket.on("notificationMessageAdmin", (value) => {
+            console.log("nana ", value);
+            const formatted1 = data.map((msg) => ({
+              ...msg,
+              from: `${msg.firstName} ${msg.lastName}`,
+              text: msg.message,
+              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+            }));
+            const formatted2 = value.data.map((msg) => ({
+              ...msg,
+              from: `${msg.firstName} ${msg.lastName}`,
+              text: msg.message,
+              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+            }));
+            setMessages([...formatted1, ...formatted2]);
+          });
+        } catch (error) {
+          console.error("Erreur de connexion au socket :", error);
+        }
+      }
+
+      fetchNotifications();
+      fetchMessages();
+    }, [token]);
+
+    useEffect(() => {
+      if (socket) {
+        socket.on("connect", () => {
+          console.log("Connecté au socket");
+        });
+
+        socket.on("notificationMessageAdmin", (value) => {
+          console.log("Message reçue :", value);
+          const formatted = value.data.map((msg) => ({
+            ...msg,
+            from: `${msg.firstName} ${msg.lastName}`,
+            text: msg.message,
+            read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+          }));
+          setMessages([...messages, ...formatted]);
+        });
+      }
+
+      return () => {
+        if (socket) {
+          socket.disconnect();
+        }
+      };
+    }, [socket]);
 
     useEffect(() => {
       const handleClickOutside = (event) => {
@@ -344,102 +452,10 @@ export default function AdminLayout() {
         }
       };
 
-      let newSocket;
-
-      async function connectSocket() {
-        const userId = await getUserIdForToken();
-        if (!userId) return;
-
-        newSocket = io(SOCKET_URL, {
-          transports: ["websocket"],
-          auth: { userId },
-        });
-
-        newSocket.on("notificationMessageAdmin", (data) => {
-          console.log("📦 Mis à jour du message : ", data);
-        });
-
-        newSocket.on("notifRegister", (data) => {
-          console.log("📦 Mis à jour notification admin : ", data);
-          setNotifications((prevNotifications) => {
-            const isDuplicate = prevNotifications.some(
-              (notif) =>
-                notif.id === data.id || JSON.stringify(notif) === JSON.stringify(data)
-            );
-            if (isDuplicate) {
-              console.log("Notification dupliquée ignorée :", data);
-              return prevNotifications;
-            }
-            return [...prevNotifications, data];
-          });
-        });
-      }
-
-      connectSocket();
-
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
         document.removeEventListener("mousedown", handleClickOutside);
-        if (newSocket) {
-          newSocket.disconnect();
-        }
-      };
     }, []);
-
-    useEffect(() => {
-      const fetchNotifications = async () => {
-        try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          if (!response.ok)
-            throw new Error("Erreur lors de la récupération des notifications");
-          const data = await response.json();
-          setNotifications(data);
-        } catch (error) {
-          console.error("Erreur lors de la récupération des notifications :", error);
-          setNotifications([]);
-        }
-      };
-      fetchNotifications();
-    }, [token]);
-
-    useEffect(() => {
-      const fetchMessages = async () => {
-        try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          if (!response.ok)
-            throw new Error("Erreur lors de la récupération des messages");
-          const data = await response.json();
-
-          const formatted = data.map((msg) => ({
-            ...msg,
-            from: `${msg.firstName} ${msg.lastName}`,
-            text: msg.message,
-            read: msg.read || false,
-          }));
-
-          setMessages(formatted);
-        } catch (error) {
-          console.error("Erreur lors de la récupération des messages :", error);
-          setMessages([]);
-        }
-      };
-
-      fetchMessages();
-    }, [token]);
 
     const markMessageAsRead = (message) => {
       setMessages((prevMessages) =>
@@ -456,9 +472,27 @@ export default function AdminLayout() {
       setShowMessages(false);
     };
 
-    const handleDeleteMessage = (idToDelete) => {
-      const updatedMessages = messages.filter((msg) => msg.id !== idToDelete);
-      setMessages(updatedMessages);
+    const handleDeleteMessage = async (id) => {
+      try {
+        // Appel à ton backend pour supprimer en base
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Erreur lors de la suppression");
+        }
+
+        // Mise à jour locale après confirmation de la suppression
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => msg.id !== id)
+        );
+      } catch (error) {
+        console.error("Suppression impossible :", error);
+      }
     };
 
     const pageBg = darkMode
@@ -474,7 +508,9 @@ export default function AdminLayout() {
             className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}
           >
             {currentPageIcon && (
-              <span className="mr-2 sm:mr-3 text-blue-700">{currentPageIcon}</span>
+              <span className="mr-2 sm:mr-3 text-blue-700">
+                {currentPageIcon}
+              </span>
             )}
             {currentPageName}
           </h2>
@@ -510,18 +546,16 @@ export default function AdminLayout() {
                 aria-label="Menu profil"
               >
                 <div className="relative">
-                  {user?.photo ? (
+                  {(
                     <img
                       src={user.photo}
                       alt=""
                       className="w-8 rounded-[50%]"
                     />
-                  ) : (
-                    <FaUser className="w-5 h-5" />
-                  )}
+                  ) || <FaUser className="w-5 h-5" />}
                 </div>
                 <span className="hidden sm:inline text-sm font-medium">
-                  {user?.name || "Admin"}
+                  {user.name || Admin}
                 </span>
                 <ChevronDown
                   className={`w-4 h-4 transition-transform duration-200 ${
@@ -532,7 +566,9 @@ export default function AdminLayout() {
               {showProfile && (
                 <div
                   className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
-                    darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+                    darkMode
+                      ? "bg-gray-800 border-gray-700"
+                      : "bg-white border-gray-200"
                   } z-50 transition-all duration-200 ${
                     window.innerWidth < 640 ? "left-4 right-4" : "right-0"
                   }`}
@@ -544,7 +580,7 @@ export default function AdminLayout() {
                       }`}
                     >
                       <p className="font-medium">Connecté en tant que</p>
-                      <p className="truncate">admin@example.com</p>
+                      <p className="truncate">{user?.name || "Admin"}</p>
                     </div>
                     <div
                       className={`border-t ${
@@ -552,6 +588,7 @@ export default function AdminLayout() {
                       }`}
                     ></div>
                     <button
+                      onClick={handleRedirect}
                       className={`w-full text-left px-3 py-2 text-sm ${
                         darkMode
                           ? "hover:bg-gray-700 text-gray-200"
@@ -632,14 +669,16 @@ export default function AdminLayout() {
         } shadow-md hover:scale-105`}
         onClick={() => setSidebarOpen(!sidebarOpen)}
       >
-        {sidebarOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
+        {sidebarOpen ? (
+          <FaTimes className="text-xl" />
+        ) : (
+          <FaBars className="text-xl" />
+        )}
       </button>
       <aside
         className={`fixed z-50 top-0 left-0 h-full w-64 transition-all duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 md:relative md:w-72 ${
-          darkMode ? "bg-gray-800" : "bg-gray-200"
-        }`}
+        } md:translate-x-0 md:relative md:w-72 ${darkMode ? "bg-gray-800" : "bg-gray-200"}`}
       >
         <div className="flex flex-col h-full">
           <div className="p-5 flex items-center justify-between">
@@ -669,10 +708,12 @@ export default function AdminLayout() {
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 transform ${
                       location.pathname === item.path
                         ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg scale-[1.02]"
-                        : darkMode
-                        ? "text-gray-200 hover:bg-gray-700 hover:text-white"
-                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                    } hover:translate-x-1 hover:scale-[1.02]`}
+                        : `${
+                            darkMode
+                              ? "text-gray-200 hover:bg-gray-700 hover:text-white"
+                              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                          } hover:translate-x-1 hover:scale-[1.02]`
+                    }`}
                     onClick={() => isMobile && setSidebarOpen(false)}
                   >
                     <span
@@ -680,13 +721,15 @@ export default function AdminLayout() {
                         location.pathname === item.path
                           ? "text-white scale-110"
                           : darkMode
-                          ? "text-gray-300 group-hover:scale-110"
-                          : "text-gray-500 group-hover:scale-110"
+                            ? "text-gray-300 group-hover:scale-110"
+                            : "text-gray-500 group-hover:scale-110"
                       }`}
                     >
                       {item.icon}
                     </span>
-                    <span className="transition-all duration-300">{item.name}</span>
+                    <span className="transition-all duration-300">
+                      {item.name}
+                    </span>
                   </Link>
                 </li>
               ))}
@@ -739,9 +782,7 @@ export default function AdminLayout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <AdminHeader currentPageName={currentPageName} darkMode={darkMode} />
         <main
-          className={`flex-1 overflow-auto scrollable p-0 ${
-            darkMode ? "bg-gray-900" : "bg-gray-50"
-          }`}
+          className={`flex-1 overflow-auto scrollable ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}
         >
           <div className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
             <Outlet />

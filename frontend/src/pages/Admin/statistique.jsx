@@ -21,6 +21,7 @@ import {
 import { FaUsers, FaBell, FaEnvelope, FaUser } from "react-icons/fa";
 import { ChevronDown } from "lucide-react";
 import statsService from "../../services/statsService";
+import { url } from "../../api/url";
 
 Chart.register(ChartDataLabels);
 
@@ -213,6 +214,7 @@ const Dropdown = React.forwardRef(
 );
 
 const Statique = () => {
+  // États
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
@@ -249,10 +251,143 @@ const Statique = () => {
 
   //BY LIOKA
   // Fonction pour charger les données
-  const fetchChartData = async () => {};
+  // const fetchChartData = async () => {};
+
+  // // Fonction pour mettre à jour le graphique des revenus
+  // const updateRevenueChart = (revenueData) => {};
+
+  // Fonction pour charger les données
+  const fetchChartData = async () => {
+    try {
+      setLoading(true);
+      console.log(`🔄 Chargement des données pour ${selectedPeriod} mois`);
+
+      const response = await fetch(`${url}/forfait/dashboard-charts?period=${selectedPeriod}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('📊 Données reçues:', data);
+
+      setChartData(data);
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des données:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fonction pour mettre à jour le graphique des revenus
-  const updateRevenueChart = (revenueData) => {};
+  const updateRevenueChart = (revenueData) => {
+    console.log('📈 Mise à jour graphique revenus:', revenueData);
+
+    if (revenueChartRef.current) {
+      revenueChartRef.current.destroy();
+    }
+
+    if (!revenueChartCanvasRef.current) return;
+
+    const ctx = revenueChartCanvasRef.current.getContext('2d');
+    revenueChartRef.current = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: revenueData.map(item => item.month),
+        datasets: [{
+          label: 'Revenus (€)',
+          data: revenueData.map(item => item.total),
+          borderColor: '#3B82F6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: darkMode ? '#ffffff' : '#000000' }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: darkMode ? '#9CA3AF' : '#6B7280' },
+            grid: { color: darkMode ? '#374151' : '#E5E7EB' }
+          },
+          y: {
+            ticks: { color: darkMode ? '#9CA3AF' : '#6B7280' },
+            grid: { color: darkMode ? '#374151' : '#E5E7EB' }
+          }
+        }
+      }
+    });
+  };
+
+  // Fonction pour mettre à jour le graphique des événements
+  const updateEventsChart = (eventsData) => {
+    console.log('🎯 Mise à jour graphique événements:', eventsData);
+
+    if (eventsChartRef.current) {
+      eventsChartRef.current.destroy();
+    }
+
+    if (!eventsChartCanvasRef.current) return;
+
+    const ctx = eventsChartCanvasRef.current.getContext('2d');
+    eventsChartRef.current = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: eventsData.map(item => item.type),
+        datasets: [{
+          data: eventsData.map(item => item.count),
+          backgroundColor: ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#F97316'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: darkMode ? '#ffffff' : '#000000', padding: 20 }
+          }
+        }
+      }
+    });
+  };
+
+  // useEffect pour le chargement initial et rechargement lors du changement de période
+  useEffect(() => {
+    fetchChartData();
+  }, [selectedPeriod]);
+
+  // useEffect pour mise à jour du graphique des revenus
+  useEffect(() => {
+    if (!loading && chartData.revenue && chartData.revenue.length > 0) {
+      updateRevenueChart(chartData.revenue);
+    }
+  }, [chartData.revenue, darkMode, loading]);
+
+  // useEffect pour mise à jour du graphique des événements
+  useEffect(() => {
+    if (!loading && chartData.events && chartData.events.length > 0) {
+      updateEventsChart(chartData.events);
+    }
+  }, [chartData.events, darkMode, loading]);
+
+  // useEffect pour le nettoyage des instances Chart
+  useEffect(() => {
+    return () => {
+      if (revenueChartRef.current) revenueChartRef.current.destroy();
+      if (eventsChartRef.current) eventsChartRef.current.destroy();
+    };
+  }, []);
+
+
+
 
   const notifications = [
     "Nouvel utilisateur inscrit",
