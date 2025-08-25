@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { getMyEvents } from "../../services/evenementServ";
 import { useStateContext } from "../../context/ContextProvider";
+import { chiffreControll, getMaxCapacity } from "../../services/controll_champs/controll_champs";
+import { createTable } from "../../services/tableService";
 
-export default function Tablecreation({ onSubmitTable }) {
-  const { token } = useStateContext();
+export default function Tablecreation() {
+  const { isAuthenticated } = useStateContext();
 
   // Formulaire
   const [form, setForm] = useState({
@@ -31,7 +33,7 @@ export default function Tablecreation({ onSubmitTable }) {
     const fetchEvents = async () => {
       setIsLoadingEvents(true);
       try {
-        const data = await getMyEvents(token);
+        const data = await getMyEvents();
         setEvents(data);
       } catch (err) {
         setEventError(
@@ -42,8 +44,8 @@ export default function Tablecreation({ onSubmitTable }) {
       }
     };
 
-    if (token) fetchEvents();
-  }, [token]);
+    if (isAuthenticated) fetchEvents();
+  }, [isAuthenticated]);
 
   // Gestion changement du nombre → crée un tableau de noms vides
   const handleNombreChange = (e) => {
@@ -64,8 +66,37 @@ export default function Tablecreation({ onSubmitTable }) {
 
   // Gestion des autres champs (capacite, type)
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const { name, value } = e.target;
+
+  if (name === "capacite") {
+    const numericValue = parseInt(value, 10);
+    const max = getMaxCapacity(form.type);
+    if (numericValue > max) {
+      setError(`La capacité maximale pour une table ${form.type} est ${max}`);
+      return;
+    } else {
+      setError(null);
+    }
+    setForm({ ...form, [name]: numericValue });
+    return;
+  }
+
+  if (name === "type") {
+    const max = getMaxCapacity(value);
+    const newCapacite = Math.min(form.capacite, max);
+    if (form.capacite > max) {
+      setError(`Capacité ajustée à ${newCapacite} pour le type ${value}`);
+    } else {
+      setError(null);
+    }
+    setForm({ ...form, [name]: value, capacite: newCapacite });
+    return;
+  }
+
+  setForm({ ...form, [name]: value });
+};
+
+
 
   // Sélectionner un événement
   const selectEvent = (event) => {
@@ -87,31 +118,30 @@ export default function Tablecreation({ onSubmitTable }) {
     }
 
     try {
-      // Remplir les noms vides avec un nom par défaut
-      const nomsFinal = form.noms.map((nom, index) =>
-        nom && nom.trim() !== "" ? nom : `Table ${index + 1}`
-      );
+  const nomsFinal = form.noms.map((nom, index) =>
+    nom && nom.trim() !== "" ? nom : `Table ${index + 1}`
+  );
 
-      const formDataArray = nomsFinal.map((nom) => ({
-        nom,
-        capacite: form.capacite,
-        type: form.type,
-        eventId: form.eventId
-      }));
+  const formDataArray = nomsFinal.map((nom) => ({
+    nom,
+    capacite: form.capacite,
+    type: form.type,
+    eventId: form.eventId
+  }));
 
-      await onSubmitTable(formDataArray);
+  await Promise.all(formDataArray.map((t) => createTable(t)));
 
-      // Réinitialiser le formulaire
-      setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: 0 });
-      setSelectedEvent(null);
-      setSuccessMessage("Tables créées avec succès");
-    } catch (err) {
-      if (err.response?.data?.message?.includes("déjà utilisé")) {
-        setShowAlert(true);
-      } else {
-        setError(err.response?.data?.message || "Erreur lors de la création des tables");
-      }
-    }
+  setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: 0 });
+  setSelectedEvent(null);
+  setSuccessMessage("Tables créées avec succès");
+} catch (err) {
+  if (err.response?.data?.message?.includes("déjà utilisé")) {
+    setShowAlert(true);
+  } else {
+    setError(err.response?.data?.message || "Erreur lors de la création des tables");
+  }
+}
+
   };
 
   return (
@@ -138,6 +168,7 @@ export default function Tablecreation({ onSubmitTable }) {
               min="1"
               className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3"
             />
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
           </div>
 
           {/* Nombre */}

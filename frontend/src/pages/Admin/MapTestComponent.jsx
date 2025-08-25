@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { url } from '../../api/url';
 
 const MapTestComponent = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,7 +27,7 @@ const MapTestComponent = () => {
 
   const fetchLocations = async () => {
     try {
-      const response = await fetch('http://localhost:3000/locations');
+      const response = await fetch(`${url}/locations`);
       const data = await response.json();
       console.log('Localisations récupérées:', data);
       setLocations(data);
@@ -42,8 +43,8 @@ const MapTestComponent = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/locations/geocode?q=${encodeURIComponent(searchQuery)}`);
-      console.log('URL appelée:', `http://localhost:3000/locations/geocode?q=${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(`${url}/locations/geocode?q=${encodeURIComponent(searchQuery)}`);
+      console.log('URL appelée:', `${url}/locations/geocode?q=${encodeURIComponent(searchQuery)}`);
       const data = await response.json();
       console.log('Réponse reçue:', data);
       if (data.error) throw new Error(data.message || data.error);
@@ -69,12 +70,12 @@ const MapTestComponent = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/locations/save', {
+      const response = await fetch(`${url}/locations/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: searchQuery }),
       });
-      console.log('URL appelée:', 'http://localhost:3000/locations/save', 'Body:', { query: searchQuery });
+      console.log('URL appelée:', `${url}/locations/save`, 'Body:', { query: searchQuery });
       const data = await response.json();
       console.log('Réponse reçue:', data);
       if (data.error) throw new Error(data.message || data.error);

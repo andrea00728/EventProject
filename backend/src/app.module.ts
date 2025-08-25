@@ -68,6 +68,11 @@ import { NotificationController } from './controllers/notification/notification.
 import { NotificationEntity } from './entities/notification.entity';
 import { Admin } from './entities/Admin';
 import { AdminModule } from './modules/admin/admin.module';
+import { TasksService } from './services/tasks/tasks.service';
+import { TasksModule } from './modules/tasks/tasks.module';
+import { TasksController } from './controllers/tasks/tasks.controller';
+
+
 
 @Module({
   imports: [
@@ -79,7 +84,10 @@ import { AdminModule } from './modules/admin/admin.module';
     ScheduleModule.forRoot(),
 
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
+      imports: [
+        ConfigModule,
+        ScheduleModule.forRoot(),
+      ],
       useFactory: (configService: ConfigService) => {
         const dbHost = configService.get<string>('DB_HOST');
         const dbPort = configService.get<number>('DB_PORT');
@@ -179,7 +187,8 @@ import { AdminModule } from './modules/admin/admin.module';
       FavoriteModule,
       ContactModule, // <-- Ajouter le module Contact ici
       NotificationModule,
-      AdminModule
+      AdminModule,
+      TasksModule,
     ],
     controllers: [ProfileController],
     providers: [],

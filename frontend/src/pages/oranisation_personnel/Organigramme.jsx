@@ -9,12 +9,12 @@ export default function PersonnelOrganigrammeDashboard() {
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [error, setError] = useState('');
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const data = await getMyEvents(token);
+        const data = await getMyEvents();
         setEvents(data);
         if(data.length > 0) {
           setSelectedEventId(data[0].id);
@@ -27,8 +27,8 @@ export default function PersonnelOrganigrammeDashboard() {
       }
     };
 
-    if (token) fetchEvents();
-  }, [token]);
+    if (isAuthenticated) fetchEvents();
+  }, [isAuthenticated]);
 
   const handleEventClick = async (event) => {
     setSelectedEventId(event.id);
@@ -69,7 +69,7 @@ export default function PersonnelOrganigrammeDashboard() {
       {/* Liste du personnel */}
       {selectedEventId && (
         <>
-        <OrganisationChart eventId={selectedEventId} token={token} />
+        <OrganisationChart eventId={selectedEventId} token={isAuthenticated} />
         </>
       )}
     </div>

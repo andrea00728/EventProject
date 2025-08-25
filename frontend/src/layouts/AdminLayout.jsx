@@ -16,6 +16,7 @@ import {
   FaSun,
   FaUser,
   FaPaperPlane,
+  // FaUserCircle
 } from "react-icons/fa";
 import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { FiLayout } from "react-icons/fi";
@@ -38,13 +39,14 @@ import io from "socket.io-client";
 import { useSocket } from "../socket";
 
 export default function AdminLayout() {
-  const { token, role, isLoading, setToken, setUser, user } = useStateContext();
+  const { isAuthenticated, role, isLoading, setUser, user } = useStateContext();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [messages,setMessages]=useState([]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -59,7 +61,7 @@ export default function AdminLayout() {
 
   if (isLoading) return <div>Chargement ...</div>;
 
-  if (!token) return <Navigate to="/pagepublic" replace />;
+  if (!isAuthenticated) return <Navigate to="/pagepublic" replace />;
 
   switch (role) {
     case "admin":
@@ -82,7 +84,6 @@ export default function AdminLayout() {
 
   const confirmLogout = () => {
     console.log("Déconnexion Confirmée");
-    setToken(null);
     setUser(null);
     logout();
     setShowLogoutModal(false);
@@ -312,6 +313,7 @@ export default function AdminLayout() {
     );
   };
 
+  // ============= MODIFIÉ: AdminHeader avec modal =============
   const AdminHeader = ({ currentPageName, darkMode }) => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [showMessages, setShowMessages] = useState(false);
@@ -336,11 +338,6 @@ export default function AdminLayout() {
         try {
           const response = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
           );
           if (!response.ok)
             throw new Error("Erreur lors de la récupération des messages");
@@ -364,11 +361,7 @@ export default function AdminLayout() {
         try {
           const response = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
+           
           );
           if (!response.ok)
             throw new Error("Erreur lors de la récupération des notifications");
@@ -382,6 +375,40 @@ export default function AdminLayout() {
           setNotifications([]);
         }
       };
+
+      async function connectSocket() {
+        const userId = await getUserIdForToken();
+        if (!userId) return;
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
+        );
+        if (!response.ok)
+          throw new Error("Erreur lors de la récupération des messages");
+        const data = await response.json();
+        try {
+
+          if (!socket) return; 
+
+          socket.on("notificationMessageAdmin", (value) => {
+            console.log("nana ", value);
+            const formatted1 = data.map((msg) => ({
+              ...msg,
+              from: `${msg.firstName} ${msg.lastName}`,
+              text: msg.message,
+              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+            }));
+            const formatted2 = value.data.map((msg) => ({
+              ...msg,
+              from: `${msg.firstName} ${msg.lastName}`,
+              text: msg.message,
+              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+            }));
+            setMessages([...formatted1, ...formatted2]);
+          });
+        } catch (error) {
+          console.error("Erreur de connexion au socket :", error);
+        }
+      }
 
       fetchNotifications();
       fetchMessages();

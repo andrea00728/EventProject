@@ -1,26 +1,33 @@
 import axios from "axios";
-import { Navigate } from "react-router-dom";
+
+const axiosClient = axios.create({
+  baseURL: `${import.meta.env.VITE_API_BASE_URL}`,
+  withCredentials: true,
+});
+
+// Intercepteur de requête : ne fait plus rien avec le token
+axiosClient.interceptors.request.use(
+  (config) => config,
+  (error) => Promise.reject(error)
+);
+
+axiosClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const { response, config } = error;
+    if (response?.status === 401 && !config._retry) {
+      config._retry = true;
+    } else if (!response) {
+      console.error("Erreur réseau ou serveur indisponible :", error);
+    }
+    return Promise.reject(error);
+  }
+);
 
 
-const axiosClient=axios.create({
-    baseURL:`${import.meta.env.VITE_API_BASE_URL}`
-})
 
-axiosClient.interceptors.request.use((config)=>{
-    const token=sessionStorage.getItem("ACCESS_TOKEN")
-    config.headers.Authorization=`Bearer ${token}`
-    return config;
-})
 
-axiosClient.interceptors.response.use((response)=>{
-     
-    return response;
-},(error)=>{
-const {response}=error;
-if(response.status===401){
-    sessionStorage.removeItem("ACCESS_TOKEN")
-}
-
-throw error;
-})
 export default axiosClient;
+
+
+
