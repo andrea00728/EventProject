@@ -53,8 +53,6 @@ const Publicacc = () => {
   const [current, setCurrent] = useState(0);
   const [isModalOpen, setModalOpen] = useState(false);
   const { isAuthenticated } = useStateContext()
-  const [organisateurCount,setOrganisateurCount]=useState(0);
-  const [eventCount,setEventCount]=useState(0);
 
   // ✅ Nouvel état pour le modal Demo
   const [isDemoOpen, setIsDemoOpen] = useState(false);
