@@ -68,14 +68,14 @@ const UserStats = () => {
         const totalEvents = await eventRes.json();
         setEventCount(totalEvents);
 
-        const revenueRes = await fetch(`{url}/forfait/revenu-mensuel`);
+        const revenueRes = await fetch(`${url}/forfait/revenu-mensuel`);
         if (!revenueRes.ok) throw new Error('Erreur récupération des revenus');
         const revenueData = await revenueRes.json();
         const totalRevenueValue = revenueData.reduce((sum, f) => sum + f.total, 0);
         const formattedRevenue = totalRevenueValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
         setRevenueTotal(formattedRevenue);
 
-        const allEventsRes = await fetch('${}/evenements');
+        const allEventsRes = await fetch(`${url}/evenements`);
         console.log('API Response Status:', allEventsRes.status); 
         const allEvents = await allEventsRes.json();
         console.log('Raw Events Data:', allEvents);

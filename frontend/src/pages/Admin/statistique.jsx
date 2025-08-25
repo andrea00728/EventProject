@@ -21,6 +21,7 @@ import {
 import { FaUsers, FaBell, FaEnvelope, FaUser } from "react-icons/fa";
 import { ChevronDown } from "lucide-react";
 import statsService from "../../services/statsService";
+import { url } from "../../api/url";
 
 Chart.register(ChartDataLabels);
 
@@ -261,7 +262,7 @@ const Statique = () => {
       setLoading(true);
       console.log(`🔄 Chargement des données pour ${selectedPeriod} mois`);
 
-      const response = await fetch(`https://api.mastertable.site/forfait/dashboard-charts?period=${selectedPeriod}`);
+      const response = await fetch(`${url}/forfait/dashboard-charts?period=${selectedPeriod}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
