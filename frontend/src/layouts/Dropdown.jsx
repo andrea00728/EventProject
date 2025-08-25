@@ -1,13 +1,33 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useState, useEffect } from "react";
 import { useDarkMode } from "../context/DarkModeContext";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Trash2 } from "lucide-react";
 
 const Dropdown = forwardRef(
-  ({ icon, label, count, items, show, setShow, onItemClick, onDelete, onViewMore }, ref) => {
+  ({ icon, label, count, items, show, setShow, onItemClick, onDelete, onViewMore, noScroll }, ref) => {
     const { darkMode } = useDarkMode();
     const dropdownRef = ref;
+    const [isMobile, setIsMobile] = useState(false);
+    const [filter, setFilter] = useState('all');
+
+    useEffect(() => {
+      const checkMobile = () => setIsMobile(window.innerWidth < 640);
+      checkMobile();
+      window.addEventListener("resize", checkMobile);
+      return () => window.removeEventListener("resize", checkMobile);
+    }, []);
+
+    const itemsWithReadStatus = items.map(item => ({
+      content: item,
+      read: item.read !== undefined ? item.read : false,
+    }));
+
+    const filteredItems = filter === 'all'
+      ? itemsWithReadStatus
+      : itemsWithReadStatus.filter(item => !item.read);
+
+    const unreadCount = itemsWithReadStatus.filter(item => !item.read).length;
 
     const toggleDropdown = () => {
       setShow(!show);
@@ -31,7 +51,7 @@ const Dropdown = forwardRef(
         e.preventDefault();
         setShow(false);
         if (onViewMore) {
-            onViewMore();
+          onViewMore();
         }
     };
 
@@ -62,29 +82,65 @@ const Dropdown = forwardRef(
 
         {show && (
           <div
-            className={`absolute top-full right-0 mt-2 w-72 rounded-lg shadow-xl border ${
-              darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-            } z-50 transition-all duration-300 transform origin-top-right`}
+            className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] ${
+              noScroll ? '' : 'overflow-y-auto'
+            } rounded-xl shadow-xl border ${
+              darkMode ? 'bg-gray-800 border-gray-700 text-gray-200' : 'bg-white border-gray-200 text-gray-900'
+            } z-50 transition-all duration-200 ${isMobile ? 'left-4 right-4' : 'right-0'}`}
           >
-            <div className={`py-2 px-4 border-b ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
-              <h3 className="font-semibold">{label}</h3>
+            <div className={`p-4 border-b ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="font-semibold">{label}</h3>
+                {count > 0 && (
+                  <span className="ml-auto bg-blue-500 text-white text-xs rounded-full px-2 py-1">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                    filter === 'all'
+                      ? 'bg-blue-500 text-white'
+                      : darkMode
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Tout ({items.length})
+                </button>
+                <button
+                  onClick={() => setFilter('unread')}
+                  className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                    filter === 'unread'
+                      ? 'bg-blue-500 text-white'
+                      : darkMode
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Non lus ({unreadCount})
+                </button>
+              </div>
             </div>
-            {items.length > 0 ? (
+
+            {filteredItems.length > 0 ? (
               <div className="max-h-80 overflow-y-auto">
-                {items.map((item, index) => {
-                  const dateValue = item.date || item.createdAt;
+                {filteredItems.map((item, index) => {
+                  const dateValue = item.content.date || item.content.createdAt;
                   const dateObject = new Date(dateValue);
                   const isValidDate = !isNaN(dateObject.getTime());
 
                   return (
                     <div
                       key={index}
-                      onClick={() => handleItemClick(item)}
+                      onClick={() => handleItemClick(item.content)}
                       className={`flex items-center p-3 transition-colors duration-150 border-b ${
                         darkMode
                           ? "border-gray-700 hover:bg-gray-700"
                           : "border-gray-200 hover:bg-gray-50"
-                      } cursor-pointer relative`}
+                      } cursor-pointer relative ${!item.read ? (darkMode ? 'bg-blue-900/20' : 'bg-blue-50') : ''}`}
                     >
                       <div
                         className={`w-2 h-2 rounded-full mr-2 ${
@@ -92,15 +148,15 @@ const Dropdown = forwardRef(
                         }`}
                       ></div>
                       <div className="flex-1 truncate">
-                        <p className="text-sm font-medium">
-                          {item.title || `${item.from || item.firstName} ${item.lastName}`}
+                        <p className={`text-sm font-medium ${!item.read ? 'font-semibold' : ''}`}>
+                          {item.content.title || `${item.content.from || item.content.firstName} ${item.content.lastName}`}
                         </p>
                         <p
                           className={`text-xs truncate ${
                             darkMode ? "text-gray-400" : "text-gray-500"
                           }`}
                         >
-                          {item.message || item.text}
+                          {item.content.message || item.content.text}
                         </p>
                         <p
                           className={`text-xs mt-1 ${
@@ -113,7 +169,7 @@ const Dropdown = forwardRef(
                         </p>
                       </div>
                       <button
-                        onClick={(e) => handleDelete(e, item)}
+                        onClick={(e) => handleDelete(e, item.content)}
                         className={`p-1 rounded-full text-gray-400 hover:text-red-500 transition-colors duration-150 ${
                           darkMode ? "hover:bg-gray-600" : "hover:bg-gray-200"
                         }`}
@@ -127,7 +183,7 @@ const Dropdown = forwardRef(
               </div>
             ) : (
               <div className={`p-4 text-center text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-                Aucun élément à afficher.
+                {filter === 'unread' ? `Aucun ${label.toLowerCase()} non lu.` : `Aucun ${label.toLowerCase()} à afficher.`}
               </div>
             )}
             
@@ -139,7 +195,7 @@ const Dropdown = forwardRef(
                     darkMode ? "text-blue-400 hover:bg-gray-700" : "text-blue-600 hover:bg-gray-100"
                   }`}
                 >
-                   {viewMoreButtonText}
+                    {viewMoreButtonText}
                 </button>
               </div>
             )}
