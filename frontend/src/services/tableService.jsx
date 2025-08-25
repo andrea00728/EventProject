@@ -119,3 +119,4 @@ export const reassignGuestToTable = async (guestId, tableId,place) => {
   );
   return response.data;
 };
+

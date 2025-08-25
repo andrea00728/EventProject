@@ -2,18 +2,18 @@ import { createContext, useContext, useState, useEffect } from "react";
 import axiosClient from "../api/axios-client";
 
 const StateContext = createContext({
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
-  setUser: () => {},
-  setIsAuthenticated: () => {},
-  handleLogout: () => {},
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+  setUser: () => {},
+  setIsAuthenticated: () => {},
+  handleLogout: () => {},
 });
 
 export const ContextProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   //Vérifie l'état d'authentification au chargement initial de l'application
   useEffect(() => {
@@ -44,21 +44,21 @@ export const ContextProvider = ({ children }) => {
     localStorage.removeItem("USER");
   };
 
-  return (
-    <StateContext.Provider
-      value={{
-        user,
-        isAuthenticated,
-        isLoading,
-        setUser,
+  return (
+    <StateContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        isLoading,
+        setUser,
         role: user?.role || null,
-        setIsAuthenticated,
-        handleLogout,
-      }}
-    >
-      {children}
-    </StateContext.Provider>
-  );
+        setIsAuthenticated,
+        handleLogout,
+      }}
+    >
+      {children}
+    </StateContext.Provider>
+  );
 };
 
 export const useStateContext = () => useContext(StateContext);

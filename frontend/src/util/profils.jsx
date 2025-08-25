@@ -1,3 +1,4 @@
+// src/components/Profil.jsx
 import { useEffect, useState } from "react";
 import { useStateContext } from "../context/ContextProvider";
 import { Camera, LogOut, Mail, Settings, User, X } from "lucide-react";
@@ -24,6 +25,7 @@ export default function Profil() {
       setUserPhoto(user.photo);
     }
   }, [user]);
+
   if (isLoading) return <p>Chargement...</p>;
 
   // --- Fonction pour déconnecter l'utilisateur ---
@@ -65,10 +67,7 @@ export default function Profil() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              {/* Gradient Background Overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-pink-50/50 rounded-3xl" />
-
-              {/* Close Button */}
               <button
                 onClick={() => setIsOpenProfil(false)}
                 className="absolute top-3 right-3 sm:top-4 sm:right-4 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100/80 flex items-center justify-center transition-all duration-200 cursor-pointer z-10"
@@ -84,23 +83,18 @@ export default function Profil() {
                     <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
                       <img src={userPhoto} alt="Profil" className="w-full h-full rounded-full object-cover border-2 border-white" />
                     </div>
-
-                    {/* Camera Icon Overlay */}
                     <div className="absolute bottom-0 right-0 w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-gray-100 group-hover:bg-blue-50 transition-colors duration-200 cursor-pointer">
                       <button><Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" /></button>
                     </div>
                   </div>
                 </div>
 
-                {/* User Info */}
                 <div className="text-center mb-6 sm:mb-8">
                   <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text break-words">{userName}</h2>
                   <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 flex items-center justify-center gap-2 break-all">
                     <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                     <span className="truncate">{userEmail}</span>
                   </p>
-
-                  {/* Status Badge */}
                   <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                     <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
                     En ligne

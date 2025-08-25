@@ -4,7 +4,7 @@ import { getMyEvents } from "../../services/evenementServ";
 import { useStateContext } from "../../context/ContextProvider";
 
 export default function ImportGuestsCSV({ onImportSuccess }) {
-  const { isAuthenticated } = useStateContext();
+  const { token } = useStateContext();
   const [file, setFile] = useState(null);
   const [eventId, setEventId] = useState("");
   const [events, setEvents] = useState([]);
@@ -14,11 +14,11 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-    getMyEvents()
+    if (!token) return;
+    getMyEvents(token)
       .then(setEvents)
       .catch(() => setError("Erreur lors du chargement des événements."));
-  }, [isAuthenticated]);
+  }, [token]);
   
   const handleFileChange = async (e) => {
     setError("");
@@ -60,7 +60,7 @@ export default function ImportGuestsCSV({ onImportSuccess }) {
     setMessage("");
 
     try {
-      const result = await importGuestsToSpecificEvent(file, eventId);
+      const result = await importGuestsToSpecificEvent(file, eventId, token);
       if (result?.imported?.length > 0) {
         setMessage(`${result.imported.length} invité(s) importé(s) avec succès !`);
       }
