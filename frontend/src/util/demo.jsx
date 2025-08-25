@@ -1,5 +1,5 @@
 import { Plus, RefreshCcw, User } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const TABLE_TYPES = [
   { value: "ronde", label: "Table ronde", width: 80, height: 80 },
@@ -127,6 +127,10 @@ export default function Demo() {
   const [ajoutTable, setAjoutTable] = useState(false);
   const [ajoutGuest, setAjoutGuest] = useState(false);
   const [movingGuest, setMovingGuest] = useState(null); // {guestId, sourceTableId, sourceChairIndex}
+
+  // Refs pour le drag tactile
+  const dragAreaRef = useRef(null);
+  const touchDataRef = useRef({});
 
   const handleFormChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -293,9 +297,30 @@ export default function Demo() {
     );
   };
 
-  // Mobile touch drag
+  // Fonctions pour le drag tactile améliorées
   const handleTouchStart = (id, e) => {
-    e.preventDefault(); // empêche le scroll pendant le drag
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const table = tables.find((t) => t.id === id);
+    if (!table) return;
+    
+    // Calculer l'offset du toucher par rapport à la position de la table
+    const tableElement = e.currentTarget;
+    const tableRect = tableElement.getBoundingClientRect();
+    const dragAreaRect = dragAreaRef.current.getBoundingClientRect();
+    
+    touchDataRef.current[id] = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      initialLeft: table.pos.left,
+      initialTop: table.pos.top,
+      offsetX: touch.clientX - tableRect.left,
+      offsetY: touch.clientY - tableRect.top,
+      dragAreaLeft: dragAreaRect.left,
+      dragAreaTop: dragAreaRect.top
+    };
+
     setTables((prev) =>
       prev.map((t) =>
         t.id === id ? { ...t, dragging: true } : { ...t, dragging: false }
@@ -305,16 +330,22 @@ export default function Demo() {
 
   const handleTouchMove = (id, e) => {
     e.preventDefault();
+    
     const touch = e.touches[0];
     const table = tables.find((t) => t.id === id);
-    if (!table) return;
-    const parentRect = e.target.parentNode.getBoundingClientRect();
-    const x = snapToGrid(touch.clientX - parentRect.left - table.width / 2);
-    const y = snapToGrid(touch.clientY - parentRect.top - table.height / 2);
+    const touchData = touchDataRef.current[id];
+    
+    if (!table || !touchData) return;
+
+    // Calculer la nouvelle position basée sur le mouvement du doigt
+    const newX = touch.clientX - touchData.dragAreaLeft - touchData.offsetX;
+    const newY = touch.clientY - touchData.dragAreaTop - touchData.offsetY;
+    
+    // Appliquer le snap et les limites
     const maxX = 800 - table.width;
     const maxY = 500 - table.height;
-    const boundedX = Math.max(0, Math.min(x, maxX));
-    const boundedY = Math.max(0, Math.min(y, maxY));
+    const boundedX = Math.max(0, Math.min(snapToGrid(newX), maxX));
+    const boundedY = Math.max(0, Math.min(snapToGrid(newY), maxY));
 
     setTables((prev) =>
       prev.map((t) =>
@@ -324,6 +355,8 @@ export default function Demo() {
   };
 
   const handleTouchEnd = (id) => {
+    delete touchDataRef.current[id];
+    
     setTables((prev) =>
       prev.map((t) =>
         t.id === id ? { ...t, dragging: false } : t
@@ -558,7 +591,11 @@ export default function Demo() {
 
           {/* Zone tables */}
           <div className="flex-1 flex items-center justify-center relative">
-            <div className="relative w-full h-[60vh] lg:w-[800px] lg:h-[500px] bg-white border overflow-auto border-gray-300 rounded-2xl shadow-2xl">
+            <div 
+              ref={dragAreaRef}
+              className="relative w-full h-[60vh] lg:w-[800px] lg:h-[500px] bg-white border overflow-hidden border-gray-300 rounded-2xl shadow-2xl"
+              style={{ touchAction: 'none' }} // Important pour désactiver le scroll pendant le drag
+            >
               {movingGuest && (
                 <div className="absolute top-4 left-4 bg-yellow-100 border border-yellow-300 text-yellow-800 px-3 py-2 rounded-lg z-40">
                   Mode déplacement: Cliquez sur une chaise libre pour déplacer l'invité
@@ -573,13 +610,14 @@ export default function Demo() {
                   onTouchStart={(e) => handleTouchStart(table.id, e)}
                   onTouchMove={(e) => handleTouchMove(table.id, e)}
                   onTouchEnd={() => handleTouchEnd(table.id)}
-                  className="absolute cursor-grab active:cursor-grabbing"
+                  className={`absolute select-none ${table.dragging ? 'cursor-grabbing' : 'cursor-grab'}`}
                   style={{
                     left: table.pos.left,
                     top: table.pos.top,
                     width: table.width,
                     height: table.height,
                     zIndex: table.dragging ? 50 : 10,
+                    touchAction: 'none', // Désactive le scroll pendant le drag
                   }}
                   onDoubleClick={() => handleOpenEdit(table)}
                 >
@@ -587,9 +625,11 @@ export default function Demo() {
                     className={`border-4 border-indigo-400 shadow-md flex items-center justify-center ${table.type === "ronde" || table.type === "ovale"
                       ? "rounded-full"
                       : "rounded-md"
-                      } w-full h-full bg-pink-200 relative`}
+                      } w-full h-full bg-pink-200 relative transition-shadow duration-200 ${
+                        table.dragging ? 'shadow-2xl scale-105' : 'shadow-md'
+                      }`}
                   >
-                    <span className="font-bold text-indigo-700">
+                    <span className="font-bold text-indigo-700 select-none pointer-events-none">
                       {table.nom}
                     </span>
                     {getChairPositions(
@@ -692,34 +732,25 @@ export default function Demo() {
       )}
 
         {/* Instructions */}
-      <div className="max-w-full sm:max-w-xl w-full  mx-auto p-3 sm:p-6 animate-fade-in animate-slide-up">
+      <div className="max-w-full sm:max-w-xl w-full mx-auto p-3 sm:p-6 animate-fade-in animate-slide-up">
         <h2 className="text-base sm:text-2xl font-extrabold text-indigo-700 mb-3 sm:mb-4 tracking-wide drop-shadow-sm">
           Instructions
         </h2>
 
         <ul className="list-disc list-inside space-y-1 sm:space-y-2 text-gray-700 prose prose-sm sm:prose">
-          <li>
-            Remplissez le formulaire à gauche pour ajouter une table. Une fois créée, vous pouvez la faire glisser dans la zone de droite.
-          </li>
-          <li>
-            Double-cliquez sur une table pour modifier son nom, sa capacité ou son type.
-          </li>
-          <li>
-            Les chaises sont automatiquement positionnées autour de la table selon sa forme et sa capacité.
-          </li>
-          <li>
-            Les tables rondes et ovales ont des chaises disposées en cercle, tandis que les tables rectangulaires et carrées ont des chaises sur les côtés.
-          </li>
-          <li>
-            Vous pouvez ajouter plusieurs tables en remplissant le formulaire plusieurs fois.
-          </li>
-          <li>
-            Les tables sont initialement positionnées pour éviter les chevauchements, mais vous pouvez les déplacer manuellement si nécessaire.
-          </li>
+          <li>Ajoutez une table via le formulaire. Une fois créée, vous pouvez la déplacer librement dans la zone.</li>
+          <li>Double-cliquez sur une table pour modifier son nom, sa capacité ou sa forme.</li>
+          <li>Les chaises se positionnent automatiquement autour de la table selon sa forme et sa capacité.</li>
+          <li>Tables rondes/ovales → chaises en cercle. Tables carrées/rectangulaires → chaises sur les côtés.</li>
+          <li>Une fois la table créée, vous pouvez ajouter des invités à chaque table.</li>
+          <li>Ajoutez plusieurs tables en répétant l’opération depuis le formulaire.</li>
+          <li>Faites glisser les tables pour réorganiser votre plan et optimiser l’espace.</li>
         </ul>
 
         <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-500 italic">
-          Astuce : utilisez le drag & drop pour ajuster la position des tables et obtenir un plan parfait !
+          Astuce : <br />
+          <li>cliquez-glissez pour déplacer tables.</li>
+           <li>cliquez sur une chaise occupée pour sélectionner l'invité, puis cliquez sur une chaise libre pour le déplacer.</li>
         </p>
       </div>
 
