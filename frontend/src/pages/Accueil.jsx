@@ -4,7 +4,7 @@ import { FaAward, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaClock } from "react-
 import TestimonialsSection from "../util/testimonialsSection";
 import { getAllEvents } from '../services/evenementServ';
 import tutorialVideo from "../assets/demo.mp4";
-
+import IMage from "../../public/undraw_having-fun_kkeu.svg";
 export default function Accueil() {
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,8 +38,8 @@ export default function Accueil() {
     };
     return icons[type?.toLowerCase()] || icons.default;
   };
-
-  useEffect(() => {
+  // Récupération de tous les événements (succès) au chargement du composant
+ useEffect(() => {
     const fetchAllEvents = async () => {
       try {
         setLoading(true);
@@ -72,8 +72,44 @@ export default function Accueil() {
         setLoading(false);
       }
     };
+    /**
+     * 
+     * nombre d'evenement organiser par tout les organisateur
+     */
+    const count_event =async ()=>{
+    try{
+      const count = await getCountEvents();
+      setCountEvent(count);
+    }catch(erreur){
+      console.log(erreur);
+    }
+    }
+    /**
+     * 
+     * nombre d'organisateur heureurs
+     */
+    const count_heureur=async () =>{
+      try{
+        const count_h= await findCountSatisfied();
+        setCountHeureur(count_h);
+      }catch(err){
+        console.log(err);
+      }
+    }
+
+    const count_pourcentage=async () =>{
+      try{
+        const count_p=await findCount_pourcentage();
+        setPourcentage(count_p);
+      }catch(err){
+        console.log(err);
+      }
+    }
 
     fetchAllEvents();
+    count_event();
+    count_heureur();
+    count_pourcentage();
   }, []);
 
   const formatDate = (dateString) => {
@@ -162,7 +198,7 @@ export default function Accueil() {
 
               <div className="relative bg-white/30 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/40">
                 <img
-                  src="/src/assets/undraw_having-fun_kkeu.svg"
+                  src={IMage}
                   alt="Illustration organisateurs d'événements"
                   className="w-full max-w-lg h-auto drop-shadow-lg hover:scale-105 transition-transform duration-500"
                 />

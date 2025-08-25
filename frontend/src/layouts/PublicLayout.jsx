@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useStateContext } from "../context/ContextProvider";
-import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
+import {
+  Outlet,
+  useNavigate,
+  useLocation,
+  Link,
+  Navigate,
+} from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "../assets/LogoMaster.png";
 import { FaUser } from "react-icons/fa";
@@ -11,7 +17,7 @@ import { getConditionalSubMenus } from "../util/menuUtils";
 import { useSocket } from "../socket";
 
 export default function PublicLayout() {
-  const { token, role, user } = useStateContext();
+  const { isAuthenticated, role, user } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [connected, setConnected] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
@@ -33,6 +39,7 @@ export default function PublicLayout() {
 
   const [navItems, setNavItems] = useState(defaultNavItems);
 
+  // Gérer le scroll vers une section de la page
   useEffect(() => {
     if (location.hash) {
       const element = document.querySelector(location.hash);
@@ -42,20 +49,19 @@ export default function PublicLayout() {
     }
   }, [location]);
 
-  // Récupération du forfait et gestion de la connexion
+  // Gérer la connexion, le forfait et la navigation
   useEffect(() => {
     const fetchAndSetForfait = async () => {
       try {
-        const data = await getUserForfait(token);
-        console.log("Données de getUserForfait :", data); // Log pour débogage
-        setForfait(data.forfait || { nom: "Default" }); // Valeur par défaut
+        const data = await getUserForfait();
+        setForfait(data.forfait || { nom: "Default" });
       } catch (err) {
-        console.error("Erreur lors de la récupération du forfait", Electrek);
-        setForfait({ nom: "Default" }); // Valeur par défaut en cas d'erreur
+        console.error("Erreur lors de la récupération du forfait", err);
+        setForfait({ nom: "Default" });
       }
     };
 
-    if (token) {
+    if (isAuthenticated) {
       fetchAndSetForfait();
       setConnected(true);
       if (!socket) return;
@@ -65,12 +71,10 @@ export default function PublicLayout() {
       setForfait(null);
       setNavItems(defaultNavItems);
     }
-  }, [token, role, user, navigate]);
+  }, [isAuthenticated, role, user, navigate]);
 
-  // Mise à jour des navItems en fonction du forfait
   useEffect(() => {
-    console.log("Forfait actuel :", forfait); // Log pour débogage
-    if (token && forfait) {
+    if (isAuthenticated && forfait) {
       setNavItems([
         { path: "/pagepublic#pagepublic", name: "Accueil" },
         {
@@ -83,28 +87,24 @@ export default function PublicLayout() {
         { path: "/pagepublic#forfaits", name: "Forfaits" },
       ]);
     }
-  }, [forfait]);
+  }, [forfait, isAuthenticated]);
 
-  // Redirection en fonction du rôle
-  if (role) {
-    switch (role) {
-      case "accueil":
-        navigate("/personnelAccueil", { replace: true });
-        break;
-      case "caissier":
-        navigate("/personnelCaisse", { replace: true });
-        break;
-      case "cuisinier":
-        navigate("/personnelCuisine", { replace: true });
-        break;
-      case "organisateur":
-        break;
-      default:
-        navigate("/pagepublic", { replace: true });
-        break;
+
+  useEffect(() => {
+  if (isAuthenticated) {
+    console.log("Token:", isAuthenticated, "User:", user, "Role:", role); // Debug log
+    if (user?.role !== "organisateur") {
+      navigate("/choix-role", { replace: true });
+    } else {
+      navigate("/pagepublic", { replace: true });
     }
   }
+}, [isAuthenticated, user, role, navigate]);
 
+
+
+
+  // Le reste du code...
   const subMenuVariants = {
     hidden: {
       opacity: 0,
@@ -129,12 +129,12 @@ export default function PublicLayout() {
 
   const handleDirection = (item) => {
     if (item.path.includes("#")) {
-      const id = item.path.split("#")[1]; // ex: "forfaits"
+      const id = item.path.split("#")[1];
       const element = document.getElementById(id);
       if (element) {
         element.scrollIntoView({ behavior: "smooth" });
       }
-    }else{
+    } else {
       navigate(item.path);
     }
   };
@@ -153,12 +153,13 @@ export default function PublicLayout() {
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center justify-center py-3 relative">
-            <div className="flex items-center gap-1">
+          {/* Menu de navigation pour grand écran (desktop) */}
+          <nav className="hidden md:flex items-center justify-center py-3 relative flex-1">
+            <div className="flex items-center gap-1 mx-auto">
               {navItems.map((item, index) => (
                 <motion.div
                   key={item.name}
-                  className="relative group"
+                  className="group"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -166,14 +167,12 @@ export default function PublicLayout() {
                   <Link
                     to={item.path}
                     className="px-4 py-2 text-gray-500 hover:text-blue-600 transition-all duration-300 relative font-semibold text-sm tracking-wide group-hover:scale-105 flex items-center gap-2"
-                    onMouseEnter={() => {
-                      console.log("Survol :", item.name); // Log pour débogage
-                      item.name === "Evenement" && setIsEvenementHovered(true);
-                    }}
-                    onMouseLeave={() => {
-                      console.log("Sortie survol :", item.name); // Log pour débogage
-                      item.name === "Evenement" && setIsEvenementHovered(false);
-                    }}
+                    onMouseEnter={() =>
+                      item.name === "Evenement" && setIsEvenementHovered(true)
+                    }
+                    onMouseLeave={() =>
+                      item.name === "Evenement" && setIsEvenementHovered(false)
+                    }
                     onClick={() => handleDirection(item)}
                   >
                     <span className="relative z-10">{item.name}</span>
@@ -183,7 +182,7 @@ export default function PublicLayout() {
                     <AnimatePresence>
                       {isEvenementHovered && (
                         <motion.div
-                          className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-40"
+                          className="absolute top-full left-1/2 -translate-x-1/2 w-full max-w-7xl pt-2 z-40"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
@@ -191,8 +190,7 @@ export default function PublicLayout() {
                           onMouseLeave={() => setIsEvenementHovered(false)}
                         >
                           <motion.div
-                            className="bg-white/98 backdrop-blur-xl shadow-2xl shadow-gray-900/15 rounded-xl border border-gray-200/60"
-                            style={{ width: "1200px" }}
+                            className="bg-white/98 backdrop-blur-xl shadow-2xl shadow-gray-900/15 rounded-xl border border-gray-200/60 w-full"
                             variants={subMenuVariants}
                             initial="hidden"
                             animate="visible"
@@ -213,9 +211,8 @@ export default function PublicLayout() {
                                 </div>
                               </div>
                             </div>
-
                             <div className="p-6">
-                              <div className="grid grid-cols-4 gap-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 {item.subMenus.map((subItem, subIndex) => (
                                   <motion.div
                                     key={subItem.path}
@@ -268,37 +265,45 @@ export default function PublicLayout() {
             ) : (
               <button
                 onClick={() => setModalOpen(true)}
-                className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl"
+                className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl ml-4"
               >
                 Se connecter <FaUser className="w-5 h-5 text-white" />
               </button>
             )}
           </nav>
 
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 rounded bg-white shadow"
-          >
-            <div className="w-6 h-6 relative flex flex-col justify-center items-center">
-              <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
-                  isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"
-                }`}
-              ></span>
-              <span
-                className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${
-                  isMenuOpen ? "opacity-0" : "opacity-100"
-                }`}
-              ></span>
-              <span
-                className={`block h-0.5 w-6 bg-gray-700 transform transition ${
-                  isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"
-                }`}
-              ></span>
-            </div>
-          </button>
+          {/* Bouton burger pour écrans mobiles */}
+          <div className="flex items-center gap-2 md:hidden">
+            {connected ? (
+              <Profil />
+            ) : (
+              <button
+                onClick={() => setModalOpen(true)}
+                className="p-2 rounded bg-white shadow"
+              >
+                <FaUser className="w-5 h-5 text-gray-700" />
+              </button>
+            )}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-2 rounded bg-white shadow"
+            >
+              <div className="w-6 h-6 relative flex flex-col justify-center items-center">
+                <span
+                  className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"}`}
+                ></span>
+                <span
+                  className={`block h-0.5 w-6 bg-gray-700 my-1 transition ${isMenuOpen ? "opacity-0" : "opacity-100"}`}
+                ></span>
+                <span
+                  className={`block h-0.5 w-6 bg-gray-700 transform transition ${isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"}`}
+                ></span>
+              </div>
+            </button>
+          </div>
         </div>
 
+        {/* Menu burger pour écrans mobiles (visible seulement si isMenuOpen est true) */}
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{
@@ -306,75 +311,64 @@ export default function PublicLayout() {
             height: isMenuOpen ? "auto" : 0,
           }}
           transition={{ duration: 0.3 }}
-          className="lg:hidden bg-white shadow border-t overflow-hidden"
+          className="md:hidden bg-white shadow border-t overflow-hidden"
         >
           <div className="px-4 py-4 space-y-3">
-            {!isPublicEventsPage &&
-              navItems.map((item) => (
-                <div key={item.name}>
-                  {!item.subMenus ? (
-                    <a
-                      href={item.path}
-                      onClick={(e) => handleSmoothScroll(e, item.path)}
-                      className="block px-4 py-2 text-gray-700 hover:bg-blue-50 rounded"
+            {navItems.map((item) => (
+              <div key={item.name}>
+                {!item.subMenus ? (
+                  <Link
+                    to={item.path}
+                    onClick={() => {
+                      handleDirection(item);
+                      setIsMenuOpen(false); // ferme le menu après clic
+                    }}
+                    className="block px-4 py-2 text-gray-700 hover:bg-blue-50 rounded"
+                  >
+                    {item.name}
+                  </Link>
+                ) : (
+                  <div>
+                    <button
+                      onClick={() =>
+                        setIsSubMenuOpenMobile(!isSubMenuOpenMobile)
+                      }
+                      className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-blue-50 rounded"
                     >
                       {item.name}
-                    </a>
-                  ) : (
-                    <div>
-                      <button
-                        onClick={() => {
-                          console.log("Toggle sous-menu mobile :", item.name); // Log pour débogage
-                          setIsSubMenuOpenMobile(!isSubMenuOpenMobile);
-                        }}
-                        className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-blue-50 rounded"
-                      >
-                        {item.name}
-                        <span>{isSubMenuOpenMobile ? "▲" : "▼"}</span>
-                      </button>
-                      <AnimatePresence>
-                        {isSubMenuOpenMobile && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="pl-4"
-                          >
-                            {item.subMenus.map((sub) => (
-                              <Link
-                                key={sub.path}
-                                to={sub.path}
-                                className="block px-4 py-2 text-gray-600 hover:text-blue-600 transition"
-                                onClick={() => {
-                                  setIsMenuOpen(false);
-                                  setIsSubMenuOpenMobile(false);
-                                }}
-                              >
-                                {sub.name}
-                              </Link>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-            {connected ? (
-              <Profil />
-            ) : (
-              <button
-                onClick={() => setModalOpen(true)}
-                className="flex items-center gap-3 w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl"
-              >
-                Se connecter <FaUser className="w-5 h-5 text-white" />
-              </button>
-            )}
+                      <span>{isSubMenuOpenMobile ? "▲" : "▼"}</span>
+                    </button>
+                    <AnimatePresence>
+                      {isSubMenuOpenMobile && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="pl-4"
+                        >
+                          {item.subMenus.map((sub) => (
+                            <Link
+                              key={sub.path}
+                              to={sub.path}
+                              className="block px-4 py-2 text-gray-600 hover:text-blue-600 transition"
+                              onClick={() => {
+                                setIsMenuOpen(false);
+                                setIsSubMenuOpenMobile(false);
+                              }}
+                            >
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </motion.div>
       </header>
-
       <div className="h-20" />
       <main>
         <Outlet />

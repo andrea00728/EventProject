@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { X, Mail, Lock, User, Upload, Eye, EyeOff, Camera, Check } from "lucide-react";
+import { X, Mail, Lock, User, Eye, EyeOff, Camera, Check } from "lucide-react";
 import { loginUser, registerUser } from "../../services/authService";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // Assurez-vous d'importer useNavigate
 import ButtonConnexion from "../../util/buttonconnexion";
+import { useStateContext } from "../../context/ContextProvider";
 
-export const AuthModal = ({ isOpen, onClose, isSignIn=false }) => {
+export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
+    // Tous les hooks sont appelés ici, au début du composant
     const [isSignUp, setIsSignUp] = useState(!isSignIn);
     const [showPassword, setShowPassword] = useState(false);
     const [photoPreview, setPhotoPreview] = useState(null);
@@ -15,12 +17,15 @@ export const AuthModal = ({ isOpen, onClose, isSignIn=false }) => {
         password: "",
         photo: null,
     });
-
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
-    const navigate = useNavigate()
+    const navigate = useNavigate();
+    const { setUser, isAuthenticated, user } = useStateContext();
 
-    if (!isOpen) return null;
+    // La logique de rendu conditionnel est déplacée ici, après les hooks
+    if (!isOpen) {
+        return null;
+    }
 
     const handleChange = (e) => {
         const { name, value, files } = e.target;
@@ -46,45 +51,47 @@ export const AuthModal = ({ isOpen, onClose, isSignIn=false }) => {
         }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(null);
-        setLoading(true);
+ const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
-        try {
-            if (isSignUp) {
-                await registerUser(formData);
-                toast.success("Inscription réussie. Veuillez vous connecter.");
-                setIsSignUp(false);
-            } else {
-                console.log("Tentative de connexion avec : ", formData);
+    try {
+        if (isSignUp) {
+            await registerUser(formData);
+            toast.success("Inscription réussie. Veuillez vous connecter.");
+            setIsSignUp(false);
+        } else {
+            const result = await loginUser({
+                email: formData.email,
+                password: formData.password
+            });
 
-                const result = await loginUser({
-                    email: formData.email,
-                    password: formData.password
-                });
-
-                console.log("Résultat de la connexion : ", result);
-
-                if (result.token) {
-                    localStorage.setItem('token', result.token);
-                    toast.success("Connexion réussie !");
-                    setTimeout(() => {
-                        navigate("/pagepublic");
-                        onClose();
-                    }, 500);
-                } else {
-                    throw new Error("Token absent dans la réponse.");
-                }
-
+            if (!result.token) {
+                throw new Error("Token absent dans la réponse.");
             }
-        } catch (err) {
-            console.log("Erreur :", err);
-            setError(err.message);
-        } finally {
-            setLoading(false);
+
+            setUser({ ...result.user, token: result.token });
+            localStorage.setItem("token", result.token);
+
+            // ✅ Redirection selon rôle / type directement ici
+            if (result.user.isInPersonnel) {
+                navigate("/choix-role", { replace: true });
+            } else if (result.user.role === "organisateur") {
+                navigate("/pagepublic", { replace: true });
+            } else {
+                navigate("/pagepublic", { replace: false });
+            }
+
+            toast.success("Connexion réussie !");
         }
-    };
+    } catch (err) {
+        setError(err.message || "Une erreur est survenue.");
+    } finally {
+        setLoading(false);
+    }
+};
+
 
 
     const removePhoto = () => {
@@ -227,8 +234,6 @@ export const AuthModal = ({ isOpen, onClose, isSignIn=false }) => {
                             >
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
-
-
                         </div>
 
                         {/* Message d'erreur */}
@@ -291,8 +296,6 @@ export const AuthModal = ({ isOpen, onClose, isSignIn=false }) => {
                         >
                             {isSignUp ? "Se connecter" : "Créer un compte"}
                         </button>
-
-                        
                     </div>
 
                     {/* Conditions d'utilisation */}

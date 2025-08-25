@@ -42,8 +42,8 @@ export class PaypalService {
         application_context: {
           brand_name: 'MonApp Événements',
           user_action: 'SUBSCRIBE_NOW',
-          return_url: 'http://localhost:3000/forfait/success',
-          cancel_url: 'http://localhost:3000/forfait/cancel',
+          return_url: 'http://localhost:5173/forfait/success',
+          cancel_url: 'http://localhost:5173/forfait/cancel',
         },
       },
       {

@@ -5,7 +5,7 @@ import Modal from '../../components/Modal/EventModal';
 import DeleteEventButton from '../../util/DeleteEvenement';
 
 const EventAccept = () => {
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,28 +13,31 @@ const EventAccept = () => {
   3
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!token) {
-      setError("Aucun token d'authentification trouvé.");
-      return;
+ useEffect(() => {
+  // Vérifier si l'utilisateur est authentifié.
+  // La logique du ContextProvider gère déjà le chargement et la récupération de l'état.
+  if (!isAuthenticated) {
+    setError("Authentification requise pour voir les événements.");
+    setIsLoading(false); // S'assurer que le chargement est terminé
+    return;
+  }
+
+  const fetchEvents = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getMyEvents();
+      setEvents(data);
+      setError(null);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des événements:', error);
+      setError("Erreur lors du chargement des événements.");
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    const fetchEvents = async () => {
-      setIsLoading(true);
-      try {
-        const data = await getMyEvents(token);
-        setEvents(data);
-        setError(null);
-      } catch (error) {
-        console.error('Erreur lors de la récupération des événements:', error);
-        setError("Erreur lors du chargement des événements.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchEvents();
-  }, [token]);
+  fetchEvents();
+}, [isAuthenticated]); 
 
   const openModal = (event) => {
     setSelectedEvent(event);
@@ -108,12 +111,12 @@ const EventAccept = () => {
                 <p className="text-slate-500">Vous n'avez pas encore créé d'événements.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-stretch">
                 {events.map((event, index) => (
-                  <div
-                    key={event.id}
-                    className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1"
-                  >
+                      <div
+                        key={event.id}
+                        className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1 h-full flex flex-col"
+                      >
                     {/* Card Header */}
                     <div className={`h-2 bg-gradient-to-r ${
                       index % 5 === 0 ? 'from-blue-500 to-purple-500' :

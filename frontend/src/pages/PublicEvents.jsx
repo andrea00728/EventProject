@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import axiosClient from '../api/axios-client';
 
 const PublicEvents = () => {
   const [events, setEvents] = useState([]);
@@ -24,7 +25,7 @@ const PublicEvents = () => {
     const fetchEvents = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get("http://localhost:3000/evenements");
+        const response = await axiosClient.get("/evenements");
         setEvents(response.data);
         setError(null);
       } catch (err) {
@@ -85,8 +86,6 @@ const PublicEvents = () => {
       // Simulation d'envoi de données
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Ici vous pourriez faire un appel API réel :
-      // await axios.post(`http://localhost:3000/evenements/${selectedEvent.id}/inscriptions`, formData);
 
       setRegistrationStatus('success');
       setFormData({ nom: '', prenom: '', email: '' });

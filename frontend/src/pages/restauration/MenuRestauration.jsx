@@ -41,7 +41,7 @@ import {
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 
 export default function MenuRestauration() {
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [allMenus, setAllMenus] = useState([]);
@@ -244,11 +244,11 @@ export default function MenuRestauration() {
   ];
 
   useEffect(() => {
-    if (!token) return;
-    getMyEvents(token).then((data) => {
+    if (!isAuthenticated) return;
+    getMyEvents().then((data) => {
       if (Array.isArray(data)) setEvents(data);
     });
-  }, [token]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!selectedEvent?.id) return;
@@ -492,7 +492,7 @@ export default function MenuRestauration() {
                 transition: 'all 0.3s ease',
                 '&:hover': {
                   bgcolor: theme.neutral,
-                  background: '#3b83f61c',
+                  background:'#3b83f61c',
                   // transform: 'translateY(-2px)'
                 },
                 '&.Mui-selected': {
