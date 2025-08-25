@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
 import {
   Outlet,
   Link,
@@ -29,10 +30,11 @@ import {
 } from "react-icons/md";
 import { useDarkMode } from "../context/DarkModeContext";
 import { useStateContext } from "../context/ContextProvider";
-import Dropdown from "./Dropdown";
+import Dropdown from "./Dropdown"; // Assurez-vous d'avoir ce composant
+import Modalist from "./modal"; // Importez le nouveau composant Modal
 import LogoutModal from "../pages/Admin/LogoutModal";
 import { logout } from "../services/firebase/authService";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import { getUserIdForToken } from "../services/userService";
 import { fr } from "date-fns/locale";
 import io from "socket.io-client";
@@ -47,6 +49,8 @@ export default function AdminLayout() {
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [messages,setMessages]=useState([]);
+  const [openDropdown, setOpenDropdown] = useState(null); // 'notifications', 'messages', null
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -167,11 +171,11 @@ export default function AdminLayout() {
           },
           {
             id: 2,
-            text: "Bonjour ! Comment puis-je vous aider ?",
-            sender: "Admin",
+            text: "Bonjour et bienvenue 👋. Merci de nous avoir contactés. Un conseiller prendra en charge votre demande dans les plus brefs délais. En attendant, n’hésitez pas à préciser l’objet de votre message.",
+            sender: "Support Automatique",
             timestamp: new Date(Date.now() - 25 * 60000),
             isAdmin: true,
-          },
+          }
         ]);
       }
     }, [conversation]);
@@ -254,15 +258,17 @@ export default function AdminLayout() {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.isAdmin ? "justify-end" : "justify-start"}`}
+                className={`flex ${
+                  message.isAdmin ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
                   className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                     message.isAdmin
                       ? "bg-blue-500 text-white"
                       : darkMode
-                        ? "bg-gray-700 text-gray-200"
-                        : "bg-gray-200 text-gray-900"
+                      ? "bg-gray-700 text-gray-200"
+                      : "bg-gray-200 text-gray-900"
                   }`}
                 >
                   <p className="text-sm">{message.text}</p>
@@ -271,8 +277,8 @@ export default function AdminLayout() {
                       message.isAdmin
                         ? "text-blue-100"
                         : darkMode
-                          ? "text-gray-400"
-                          : "text-gray-500"
+                        ? "text-gray-400"
+                        : "text-gray-500"
                     }`}
                   >
                     {formatTime(message.timestamp)}
@@ -321,14 +327,31 @@ export default function AdminLayout() {
     const [showConversationModal, setShowConversationModal] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [notifications, setNotifications] = useState([]);
+    const [messages, setMessages] = useState([]);
     const { user, token } = useStateContext();
     const socket = useSocket();
     const notifRef = useRef(null);
     const msgRef = useRef(null);
     const profileRef = useRef(null);
     const navigate = useNavigate();
-    const [messages, setMessages] = useState([]);
-    
+    const [notifFilter, setNotifFilter] = useState("all");
+    const [msgFilter, setMsgFilter] = useState("all");
+    const [openDropdown, setOpenDropdown] = useState(null);
+
+    const filteredNotifications = notifications.filter(n => {
+      if (notifFilter === "all") return true;
+      if (notifFilter === "unread") return !n.read;
+      return n.read;
+    });
+
+    const filteredMessages = messages.filter(m => {
+      if (msgFilter === "all") return true;
+      if (msgFilter === "unread") return !m.read;
+      return m.read;
+    });
+    // États pour les modaux
+    const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+    const [showMessagesModal, setShowMessagesModal] = useState(false);
 
     const handleRedirect = () => {
       navigate("/AdminParametre");
@@ -344,12 +367,11 @@ export default function AdminLayout() {
             throw new Error("Erreur lors de la récupération des messages");
           const data = await response.json();
 
-          // Adapter le format au même style que ton tableau statique
           const formatted = data.map((msg) => ({
             ...msg,
             from: `${msg.firstName} ${msg.lastName}`,
             text: msg.message,
-            read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+            read: msg.read || false,
           }));
 
           setMessages(formatted);
@@ -358,6 +380,7 @@ export default function AdminLayout() {
           setMessages([]);
         }
       };
+
       const fetchNotifications = async () => {
         try {
           const response = await fetch(
@@ -427,7 +450,7 @@ export default function AdminLayout() {
             ...msg,
             from: `${msg.firstName} ${msg.lastName}`,
             text: msg.message,
-            read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+            read: msg.read || false,
           }));
           setMessages([...messages, ...formatted]);
         });
@@ -458,24 +481,44 @@ export default function AdminLayout() {
         document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const markMessageAsRead = (message) => {
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.id === message.id ? { ...msg, read: true } : msg
-        )
-      );
+    const markAsRead = async (id, type) => {
+      if (type === "message") {
+        setMessages(prev =>
+          prev.map(m => (m.id === id ? { ...m, read: true } : m))
+        );
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ read: true }),
+        });
+      } else if (type === "notification") {
+        setNotifications(prev =>
+          prev.map(n => (n.id === id ? { ...n, read: true } : n))
+        );
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/notification/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ read: true }),
+        });
+      }
     };
 
-    const handleMessageClick = (item) => {
+    const handleMessageClick = async (item) => {
+      await markAsRead(item.id, "message");
+      setOpenDropdown(null);
       setSelectedConversation({ content: item });
-      markMessageAsRead(item);
       setShowConversationModal(true);
-      setShowMessages(false);
     };
 
+    const handleNotificationClick = async (item) => {
+      await markAsRead(item.id, "notification");
+      setOpenDropdown(null);
+      setSelectedConversation({ content: item });
+    };
+
+  
     const handleDeleteMessage = async (id) => {
       try {
-        // Appel à ton backend pour supprimer en base
         const response = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`,
           {
@@ -487,12 +530,21 @@ export default function AdminLayout() {
           throw new Error("Erreur lors de la suppression");
         }
 
-        // Mise à jour locale après confirmation de la suppression
         setMessages((prevMessages) =>
           prevMessages.filter((msg) => msg.id !== id)
         );
       } catch (error) {
         console.error("Suppression impossible :", error);
+      }
+    };
+    
+    // Suppression d'une notification
+    const handleDeleteNotification = async (notificationId) => {
+      try {
+        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/notification/${notificationId}`);
+        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      } catch (err) {
+        console.error("Erreur lors de la suppression :", err);
       }
     };
 
@@ -516,28 +568,81 @@ export default function AdminLayout() {
             {currentPageName}
           </h2>
           <div className="flex items-center gap-3 sm:gap-6 relative">
+            {/* Dropdown Notifications */}
             <Dropdown
               ref={notifRef}
-              show={showNotifications}
-              setShow={setShowNotifications}
+              show={openDropdown === 'notifications'}
+              setShow={() =>
+                setOpenDropdown(openDropdown === 'notifications' ? null : 'notifications')
+              }
               icon={<FaBell className="text-lg sm:text-xl" />}
               label="Notifications"
-              count={notifications.length}
-              items={notifications}
-              noScroll={true}
-            />
+              count={notifications.filter(n => !n.read).length}
+              items={filteredNotifications}
+              onItemClick={handleNotificationClick}
+              onDelete={handleDeleteNotification}
+              onViewMore={() => setShowNotificationsModal(true)}
+            >
+              <div className="flex gap-2 p-2">
+                <button
+                  onClick={() => setNotifFilter('all')}
+                  className={`px-3 py-1 rounded-full ${notifFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Tout ({notifications.length})
+                </button>
+                <button
+                  onClick={() => setNotifFilter('unread')}
+                  className={`px-3 py-1 rounded-full ${notifFilter === 'unread' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Non lus ({notifications.filter(n => !n.read).length})
+                </button>
+                <button
+                  onClick={() => setNotifFilter('read')}
+                  className={`px-3 py-1 rounded-full ${notifFilter === 'read' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Lus ({notifications.filter(n => n.read).length})
+                </button>
+              </div>
+            </Dropdown>
+
+            {/* Dropdown Messages */}
             <Dropdown
               ref={msgRef}
-              show={showMessages}
-              setShow={setShowMessages}
+              show={openDropdown === 'messages'}
+              setShow={() =>
+                setOpenDropdown(openDropdown === 'messages' ? null : 'messages')
+              }
               icon={<FaEnvelope className="text-lg sm:text-xl" />}
               label="Messages"
-              count={messages.filter((msg) => !msg.read).length}
-              items={messages}
-              onDelete={handleDeleteMessage}
+              count={messages.filter(m => !m.read).length}
+              items={filteredMessages}
               onItemClick={handleMessageClick}
-              noScroll={true}
-            />
+              onDelete={handleDeleteMessage}
+              onViewMore={() => setShowMessagesModal(true)}
+            >
+              <div className="flex gap-2 p-2">
+                <button
+                  onClick={() => setMsgFilter('all')}
+                  className={`px-3 py-1 rounded-full ${msgFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Tout ({messages.length})
+                </button>
+                <button
+                  onClick={() => setMsgFilter('unread')}
+                  className={`px-3 py-1 rounded-full ${msgFilter === 'unread' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Non lus ({messages.filter(m => !m.read).length})
+                </button>
+                <button
+                  onClick={() => setMsgFilter('read')}
+                  className={`px-3 py-1 rounded-full ${msgFilter === 'read' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                >
+                  Lus ({messages.filter(m => m.read).length})
+                </button>
+              </div>
+            </Dropdown>
+
+
             <div ref={profileRef} className="relative">
               <button
                 onClick={() => setShowProfile(!showProfile)}
@@ -650,6 +755,22 @@ export default function AdminLayout() {
           conversation={selectedConversation}
           darkMode={darkMode}
         />
+        <Modalist
+          show={showNotificationsModal}
+          onClose={() => setShowNotificationsModal(false)}
+          title="Toutes les notifications"
+          items={notifications}
+          onItemClick={handleNotificationClick}
+          onDelete={handleDeleteNotification}
+        />
+        <Modalist
+          show={showMessagesModal}
+          onClose={() => setShowMessagesModal(false)}
+          title="Tous les messages"
+          items={messages}
+          onItemClick={handleMessageClick}
+          onDelete={handleDeleteMessage}
+        />
       </>
     );
   };
@@ -679,7 +800,9 @@ export default function AdminLayout() {
       <aside
         className={`fixed z-50 top-0 left-0 h-full w-64 transition-all duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 md:relative md:w-72 ${darkMode ? "bg-gray-800" : "bg-gray-200"}`}
+        } md:translate-x-0 md:relative md:w-72 ${
+          darkMode ? "bg-gray-800" : "bg-gray-200"
+        }`}
       >
         <div className="flex flex-col h-full">
           <div className="p-5 flex items-center justify-between">
@@ -722,8 +845,8 @@ export default function AdminLayout() {
                         location.pathname === item.path
                           ? "text-white scale-110"
                           : darkMode
-                            ? "text-gray-300 group-hover:scale-110"
-                            : "text-gray-500 group-hover:scale-110"
+                          ? "text-gray-300 group-hover:scale-110"
+                          : "text-gray-500 group-hover:scale-110"
                       }`}
                     >
                       {item.icon}
@@ -783,9 +906,13 @@ export default function AdminLayout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <AdminHeader currentPageName={currentPageName} darkMode={darkMode} />
         <main
-          className={`flex-1 overflow-auto scrollable ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}
+          className={`flex-1 overflow-auto scrollable ${
+            darkMode ? "bg-gray-900" : "bg-gray-50"
+          }`}
         >
-          <div className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+          <div
+            className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}
+          >
             <Outlet />
           </div>
         </main>

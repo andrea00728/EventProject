@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { url } from '../api/url';
 
 export default function Contact() {
-    const URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
+    // La bonne pratique est d'utiliser un message d'état pour les retours utilisateur,
+    // car 'alert' peut bloquer l'interface et n'est pas stylisable.
+    const [messageStatus, setMessageStatus] = useState(null); // 'success', 'error', or null
+    // L'environnement de compilation actuel ne prend pas en charge import.meta.env.
+    // Nous utiliserons donc une URL de base fixe.
+    const URL = "http://localhost:3000";
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -20,16 +25,24 @@ export default function Contact() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setMessageStatus(null); // Réinitialiser le message de statut
+
+        // Créer l'objet complet avec la date de création au format ISO 8601
+        // Ce format est standard et évite les erreurs de parsing de date.
+        const messagePayload = {
+            ...formData,
+            createdAt: new Date().toISOString(),
+        };
 
         try {
-            const response = await fetch(`${url}/contact_messages`, {
+            const response = await fetch(URL + '/contact_messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(messagePayload) // Utiliser le payload avec la date
             });
 
             if (response.ok) {
-                alert('Message envoyé avec succès !');
+                setMessageStatus('success'); // Afficher un message de succès
                 setFormData({
                     firstName: '',
                     lastName: '',
@@ -38,11 +51,11 @@ export default function Contact() {
                     message: ''
                 });
             } else {
-                alert('Erreur lors de l\'envoi du message.');
+                setMessageStatus('error'); // Afficher un message d'erreur
             }
         } catch (error) {
             console.error('Erreur:', error);
-            alert('Erreur réseau.');
+            setMessageStatus('error'); // Afficher un message d'erreur réseau
         } finally {
             setLoading(false);
         }
@@ -86,6 +99,20 @@ export default function Contact() {
                                 <p className="text-gray-500">Nous vous répondrons dans les 24h</p>
                             </div>
 
+                            {/* Message de statut */}
+                            {messageStatus === 'success' && (
+                                <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md mb-6" role="alert">
+                                    <p className="font-bold">Succès !</p>
+                                    <p>Message envoyé avec succès !</p>
+                                </div>
+                            )}
+                            {messageStatus === 'error' && (
+                                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6" role="alert">
+                                    <p className="font-bold">Erreur !</p>
+                                    <p>Erreur lors de l'envoi du message. Veuillez réessayer.</p>
+                                </div>
+                            )}
+                            
                             <form className="space-y-6" onSubmit={handleSubmit}>
                                 {/* Prénom & Nom */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -307,16 +334,16 @@ export default function Contact() {
 
             <style>{`
                 @keyframes pulse {
-                  0%, 100% {
-                    opacity: 0.7;
-                  }
-                  50% {
-                    opacity: 0.3;
-                  }
+                    0%, 100% {
+                        opacity: 0.7;
+                    }
+                    50% {
+                        opacity: 0.3;
+                    }
                 }
                 
                 .animate-pulse {
-                  animation: pulse 4s ease-in-out infinite;
+                    animation: pulse 4s ease-in-out infinite;
                 }
             `}</style>
         </>
