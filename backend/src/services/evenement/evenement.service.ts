@@ -14,7 +14,7 @@ export class EvenementService {
     private readonly evenementRepository: Repository<Evenement>,
     private readonly locationService: LocationService,
     private readonly notificationService: NotificationService,
-    @InjectRepository(User)
+     @InjectRepository(User)
     private userRepo: Repository<User>,
   ) {}
 

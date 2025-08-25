@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { Pie, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -15,6 +14,7 @@ import { useStateContext } from "../../context/ContextProvider";  // Adjusted pa
 import { useNavigate } from "react-router-dom";
 import { getEventIdByEmail } from "../../services/invitationService";  // Adjusted path
 import { motion } from "framer-motion";
+import axiosClient from "../../api/axios-client";
 
 // Enregistrement des éléments nécessaires pour Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, LineElement, PointElement);
@@ -48,7 +48,7 @@ const StatistiquesPage = () => {
   const [eventId, setEventId] = useState(null);
   const [eventDetails, setEventDetails] = useState(null);
   const [error, setError] = useState(null);
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const navigate = useNavigate();
 
   // Fonction utilitaire pour créer un dégradé de couleur pour les graphiques
@@ -270,9 +270,7 @@ const StatistiquesPage = () => {
   // Logique de récupération des données
   const fetchEventDetails = async (eventId) => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/evenements/${eventId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axiosClient.get(`/evenements/${eventId}`);
       setEventDetails(response.data);
     } catch (error) {
       console.error("Erreur lors de la récupération des détails de l'événement :", error);
@@ -287,7 +285,7 @@ const StatistiquesPage = () => {
   const fetchStatistics = async () => {
     try {
       setLoading(true);
-      const event = await getEventIdByEmail(token);
+      const event = await getEventIdByEmail();
       if (!event?.eventId) {
         throw new Error("ID d'événement non valide ou introuvable.");
       }
@@ -295,9 +293,7 @@ const StatistiquesPage = () => {
       setEventId(eventId);
       await fetchEventDetails(eventId);
 
-      const ordersRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders/event/${eventId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const ordersRes = await axiosClient.get(`/orders/event/${eventId}`);
       const ordersData = ordersRes.data;
 
       const orderStats = ordersData.reduce((acc, order) => {
@@ -312,9 +308,7 @@ const StatistiquesPage = () => {
 
       let stockItems = [];
       try {
-        const stockRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const stockRes = await axiosClient.get(`/menus`);
         stockItems = Array.isArray(stockRes.data)
           ? stockRes.data.flatMap((menu) => (Array.isArray(menu.items) ? menu.items : []))
           : [];
@@ -347,10 +341,10 @@ const StatistiquesPage = () => {
   };
 
   useEffect(() => {
-    if (token) {
+    if (isAuthenticated) {
       fetchStatistics();
     }
-  }, [token]);
+  }, [isAuthenticated]);
 
   // États de chargement et d'erreur
   if (error) {

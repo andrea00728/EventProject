@@ -12,10 +12,17 @@ import { Server, Socket } from 'socket.io';
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true,
   },
+  //  path: '/socket.io',
 })
 export class OrdersGateway {
   @WebSocketServer()
   server: Server;
+
+/**
+ * Emits an 'orderRefunded' event to all connected clients.
+ * 
+ * @param data - An object containing the ID of the order and its payment status.
+ */
 
   handleOrderRefunded(data: { id: number; paymentStatus: string }) {
     console.log(`Émission de l'événement orderRefunded: ${JSON.stringify(data)}`);

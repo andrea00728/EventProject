@@ -13,7 +13,7 @@ import NotificationListener from "../util/Notification/notification_global";
 import { getConditionalSubMenus } from "../util/menuUtils";
 
 export default function DefaultLayout() {
-  const { token, role, isLoading } = useStateContext();
+  const { isAuthenticated,role, isLoading } = useStateContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEvenementHovered, setIsEvenementHovered] = useState(false);
   const [forfait, setForfait] = useState(null);
@@ -45,7 +45,8 @@ export default function DefaultLayout() {
 
   if (isLoading) return <div>Chargement ...</div>;
 
-  if (!token) return <Navigate to="/pagepublic" replace />;
+  // 🔐 Rediriger si non connecté
+  if (!isAuthenticated) return <Navigate to="/pagepublic" replace />;
 
   switch (role) {
     case "organisateur":
@@ -60,6 +61,34 @@ export default function DefaultLayout() {
       return <Navigate to="/pagepublic" replace />;
   }
 
+
+  useEffect(() => {
+    const fetchAndSetForfait = async () => {
+      try {
+        const data = await getUserForfait();
+        setForfait(data.forfait);
+      } catch (err) {
+        console.error("Erreur lors de la récupération du forfait", err);
+      }
+    };
+
+    fetchAndSetForfait();
+
+    // Mettre à jour dynamiquement après activation
+    const handleForfaitUpdate = () => {
+      if(isAuthenticated){
+        fetchAndSetForfait();
+      }
+      
+    };
+
+    window.addEventListener("forfaitUpdated", handleForfaitUpdate);
+    return () => {
+      window.removeEventListener("forfaitUpdated", handleForfaitUpdate);
+    };
+  }, [isAuthenticated]);
+
+  //  Configuration dynamique du menu
   const navItems = [
     { path: "/accueil", name: "Accueil" },
     {
