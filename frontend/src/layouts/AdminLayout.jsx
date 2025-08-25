@@ -46,7 +46,7 @@ export default function AdminLayout() {
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [messages,setMessages]=useState([]);
+  const [messages, setMessages] = useState([]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -321,13 +321,16 @@ export default function AdminLayout() {
     const [showConversationModal, setShowConversationModal] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [notifications, setNotifications] = useState([]);
+    const [messages, setMessages] = useState([]);
+    const [userName, setUserName] = useState("");
+    const [userEmail, setUserEmail] = useState("");
+    const [userPhoto, setUserPhoto] = useState("");
     const { user } = useStateContext();
     const socket = useSocket();
     const notifRef = useRef(null);
     const msgRef = useRef(null);
     const profileRef = useRef(null);
     const navigate = useNavigate();
-    const [messages, setMessages] = useState([]);
 
     const handleRedirect = () => {
       navigate("/AdminParametre");
@@ -337,7 +340,7 @@ export default function AdminLayout() {
       const fetchMessages = async () => {
         try {
           const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
+            `${import.meta.env.VITE_API_BASE_URL}/auth/messages`
           );
           if (!response.ok)
             throw new Error("Erreur lors de la récupération des messages");
@@ -360,8 +363,7 @@ export default function AdminLayout() {
       const fetchNotifications = async () => {
         try {
           const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`,
-           
+            `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`
           );
           if (!response.ok)
             throw new Error("Erreur lors de la récupération des notifications");
@@ -380,14 +382,13 @@ export default function AdminLayout() {
         const userId = await getUserIdForToken();
         if (!userId) return;
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
+          `${import.meta.env.VITE_API_BASE_URL}/auth/messages`
         );
         if (!response.ok)
           throw new Error("Erreur lors de la récupération des messages");
         const data = await response.json();
         try {
-
-          if (!socket) return; 
+          if (!socket) return;
 
           socket.on("notificationMessageAdmin", (value) => {
             console.log("nana ", value);
@@ -412,32 +413,14 @@ export default function AdminLayout() {
 
       fetchNotifications();
       fetchMessages();
-    }, [token]);
-
-    useEffect(() => {
-      if (socket) {
-        socket.on("connect", () => {
-          console.log("Connecté au socket");
-        });
-
-        socket.on("notificationMessageAdmin", (value) => {
-          console.log("Message reçue :", value);
-          const formatted = value.data.map((msg) => ({
-            ...msg,
-            from: `${msg.firstName} ${msg.lastName}`,
-            text: msg.message,
-            read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
-          }));
-          setMessages([...messages, ...formatted]);
-        });
-      }
+      connectSocket();
 
       return () => {
         if (socket) {
           socket.disconnect();
         }
       };
-    }, [socket]);
+    }, []);
 
     useEffect(() => {
       const handleClickOutside = (event) => {
@@ -456,6 +439,14 @@ export default function AdminLayout() {
       return () =>
         document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    useEffect(() => {
+      if (user) {
+        setUserName(user.name || "Utilisateur");
+        setUserEmail(user.email || "email@example.com");
+        setUserPhoto(user.photo || "/default-avatar.png");
+      }
+    }, [user]);
 
     const markMessageAsRead = (message) => {
       setMessages((prevMessages) =>
@@ -548,14 +539,14 @@ export default function AdminLayout() {
                 <div className="relative">
                   {(
                     <img
-                      src={user.photo}
+                      src={userPhoto}
                       alt=""
                       className="w-8 rounded-[50%]"
                     />
                   ) || <FaUser className="w-5 h-5" />}
                 </div>
                 <span className="hidden sm:inline text-sm font-medium">
-                  {user.name || Admin}
+                  {userName || "Admin"}
                 </span>
                 <ChevronDown
                   className={`w-4 h-4 transition-transform duration-200 ${

@@ -1,41 +1,52 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useStateContext } from '../../context/ContextProvider';
-import { signInWithGoogle, signInWithFacebook } from '../../services/firebase/authService'; 
-import { FcGoogle } from 'react-icons/fc';
-import { FaFacebook, FaLock } from 'react-icons/fa';
-import { motion } from 'framer-motion';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useStateContext } from "../../context/ContextProvider";
+import {
+  signInWithGoogle,
+  signInWithFacebook,
+} from "../../services/firebase/authService";
+import { FcGoogle } from "react-icons/fc";
+import { FaFacebook, FaLock } from "react-icons/fa";
+import { motion } from "framer-motion";
 
 const LoginPage = () => {
-  const { setUser, setIsAuthenticated } = useStateContext();
+  const { setUser, setIsAuthenticated, isLoading } = useStateContext();
+
   const navigate = useNavigate();
-  const [errorMessage, setErrorMessage] = useState(null); 
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const handleLogin = async (provider) => {
     setErrorMessage(null); // Réinitialiser l'erreur
     try {
-      const res = provider === "Google" 
-        ? await signInWithGoogle() 
-        : await signInWithFacebook();
-
-      // Sauvegarde token + user dans localStorage
-      localStorage.setItem("ACCESS_TOKEN", res.access_token);
-      localStorage.setItem("USER", JSON.stringify(res.user));
+      const res =
+        provider === "Google"
+          ? await signInWithGoogle()
+          : await signInWithFacebook();
 
       // Mise à jour du contexte
       setUser(res.user);
       setIsAuthenticated(true);
 
-      navigate('/AdminAccueil');
+      navigate("/AdminAccueil");
     } catch (error) {
       console.error("Erreur lors de la connexion :", error);
       if (error.response && error.response.status === 401) {
-        setErrorMessage("Accès non autorisé. Votre compte n'a pas les droits d'admin.");
+        setErrorMessage(
+          "Accès non autorisé. Votre compte n'a pas les droits d'admin."
+        );
       } else {
         setErrorMessage("Erreur de connexion. Veuillez réessayer.");
       }
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <p>Chargement...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-gray-800">
@@ -48,8 +59,12 @@ const LoginPage = () => {
         <div className="flex justify-center mb-6">
           <FaLock className="text-4xl text-blue-600" />
         </div>
-        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">Connexion Admin</h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-8">Veuillez vous connecter avec votre compte</p>
+        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
+          Connexion Admin
+        </h2>
+        <p className="text-gray-500 dark:text-gray-400 mb-8">
+          Veuillez vous connecter avec votre compte
+        </p>
 
         {errorMessage && (
           <motion.div
@@ -64,22 +79,22 @@ const LoginPage = () => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => handleLogin('Google')}
+          onClick={() => handleLogin("Google")}
           className="w-full flex items-center justify-center gap-3 bg-white text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 py-3 rounded-xl shadow hover:shadow-md transition mb-4"
         >
           <FcGoogle size={24} />
           Connexion avec Google
         </motion.button>
 
-        <motion.button
+        {/* <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => handleLogin('Facebook')}
+          onClick={() => handleLogin("Facebook")}
           className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white py-3 rounded-xl shadow hover:bg-blue-700 transition"
         >
           <FaFacebook size={24} />
           Connexion avec Facebook
-        </motion.button>
+        </motion.button> */}
       </motion.div>
     </div>
   );
