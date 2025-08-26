@@ -914,7 +914,7 @@ export default function AdminLayout() {
           <div className="p-5 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <img
-                src="../../public/LogoAmsterTable.png"
+                src="../../src/assets/LogoAmsterTable.png"
                 alt="Logo"
                 className="w-15 h-auto object-cover transition-transform duration-300 hover:scale-110"
               />
