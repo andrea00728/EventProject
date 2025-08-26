@@ -19,15 +19,13 @@ export class AdminService {
     private readonly redis:Redis ,
   ) {}
 
-  async loginWithFirebaseAndCookie(idToken: string, res: Response) {
+  async loginWithGoogleOAuth(user: any, res: Response) {
     try {
-      // 1. Vérifier et décoder le token Firebase
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
-      const email = decodedToken.email;
-      const displayName = decodedToken.name || 'Admin';
-      const photoURL = decodedToken.picture || null;
+      const email = user.email;
+      const displayName = user.displayName || 'Admin';
+      const photoURL = user.photos?.[0]?.value || null;
 
-      // 2. Chercher l'admin existant
+      // Chercher l'admin existant
       let adminUser = await this.userRepository.findOne({
         where: { email, role: 'admin' },
       });
@@ -46,7 +44,7 @@ export class AdminService {
           id: uuidv4(),
           email,
           name: displayName,
-          photo: photoURL ?? null,
+          photo: photoURL,
           role: 'admin',
           isOnline: true,
           lastLogin: new Date(),
@@ -55,7 +53,7 @@ export class AdminService {
         await this.userRepository.save(adminUser);
       }
 
-      // 3. Créer les tokens JWT
+      // Générer les tokens JWT
       const payload = {
         sub: adminUser.id,
         email: adminUser.email,
@@ -67,22 +65,21 @@ export class AdminService {
       const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
       const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-      // 4. Mettre les tokens dans des cookies HTTP-only
+      // Placer les cookies HTTP-only
       res.cookie('jwt', access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 1000, // 1h
+        maxAge: 60 * 60 * 1000,
       });
 
       res.cookie('refresh_token', refresh_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      // 5. Retourner les infos user côté front si besoin
       return {
         user: {
           id: adminUser.id,
@@ -93,33 +90,33 @@ export class AdminService {
         },
       };
     } catch (error) {
-      console.error('Login with Firebase error:', error);
+      console.error('Login with Google OAuth error:', error);
       throw new UnauthorizedException(
-        'Token Firebase invalide ou autre erreur',
+        'Erreur lors de l’authentification Google OAuth',
       );
     }
   }
 
   async logout(req: Request, res: Response): Promise<{ message: string }> {
     try {
-      const jwtCookie = (req as any).cookies['jwt']; // Récupérer le jeton directement du cookie
+      const jwtCookie = (req as any).cookies['jwt'];
       if (!jwtCookie) {
         throw new Error('Aucun jeton fourni');
       }
-  
+
       await this.jwtService.verifyAsync(jwtCookie, {
         secret: process.env.JWT_SECRET || 'your-secret-key',
       });
-  
+
       await this.redis.set(`blacklist:${jwtCookie}`, 'true', 'EX', 24 * 60 * 60);
-  
-      // ... Le reste de votre code pour effacer les cookies
-      res.clearCookie('jwt', { /* options */ });
-      res.clearCookie('refresh_token', { /* options */ });
-  
+
+      res.clearCookie('jwt');
+      res.clearCookie('refresh_token');
+
       return { message: 'Déconnexion réussie' };
     } catch (error) {
       throw new Error('Token invalide ou erreur lors de la déconnexion');
     }
   }
 }
+

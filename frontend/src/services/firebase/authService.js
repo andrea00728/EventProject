@@ -1,61 +1,51 @@
-import { GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, signOut, getAuth, getRedirectResult, signInWithRedirect } from 'firebase/auth';
-import { auth } from './firebaseConfig';
-import axiosClient from '../../api/axios-client';
-import { url } from '../../api/url';
+import {
+  GoogleAuthProvider,
+  FacebookAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult
+} from "firebase/auth";
+import { auth } from "./firebaseConfig";
+import axiosClient from "../../api/axios-client";
+
+// Détection simple mobile/desktop
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 // Connexion avec Google
 export const signInWithGoogle = async () => {
   const provider = new GoogleAuthProvider();
-  const result = await signInWithPopup(auth, provider);
-  const token = await result.user.getIdToken(true);
-
-  const response = await axiosClient.post(`/admin/login/admin`, {}, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  return {
-    user: response.data.user,
-    access_token: response.data.access_token,
-  };
+  if (isMobile) {
+    await signInWithRedirect(auth, provider);
+  } else {
+    return await signInWithPopup(auth, provider);
+  }
 };
-
 
 // Connexion avec Facebook
 export const signInWithFacebook = async () => {
   const provider = new FacebookAuthProvider();
-  const result = await signInWithPopup(auth, provider);
-  const token = await result.user.getIdToken(true);
-
-  const response = await axiosClient.post(`/admin/login/admin`, {}, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  return {
-    user: response.data.user,
-    access_token: response.data.access_token,
-  };
+  if (isMobile) {
+    await signInWithRedirect(auth, provider);
+  } else {
+    return await signInWithPopup(auth, provider);
+  }
 };
 
-// Gestion des redirections (mobile / PWA)
+// Récupérer le résultat après redirection (mobile)
 export const handleRedirectResult = async () => {
-  const auth = getAuth();
-  const result = await getRedirectResult(auth);
-
-  if (result) {
-    const token = await result.user.getIdToken();
-    return token;
-  } else {
+  try {
+    const result = await getRedirectResult(auth);
+    return result;
+  } catch (error) {
+    console.error("Erreur handleRedirectResult:", error);
     return null;
   }
 };
 
-// Déconnexion Firebase
+
+// Déconnexion
 export const logout = async () => {
   const res = await axiosClient.post(`/admin/logout`);
-  signOut(auth);
-  return res
-} 
+  //await signOut(auth);
+  return res;
+};
