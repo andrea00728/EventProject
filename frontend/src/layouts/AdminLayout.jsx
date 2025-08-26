@@ -38,7 +38,6 @@ import { getUserIdForToken } from "../services/userService";
 import { fr } from "date-fns/locale";
 import { useSocket } from "../socket";
 import { motion, AnimatePresence } from "framer-motion";
-
 export default function AdminLayout() {
   const { isAuthenticated, role, isLoading, setUser, user, token } = useStateContext();
   const location = useLocation();
@@ -47,6 +46,9 @@ export default function AdminLayout() {
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null); // 'notifications', 'messages', null
+
+  const [messages,setMessages]=useState([]);
 
   console.log("Auth State:", { isLoading, isAuthenticated, role, user });
 
@@ -313,75 +315,75 @@ export default function AdminLayout() {
   };
 
   const NotificationModal = ({ show, onClose, notification, darkMode }) => {
-  // Si on n'a pas de notification ou si le modal est fermé, ne rien afficher
-  if (!show || !notification) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        className="fixed inset-0 bg-gray-900 bg-opacity-30 z-[60] flex items-center justify-center p-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-      >
+    // Si on n'a pas de notification ou si le modal est fermé, ne rien afficher
+    if (!show || !notification) return null;
+  
+    return (
+      <AnimatePresence>
         <motion.div
-          className={`w-full max-w-md rounded-lg shadow-xl ${
-            darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-          } flex flex-col`}
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1, transition: { duration: 0.25 } }}
-          exit={{ scale: 0.8, opacity: 0, transition: { duration: 0.2 } }}
+          className="fixed inset-0 bg-gray-900 bg-opacity-30 z-[60] flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
         >
-          {/* Header avec image */}
-          <div
-            className={`p-4 border-b flex items-center justify-between ${
-              darkMode ? "border-gray-700" : "border-gray-200"
-            }`}
+          <motion.div
+            className={`w-full max-w-md rounded-lg shadow-xl ${
+              darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+            } flex flex-col`}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1, transition: { duration: 0.25 } }}
+            exit={{ scale: 0.8, opacity: 0, transition: { duration: 0.2 } }}
           >
-            <div className="flex items-center gap-3">
-              {notification.organizerImage && (
-                <img
-                  src={notification.organizerImage}
-                  alt="Organisateur"
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              )}
-              <h3 className="font-semibold">{notification.title || "Notification"}</h3>
+            {/* Header avec image */}
+            <div
+              className={`p-4 border-b flex items-center justify-between ${
+                darkMode ? "border-gray-700" : "border-gray-200"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {notification.organizerImage && (
+                  <img
+                    src={notification.organizerImage}
+                    alt="Organisateur"
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                )}
+                <h3 className="font-semibold">{notification.title || "Notification"}</h3>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Contenu */}
-          <div className="p-4 space-y-2">
-            <p className="text-sm">{notification.message}</p>
-            {notification.time && (
-              <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-                {notification.time}
-              </p>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="p-4 border-t flex justify-end">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              Fermer
-            </button>
-          </div>
+  
+            {/* Contenu */}
+            <div className="p-4 space-y-2">
+              <p className="text-sm">{notification.message}</p>
+              {notification.time && (
+                <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  {notification.time}
+                </p>
+              )}
+            </div>
+  
+            {/* Footer */}
+            <div className="p-4 border-t flex justify-end">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
+      </AnimatePresence>
+    );
+  };
 
-
+  // ============= MODIFIÉ: AdminHeader avec modal =============
   const AdminHeader = ({ currentPageName, darkMode }) => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [showMessages, setShowMessages] = useState(false);
@@ -804,33 +806,38 @@ export default function AdminLayout() {
             </Dropdown>
 
             <div ref={profileRef} className="relative">
-              <button
-                onClick={() => setShowProfile(!showProfile)}
-                className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
-                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                }`}
-                aria-label="Menu profil"
-              >
-                <div className="relative">
-                  {user?.photo ? (
-                    <img
-                      src={user.photo}
-                      alt="Profile"
-                      className="w-8 rounded-[50%]"
-                    />
-                  ) : (
-                    <FaUser className="w-5 h-5" />
-                  )}
-                </div>
-                <span className="hidden sm:inline text-sm font-medium">
-                  {user?.name || "Admin"}
-                </span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-200 ${
-                    showProfile ? "rotate-180" : ""
+                <button
+                  onClick={() => setShowProfile(!showProfile)}
+                  className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
+                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
                   }`}
-                />
-              </button>
+                  aria-label="Menu profil"
+                >
+                  <div className="relative">
+                    {user?.photo ? (
+                      <img
+                        src={
+                          user.photo.startsWith('data:') 
+                            ? user.photo 
+                            : `data:image/jpeg;base64,${user.photo}`
+                        }
+                        alt="Profile"
+                        className="w-10 h-10 rounded-[50%] object-cover"
+                      />
+                    ) : (
+                      <FaUser className="w-5 h-5" />
+                    )}
+                  </div>
+                  <span className="hidden sm:inline text-sm font-medium">
+                    {user?.name || "Admin"}
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-200 ${
+                      showProfile ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
               {showProfile && (
                 <div
                   className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${

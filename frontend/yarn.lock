@@ -2768,11 +2768,26 @@ cloneable-readable@^1.0.0:
     process-nextick-args "^2.0.0"
     readable-stream "^2.3.5"
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> origin/dev_nadja
+>>>>>>> origin/dev_stephan
 clsx@^1.1.1:
   version "1.2.1"
   resolved "https://registry.npmjs.org/clsx/-/clsx-1.2.1.tgz"
   integrity sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> origin/dev_stephan
+>>>>>>> origin/dev_nadja
+>>>>>>> origin/dev_stephan
 clsx@^2.0.0, clsx@^2.1.1:
   version "2.1.1"
   resolved "https://registry.npmjs.org/clsx/-/clsx-2.1.1.tgz"
@@ -3831,10 +3846,17 @@ es6-weak-map@~0.1.4:
     es6-iterator "~0.1.3"
     es6-symbol "~2.0.1"
 
+<<<<<<< HEAD
+esbuild@^0.25.0:
+  version "0.25.9"
+  resolved "https://registry.npmjs.org/esbuild/-/esbuild-0.25.9.tgz"
+  integrity sha512-CRbODhYyQx3qp7ZEwzxOk4JBqmD/seJrzPa/cGjY1VtIn5E09Oi9/dB4JwctnfZ8Q8iT7rioVv5k/FNT/uf54g==
+=======
 esbuild@*, esbuild@^0.25.0:
   version "0.25.8"
   resolved "https://registry.npmjs.org/esbuild/-/esbuild-0.25.8.tgz"
   integrity sha512-vVC0USHGtMi8+R4Kz8rt6JhEWLxsv9Rnu/lGYbPR8u47B+DCBksq9JarW0zOO7bs37hyOK1l2/oqtbciutL5+Q==
+>>>>>>> origin/dev_nadja
   optionalDependencies:
     "@esbuild/aix-ppc64" "0.25.9"
     "@esbuild/android-arm" "0.25.9"
@@ -5974,7 +5996,11 @@ lead@^4.0.0:
   resolved "https://registry.npmjs.org/lead/-/lead-4.0.0.tgz"
   integrity sha512-DpMa59o5uGUWWjruMp71e6knmwKU3jRBBn1kjuLWN9EeIOxNeSAwvHf03WIl8g/ZMR2oSQC9ej3yeLBwdDc/pg==
 
+<<<<<<< HEAD
+leaflet@^1.9.4:
+=======
 leaflet@^1.9.0, leaflet@^1.9.4:
+>>>>>>> origin/dev_nadja
   version "1.9.4"
   resolved "https://registry.npmjs.org/leaflet/-/leaflet-1.9.4.tgz"
   integrity sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==
@@ -7537,6 +7563,8 @@ react-is@^16.7.0:
   integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
 
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
 <<<<<<< HEAD
 "react-is@^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", react-is@^19.0.0, react-is@^19.1.0:
   version "19.1.0"
@@ -7544,6 +7572,7 @@ react-is@^16.7.0:
   integrity sha512-Oe56aUPnkHyyDxxkvqtd7KkdQP5uIUfHxd5XTb3wE9d/kRnZLmKbDB0GWk919tdQ+mxxPtG6EAs6RMT6i1qtHg==
 =======
 =======
+>>>>>>> origin/dev_nadja
 react-is@^18.2.0:
   version "18.3.1"
   resolved "https://registry.npmjs.org/react-is/-/react-is-18.3.1.tgz"
@@ -7554,7 +7583,10 @@ react-is@^19.0.0, react-is@^19.1.0:
   version "19.1.1"
   resolved "https://registry.npmjs.org/react-is/-/react-is-19.1.1.tgz"
   integrity sha512-tr41fA15Vn8p4X9ntI+yCyeGSf1TlYaY5vlTZfQmeLBrFo3psOPX6HhTDnFNL9uj3EhP0KAQ80cugCl4b4BERA==
+<<<<<<< HEAD
+=======
 >>>>>>> origin/dev_stephan
+>>>>>>> origin/dev_nadja
 
 react-joyride@^2.9.3:
   version "2.9.3"
@@ -7606,31 +7638,43 @@ react-refresh@^0.17.0:
   integrity sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==
 
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
 react-router-dom@^7.1.5:
   version "7.8.1"
   resolved "https://registry.npmjs.org/react-router-dom/-/react-router-dom-7.8.1.tgz"
   integrity sha512-NkgBCF3sVgCiAWIlSt89GR2PLaksMpoo3HDCorpRfnCEfdtRPLiuTf+CNXvqZMI5SJLZCLpVCvcZrTdtGW64xQ==
 =======
+>>>>>>> origin/dev_nadja
 react-router-dom@^6.30.1:
   version "6.30.1"
   resolved "https://registry.npmjs.org/react-router-dom/-/react-router-dom-6.30.1.tgz"
   integrity sha512-llKsgOkZdbPU1Eg3zK8lCn+sjD9wMRZZPuzmdWWX5SUs8OFkN5HnFVC0u5KMeMaC9aoancFI/KoLuKPqN+hxHw==
+<<<<<<< HEAD
+=======
 >>>>>>> origin/dev_stephan
+>>>>>>> origin/dev_nadja
   dependencies:
     "@remix-run/router" "1.23.0"
     react-router "6.30.1"
 
+<<<<<<< HEAD
+=======
 <<<<<<< HEAD
 react-router@^7, react-router@7.8.1:
   version "7.8.1"
   resolved "https://registry.npmjs.org/react-router/-/react-router-7.8.1.tgz"
   integrity sha512-5cy/M8DHcG51/KUIka1nfZ2QeylS4PJRs6TT8I4PF5axVsI5JUxp0hC0NZ/AEEj8Vw7xsEoD7L/6FY+zoYaOGA==
 =======
+>>>>>>> origin/dev_nadja
 react-router@6.30.1:
   version "6.30.1"
   resolved "https://registry.npmjs.org/react-router/-/react-router-6.30.1.tgz"
   integrity sha512-X1m21aEmxGXqENEPG3T6u0Th7g0aS4ZmoNynhbs+Cn+q+QGTLt+d5IQ2bHAXKzKcxGJjxACpVbnYQSCRcfxHlQ==
+<<<<<<< HEAD
+=======
 >>>>>>> origin/dev_stephan
+>>>>>>> origin/dev_nadja
   dependencies:
     "@remix-run/router" "1.23.0"
 
@@ -7677,7 +7721,11 @@ react-transition-group@^4.3.0, react-transition-group@^4.4.5:
     prop-types "^15.6.2"
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 react@*, "react@^0.14.0 || ^15.0.1 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^16.9.0 || ^17.0.0 || ^18 || ^19", "react@^17.0.0 || ^18.0.0 || ^19.0.0", "react@^18 || ^19", "react@^18.0 || ^19", react@^18.0.0, "react@^18.0.0 || ^19.0.0", react@^18.3.1, "react@>= 16 || ^19.0.0-rc", "react@>= 16.12.0", "react@>= 16.3.0", "react@>= 16.8.0", "react@>=0.0.0 <=99", react@>=16, react@>=16.0.0, react@>=16.3, react@>=16.6.0, react@>=16.8.0, react@>=16.8.6, react@>=17.0.0, react@>=18, "react@>=18.2.0 <20", "react@15 - 18":
+=======
+react@^18.3.1:
+>>>>>>> origin/dev_stephan
 =======
 <<<<<<< HEAD
 react@*, "react@^0.14.0 || ^15.0.1 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^16.9.0 || ^17.0.0 || ^18 || ^19", "react@^17.0.0 || ^18.0.0 || ^19.0.0", "react@^18 || ^19", "react@^18.0 || ^19", react@^18.0.0, "react@^18.0.0 || ^19.0.0", react@^18.3.1, "react@>= 16 || ^19.0.0-rc", "react@>= 16.12.0", "react@>= 16.3.0", "react@>= 16.8.0", "react@>=0.0.0 <=99", react@>=16.0.0, react@>=16.3, react@>=16.6.0, react@>=16.8.0, react@>=16.8.6, react@>=17.0.0, react@>=18, "react@>=18.2.0 <20", "react@15 - 18":
