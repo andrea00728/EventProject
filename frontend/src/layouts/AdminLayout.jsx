@@ -51,6 +51,20 @@ export default function AdminLayout() {
   const [messages,setMessages]=useState([]);
 
   useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === 'Escape' && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [sidebarOpen]);
+
+  useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
       if (window.innerWidth >= 768) setSidebarOpen(false);
@@ -882,7 +896,7 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className={`flex h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`flex h-screen flex-row ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
       {sidebarOpen && isMobile && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
@@ -890,7 +904,7 @@ export default function AdminLayout() {
         />
       )}
       <button
-        className={`fixed z-30 top-4 left-4 p-2 rounded-lg transition-all duration-300 md:hidden ${
+        className={`fixed z-30 top-4 left-4 p-2 rounded-lg transition-all duration-300 lg:hidden ${
           darkMode
             ? "bg-gray-700 text-gray-200 hover:bg-gray-600"
             : "bg-white text-gray-600 hover:bg-gray-100"
@@ -906,7 +920,7 @@ export default function AdminLayout() {
       <aside
         className={`fixed z-50 top-0 left-0 h-full w-64 transition-all duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 md:relative md:w-72 ${
+        } lg:translate-x-0 lg:relative lg:w-72 ${
           darkMode ? "bg-gray-800" : "bg-gray-200"
         }`}
       >
@@ -923,7 +937,7 @@ export default function AdminLayout() {
               </h1>
             </div>
             <button
-              className="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-all duration-300 hover:rotate-90"
+              className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-all duration-300 hover:rotate-90"
               onClick={() => setSidebarOpen(false)}
             >
               <FaTimes className="text-lg" />
@@ -1012,7 +1026,9 @@ export default function AdminLayout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <AdminHeader currentPageName={currentPageName} darkMode={darkMode} />
         <main
-          className={`flex-1 overflow-auto scrollable ${
+          className={`flex-1 overflow-auto scrollable transition-all duration-300 ${
+            sidebarOpen ? "lg:ml-64" : "lg:ml-0"
+          } ${
             darkMode ? "bg-gray-900" : "bg-gray-50"
           }`}
         >
