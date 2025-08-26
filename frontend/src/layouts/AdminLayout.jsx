@@ -37,6 +37,7 @@ import { format } from "date-fns";
 import { getUserIdForToken } from "../services/userService";
 import { fr } from "date-fns/locale";
 import { useSocket } from "../socket";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminLayout() {
   const { isAuthenticated, role, isLoading, setUser, user } = useStateContext();
@@ -311,6 +312,76 @@ export default function AdminLayout() {
     );
   };
 
+  const NotificationModal = ({ show, onClose, notification, darkMode }) => {
+  // Si on n'a pas de notification ou si le modal est fermé, ne rien afficher
+  if (!show || !notification) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 bg-gray-900 bg-opacity-30 z-[60] flex items-center justify-center p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <motion.div
+          className={`w-full max-w-md rounded-lg shadow-xl ${
+            darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+          } flex flex-col`}
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1, transition: { duration: 0.25 } }}
+          exit={{ scale: 0.8, opacity: 0, transition: { duration: 0.2 } }}
+        >
+          {/* Header avec image */}
+          <div
+            className={`p-4 border-b flex items-center justify-between ${
+              darkMode ? "border-gray-700" : "border-gray-200"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              {notification.organizerImage && (
+                <img
+                  src={notification.organizerImage}
+                  alt="Organisateur"
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              )}
+              <h3 className="font-semibold">{notification.title || "Notification"}</h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Contenu */}
+          <div className="p-4 space-y-2">
+            <p className="text-sm">{notification.message}</p>
+            {notification.time && (
+              <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                {notification.time}
+              </p>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 border-t flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Fermer
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+
   const AdminHeader = ({ currentPageName, darkMode }) => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [showMessages, setShowMessages] = useState(false);
@@ -330,6 +401,10 @@ export default function AdminLayout() {
     const [notifFilter, setNotifFilter] = useState("all");
     const [msgFilter, setMsgFilter] = useState("all");
     const [openDropdown, setOpenDropdown] = useState(null);
+    const [showNotificationModal, setShowNotificationModal] = useState(false);
+    const [selectedNotification, setSelectedNotification] = useState(null);
+
+    
 
     const filteredNotifications = notifications.filter((n) => {
       if (notifFilter === "all") return true;
@@ -498,6 +573,7 @@ export default function AdminLayout() {
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+
     const markAsRead = async (id, type) => {
       try {
         if (type === "message") {
@@ -545,8 +621,24 @@ export default function AdminLayout() {
 
     const handleNotificationClick = async (item) => {
       await markAsRead(item.id, "notification");
+
+      // 🔹 Mets à jour localStorage
+      const readIds = JSON.parse(localStorage.getItem("readNotifications")) || [];
+      if (!readIds.includes(item.id)) {
+        readIds.push(item.id);
+        localStorage.setItem("readNotifications", JSON.stringify(readIds));
+      }
+
       setOpenDropdown(null);
       setSelectedConversation({ content: item });
+
+      // 🔹 Mets à jour ton state pour affichage instantané
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === item.id ? { ...n, is_read: true } : n))
+      );
+      setShowNotificationModal(true);      // on ouvre le modal
+
+
     };
 
     const handleDeleteMessage = async (id) => {
@@ -615,7 +707,11 @@ export default function AdminLayout() {
               label="Notifications"
               count={filteredNotifications.filter((n) => !n.read).length}
               items={filteredNotifications}
-              onItemClick={handleNotificationClick}
+              onItemClick={(item) => {
+                handleNotificationClick(item);
+                setSelectedNotification(item);   // on stocke la notif cliquée
+                setIsModalOpen(true);            // on ouvre le modal
+              }}
               onDelete={handleDeleteNotification}
               onViewMore={() => setShowNotificationsModal(true)}
             >
@@ -817,6 +913,12 @@ export default function AdminLayout() {
           conversation={selectedConversation}
           darkMode={darkMode}
         />
+        <NotificationModal
+          show={showNotificationModal}
+          onClose={() => setShowNotificationModal(false)}
+          notification={selectedNotification}
+          darkMode={darkMode}
+        />
         <Modalist
           show={showNotificationsModal}
           onClose={() => setShowNotificationsModal(false)}
@@ -836,6 +938,8 @@ export default function AdminLayout() {
       </>
     );
   };
+
+  
 
   return (
     <div className={`flex h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
@@ -985,4 +1089,5 @@ export default function AdminLayout() {
       </div>
     </div>
   );
+
 }
