@@ -12,7 +12,7 @@ import { GoogleAdminStrategy } from 'src/strategies/google.strategy';
         secret: 'andreanadjasylvanoilaina',
         signOptions: { expiresIn: '60m' },
       }),],
-  providers: [AdminService, JwtStrategy, GoogleAdminStrategy],
+  providers: [AdminService, JwtStrategy,GoogleAdminStrategy],
   controllers: [AdminController],
 })
 export class AdminModule {}
