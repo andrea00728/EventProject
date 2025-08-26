@@ -40,7 +40,7 @@ import { useSocket } from "../socket";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminLayout() {
-  const { isAuthenticated, role, isLoading, setUser, user } = useStateContext();
+  const { isAuthenticated, role, isLoading, setUser, user, token } = useStateContext();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -418,6 +418,8 @@ export default function AdminLayout() {
       return m.read;
     });
 
+ 
+
     const handleRedirect = () => {
       navigate("/AdminParametre");
     };
@@ -436,6 +438,7 @@ export default function AdminLayout() {
           );
           if (!response.ok)
             throw new Error("Erreur lors de la récupération des notifications");
+
           const data = await response.json();
           setNotifications(data);
         } catch (error) {
@@ -695,6 +698,7 @@ export default function AdminLayout() {
             {currentPageName}
           </h2>
           <div className="flex items-center gap-3 sm:gap-6 relative">
+
             <Dropdown
               ref={notifRef}
               show={openDropdown === "notifications"}
@@ -974,9 +978,9 @@ export default function AdminLayout() {
           <div className="p-5 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <img
-                src="/images/logo_4.png"
+                src="../../src/assets/LogoAmsterTable.png"
                 alt="Logo"
-                className="w-10 h-10 rounded-lg object-cover transition-transform duration-300 hover:scale-110"
+                className="w-15 h-auto object-cover transition-transform duration-300 hover:scale-110"
               />
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
                 Master Table
