@@ -395,7 +395,8 @@ export default function Profil() {
                 <div className="flex flex-col items-center space-y-4">
                   <div className="relative">
                     <img
-                      src={user.photo}
+                    //a modifier ici pour afficher l'aperçu de l'image sélectionnée
+                      src={previewImage || "https://via.placeholder.com/150"}
                       alt="Aperçu de la photo"
                       className="w-20 h-20 rounded-full object-cover border-4 border-gray-200"
                     />
