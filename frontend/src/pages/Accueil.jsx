@@ -39,7 +39,7 @@ export default function Accueil() {
     return icons[type?.toLowerCase()] || icons.default;
   };
   // Récupération de tous les événements (succès) au chargement du composant
- useEffect(() => {
+  useEffect(() => {
     const fetchAllEvents = async () => {
       try {
         setLoading(true);
@@ -76,32 +76,32 @@ export default function Accueil() {
      * 
      * nombre d'evenement organiser par tout les organisateur
      */
-    const count_event =async ()=>{
-    try{
-      const count = await getCountEvents();
-      setCountEvent(count);
-    }catch(erreur){
-      console.log(erreur);
-    }
+    const count_event = async () => {
+      try {
+        const count = await getCountEvents();
+        setCountEvent(count);
+      } catch (erreur) {
+        console.log(erreur);
+      }
     }
     /**
      * 
      * nombre d'organisateur heureurs
      */
-    const count_heureur=async () =>{
-      try{
-        const count_h= await findCountSatisfied();
+    const count_heureur = async () => {
+      try {
+        const count_h = await findCountSatisfied();
         setCountHeureur(count_h);
-      }catch(err){
+      } catch (err) {
         console.log(err);
       }
     }
 
-    const count_pourcentage=async () =>{
-      try{
-        const count_p=await findCount_pourcentage();
+    const count_pourcentage = async () => {
+      try {
+        const count_p = await findCount_pourcentage();
         setPourcentage(count_p);
-      }catch(err){
+      } catch (err) {
         console.log(err);
       }
     }
@@ -272,21 +272,22 @@ export default function Accueil() {
 
       {/* Modal plein écran */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
-          <div className="relative w-full h-full bg-white flex flex-col items-center justify-center overflow-scroll">
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 sm:p-6">
+          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md sm:max-w-lg md:max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col items-center justify-start p-6">
             {/* Bouton fermer */}
-            <button
+            {/* <button
               onClick={() => setIsOpen(false)}
-              className="absolute top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors z-50 cursor-pointer"
+              className="absolute top-4 right-4 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors cursor-pointer z-50"
             >
               ✕
-            </button>
+            </button> */}
 
             {/* Contenu du modal */}
-            <Demo/>
+            <Demo closeModal={() => setIsOpen(false)} />
           </div>
         </div>
       )}
+
 
 
       {/* Section Événements de Succès */}

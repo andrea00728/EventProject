@@ -39,7 +39,7 @@ import io from "socket.io-client";
 import { useSocket } from "../socket";
 
 export default function AdminLayout() {
-  const { isAuthenticated, role, isLoading, setUser, user } = useStateContext();
+  const { isAuthenticated, role, isLoading, setUser, user, token } = useStateContext();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
