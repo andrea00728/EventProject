@@ -3,11 +3,13 @@ import Evenementform from "../components/evenementForm";
 import Inviteform from "./choixModInvite/inviteForm";
 import Stepper from "../util/Stepper";
 import Table from "./Table";
+import { useNavigate } from "react-router-dom";
 
 export default function Evenemenpage() {
   const [mode, setMode] = useState(null); // "public" ou "prive"
   const [currentStep, setCurrentStep] = useState(1);
   const [evenementData, setEvenetData] = useState({});
+  const navigate = useNavigate()
 
   const handleNext = (data) => {
     setEvenetData(data);
@@ -49,7 +51,10 @@ export default function Evenemenpage() {
       <div className="flex flex-col items-center">
         <Evenementform
           isPublic={true}
-          onNext={(data) => console.log("Public créé :", data)}
+          onNext={(data) => {
+            console.log("Public créé :", data);
+            navigate("/evenement/evenement")
+          }}
           isExit={handleExit}
         />
       </div>

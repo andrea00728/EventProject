@@ -192,6 +192,25 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   const onSubmit = async (e) => {
     e.preventDefault();
 
+    const now = new Date();
+    const dateDebut = new Date(form.date);
+    const dateFin = new Date(form.date_fin);
+
+    if (dateDebut < now) {
+      setError("La date de début doit être aujourd'hui ou dans le futur.");
+      return;
+    }
+
+    if (dateFin < now) {
+      setError("La date de fin doit être aujourd'hui ou dans le futur.");
+      return;
+    }
+
+    if (dateDebut >= dateFin) {
+      setError("La date de fin doit être après la date de début.");
+      return;
+    }
+
     if (new Date(form.date) >= new Date(form.date_fin)) {
       setError("La date de fin doit être après la date de début.");
       return;
@@ -356,6 +375,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               value={form.date}
               onChange={handleChange}
               required
+              min={new Date().toISOString().slice(0,16)}
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
             />
           </div>
@@ -370,6 +390,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               value={form.date_fin}
               onChange={handleChange}
               required
+              min={new Date().toISOString().slice(0,16)}
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
             />
           </div>
@@ -400,11 +421,10 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               disabled={!form.locationId}
               onClick={() => form.locationId && setModalSalleOpen(true)}
               placeholder="Sélectionnez une salle"
-              className={`border border-gray-300 rounded-xl px-5 py-3 text-gray-900 placeholder-gray-400 transition ${
-                form.locationId
-                  ? "cursor-pointer bg-gray-50 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
-                  : "bg-gray-200 cursor-not-allowed"
-              }`}
+              className={`border border-gray-300 rounded-xl px-5 py-3 text-gray-900 placeholder-gray-400 transition ${form.locationId
+                ? "cursor-pointer bg-gray-50 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+                : "bg-gray-200 cursor-not-allowed"
+                }`}
             />
           </div>
 
@@ -493,9 +513,8 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                       <div
                         key={loc.id}
                         onClick={() => handleSelectLieu(loc)}
-                        className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${
-                          selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
-                        }`}
+                        className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
+                          }`}
                       >
                         {loc.nom}
                       </div>

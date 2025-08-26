@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getTablesByEventId, getAvailableSeats, createTable } from "../services/tableService";
 import { getMyEvents } from "../services/evenementServ";
 import { useStateContext } from "../context/ContextProvider";
+import { getMaxCapacity } from "../services/controll_champs/controll_champs";
 
 const TABLE_TYPES = [
   { value: "ronde", label: "Table ronde", icon: <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" fill="#e0e7ff" stroke="#6366f1" strokeWidth="3"/></svg> },
@@ -11,7 +12,7 @@ const TABLE_TYPES = [
 ];
 
 export default function TableCreation({ eventId, onNext, onBack }) {
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
 
   const [tables, setTables] = useState([]);
   const [events, setEvents] = useState([]);
@@ -29,7 +30,7 @@ export default function TableCreation({ eventId, onNext, onBack }) {
     const fetchEvents = async () => {
       setIsLoadingEvents(true);
       try {
-        const data = await getMyEvents(token);
+        const data = await getMyEvents();
         setEvents(data);
       } catch (err) {
         setEventError(err.response?.data?.message || "Impossible de charger les événements");
@@ -37,14 +38,14 @@ export default function TableCreation({ eventId, onNext, onBack }) {
         setIsLoadingEvents(false);
       }
     };
-    if (token) fetchEvents();
-  }, [token]);
+    if (isAuthenticated) fetchEvents();
+  }, [isAuthenticated]);
 
   // Charger les tables existantes
   const loadTables = async () => {
-    if (!selectedEvent?.id || !token) return;
+    if (!selectedEvent?.id || !isAuthenticated) return;
     try {
-      const data = await getTablesByEventId(selectedEvent.id, token);
+      const data = await getTablesByEventId(selectedEvent.id);
       const withSeats = await Promise.all(
         data.map(async (t) => {
           const available = await getAvailableSeats(t.id);
@@ -59,10 +60,41 @@ export default function TableCreation({ eventId, onNext, onBack }) {
 
   useEffect(() => {
     if (selectedEvent) loadTables();
-  }, [selectedEvent, token]);
+  }, [selectedEvent, isAuthenticated]);
 
   // Gestion formulaire
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  // const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+    const handleChange = (e) => {
+    const { name, value } = e.target;
+  
+    if (name === "capacite") {
+      const numericValue = parseInt(value, 10);
+      const max = getMaxCapacity(form.type);
+      if (numericValue > max) {
+        setError(`La capacité maximale pour une table ${form.type} est ${max}`);
+        return;
+      } else {
+        setError(null);
+      }
+      setForm({ ...form, [name]: numericValue });
+      return;
+    }
+  
+    if (name === "type") {
+      const max = getMaxCapacity(value);
+      const newCapacite = Math.min(form.capacite, max);
+      if (form.capacite > max) {
+        setError(`Capacité ajustée à ${newCapacite} pour le type ${value}`);
+      } else {
+        setError(null);
+      }
+      setForm({ ...form, [name]: value, capacite: newCapacite });
+      return;
+    }
+  
+    setForm({ ...form, [name]: value });
+  };
+
   const handleNombreChange = (e) => {
     const nb = Number(e.target.value);
     setForm(prev => ({ ...prev, nombre: nb, noms: Array(nb).fill("") }));
@@ -92,13 +124,18 @@ export default function TableCreation({ eventId, onNext, onBack }) {
         eventId: form.eventId
       }));
       for (const t of tablesArray) {
-        await createTable(t, token);
+        await createTable(t);
       }
       setSuccessMessage("Tables créées avec succès");
       setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: form.eventId });
       await loadTables();
     } catch (err) {
-      setError(err.response?.data?.message || "Erreur création tables");
+      // setError(err.response?.data?.message || "Erreur création tables");
+      if(err.response?.data?.message?.includes("capacité maximale")){
+        setError(err.response?.data?.message);
+      } else {
+        setError(err.response?.data?.message || "Erreur lors de la création des tables");
+      }
     }
   };
 
@@ -111,6 +148,7 @@ export default function TableCreation({ eventId, onNext, onBack }) {
           <div className="flex flex-col">
             <label className="text-gray-700 font-medium mb-2 text-sm">Capacité</label>
             <input type="number" name="capacite" value={form.capacite} onChange={handleChange} min="1" placeholder="Ex: 4" required className="border border-gray-200 rounded-lg px-4 py-3" />
+             {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
           </div>
           <div className="flex flex-col">
             <label className="text-gray-700 font-medium mb-2 text-sm">Nombre de tables</label>

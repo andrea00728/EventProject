@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react"; // Added useRef
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
@@ -19,7 +19,7 @@ import {
 } from "chart.js";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer, toast, Slide } from "react-toastify"; // Added Slide
 import "react-toastify/dist/ReactToastify.css";
 import { useSocket } from "../../socket";
 import revenuService from "../../services/revenu";
@@ -77,56 +77,87 @@ const RevenuPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
   const [chartType, setChartType] = useState("bar");
-
-  const { token } = useStateContext();
+  const [noOrders, setNoOrders] = useState(false);
+  const { isAuthenticated, isLoading } = useStateContext();
   const navigate = useNavigate();
   const socket = useSocket();
+  const toastIds = useRef({}); // Added to track toast IDs
 
+  // Constantes de style pour les graphiques
   const COLORS = {
     paid: ["rgba(34, 197, 94, 0.8)", "rgba(74, 222, 128, 0.8)"],
     pending: ["rgba(234, 179, 8, 0.8)", "rgba(250, 204, 21, 0.8)"],
     refunded: ["rgba(239, 68, 68, 0.8)", "rgba(248, 113, 113, 0.8)"],
     timeSeries: ["rgba(99, 102, 241, 0.8)", "rgba(129, 140, 248, 0.8)"],
     categories: [
-      "#4a90e2", "#7ed321", "#f5a623", "#bd10e0", "#50e3c2", "#e2b84a", "#9013fe", "#e01083", "#008cff",
+      "#4a90e2",
+      "#7ed321",
+      "#f5a623",
+      "#bd10e0",
+      "#50e3c2",
+      "#e2b84a",
+      "#9013fe",
+      "#e01083",
+      "#008cff",
     ],
   };
 
-  useEffect(() => {
-    revenuService.setAuthToken(token);
-  }, [token]);
+  // Fonction pour afficher les toasts sans duplication
+  const showToast = useCallback((message, type, key) => {
+    if (toastIds.current[key]) {
+      toast.update(toastIds.current[key], {
+        render: message,
+        type,
+        autoClose: 3000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } else {
+      toastIds.current[key] = toast(message, {
+        type,
+        autoClose: 3000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }
+  }, []);
 
+  // Mise à jour du token pour le service de revenus
+  useEffect(() => {
+    revenuService.setAuthToken();
+  }, []);
+
+  // Récupérer le userId à partir du token
   useEffect(() => {
     async function fetchUserId() {
-      if (!token) {
-        toast.error("Veuillez vous connecter pour accéder aux revenus");
-        navigate("/login");
-        return;
-      }
+      if (!isAuthenticated) return; // ⚡ ne pas naviguer ici
       try {
         const id = await getUserIdForToken();
-        if (!id) {
-          throw new Error("Impossible de récupérer l'ID utilisateur");
-        }
+        if (!id) throw new Error("Impossible de récupérer l'ID utilisateur");
       } catch (error) {
-        console.error("Erreur lors de la récupération de l'userId:", error);
-        toast.error("Erreur d'authentification. Veuillez vous reconnecter.");
+        console.error(error);
+        showToast("Erreur d'authentification. Veuillez vous reconnecter.", "error", "auth_error");
         navigate("/login");
       }
     }
     fetchUserId();
-  }, [token, navigate]);
+  }, [isAuthenticated, navigate, showToast]);
 
+  // Fonction pour récupérer les données des revenus
   const fetchRevenus = useCallback(async () => {
-    if (!token) {
-      toast.error("Veuillez vous connecter pour accéder aux revenus");
+    if (!isAuthenticated) {
+      showToast("Veuillez vous connecter pour accéder aux revenus", "error", "auth_login");
       navigate("/login");
       return;
     }
 
     setLoading(true);
     try {
-      const eventId = await getEventIdByEmail(token);
+      const eventId = await getEventIdByEmail();
       if (!eventId?.eventId) {
         throw new Error("ID d'événement non trouvé");
       }
@@ -134,12 +165,12 @@ const RevenuPage = () => {
       const data = await revenuService.getOrdersByEvent(eventId.eventId);
 
       if (!Array.isArray(data) || data.length === 0) {
-        toast.warn("Aucune commande trouvée pour cet événement");
         setRevenus([]);
         setTotalRevenue(0);
         setTotalPending(0);
         setTotalRefunded(0);
         setCategoryBreakdown({});
+        setNoOrders(true);
         setTimeSeriesData([]);
         setLoading(false);
         return;
@@ -151,7 +182,9 @@ const RevenuPage = () => {
         email: order.email || "-",
         total: parseFloat(order.total || 0).toFixed(2),
         amountPaid:
-          order.paymentStatus === "paid" ? parseFloat(order.total || 0).toFixed(2) : "0.00",
+          order.paymentStatus === "paid"
+            ? parseFloat(order.total || 0).toFixed(2)
+            : "0.00",
         paymentStatus:
           order.paymentStatus === "paid"
             ? "Payé"
@@ -212,17 +245,17 @@ const RevenuPage = () => {
       setCategoryBreakdown(categories);
       setTimeSeriesData(timeSeriesArray);
     } catch (error) {
-      console.error("Erreur lors de la récupération des revenus:", error.response?.data);
+      console.error(error);
       if (error.message.includes("Unauthorized")) {
-        toast.error("Session expirée. Veuillez vous reconnecter.");
+        showToast("Session expirée. Veuillez vous reconnecter.", "error", "session_expired");
         navigate("/login");
       } else {
-        toast.error(error.message || "Erreur lors du chargement des données");
+        showToast(error.message || "Erreur lors du chargement des données", "error", "data_load_error");
       }
     } finally {
       setLoading(false);
     }
-  }, [token, navigate]);
+  }, [isAuthenticated, navigate, showToast]);
 
   const handleRefund = useCallback(
     async (id) => {
@@ -247,7 +280,7 @@ const RevenuPage = () => {
           socket.emit("orderRefunded", { id, paymentStatus: "refunded" });
           socket.emit("orderDeleted", { id });
         }
-        toast.success("Commande remboursée et supprimée avec succès");
+        showToast("Commande remboursée et supprimée avec succès", "success", `refund_${id}`);
         await fetchRevenus();
       } catch (error) {
         console.error("Erreur lors du remboursement:", error.response?.data);
@@ -259,13 +292,13 @@ const RevenuPage = () => {
             : error.message.includes("payées peuvent être remboursées")
             ? "Seules les commandes payées peuvent être remboursées."
             : error.message || "Erreur lors du remboursement";
-        toast.error(errorMessage);
+        showToast(errorMessage, "error", `refund_error_${id}`);
         if (error.message.includes("Unauthorized")) navigate("/login");
       } finally {
         setIsRefunding((prev) => ({ ...prev, [id]: false }));
       }
     },
-    [socket, navigate, fetchRevenus]
+    [socket, navigate, fetchRevenus, showToast]
   );
 
   const handleRefundDebounced = useMemo(() => debounce(handleRefund, 300), [handleRefund]);
@@ -322,8 +355,8 @@ const RevenuPage = () => {
     link.download = `revenus_${new Date().toISOString()}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-    toast.success("Exportation CSV réussie");
-  }, [filteredRevenus]);
+    showToast("Exportation CSV réussie", "success", "export_csv");
+  }, [filteredRevenus, showToast]);
 
   const exportToPDF = useCallback(() => {
     const doc = new jsPDF();
@@ -369,8 +402,8 @@ const RevenuPage = () => {
     });
 
     doc.save(`revenus_${new Date().toISOString()}.pdf`);
-    toast.success("Exportation PDF réussie");
-  }, [filteredRevenus, totalRevenue, totalPending, totalRefunded, categoryBreakdown]);
+    showToast("Exportation PDF réussie", "success", "export_pdf");
+  }, [filteredRevenus, totalRevenue, totalPending, totalRefunded, categoryBreakdown, showToast]);
 
   const generateInvoicePDF = (order) => {
     console.log("Données de la commande :", order);
@@ -388,7 +421,11 @@ const RevenuPage = () => {
     doc.setFont("Helvetica", "bold");
     doc.text("FACTURE", 20, 20);
     doc.setFontSize(12);
-    doc.text(`Numéro de facture: FACT-${new Date().getFullYear()}-${String(order.id).padStart(5, "0")}`, 20, 30);
+    doc.text(
+      `Numéro de facture: FACT-${new Date().getFullYear()}-${String(order.id).padStart(5, "0")}`,
+      20,
+      30
+    );
 
     doc.setFontSize(12);
     doc.setFont("Helvetica", "bold");
@@ -445,12 +482,9 @@ const RevenuPage = () => {
       didDrawPage: (data) => {
         doc.setFontSize(8);
         doc.setTextColor(...textColor);
-        doc.text(
-          `Page ${data.pageNumber}`,
-          190,
-          doc.internal.pageSize.height - 10,
-          { align: "right" }
-        );
+        doc.text(`Page ${data.pageNumber}`, 190, doc.internal.pageSize.height - 10, {
+          align: "right",
+        });
       },
     });
 
@@ -466,13 +500,15 @@ const RevenuPage = () => {
     doc.text(`Total de la commande: €${parseFloat(order.total || 0).toFixed(2)}`, 20, finalY + 10);
     doc.text(`Montant payé: €${parseFloat(order.amountPaid || 0).toFixed(2)}`, 20, finalY + 16);
     doc.text(
-      `Reste à payer: €${(parseFloat(order.total || 0) - parseFloat(order.amountPaid || 0)).toFixed(2)}`,
+      `Reste à payer: €${(parseFloat(order.total || 0) - parseFloat(order.amountPaid || 0)).toFixed(
+        2
+      )}`,
       20,
       finalY + 22
     );
 
     doc.save(`facture_commande_${String(order.id)}.pdf`);
-    toast.success("Facture PDF générée avec succès");
+    showToast("Facture PDF générée avec succès", "success", `invoice_${order.id}`);
   };
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -502,13 +538,15 @@ const RevenuPage = () => {
     const data = Object.values(categoryBreakdown);
     return {
       labels,
-      datasets: [{
-        data: data,
-        backgroundColor: COLORS.categories.slice(0, labels.length),
-        borderColor: "#ffffff",
-        borderWidth: 2,
-        hoverOffset: 10,
-      }],
+      datasets: [
+        {
+          data: data,
+          backgroundColor: COLORS.categories.slice(0, labels.length),
+          borderColor: "#ffffff",
+          borderWidth: 2,
+          hoverOffset: 10,
+        },
+      ],
     };
   }, [categoryBreakdown]);
 
@@ -518,11 +556,7 @@ const RevenuPage = () => {
       datasets: [
         {
           label: "Revenus",
-          data: [
-            parseFloat(totalRevenue),
-            parseFloat(totalPending),
-            parseFloat(totalRefunded),
-          ],
+          data: [parseFloat(totalRevenue), parseFloat(totalPending), parseFloat(totalRefunded)],
           backgroundColor: (context) => {
             const ctx = context.chart.ctx;
             const chartArea = context.chart.chartArea;
@@ -539,7 +573,7 @@ const RevenuPage = () => {
             const colors = [
               COLORS.paid.map((c) => c.replace("0.8", "0.9")),
               COLORS.pending.map((c) => c.replace("0.8", "0.9")),
-              COLORS.refunded.map((c) => c.replace("0.8", "0.9"))
+              COLORS.refunded.map((c) => c.replace("0.8", "0.9")),
             ];
             return createGradient(ctx, chartArea, colors[context.dataIndex]);
           },
@@ -640,33 +674,41 @@ const RevenuPage = () => {
     []
   );
 
+  const fetchRevenusMemo = useCallback(() => {
+    fetchRevenus();
+  }, [fetchRevenus]);
+
   useEffect(() => {
-    if (!token) {
+    if (isLoading) return;
+    if (!isAuthenticated) {
       navigate("/login");
       return;
     }
 
-    fetchRevenus();
+    fetchRevenusMemo();
+  }, [isLoading, isAuthenticated, navigate, fetchRevenusMemo]);
 
-    if (!socket) {
-      return;
-    }
+  useEffect(() => {
+    if (!socket) return;
 
-    const socketCleanup = () => {
-      socket.off("connect");
-      socket.off("connect_error");
-      socket.off("orderDeleted");
-      socket.off("orderRefunded");
+    const onConnect = () => showToast("Connecté au serveur en temps réel", "info", "socket_connect");
+    const onConnectError = () =>
+      showToast("Erreur de connexion au serveur en temps réel", "error", "socket_error");
+
+    socket.on("connect", onConnect);
+    socket.on("connect_error", onConnectError);
+    socket.on("orderDeleted", fetchRevenusMemo);
+    socket.on("orderRefunded", fetchRevenusMemo);
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("connect_error", onConnectError);
+      socket.off("orderDeleted", fetchRevenusMemo);
+      socket.off("orderRefunded", fetchRevenusMemo);
     };
+  }, [socket, fetchRevenusMemo, showToast]);
 
-    socket.on("connect", () => toast.info("Connecté au serveur en temps réel"));
-    socket.on("connect_error", () => toast.error("Erreur de connexion au serveur en temps réel"));
-    socket.on("orderDeleted", fetchRevenus);
-    socket.on("orderRefunded", fetchRevenus);
-
-    return socketCleanup;
-  }, [token, socket, navigate, fetchRevenus]);
-
+  // Composant pour afficher le statut avec une pastille de couleur
   const StatusPill = ({ status }) => {
     let colorClass, text;
     switch (status) {
@@ -687,12 +729,15 @@ const RevenuPage = () => {
         text = "Inconnu";
     }
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${colorClass}`}>
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${colorClass}`}
+      >
         {text}
       </span>
     );
   };
 
+  // --- Rendu du composant ---
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -740,16 +785,17 @@ const RevenuPage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1, duration: 0.4, ease: "easeOut" }}
-              whileHover={{ scale: 1.03, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" }}
+              whileHover={{
+                scale: 1.03,
+                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+              }}
               className={`${stat.color} rounded-3xl p-6 shadow-lg transition-all duration-300 border border-gray-200 flex items-center justify-between`}
             >
               <div>
                 <p className="text-sm font-medium text-gray-600">{stat.title}</p>
                 <h2 className="text-3xl font-extrabold text-gray-900 mt-1">{stat.value}</h2>
               </div>
-              <div className="p-3 rounded-full bg-white/60 backdrop-blur-sm">
-                {stat.icon}
-              </div>
+              <div className="p-3 rounded-full bg-white/60 backdrop-blur-sm">{stat.icon}</div>
             </motion.div>
           ))}
         </div>
@@ -839,7 +885,10 @@ const RevenuPage = () => {
           >
             <h3 className="text-xl font-semibold text-gray-900 mb-4">Répartition par Catégorie</h3>
             <div className="h-80 relative flex items-center justify-center">
-              <Pie data={pieChartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }} />
+              <Pie
+                data={pieChartData}
+                options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } }}
+              />
             </div>
           </motion.div>
           <motion.div
@@ -850,9 +899,7 @@ const RevenuPage = () => {
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-semibold text-gray-900">
-                {chartType === "bar"
-                  ? "Répartition des Revenus"
-                  : "Revenus par Période"}
+                {chartType === "bar" ? "Répartition des Revenus" : "Revenus par Période"}
               </h3>
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -865,11 +912,7 @@ const RevenuPage = () => {
               </motion.button>
             </div>
             <div className="h-80 relative">
-              {chartType === "bar" ? (
-                <Bar data={barChartData} options={chartOptions} />
-              ) : (
-                <Line data={timeSeriesChartData} options={chartOptions} />
-              )}
+              {chartType === "bar" ? <Bar data={barChartData} options={chartOptions} /> : <Line data={timeSeriesChartData} options={chartOptions} />}
             </div>
           </motion.div>
 
@@ -884,14 +927,30 @@ const RevenuPage = () => {
               <table className="min-w-full text-sm text-left text-gray-600">
                 <thead className="text-xs uppercase bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700">
                   <tr>
-                    <th scope="col" className="px-6 py-3">ID</th>
-                    <th scope="col" className="px-6 py-3">Client</th>
-                    <th scope="col" className="px-6 py-3">Email</th>
-                    <th scope="col" className="px-6 py-3 text-right">Total (€)</th>
-                    <th scope="col" className="px-6 py-3 text-right">Payé (€)</th>
-                    <th scope="col" className="px-6 py-3">Statut</th>
-                    <th scope="col" className="px-6 py-3">Date</th>
-                    <th scope="col" className="px-6 py-3">Actions</th>
+                    <th scope="col" className="px-6 py-3">
+                      ID
+                    </th>
+                    <th scope="col" className="px-6 py-3">
+                      Client
+                    </th>
+                    <th scope="col" className="px-6 py-3">
+                      Email
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right">
+                      Total (€)
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right">
+                      Payé (€)
+                    </th>
+                    <th scope="col" className="px-6 py-3">
+                      Statut
+                    </th>
+                    <th scope="col" className="px-6 py-3">
+                      Date
+                    </th>
+                    <th scope="col" className="px-6 py-3">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -912,12 +971,12 @@ const RevenuPage = () => {
                               r="10"
                               stroke="currentColor"
                               strokeWidth="4"
-                            />
+                            ></circle>
                             <path
                               className="opacity-75"
                               fill="currentColor"
                               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            />
+                            ></path>
                           </svg>
                           Chargement des données...
                         </div>
@@ -952,9 +1011,25 @@ const RevenuPage = () => {
                                 aria-label={`Rembourser la commande ${rev.id}`}
                               >
                                 {isRefunding[rev.id] ? (
-                                  <svg className="animate-spin h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  <svg
+                                    className="animate-spin h-5 w-5 text-red-600"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    ></path>
                                   </svg>
                                 ) : (
                                   <FaUndo className="w-5 h-5" />
@@ -999,7 +1074,25 @@ const RevenuPage = () => {
           </motion.div>
         </div>
       </div>
-      <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={3000}
+        hideProgressBar
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        transition={Slide}
+        className="text-sm"
+        toastStyle={{
+          borderRadius: "8px",
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          fontFamily: "'Inter', sans-serif",
+        }}
+      />
+      {noOrders && <p className="text-gray-500">Aucune commande trouvée pour cet événement.</p>}
     </motion.div>
   );
 };

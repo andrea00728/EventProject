@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { url } from '../../api/url';
 
 // Fix Leaflet marker icon - Important pour que les marqueurs s'affichent
 delete L.Icon.Default.prototype._getIconUrl;
@@ -44,7 +45,7 @@ const MapTestComponent = () => {
   const fetchLocations = async () => {
     // Votre code fetchLocations est parfait, pas besoin de le modifier
     try {
-      const response = await fetch('http://localhost:3000/locations');
+      const response = await fetch(`${url}/locations`);
       const data = await response.json();
       console.log('Localisations récupérées:', data);
       setLocations(data);
@@ -62,11 +63,32 @@ const MapTestComponent = () => {
     
     // ... votre code de géocodage ...
 
+<<<<<<< HEAD
     if (mapInstanceRef.current && data.lat && data.lon) {
       mapInstanceRef.current.setView([data.lat, data.lon], 13);
       L.marker([data.lat, data.lon]).addTo(mapInstanceRef.current)
         .bindPopup(data.displayName)
         .openPopup();
+=======
+    try {
+      const response = await fetch(`${url}/locations/geocode?q=${encodeURIComponent(searchQuery)}`);
+      console.log('URL appelée:', `${url}/locations/geocode?q=${encodeURIComponent(searchQuery)}`);
+      const data = await response.json();
+      console.log('Réponse reçue:', data);
+      if (data.error) throw new Error(data.message || data.error);
+      if (!data.lat || !data.lon) throw new Error('Coordonnées invalides');
+      setResult(data);
+
+      if (map) {
+        map.setView([data.lat, data.lon], 13);
+        L.marker([data.lat, data.lon]).addTo(map)
+          .bindPopup(data.displayName)
+          .openPopup();
+      }
+    } catch (error) {
+      setResult({ error: `Erreur : ${error.message}` });
+      console.error('Erreur détaillée:', error);
+>>>>>>> origin/lioka
     }
   };
 
@@ -79,11 +101,38 @@ const MapTestComponent = () => {
     
     // ... votre code de sauvegarde ...
 
+<<<<<<< HEAD
     if (mapInstanceRef.current && data.location) {
       mapInstanceRef.current.setView([data.location.latitude, data.location.longitude], 13);
       L.marker([data.location.latitude, data.location.longitude]).addTo(mapInstanceRef.current)
         .bindPopup(data.location.nom)
         .openPopup();
+=======
+    try {
+      const response = await fetch(`${url}/locations/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: searchQuery }),
+      });
+      console.log('URL appelée:', `${url}/locations/save`, 'Body:', { query: searchQuery });
+      const data = await response.json();
+      console.log('Réponse reçue:', data);
+      if (data.error) throw new Error(data.message || data.error);
+      setResult(data);
+
+      if (map && data.location) {
+        map.setView([data.location.latitude, data.location.longitude], 13);
+        L.marker([data.location.latitude, data.location.longitude]).addTo(map)
+          .bindPopup(data.location.nom)
+          .openPopup();
+      }
+
+      // Rafraîchir la liste des localisations après sauvegarde
+      fetchLocations();
+    } catch (error) {
+      setResult({ error: `Erreur : ${error.message}` });
+      console.error('Erreur détaillée:', error);
+>>>>>>> origin/lioka
     }
     
     fetchLocations();

@@ -17,6 +17,7 @@ import {
   FaSun,
   FaUser,
   FaPaperPlane,
+  // FaUserCircle
 } from "react-icons/fa";
 import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { FiLayout } from "react-icons/fi";
@@ -39,9 +40,8 @@ import { fr } from "date-fns/locale";
 import io from "socket.io-client";
 import { useSocket } from "../socket";
 import { motion, AnimatePresence } from "framer-motion";
-
 export default function AdminLayout() {
-  const { token, role, isLoading, setToken, setUser, user } = useStateContext();
+  const { isAuthenticated, role, isLoading, setUser, user, token } = useStateContext();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -50,6 +50,7 @@ export default function AdminLayout() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null); // 'notifications', 'messages', null
 
+  const [messages,setMessages]=useState([]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -64,7 +65,7 @@ export default function AdminLayout() {
 
   if (isLoading) return <div>Chargement ...</div>;
 
-  if (!token) return <Navigate to="/pagepublic" replace />;
+  if (!isAuthenticated) return <Navigate to="/pagepublic" replace />;
 
   switch (role) {
     case "admin":
@@ -87,7 +88,6 @@ export default function AdminLayout() {
 
   const confirmLogout = () => {
     console.log("Déconnexion Confirmée");
-    setToken(null);
     setUser(null);
     logout();
     setShowLogoutModal(false);
@@ -320,75 +320,75 @@ export default function AdminLayout() {
   };
 
   const NotificationModal = ({ show, onClose, notification, darkMode }) => {
-  // Si on n'a pas de notification ou si le modal est fermé, ne rien afficher
-  if (!show || !notification) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        className="fixed inset-0 bg-gray-900 bg-opacity-30 z-[60] flex items-center justify-center p-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-      >
+    // Si on n'a pas de notification ou si le modal est fermé, ne rien afficher
+    if (!show || !notification) return null;
+  
+    return (
+      <AnimatePresence>
         <motion.div
-          className={`w-full max-w-md rounded-lg shadow-xl ${
-            darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-          } flex flex-col`}
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1, transition: { duration: 0.25 } }}
-          exit={{ scale: 0.8, opacity: 0, transition: { duration: 0.2 } }}
+          className="fixed inset-0 bg-gray-900 bg-opacity-30 z-[60] flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
         >
-          {/* Header avec image */}
-          <div
-            className={`p-4 border-b flex items-center justify-between ${
-              darkMode ? "border-gray-700" : "border-gray-200"
-            }`}
+          <motion.div
+            className={`w-full max-w-md rounded-lg shadow-xl ${
+              darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+            } flex flex-col`}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1, transition: { duration: 0.25 } }}
+            exit={{ scale: 0.8, opacity: 0, transition: { duration: 0.2 } }}
           >
-            <div className="flex items-center gap-3">
-              {notification.organizerImage && (
-                <img
-                  src={notification.organizerImage}
-                  alt="Organisateur"
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              )}
-              <h3 className="font-semibold">{notification.title || "Notification"}</h3>
+            {/* Header avec image */}
+            <div
+              className={`p-4 border-b flex items-center justify-between ${
+                darkMode ? "border-gray-700" : "border-gray-200"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {notification.organizerImage && (
+                  <img
+                    src={notification.organizerImage}
+                    alt="Organisateur"
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                )}
+                <h3 className="font-semibold">{notification.title || "Notification"}</h3>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Contenu */}
-          <div className="p-4 space-y-2">
-            <p className="text-sm">{notification.message}</p>
-            {notification.time && (
-              <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-                {notification.time}
-              </p>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="p-4 border-t flex justify-end">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              Fermer
-            </button>
-          </div>
+  
+            {/* Contenu */}
+            <div className="p-4 space-y-2">
+              <p className="text-sm">{notification.message}</p>
+              {notification.time && (
+                <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  {notification.time}
+                </p>
+              )}
+            </div>
+  
+            {/* Footer */}
+            <div className="p-4 border-t flex justify-end">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
+      </AnimatePresence>
+    );
+  };
 
-
+  // ============= MODIFIÉ: AdminHeader avec modal =============
   const AdminHeader = ({ currentPageName, darkMode }) => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [showMessages, setShowMessages] = useState(false);
@@ -435,11 +435,6 @@ export default function AdminLayout() {
         try {
           const response = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
           );
           if (!response.ok)
             throw new Error("Erreur lors de la récupération des messages");
@@ -488,6 +483,40 @@ export default function AdminLayout() {
         setNotifications([]);
       }
     };
+
+      async function connectSocket() {
+        const userId = await getUserIdForToken();
+        if (!userId) return;
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
+        );
+        if (!response.ok)
+          throw new Error("Erreur lors de la récupération des messages");
+        const data = await response.json();
+        try {
+
+          if (!socket) return; 
+
+          socket.on("notificationMessageAdmin", (value) => {
+            console.log("nana ", value);
+            const formatted1 = data.map((msg) => ({
+              ...msg,
+              from: `${msg.firstName} ${msg.lastName}`,
+              text: msg.message,
+              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+            }));
+            const formatted2 = value.data.map((msg) => ({
+              ...msg,
+              from: `${msg.firstName} ${msg.lastName}`,
+              text: msg.message,
+              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+            }));
+            setMessages([...formatted1, ...formatted2]);
+          });
+        } catch (error) {
+          console.error("Erreur de connexion au socket :", error);
+        }
+      }
 
       fetchNotifications();
       fetchMessages();

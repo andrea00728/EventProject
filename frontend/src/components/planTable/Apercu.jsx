@@ -5,7 +5,7 @@ import { Tabs, Tab } from "@mui/material";
 import { useStateContext } from "../../context/ContextProvider";
 
 export default function Apercu() {
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
@@ -13,14 +13,14 @@ export default function Apercu() {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      if (!token) {
+      if (!isAuthenticated) {
         setEventError("Veuillez vous connecter pour voir vos événements.");
         setIsLoadingEvents(false);
         return;
       }
       setIsLoadingEvents(true);
       try {
-        const data = await getMyEvents(token);
+        const data = await getMyEvents();
         console.log("Events Response:", data);
         if (Array.isArray(data)) {
           setEvents(data);
@@ -40,7 +40,7 @@ export default function Apercu() {
       }
     };
     fetchEvents();
-  }, [token]);
+  }, [isAuthenticated]);
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
