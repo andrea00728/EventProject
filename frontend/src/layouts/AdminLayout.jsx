@@ -802,33 +802,38 @@ export default function AdminLayout() {
             </Dropdown>
 
             <div ref={profileRef} className="relative">
-              <button
-                onClick={() => setShowProfile(!showProfile)}
-                className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
-                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                }`}
-                aria-label="Menu profil"
-              >
-                <div className="relative">
-                  {user?.photo ? (
-                    <img
-                      src={user.photo}
-                      alt="Profile"
-                      className="w-8 rounded-[50%]"
-                    />
-                  ) : (
-                    <FaUser className="w-5 h-5" />
-                  )}
-                </div>
-                <span className="hidden sm:inline text-sm font-medium">
-                  {user?.name || "Admin"}
-                </span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-200 ${
-                    showProfile ? "rotate-180" : ""
+                <button
+                  onClick={() => setShowProfile(!showProfile)}
+                  className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
+                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
                   }`}
-                />
-              </button>
+                  aria-label="Menu profil"
+                >
+                  <div className="relative">
+                    {user?.photo ? (
+                      <img
+                        src={
+                          user.photo.startsWith('data:') 
+                            ? user.photo 
+                            : `data:image/jpeg;base64,${user.photo}`
+                        }
+                        alt="Profile"
+                        className="w-10 h-10 rounded-[50%] object-cover"
+                      />
+                    ) : (
+                      <FaUser className="w-5 h-5" />
+                    )}
+                  </div>
+                  <span className="hidden sm:inline text-sm font-medium">
+                    {user?.name || "Admin"}
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-200 ${
+                      showProfile ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
               {showProfile && (
                 <div
                   className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
