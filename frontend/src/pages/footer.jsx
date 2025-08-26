@@ -8,6 +8,7 @@ import Support from "../util/Support";
 import { FaDatabase, FaTable, FaShare } from 'react-icons/fa';
 import { MdOutlineSecurity } from "react-icons/md";
 import { LuUserCheck } from "react-icons/lu";
+import LogoRG from "../assets/LogoRapexGroup.png"
 
 // Données des sections de la politique de confidentialité
 const SECTIONS_DATA = [
@@ -237,13 +238,13 @@ function Footer() {
           <div className="border-t border-white/10 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-[#FB9E3A] to-orange-400 rounded-xl flex items-center justify-center">
+                <div className="flex items-center gap-2 w-30 h-auto">
+                  {/* <div className="w-8 h-8 bg-gradient-to-br from-[#FB9E3A] to-orange-400 rounded-xl flex items-center justify-center">
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                  </div>
-                  <span className="text-xl font-black text-white">Rapex group</span>
+                  </div> */}
+                  <span className="text-xl font-black text-white"><img src={LogoRG} alt="Logo" className="w-30 h-auto object-cover" /></span>
                 </div>
                 <p className="text-slate-400 text-sm">© 2025. Tous droits réservés</p>
               </div>
