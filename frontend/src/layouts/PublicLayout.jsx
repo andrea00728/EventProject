@@ -8,7 +8,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import Logo from "../assets/LogoMaster.png";
+import Logo from "../assets/LogoAmsterTable.png";
 import { FaUser } from "react-icons/fa";
 import Profil from "../util/profils";
 import { AuthModal } from "../components/Modal/authModal";
@@ -144,8 +144,8 @@ export default function PublicLayout() {
       <header className="w-screen bg-white/90 backdrop-blur-xl shadow border-b fixed top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
-              <img src={Logo} alt="Logo" className="w-10 h-10" />
+            <div className="w-20 h-20 bg-blue-100/1 rounded-2xl flex items-center justify-center">
+              <img src={Logo} alt="Logo" className="w-20 h-auto object-cover" />
             </div>
             <div className="hidden sm:block">
               <h1 className="text-2xl font-bold text-blue-700">Master Table</h1>
