@@ -56,10 +56,12 @@ const LoginPage = () => {
   const handleLogin = async (provider) => {
     setErrorMessage(null);
     try {
-      provider === "Google"
+      const res = provider === "Google"
         ? await signInWithGoogle()
         : await signInWithFacebook();
       // ⚠️ Pas de mise à jour directe ici → car getRedirectResult prendra le relais
+      setUser(res.user);
+      setIsAuthenticated(true);
       navigate("/AdminAccueil");
     } catch (error) {
       console.error("Erreur lors de la connexion :", error);
