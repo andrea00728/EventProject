@@ -1,31 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { url } from '../../api/url';
+
+// Fix Leaflet marker icon - Important pour que les marqueurs s'affichent
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+});
 
 const MapTestComponent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [result, setResult] = useState(null);
   const [locations, setLocations] = useState([]);
-  const [map, setMap] = useState(null);
+
+  // Utiliser useRef pour obtenir une référence au conteneur de la carte
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null); // Pour stocker l'instance de la carte
 
   useEffect(() => {
-    const initialMap = L.map('map').setView([48.8566, 2.3522], 4);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-    }).addTo(initialMap);
-    setMap(initialMap);
+    // S'assurer que le conteneur de la carte existe
+    if (mapRef.current && !mapInstanceRef.current) {
+      const initialMap = L.map(mapRef.current).setView([48.8566, 2.3522], 4);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+      }).addTo(initialMap);
+      mapInstanceRef.current = initialMap;
+    }
 
     // Charger les localisations au montage du composant
     fetchLocations();
 
     return () => {
-      initialMap.remove();
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
     };
   }, []);
 
   const fetchLocations = async () => {
+    // Votre code fetchLocations est parfait, pas besoin de le modifier
     try {
       const response = await fetch(`${url}/locations`);
       const data = await response.json();
@@ -37,11 +55,15 @@ const MapTestComponent = () => {
   };
 
   const geocodeLocation = async () => {
+    // Votre code geocodeLocation est parfait, avec la nouvelle gestion de la carte
     if (!searchQuery) {
       alert('Veuillez entrer un lieu.');
       return;
     }
+    
+    // ... votre code de géocodage ...
 
+<<<<<<< HEAD
     try {
       const response = await fetch(`${url}/locations/geocode?q=${encodeURIComponent(searchQuery)}`);
       console.log('URL appelée:', `${url}/locations/geocode?q=${encodeURIComponent(searchQuery)}`);
@@ -60,15 +82,26 @@ const MapTestComponent = () => {
     } catch (error) {
       setResult({ error: `Erreur : ${error.message}` });
       console.error('Erreur détaillée:', error);
+=======
+    if (mapInstanceRef.current && data.lat && data.lon) {
+      mapInstanceRef.current.setView([data.lat, data.lon], 13);
+      L.marker([data.lat, data.lon]).addTo(mapInstanceRef.current)
+        .bindPopup(data.displayName)
+        .openPopup();
+>>>>>>> origin/dev_stephan
     }
   };
 
   const saveLocation = async () => {
+    // Votre code saveLocation est parfait, avec la nouvelle gestion de la carte
     if (!searchQuery) {
       alert('Veuillez entrer un lieu.');
       return;
     }
+    
+    // ... votre code de sauvegarde ...
 
+<<<<<<< HEAD
     try {
       const response = await fetch(`${url}/locations/save`, {
         method: 'POST',
@@ -93,7 +126,16 @@ const MapTestComponent = () => {
     } catch (error) {
       setResult({ error: `Erreur : ${error.message}` });
       console.error('Erreur détaillée:', error);
+=======
+    if (mapInstanceRef.current && data.location) {
+      mapInstanceRef.current.setView([data.location.latitude, data.location.longitude], 13);
+      L.marker([data.location.latitude, data.location.longitude]).addTo(mapInstanceRef.current)
+        .bindPopup(data.location.nom)
+        .openPopup();
+>>>>>>> origin/dev_stephan
     }
+    
+    fetchLocations();
   };
 
   return (
@@ -122,7 +164,8 @@ const MapTestComponent = () => {
           ))}
         </ul>
       </div>
-      <div id="map" style={{ height: '400px', width: '100%', marginTop: '20px' }}></div>
+      {/* Utiliser la référence ref= pour lier la div au hook useRef */}
+      <div ref={mapRef} id="map" style={{ height: '400px', width: '100%', marginTop: '20px' }}></div>
     </div>
   );
 };
