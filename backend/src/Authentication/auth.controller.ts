@@ -91,7 +91,6 @@ async googleAuthRedirect(@Req() req, @Res() res) {
 
   // Redirige simplement vers la page de rappel sans paramètres
   const redirectUrl = `http://localhost:5173/callback`;
-
   return res.redirect(redirectUrl);
 }
 

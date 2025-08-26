@@ -16,7 +16,6 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
   const positions = [];
   const chairSize = 30; // Taille approximative d'une chaise
   const minDistanceFromTable = 0; // Distance minimale entre la chaise et la table
-
   if (type === "ronde" || type === "ovale") {
     // Pour les tables rondes/ovales
     const centerX = tableWidth / 2;
@@ -40,7 +39,6 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
     // Pour les tables rectangulaires/carrées
     const perimetre = 2 * (tableWidth + tableHeight);
     const spacingBetweenChairs = perimetre / capacity;
-
     // Calculer combien de chaises par côté en fonction de l'espacement uniforme
     const topChairs = Math.round((tableWidth / spacingBetweenChairs));
     const rightChairs = Math.round((tableHeight / spacingBetweenChairs));
@@ -70,7 +68,6 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
         });
       }
     }
-
     // Côté du bas
     if (bottomChairs > 0) {
       const spacing = tableWidth / (bottomChairs + 1);
@@ -81,7 +78,6 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
         });
       }
     }
-
     // Côté gauche
     if (leftChairs > 0) {
       const spacing = tableHeight / (leftChairs + 1);
@@ -93,7 +89,7 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
       }
     }
   }
-
+  
   return positions;
 }
 
@@ -169,7 +165,6 @@ export default function Demo() {
     // Trouver la première chaise libre
     const occupiedChairs = guests.filter(g => g.tableId === table.id).map(g => g.chairIndex);
     let freeChairIndex = -1;
-
     for (let i = 0; i < table.capacite; i++) {
       if (!occupiedChairs.includes(i)) {
         freeChairIndex = i;
@@ -198,15 +193,14 @@ export default function Demo() {
     if (movingGuest) {
       // Mode déplacement - déplacer l'invité vers cette chaise
       const targetGuest = guests.find(g => g.tableId === tableId && g.chairIndex === chairIndex);
-
       if (targetGuest) {
         alert("Cette chaise est déjà occupée!");
         return;
       }
 
-      setGuests(prev =>
-        prev.map(g =>
-          g.id === movingGuest.guestId
+      setGuests(prev => 
+        prev.map(g => 
+          g.id === movingGuest.guestId 
             ? { ...g, tableId, chairIndex }
             : g
         )
@@ -307,7 +301,6 @@ export default function Demo() {
     const tableElement = e.currentTarget;
     const tableRect = tableElement.getBoundingClientRect();
     const dragAreaRect = dragAreaRef.current.getBoundingClientRect();
-
     touchDataRef.current[id] = {
       startX: touch.clientX,
       startY: touch.clientY,
@@ -338,7 +331,6 @@ export default function Demo() {
     // Calculer la nouvelle position basée sur le mouvement du doigt
     const newX = touch.clientX - touchData.dragAreaLeft - touchData.offsetX;
     const newY = touch.clientY - touchData.dragAreaTop - touchData.offsetY;
-
     // Appliquer le snap et les limites
     const maxX = 800 - table.width;
     const maxY = 500 - table.height;
@@ -354,7 +346,6 @@ export default function Demo() {
 
   const handleTouchEnd = (id) => {
     delete touchDataRef.current[id];
-
     setTables((prev) =>
       prev.map((t) =>
         t.id === id ? { ...t, dragging: false } : t
