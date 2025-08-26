@@ -14,8 +14,8 @@ import { ContactMessage } from 'src/entities/ContactMessage';
 import * as bcrypt from 'bcrypt'
 import axios from 'axios';
 import {Request, Response } from 'express';
-import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { Redis  } from 'ioredis';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
 
 
 @Injectable()

@@ -10,6 +10,7 @@ export class PaypalService {
   /**
    * Récupère le token d'accès OAuth2
    */
+  
   private async getAccessToken(): Promise<string> {
     const response = await axios.post(
       `${this.apiUrl}/v1/oauth2/token`,
