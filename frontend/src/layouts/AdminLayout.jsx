@@ -39,7 +39,7 @@ import io from "socket.io-client";
 import { useSocket } from "../socket";
 
 export default function AdminLayout() {
-  const { isAuthenticated, role, isLoading, setUser, user } = useStateContext();
+  const { isAuthenticated, role, isLoading, setUser, user, handleLogout } = useStateContext();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -78,15 +78,16 @@ export default function AdminLayout() {
       return <Navigate to={location.pathname || "/AdminAccueil"} replace />;
   }
 
-  const handleLogout = () => {
+  const handleShowLogout = () => {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = () => {
-    console.log("Déconnexion Confirmée");
+  const confirmLogout = async () => {
     setUser(null);
-    logout();
+    await logout();
+    handleLogout()
     setShowLogoutModal(false);
+    navigate("/pagepublic");
   };
 
   const cancelLogout = () => {
@@ -604,7 +605,7 @@ export default function AdminLayout() {
                       }`}
                     ></div>
                     <button
-                      onClick={handleLogout}
+                      onClick={handleShowLogout}
                       className={`w-full text-left px-3 py-2 text-sm ${
                         darkMode
                           ? "hover:bg-gray-700 text-red-400"
@@ -749,7 +750,7 @@ export default function AdminLayout() {
                 )}
               </button>
               <button
-                onClick={handleLogout}
+                onClick={handleShowLogout}
                 className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 transform ${
                   darkMode
                     ? "text-red-300 hover:bg-gray-700 hover:bg-opacity-50 hover:scale-[1.02]"

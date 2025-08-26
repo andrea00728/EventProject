@@ -39,6 +39,21 @@ export default function PublicLayout() {
 
   const [navItems, setNavItems] = useState(defaultNavItems);
 
+  const roles = ["cuisinier", "accueil", "accueil"];
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log("Token:", isAuthenticated, "User:", user, "Role:", role); // Debug log
+      if (roles.includes(user?.role)) {
+        navigate("/choix-role", { replace: true });
+      } else if (!roles.includes(user?.role) && user?.role !== "organisateur") {
+        navigate("/AdminAccueil", { replace: true });
+      } else {
+        navigate("/pagepublic", { replace: true });
+      }
+    }
+  }, [isAuthenticated, user, role, navigate]);
+
   // Gérer le scroll vers une section de la page
   useEffect(() => {
     if (location.hash) {
@@ -61,7 +76,7 @@ export default function PublicLayout() {
       }
     };
 
-    if (isAuthenticated) {
+    if (isAuthenticated && user?.role === "organisateur") {
       fetchAndSetForfait();
       setConnected(true);
       if (!socket) return;
@@ -88,21 +103,6 @@ export default function PublicLayout() {
       ]);
     }
   }, [forfait, isAuthenticated]);
-
-
-  useEffect(() => {
-  if (isAuthenticated) {
-    console.log("Token:", isAuthenticated, "User:", user, "Role:", role); // Debug log
-    if (user?.role !== "organisateur") {
-      navigate("/choix-role", { replace: true });
-    } else {
-      navigate("/pagepublic", { replace: true });
-    }
-  }
-}, [isAuthenticated, user, role, navigate]);
-
-
-
 
   // Le reste du code...
   const subMenuVariants = {

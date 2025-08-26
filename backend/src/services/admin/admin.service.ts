@@ -6,6 +6,8 @@ import { Admin } from 'src/entities/Admin';
 import admin from 'src/firebase/firebase-admin';
 import { Repository } from 'typeorm';
 import { Response } from 'express';
+import Redis from 'ioredis';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
 
 @Injectable()
 export class AdminService {
@@ -13,6 +15,8 @@ export class AdminService {
     private readonly jwtService: JwtService,
     @InjectRepository(Admin)
     private readonly userRepository: Repository<Admin>,
+    @InjectRedis()
+    private readonly redis:Redis ,
   ) {}
 
   async loginWithFirebaseAndCookie(idToken: string, res: Response) {
@@ -93,6 +97,29 @@ export class AdminService {
       throw new UnauthorizedException(
         'Token Firebase invalide ou autre erreur',
       );
+    }
+  }
+
+  async logout(req: Request, res: Response): Promise<{ message: string }> {
+    try {
+      const jwtCookie = (req as any).cookies['jwt']; // Récupérer le jeton directement du cookie
+      if (!jwtCookie) {
+        throw new Error('Aucun jeton fourni');
+      }
+  
+      await this.jwtService.verifyAsync(jwtCookie, {
+        secret: process.env.JWT_SECRET || 'your-secret-key',
+      });
+  
+      await this.redis.set(`blacklist:${jwtCookie}`, 'true', 'EX', 24 * 60 * 60);
+  
+      // ... Le reste de votre code pour effacer les cookies
+      res.clearCookie('jwt', { /* options */ });
+      res.clearCookie('refresh_token', { /* options */ });
+  
+      return { message: 'Déconnexion réussie' };
+    } catch (error) {
+      throw new Error('Token invalide ou erreur lors de la déconnexion');
     }
   }
 }

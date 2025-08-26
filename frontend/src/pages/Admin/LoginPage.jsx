@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStateContext } from "../../context/ContextProvider";
 import {
@@ -6,37 +6,64 @@ import {
   signInWithFacebook,
 } from "../../services/firebase/authService";
 import { FcGoogle } from "react-icons/fc";
-import { FaFacebook, FaLock } from "react-icons/fa";
+import { FaLock } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { getRedirectResult } from "firebase/auth";
+import { auth } from "../../services/firebase/firebaseConfig";
+import axiosClient from "../../api/axios-client";
 
 const LoginPage = () => {
   const { setUser, setIsAuthenticated, isLoading } = useStateContext();
-
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState(null);
 
+  // 🟢 useEffect pour gérer le retour après redirection Google
+  // useEffect(() => {
+  //   const handleRedirect = async () => {
+  //     try {
+  //       const result = await getRedirectResult(auth);
+
+  //       if (result) {
+  //         const token = await result.user.getIdToken(true);
+
+  //         // Envoi vers ton backend NestJS
+  //         const response = await axiosClient.post(
+  //           `/admin/login/admin`,
+  //           {},
+  //           {
+  //             headers: { Authorization: `Bearer ${token}` },
+  //             withCredentials: true,
+  //           }
+  //         );
+
+  //         // Mise à jour du contexte
+  //         console.log("Réponse du backend :", response.data);
+  //         setUser(response.data.user);
+  //         setIsAuthenticated(true);
+
+  //         navigate("/AdminAccueil");
+  //       }
+  //     } catch (error) {
+  //       console.error("Erreur lors du retour Google :", error);
+  //       setErrorMessage("Erreur de connexion avec Google.");
+  //     }
+  //   };
+
+  //   handleRedirect();
+  // }, [navigate, setUser, setIsAuthenticated]);
+
+  // Bouton pour déclencher le login
   const handleLogin = async (provider) => {
-    setErrorMessage(null); // Réinitialiser l'erreur
+    setErrorMessage(null);
     try {
-      const res =
-        provider === "Google"
-          ? await signInWithGoogle()
-          : await signInWithFacebook();
-
-      // Mise à jour du contexte
-      setUser(res.user);
-      setIsAuthenticated(true);
-
+      provider === "Google"
+        ? await signInWithGoogle()
+        : await signInWithFacebook();
+      // ⚠️ Pas de mise à jour directe ici → car getRedirectResult prendra le relais
       navigate("/AdminAccueil");
     } catch (error) {
       console.error("Erreur lors de la connexion :", error);
-      if (error.response && error.response.status === 401) {
-        setErrorMessage(
-          "Accès non autorisé. Votre compte n'a pas les droits d'admin."
-        );
-      } else {
-        setErrorMessage("Erreur de connexion. Veuillez réessayer.");
-      }
+      setErrorMessage("Erreur de connexion. Veuillez réessayer.");
     }
   };
 
@@ -85,16 +112,6 @@ const LoginPage = () => {
           <FcGoogle size={24} />
           Connexion avec Google
         </motion.button>
-
-        {/* <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => handleLogin("Facebook")}
-          className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white py-3 rounded-xl shadow hover:bg-blue-700 transition"
-        >
-          <FaFacebook size={24} />
-          Connexion avec Facebook
-        </motion.button> */}
       </motion.div>
     </div>
   );

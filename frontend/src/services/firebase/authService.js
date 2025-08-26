@@ -1,6 +1,7 @@
-import { GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, signOut, getAuth, getRedirectResult } from 'firebase/auth';
+import { GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, signOut, getAuth, getRedirectResult, signInWithRedirect } from 'firebase/auth';
 import { auth } from './firebaseConfig';
 import axiosClient from '../../api/axios-client';
+import { url } from '../../api/url';
 
 // Connexion avec Google
 export const signInWithGoogle = async () => {
@@ -19,6 +20,7 @@ export const signInWithGoogle = async () => {
     access_token: response.data.access_token,
   };
 };
+
 
 // Connexion avec Facebook
 export const signInWithFacebook = async () => {
@@ -52,4 +54,8 @@ export const handleRedirectResult = async () => {
 };
 
 // Déconnexion Firebase
-export const logout = () => signOut(auth);
+export const logout = async () => {
+  const res = await axiosClient.post(`/admin/logout`);
+  signOut(auth);
+  return res
+} 

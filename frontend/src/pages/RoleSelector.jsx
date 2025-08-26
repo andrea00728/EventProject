@@ -1,5 +1,7 @@
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useStateContext } from "../context/ContextProvider";
+import { useEffect } from "react";
+import { clearCookiesPage } from "../services/service";
 
 export default function RoleSelector() {
   const { user, setUser } = useStateContext();
@@ -24,7 +26,9 @@ export default function RoleSelector() {
 
   return (
     <div className="flex flex-col items-center gap-6 mt-20 bg-gray-100 rounded-lg w-[50%] mx-auto p-10">
-      <h2 className="text-2xl font-bold text-gray-700">Choisissez votre rôle</h2>
+      <h2 className="text-2xl font-bold text-gray-700">
+        Choisissez votre rôle
+      </h2>
       <div className="flex gap-6">
         <button
           onClick={() => choisirRole(user?.role)}
