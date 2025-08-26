@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { getTablesByEventId, getAvailableSeats, createTable } from "../services/tableService";
-import { getMyEvents } from "../services/evenementServ";
 import { useStateContext } from "../context/ContextProvider";
 import { getMaxCapacity } from "../services/controll_champs/controll_champs";
 
@@ -15,37 +14,17 @@ export default function TableCreation({ eventId, onNext, onBack }) {
   const { isAuthenticated } = useStateContext();
 
   const [tables, setTables] = useState([]);
-  const [events, setEvents] = useState([]);
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [form, setForm] = useState({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: 0 });
+  const [form, setForm] = useState({ capacite: "", type: "ronde", nombre: "", noms: [], eventId });
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
-  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
-  const [eventError, setEventError] = useState(null);
   const [modalTypeOpen, setModalTypeOpen] = useState(false);
   const [selectedType, setSelectedType] = useState("ronde");
 
-  // Charger événements
-  useEffect(() => {
-    const fetchEvents = async () => {
-      setIsLoadingEvents(true);
-      try {
-        const data = await getMyEvents();
-        setEvents(data);
-      } catch (err) {
-        setEventError(err.response?.data?.message || "Impossible de charger les événements");
-      } finally {
-        setIsLoadingEvents(false);
-      }
-    };
-    if (isAuthenticated) fetchEvents();
-  }, [isAuthenticated]);
-
   // Charger les tables existantes
   const loadTables = async () => {
-    if (!selectedEvent?.id || !isAuthenticated) return;
+    if (!eventId || !isAuthenticated) return;
     try {
-      const data = await getTablesByEventId(selectedEvent.id);
+      const data = await getTablesByEventId(eventId);
       const withSeats = await Promise.all(
         data.map(async (t) => {
           const available = await getAvailableSeats(t.id);
@@ -59,12 +38,11 @@ export default function TableCreation({ eventId, onNext, onBack }) {
   };
 
   useEffect(() => {
-    if (selectedEvent) loadTables();
-  }, [selectedEvent, isAuthenticated]);
+    if (eventId) loadTables();
+  }, [eventId, isAuthenticated]);
 
   // Gestion formulaire
-  // const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-    const handleChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
   
     if (name === "capacite") {
@@ -99,21 +77,18 @@ export default function TableCreation({ eventId, onNext, onBack }) {
     const nb = Number(e.target.value);
     setForm(prev => ({ ...prev, nombre: nb, noms: Array(nb).fill("") }));
   };
+
   const handleNomChange = (index, value) => {
     const updatedNoms = [...form.noms];
     updatedNoms[index] = value;
     setForm(prev => ({ ...prev, noms: updatedNoms }));
-  };
-  const selectEvent = (event) => {
-    setSelectedEvent(event);
-    setForm(prev => ({ ...prev, eventId: event.id }));
   };
 
   const handleSubmitTables = async (e) => {
     e.preventDefault();
     setError(null);
     if (!form.eventId) {
-      setError("Veuillez sélectionner un événement");
+      setError("Aucun événement spécifié");
       return;
     }
     try {
@@ -127,10 +102,9 @@ export default function TableCreation({ eventId, onNext, onBack }) {
         await createTable(t);
       }
       setSuccessMessage("Tables créées avec succès");
-      setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: form.eventId });
+      setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId });
       await loadTables();
     } catch (err) {
-      // setError(err.response?.data?.message || "Erreur création tables");
       if(err.response?.data?.message?.includes("capacité maximale")){
         setError(err.response?.data?.message);
       } else {
@@ -148,18 +122,11 @@ export default function TableCreation({ eventId, onNext, onBack }) {
           <div className="flex flex-col">
             <label className="text-gray-700 font-medium mb-2 text-sm">Capacité</label>
             <input type="number" name="capacite" value={form.capacite} onChange={handleChange} min="1" placeholder="Ex: 4" required className="border border-gray-200 rounded-lg px-4 py-3" />
-             {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
           </div>
           <div className="flex flex-col">
             <label className="text-gray-700 font-medium mb-2 text-sm">Nombre de tables</label>
             <input type="number" name="nombre" value={form.nombre} onChange={handleNombreChange} min="1" placeholder="Ex: 4" required className="border border-gray-200 rounded-lg px-4 py-3" />
-          </div>
-          <div className="flex flex-col">
-            <label className="text-gray-700 font-medium mb-2 text-sm">Événement</label>
-            <select className="border border-gray-200 rounded-lg px-4 py-3" value={selectedEvent?.id || ""} onChange={e => selectEvent(events.find(ev => ev.id === Number(e.target.value)))} required>
-              <option value="" disabled>Sélectionner un événement</option>
-              {events.map(ev => <option key={ev.id} value={ev.id}>{ev.nom} ({new Date(ev.date).toLocaleDateString()})</option>)}
-            </select>
           </div>
           <div className="flex flex-col">
             <label className="text-gray-700 font-medium mb-2 text-sm">Type de table</label>

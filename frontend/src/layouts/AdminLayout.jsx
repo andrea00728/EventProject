@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
 import {
   Outlet,
   Link,
@@ -16,7 +17,6 @@ import {
   FaSun,
   FaUser,
   FaPaperPlane,
-  // FaUserCircle
 } from "react-icons/fa";
 import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { FiLayout } from "react-icons/fi";
@@ -29,17 +29,15 @@ import {
 } from "react-icons/md";
 import { useDarkMode } from "../context/DarkModeContext";
 import { useStateContext } from "../context/ContextProvider";
-import Dropdown from "./Dropdown"; // Assurez-vous d'avoir ce composant
-import Modalist from "./modal"; // Importez le nouveau composant Modal
+import Dropdown from "./Dropdown";
+import Modalist from "./modal";
 import LogoutModal from "../pages/Admin/LogoutModal";
 import { logout } from "../services/firebase/authService";
 import { format } from "date-fns";
 import { getUserIdForToken } from "../services/userService";
 import { fr } from "date-fns/locale";
-import io from "socket.io-client";
 import { useSocket } from "../socket";
 import { motion, AnimatePresence } from "framer-motion";
-
 export default function AdminLayout() {
   const { isAuthenticated, role, isLoading, setUser, user, token } = useStateContext();
   const location = useLocation();
@@ -48,7 +46,11 @@ export default function AdminLayout() {
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null); // 'notifications', 'messages', null
+
   const [messages,setMessages]=useState([]);
+
+  console.log("Auth State:", { isLoading, isAuthenticated, role, user });
 
   useEffect(() => {
     const handleEscape = (event) => {
@@ -76,7 +78,6 @@ export default function AdminLayout() {
   }, []);
 
   if (isLoading) return <div>Chargement ...</div>;
-
   if (!isAuthenticated) return <Navigate to="/pagepublic" replace />;
 
   switch (role) {
@@ -183,8 +184,8 @@ export default function AdminLayout() {
           },
           {
             id: 2,
-            text: "Bonjour ! Comment puis-je vous aider ?",
-            sender: "Admin",
+            text: "Bonjour et bienvenue 👋. Merci de nous avoir contactés. Un conseiller prendra en charge votre demande dans les plus brefs délais. En attendant, n’hésitez pas à préciser l’objet de votre message.",
+            sender: "Support Automatique",
             timestamp: new Date(Date.now() - 25 * 60000),
             isAdmin: true,
           },
@@ -193,12 +194,8 @@ export default function AdminLayout() {
     }, [conversation]);
 
     useEffect(() => {
-      scrollToBottom();
-    }, [messages]);
-
-    const scrollToBottom = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
+    }, [messages]);
 
     const handleSendMessage = (e) => {
       e.preventDefault();
@@ -334,7 +331,7 @@ export default function AdminLayout() {
   const NotificationModal = ({ show, onClose, notification, darkMode }) => {
     // Si on n'a pas de notification ou si le modal est fermé, ne rien afficher
     if (!show || !notification) return null;
-
+  
     return (
       <AnimatePresence>
         <motion.div
@@ -374,7 +371,7 @@ export default function AdminLayout() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-
+  
             {/* Contenu */}
             <div className="p-4 space-y-2">
               <p className="text-sm">{notification.message}</p>
@@ -384,7 +381,7 @@ export default function AdminLayout() {
                 </p>
               )}
             </div>
-
+  
             {/* Footer */}
             <div className="p-4 border-t flex justify-end">
               <button
@@ -406,66 +403,45 @@ export default function AdminLayout() {
     const [showMessages, setShowMessages] = useState(false);
     const [showProfile, setShowProfile] = useState(false);
     const [showConversationModal, setShowConversationModal] = useState(false);
+    const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+    const [showMessagesModal, setShowMessagesModal] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [notifications, setNotifications] = useState([]);
-    const { user } = useStateContext();
+    const [messages, setMessages] = useState([]);
+    const { user, token } = useStateContext();
     const socket = useSocket();
     const notifRef = useRef(null);
     const msgRef = useRef(null);
     const profileRef = useRef(null);
     const navigate = useNavigate();
-    const [messages, setMessages] = useState([]);
     const [notifFilter, setNotifFilter] = useState("all");
     const [msgFilter, setMsgFilter] = useState("all");
     const [openDropdown, setOpenDropdown] = useState(null);
     const [showNotificationModal, setShowNotificationModal] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState(null);
 
+    
 
-    // États pour les modaux
-    const [showNotificationsModal, setShowNotificationsModal] = useState(false);
-    const [showMessagesModal, setShowMessagesModal] = useState(false);
-
-    const filteredNotifications = notifications.filter(n => {
+    const filteredNotifications = notifications.filter((n) => {
       if (notifFilter === "all") return true;
       if (notifFilter === "unread") return !n.read;
       return n.read;
     });
 
-    const filteredMessages = messages.filter(m => {
+    const filteredMessages = messages.filter((m) => {
       if (msgFilter === "all") return true;
       if (msgFilter === "unread") return !m.read;
       return m.read;
     });
+
+ 
 
     const handleRedirect = () => {
       navigate("/AdminParametre");
     };
 
     useEffect(() => {
-      const fetchMessages = async () => {
-        try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
-          );
-          if (!response.ok)
-            throw new Error("Erreur lors de la récupération des messages");
-          const data = await response.json();
-
-          const formatted = data.map((msg) => ({
-            ...msg,
-            from: `${msg.firstName} ${msg.lastName}`,
-            text: msg.message,
-            read: msg.read || false,
-          }));
-
-          setMessages(formatted);
-        } catch (error) {
-          console.error("Erreur lors de la récupération des messages :", error);
-          setMessages([]);
-        }
-      };
-
+      // Fetch initial notifications
       const fetchNotifications = async () => {
         try {
           const response = await fetch(
@@ -480,122 +456,178 @@ export default function AdminLayout() {
             throw new Error("Erreur lors de la récupération des notifications");
 
           const data = await response.json();
-
-          // 🔹 Récupère les lus depuis localStorage
-          const readIds = JSON.parse(localStorage.getItem("readNotifications")) || [];
-
-          // 🔹 Marque comme lu dans ton state
-          const merged = data.map((n) =>
-            readIds.includes(n.id) ? { ...n, is_read: true } : n
-          );
-
-          setNotifications(merged);
+          setNotifications(data);
         } catch (error) {
-          console.error("Erreur lors de la récupération des notifications :", error);
+          console.error("Erreur fetchNotifications:", error);
           setNotifications([]);
         }
       };
 
-      async function connectSocket() {
-        const userId = await getUserIdForToken();
-        if (!userId) return;
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
-        );
-        if (!response.ok)
-          throw new Error("Erreur lors de la récupération des messages");
-        const data = await response.json();
+      // Fetch initial messages
+      const fetchMessages = async () => {
         try {
-
-          if (!socket) return; 
-
-          socket.on("notificationMessageAdmin", (value) => {
-            console.log("nana ", value);
-            const formatted1 = data.map((msg) => ({
-              ...msg,
-              from: `${msg.firstName} ${msg.lastName}`,
-              text: msg.message,
-              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
-            }));
-            const formatted2 = value.data.map((msg) => ({
-              ...msg,
-              from: `${msg.firstName} ${msg.lastName}`,
-              text: msg.message,
-              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
-            }));
-            setMessages([...formatted1, ...formatted2]);
-          });
-        } catch (error) {
-          console.error("Erreur de connexion au socket :", error);
-        }
-      }
-
-      fetchNotifications();
-      fetchMessages();
-    }, [token]);
-
-    useEffect(() => {
-      if (socket) {
-        socket.on("connect", () => {
-          console.log("Connecté au socket");
-        });
-
-        socket.on("notificationMessageAdmin", (value) => {
-          console.log("Message reçue :", value);
-          const formatted = value.data.map((msg) => ({
+          const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          if (!response.ok)
+            throw new Error("Erreur lors de la récupération des messages");
+          const data = await response.json();
+          const formatted = data.map((msg) => ({
             ...msg,
             from: `${msg.firstName} ${msg.lastName}`,
             text: msg.message,
             read: msg.read || false,
           }));
-          setMessages([...messages, ...formatted]);
-        });
-      }
+          setMessages(formatted);
+        } catch (error) {
+          console.error("Erreur fetchMessages:", error);
+          setMessages([]);
+        }
+      };
+
+      // Configure socket listeners
+      const setupSocket = async () => {
+        if (!socket) {
+          console.error("Socket non initialisé");
+          return;
+        }
+
+        try {
+          const userId = await getUserIdForToken();
+          if (!userId) {
+            console.error("User ID non trouvé");
+            return;
+          }
+
+          socket.on("connect", () => console.log("Socket connecté"));
+          socket.on("connect_error", (error) =>
+            console.error("Erreur socket:", error)
+          );
+          socket.on("disconnect", () => console.log("Socket déconnecté"));
+
+          socket.on("notifRegister", (notif) => {
+            console.log("NotifRegister reçu:", notif, "Listener ID:", Date.now());
+            setNotifications((prevNotifications) => {
+              // Vérifier si la notification existe déjà pour éviter les doublons
+              const exists = prevNotifications.some(
+                (n) => n.id === (notif.id || Date.now().toString())
+              );
+              if (exists) {
+                console.log("Notification déjà existante, ignorée:", notif);
+                return prevNotifications;
+              }
+              return [
+                {
+                  ...notif,
+                  id: notif.id || Date.now().toString(),
+                  read: false,
+                },
+                ...prevNotifications,
+              ];
+            });
+          });
+
+          socket.on("notificationMessageAdmin", (value) => {
+            console.log("Message reçu:", value);
+            const formatted = Array.isArray(value.data)
+              ? value.data.map((msg) => ({
+                  ...msg,
+                  from: `${msg.firstName} ${msg.lastName}`,
+                  text: msg.message,
+                  read: msg.read || false,
+                }))
+              : [
+                  {
+                    ...value.data,
+                    from: `${value.data.firstName} ${value.data.lastName}`,
+                    text: value.data.message,
+                    read: value.data.read || false,
+                  },
+                ];
+            setMessages((prevMessages) => [...prevMessages, ...formatted]);
+          });
+        } catch (error) {
+          console.error("Erreur setupSocket:", error);
+        }
+      };
+
+      fetchNotifications();
+      fetchMessages();
+      setupSocket();
 
       return () => {
         if (socket) {
-          socket.disconnect();
+          console.log("Nettoyage des listeners socket");
+          socket.off("connect");
+          socket.off("connect_error");
+          socket.off("disconnect");
+          socket.off("notifRegister");
+          socket.off("notificationMessageAdmin");
         }
       };
-    }, [socket]);
+    }, [socket, token]);
 
+    // Handle click outside for dropdowns
     useEffect(() => {
       const handleClickOutside = (event) => {
         if (notifRef.current && !notifRef.current.contains(event.target)) {
           setShowNotifications(false);
+          setOpenDropdown((prev) => (prev === "notifications" ? null : prev));
         }
         if (msgRef.current && !msgRef.current.contains(event.target)) {
           setShowMessages(false);
+          setOpenDropdown((prev) => (prev === "messages" ? null : prev));
         }
         if (profileRef.current && !profileRef.current.contains(event.target)) {
           setShowProfile(false);
         }
       };
 
-      document.removeEventListener("mousedown", handleClickOutside);
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+
     const markAsRead = async (id, type) => {
-      if (type === "message") {
-        setMessages(prev =>
-          prev.map(m => (m.id === id ? { ...m, read: true } : m))
-        );
-        await fetch(`${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ read: true }),
-        });
-      } else if (type === "notification") {
-        setNotifications(prev =>
-          prev.map(n => (n.id === id ? { ...n, read: true } : n))
-        );
-        await fetch(`${import.meta.env.VITE_API_BASE_URL}/notification/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ read: true }),
-        });
+      try {
+        if (type === "message") {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === id ? { ...m, read: true } : m))
+          );
+          await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ read: true }),
+            }
+          );
+        } else if (type === "notification") {
+          setNotifications((prev) =>
+            prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+          );
+          await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/notification/${id}`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ read: true }),
+            }
+          );
+        }
+      } catch (error) {
+        console.error(`Erreur lors du marquage comme lu (${type}):`, error);
       }
     };
 
@@ -606,28 +638,6 @@ export default function AdminLayout() {
       setShowConversationModal(true);
     };
 
-    const handleDeleteMessage = async (id) => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`,
-          {
-            method: "DELETE",
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Erreur lors de la suppression");
-        }
-
-        setMessages((prevMessages) =>
-          prevMessages.filter((msg) => msg.id !== id)
-        );
-      } catch (error) {
-        console.error("Suppression impossible :", error);
-      }
-    };
-    
-    // Logique pour les notifications
     const handleNotificationClick = async (item) => {
       await markAsRead(item.id, "notification");
 
@@ -650,13 +660,37 @@ export default function AdminLayout() {
 
     };
 
-    // Suppression d'une notification
+    const handleDeleteMessage = async (id) => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (!response.ok) throw new Error("Erreur lors de la suppression");
+        setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== id));
+      } catch (error) {
+        console.error("Suppression message impossible:", error);
+      }
+    };
+
     const handleDeleteNotification = async (notificationId) => {
       try {
-        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/notification/${notificationId}`);
-        setNotifications(prev => prev.filter(n => n.id !== notificationId));
-      } catch (err) {
-        console.error("Erreur lors de la suppression :", err);
+        await axios.delete(
+          `${import.meta.env.VITE_API_BASE_URL}/notification/${notificationId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+      } catch (error) {
+        console.error("Erreur lors de la suppression notification:", error);
       }
     };
 
@@ -683,13 +717,15 @@ export default function AdminLayout() {
 
             <Dropdown
               ref={notifRef}
-              show={openDropdown === 'notifications'}
+              show={openDropdown === "notifications"}
               setShow={() =>
-                setOpenDropdown(openDropdown === 'notifications' ? null : 'notifications')
+                setOpenDropdown(
+                  openDropdown === "notifications" ? null : "notifications"
+                )
               }
               icon={<FaBell className="text-lg sm:text-xl" />}
               label="Notifications"
-              count={notifications.filter(n => !n.read).length}
+              count={filteredNotifications.filter((n) => !n.read).length}
               items={filteredNotifications}
               onItemClick={(item) => {
                 handleNotificationClick(item);
@@ -701,35 +737,49 @@ export default function AdminLayout() {
             >
               <div className="flex gap-2 p-2">
                 <button
-                  onClick={() => setNotifFilter('all')}
-                  className={`px-3 py-1 rounded-full ${notifFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                  onClick={() => setNotifFilter("all")}
+                  className={`px-3 py-1 rounded-full ${
+                    notifFilter === "all"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
                 >
                   Tout ({notifications.length})
                 </button>
                 <button
-                  onClick={() => setNotifFilter('unread')}
-                  className={`px-3 py-1 rounded-full ${notifFilter === 'unread' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                  onClick={() => setNotifFilter("unread")}
+                  className={`px-3 py-1 rounded-full ${
+                    notifFilter === "unread"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
                 >
-                  Non lus ({notifications.filter(n => !n.read).length})
+                  Non lus ({notifications.filter((n) => !n.read).length})
                 </button>
                 <button
-                  onClick={() => setNotifFilter('read')}
-                  className={`px-3 py-1 rounded-full ${notifFilter === 'read' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                  onClick={() => setNotifFilter("read")}
+                  className={`px-3 py-1 rounded-full ${
+                    notifFilter === "read"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
                 >
-                  Lus ({notifications.filter(n => n.read).length})
+                  Lus ({notifications.filter((n) => n.read).length})
                 </button>
               </div>
             </Dropdown>
 
             <Dropdown
               ref={msgRef}
-              show={openDropdown === 'messages'}
+              show={openDropdown === "messages"}
               setShow={() =>
-                setOpenDropdown(openDropdown === 'messages' ? null : 'messages')
+                setOpenDropdown(
+                  openDropdown === "messages" ? null : "messages"
+                )
               }
               icon={<FaEnvelope className="text-lg sm:text-xl" />}
               label="Messages"
-              count={messages.filter(m => !m.read).length}
+              count={filteredMessages.filter((m) => !m.read).length}
               items={filteredMessages}
               onItemClick={handleMessageClick}
               onDelete={handleDeleteMessage}
@@ -737,52 +787,71 @@ export default function AdminLayout() {
             >
               <div className="flex gap-2 p-2">
                 <button
-                  onClick={() => setMsgFilter('all')}
-                  className={`px-3 py-1 rounded-full ${msgFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                  onClick={() => setMsgFilter("all")}
+                  className={`px-3 py-1 rounded-full ${
+                    msgFilter === "all"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
                 >
                   Tout ({messages.length})
                 </button>
                 <button
-                  onClick={() => setMsgFilter('unread')}
-                  className={`px-3 py-1 rounded-full ${msgFilter === 'unread' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                  onClick={() => setMsgFilter("unread")}
+                  className={`px-3 py-1 rounded-full ${
+                    msgFilter === "unread"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
                 >
-                  Non lus ({messages.filter(m => !m.read).length})
+                  Non lus ({messages.filter((m) => !m.read).length})
                 </button>
                 <button
-                  onClick={() => setMsgFilter('read')}
-                  className={`px-3 py-1 rounded-full ${msgFilter === 'read' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+                  onClick={() => setMsgFilter("read")}
+                  className={`px-3 py-1 rounded-full ${
+                    msgFilter === "read"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
                 >
-                  Lus ({messages.filter(m => m.read).length})
+                  Lus ({messages.filter((m) => m.read).length})
                 </button>
               </div>
             </Dropdown>
-            
+
             <div ref={profileRef} className="relative">
-              <button
-                onClick={() => setShowProfile(!showProfile)}
-                className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
-                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                }`}
-                aria-label="Menu profil"
-              >
-                <div className="relative">
-                  {(
-                    <img
-                      src={user.photo}
-                      alt=""
-                      className="w-8 rounded-[50%]"
-                    />
-                  ) || <FaUser className="w-5 h-5" />}
-                </div>
-                <span className="hidden sm:inline text-sm font-medium">
-                  {user.name || Admin}
-                </span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-200 ${
-                    showProfile ? "rotate-180" : ""
+                <button
+                  onClick={() => setShowProfile(!showProfile)}
+                  className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
+                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
                   }`}
-                />
-              </button>
+                  aria-label="Menu profil"
+                >
+                  <div className="relative">
+                    {user?.photo ? (
+                      <img
+                        src={
+                          user.photo.startsWith('data:') 
+                            ? user.photo 
+                            : `data:image/jpeg;base64,${user.photo}`
+                        }
+                        alt="Profile"
+                        className="w-10 h-10 rounded-[50%] object-cover"
+                      />
+                    ) : (
+                      <FaUser className="w-5 h-5" />
+                    )}
+                  </div>
+                  <span className="hidden sm:inline text-sm font-medium">
+                    {user?.name || "Admin"}
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-200 ${
+                      showProfile ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
               {showProfile && (
                 <div
                   className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
@@ -894,6 +963,8 @@ export default function AdminLayout() {
       </>
     );
   };
+
+  
 
   return (
     <div className={`flex h-screen flex-row ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
@@ -1032,9 +1103,7 @@ export default function AdminLayout() {
             darkMode ? "bg-gray-900" : "bg-gray-50"
           }`}
         >
-          <div
-            className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}
-          >
+          <div className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
             <Outlet />
           </div>
         </main>
@@ -1047,4 +1116,5 @@ export default function AdminLayout() {
       </div>
     </div>
   );
+
 }

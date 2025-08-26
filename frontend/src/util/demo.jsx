@@ -114,7 +114,7 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
   );
 }
 
-export default function Demo() {
+export default function Demo({ closeModal }) {
   const [tables, setTables] = useState([]);
   const [guests, setGuests] = useState([]); // {id, name, tableId, chairIndex}
   const [form, setForm] = useState({ nom: "", capacite: "", nombre: "" });
@@ -364,6 +364,12 @@ export default function Demo() {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 p-4 lg:p-8 gap-4 lg:gap-8 overflow-auto">
+      <button
+        onClick={closeModal}
+        className="absolute top-4 right-4 text-2xl font-bold text-gray-800 hover:text-red-500 z-50 cursor-pointer"
+      >
+        ✕
+      </button>
       {/* Formulaire */}
       {!showDragZone && (
         <div className="w-full max-w-md lg:w-[400px] mx-auto">

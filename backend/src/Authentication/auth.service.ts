@@ -14,8 +14,9 @@ import { ContactMessage } from 'src/entities/ContactMessage';
 import * as bcrypt from 'bcrypt'
 import axios from 'axios';
 import {Request, Response } from 'express';
-import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { Redis  } from 'ioredis';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import { NotificationGateway } from 'src/gateway/notification.gateway';
 
 
 @Injectable()
@@ -39,6 +40,7 @@ export class AuthService {
     private readonly contact_messages: Repository<ContactMessage>,
     @InjectRedis()
     private readonly redis:Redis ,
+    private readonly notificationGateway: NotificationGateway,
   ) { }
 
 
@@ -88,8 +90,13 @@ export class AuthService {
         title: 'Nouvel organisateur inscrit',
         message: `L'organisateur ${displayName || email} s'est inscrit.`,
         type: 'info',
+        date: new Date(),
       });
       await this.notificationRepository.save(notification);
+      this.notificationGateway.emitNotifRegisterToAdmin({
+        ...notification,
+        date: notification.date.toISOString(),
+      });
     }
 
 

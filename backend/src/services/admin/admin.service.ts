@@ -9,27 +9,26 @@ import { Repository } from 'typeorm';
 @Injectable()
 export class AdminService {
 
-    constructor(
+  constructor(
     private readonly jwtService: JwtService,
     @InjectRepository(Admin)
     private readonly userRepository: Repository<Admin>,
-    ) { }
+  ) {}
 
-    async loginWithFirebase(idToken: string) {
+  async loginWithFirebase(idToken: string) {
     try {
-      // 1. Vérifier et décoder le token Firebase
+      // Vérifier et décoder le token Firebase
       const decodedToken = await admin.auth().verifyIdToken(idToken);
       const email = decodedToken.email;
       const displayName = decodedToken.name || 'Admin';
       const photoURL = decodedToken.picture || null;
 
-      // 2. Chercher l'admin existant
+      // Chercher l'admin existant
       let adminUser = await this.userRepository.findOne({
-        where: {email, role: 'admin' },
+        where: { email, role: 'admin' },
       });
 
       if (!adminUser) {
-        
         if(email !== process.env.ADMIN_EMAIL_1 && email !== process.env.ADMIN_EMAIL_2) {
           throw new UnauthorizedException('Non autorisé : vous n\'êtes pas autorisé à vous connecter en tant qu\'admin');
         }
@@ -38,7 +37,7 @@ export class AdminService {
           id: uuidv4(),
           email,
           name: displayName,
-          photo: photoURL ?? null, 
+          photo: photoURL ?? null,
           role: 'admin',
           isOnline: true,
           lastLogin: new Date(),
@@ -48,7 +47,7 @@ export class AdminService {
       }
 
       const payload = {
-        sub: adminUser.id, 
+        sub: adminUser.id,
         email: adminUser.email,
         role: adminUser.role,
       };
@@ -67,7 +66,42 @@ export class AdminService {
       };
     } catch (error) {
       console.error('Login with Firebase error:', error);
-      throw new UnauthorizedException('Token Firebase invalide ou autre erreur : ', error);
+      throw new UnauthorizedException('Token Firebase invalide ou autre erreur');
     }
   }
+
+  async updateProfile(idToken: string, updateData: { name?: string; bio?: string; photo?: string }) {
+    try {
+      // Vérifier le token Firebase
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const email = decodedToken.email;
+
+      // Chercher l'admin correspondant
+      const adminUser = await this.userRepository.findOne({ where: { email, role: 'admin' } });
+      if (!adminUser) throw new UnauthorizedException('Admin non trouvé');
+
+      // Mettre à jour uniquement les champs côté site
+      adminUser.name = updateData.name ?? adminUser.name;
+      adminUser.bio = updateData.bio ?? adminUser.bio;
+
+      // Modifier la photo côté site seulement
+      if (updateData.photo) {
+        adminUser.photo = updateData.photo;  // Ne touche pas à photoEmail si tu as ce champ séparé
+      }
+
+      await this.userRepository.save(adminUser);
+
+      return {
+        id: adminUser.id,
+        email: adminUser.email,
+        name: adminUser.name,
+        photo: adminUser.photo,
+        role: adminUser.role,
+      };
+    } catch (error) {
+      console.error('Erreur updateProfile:', error);
+      throw new UnauthorizedException('Impossible de mettre à jour le profil');
+    }
+  }
+
 }
