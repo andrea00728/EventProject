@@ -8,6 +8,7 @@ import {
 } from "../../services/firebase/authService";
 import { FcGoogle } from "react-icons/fc";
 import { motion } from "framer-motion";
+import { url } from "../../api/url";
 
 const LoginPage = () => {
   const { setUser, setIsAuthenticated, isLoading } = useStateContext();
@@ -51,7 +52,7 @@ const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
       <motion.button
         onClick={() =>
-          (window.location.href = "http://localhost:3000/admin/google")
+          (window.location.href = `${url}/admin/google`)
         }
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
