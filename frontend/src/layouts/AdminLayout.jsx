@@ -914,9 +914,9 @@ export default function AdminLayout() {
           <div className="p-5 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <img
-                src="../../public/"
+                src="../../public/LogoAmsterTable.png"
                 alt="Logo"
-                className="w-10 h-10 rounded-lg object-cover transition-transform duration-300 hover:scale-110"
+                className="w-15 h-auto object-cover transition-transform duration-300 hover:scale-110"
               />
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
                 Master Table
