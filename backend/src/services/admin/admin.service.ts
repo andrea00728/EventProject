@@ -108,7 +108,6 @@ export class AdminService {
           lastLogin: new Date(),
         } as Partial<Admin>);
     await this.userRepository.save(adminUser);
-
     return { message: 'Administrateur créé' };
   }
 
