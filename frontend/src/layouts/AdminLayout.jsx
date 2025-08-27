@@ -39,7 +39,7 @@ import { fr } from "date-fns/locale";
 import { useSocket } from "../socket";
 import { motion, AnimatePresence } from "framer-motion";
 export default function AdminLayout() {
-  const { isAuthenticated, role, isLoading, setUser, user, token } = useStateContext();
+  const { isAuthenticated, role, isLoading, setUser, user } = useStateContext();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -396,9 +396,9 @@ export default function AdminLayout() {
     const [messages, setMessages] = useState([]);
     const { user, token } = useStateContext();
     const socket = useSocket();
-    const notifRef = useRef(null);
-    const msgRef = useRef(null);
-    const profileRef = useRef(null);
+    const notifRef = useRef();
+    const msgRef = useRef();
+    const profileRef = useRef();
     const navigate = useNavigate();
     const [notifFilter, setNotifFilter] = useState("all");
     const [msgFilter, setMsgFilter] = useState("all");
@@ -420,14 +420,14 @@ export default function AdminLayout() {
       return m.read;
     });
 
- 
-
     const handleRedirect = () => {
       navigate("/AdminParametre");
     };
 
+    
+
     useEffect(() => {
-      // Fetch initial notifications
+      // ------------------- FETCH NOTIFICATIONS -------------------
       const fetchNotifications = async () => {
         try {
           const response = await fetch(
@@ -442,14 +442,24 @@ export default function AdminLayout() {
             throw new Error("Erreur lors de la récupération des notifications");
 
           const data = await response.json();
-          setNotifications(data);
+
+          // 🔹 Récupérer IDs lus depuis localStorage
+          const readIds = JSON.parse(localStorage.getItem("readNotifications")) || [];
+
+          // 🔹 Marquer les notifications comme lues si elles sont dans le localStorage
+          const formatted = data.map((notif) => ({
+            ...notif,
+            read: readIds.includes(notif.id) ? true : notif.read || false,
+          }));
+
+          setNotifications(formatted);
         } catch (error) {
           console.error("Erreur fetchNotifications:", error);
           setNotifications([]);
         }
       };
 
-      // Fetch initial messages
+      // ------------------- FETCH MESSAGES -------------------
       const fetchMessages = async () => {
         try {
           const response = await fetch(
@@ -462,19 +472,29 @@ export default function AdminLayout() {
           );
           if (!response.ok)
             throw new Error("Erreur lors de la récupération des messages");
+
           const data = await response.json();
+
+          // 🔹 IDs lus dans localStorage
+          const readIds = JSON.parse(localStorage.getItem("readMessages")) || [];
+
+          // 🔹 Formater les messages
           const formatted = data.map((msg) => ({
             ...msg,
-            from: `${msg.firstName} ${msg.lastName}`,
-            text: msg.message,
-            read: msg.read || false,
+            from: msg.from || `${msg.firstName} ${msg.lastName}`, // n'écrase pas 'from' existant
+            text: msg.text || msg.message,                         // prend 'text' si déjà présent
+            read: readIds.includes(msg.id) ? true : msg.read || false,
           }));
+
           setMessages(formatted);
         } catch (error) {
           console.error("Erreur fetchMessages:", error);
           setMessages([]);
         }
       };
+
+
+
 
       // Configure socket listeners
       const setupSocket = async () => {
@@ -582,38 +602,30 @@ export default function AdminLayout() {
     const markAsRead = async (id, type) => {
       try {
         if (type === "message") {
-          setMessages((prev) =>
-            prev.map((m) => (m.id === id ? { ...m, read: true } : m))
-          );
-          await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`,
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ read: true }),
-            }
-          );
+          setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, read: true } : m)));
+          const readIds = JSON.parse(localStorage.getItem("readMessages")) || [];
+          if (!readIds.includes(id)) readIds.push(id);
+          localStorage.setItem("readMessages", JSON.stringify(readIds));
+
+          await fetch(`${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ read: true }),
+          });
         } else if (type === "notification") {
-          setNotifications((prev) =>
-            prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-          );
-          await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/notification/${id}`,
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ read: true }),
-            }
-          );
+          setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+          const readIds = JSON.parse(localStorage.getItem("readNotifications")) || [];
+          if (!readIds.includes(id)) readIds.push(id);
+          localStorage.setItem("readNotifications", JSON.stringify(readIds));
+
+          await fetch(`${import.meta.env.VITE_API_BASE_URL}/notification/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ read: true }),
+          });
         }
       } catch (error) {
-        console.error(`Erreur lors du marquage comme lu (${type}):`, error);
+        console.error("markAsRead error:", error);
       }
     };
 
@@ -680,6 +692,24 @@ export default function AdminLayout() {
       }
     };
 
+    useEffect(() => {
+      const readNotifIds = JSON.parse(localStorage.getItem("readNotifications")) || [];
+      const readMsgIds = JSON.parse(localStorage.getItem("readMessages")) || [];
+
+      setNotifications((prev) =>
+        prev.map((n) =>
+          readNotifIds.includes(n.id) ? { ...n, read: true } : n
+        )
+      );
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          readMsgIds.includes(m.id) ? { ...m, read: true } : m
+        )
+      );
+    }, [notifications, messages]);
+
+
     const pageBg = darkMode
       ? "bg-gray-900 text-gray-200"
       : "bg-gray-50 text-gray-800";
@@ -700,7 +730,6 @@ export default function AdminLayout() {
             {currentPageName}
           </h2>
           <div className="flex items-center gap-3 sm:gap-6 relative">
-
             <Dropdown
               ref={notifRef}
               show={openDropdown === "notifications"}
@@ -759,25 +788,67 @@ export default function AdminLayout() {
               ref={msgRef}
               show={openDropdown === "messages"}
               setShow={() =>
-                setOpenDropdown(
-                  openDropdown === "messages" ? null : "messages"
-                )
+                setOpenDropdown(openDropdown === "messages" ? null : "messages")
               }
               icon={<FaEnvelope className="text-lg sm:text-xl" />}
               label="Messages"
               count={filteredMessages.filter((m) => !m.read).length}
               items={filteredMessages}
-              onItemClick={handleMessageClick}
-              onDelete={handleDeleteMessage}
+              onItemClick={async (item) => {
+                // Marquer comme lu
+                if (!item.read) {
+                  const readIds = JSON.parse(localStorage.getItem("readMessages")) || [];
+                  if (!readIds.includes(item.id)) {
+                    readIds.push(item.id);
+                    localStorage.setItem("readMessages", JSON.stringify(readIds));
+                  }
+
+                  setMessages((prev) =>
+                    prev.map((m) => (m.id === item.id ? { ...m, read: true } : m))
+                  );
+
+                  // Appel API pour marquer comme lu côté backend
+                  try {
+                    await fetch(`${import.meta.env.VITE_API_BASE_URL}/contact_messages/${item.id}`, {
+                      method: "PATCH",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({ read: true }),
+                    });
+                  } catch (error) {
+                    console.error("Erreur mark as read:", error);
+                  }
+                }
+
+                setSelectedConversation({ content: item });
+                setOpenDropdown(null);
+                setShowConversationModal(true);
+              }}
+              onDelete={async (id) => {
+                try {
+                  await fetch(`${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`, {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                  });
+                  setMessages((prev) => prev.filter((m) => m.id !== id));
+
+                  // Supprimer aussi du localStorage si présent
+                  const readIds = JSON.parse(localStorage.getItem("readMessages")) || [];
+                  const newReadIds = readIds.filter((rid) => rid !== id);
+                  localStorage.setItem("readMessages", JSON.stringify(newReadIds));
+                } catch (error) {
+                  console.error("Erreur suppression message:", error);
+                }
+              }}
               onViewMore={() => setShowMessagesModal(true)}
             >
               <div className="flex gap-2 p-2">
                 <button
                   onClick={() => setMsgFilter("all")}
                   className={`px-3 py-1 rounded-full ${
-                    msgFilter === "all"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-700"
+                    msgFilter === "all" ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700"
                   }`}
                 >
                   Tout ({messages.length})
@@ -795,15 +866,14 @@ export default function AdminLayout() {
                 <button
                   onClick={() => setMsgFilter("read")}
                   className={`px-3 py-1 rounded-full ${
-                    msgFilter === "read"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-700"
+                    msgFilter === "read" ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700"
                   }`}
                 >
                   Lus ({messages.filter((m) => m.read).length})
                 </button>
               </div>
             </Dropdown>
+
 
             <div ref={profileRef} className="relative">
                 <button
@@ -985,9 +1055,9 @@ export default function AdminLayout() {
           <div className="p-5 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <img
-                src="../../src/assets/LogoAmsterTable.png"
+                src="/images/logo_4.png"
                 alt="Logo"
-                className="w-15 h-auto object-cover transition-transform duration-300 hover:scale-110"
+                className="w-10 h-10 rounded-lg object-cover transition-transform duration-300 hover:scale-110"
               />
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
                 Master Table
