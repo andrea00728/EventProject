@@ -1,7 +1,5 @@
 import { Entity, Column, PrimaryColumn, ManyToMany, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
-export type UserRole = 'admin';
-
 @Entity('admin')
 export class Admin {
   @PrimaryColumn('uuid')
@@ -18,10 +16,10 @@ export class Admin {
 
   @Column({
     type: 'enum',
-    enum: ['admin'],
+    enum: ['admin', 'super_admin'],
     default: 'admin',
   })
-  role: UserRole;
+  role: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

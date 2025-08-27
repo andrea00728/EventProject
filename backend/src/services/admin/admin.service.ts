@@ -45,7 +45,7 @@ export class AdminService {
           email,
           name: displayName,
           photo: photoURL,
-          role: 'admin',
+          role: 'super_admin',
           isOnline: true,
           lastLogin: new Date(),
         } as Partial<Admin>);
@@ -96,6 +96,22 @@ export class AdminService {
       );
     }
   }
+  
+  async createUser(user : {name : string; email: string; photo ?: string}):Promise<{ message: string }>{
+    const adminUser = this.userRepository.create({
+          id: uuidv4(),
+          email:user.email,
+          name: user.name,
+          photo: user.photo,
+          role: 'admin',
+          isOnline: true,
+          lastLogin: new Date(),
+        } as Partial<Admin>);
+    await this.userRepository.save(adminUser);
+
+    return { message: 'Administrateur créé' };
+  }
+
 
   async logout(req: Request, res: Response): Promise<{ message: string }> {
     try {
