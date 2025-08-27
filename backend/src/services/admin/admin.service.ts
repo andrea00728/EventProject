@@ -19,6 +19,23 @@ export class AdminService {
     private readonly redis:Redis ,
   ) {}
 
+  async loginWithEmailAndPass(user : {email : string; password : string}) : Promise<any> {
+
+    if (!user) return {message : "Email ou mot de passe oublié"}
+
+    const userExist = this.userRepository.findOne({
+      where: {email : user.email, password : user.password}
+    })
+
+    if (!userExist) throw new UnauthorizedException('Admin non trouvé');
+
+    return {message : "Authentification reussi"};
+  }
+
+  async loginWithPasswordReceived () {
+
+  }
+
   async loginWithGoogleOAuth(user: any, res: Response) {
     try {
       const email = user.email;
@@ -112,39 +129,56 @@ export class AdminService {
   }
 
 
-async logout(req: Request, res: Response): Promise<{ message: string }> {
-    try {
-      // Récupérer le cookie jwt
-      const jwtCookie = req.cookies['jwt'];
-      console.log("Cookie JWT lors de la déconnexion :", jwtCookie, req.cookies['refresh_token']);
-      if (!jwtCookie) {
-        throw new Error('Aucun jeton fourni');
-      }
+async logout(req: Request, res: Response): Promise<{ success: boolean; message: string }> {
+  try {
+    const jwtCookie = req.cookies['jwt'];
+    const refreshToken = req.cookies['refresh_token'];
 
-      // Vérifier le token
+    console.log("🔑 Cookie JWT reçu :", jwtCookie);
+    console.log("🔑 Refresh token reçu :", refreshToken);
+
+    if (!jwtCookie) {
+      return { success: false, message: 'Aucun jeton fourni' };
+    }
+
+    // Vérification du token
+    try {
       await this.jwtService.verifyAsync(jwtCookie, {
         secret: process.env.JWT_SECRET || 'your-secret-key',
       });
-
-      // Mettre le token en blacklist dans Redis pour 24h
-      await this.redis.set(`blacklist:${jwtCookie}`, 'true', 'EX', 24 * 60 * 60);
-
-      // Supprimer les cookies du navigateur
-      res.clearCookie('jwt', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-      });
-      res.clearCookie('refresh_token', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-      });
-
-      return { message: 'Déconnexion réussie' };
-    } catch (error) {
-      throw new Error('Token invalide ou erreur lors de la déconnexion');
+    } catch (err) {
+      console.error("❌ Token invalide :", err.message);
+      return { success: false, message: 'Token invalide' };
     }
-  }
 
+    // Blacklist du JWT
+    try {
+      await this.redis.set(`blacklist:${jwtCookie}`, 'true', 'EX', 24 * 60 * 60);
+      if (refreshToken) {
+        await this.redis.set(`blacklist_refresh:${refreshToken}`, 'true', 'EX', 7 * 24 * 60 * 60); // ex : 7j
+      }
+    } catch (err) {
+      console.error("⚠️ Erreur Redis :", err.message);
+      return { success: false, message: 'Erreur lors de la déconnexion (Redis)' };
+    }
+
+    // Suppression sécurisée des cookies
+    res.clearCookie('jwt', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    return { success: true, message: 'Déconnexion réussie' };
+  } catch (error: any) {
+    console.error("⚠️ Erreur générale lors du logout :", error.message);
+    return { success: false, message: 'Erreur interne lors de la déconnexion' };
+  }
+}
 }

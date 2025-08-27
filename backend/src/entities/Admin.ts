@@ -24,11 +24,15 @@ export class Admin {
   })
   role: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  password: string; // modifiable pour le site
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
   @Column({ type: 'boolean', default: false })
   isOnline: boolean;
+  
 
   @Column({ type: 'timestamp', nullable: true })
   lastLogin: Date;

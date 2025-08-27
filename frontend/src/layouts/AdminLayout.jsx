@@ -107,7 +107,7 @@ export default function AdminLayout() {
     await logout();
     handleLogout()
     setShowLogoutModal(false);
-    navigate("/pagepublic");
+    navigate("/login-site/super/admin");
   };
 
   const cancelLogout = () => {
