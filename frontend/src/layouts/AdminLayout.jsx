@@ -713,7 +713,7 @@ export default function AdminLayout() {
           readMsgIds.includes(m.id) ? { ...m, read: true } : m
         )
       );
-    }, [notifications, messages]);
+    }, []); // ✅ tableau vide → ne s’exécute qu’une seule fois au montage
 
 
     const pageBg = darkMode
