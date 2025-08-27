@@ -14,7 +14,7 @@ const EventAccept = () => {
   const [error, setError] = useState(null);
 
  useEffect(() => {
-  // 🚦 Vérifier si l'utilisateur est authentifié.
+  // Vérifier si l'utilisateur est authentifié.
   // La logique du ContextProvider gère déjà le chargement et la récupération de l'état.
   if (!isAuthenticated) {
     setError("Authentification requise pour voir les événements.");
@@ -111,12 +111,12 @@ const EventAccept = () => {
                 <p className="text-slate-500">Vous n'avez pas encore créé d'événements.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-stretch">
                 {events.map((event, index) => (
-                  <div
-                    key={event.id}
-                    className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1"
-                  >
+                      <div
+                        key={event.id}
+                        className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1 h-full flex flex-col"
+                      >
                     {/* Card Header */}
                     <div className={`h-2 bg-gradient-to-r ${
                       index % 5 === 0 ? 'from-blue-500 to-purple-500' :

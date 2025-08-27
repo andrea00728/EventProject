@@ -482,19 +482,6 @@ const connectSocket = async () => {
     setIsModalOpen(false);
   };
 
-  const notifications = [
-    "Nouvel organisateur inscrit",
-    "Événement 'Conférence Tech' mis à jour",
-    "Paiement reçu pour 'Atelier React'",
-    "Nouveau message de support",
-  ];
-
-  const messages = [
-    { from: "Alice", text: "Bonjour, j'ai une question sur l'événement." },
-    { from: "Bob", text: "Le planning a été modifié." },
-    { from: "Charlie", text: "Merci pour la confirmation." },
-  ];
-
   const handleDownload = () => {
     const page = data.map((p) => ({
       Nom: p.name,

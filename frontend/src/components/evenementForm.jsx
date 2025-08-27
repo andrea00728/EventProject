@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useDarkMode } from "../context/DarkModeContext"; // <--- AJOUTEZ CETTE LIGNE
 import {
   createEvent,
   getLocations,
@@ -140,6 +141,7 @@ const customStyles = {
 };
 
 export default function Evenementform({ onNext, isPublic, isExit }) {
+  const { darkMode } = useDarkMode();
   const [form, setForm] = useState({
     nom: "",
     type: "",
@@ -160,7 +162,8 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   const [searchLieu, setSearchLieu] = useState("");
   const [selectedLieu, setSelectedLieu] = useState(null);
   const [error, setError] = useState(null);
-  const mapRef = useRef(null);
+  const [map, setMap] = useState(null);
+
 
   useEffect(() => {
     getLocations()
@@ -189,6 +192,25 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+
+    const now = new Date();
+    const dateDebut = new Date(form.date);
+    const dateFin = new Date(form.date_fin);
+
+    if (dateDebut < now) {
+      setError("La date de début doit être aujourd'hui ou dans le futur.");
+      return;
+    }
+
+    if (dateFin < now) {
+      setError("La date de fin doit être aujourd'hui ou dans le futur.");
+      return;
+    }
+
+    if (dateDebut >= dateFin) {
+      setError("La date de fin doit être après la date de début.");
+      return;
+    }
 
     if (new Date(form.date) >= new Date(form.date_fin)) {
       setError("La date de fin doit être après la date de début.");
@@ -238,14 +260,15 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   );
 
   const handleSelectLieu = (loc) => {
-    setSelectedLieu(loc);
-    if (mapRef.current && loc.latitude && loc.longitude) {
-      mapRef.current.setView(
-        [parseFloat(loc.latitude), parseFloat(loc.longitude)],
-        13
-      );
-    }
-  };
+  setSelectedLieu(loc);
+  if (map && loc.latitude && loc.longitude) {
+    map.setView(
+      [parseFloat(loc.latitude), parseFloat(loc.longitude)],
+      13
+    );
+  }
+};
+
 
   const handleConfirmLieu = () => {
     if (selectedLieu) {
@@ -354,6 +377,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               value={form.date}
               onChange={handleChange}
               required
+              min={new Date().toISOString().slice(0,16)}
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
             />
           </div>
@@ -368,6 +392,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               value={form.date_fin}
               onChange={handleChange}
               required
+              min={new Date().toISOString().slice(0,16)}
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
             />
           </div>
@@ -398,11 +423,10 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               disabled={!form.locationId}
               onClick={() => form.locationId && setModalSalleOpen(true)}
               placeholder="Sélectionnez une salle"
-              className={`border border-gray-300 rounded-xl px-5 py-3 text-gray-900 placeholder-gray-400 transition ${
-                form.locationId
-                  ? "cursor-pointer bg-gray-50 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
-                  : "bg-gray-200 cursor-not-allowed"
-              }`}
+              className={`border border-gray-300 rounded-xl px-5 py-3 text-gray-900 placeholder-gray-400 transition ${form.locationId
+                ? "cursor-pointer bg-gray-50 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+                : "bg-gray-200 cursor-not-allowed"
+                }`}
             />
           </div>
 
@@ -491,9 +515,8 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                       <div
                         key={loc.id}
                         onClick={() => handleSelectLieu(loc)}
-                        className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${
-                          selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
-                        }`}
+                        className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
+                          }`}
                       >
                         {loc.nom}
                       </div>
@@ -531,7 +554,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                   center={[48.8566, 2.3522]} // Paris par défaut
                   zoom={13}
                   style={{ height: "100%", width: "100%" }}
-                  ref={mapRef}
+                  whenCreated={setMap}
                   dragging={true}
                   zoomControl={true}
                   scrollWheelZoom={false}

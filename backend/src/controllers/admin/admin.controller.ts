@@ -3,6 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { AdminService } from 'src/services/admin/admin.service';
+import { FirebaseAuthGuard } from 'src/guards/firebase-auth.guard';
 
 @Controller('admin')
 export class AdminController {

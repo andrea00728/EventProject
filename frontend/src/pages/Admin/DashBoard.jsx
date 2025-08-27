@@ -188,25 +188,6 @@ export default function Dashboard() {
     { label: "Voir rapports", icon: <MdEventNote /> },
   ];
 
-  const notifications = [
-    "Nouvel organisateur inscrit",
-    "Événement 'Conférence Tech' mis à jour",
-    "Paiement reçu pour 'Atelier React'",
-    "Nouveau message de support",
-  ];
-
-  const messages = [
-    { from: "Alice", text: "Bonjour, j’ai une question sur l’événement." },
-    { from: "Bob", text: "Le planning a été modifié." },
-    { from: "Charlie", text: "Merci pour la confirmation." },
-  ];
-
-  const recentOrganizers = [
-    { name: "Claire Dupont", email: "claire.dupont@mail.com" },
-    { name: "Jean Martin", email: "jean.martin@mail.com" },
-    { name: "Sophie Lemoine", email: "sophie.lemoine@mail.com" },
-  ];
-
   const engagementGradientColors = [
     "bg-gradient-to-r from-blue-400 to-blue-600",
     "bg-gradient-to-r from-green-400 to-green-600",
