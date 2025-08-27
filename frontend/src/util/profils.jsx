@@ -12,7 +12,7 @@ export default function Profil() {
 
   const [userName, setUserName] = useState("Utilisateur");
   const [userEmail, setUserEmail] = useState("email@example.com");
-  const [userPhoto, setUserPhoto] = useState("https://via.placeholder.com/150");
+  const [userPhoto, setUserPhoto] = useState("");
   const [openEditProfil, setOpenEditProfil] = useState(false);
   const [isOpenProfil, setIsOpenProfil] = useState(false);
   const [confirmLogOut, setConfirmLogOut] = useState(false);
@@ -27,7 +27,7 @@ export default function Profil() {
     confirmPassword: "",
   });
 
-  const [previewImage, setPreviewImage] = useState("https://via.placeholder.com/150");
+  const [previewImage, setPreviewImage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
@@ -42,7 +42,7 @@ export default function Profil() {
         ? `http://localhost:3000${user.photo}`
         : "https://via.placeholder.com/150";
 
-      setUserPhoto(photoUrl);
+      setUserPhoto(user.photo);
 
       // Initialiser le formulaire d'édition
       setEditFormData((prev) => ({
@@ -395,6 +395,7 @@ export default function Profil() {
                 <div className="flex flex-col items-center space-y-4">
                   <div className="relative">
                     <img
+                    //a modifier ici pour afficher l'aperçu de l'image sélectionnée
                       src={previewImage || "https://via.placeholder.com/150"}
                       alt="Aperçu de la photo"
                       className="w-20 h-20 rounded-full object-cover border-4 border-gray-200"
