@@ -77,6 +77,7 @@ import Tablecreation from "../pages/TableOrganisation/Tablecreation.jsx";
 import Publicacc from "../pages/Merge.jsx";
 import PublicLayout from "../layouts/PublicLayout.jsx";
 import EventProtectLayout from "../layouts/eventProtectLayout.jsx";
+import AdminManagementPage from "../pages/Admin/AdminManagmentTable.jsx";
 
 const router = createBrowserRouter([
   {
@@ -496,6 +497,10 @@ const router = createBrowserRouter([
       {
         path: "/AdminStats",
         element: <Statique />,
+      },
+      {
+        path: "/AdminManagement",
+        element: <AdminManagementPage />,
       },
 
       {

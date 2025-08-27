@@ -22,6 +22,7 @@ import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { FiLayout } from "react-icons/fi";
 import { ChevronDown, X } from "lucide-react";
 import {
+  MdAdminPanelSettings,
   MdCalendarToday,
   MdHistory,
   MdQueryStats,
@@ -126,6 +127,11 @@ export default function AdminLayout() {
       path: "/AdminStats",
       name: "Statistique",
       icon: <MdQueryStats className="text-lg" />,
+    },
+    {
+      path: "/AdminManagement",
+      name: "Gestion Admin",
+      icon: <MdAdminPanelSettings className="text-lg" />,
     },
     {
       path: "/AdminParametre",
