@@ -1,20 +1,23 @@
-import { Entity, Column, PrimaryColumn, ManyToMany, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 export type UserRole = 'admin';
 
 @Entity('admin')
 export class Admin {
-  @PrimaryColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ unique: true })
   email: string;
 
   @Column()
   name: string;
 
   @Column({ type: 'varchar', nullable: true })
-  photo: string;
+  photo: string; // modifiable pour le site
+
+  @Column({ type: 'varchar', nullable: true })
+  photoEmail: string; // image fixe utilisée dans les emails
 
   @Column({
     type: 'enum',
@@ -26,7 +29,6 @@ export class Admin {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  // gestion de status 
   @Column({ type: 'boolean', default: false })
   isOnline: boolean;
 
@@ -35,6 +37,5 @@ export class Admin {
 
   @Column({ type: 'timestamp', nullable: true })
   lastLogout: Date;
-
+  bio: any;
 }
-

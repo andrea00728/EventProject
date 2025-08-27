@@ -483,7 +483,27 @@ const connectSocket = async () => {
   };
 
   const notifications = [
-    "Nouvel organisateur inscrit",
+    {
+    id: 1,
+    title: "Nouvel organisateur inscrit",
+    message: "Stephan Ravelojaona vient de s'inscrire.",
+    time: new Date().toLocaleString("fr-FR"),
+    organizerImage: "https://i.pravatar.cc/150?u=stephan"
+    },
+    {
+      id: 2,
+      title: "Événement mis à jour",
+      message: "La conférence React a été modifiée.",
+      time: new Date().toLocaleString("fr-FR"),
+      organizerImage: "https://i.pravatar.cc/150?u=react"
+    },
+    {
+      id: 3,
+      title: "Paiement reçu",
+      message: "Un paiement a été confirmé pour l'Atelier Vue.js.",
+      time: new Date().toLocaleString("fr-FR"),
+      organizerImage: "https://i.pravatar.cc/150?u=vue"
+    },
     "Événement 'Conférence Tech' mis à jour",
     "Paiement reçu pour 'Atelier React'",
     "Nouveau message de support",
