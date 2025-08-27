@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Admin } from 'src/entities/Admin';
 import admin from 'src/firebase/firebase-admin';
 import { Repository } from 'typeorm';
-import { Response } from 'express';
+import {Request, Response } from 'express';
 import Redis from 'ioredis';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 
@@ -27,7 +27,7 @@ export class AdminService {
 
       // Chercher l'admin existant
       let adminUser = await this.userRepository.findOne({
-        where: { email, role: 'admin' },
+        where: [{ email, role: 'admin' }, { email, role: 'super_admin' },]
       });
 
       if (!adminUser) {
@@ -113,25 +113,39 @@ export class AdminService {
   }
 
 
-  async logout(req: Request, res: Response): Promise<{ message: string }> {
+async logout(req: Request, res: Response): Promise<{ message: string }> {
     try {
-      const jwtCookie = (req as any).cookies['jwt'];
+      // Récupérer le cookie jwt
+      const jwtCookie = req.cookies['jwt'];
+      console.log("Cookie JWT lors de la déconnexion :", jwtCookie, req.cookies['refresh_token']);
       if (!jwtCookie) {
         throw new Error('Aucun jeton fourni');
       }
 
+      // Vérifier le token
       await this.jwtService.verifyAsync(jwtCookie, {
         secret: process.env.JWT_SECRET || 'your-secret-key',
       });
 
+      // Mettre le token en blacklist dans Redis pour 24h
       await this.redis.set(`blacklist:${jwtCookie}`, 'true', 'EX', 24 * 60 * 60);
 
-      res.clearCookie('jwt');
-      res.clearCookie('refresh_token');
+      // Supprimer les cookies du navigateur
+      res.clearCookie('jwt', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+      });
+      res.clearCookie('refresh_token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+      });
 
       return { message: 'Déconnexion réussie' };
     } catch (error) {
       throw new Error('Token invalide ou erreur lors de la déconnexion');
     }
   }
+
 }

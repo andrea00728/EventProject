@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Pagepublic from './pages/Pagepublic';
 import PublicEvents from './pages/PublicEvents';
 import NotFound from './pages/NotFound';
-import Evenementform from "./components/Evenementform"; // Le formulaire privé complet
+import Evenementform from "../components/Evenementform"; // Le formulaire privé complet
 
 function App() {
   return (

@@ -1,7 +1,7 @@
 import { Controller, Get, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { AdminService } from 'src/services/admin/admin.service';
 import { FirebaseAuthGuard } from 'src/guards/firebase-auth.guard';
 
@@ -22,9 +22,6 @@ export class AdminController {
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const user = req.user;
 
-    const payload = { email: user.email, sub: user.providerId };
-    const token = this.jwtService.sign(payload, { expiresIn: '1h' });
-
     await this.adminService.loginWithGoogleOAuth(user, res);
     // on met le token dans un cookie
     const redirectUrl = `http://localhost:5173/AdminAccueil`;
@@ -42,4 +39,5 @@ export class AdminController {
       });
     }
   }
+
 }

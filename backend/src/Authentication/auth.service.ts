@@ -14,9 +14,9 @@ import { ContactMessage } from 'src/entities/ContactMessage';
 import * as bcrypt from 'bcrypt'
 import axios from 'axios';
 import {Request, Response } from 'express';
-import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { Redis  } from 'ioredis';
 import { NotificationGateway } from 'src/gateway/notification.gateway';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
 
 
 @Injectable()
@@ -611,6 +611,33 @@ async logout(req: Request, res: Response): Promise<{ message: string }> {
       }
     };
   }
+
+  async updateProfile(
+      userId: string,
+      data: { name?: string; photo?: string }
+    ) {
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        throw new NotFoundException("Utilisateur non trouvé");
+      }
+
+      if (data.name) user.name = data.name;
+      if (data.photo) user.photo = data.photo;
+
+      await this.userRepository.save(user);
+
+      return {
+        message: "Profil mis à jour avec succès",
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          photo: user.photo,
+          role: user.role,
+        },
+      };
+  }
+
 
 
    

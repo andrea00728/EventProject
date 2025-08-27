@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import tutorialVideo from "../assets/demo.mp4"; // import de la vidéo
-import DemoTable from "./demo";
 import { FaPlay, FaEyeSlash, FaDownload, FaEye } from 'react-icons/fa';
+import DemoTable from "./demo";
 
-const Demo = () => {
+const Dem = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -91,15 +91,9 @@ const Demo = () => {
       {isOpen && (
           <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
               <div className="relative w-full h-full bg-white flex flex-col items-center justify-center">
-                  {/* Bouton fermer */}
-                  <button
-                      onClick={() => setIsOpen(false)}
-                      className="absolute top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors"
-                  >
-                      ✕
-                  </button>
+                 
                   {/* Contenu du modal */}
-                  <DemoTable />
+                  <DemoTable closeModal={setIsOpen(false)}/>
               </div>
           </div>
       )}
@@ -107,4 +101,4 @@ const Demo = () => {
   );
 };
 
-export default Demo;
+export default Dem;
