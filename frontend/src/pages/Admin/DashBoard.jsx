@@ -554,59 +554,71 @@ function EventChart({ darkMode, eventData }) {
   const labels = filteredData.map(item => item.type);
   const totals = filteredData.map(item => item.total);
   const percentages = filteredData.map(item => item.percentage);
+  const chartRef = useRef(null);
+  const [chartWidth, setChartWidth] = useState(480);
 
-  return (
-    <div>
-      <h3 className="text-base sm:text-lg font-semibold mb-2 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-        Événements par type
-      </h3>
-      <BarChart
-        series={[
-          {
-            data: totals,
-            label: "Nombre total",
-            LabelStyle: {
-              fill: darkMode ? "#ffffff" : "#000000",
-            },
-          },
-          {
-            data: percentages,
-            label: "Pourcentage",
-            LabelStyle: {
-              fill: darkMode ? "#ffffff" : "#000000",
-            },
-          },
-        ]}
-        xAxis={[
-          {
-            data: labels,
-            tickLabelStyle: {
-              fill: darkMode ? "#ffffff" : "#000000",
-            },
-          },
-        ]}
-        yAxis={[
-          {
-            tickLabelStyle: {
-              fill: darkMode ? "#ffffff" : "#000000",
-            },
-          },
-        ]}
-        height={270}
-        margin={{ top: 20, right: 10, bottom: 20, left: 5 }}
-        width={480}
-        className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px] ${
-          darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-        }`}
-      />
-    </div>
-  );
+  useEffect(() => {
+    const handleResize = () => {
+      if (chartRef.current) {
+        setChartWidth(chartRef.current.offsetWidth);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return (
+    <div ref={chartRef}>
+      <h3 className="text-base sm:text-lg font-semibold mb-2 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+        Événements par type
+      </h3>
+      <BarChart
+        series={[
+          {
+            data: totals,
+            label: "Nombre total",
+            LabelStyle: {
+              fill: darkMode ? "#ffffff" : "#000000",
+            },
+          },
+          {
+            data: percentages,
+            label: "Pourcentage",
+            LabelStyle: {
+              fill: darkMode ? "#ffffff" : "#000000",
+            },
+          },
+        ]}
+        xAxis={[
+          {
+            data: labels,
+            tickLabelStyle: {
+              fill: darkMode ? "#ffffff" : "#000000",
+            },
+          },
+        ]}
+        yAxis={[
+          {
+            tickLabelStyle: {
+              fill: darkMode ? "#ffffff" : "#000000",
+            },
+          },
+        ]}
+        height={270}
+        margin={{ top: 20, right: 10, bottom: 20, left: 5 }}
+        width={chartWidth}
+      />
+    </div>
+  );
 }
 
 function MoneyChart({ darkMode }) {
   const margin = { right: 24 };
   const [revenus, setRevenus] = useState([]);
   const [labels, setLabels] = useState([]);
+  const chartRef = useRef(null);
+  const [chartWidth, setChartWidth] = useState(480);
 
   const colorsMap = {
     freemium: "#a3a3a3",
@@ -630,10 +642,21 @@ function MoneyChart({ darkMode }) {
 
   useEffect(() => {
     fetchData();
+
+    const handleResize = () => {
+      if (chartRef.current) {
+        setChartWidth(chartRef.current.offsetWidth);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
-    <div>
+    <div ref={chartRef}>
       <h3 className="text-base sm:text-lg font-semibold mb-2 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
         Revenus par Forfait
       </h3>
@@ -666,9 +689,8 @@ function MoneyChart({ darkMode }) {
         ]}
         height={270}
         margin={{ top: 20, right: 10, bottom: 20, left: 5 }}
-        width={480}
-        className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px]${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-          }`}
+        // 4. Utilisation de l'état pour la largeur
+        width={chartWidth}
       />
     </div>
   );

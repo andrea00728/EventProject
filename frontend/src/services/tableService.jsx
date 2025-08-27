@@ -120,3 +120,16 @@ export const reassignGuestToTable = async (guestId, tableId,place) => {
   return response.data;
 };
 
+
+//BY LIOKA
+/**
+ * Met à jour les données d'une table.
+ * @param {number} tableId - L'ID de la table à mettre à jour.
+ * @param {Object} data - Les nouvelles données de la table.
+ * @returns {Promise<Object>} - La table mise à jour.
+ */
+export const updateTable = async (tableId, data) => {
+  const response = await axiosClient.patch(`/tables/${tableId}`, data);
+  return response.data;
+};
+

@@ -27,8 +27,8 @@ import { Table } from 'typeorm';
 export class TableController {
   constructor(
     private readonly tableService: TableService,
-    private readonly evenementService:EvenementService,
-  ) {}
+    private readonly evenementService: EvenementService,
+  ) { }
 
 
   /**
@@ -38,7 +38,7 @@ export class TableController {
    * @returns 
    * creation dúne table
    */
-@Post('/create')
+  @Post('/create')
   @UseGuards(AuthGuard('jwt'))
   async creationTablebyIdEvent(@Body() dto: CreateTableDto, @Req() req): Promise<any> {
     const userId = req.user?.sub;
@@ -55,31 +55,31 @@ export class TableController {
       nom: dto.nom,
       capacite: dto.capacite,
       eventId: lastEvent.id,
-      type:dto.type,
+      type: dto.type,
     }, userId);
   }
-  
+
   @Post('/create/by_event')
-@UseGuards(AuthGuard('jwt'))
-async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<TableEvent[]> {
-  const userId = req.user?.sub;
-  if (!userId) {
-    throw new UnauthorizedException('Utilisateur non authentifié');
-  }
+  @UseGuards(AuthGuard('jwt'))
+  async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<TableEvent[]> {
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('Utilisateur non authentifié');
+    }
 
-  // Vérifier que l'événement existe et appartient à l'utilisateur
-  const event = await this.evenementService.findOneById(dto.eventId);
-  if (!event) { 
-    throw new NotFoundException("Événement non trouvé");
-  }
-  if (event.user.id !== userId) {
-    throw new UnauthorizedException("Cet événement n'appartient pas à l'utilisateur connecté");
-  }
+    // Vérifier que l'événement existe et appartient à l'utilisateur
+    const event = await this.evenementService.findOneById(dto.eventId);
+    if (!event) {
+      throw new NotFoundException("Événement non trouvé");
+    }
+    if (event.user.id !== userId) {
+      throw new UnauthorizedException("Cet événement n'appartient pas à l'utilisateur connecté");
+    }
 
-  const table = await this.tableService.createTable(dto, userId);
+    const table = await this.tableService.createTable(dto, userId);
 
-  return table;
-}
+    return table;
+  }
   /**
    * 
    * @param tableId 
@@ -105,24 +105,24 @@ async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<TableEvent[]
 
   @Get('event/:eventId')
   @UseGuards(AuthGuard('jwt'))
-  async getTablesByEvent(@Param('eventId',ParseIntPipe) eventId:number,@Req() req): Promise<TableEvent[]>{
-      const userId=req.user?.sub;
-      if(!userId) throw new HttpException('utilisateur non authentifie',HttpStatus.UNAUTHORIZED);
-      const table=await this.tableService.findByEvent(eventId);
-      return table
+  async getTablesByEvent(@Param('eventId', ParseIntPipe) eventId: number, @Req() req): Promise<TableEvent[]> {
+    const userId = req.user?.sub;
+    if (!userId) throw new HttpException('utilisateur non authentifie', HttpStatus.UNAUTHORIZED);
+    const table = await this.tableService.findByEvent(eventId);
+    return table
   }
 
 
- 
 
 
- /**
-  * 
-  * @param // Obtenir les tables liées au dernier  événement creer par l'útilisateur connecter
-  * @returns 
-  */
 
-   @Get('/by-last-event')
+  /**
+   * 
+   * @param // Obtenir les tables liées au dernier  événement creer par l'útilisateur connecter
+   * @returns 
+   */
+
+  @Get('/by-last-event')
   @UseGuards(AuthGuard('jwt'))
   async getTablesByLastEvent(@Req() req): Promise<TableEvent[]> {
     const userId = req.user?.sub;
@@ -183,5 +183,30 @@ async createTable(@Body() dto: CreateTableDto, @Req() req): Promise<TableEvent[]
   async deleteTableEvent(@Param('tableId', ParseIntPipe) tableId: number): Promise<void> {
     return this.tableService.deleteTableEvent(tableId);
   }
+
+
+  //BY Lioka
+  // À ajouter dans votre TableController
+
+  // @Patch(':id')
+  // async updateTable(
+  //   @Param('id') id: string,
+  //   @Body() updateData: Partial<TableEvent>,
+  //   @Req() req: any
+  // ): Promise<TableEvent> {
+  //   const tableId = parseInt(id, 10);
+
+  //   // Vérifier que la table appartient à l'utilisateur
+  //   const table = await this.tableService.findOne(tableId);
+  //   if (!table) {
+  //     throw new NotFoundException('Table non trouvée');
+  //   }
+
+  //   if (table.event.user.id !== req.user.id) {
+  //     throw new UnauthorizedException('Vous n\'avez pas l\'autorisation de modifier cette table');
+  //   }
+
+  //   return this.tableService.updateTable(tableId, updateData);
+  // }
 
 }
