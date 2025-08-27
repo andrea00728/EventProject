@@ -27,6 +27,11 @@ function snapToGrid(value, gridSize = 40) {
   return Math.round(value / gridSize) * gridSize;
 }
 
+// Fonction pour aligner les angles de rotation sur une grille angulaire
+function snapToAngle(value, angleStep = 15) {
+  return Math.round(value / angleStep) * angleStep;
+}
+
 // Calcule les positions des chaises autour de la table en fonction de son type et de sa capacité
 function getChairPositions(type, capacity, tableWidth, tableHeight) {
   const positions = [];
@@ -106,8 +111,8 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
   return (
     <div
       className={`w-5 h-5 rounded-full absolute border border-white shadow-sm flex items-center justify-center text-[10px] font-bold text-white cursor-pointer transition-all duration-200 ${isOccupied
-          ? "bg-gradient-to-r from-red-400 to-rose-500 hover:from-red-500 hover:to-rose-600"
-          : "bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600"
+        ? "bg-gradient-to-r from-red-400 to-rose-500 hover:from-red-500 hover:to-rose-600"
+        : "bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600"
         } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''} ${isMoving ? 'ring-2 ring-yellow-400 ring-offset-1 animate-pulse' : ''
         }`}
       style={style}
@@ -125,9 +130,9 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
 
   const ref = useRef(null);
   const [dragging, setDragging] = useState(false);
+  const [rotating, setRotating] = useState(false);
   const [pos, setPos] = useState(table.position ?? { left: 100, top: 100 });
   const [rotation, setRotation] = useState(table.rotation ?? 0);
-  const touchDataRef = useRef({});
 
   useEffect(() => {
     setPos(table.position ?? { left: 100, top: 100 });
@@ -207,6 +212,18 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     onMove(table.id, pos);
   };
 
+  const handleRotate = (direction) => {
+    setRotating(true);
+    const angleStep = 15;
+    const newRotation = snapToAngle(
+      direction === "clockwise" ? rotation + angleStep : rotation - angleStep
+    );
+    setRotation(newRotation);
+    onRotate(table.id, newRotation);
+    setTimeout(() => setRotating(false), 300); // Durée de l'animation
+    toast.success(`Table ${table.nom} pivotée à ${newRotation}°`);
+  };
+
   const isChairOccupied = (chairIndex) => {
     return table.guests?.some(g => g.place === chairIndex + 1);
   };
@@ -228,8 +245,9 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
         top: pos.top,
         width: tableWidth,
         height: tableHeight,
-        zIndex: dragging ? 50 : 10,
+        zIndex: dragging || rotating ? 50 : 10,
         touchAction: 'none',
+        transition: rotating ? 'none' : 'transform 0.3s ease'
       }}
       draggable
       onDragStart={handleDragStart}
@@ -237,27 +255,47 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      onDoubleClick={() => onEdit(table)}
     >
       <button
         onClick={(e) => {
           e.stopPropagation();
           onEdit(table);
         }}
-        className="absolute -top-2 -right-2 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-indigo-700 z-30 md:hidden"
+        className="absolute -top-2 -right-2 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-indigo-700 z-30"
         title="Modifier la table"
       >
         <Edit className="w-3 h-3" />
       </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleRotate("counterclockwise");
+        }}
+        className={`absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all ${rotating ? 'ring-2 ring-blue-300 animate-pulse' : ''}`}
+        title="Pivoter à gauche"
+      >
+        <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(90deg)' }} />
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleRotate("clockwise");
+        }}
+        className={`absolute -top-2 left-6 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all ${rotating ? 'ring-2 ring-blue-300 animate-pulse' : ''}`}
+        title="Pivoter à droite"
+      >
+        <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(-90deg)' }} />
+      </button>
 
       <div
         className={`border-4 border-indigo-400 shadow-md flex items-center justify-center ${table.type === "ronde" || table.type === "ovale"
-            ? "rounded-full"
-            : "rounded-md"
-          } w-full h-full bg-pink-200 relative transition-shadow duration-200 ${dragging ? 'shadow-2xl scale-105' : 'shadow-md'
-          }`}
+          ? "rounded-full"
+          : "rounded-md"
+          } w-full h-full bg-pink-200 relative transition-shadow duration-200 ${dragging || rotating ? 'shadow-2xl scale-105' : 'shadow-md'
+          } ${rotating ? 'ring-2 ring-blue-300' : ''}`}
         style={{
           transform: `rotate(${rotation}deg)`,
+          transition: rotating ? 'none' : 'transform 0.3s ease'
         }}
       >
         <span className="font-bold text-indigo-700 select-none pointer-events-none">
@@ -303,12 +341,11 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
     type: "ronde",
     nombre: "",
     noms: [],
-    eventId: eventId || 0 // Utiliser l'eventId passé en prop
+    eventId: eventId || 0
   });
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [error, setError] = useState(null);
 
-  // Gère le changement du nombre de tables
   const handleNombreChange = (e) => {
     const nb = Number(e.target.value);
     setForm((prev) => ({
@@ -318,14 +355,12 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
     }));
   };
 
-  // Gère le changement du nom d'une table
   const handleNomChange = (index, value) => {
     const updatedNoms = [...form.noms];
     updatedNoms[index] = value;
     setForm((prev) => ({ ...prev, noms: updatedNoms }));
   };
 
-  // Gère les changements dans les champs du formulaire
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -357,13 +392,11 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
     setForm({ ...form, [name]: value });
   };
 
-  // Sélectionne un événement
   const selectEvent = (event) => {
     setSelectedEvent(event);
     setForm((prev) => ({ ...prev, eventId: event.id }));
   };
 
-  // Soumet le formulaire pour créer les tables
   const onSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -379,7 +412,6 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
         nom && nom.trim() !== "" ? nom : `Table ${index + 1}`
       );
 
-      // Préparer les données pour chaque table
       const formDataArray = nomsFinal.map((nom, index) => ({
         nom,
         capacite: Number(form.capacite),
@@ -395,21 +427,15 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
         guests: []
       }));
 
-      // Appeler le service pour créer les tables
       const response = await Promise.all(formDataArray.map((t) => createTable(t)));
-      console.log("Réponse brute de createTable:", response); // Log pour débogage
-
-      // Aplatir la réponse si elle est imbriquée
       const newTables = response.flat();
-      console.log("Nouvelles tables après aplatissement:", newTables); // Log pour débogage
 
-      // Vérifier que les tables ont le format attendu
       const formattedTables = newTables.map(table => ({
         id: table.id || table.tableId,
         nom: table.nom || table.name,
         capacite: table.capacite || table.capacity,
         type: table.type,
-        eventId: Number(table.eventId), // Forcer la conversion en nombre
+        eventId: Number(table.eventId),
         position: table.position || { left: 100, top: 100 },
         width: table.width || TABLE_TYPES.find(t => t.value === table.type).width,
         height: table.height || TABLE_TYPES.find(t => t.value === table.type).height,
@@ -417,21 +443,15 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
         guests: table.guests || []
       }));
 
-      // Log pour vérifier les eventId
-      console.log("form.eventId:", form.eventId, "Type:", typeof form.eventId); // Log pour débogage
-      console.log("Tables envoyées à onAddTables:", formattedTables); // Log pour débogage
-
-      // Réinitialiser le formulaire
       setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: eventId || 0 });
       setSelectedEvent(null);
 
-      // Mettre à jour l'état local directement
-      onAddTables(formattedTables); // Passer toutes les tables sans filtrer
+      onAddTables(formattedTables);
       onClose();
 
       toast.success(`${nomsFinal.length} table${nomsFinal.length > 1 ? 's' : ''} créée${nomsFinal.length > 1 ? 's' : ''} avec succès !`);
     } catch (err) {
-      console.error("Erreur création tables:", err); // Log pour débogage
+      console.error("Erreur création tables:", err);
       setError(err.response?.data?.message || "Erreur lors de la création des tables");
       toast.error(err.response?.data?.message || "Erreur lors de la création des tables");
     }
@@ -608,8 +628,6 @@ function GuestCreationModal({ isOpen, onClose, onAddGuest, tables, events }) {
 
     try {
       const response = await createInviteForSpecificEvent(form);
-      console.log("Réponse brute de createInviteForSpecificEvent:", response);
-
       const newGuest = {
         id: response.id || response.guestId,
         nom: `${form.nom} ${form.prenom}`,
@@ -623,7 +641,6 @@ function GuestCreationModal({ isOpen, onClose, onAddGuest, tables, events }) {
 
       setForm({ nom: "", prenom: "", email: "", sex: "", eventId: null, tableId: null, place: null });
 
-      console.log("Invité envoyé à onAddGuest:", newGuest);
       onAddGuest(newGuest);
       onClose();
 
@@ -975,7 +992,6 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
   const addNewTables = (newTables) => {
     console.log("Ajout de nouvelles tables dans addNewTables:", newTables);
     setTables(prev => {
-      // Ajouter les nouvelles tables sans filtrer par eventId
       const updatedTables = [...prev, ...newTables];
       console.log("État tables après mise à jour:", updatedTables);
       return updatedTables;
@@ -1064,38 +1080,140 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
         )}
       </div>
 
-      <div className="relative w-[900px] h-[650px] bg-white border border-gray-300 rounded-2xl shadow-2xl max-w-full max-h-[80vh] overflow-hidden">
+      <div className="relative w-[900px] h-[650px] bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 border-2 border-gray-200/60 rounded-3xl shadow-2xl max-w-full max-h-[80vh] overflow-hidden backdrop-blur-sm">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-indigo-100/20 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-purple-100/15 to-transparent rounded-full blur-2xl"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-50/10 to-indigo-50/10 rounded-full blur-3xl"></div>
+
         {movingGuest && (
-          <div className="absolute top-4 left-4 right-4 bg-yellow-100 border border-yellow-300 text-yellow-800 px-3 py-2 rounded-lg z-40 text-center">
-            Mode déplacement: <strong>{movingGuest.guestName}</strong> - Cliquez sur une chaise libre pour déplacer l'invité
+          <div className="absolute top-4 left-4 right-4 z-40 animate-slide-down">
+            <div className="relative bg-gradient-to-r from-amber-50 to-yellow-50/80 border border-amber-200/60 rounded-2xl p-4 shadow-xl overflow-hidden backdrop-blur-sm">
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-100/20 to-yellow-100/20 animate-pulse"></div>
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-yellow-500"></div>
+              <div className="relative flex items-center justify-center space-x-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center animate-bounce">
+                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div className="flex-1 text-center">
+                  <div className="text-amber-800 font-medium">
+                    <span className="text-sm">Mode déplacement activé</span>
+                    <div className="mt-1">
+                      <span className="font-bold text-amber-900 bg-amber-200/50 px-2 py-1 rounded-lg">
+                        {movingGuest.guestName}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-amber-700 mt-1">Cliquez sur une chaise libre pour déplacer l'invité</p>
+                </div>
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                  <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 text-xl font-extrabold text-indigo-700 tracking-wide drop-shadow z-30">
-          Plan des Tables - {event?.nom || "Événement"}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30">
+          <div className="relative text-center">
+            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50"></div>
+            <div className="relative px-6 py-3">
+              <h1 className="text-2xl font-black bg-gradient-to-r from-indigo-700 via-purple-600 to-indigo-800 bg-clip-text text-transparent tracking-wide drop-shadow-sm">
+                Plan des Tables - {event?.nom || "Événement"}
+              </h1>
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"></div>
+            </div>
+          </div>
         </div>
 
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(200,200,255,0.08)_1px,transparent_1px),linear-gradient(180deg,rgba(200,200,255,0.08)_1px,transparent_1px)] bg-[size:40px_40px]" />
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(99,102,241,0.08)_1px,transparent_1px),linear-gradient(180deg,rgba(99,102,241,0.08)_1px,transparent_1px)] bg-[size:40px_40px]" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(129,140,248,0.04)_1px,transparent_1px),linear-gradient(180deg,rgba(129,140,248,0.04)_1px,transparent_1px)] bg-[size:20px_20px]" />
+          <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-indigo-200/30 to-transparent"></div>
+          <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-200/30 to-transparent"></div>
+        </div>
 
-        {tables.map((table) => (
-          <Table
-            key={table.id}
-            table={table}
-            onMove={handleTableMove}
-            onRotate={handleTableRotate}
-            onDelete={handleTableDelete}
-            onPlaceClick={handlePlaceClick}
-            selectedPlace={selectedPlace}
-            onEdit={handleOpenEdit}
-            movingGuest={movingGuest}
-          />
-        ))}
+        <div className="relative z-20 w-full h-full">
+          {tables.map((table) => (
+            <Table
+              key={table.id}
+              table={table}
+              onMove={handleTableMove}
+              onRotate={handleTableRotate}
+              onDelete={handleTableDelete}
+              onPlaceClick={handlePlaceClick}
+              selectedPlace={selectedPlace}
+              onEdit={handleOpenEdit}
+              movingGuest={movingGuest}
+            />
+          ))}
+        </div>
 
         {tables.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-lg">
-            Aucune table créée. Ajoutez des tables depuis le bouton en bas à gauche.
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <div className="text-center space-y-6 max-w-md mx-auto px-6">
+              <div className="relative mx-auto w-24 h-24">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-3xl animate-pulse"></div>
+                <div className="relative w-full h-full bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl flex items-center justify-center shadow-lg">
+                  <svg className="w-12 h-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                  </svg>
+                </div>
+                <div className="absolute -top-2 -right-2 w-4 h-4 bg-indigo-400 rounded-full animate-bounce"></div>
+                <div className="absolute -bottom-2 -left-2 w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.3s'}}></div>
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-500 bg-clip-text text-transparent">
+                  Canvas vide
+                </h3>
+                <div className="space-y-2">
+                  <p className="text-gray-600 leading-relaxed">
+                    Aucune table créée pour le moment
+                  </p>
+                  <p className="text-sm text-gray-500 bg-gray-50/80 px-4 py-2 rounded-xl border border-gray-200/50">
+                    💡 Astuce : Ajoutez des tables depuis le bouton en bas à gauche pour commencer l'organisation de votre événement
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-center space-x-2">
+                <div className="w-2 h-2 bg-indigo-300 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-purple-300 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                <div className="w-2 h-2 bg-pink-300 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
+              </div>
+              <div className="relative">
+                <div className="absolute -bottom-12 -left-16 transform rotate-12 animate-bounce text-indigo-400">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
           </div>
         )}
+
+        <div className="absolute top-4 left-4 w-6 h-6 border-l-2 border-t-2 border-indigo-200/50 rounded-tl-lg"></div>
+        <div className="absolute top-4 right-4 w-6 h-6 border-r-2 border-t-2 border-indigo-200/50 rounded-tr-lg"></div>
+        <div className="absolute bottom-4 left-4 w-6 h-6 border-l-2 border-b-2 border-indigo-200/50 rounded-bl-lg"></div>
+        <div className="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-indigo-200/50 rounded-br-lg"></div>
+
+        <style jsx>{`
+          @keyframes slide-down {
+            from { 
+              opacity: 0; 
+              transform: translateY(-20px); 
+            }
+            to { 
+              opacity: 1; 
+              transform: translateY(0); 
+            }
+          }
+          .animate-slide-down {
+            animation: slide-down 0.5s ease-out;
+          }
+        `}</style>
       </div>
 
       <TableCreationModal
@@ -1104,7 +1222,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
         onAddTables={addNewTables}
         events={events}
         tables={tables}
-        eventId={event?.id} // Passer l'eventId du composant parent
+        eventId={event?.id}
       />
 
       <GuestCreationModal
@@ -1115,71 +1233,6 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
         events={events}
       />
 
-      {/* {editingTable && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
-            <h2 className="text-xl font-semibold mb-4">
-              Modifier {editingTable.nom}
-            </h2>
-            <div className="space-y-4">
-              <input
-                defaultValue={editingTable.nom}
-                onChange={(e) =>
-                  handleTableChange(editingTable.id, "nom", e.target.value)
-                }
-                placeholder="Nom de la table"
-                className="w-full border rounded-lg px-3 py-2"
-              />
-              <input
-                type="number"
-                defaultValue={editingTable.capacite}
-                onChange={(e) =>
-                  handleTableChange(editingTable.id, "capacite", e.target.value)
-                }
-                min="1"
-                placeholder="Capacité"
-                className="w-full border rounded-lg px-3 py-2"
-              />
-              <select
-                defaultValue={editingTable.type}
-                onChange={(e) =>
-                  handleTableChange(editingTable.id, "type", e.target.value)
-                }
-                className="w-full border rounded-lg px-3 py-2"
-              >
-                {TABLE_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
-              <button
-                className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 cursor-pointer"
-                onClick={handleCloseEdit}
-              >
-                Annuler
-              </button>
-              <button
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer"
-                onClick={handleCloseEdit}
-              >
-                OK
-              </button>
-              <button
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cursor-pointer"
-                onClick={() => {
-                  handleTableDelete(editingTable.id);
-                  handleCloseEdit();
-                }}
-              >
-                Supprimer
-              </button>
-            </div>
-          </div>
-        </div>
-      )} */}
       {editingTable && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
@@ -1191,7 +1244,6 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                 🚧 <strong>Fonctionnalité en maintenance</strong> 🚧<br />
                 La modification des tables est temporairement désactivée. Veuillez réessayer plus tard.
               </p>
-              {/* Afficher les champs en lecture seule pour contexte */}
               <div>
                 <label className="text-gray-700 font-medium mb-2 text-sm">Nom</label>
                 <input
