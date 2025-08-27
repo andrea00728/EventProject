@@ -396,7 +396,7 @@ export default function Profil() {
                   <div className="relative">
                     <img
                     //a modifier ici pour afficher l'aperçu de l'image sélectionnée
-                      src={previewImage || "https://via.placeholder.com/150"}
+                      src={user.photo}
                       alt="Aperçu de la photo"
                       className="w-20 h-20 rounded-full object-cover border-4 border-gray-200"
                     />
