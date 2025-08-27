@@ -1,5 +1,5 @@
-import * as crypto from 'crypto';
-(global as any).crypto = crypto;
+// import * as crypto from 'crypto';
+// (global as any).crypto = crypto;
 
 
   import { Module } from '@nestjs/common';

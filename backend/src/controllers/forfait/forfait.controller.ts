@@ -79,8 +79,7 @@ export class ForfaitController {
     @Query('subscription_id') subscriptionId: string,
     @Res() res: Response,
   ) {
-    const url = `https://mastertable.site/forfait/success?subscription_id=${subscriptionId}`;
-     
+     const url = `https://mastertable.site/forfait/success?subscription_id=${subscriptionId}`;
     return res.redirect(url); // redirection vers le frontend
   }
 

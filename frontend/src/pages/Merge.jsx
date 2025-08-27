@@ -53,14 +53,13 @@ const Publicacc = () => {
   const [current, setCurrent] = useState(0);
   const [isModalOpen, setModalOpen] = useState(false);
   const { isAuthenticated } = useStateContext()
-  const [organisateurCount,setOrganisateurCount]=useState(0);
-  const [eventCount,setEventCount]=useState(0);
 
   // ✅ Nouvel état pour le modal Demo
   const [isDemoOpen, setIsDemoOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isConfidentialiteOpen, setIsConfidentialiteOpen] = useState(false); // Nouvel état pour la modale Confidentialite
-
+  const [organisateurCount, setOrganisateurCount] = useState(0);
+  const [eventCount, setEventCount] = useState(0);
   const intervalRef = useRef(null);
   const touchStartX = useRef(0);
   const accueilRef = useRef(null);
@@ -274,11 +273,11 @@ const Publicacc = () => {
         {/* Modal plein écran */}
         {isOpen && (
           <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
-            <div className="relative w-full h-full bg-white flex flex-col items-center justify-center">
+            <div className="relative w-full h-full bg-white flex flex-col items-center justify-center z-50">
               {/* Bouton fermer */}
               <button
                 onClick={() => setIsOpen(false)}
-                className="absolute top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors"
+                className="fixed top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors z-500"
               >
                 ✕
               </button>
@@ -299,7 +298,7 @@ const Publicacc = () => {
 
       <section id="demo">
         <div className="bg-gradient-to-b from-gray-50 to-white">
-          <Demo isOpen={isDemoOpen} onClose={() => setIsDemoOpen(false)} />
+          <Demo />
         </div>
       </section>
 

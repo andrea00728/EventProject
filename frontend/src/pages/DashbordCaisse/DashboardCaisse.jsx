@@ -29,6 +29,7 @@ const theme = {
   },
 };
 
+
 // === ANIMATIONS ===
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const cardVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } } };
@@ -134,15 +135,23 @@ const Caisse = () => {
 
             <AnimatePresence>
               {showMenu && (
-                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                  className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border">
-                  <button onClick={() => setConfirmLogout(true)} className="flex items-center px-4 py-3 w-full text-left text-red-600 hover:bg-red-50">
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute right-0 mt-2 w-48 max-h-60 overflow-y-auto bg-white rounded-lg shadow-lg border z-50"
+                >
+                  <button
+                    onClick={() => setConfirmLogout(true)}
+                    className="flex items-center px-4 py-3 w-full text-left text-red-600 hover:bg-red-50"
+                  >
                     <LucideLogOut className="w-5 h-5 mr-2" />
                     Déconnexion
                   </button>
                 </motion.div>
               )}
             </AnimatePresence>
+
           </div>
         </div>
 

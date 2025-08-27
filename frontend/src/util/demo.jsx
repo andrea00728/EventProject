@@ -1,7 +1,6 @@
-import { Plus, RefreshCcw, User } from "lucide-react";
+import { ArrowBack } from "@mui/icons-material";
+import { Edit, Plus, RefreshCcw, User } from "lucide-react";
 import { useState, useRef } from "react";
-
-//Tyh le zy ry andrea ah
 
 const TABLE_TYPES = [
   { value: "ronde", label: "Table ronde", width: 80, height: 80 },
@@ -18,19 +17,18 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
   const positions = [];
   const chairSize = 30; // Taille approximative d'une chaise
   const minDistanceFromTable = 0; // Distance minimale entre la chaise et la table
-  
   if (type === "ronde" || type === "ovale") {
     // Pour les tables rondes/ovales
     const centerX = tableWidth / 2;
     const centerY = tableHeight / 2;
-    
+
     // Calculer le rayon en fonction de la forme
-    const tableRadius = type === "ronde" 
-      ? Math.min(tableWidth, tableHeight) / 2 
+    const tableRadius = type === "ronde"
+      ? Math.min(tableWidth, tableHeight) / 2
       : Math.max(tableWidth, tableHeight) / 2;
-    
+
     const radius = tableRadius + minDistanceFromTable + chairSize / 2;
-    
+
     for (let i = 0; i < capacity; i++) {
       // Commencer à -π/2 pour que la première chaise soit en haut
       const angle = (2 * Math.PI * i) / capacity - Math.PI / 2;
@@ -42,26 +40,25 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
     // Pour les tables rectangulaires/carrées
     const perimetre = 2 * (tableWidth + tableHeight);
     const spacingBetweenChairs = perimetre / capacity;
-    
     // Calculer combien de chaises par côté en fonction de l'espacement uniforme
     const topChairs = Math.round((tableWidth / spacingBetweenChairs));
     const rightChairs = Math.round((tableHeight / spacingBetweenChairs));
     const bottomChairs = Math.round((tableWidth / spacingBetweenChairs));
     const leftChairs = capacity - topChairs - rightChairs - bottomChairs;
-    
+
     let count = 0;
-    
+
     // Côté du haut
     if (topChairs > 0) {
       const spacing = tableWidth / (topChairs + 1);
       for (let i = 0; i < topChairs && count < capacity; i++, count++) {
-        positions.push({ 
-          left: `${(i + 1) * spacing - chairSize / 2}px`, 
-          top: `${-minDistanceFromTable - chairSize}px` 
+        positions.push({
+          left: `${(i + 1) * spacing - chairSize / 2}px`,
+          top: `${-minDistanceFromTable - chairSize}px`
         });
       }
     }
-    
+
     // Côté droit
     if (rightChairs > 0) {
       const spacing = tableHeight / (rightChairs + 1);
@@ -72,7 +69,6 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
         });
       }
     }
-    
     // Côté du bas
     if (bottomChairs > 0) {
       const spacing = tableWidth / (bottomChairs + 1);
@@ -83,7 +79,6 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
         });
       }
     }
-    
     // Côté gauche
     if (leftChairs > 0) {
       const spacing = tableHeight / (leftChairs + 1);
@@ -102,13 +97,11 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
 function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMoving }) {
   return (
     <div
-      className={`w-5 h-5 rounded-full absolute border border-white shadow-sm flex items-center justify-center text-[10px] font-bold text-white cursor-pointer transition-all duration-200 ${
-        isOccupied 
-          ? "bg-gradient-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600" 
+      className={`w-5 h-5 rounded-full absolute border border-white shadow-sm flex items-center justify-center text-[10px] font-bold text-white cursor-pointer transition-all duration-200 ${isOccupied
+          ? "bg-gradient-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600"
           : "bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600"
-      } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''} ${
-        isMoving ? 'ring-2 ring-yellow-400 ring-offset-1 animate-pulse' : ''
-      }`}
+        } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''} ${isMoving ? 'ring-2 ring-yellow-400 ring-offset-1 animate-pulse' : ''
+        }`}
       style={style}
       title={isOccupied ? `Place ${number} - ${guestName}` : `Place ${number} - Libre`}
       onClick={onClick}
@@ -118,7 +111,7 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
   );
 }
 
-export default function Demo() {
+export default function DemoTable({ closeModal }) {
   const [tables, setTables] = useState([]);
   const [guests, setGuests] = useState([]); // {id, name, tableId, chairIndex}
   const [form, setForm] = useState({ nom: "", capacite: "", nombre: "" });
@@ -173,7 +166,6 @@ export default function Demo() {
     // Trouver la première chaise libre
     const occupiedChairs = guests.filter(g => g.tableId === table.id).map(g => g.chairIndex);
     let freeChairIndex = -1;
-    
     for (let i = 0; i < table.capacite; i++) {
       if (!occupiedChairs.includes(i)) {
         freeChairIndex = i;
@@ -202,15 +194,14 @@ export default function Demo() {
     if (movingGuest) {
       // Mode déplacement - déplacer l'invité vers cette chaise
       const targetGuest = guests.find(g => g.tableId === tableId && g.chairIndex === chairIndex);
-      
       if (targetGuest) {
         alert("Cette chaise est déjà occupée!");
         return;
       }
 
-      setGuests(prev => 
-        prev.map(g => 
-          g.id === movingGuest.guestId 
+      setGuests(prev =>
+        prev.map(g =>
+          g.id === movingGuest.guestId
             ? { ...g, tableId, chairIndex }
             : g
         )
@@ -288,7 +279,7 @@ export default function Demo() {
           if (field === "capacite") {
             updatedTable.capacite = Number(value) || 1;
             // Supprimer les invités dont les chaises n'existent plus
-            setGuests(prev => 
+            setGuests(prev =>
               prev.filter(g => g.tableId !== id || g.chairIndex < updatedTable.capacite)
             );
           }
@@ -302,16 +293,15 @@ export default function Demo() {
   // Fonctions pour le drag tactile améliorées
   const handleTouchStart = (id, e) => {
     e.preventDefault();
-    
+
     const touch = e.touches[0];
     const table = tables.find((t) => t.id === id);
     if (!table) return;
-    
+
     // Calculer l'offset du toucher par rapport à la position de la table
     const tableElement = e.currentTarget;
     const tableRect = tableElement.getBoundingClientRect();
     const dragAreaRect = dragAreaRef.current.getBoundingClientRect();
-    
     touchDataRef.current[id] = {
       startX: touch.clientX,
       startY: touch.clientY,
@@ -332,17 +322,16 @@ export default function Demo() {
 
   const handleTouchMove = (id, e) => {
     e.preventDefault();
-    
+
     const touch = e.touches[0];
     const table = tables.find((t) => t.id === id);
     const touchData = touchDataRef.current[id];
-    
+
     if (!table || !touchData) return;
 
     // Calculer la nouvelle position basée sur le mouvement du doigt
     const newX = touch.clientX - touchData.dragAreaLeft - touchData.offsetX;
     const newY = touch.clientY - touchData.dragAreaTop - touchData.offsetY;
-    
     // Appliquer le snap et les limites
     const maxX = 800 - table.width;
     const maxY = 500 - table.height;
@@ -358,7 +347,6 @@ export default function Demo() {
 
   const handleTouchEnd = (id) => {
     delete touchDataRef.current[id];
-    
     setTables((prev) =>
       prev.map((t) =>
         t.id === id ? { ...t, dragging: false } : t
@@ -367,10 +355,20 @@ export default function Demo() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 p-4 lg:p-8 gap-4 lg:gap-8 overflow-auto">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 p-4 lg:p-8 gap-4 lg:gap-8 overflow-auto w-full">
+
+      {/* Bouton fermer unique et amélioré */}
+            <div
+              
+              className=" text-2xl font-bold p-2 rounded-full mr-10 hover:bg-white/20 transition-colors cursor-pointer z-[999] pointer-events-auto"
+              aria-label="Fermer la démonstration"
+            >
+              <ArrowBack onClick={closeModal} className="text-transparent"/>
+            </div>
+
       {/* Formulaire */}
       {!showDragZone && (
-        <div className="w-full max-w-md lg:w-[400px] mx-auto">
+        <div className="w-full max-w-md lg:w-[400px] mx-auto ">
           <form
             onSubmit={handleAddTable}
             className="p-6 bg-white shadow-lg rounded-xl border border-gray-200"
@@ -592,10 +590,11 @@ export default function Demo() {
           </div>
 
           {/* Zone tables */}
-          <div className="flex-1 flex items-center justify-center relative">
-            <div 
+          <div className="flex-1 flex items-center justify-center relative ">
+            <div
               ref={dragAreaRef}
-              className="relative w-full h-[60vh] lg:w-[800px] lg:h-[500px] bg-white border overflow-hidden border-gray-300 rounded-2xl shadow-2xl"
+              className="relative w-full h-[60vh] lg:w-[800px] lg:h-[500px] bg-white border overflow-hidden border-gray-300 rounded-2xl shadow-2xl "
+
               style={{ touchAction: 'none' }} // Important pour désactiver le scroll pendant le drag
             >
               {movingGuest && (
@@ -627,10 +626,17 @@ export default function Demo() {
                     className={`border-4 border-indigo-400 shadow-md flex items-center justify-center ${table.type === "ronde" || table.type === "ovale"
                       ? "rounded-full"
                       : "rounded-md"
-                      } w-full h-full bg-pink-200 relative transition-shadow duration-200 ${
-                        table.dragging ? 'shadow-2xl scale-105' : 'shadow-md'
+                      } w-full h-full bg-pink-200 relative transition-shadow duration-200 ${table.dragging ? 'shadow-2xl scale-105' : 'shadow-md'
                       }`}
                   >
+                    {/* Bouton d'édition pour mobile */}
+                    <button
+                      onClick={(e) => handleOpenEdit(table)}
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-indigo-700 z-30 md:hidden"
+                      title="Modifier la table"
+                    >
+                      <Edit className="w-3 h-3" />
+                    </button>
                     <span className="font-bold text-indigo-700 select-none pointer-events-none">
                       {table.nom}
                     </span>
@@ -644,11 +650,11 @@ export default function Demo() {
                       const guest = getGuestForChair(table.id, i);
                       const isSelected = movingGuest?.sourceTableId === table.id && movingGuest?.sourceChairIndex === i;
                       const isMovingTarget = movingGuest && movingGuest.guestId !== guest?.id;
-                      
+
                       return (
-                        <Chair 
-                          key={i} 
-                          number={i + 1} 
+                        <Chair
+                          key={i}
+                          number={i + 1}
                           style={pos}
                           isOccupied={isOccupied}
                           guestName={guest?.name}
@@ -733,7 +739,7 @@ export default function Demo() {
         </div>
       )}
 
-        {/* Instructions */}
+      {/* Instructions */}
       <div className="max-w-full sm:max-w-xl w-full mx-auto p-3 sm:p-6 animate-fade-in animate-slide-up">
         <h2 className="text-base sm:text-2xl font-extrabold text-indigo-700 mb-3 sm:mb-4 tracking-wide drop-shadow-sm">
           Instructions
@@ -741,7 +747,7 @@ export default function Demo() {
 
         <ul className="list-disc list-inside space-y-1 sm:space-y-2 text-gray-700 prose prose-sm sm:prose">
           <li>Ajoutez une table via le formulaire. Une fois créée, vous pouvez la déplacer librement dans la zone.</li>
-          <li>Double-cliquez sur une table pour modifier son nom, sa capacité ou sa forme.</li>
+          <li>Pour modifier une table : double-cliquez dessus sur desktop ou utilisez le bouton "Edit" sur mobile pour changer son nom, sa capacité ou sa forme.</li>
           <li>Les chaises se positionnent automatiquement autour de la table selon sa forme et sa capacité.</li>
           <li>Tables rondes/ovales → chaises en cercle. Tables carrées/rectangulaires → chaises sur les côtés.</li>
           <li>Une fois la table créée, vous pouvez ajouter des invités à chaque table.</li>
@@ -752,7 +758,7 @@ export default function Demo() {
         <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-500 italic">
           Astuce : <br />
           <li>cliquez-glissez pour déplacer tables.</li>
-           <li>cliquez sur une chaise occupée pour sélectionner l'invité, puis cliquez sur une chaise libre pour le déplacer.</li>
+          <li>cliquez sur une chaise occupée pour sélectionner l'invité, puis cliquez sur une chaise libre pour le déplacer.</li>
         </p>
       </div>
 

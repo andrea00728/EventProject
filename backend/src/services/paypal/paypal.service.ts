@@ -10,6 +10,7 @@ export class PaypalService {
   /**
    * Récupère le token d'accès OAuth2
    */
+  
   private async getAccessToken(): Promise<string> {
     const response = await axios.post(
       `${this.apiUrl}/v1/oauth2/token`,
@@ -41,8 +42,9 @@ export class PaypalService {
         application_context: {
           brand_name: 'MonApp Événements',
           user_action: 'SUBSCRIBE_NOW',
-          return_url: 'https://mastertable.site/forfait/success',
+           return_url: 'https://mastertable.site/forfait/success',
           cancel_url: 'https://mastertable.site/forfait/cancel',
+         
         },
       },
       {
