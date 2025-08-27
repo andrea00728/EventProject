@@ -683,204 +683,203 @@ const Statique = () => {
   }, [sessionStats]);
 
   useEffect(() => {
+    // === Graphique des revenus ===
     if (revenueChartCanvasRef.current) {
-      revenueChartRef.current = new Chart(revenueChartCanvasRef.current, {
-        type: "line",
-        data: {
-          labels: [
-            "Jan",
-            "Fév",
-            "Mar",
-            "Avr",
-            "Mai",
-            "Juin",
-            "Juil",
-            "Août",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Déc",
-          ],
-          datasets: [
-            {
-              label: "Revenus (en K€)",
-              data: [12, 19, 15, 22, 24, 28, 31, 35, 32, 38, 42, 45],
-              borderColor: "#6366f1",
-              backgroundColor: "rgba(99, 102, 241, 0.15)",
-              borderWidth: 2,
-              tension: 0.4,
-              fill: true,
-              pointBackgroundColor: darkMode ? "#1a202c" : "#ffffff",
-              pointBorderColor: "#6366f1",
-              pointBorderWidth: 2,
-              pointRadius: 5,
-              pointHoverRadius: 7,
-            },
-          ],
-        },
-        options: {
-          ...commonChartOptions,
-          plugins: {
-            ...commonChartOptions.plugins,
-            tooltip: {
-              ...commonChartOptions.plugins.tooltip,
-              callbacks: {
-                label: function (context) {
-                  return ` ${context.parsed.y}K€`;
-                },
-              },
-            },
-            legend: {
-              ...commonChartOptions.plugins.legend,
-              display: true,
-              position: "bottom",
-              labels: {
-                usePointStyle: true,
-                padding: 20,
-                color: darkMode ? "#cbd5e1" : "#4a5568",
-              },
-            },
-          },
-        },
-      });
-    }
-
-    if (eventsChartCanvasRef.current && eventTypeData.length > 0) {
-      if (eventsChartRef.current) {
-        eventsChartRef.current.destroy();
-      }
-      eventsChartRef.current = new Chart(eventsChartCanvasRef.current, {
-        type: "doughnut",
-        data: {
-          labels: eventTypeData.map((e) => e.type),
-          datasets: [
-            {
-              data: eventTypeData.map((e) => e.count),
-              backgroundColor: eventTypeData.map(
-                (_, index) => `hsl(${index * 60}, 70%, 50%)`
-              ),
-              borderColor: eventTypeData.map(
-                (_, index) => `hsl(${index * 60}, 70%, 50%)`
-              ),
-              borderWidth: 1.5,
-            },
-          ],
-        },
-        options: doughnutChartOptions,
-        plugins: [ChartDataLabels, centerTextPlugin],
-      });
-    }
-
-    if (peakHoursChartCanvasRef.current) {
-      peakHoursChartRef.current = new Chart(peakHoursChartCanvasRef.current, {
-        type: "bar",
-        data: peakHoursData,
-        options: {
-          ...commonChartOptions,
-          plugins: {
-            ...commonChartOptions.plugins,
-            tooltip: {
-              ...commonChartOptions.plugins.tooltip,
-              callbacks: {
-                label: function (context) {
-                  return ` ${context.parsed.y}% des sessions`;
-                },
-              },
-            },
-          },
-          scales: {
-            y: {
-              ...commonChartOptions.scales.y,
-              max: 100,
-              ticks: {
-                ...commonChartOptions.scales.y.ticks,
-                callback: function (value) {
-                  return value + "%";
-                },
-              },
-            },
-            x: {
-              ...commonChartOptions.scales.x,
-            },
-          },
-        },
-      });
-    }
-
-    if (registrationChartCanvasRef.current && registrationData.length > 0) {
-      if (registrationChartRef.current) {
-        registrationChartRef.current.destroy();
-      }
-      registrationChartRef.current = new Chart(
-        registrationChartCanvasRef.current,
-        {
-          type: "line",
-          data: {
-            labels: registrationData.map((item) => item.month),
-            datasets: [
-              {
-                label: "Inscriptions",
-                data: registrationData.map((item) => item.count),
-                borderColor: "#6366f1",
-                backgroundColor: "rgba(99, 102, 241, 0.15)",
-                tension: 0.4,
-                fill: true,
-                pointBackgroundColor: "#ffffff",
-                pointBorderColor: "#6366f1",
-                pointBorderWidth: 2,
-                pointRadius: 5,
-                pointHoverRadius: 7,
-              },
-            ],
-          },
-          options: {
-            ...commonChartOptions,
-            plugins: {
-              ...commonChartOptions.plugins,
-              legend: {
-                ...commonChartOptions.plugins.legend,
-                display: true,
-                position: "bottom",
-                labels: {
-                  usePointStyle: true,
-                  padding: 20,
-                  color: darkMode ? "#cbd5e1" : "#4a5568",
-                },
-              },
-              tooltip: {
-                ...commonChartOptions.plugins.tooltip,
-                callbacks: {
-                  label: function (context) {
-                    return ` ${context.dataset.label}: ${context.parsed.y}`;
-                  },
-                },
-              },
-              datalabels: {
-                color: darkMode ? "#E5E7EB" : "#374151",
-                anchor: "end",
-                align: "top",
-                formatter: (value) => value,
-              },
-            },
-          },
-          plugins: [ChartDataLabels],
+        // Détruire le graphique existant s'il y en a un
+        if (revenueChartRef.current) {
+            revenueChartRef.current.destroy();
         }
-      );
+        revenueChartRef.current = new Chart(revenueChartCanvasRef.current, {
+            type: "line",
+            data: {
+                labels: [
+                    "Jan", "Fév", "Mar", "Avr", "Mai", "Juin",
+                    "Juil", "Août", "Sep", "Oct", "Nov", "Déc",
+                ],
+                datasets: [
+                    {
+                        label: "Revenus (en K€)",
+                        data: [12, 19, 15, 22, 24, 28, 31, 35, 32, 38, 42, 45],
+                        borderColor: "#6366f1",
+                        backgroundColor: "rgba(99, 102, 241, 0.15)",
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: darkMode ? "#1a202c" : "#ffffff",
+                        pointBorderColor: "#6366f1",
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                    },
+                ],
+            },
+            options: {
+                ...commonChartOptions,
+                plugins: {
+                    ...commonChartOptions.plugins,
+                    tooltip: {
+                        ...commonChartOptions.plugins.tooltip,
+                        callbacks: {
+                            label: function (context) {
+                                return ` ${context.parsed.y}K€`;
+                            },
+                        },
+                    },
+                    legend: {
+                        ...commonChartOptions.plugins.legend,
+                        display: true,
+                        position: "bottom",
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            color: darkMode ? "#cbd5e1" : "#4a5568",
+                        },
+                    },
+                },
+            },
+        });
+    }
+
+    // === Graphique des événements ===
+    if (eventsChartCanvasRef.current && eventTypeData.length > 0) {
+        if (eventsChartRef.current) {
+            eventsChartRef.current.destroy();
+        }
+        eventsChartRef.current = new Chart(eventsChartCanvasRef.current, {
+            type: "doughnut",
+            data: {
+                labels: eventTypeData.map((e) => e.type),
+                datasets: [
+                    {
+                        data: eventTypeData.map((e) => e.count),
+                        backgroundColor: eventTypeData.map(
+                            (_, index) => `hsl(${index * 60}, 70%, 50%)`
+                        ),
+                        borderColor: eventTypeData.map(
+                            (_, index) => `hsl(${index * 60}, 70%, 50%)`
+                        ),
+                        borderWidth: 1.5,
+                    },
+                ],
+            },
+            options: doughnutChartOptions,
+            plugins: [ChartDataLabels, centerTextPlugin],
+        });
+    }
+
+    // === Graphique des heures de pointe ===
+    if (peakHoursChartCanvasRef.current) {
+        // Détruire le graphique existant s'il y en a un
+        if (peakHoursChartRef.current) {
+            peakHoursChartRef.current.destroy();
+        }
+        peakHoursChartRef.current = new Chart(peakHoursChartCanvasRef.current, {
+            type: "bar",
+            data: peakHoursData,
+            options: {
+                ...commonChartOptions,
+                plugins: {
+                    ...commonChartOptions.plugins,
+                    tooltip: {
+                        ...commonChartOptions.plugins.tooltip,
+                        callbacks: {
+                            label: function (context) {
+                                return ` ${context.parsed.y}% des sessions`;
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    y: {
+                        ...commonChartOptions.scales.y,
+                        max: 100,
+                        ticks: {
+                            ...commonChartOptions.scales.y.ticks,
+                            callback: function (value) {
+                                return value + "%";
+                            },
+                        },
+                    },
+                    x: {
+                        ...commonChartOptions.scales.x,
+                    },
+                },
+            },
+        });
+    }
+
+    // === Graphique des inscriptions ===
+    if (registrationChartCanvasRef.current && registrationData.length > 0) {
+        if (registrationChartRef.current) {
+            registrationChartRef.current.destroy();
+        }
+        registrationChartRef.current = new Chart(
+            registrationChartCanvasRef.current, {
+                type: "line",
+                data: {
+                    labels: registrationData.map((item) => item.month),
+                    datasets: [{
+                        label: "Inscriptions",
+                        data: registrationData.map((item) => item.count),
+                        borderColor: "#6366f1",
+                        backgroundColor: "rgba(99, 102, 241, 0.15)",
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: "#ffffff",
+                        pointBorderColor: "#6366f1",
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                    }, ],
+                },
+                options: {
+                    ...commonChartOptions,
+                    plugins: {
+                        ...commonChartOptions.plugins,
+                        legend: {
+                            ...commonChartOptions.plugins.legend,
+                            display: true,
+                            position: "bottom",
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                color: darkMode ? "#cbd5e1" : "#4a5568",
+                            },
+                        },
+                        tooltip: {
+                            ...commonChartOptions.plugins.tooltip,
+                            callbacks: {
+                                label: function (context) {
+                                    return ` ${context.dataset.label}: ${context.parsed.y}`;
+                                },
+                            },
+                        },
+                        datalabels: {
+                            color: darkMode ? "#E5E7EB" : "#374151",
+                            anchor: "end",
+                            align: "top",
+                            formatter: (value) => value,
+                        },
+                    },
+                },
+                plugins: [ChartDataLabels],
+            }
+        );
     }
 
     return () => {
-      revenueChartRef.current?.destroy();
-      eventsChartRef.current?.destroy();
-      peakHoursChartRef.current?.destroy();
-      registrationChartRef.current?.destroy();
+        revenueChartRef.current?.destroy();
+        eventsChartRef.current?.destroy();
+        peakHoursChartRef.current?.destroy();
+        registrationChartRef.current?.destroy();
     };
   }, [
-    commonChartOptions,
-    doughnutChartOptions,
-    eventTypeData,
-    registrationData,
-    darkMode,
-    peakHoursData,
+      commonChartOptions,
+      doughnutChartOptions,
+      eventTypeData,
+      registrationData,
+      darkMode,
+      peakHoursData,
   ]);
 
   const eventPercentage =
