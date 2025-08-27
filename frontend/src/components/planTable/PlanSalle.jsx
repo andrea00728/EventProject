@@ -452,6 +452,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   if (!table) return null;
 
   const ref = useRef(null);
+  const touchDataRef = useRef({}); // Ajout de touchDataRef pour stocker les données tactiles
   const [dragging, setDragging] = useState(false);
   const [rotating, setRotating] = useState(false);
   const [pos, setPos] = useState(table.position ?? { left: 100, top: 100 });
@@ -489,11 +490,11 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   };
 
   const handleTouchStart = (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Empêche le défilement par défaut
     const touch = e.touches[0];
     if (!ref.current) return;
 
-    const tableElement = e.currentTarget;
+    const tableElement = ref.current;
     const tableRect = tableElement.getBoundingClientRect();
     const dragAreaRect = ref.current.parentNode.getBoundingClientRect();
 
@@ -512,11 +513,11 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   };
 
   const handleTouchMove = (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Empêche le défilement par défaut
     const touch = e.touches[0];
     const touchData = touchDataRef.current[table.id];
 
-    if (!touchData) return;
+    if (!touchData || !ref.current) return;
 
     const newX = touch.clientX - touchData.dragAreaLeft - touchData.offsetX;
     const newY = touch.clientY - touchData.dragAreaTop - touchData.offsetY;
@@ -526,13 +527,17 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     const boundedX = Math.max(0, Math.min(snapToGrid(newX), maxX));
     const boundedY = Math.max(0, Math.min(snapToGrid(newY), maxY));
 
-    setPos({ left: boundedX, top: boundedY });
+    const newPos = { left: boundedX, top: boundedY };
+    setPos(newPos);
   };
 
   const handleTouchEnd = () => {
+    if (!touchDataRef.current[table.id] || !ref.current) return;
+
+    const newPos = { left: pos.left, top: pos.top };
     delete touchDataRef.current[table.id];
     setDragging(false);
-    onMove(table.id, pos);
+    onMove(table.id, newPos);
   };
 
   const handleRotate = (direction) => {
@@ -569,7 +574,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
         width: tableWidth,
         height: tableHeight,
         zIndex: dragging || rotating ? 50 : 10,
-        touchAction: 'none',
+        touchAction: 'none', // Empêche le comportement tactile par défaut
         transition: rotating ? 'none' : 'transform 0.3s ease'
       }}
       draggable
@@ -578,6 +583,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd} // Ajout pour gérer l'annulation des touch
     >
       <button
         onClick={(e) => {
@@ -1624,4 +1630,4 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
       )}
     </div>
   );
-};
+}

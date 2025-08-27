@@ -368,7 +368,7 @@ export default function DemoTable({ closeModal }) {
 
       {/* Formulaire */}
       {!showDragZone && (
-        <div className="w-full max-w-md lg:w-[400px] mx-auto">
+        <div className="w-full max-w-md lg:w-[400px] mx-auto ">
           <form
             onSubmit={handleAddTable}
             className="p-6 bg-white shadow-lg rounded-xl border border-gray-200"
@@ -590,10 +590,10 @@ export default function DemoTable({ closeModal }) {
           </div>
 
           {/* Zone tables */}
-          <div className="flex-1 flex items-center justify-center relative">
+          <div className="flex-1 flex items-center justify-center relative ">
             <div
               ref={dragAreaRef}
-              className="relative w-full h-[60vh] lg:w-[800px] lg:h-[500px] bg-white border overflow-hidden border-gray-300 rounded-2xl shadow-2xl pointer-events-auto"
+              className="relative w-full h-[60vh] lg:w-[800px] lg:h-[500px] bg-white border overflow-hidden border-gray-300 rounded-2xl shadow-2xl "
 
               style={{ touchAction: 'none' }} // Important pour désactiver le scroll pendant le drag
             >
