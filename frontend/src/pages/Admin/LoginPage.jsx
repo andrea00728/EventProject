@@ -15,45 +15,17 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState(null);
 
-  // ⚡ Récupération après redirect mobile
-  useEffect(() => {
-    const checkRedirect = async () => {
-      const res = await handleRedirectResult();
-      if (res) {
-        setUser(res.user);
-        setIsAuthenticated(true);
-        navigate("/AdminAccueil");
-      }
-    };
-    checkRedirect();
-  }, [setUser, setIsAuthenticated, navigate]);
-
-  const handleLogin = async (provider) => {
-    setErrorMessage(null);
-    try {
-      const res =
-        provider === "Google"
-          ? await signInWithGoogle()
-          : await signInWithFacebook();
-      if (res) {
-        setUser(res.user);
-        setIsAuthenticated(true);
-        navigate("/AdminAccueil");
-      }
-    } catch (err) {
-      console.error(err);
-      setErrorMessage("Erreur de connexion. Veuillez réessayer.");
-    }
-  };
 
   if (isLoading) return <div>Chargement...</div>;
+
+  const handleDirection = () => {
+    return window.location.href = `${url}/admin/google`
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
       <motion.button
-        onClick={() =>
-          (window.location.href = `${url}/admin/google`)
-        }
+        onClick={handleDirection}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         className="flex items-center justify-center gap-2 border py-2 px-4 rounded"
