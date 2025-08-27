@@ -28,7 +28,7 @@ function snapToGrid(value, gridSize = 40) {
 }
 
 // Fonction pour aligner les angles de rotation sur une grille angulaire
-function snapToAngle(value, angleStep = 45) {
+function snapToAngle(value, angleStep = 15) {
   return Math.round(value / angleStep) * angleStep;
 }
 
@@ -130,9 +130,9 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
 
   const ref = useRef(null);
   const [dragging, setDragging] = useState(false);
+  const [rotating, setRotating] = useState(false);
   const [pos, setPos] = useState(table.position ?? { left: 100, top: 100 });
   const [rotation, setRotation] = useState(table.rotation ?? 0);
-  const touchDataRef = useRef({});
 
   useEffect(() => {
     setPos(table.position ?? { left: 100, top: 100 });
@@ -212,10 +212,16 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     onMove(table.id, pos);
   };
 
-  const handleRotate = () => {
-    const newRotation = snapToAngle((rotation + 45) % 360);
+  const handleRotate = (direction) => {
+    setRotating(true);
+    const angleStep = 15;
+    const newRotation = snapToAngle(
+      direction === "clockwise" ? rotation + angleStep : rotation - angleStep
+    );
     setRotation(newRotation);
     onRotate(table.id, newRotation);
+    setTimeout(() => setRotating(false), 300); // Durée de l'animation
+    toast.success(`Table ${table.nom} pivotée à ${newRotation}°`);
   };
 
   const isChairOccupied = (chairIndex) => {
@@ -239,8 +245,9 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
         top: pos.top,
         width: tableWidth,
         height: tableHeight,
-        zIndex: dragging ? 50 : 10,
+        zIndex: dragging || rotating ? 50 : 10,
         touchAction: 'none',
+        transition: rotating ? 'none' : 'transform 0.3s ease'
       }}
       draggable
       onDragStart={handleDragStart}
@@ -248,17 +255,13 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      onDoubleClick={(e) => {
-        e.stopPropagation();
-        handleRotate();
-      }}
     >
       <button
         onClick={(e) => {
           e.stopPropagation();
           onEdit(table);
         }}
-        className="absolute -top-2 -right-2 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-indigo-700 z-30 md:hidden"
+        className="absolute -top-2 -right-2 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-indigo-700 z-30"
         title="Modifier la table"
       >
         <Edit className="w-3 h-3" />
@@ -266,22 +269,33 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       <button
         onClick={(e) => {
           e.stopPropagation();
-          handleRotate();
+          handleRotate("counterclockwise");
         }}
-        className="absolute -top-2 -left-2 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-700 z-30"
-        title="Pivoter la table"
+        className={`absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all ${rotating ? 'ring-2 ring-blue-300 animate-pulse' : ''}`}
+        title="Pivoter à gauche"
       >
-        <RefreshCcw className="w-3 h-3" />
+        <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(90deg)' }} />
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleRotate("clockwise");
+        }}
+        className={`absolute -top-2 left-6 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all ${rotating ? 'ring-2 ring-blue-300 animate-pulse' : ''}`}
+        title="Pivoter à droite"
+      >
+        <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(-90deg)' }} />
       </button>
 
       <div
         className={`border-4 border-indigo-400 shadow-md flex items-center justify-center ${table.type === "ronde" || table.type === "ovale"
           ? "rounded-full"
           : "rounded-md"
-          } w-full h-full bg-pink-200 relative transition-shadow duration-200 ${dragging ? 'shadow-2xl scale-105' : 'shadow-md'
-          }`}
+          } w-full h-full bg-pink-200 relative transition-shadow duration-200 ${dragging || rotating ? 'shadow-2xl scale-105' : 'shadow-md'
+          } ${rotating ? 'ring-2 ring-blue-300' : ''}`}
         style={{
           transform: `rotate(${rotation}deg)`,
+          transition: rotating ? 'none' : 'transform 0.3s ease'
         }}
       >
         <span className="font-bold text-indigo-700 select-none pointer-events-none">
