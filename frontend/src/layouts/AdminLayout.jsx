@@ -86,12 +86,15 @@ export default function AdminLayout() {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = () => {
-    console.log("Déconnexion Confirmée");
-    setUser(null);
-    logout();
-    setShowLogoutModal(false);
-  };
+ const confirmLogout = () => {
+  console.log("Déconnexion Confirmée");
+  setUser(null);
+  logout();
+  setShowLogoutModal(false);
+  
+  // Redirection vers la page de login
+  navigate("/login-site/super/admin", { replace: true });
+};
 
   const cancelLogout = () => {
     setShowLogoutModal(false);
