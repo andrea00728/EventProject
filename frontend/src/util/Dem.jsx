@@ -91,9 +91,17 @@ const Dem = () => {
       {isOpen && (
           <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
               <div className="relative w-full h-full bg-white flex flex-col items-center justify-center">
+
+                {/* Bouton fermer */}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="fixed top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors z-500"
+              >
+                ✕
+              </button>
                  
                   {/* Contenu du modal */}
-                  <DemoTable closeModal={setIsOpen(false)}/>
+                  <DemoTable closeModal={() => setIsOpen(false)}/>
               </div>
           </div>
       )}
