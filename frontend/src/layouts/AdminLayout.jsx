@@ -1103,7 +1103,9 @@ export default function AdminLayout() {
             darkMode ? "bg-gray-900" : "bg-gray-50"
           }`}
         >
-          <div className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+          <div
+            className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}
+          >
             <Outlet />
           </div>
         </main>
