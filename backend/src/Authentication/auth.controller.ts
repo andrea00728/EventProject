@@ -228,13 +228,29 @@ async login(@Body() body: any) {
    * @returns 
    */
   @Get('validate-token')
-async validateToken(@Req() req: Request) {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token || await this.authService.isTokenBlacklisted(token)) {
-    throw new UnauthorizedException('Jeton invalide ou blacklisté');
+    async validateToken(@Req() req: Request) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token || await this.authService.isTokenBlacklisted(token)) {
+      throw new UnauthorizedException('Jeton invalide ou blacklisté');
+    }
+    return { valid: true };
   }
-  return { valid: true };
-}
+
+  @UseGuards(JwtAuthGuard)
+  @Post('update-profile')
+  @UseInterceptors(FileInterceptor('photo', { dest: './uploads' }))
+  async updateProfile(
+    @Req() req,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: { name?: string }
+  ) {
+    const userId = req.user.sub;
+    return this.authService.updateProfile(userId, {
+      name: body.name,
+      photo: file?.filename, // tu sauvegardes le nom du fichier
+    });
+  }
+
 
 
 

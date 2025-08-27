@@ -265,59 +265,131 @@ export default function ListeTable() {
       </div> */}
 
       {/* Event Selection */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-          <span className="w-2 h-6 bg-indigo-600 rounded-full mr-3"></span>
-          Sélectionnez un événement
-        </h3>
+      <div className="relative bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl p-8 mb-8 border border-gray-100/50 backdrop-blur-sm overflow-hidden">
+        {/* Effet décoratif de fond */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full blur-3xl opacity-30 -translate-y-16 translate-x-16"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-100 to-indigo-100 rounded-full blur-2xl opacity-20 translate-y-12 -translate-x-12"></div>
 
-        {isLoadingEvents ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
-          </div>
-        ) : eventError ? (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-            <div className="flex items-center">
-              <FiAlertTriangle className="text-red-500 mr-2" />
-              <p className="text-red-700">{eventError}</p>
+        {/* Header avec design moderne */}
+        <div className="relative z-10 mb-6">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <div className="w-3 h-8 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full shadow-lg"></div>
+                <div className="absolute inset-0 w-3 h-8 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full animate-pulse opacity-50"></div>
+              </div>
+              <h3 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                Sélectionnez un événement
+              </h3>
             </div>
+            <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent"></div>
           </div>
-        ) : events.length === 0 ? (
-          <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-            <p className="text-yellow-700">Aucun événement trouvé. Créez un événement d'abord.</p>
-          </div>
-        ) : (
-          <Tabs
-            value={selectedEvent ? events.findIndex(event => event.id === selectedEvent.id) : false}
-            onChange={(e, newValue) => setSelectedEvent(events[newValue])}
-            variant="scrollable"
-            scrollButtons="auto"
-            className="mb-6"
-            TabIndicatorProps={{ style: { backgroundColor: '#6b48ff', height: '3px' } }}
-          >
-            {events.map((event) => (
-              <Tab
-                key={event.id}
-                label={
-                  <div className="flex flex-col items-start px-4 py-2 transition-all duration-300 ease-in-out  hover:bg-white rounded-lg hover:shadow-md hover:scale-[1.1] hover:border-red-500 hover:pl-3 group">
-                    <span className={`text-sm font-medium ${selectedEvent?.id === event.id ? 'text-indigo-600' : 'text-gray-600'}`}>
-                      {event.nom}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {new Date(event.date).toLocaleDateString()}
-                    </span>
-                  </div>
-                }
-                sx={{
-                  minWidth: 'auto',
-                  padding: 0,
-                  textTransform: 'none',
-                  '&.Mui-selected': { backgroundColor: 'transparent' },
-                }}
-              />
-            ))}
-          </Tabs>
-        )}
+        </div>
+
+        <div className="relative z-10">
+          {isLoadingEvents ? (
+            <div className="flex justify-center py-12">
+              <div className="relative">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200"></div>
+                <div className="absolute inset-0 animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-indigo-500 border-r-purple-500"></div>
+                <div className="absolute inset-2 animate-ping rounded-full h-8 w-8 bg-indigo-100"></div>
+              </div>
+            </div>
+          ) : eventError ? (
+            <div className="relative bg-gradient-to-r from-red-50 to-red-50/30 border border-red-200 rounded-xl p-6 shadow-sm">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-red-400 to-red-600 rounded-l-xl"></div>
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <FiAlertTriangle className="text-red-500 w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-red-800 mb-1">Erreur</h4>
+                  <p className="text-red-700 text-sm leading-relaxed">{eventError}</p>
+                </div>
+              </div>
+            </div>
+          ) : events.length === 0 ? (
+            <div className="relative bg-gradient-to-r from-amber-50 to-yellow-50/50 border border-amber-200 rounded-xl p-6 shadow-sm">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-yellow-500 rounded-l-xl"></div>
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-amber-800 mb-1">Aucun événement</h4>
+                  <p className="text-amber-700 text-sm leading-relaxed">Aucun événement trouvé. Créez un événement d'abord.</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Custom Tabs Design */}
+              <div className="relative">
+                <div className="flex space-x-2 overflow-x-auto pb-4 scrollbar-hide">
+                  {events.map((event, index) => (
+                    <button
+                      key={event.id}
+                      onClick={() => setSelectedEvent(event)}
+                      className={`group relative flex-shrink-0 min-w-[200px] p-4 rounded-xl border-2 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg ${selectedEvent?.id === event.id
+                          ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-300 shadow-md'
+                          : 'bg-white hover:bg-gray-50 border-gray-200 hover:border-indigo-200'
+                        }`}
+                    >
+                      {/* Indicateur de sélection */}
+                      {selectedEvent?.id === event.id && (
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-t-xl"></div>
+                      )}
+
+                      {/* Contenu de l'événement */}
+                      <div className="flex flex-col items-start space-y-2">
+                        <div className="flex items-center space-x-2 w-full">
+                          <div className={`w-3 h-3 rounded-full ${selectedEvent?.id === event.id
+                              ? 'bg-gradient-to-r from-indigo-500 to-purple-600'
+                              : 'bg-gray-300 group-hover:bg-indigo-400'
+                            } transition-all duration-300`}></div>
+                          <span className={`font-semibold text-sm truncate flex-1 ${selectedEvent?.id === event.id ? 'text-indigo-700' : 'text-gray-700 group-hover:text-indigo-600'
+                            } transition-colors duration-300`}>
+                            {event.nom}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center space-x-1 text-xs text-gray-500">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span>{new Date(event.date).toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                          })}</span>
+                        </div>
+                      </div>
+
+                      {/* Effet de hover */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Indicateur de scroll si nécessaire */}
+                <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <style jsx>{`
+          .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+          `}
+        </style>
       </div>
 
       {/* Table Display */}

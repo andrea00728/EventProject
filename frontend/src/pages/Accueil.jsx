@@ -5,6 +5,7 @@ import TestimonialsSection from "../util/testimonialsSection";
 import { getAllEvents } from '../services/evenementServ';
 import tutorialVideo from "../assets/demo.mp4";
 import IMage from "../../public/undraw_having-fun_kkeu.svg";
+import Dem from '../util/Dem';
 export default function Accueil() {
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -262,7 +263,7 @@ export default function Accueil() {
             <a
               href={tutorialVideo}
               download="demonstration.mp4"
-              className="bg-green-600 text-white px-5 py-3 rounded-xl font-semibold hover:scale-105 transition flex items-center justify-center"
+              className="bg-green-600 text-white px-5 py-3 rounded-xl font-semibold hover:scale-105 transition flex items-center justify-center "
             >
               Télécharger la vidéo
             </a>
@@ -273,17 +274,9 @@ export default function Accueil() {
       {/* Modal plein écran */}
       {isOpen && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 sm:p-6">
-          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md sm:max-w-lg md:max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col items-center justify-start p-6">
-            {/* Bouton fermer */}
-            {/* <button
-              onClick={() => setIsOpen(false)}
-              className="absolute top-4 right-4 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors cursor-pointer z-50"
-            >
-              ✕
-            </button> */}
-
+          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col items-center justify-start">
             {/* Contenu du modal */}
-            <Demo closeModal={() => setIsOpen(false)} />
+            <Dem closeModal={() => setIsOpen(false)} />
           </div>
         </div>
       )}

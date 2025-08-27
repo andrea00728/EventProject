@@ -1,3 +1,4 @@
+import { ArrowBack } from "@mui/icons-material";
 import { Edit, Plus, RefreshCcw, User } from "lucide-react";
 import { useState, useRef } from "react";
 
@@ -114,7 +115,7 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
   );
 }
 
-export default function Demo({ closeModal }) {
+export default function DemoTable({ closeModal }) {
   const [tables, setTables] = useState([]);
   const [guests, setGuests] = useState([]); // {id, name, tableId, chairIndex}
   const [form, setForm] = useState({ nom: "", capacite: "", nombre: "" });
@@ -363,13 +364,17 @@ export default function Demo({ closeModal }) {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 p-4 lg:p-8 gap-4 lg:gap-8 overflow-auto">
-      <button
-        onClick={closeModal}
-        className="absolute top-4 right-4 text-2xl font-bold text-gray-800 hover:text-red-500 z-50 cursor-pointer"
-      >
-        ✕
-      </button>
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 p-4 lg:p-8 gap-4 lg:gap-8 overflow-auto w-full">
+
+      {/* Bouton fermer unique et amélioré */}
+            <div
+              
+              className=" text-2xl font-bold p-2 rounded-full mr-10 hover:bg-white/20 transition-colors cursor-pointer z-[999] pointer-events-auto"
+              aria-label="Fermer la démonstration"
+            >
+              <ArrowBack onClick={closeModal} className="text-transparent"/>
+            </div>
+
       {/* Formulaire */}
       {!showDragZone && (
         <div className="w-full max-w-md lg:w-[400px] mx-auto">
@@ -597,7 +602,8 @@ export default function Demo({ closeModal }) {
           <div className="flex-1 flex items-center justify-center relative">
             <div
               ref={dragAreaRef}
-              className="relative w-full h-[60vh] lg:w-[800px] lg:h-[500px] bg-white border overflow-hidden border-gray-300 rounded-2xl shadow-2xl"
+              className="relative w-full h-[60vh] lg:w-[800px] lg:h-[500px] bg-white border overflow-hidden border-gray-300 rounded-2xl shadow-2xl pointer-events-auto"
+
               style={{ touchAction: 'none' }} // Important pour désactiver le scroll pendant le drag
             >
               {movingGuest && (
