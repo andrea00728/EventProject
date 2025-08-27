@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
 import { Response, Request } from 'express';
@@ -38,6 +38,36 @@ export class AdminController {
         message: error.message || 'Erreur lors de la déconnexion',
       });
     }
+  }
+
+  @UseGuards(AuthGuard('jwt')) // Protégé par JWT
+  @Post('update-password')
+  async updatePassword(
+    @Req() req,
+    @Body() body: { newPassword: string },
+  ) {
+    const adminId = req.user.id; // ID de l’utilisateur récupéré depuis le JWT
+    return this.adminService.updatePassword(
+      adminId,
+      body.newPassword,
+    );
+  }
+
+  @Post('login-email')
+  async loginWithEmail(
+    @Body() body: { email: string; password: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.adminService.loginWithEmailAndPass(body, res);
+    return result;
+  }
+
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('has-password')
+  async checkHasPassword(@Req() req: any) {
+    const adminId = req.user.id; // récupéré depuis le token JWT
+    return this.adminService.hasPassword(adminId);
   }
 
 }

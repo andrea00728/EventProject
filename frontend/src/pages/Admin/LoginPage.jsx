@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { FcGoogle } from "react-icons/fc";
 import { FaLock, FaEnvelope } from "react-icons/fa";
 import { url } from "../../api/url";
+import axiosClient from "../../api/axios-client";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -13,18 +14,38 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
 
   // Simulation login email
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMessage("");
+
     try {
       if (!email || !password) {
         throw new Error("Veuillez remplir tous les champs !");
       }
-      // TODO: requête API login
-      console.log("Login avec:", email, password);
-      navigate("/dashboard");
-    } catch (error) {
-      setErrorMessage(error.message);
+
+      // Appel à l'API NestJS
+      const response = await axiosClient.post(
+        "/admin/login-email",
+        { email, password },
+        { withCredentials: true } // très important pour les cookies HTTP-only
+      );
+
+      console.log("Réponse login :", response.data);
+
+      // Redirection après succès
+      if(response.data){
+        window.location.href = '/AdminAccueil';
+      }
+
+      } catch (error) {
+      console.error(error);
+      if (error.response?.data?.message) {
+        setErrorMessage(error.response.data.message);
+      } else {
+        setErrorMessage(error.message || "Erreur lors de la connexion");
+      }
     } finally {
       setLoading(false);
     }

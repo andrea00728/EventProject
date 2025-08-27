@@ -35,14 +35,19 @@ import Modalist from "./modal";
 import LogoutModal from "../pages/Admin/LogoutModal";
 import { logout } from "../services/firebase/authService";
 import { format } from "date-fns";
-import { getUserIdForToken } from "../services/userService";
+import {
+  getIfAdminHasPassword,
+  getUserIdForToken,
+} from "../services/userService";
 import { fr } from "date-fns/locale";
 import { useSocket } from "../socket";
 import { motion, AnimatePresence } from "framer-motion";
 import { url } from "../api/url";
 import { io } from "socket.io-client";
+import { PasswordSetupModal } from "../pages/Admin/PasswordSetupModal";
 export default function AdminLayout() {
-  const { isAuthenticated, role, isLoading, setUser, user, handleLogout } = useStateContext();
+  const { isAuthenticated, role, isLoading, setUser, user, handleLogout } =
+    useStateContext();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -51,21 +56,38 @@ export default function AdminLayout() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null); // 'notifications', 'messages', null
 
-  const [messages,setMessages]=useState([]);
+  const [messages, setMessages] = useState([]);
+  const [showModalModifyPassword, setShowModalModifyPassword] = useState(false);
 
   useEffect(() => {
     const handleEscape = (event) => {
-      if (event.key === 'Escape' && sidebarOpen) {
+      if (event.key === "Escape" && sidebarOpen) {
         setSidebarOpen(false);
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
 
     return () => {
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [sidebarOpen]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await getIfAdminHasPassword();
+      const hidden = localStorage.getItem("hidePasswordModal");
+      // console.log("Connaître si l'admin a un mot de passe : ", res);
+      if (res.hasPassword == false && hidden == "false") {
+        setTimeout(() => {
+          setShowModalModifyPassword(true);
+        }, 2000);
+      } else {
+        setShowModalModifyPassword(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   console.log("Auth State:", { isLoading, isAuthenticated, role, user });
 
@@ -86,6 +108,8 @@ export default function AdminLayout() {
   switch (role) {
     case "admin":
       break;
+    case "super_admin":
+      break;
     case "accueil":
       return <Navigate to="/personnelAccueil" replace />;
     case "caissier":
@@ -105,7 +129,7 @@ export default function AdminLayout() {
   const confirmLogout = async () => {
     setUser(null);
     await logout();
-    handleLogout()
+    handleLogout();
     setShowLogoutModal(false);
     navigate("/login-site/super/admin");
   };
@@ -285,8 +309,8 @@ export default function AdminLayout() {
                     message.isAdmin
                       ? "bg-blue-500 text-white"
                       : darkMode
-                      ? "bg-gray-700 text-gray-200"
-                      : "bg-gray-200 text-gray-900"
+                        ? "bg-gray-700 text-gray-200"
+                        : "bg-gray-200 text-gray-900"
                   }`}
                 >
                   <p className="text-sm">{message.text}</p>
@@ -295,8 +319,8 @@ export default function AdminLayout() {
                       message.isAdmin
                         ? "text-blue-100"
                         : darkMode
-                        ? "text-gray-400"
-                        : "text-gray-500"
+                          ? "text-gray-400"
+                          : "text-gray-500"
                     }`}
                   >
                     {formatTime(message.timestamp)}
@@ -340,7 +364,7 @@ export default function AdminLayout() {
   const NotificationModal = ({ show, onClose, notification, darkMode }) => {
     // Si on n'a pas de notification ou si le modal est fermé, ne rien afficher
     if (!show || !notification) return null;
-  
+
     return (
       <AnimatePresence>
         <motion.div
@@ -371,7 +395,9 @@ export default function AdminLayout() {
                     className="w-10 h-10 rounded-full object-cover"
                   />
                 )}
-                <h3 className="font-semibold">{notification.title || "Notification"}</h3>
+                <h3 className="font-semibold">
+                  {notification.title || "Notification"}
+                </h3>
               </div>
               <button
                 onClick={onClose}
@@ -380,17 +406,19 @@ export default function AdminLayout() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-  
+
             {/* Contenu */}
             <div className="p-4 space-y-2">
               <p className="text-sm">{notification.message}</p>
               {notification.time && (
-                <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                <p
+                  className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}
+                >
                   {notification.time}
                 </p>
               )}
             </div>
-  
+
             {/* Footer */}
             <div className="p-4 border-t flex justify-end">
               <button
@@ -431,8 +459,6 @@ export default function AdminLayout() {
     const [showNotificationModal, setShowNotificationModal] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState(null);
 
-    
-
     const filteredNotifications = notifications.filter((n) => {
       if (notifFilter === "all") return true;
       if (notifFilter === "unread") return !n.read;
@@ -448,8 +474,6 @@ export default function AdminLayout() {
     const handleRedirect = () => {
       navigate("/AdminParametre");
     };
-
-    
 
     useEffect(() => {
       const fetchMessages = async () => {
@@ -486,7 +510,8 @@ export default function AdminLayout() {
           const data = await response.json();
 
           // 🔹 Récupérer IDs lus depuis localStorage
-          const readIds = JSON.parse(localStorage.getItem("readNotifications")) || [];
+          const readIds =
+            JSON.parse(localStorage.getItem("readNotifications")) || [];
 
           // 🔹 Marquer les notifications comme lues si elles sont dans le localStorage
           const formatted = data.map((notif) => ({
@@ -500,7 +525,7 @@ export default function AdminLayout() {
           setNotifications([]);
         }
       };
-      
+
       async function connectSocket() {
         const userId = await getUserIdForToken();
         if (!userId) return;
@@ -520,10 +545,15 @@ export default function AdminLayout() {
           if (!socket) return;
 
           socket.on("notifRegister", (notif) => {
-            console.log("NotifRegister reçu:", notif, "Listener ID:", Date.now());
+            console.log(
+              "NotifRegister reçu:",
+              notif,
+              "Listener ID:",
+              Date.now()
+            );
             setNotifications((prevNotifications) => {
               // Vérifier si la notification existe déjà pour éviter les doublons
-              console.log("notif vaovao", notif)
+              console.log("notif vaovao", notif);
               const exists = prevNotifications.some(
                 (n) => n.id === (notif.id || Date.now().toString())
               );
@@ -596,7 +626,8 @@ export default function AdminLayout() {
       };
 
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     useEffect(() => {
@@ -648,7 +679,8 @@ export default function AdminLayout() {
       await markAsRead(item.id, "notification");
 
       // 🔹 Mets à jour localStorage
-      const readIds = JSON.parse(localStorage.getItem("readNotifications")) || [];
+      const readIds =
+        JSON.parse(localStorage.getItem("readNotifications")) || [];
       if (!readIds.includes(item.id)) {
         readIds.push(item.id);
         localStorage.setItem("readNotifications", JSON.stringify(readIds));
@@ -661,9 +693,7 @@ export default function AdminLayout() {
       setNotifications((prev) =>
         prev.map((n) => (n.id === item.id ? { ...n, is_read: true } : n))
       );
-      setShowNotificationModal(true);      // on ouvre le modal
-
-
+      setShowNotificationModal(true); // on ouvre le modal
     };
 
     const handleDeleteMessage = async (id) => {
@@ -675,7 +705,9 @@ export default function AdminLayout() {
           }
         );
         if (!response.ok) throw new Error("Erreur lors de la suppression");
-        setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== id));
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => msg.id !== id)
+        );
       } catch (error) {
         console.error("Suppression message impossible:", error);
       }
@@ -684,8 +716,7 @@ export default function AdminLayout() {
     const handleDeleteNotification = async (notificationId) => {
       try {
         await axios.delete(
-          `${import.meta.env.VITE_API_BASE_URL}/notification/${notificationId}`,
-          
+          `${import.meta.env.VITE_API_BASE_URL}/notification/${notificationId}`
         );
         setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
       } catch (error) {
@@ -694,7 +725,8 @@ export default function AdminLayout() {
     };
 
     useEffect(() => {
-      const readNotifIds = JSON.parse(localStorage.getItem("readNotifications")) || [];
+      const readNotifIds =
+        JSON.parse(localStorage.getItem("readNotifications")) || [];
       const readMsgIds = JSON.parse(localStorage.getItem("readMessages")) || [];
 
       setNotifications((prev) =>
@@ -704,12 +736,9 @@ export default function AdminLayout() {
       );
 
       setMessages((prev) =>
-        prev.map((m) =>
-          readMsgIds.includes(m.id) ? { ...m, read: true } : m
-        )
+        prev.map((m) => (readMsgIds.includes(m.id) ? { ...m, read: true } : m))
       );
     }, []); // ✅ tableau vide → ne s’exécute qu’une seule fois au montage
-
 
     const pageBg = darkMode
       ? "bg-gray-900 text-gray-200"
@@ -745,8 +774,8 @@ export default function AdminLayout() {
               items={filteredNotifications}
               onItemClick={(item) => {
                 handleNotificationClick(item);
-                setSelectedNotification(item);   // on stocke la notif cliquée
-                setIsModalOpen(true);            // on ouvre le modal
+                setSelectedNotification(item); // on stocke la notif cliquée
+                setIsModalOpen(true); // on ouvre le modal
               }}
               onDelete={handleDeleteNotification}
               onViewMore={() => setShowNotificationsModal(true)}
@@ -798,22 +827,31 @@ export default function AdminLayout() {
               onItemClick={async (item) => {
                 // Marquer comme lu
                 if (!item.read) {
-                  const readIds = JSON.parse(localStorage.getItem("readMessages")) || [];
+                  const readIds =
+                    JSON.parse(localStorage.getItem("readMessages")) || [];
                   if (!readIds.includes(item.id)) {
                     readIds.push(item.id);
-                    localStorage.setItem("readMessages", JSON.stringify(readIds));
+                    localStorage.setItem(
+                      "readMessages",
+                      JSON.stringify(readIds)
+                    );
                   }
 
                   setMessages((prev) =>
-                    prev.map((m) => (m.id === item.id ? { ...m, read: true } : m))
+                    prev.map((m) =>
+                      m.id === item.id ? { ...m, read: true } : m
+                    )
                   );
 
                   // Appel API pour marquer comme lu côté backend
                   try {
-                    await fetch(`${import.meta.env.VITE_API_BASE_URL}/contact_messages/${item.id}`, {
-                      method: "PATCH",
-                      body: JSON.stringify({ read: true }),
-                    });
+                    await fetch(
+                      `${import.meta.env.VITE_API_BASE_URL}/contact_messages/${item.id}`,
+                      {
+                        method: "PATCH",
+                        body: JSON.stringify({ read: true }),
+                      }
+                    );
                   } catch (error) {
                     console.error("Erreur mark as read:", error);
                   }
@@ -825,15 +863,22 @@ export default function AdminLayout() {
               }}
               onDelete={async (id) => {
                 try {
-                  await fetch(`${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`, {
-                    method: "DELETE",
-                  });
+                  await fetch(
+                    `${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`,
+                    {
+                      method: "DELETE",
+                    }
+                  );
                   setMessages((prev) => prev.filter((m) => m.id !== id));
 
                   // Supprimer aussi du localStorage si présent
-                  const readIds = JSON.parse(localStorage.getItem("readMessages")) || [];
+                  const readIds =
+                    JSON.parse(localStorage.getItem("readMessages")) || [];
                   const newReadIds = readIds.filter((rid) => rid !== id);
-                  localStorage.setItem("readMessages", JSON.stringify(newReadIds));
+                  localStorage.setItem(
+                    "readMessages",
+                    JSON.stringify(newReadIds)
+                  );
                 } catch (error) {
                   console.error("Erreur suppression message:", error);
                 }
@@ -844,7 +889,9 @@ export default function AdminLayout() {
                 <button
                   onClick={() => setMsgFilter("all")}
                   className={`px-3 py-1 rounded-full ${
-                    msgFilter === "all" ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700"
+                    msgFilter === "all"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700"
                   }`}
                 >
                   Tout ({messages.length})
@@ -862,7 +909,9 @@ export default function AdminLayout() {
                 <button
                   onClick={() => setMsgFilter("read")}
                   className={`px-3 py-1 rounded-full ${
-                    msgFilter === "read" ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700"
+                    msgFilter === "read"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700"
                   }`}
                 >
                   Lus ({messages.filter((m) => m.read).length})
@@ -870,39 +919,38 @@ export default function AdminLayout() {
               </div>
             </Dropdown>
 
-
             <div ref={profileRef} className="relative">
-                <button
-                  onClick={() => setShowProfile(!showProfile)}
-                  className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
-                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+              <button
+                onClick={() => setShowProfile(!showProfile)}
+                className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
+                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                }`}
+                aria-label="Menu profil"
+              >
+                <div className="relative">
+                  {user?.photo ? (
+                    <img
+                      src={
+                        user.photo.startsWith("data:")
+                          ? user.photo
+                          : `data:image/jpeg;base64,${user.photo}`
+                      }
+                      alt="Profile"
+                      className="w-10 h-10 rounded-[50%] object-cover"
+                    />
+                  ) : (
+                    <FaUser className="w-5 h-5" />
+                  )}
+                </div>
+                <span className="hidden sm:inline text-sm font-medium">
+                  {user?.name || "Admin"}
+                </span>
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    showProfile ? "rotate-180" : ""
                   }`}
-                  aria-label="Menu profil"
-                >
-                  <div className="relative">
-                    {user?.photo ? (
-                      <img
-                        src={
-                          user.photo.startsWith('data:') 
-                            ? user.photo 
-                            : `data:image/jpeg;base64,${user.photo}`
-                        }
-                        alt="Profile"
-                        className="w-10 h-10 rounded-[50%] object-cover"
-                      />
-                    ) : (
-                      <FaUser className="w-5 h-5" />
-                    )}
-                  </div>
-                  <span className="hidden sm:inline text-sm font-medium">
-                    {user?.name || "Admin"}
-                  </span>
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform duration-200 ${
-                      showProfile ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
+                />
+              </button>
 
               {showProfile && (
                 <div
@@ -1016,10 +1064,10 @@ export default function AdminLayout() {
     );
   };
 
-  
-
   return (
-    <div className={`flex h-screen flex-row ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+    <div
+      className={`flex h-screen flex-row ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}
+    >
       {sidebarOpen && isMobile && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
@@ -1088,8 +1136,8 @@ export default function AdminLayout() {
                         location.pathname === item.path
                           ? "text-white scale-110"
                           : darkMode
-                          ? "text-gray-300 group-hover:scale-110"
-                          : "text-gray-500 group-hover:scale-110"
+                            ? "text-gray-300 group-hover:scale-110"
+                            : "text-gray-500 group-hover:scale-110"
                       }`}
                     >
                       {item.icon}
@@ -1151,13 +1199,9 @@ export default function AdminLayout() {
         <main
           className={`flex-1 overflow-auto scrollable transition-all duration-300 ${
             sidebarOpen ? "lg:ml-64" : "lg:ml-0"
-          } ${
-            darkMode ? "bg-gray-900" : "bg-gray-50"
-          }`}
+          } ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}
         >
-          <div
-            className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}
-          >
+          <div className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
             <Outlet />
           </div>
         </main>
@@ -1167,8 +1211,11 @@ export default function AdminLayout() {
           onConfirm={confirmLogout}
           darkMode={darkMode}
         />
+        <PasswordSetupModal
+          show={showModalModifyPassword}
+          onClose={() => setShowModalModifyPassword(false)}
+        />
       </div>
     </div>
   );
-
 }

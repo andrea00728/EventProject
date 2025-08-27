@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import {Request, Response } from 'express';
 import Redis from 'ioredis';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AdminService {
@@ -19,22 +20,61 @@ export class AdminService {
     private readonly redis:Redis ,
   ) {}
 
-  async loginWithEmailAndPass(user : {email : string; password : string}) : Promise<any> {
+async loginWithEmailAndPass(user: { email: string; password: string }, res: Response): Promise<any> {
+  if (!user) return { message: "Email ou mot de passe oublié" };
 
-    if (!user) return {message : "Email ou mot de passe oublié"}
+  const adminUser = await this.userRepository.findOne({
+    where: { email: user.email }
+  });
 
-    const userExist = this.userRepository.findOne({
-      where: {email : user.email, password : user.password}
-    })
+  if (!adminUser) throw new UnauthorizedException('Admin non trouvé');
 
-    if (!userExist) throw new UnauthorizedException('Admin non trouvé');
-
-    return {message : "Authentification reussi"};
+  // Vérifier que le mot de passe est défini
+  if (!adminUser.password) {
+    throw new UnauthorizedException('Mot de passe non défini pour cet utilisateur');
   }
 
-  async loginWithPasswordReceived () {
+  const isPasswordValid = await bcrypt.compare(user.password, adminUser.password);
+  if (!isPasswordValid) throw new UnauthorizedException('Mot de passe incorrect');
 
-  }
+  // Payload JWT
+  const payload = { 
+    sub: adminUser.id, 
+    email: adminUser.email, 
+    role: adminUser.role, 
+    name: adminUser.name 
+  };
+
+  // Générer les tokens
+  const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
+  const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+  // Placer les cookies HTTP-only
+  res.cookie('jwt', access_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 1000, // 1 heure
+  });
+
+  res.cookie('refresh_token', refresh_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+  });
+
+  return { 
+    message: "Authentification réussie", 
+    user: { id: adminUser.id, email: adminUser.email, role: adminUser.role },
+  };
+}
+
+
+
+
+  // async loginWithPasswordReceived () {
+  // }
 
   async loginWithGoogleOAuth(user: any, res: Response) {
     try {
@@ -113,6 +153,26 @@ export class AdminService {
       );
     }
   }
+
+  async updatePassword(
+    adminId: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
+    const admin = await this.userRepository.findOne({ where: { id: adminId } });
+
+    if (!admin) {
+      throw new BadRequestException('Utilisateur introuvable');
+    }
+
+    // Hasher le nouveau mot de passe
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Mise à jour
+    admin.password = hashedPassword;
+    await this.userRepository.save(admin);
+
+    return { message: 'Mot de passe mis à jour avec succès' };
+  }
   
   async createUser(user : {name : string; email: string; photo ?: string}):Promise<{ message: string }>{
     const adminUser = this.userRepository.create({
@@ -181,4 +241,17 @@ async logout(req: Request, res: Response): Promise<{ success: boolean; message: 
     return { success: false, message: 'Erreur interne lors de la déconnexion' };
   }
 }
+
+async hasPassword(adminId: string): Promise<{ hasPassword: boolean }> {
+    const admin = await this.userRepository.findOne({
+      where: { id: adminId },
+      select: ['id', 'password'], // on récupère uniquement l'id et le password
+    });
+
+    if (!admin) {
+      throw new NotFoundException('Admin introuvable');
+    }
+
+    return { hasPassword: !!admin.password }; // true si password existe, false sinon
+  }
 }
