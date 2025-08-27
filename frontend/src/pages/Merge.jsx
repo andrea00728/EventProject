@@ -298,7 +298,7 @@ const Publicacc = () => {
 
       <section id="demo">
         <div className="bg-gradient-to-b from-gray-50 to-white">
-          <Demo isOpen={isDemoOpen} onClose={() => setIsDemoOpen(false)} />
+          <Demo />
         </div>
       </section>
 
