@@ -6,7 +6,7 @@ import DemoTable from "./demo";
 const Dem = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpenDemo, setIsOpenDemo] = useState(false);
   const [showVideo, setShowVideo] = useState(true);
 
 
@@ -58,8 +58,8 @@ const Dem = () => {
             <div className="flex flex-wrap gap-4 mt-4 align-center justify-center">
                 {/* Bouton pour ouvrir le modal */}
                 <button
-                    onClick={() => setIsOpen(true)}
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-3 rounded-xl font-semibold hover:scale-105 transition"
+                    onClick={() => setIsOpenDemo(true)}
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-3 rounded-xl font-semibold hover:scale-105 transition cursor-pointer"
                 >
                     <FaPlay />
                     <span className="hidden md:inline">Voir la démo</span>
@@ -88,12 +88,12 @@ const Dem = () => {
       </section>
 
       {/* Modal plein écran (inchangé) */}
-      {isOpen && (
+      {isOpenDemo && (
           <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
               <div className="relative w-full h-full bg-white flex flex-col items-center justify-center">
                  
                   {/* Contenu du modal */}
-                  <DemoTable closeModal={setIsOpen(false)}/>
+                  <DemoTable closeModal={setIsOpenDemo(false)}/>
               </div>
           </div>
       )}

@@ -2,7 +2,6 @@ import React from "react";
 import DefaultLayout from "../layouts/DefaultLayout";
 import { createBrowserRouter, Navigate, Router } from "react-router-dom";
 import GuestLayout from "../layouts/GuestLayout";
-import Accueil from "../pages/Accueil";
 import Evenement from "../pages/Evenement";
 import Notfound from "../pages/Notofoundpage";
 import Pagepublic from "../pages/Pagepublic";
@@ -92,10 +91,10 @@ const router = createBrowserRouter([
         path: "/pagepublic",
         element: <Publicacc />,
       },
-      {
-        path: "/accueil",
-        element: <Accueil />,
-      },
+      // {
+      //   path: "/accueil",
+      //   element: <Accueil />,
+      // },
       {
         path: "/apropos",
         element: <Apropos />,
