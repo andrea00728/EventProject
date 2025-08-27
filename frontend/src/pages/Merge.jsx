@@ -53,14 +53,13 @@ const Publicacc = () => {
   const [current, setCurrent] = useState(0);
   const [isModalOpen, setModalOpen] = useState(false);
   const { isAuthenticated } = useStateContext()
-  const [organisateurCount,setOrganisateurCount]=useState(0);
-  const [eventCount,setEventCount]=useState(0);
 
   // ✅ Nouvel état pour le modal Demo
   const [isDemoOpen, setIsDemoOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isConfidentialiteOpen, setIsConfidentialiteOpen] = useState(false); // Nouvel état pour la modale Confidentialite
-
+  const [organisateurCount, setOrganisateurCount] = useState(0);
+  const [eventCount, setEventCount] = useState(0);
   const intervalRef = useRef(null);
   const touchStartX = useRef(0);
   const accueilRef = useRef(null);

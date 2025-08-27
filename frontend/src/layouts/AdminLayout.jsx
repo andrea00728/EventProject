@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
 import {
   Outlet,
   Link,
@@ -16,7 +17,6 @@ import {
   FaSun,
   FaUser,
   FaPaperPlane,
-  // FaUserCircle
 } from "react-icons/fa";
 import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { FiLayout } from "react-icons/fi";
@@ -30,23 +30,27 @@ import {
 import { useDarkMode } from "../context/DarkModeContext";
 import { useStateContext } from "../context/ContextProvider";
 import Dropdown from "./Dropdown";
+import Modalist from "./modal";
 import LogoutModal from "../pages/Admin/LogoutModal";
 import { logout } from "../services/firebase/authService";
 import { format } from "date-fns";
 import { getUserIdForToken } from "../services/userService";
 import { fr } from "date-fns/locale";
-import io from "socket.io-client";
 import { useSocket } from "../socket";
-
+import { motion, AnimatePresence } from "framer-motion";
 export default function AdminLayout() {
-  const { isAuthenticated, role, isLoading, setUser, user } = useStateContext();
+  const { isAuthenticated, role, isLoading, setUser, user, token } = useStateContext();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null); // 'notifications', 'messages', null
+
   const [messages,setMessages]=useState([]);
+
+  console.log("Auth State:", { isLoading, isAuthenticated, role, user });
 
   useEffect(() => {
     const handleResize = () => {
@@ -60,7 +64,6 @@ export default function AdminLayout() {
   }, []);
 
   if (isLoading) return <div>Chargement ...</div>;
-
   if (!isAuthenticated) return <Navigate to="/pagepublic" replace />;
 
   switch (role) {
@@ -167,8 +170,8 @@ export default function AdminLayout() {
           },
           {
             id: 2,
-            text: "Bonjour ! Comment puis-je vous aider ?",
-            sender: "Admin",
+            text: "Bonjour et bienvenue 👋. Merci de nous avoir contactés. Un conseiller prendra en charge votre demande dans les plus brefs délais. En attendant, n’hésitez pas à préciser l’objet de votre message.",
+            sender: "Support Automatique",
             timestamp: new Date(Date.now() - 25 * 60000),
             isAdmin: true,
           },
@@ -177,12 +180,8 @@ export default function AdminLayout() {
     }, [conversation]);
 
     useEffect(() => {
-      scrollToBottom();
-    }, [messages]);
-
-    const scrollToBottom = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
+    }, [messages]);
 
     const handleSendMessage = (e) => {
       e.preventDefault();
@@ -254,15 +253,17 @@ export default function AdminLayout() {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.isAdmin ? "justify-end" : "justify-start"}`}
+                className={`flex ${
+                  message.isAdmin ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
                   className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                     message.isAdmin
                       ? "bg-blue-500 text-white"
                       : darkMode
-                        ? "bg-gray-700 text-gray-200"
-                        : "bg-gray-200 text-gray-900"
+                      ? "bg-gray-700 text-gray-200"
+                      : "bg-gray-200 text-gray-900"
                   }`}
                 >
                   <p className="text-sm">{message.text}</p>
@@ -271,8 +272,8 @@ export default function AdminLayout() {
                       message.isAdmin
                         ? "text-blue-100"
                         : darkMode
-                          ? "text-gray-400"
-                          : "text-gray-500"
+                        ? "text-gray-400"
+                        : "text-gray-500"
                     }`}
                   >
                     {formatTime(message.timestamp)}
@@ -313,167 +314,366 @@ export default function AdminLayout() {
     );
   };
 
+  const NotificationModal = ({ show, onClose, notification, darkMode }) => {
+    // Si on n'a pas de notification ou si le modal est fermé, ne rien afficher
+    if (!show || !notification) return null;
+  
+    return (
+      <AnimatePresence>
+        <motion.div
+          className="fixed inset-0 bg-gray-900 bg-opacity-30 z-[60] flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className={`w-full max-w-md rounded-lg shadow-xl ${
+              darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+            } flex flex-col`}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1, transition: { duration: 0.25 } }}
+            exit={{ scale: 0.8, opacity: 0, transition: { duration: 0.2 } }}
+          >
+            {/* Header avec image */}
+            <div
+              className={`p-4 border-b flex items-center justify-between ${
+                darkMode ? "border-gray-700" : "border-gray-200"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {notification.organizerImage && (
+                  <img
+                    src={notification.organizerImage}
+                    alt="Organisateur"
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                )}
+                <h3 className="font-semibold">{notification.title || "Notification"}</h3>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+  
+            {/* Contenu */}
+            <div className="p-4 space-y-2">
+              <p className="text-sm">{notification.message}</p>
+              {notification.time && (
+                <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  {notification.time}
+                </p>
+              )}
+            </div>
+  
+            {/* Footer */}
+            <div className="p-4 border-t flex justify-end">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  };
+
   // ============= MODIFIÉ: AdminHeader avec modal =============
   const AdminHeader = ({ currentPageName, darkMode }) => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [showMessages, setShowMessages] = useState(false);
     const [showProfile, setShowProfile] = useState(false);
     const [showConversationModal, setShowConversationModal] = useState(false);
+    const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+    const [showMessagesModal, setShowMessagesModal] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [notifications, setNotifications] = useState([]);
     const [messages, setMessages] = useState([]);
-    const { user } = useStateContext();
+    const { user, token } = useStateContext();
     const socket = useSocket();
     const notifRef = useRef(null);
     const msgRef = useRef(null);
     const profileRef = useRef(null);
     const navigate = useNavigate();
+    const [notifFilter, setNotifFilter] = useState("all");
+    const [msgFilter, setMsgFilter] = useState("all");
+    const [openDropdown, setOpenDropdown] = useState(null);
+    const [showNotificationModal, setShowNotificationModal] = useState(false);
+    const [selectedNotification, setSelectedNotification] = useState(null);
+
+    
+
+    const filteredNotifications = notifications.filter((n) => {
+      if (notifFilter === "all") return true;
+      if (notifFilter === "unread") return !n.read;
+      return n.read;
+    });
+
+    const filteredMessages = messages.filter((m) => {
+      if (msgFilter === "all") return true;
+      if (msgFilter === "unread") return !m.read;
+      return m.read;
+    });
 
     const handleRedirect = () => {
       navigate("/AdminParametre");
     };
 
     useEffect(() => {
-      const fetchMessages = async () => {
-        try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
-          );
-          if (!response.ok)
-            throw new Error("Erreur lors de la récupération des messages");
-          const data = await response.json();
-
-          // Adapter le format au même style que ton tableau statique
-          const formatted = data.map((msg) => ({
-            ...msg,
-            from: `${msg.firstName} ${msg.lastName}`,
-            text: msg.message,
-            read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
-          }));
-
-          setMessages(formatted);
-        } catch (error) {
-          console.error("Erreur lors de la récupération des messages :", error);
-          setMessages([]);
-        }
-      };
+      // Fetch initial notifications
       const fetchNotifications = async () => {
         try {
           const response = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`,
-           
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
           );
           if (!response.ok)
             throw new Error("Erreur lors de la récupération des notifications");
           const data = await response.json();
           setNotifications(data);
         } catch (error) {
-          console.error(
-            "Erreur lors de la récupération des notifications :",
-            error
-          );
+          console.error("Erreur fetchNotifications:", error);
           setNotifications([]);
         }
       };
 
-      async function connectSocket() {
-        const userId = await getUserIdForToken();
-        if (!userId) return;
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
-        );
-        if (!response.ok)
-          throw new Error("Erreur lors de la récupération des messages");
-        const data = await response.json();
+      // Fetch initial messages
+      const fetchMessages = async () => {
         try {
+          const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/auth/messages`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          if (!response.ok)
+            throw new Error("Erreur lors de la récupération des messages");
+          const data = await response.json();
+          const formatted = data.map((msg) => ({
+            ...msg,
+            from: `${msg.firstName} ${msg.lastName}`,
+            text: msg.message,
+            read: msg.read || false,
+          }));
+          setMessages(formatted);
+        } catch (error) {
+          console.error("Erreur fetchMessages:", error);
+          setMessages([]);
+        }
+      };
 
-          if (!socket) return; 
+      // Configure socket listeners
+      const setupSocket = async () => {
+        if (!socket) {
+          console.error("Socket non initialisé");
+          return;
+        }
+
+        try {
+          const userId = await getUserIdForToken();
+          if (!userId) {
+            console.error("User ID non trouvé");
+            return;
+          }
+
+          socket.on("connect", () => console.log("Socket connecté"));
+          socket.on("connect_error", (error) =>
+            console.error("Erreur socket:", error)
+          );
+          socket.on("disconnect", () => console.log("Socket déconnecté"));
+
+          socket.on("notifRegister", (notif) => {
+            console.log("NotifRegister reçu:", notif, "Listener ID:", Date.now());
+            setNotifications((prevNotifications) => {
+              // Vérifier si la notification existe déjà pour éviter les doublons
+              const exists = prevNotifications.some(
+                (n) => n.id === (notif.id || Date.now().toString())
+              );
+              if (exists) {
+                console.log("Notification déjà existante, ignorée:", notif);
+                return prevNotifications;
+              }
+              return [
+                {
+                  ...notif,
+                  id: notif.id || Date.now().toString(),
+                  read: false,
+                },
+                ...prevNotifications,
+              ];
+            });
+          });
 
           socket.on("notificationMessageAdmin", (value) => {
-            console.log("nana ", value);
-            const formatted1 = data.map((msg) => ({
-              ...msg,
-              from: `${msg.firstName} ${msg.lastName}`,
-              text: msg.message,
-              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
-            }));
-            const formatted2 = value.data.map((msg) => ({
-              ...msg,
-              from: `${msg.firstName} ${msg.lastName}`,
-              text: msg.message,
-              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
-            }));
-            setMessages([...formatted1, ...formatted2]);
+            console.log("Message reçu:", value);
+            const formatted = Array.isArray(value.data)
+              ? value.data.map((msg) => ({
+                  ...msg,
+                  from: `${msg.firstName} ${msg.lastName}`,
+                  text: msg.message,
+                  read: msg.read || false,
+                }))
+              : [
+                  {
+                    ...value.data,
+                    from: `${value.data.firstName} ${value.data.lastName}`,
+                    text: value.data.message,
+                    read: value.data.read || false,
+                  },
+                ];
+            setMessages((prevMessages) => [...prevMessages, ...formatted]);
           });
         } catch (error) {
-          console.error("Erreur de connexion au socket :", error);
+          console.error("Erreur setupSocket:", error);
         }
-      }
+      };
 
       fetchNotifications();
       fetchMessages();
-      connectSocket();
+      setupSocket();
 
       return () => {
         if (socket) {
-          socket.disconnect();
+          console.log("Nettoyage des listeners socket");
+          socket.off("connect");
+          socket.off("connect_error");
+          socket.off("disconnect");
+          socket.off("notifRegister");
+          socket.off("notificationMessageAdmin");
         }
       };
-    }, []);
+    }, [socket, token]);
 
+    // Handle click outside for dropdowns
     useEffect(() => {
       const handleClickOutside = (event) => {
         if (notifRef.current && !notifRef.current.contains(event.target)) {
           setShowNotifications(false);
+          setOpenDropdown((prev) => (prev === "notifications" ? null : prev));
         }
         if (msgRef.current && !msgRef.current.contains(event.target)) {
           setShowMessages(false);
+          setOpenDropdown((prev) => (prev === "messages" ? null : prev));
         }
         if (profileRef.current && !profileRef.current.contains(event.target)) {
           setShowProfile(false);
         }
       };
 
-      document.removeEventListener("mousedown", handleClickOutside);
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const markMessageAsRead = (message) => {
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.id === message.id ? { ...msg, read: true } : msg
-        )
-      );
+
+    const markAsRead = async (id, type) => {
+      try {
+        if (type === "message") {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === id ? { ...m, read: true } : m))
+          );
+          await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ read: true }),
+            }
+          );
+        } else if (type === "notification") {
+          setNotifications((prev) =>
+            prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+          );
+          await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/notification/${id}`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ read: true }),
+            }
+          );
+        }
+      } catch (error) {
+        console.error(`Erreur lors du marquage comme lu (${type}):`, error);
+      }
     };
 
-    const handleMessageClick = (item) => {
+    const handleMessageClick = async (item) => {
+      await markAsRead(item.id, "message");
+      setOpenDropdown(null);
       setSelectedConversation({ content: item });
-      markMessageAsRead(item);
       setShowConversationModal(true);
-      setShowMessages(false);
+    };
+
+    const handleNotificationClick = async (item) => {
+      await markAsRead(item.id, "notification");
+
+      // 🔹 Mets à jour localStorage
+      const readIds = JSON.parse(localStorage.getItem("readNotifications")) || [];
+      if (!readIds.includes(item.id)) {
+        readIds.push(item.id);
+        localStorage.setItem("readNotifications", JSON.stringify(readIds));
+      }
+
+      setOpenDropdown(null);
+      setSelectedConversation({ content: item });
+
+      // 🔹 Mets à jour ton state pour affichage instantané
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === item.id ? { ...n, is_read: true } : n))
+      );
+      setShowNotificationModal(true);      // on ouvre le modal
+
+
     };
 
     const handleDeleteMessage = async (id) => {
       try {
-        // Appel à ton backend pour supprimer en base
         const response = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}/contact_messages/${id}`,
           {
             method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
         );
-
-        if (!response.ok) {
-          throw new Error("Erreur lors de la suppression");
-        }
-
-        // Mise à jour locale après confirmation de la suppression
-        setMessages((prevMessages) =>
-          prevMessages.filter((msg) => msg.id !== id)
-        );
+        if (!response.ok) throw new Error("Erreur lors de la suppression");
+        setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== id));
       } catch (error) {
-        console.error("Suppression impossible :", error);
+        console.error("Suppression message impossible:", error);
+      }
+    };
+
+    const handleDeleteNotification = async (notificationId) => {
+      try {
+        await axios.delete(
+          `${import.meta.env.VITE_API_BASE_URL}/notification/${notificationId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+      } catch (error) {
+        console.error("Erreur lors de la suppression notification:", error);
       }
     };
 
@@ -490,59 +690,150 @@ export default function AdminLayout() {
             className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}
           >
             {currentPageIcon && (
-              <span className="mr-2 sm:mr-3 text-blue-700">{currentPageIcon}</span>
+              <span className="mr-2 sm:mr-3 text-blue-700">
+                {currentPageIcon}
+              </span>
             )}
             {currentPageName}
           </h2>
           <div className="flex items-center gap-3 sm:gap-6 relative">
             <Dropdown
               ref={notifRef}
-              show={showNotifications}
-              setShow={setShowNotifications}
+              show={openDropdown === "notifications"}
+              setShow={() =>
+                setOpenDropdown(
+                  openDropdown === "notifications" ? null : "notifications"
+                )
+              }
               icon={<FaBell className="text-lg sm:text-xl" />}
               label="Notifications"
-              count={notifications.length}
-              items={notifications}
-              noScroll={true}
-            />
+              count={filteredNotifications.filter((n) => !n.read).length}
+              items={filteredNotifications}
+              onItemClick={(item) => {
+                handleNotificationClick(item);
+                setSelectedNotification(item);   // on stocke la notif cliquée
+                setIsModalOpen(true);            // on ouvre le modal
+              }}
+              onDelete={handleDeleteNotification}
+              onViewMore={() => setShowNotificationsModal(true)}
+            >
+              <div className="flex gap-2 p-2">
+                <button
+                  onClick={() => setNotifFilter("all")}
+                  className={`px-3 py-1 rounded-full ${
+                    notifFilter === "all"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  Tout ({notifications.length})
+                </button>
+                <button
+                  onClick={() => setNotifFilter("unread")}
+                  className={`px-3 py-1 rounded-full ${
+                    notifFilter === "unread"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  Non lus ({notifications.filter((n) => !n.read).length})
+                </button>
+                <button
+                  onClick={() => setNotifFilter("read")}
+                  className={`px-3 py-1 rounded-full ${
+                    notifFilter === "read"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  Lus ({notifications.filter((n) => n.read).length})
+                </button>
+              </div>
+            </Dropdown>
+
             <Dropdown
               ref={msgRef}
-              show={showMessages}
-              setShow={setShowMessages}
+              show={openDropdown === "messages"}
+              setShow={() =>
+                setOpenDropdown(
+                  openDropdown === "messages" ? null : "messages"
+                )
+              }
               icon={<FaEnvelope className="text-lg sm:text-xl" />}
               label="Messages"
-              count={messages.filter((msg) => !msg.read).length}
-              items={messages}
-              onDelete={handleDeleteMessage}
+              count={filteredMessages.filter((m) => !m.read).length}
+              items={filteredMessages}
               onItemClick={handleMessageClick}
-              noScroll={true}
-            />
-            <div ref={profileRef} className="relative">
-              <button
-                onClick={() => setShowProfile(!showProfile)}
-                className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
-                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                }`}
-                aria-label="Menu profil"
-              >
-                <div className="relative">
-                  {(
-                    <img
-                      src={user.photo}
-                      alt=""
-                      className="w-8 rounded-[50%]"
-                    />
-                  ) || <FaUser className="w-5 h-5" />}
-                </div>
-                <span className="hidden sm:inline text-sm font-medium">
-                  {user.name || Admin}
-                </span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-200 ${
-                    showProfile ? "rotate-180" : ""
+              onDelete={handleDeleteMessage}
+              onViewMore={() => setShowMessagesModal(true)}
+            >
+              <div className="flex gap-2 p-2">
+                <button
+                  onClick={() => setMsgFilter("all")}
+                  className={`px-3 py-1 rounded-full ${
+                    msgFilter === "all"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700"
                   }`}
-                />
-              </button>
+                >
+                  Tout ({messages.length})
+                </button>
+                <button
+                  onClick={() => setMsgFilter("unread")}
+                  className={`px-3 py-1 rounded-full ${
+                    msgFilter === "unread"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  Non lus ({messages.filter((m) => !m.read).length})
+                </button>
+                <button
+                  onClick={() => setMsgFilter("read")}
+                  className={`px-3 py-1 rounded-full ${
+                    msgFilter === "read"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  Lus ({messages.filter((m) => m.read).length})
+                </button>
+              </div>
+            </Dropdown>
+
+            <div ref={profileRef} className="relative">
+                <button
+                  onClick={() => setShowProfile(!showProfile)}
+                  className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
+                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                  }`}
+                  aria-label="Menu profil"
+                >
+                  <div className="relative">
+                    {user?.photo ? (
+                      <img
+                        src={
+                          user.photo.startsWith('data:') 
+                            ? user.photo 
+                            : `data:image/jpeg;base64,${user.photo}`
+                        }
+                        alt="Profile"
+                        className="w-10 h-10 rounded-[50%] object-cover"
+                      />
+                    ) : (
+                      <FaUser className="w-5 h-5" />
+                    )}
+                  </div>
+                  <span className="hidden sm:inline text-sm font-medium">
+                    {user?.name || "Admin"}
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-200 ${
+                      showProfile ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
               {showProfile && (
                 <div
                   className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
@@ -629,9 +920,33 @@ export default function AdminLayout() {
           conversation={selectedConversation}
           darkMode={darkMode}
         />
+        <NotificationModal
+          show={showNotificationModal}
+          onClose={() => setShowNotificationModal(false)}
+          notification={selectedNotification}
+          darkMode={darkMode}
+        />
+        <Modalist
+          show={showNotificationsModal}
+          onClose={() => setShowNotificationsModal(false)}
+          title="Toutes les notifications"
+          items={notifications}
+          onItemClick={handleNotificationClick}
+          onDelete={handleDeleteNotification}
+        />
+        <Modalist
+          show={showMessagesModal}
+          onClose={() => setShowMessagesModal(false)}
+          title="Tous les messages"
+          items={messages}
+          onItemClick={handleMessageClick}
+          onDelete={handleDeleteMessage}
+        />
       </>
     );
   };
+
+  
 
   return (
     <div className={`flex h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
@@ -658,13 +973,15 @@ export default function AdminLayout() {
       <aside
         className={`fixed z-50 top-0 left-0 h-full w-64 transition-all duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 md:relative md:w-72 ${darkMode ? "bg-gray-800" : "bg-gray-200"}`}
+        } md:translate-x-0 md:relative md:w-72 ${
+          darkMode ? "bg-gray-800" : "bg-gray-200"
+        }`}
       >
         <div className="flex flex-col h-full">
           <div className="p-5 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <img
-                src="../../public/images/logo_4.png"
+                src="/images/logo_4.png"
                 alt="Logo"
                 className="w-10 h-10 rounded-lg object-cover transition-transform duration-300 hover:scale-110"
               />
@@ -762,7 +1079,9 @@ export default function AdminLayout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <AdminHeader currentPageName={currentPageName} darkMode={darkMode} />
         <main
-          className={`flex-1 overflow-auto scrollable ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}
+          className={`flex-1 overflow-auto scrollable ${
+            darkMode ? "bg-gray-900" : "bg-gray-50"
+          }`}
         >
           <div className={`h-full ${darkMode ? "bg-gray-900" : "bg-gray-50"}`}>
             <Outlet />
@@ -777,4 +1096,5 @@ export default function AdminLayout() {
       </div>
     </div>
   );
+
 }

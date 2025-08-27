@@ -7,10 +7,11 @@ export class OrderItem {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Order, (order) => order.items)
+  //'CASCADE' ici pour supprimer automatiquement les items si l'order est supprimée
+  @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
   order: Order;
 
-  @ManyToOne(() => MenuItem,{onDelete:'CASCADE'})
+  @ManyToOne(() => MenuItem, { onDelete: 'CASCADE' })
   menuItem: MenuItem;
 
   @Column()
