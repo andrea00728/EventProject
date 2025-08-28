@@ -40,7 +40,7 @@ export default function Profil() {
 
       // Corrige l'URL photo
       const photoUrl = user.photo
-        ? `${ur}${user.photo}`
+        ? `${url}${user.photo}`
         : "https://via.placeholder.com/150";
 
       setUserPhoto(user.photo);
