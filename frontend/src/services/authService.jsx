@@ -1,44 +1,39 @@
 import { url } from "../api/url";
 
-export const registerUser = async (userData, file) => {
-    const formData = new FormData();
-    for (const key in userData) {
-        formData.append(key, userData[key]);
-    }
-    if (file) {
-        formData.append('photo', file);
-    }
+export const registerUser = async (userData) => {
+  const formData = new FormData();
+  for (const key in userData) {
+    formData.append(key, userData[key]);
+  }
 
-    const response = await fetch(`${url}/auth/register`, {
-        method: 'POST',
-        body: formData,
-    });
+  const response = await fetch(`${url}/auth/register`, {
+    method: "POST",
+    body: formData,
+    credentials: "include", // Inclure les cookies
+  });
 
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erreur d\'inscription');
-    }
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Erreur d'inscription");
+  }
 
-    return await response.json();
+  return await response.json();
 };
 
-
-
-// Connexion de l'utilisateur
 export const loginUser = async (userData) => {
-    const response = await fetch(`${url}/auth/login`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-    });
+  const response = await fetch(`${url}/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(userData),
+    credentials: "include", // Inclure les cookies
+  });
 
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erreur de connexion');
-    }
-    console.log("voici l'info du token", response)
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Erreur de connexion");
+  }
 
-    return await response.json(); // Assurez-vous que cela renvoie { access_token: "votre_token" }
+  return await response.json();
 };

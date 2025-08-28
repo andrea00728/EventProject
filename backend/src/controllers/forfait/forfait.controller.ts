@@ -23,6 +23,7 @@ import { NotificationService } from 'src/services/notification/notification.serv
 import { ForfaitService } from 'src/services/forfait/forfait.service';
 @Controller('forfait')
 export class ForfaitController {
+  jwtService: any;
   constructor(
     private readonly paypalService: PaypalService,
     private readonly paypalWebhookService: PaypalWebhookService,
@@ -74,14 +75,16 @@ export class ForfaitController {
    * @param res 
    * @returns 
    */
-  @Get('success')
-  async redirectToFrontend(
-    @Query('subscription_id') subscriptionId: string,
-    @Res() res: Response,
-  ) {
-     const url = `https://mastertable.site/forfait/success?subscription_id=${subscriptionId}`;
-    return res.redirect(url); // redirection vers le frontend
-  }
+ @Get('success')
+async redirectToFrontend(
+  @Query('subscription_id') subscriptionId: string,
+  @Query('token') token: string, // Ajoutez le token dans la redirection PayPal
+  @Res() res: Response,
+) {
+  // Inclure le token JWT dans la redirection
+  const url = `https://mastertable.site/forfait/success?subscription_id=${subscriptionId}&token=${token}`;
+  return res.redirect(url);
+}
 
 
 
@@ -113,13 +116,27 @@ export class ForfaitController {
 
 
   @Get('success-confirmation')
-  @UseGuards(AuthGuard('jwt'))
-  async handleSuccess(
-    @Query('subscription_id') subscriptionId: string,
-    @Req() req: any,
-  ) {
-    const userId = req.user?.sub;
-    if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
+async handleSuccess(
+  @Query('subscription_id') subscriptionId: string,
+  @Query('token') token: string, // Récupérer le token depuis l'URL
+  @Req() req: any,
+) {
+  try {
+    // Vérifier le token depuis l'URL si présent
+    let userId;
+    
+    if (token) {
+      // Décoder le token depuis l'URL
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET || 'your-secret-key',
+      });
+      userId = decoded.sub;
+    } else if (req.user?.sub) {
+      // Fallback sur l'utilisateur authentifié
+      userId = req.user.sub;
+    } else {
+      throw new UnauthorizedException('Utilisateur non authentifié');
+    }
 
     if (!subscriptionId) throw new BadRequestException('Subscription ID manquant');
 
@@ -134,23 +151,29 @@ export class ForfaitController {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new BadRequestException('Utilisateur introuvable');
 
-    // Mettre à jour le forfait et la date d'expiration
+    // Mettre à jour le forfait
     user.forfait = forfait;
     user.datedowngraded = null;
-    user.forfaitexpirationdate = addDays(new Date(), forfait.validationduration); // Ajouter la durée de validation
+    user.forfaitexpirationdate = addDays(new Date(), forfait.validationduration);
 
-    const success = await this.userRepository.save(user);
+    await this.userRepository.save(user);
+    
     await this.notificationService.notifyAll(
-      'payement accepté',
-      `votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
-    )
+      'Paiement accepté',
+      `Votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
+    );
 
-    return success;
-
-    // return {
-    //   message: `Paiement accepté, votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
-    // };
+    return {
+      success: true,
+      message: `Paiement accepté, votre forfait ${forfait.nom} a été activé !`,
+      forfait: forfait.nom,
+      expirationDate: user.forfaitexpirationdate,
+    };
+  } catch (error) {
+    console.error('Erreur lors de la confirmation du succès:', error);
+    throw error;
   }
+}
 
 
 

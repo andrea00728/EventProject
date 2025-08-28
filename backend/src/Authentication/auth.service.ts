@@ -582,35 +582,60 @@ async logout(req: Request, res: Response): Promise<{ message: string }> {
   //   return user;
   // }
 
-   async loginUser(email: string, password: string) {
-    // Chercher l'utilisateur
-    const user = await this.userRepository.findOne({ where: { email } });
-    if (!user) {
-      throw new BadRequestException('Email ou mot de passe incorrect');
-    }
-
-    // Vérifier le mot de passe
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      throw new BadRequestException('Email ou mot de passe incorrect');
-    }
-
-    // Générer un JWT
-    const payload = { id: user.id, email: user.email, role: user.role };
-    const token = this.jwtService.sign(payload);
-
-    return {
-      message: 'Connexion réussie',
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        photo: user.photo
-      }
-    };
+async loginUser(email: string, password: string, res: Response) {
+  const user = await this.userRepository.findOne({ 
+    where: { email },
+    select: ['id', 'email', 'password', 'role', 'name', 'photo'] 
+  });
+  
+  if (!user) {
+    throw new BadRequestException('Email ou mot de passe incorrect');
   }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new BadRequestException('Email ou mot de passe incorrect');
+  }
+
+  // Payload JWT
+  const payload = { 
+    sub: user.id, 
+    email: user.email, 
+    role: user.role, 
+    name: user.name, 
+    photo: user.photo 
+  };
+  
+  const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
+  const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+  // Set cookies
+  res.cookie('jwt', access_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 1000,
+  });
+
+  res.cookie('refresh_token', refresh_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  return {
+    message: 'Connexion réussie',
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      photo: user.photo,
+    },
+  };
+}
+
 
   async updateProfile(
       userId: string,
@@ -637,8 +662,4 @@ async logout(req: Request, res: Response): Promise<{ message: string }> {
         },
       };
   }
-
-
-
-   
 }
