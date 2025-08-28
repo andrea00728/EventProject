@@ -15,7 +15,7 @@ const TABLE_TYPES = [
 
 // Limites pour la démo
 const MAX_TABLES = 3;
-const MAX_GUESTS = 10;
+const MAX_GUESTS = 3;
 
 function snapToGrid(value, gridSize = 40) {
   return Math.round(value / gridSize) * gridSize;
@@ -430,6 +430,7 @@ export default function DemoTable({ closeModal }) {
               <button
                 onClick={() => {
                   setShowLimitModal(false);
+                setAjoutTable(false);
                   setModalOpen(true);
                 }}
                 className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer transition"
