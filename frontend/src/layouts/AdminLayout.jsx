@@ -45,6 +45,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { url } from "../api/url";
 import { io } from "socket.io-client";
 import { PasswordSetupModal } from "../pages/Admin/PasswordSetupModal";
+import md5 from "blueimp-md5"; // npm i blueimp-md5 si pas déjà fait
+
+
 export default function AdminLayout() {
   const { isAuthenticated, role, isLoading, setUser, user, handleLogout } =
     useStateContext();
@@ -193,6 +196,29 @@ export default function AdminLayout() {
   const currentPage = menuItems.find((item) => item.path === location.pathname);
   const currentPageName = currentPage ? currentPage.name : "Page Inconnue";
   const currentPageIcon = currentPage ? currentPage.icon : null;
+
+  const gravatarUrl = (email) => {
+    if (!email) return "/default-avatar.png";
+    return `https://www.gravatar.com/avatar/${md5(email.trim().toLowerCase())}?d=identicon&s=200`;
+  };
+
+  const getUserDisplayName = (user) => {
+    if (user?.name && user.name.trim()) return user.name.trim();
+    if (user?.email && typeof user.email === "string") {
+      const local = user.email.split("@")[0];
+      return local || "Utilisateur";
+    }
+    return "Utilisateur";
+  };
+
+  const getGravatarUrl = (email, { size = 80, d = "identicon" } = {}) => {
+    if (!email || typeof email !== "string") {
+      // fallback universel
+      return `https://www.gravatar.com/avatar/?d=${encodeURIComponent(d)}&s=${size}`;
+    }
+    const hash = md5(email.trim().toLowerCase());
+    return `https://www.gravatar.com/avatar/${hash}?d=${encodeURIComponent(d)}&s=${size}`;
+  };
 
   const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
     const [newMessage, setNewMessage] = useState("");
@@ -952,101 +978,103 @@ export default function AdminLayout() {
             </Dropdown>
 
             <div ref={profileRef} className="relative">
-              <button
-                onClick={() => setShowProfile(!showProfile)}
-                className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
-                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                }`}
-                aria-label="Menu profil"
-              >
-                <div className="relative">
-                  {user?.photo ? (
-                    <img
-                      src={
-                        user.photo.startsWith("data:")
-                          ? user.photo
-                          : `data:image/jpeg;base64,${user.photo}`
-                      }
-                      alt="Profile"
-                      className="w-10 h-10 rounded-[50%] object-cover"
-                    />
-                  ) : (
-                    <FaUser className="w-5 h-5" />
-                  )}
-                </div>
-                <span className="hidden sm:inline text-sm font-medium">
-                  {user?.name || "Admin"}
-                </span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-200 ${
-                    showProfile ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
+  <button
+    onClick={() => setShowProfile(!showProfile)}
+    className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
+      darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+    }`}
+    aria-label="Menu profil"
+  >
+    {/* Avatar = photo basée sur l'email (Gravatar) */}
+    <div className="relative">
+      <img
+        src={getGravatarUrl(user?.email, { size: 96 })}
+        alt="User avatar"
+        className="w-10 h-10 rounded-full object-cover"
+        onError={(e) => {
+          // Sécurité: fallback si jamais l’URL échoue
+          e.currentTarget.src = getGravatarUrl(null, { size: 96 });
+        }}
+      />
+    </div>
 
-              {showProfile && (
-                <div
-                  className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
-                    darkMode
-                      ? "bg-gray-800 border-gray-700"
-                      : "bg-white border-gray-200"
-                  } z-50 transition-all duration-200 ${
-                    window.innerWidth < 640 ? "left-4 right-4" : "right-0"
-                  }`}
-                >
-                  <div className="p-2">
-                    <div
-                      className={`px-3 py-2 text-sm ${
-                        darkMode ? "text-gray-300" : "text-gray-700"
-                      }`}
-                    >
-                      <p className="font-medium">Connecté en tant que</p>
-                      <p className="truncate">{user?.name || "Admin"}</p>
-                    </div>
-                    <div
-                      className={`border-t ${
-                        darkMode ? "border-gray-700" : "border-gray-200"
-                      }`}
-                    ></div>
-                    <button
-                      onClick={handleRedirect}
-                      className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode
-                          ? "hover:bg-gray-700 text-gray-200"
-                          : "hover:bg-gray-100 text-gray-800"
-                      } transition-colors duration-150`}
-                    >
-                      Mon profil
-                    </button>
-                    <button
-                      onClick={handleRedirect}
-                      className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode
-                          ? "hover:bg-gray-700 text-gray-200"
-                          : "hover:bg-gray-100 text-gray-800"
-                      } transition-colors duration-150`}
-                    >
-                      Paramètres
-                    </button>
-                    <div
-                      className={`border-t ${
-                        darkMode ? "border-gray-700" : "border-gray-200"
-                      }`}
-                    ></div>
-                    <button
-                      onClick={handleShowLogout}
-                      className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode
-                          ? "hover:bg-gray-700 text-red-400"
-                          : "hover:bg-gray-100 text-red-600"
-                      } transition-colors duration-150`}
-                    >
-                      Déconnexion
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+    {/* Nom dynamique – plus jamais "Admin" */}
+    <span className="hidden sm:inline text-sm font-medium">
+      {getUserDisplayName(user)}
+    </span>
+
+    <ChevronDown
+      className={`w-4 h-4 transition-transform duration-200 ${
+        showProfile ? "rotate-180" : ""
+      }`}
+    />
+  </button>
+
+  {showProfile && (
+    <div
+      className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
+        darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+      } z-50 transition-all duration-200 ${
+        window.innerWidth < 640 ? "left-4 right-4" : "right-0"
+      }`}
+    >
+      <div className="p-2">
+        <div
+          className={`flex items-center gap-3 px-3 py-2 text-sm ${
+            darkMode ? "text-gray-300" : "text-gray-700"
+          }`}
+        >
+          <img
+            src={getGravatarUrl(user?.email, { size: 80 })}
+            alt="User avatar"
+            className="w-8 h-8 rounded-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = getGravatarUrl(null, { size: 80 });
+            }}
+          />
+          <div>
+            <p className="font-medium">{getUserDisplayName(user)}</p>
+            <p className="truncate text-xs">{user?.email || "aucun email"}</p>
+          </div>
+        </div>
+
+        <div className={`border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`} />
+
+        <button
+          onClick={handleRedirect}
+          className={`w-full text-left px-3 py-2 text-sm ${
+            darkMode ? "hover:bg-gray-700 text-gray-200" : "hover:bg-gray-100 text-gray-800"
+          } transition-colors duration-150`}
+        >
+          Mon profil
+        </button>
+
+        <button
+          onClick={handleRedirect}
+          className={`w-full text-left px-3 py-2 text-sm ${
+            darkMode ? "hover:bg-gray-700 text-gray-200" : "hover:bg-gray-100 text-gray-800"
+          } transition-colors duration-150`}
+        >
+          Paramètres
+        </button>
+
+        <div className={`border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`} />
+
+        <button
+          onClick={handleShowLogout}
+          className={`w-full text-left px-3 py-2 text-sm ${
+            darkMode ? "hover:bg-gray-700 text-red-400" : "hover:bg-gray-100 text-red-600"
+          } transition-colors duration-150`}
+        >
+          Déconnexion
+        </button>
+      </div>
+    </div>
+  )}
+</div>
+
+
+
             <button
               onClick={toggleDarkMode}
               className={`p-2 rounded-full ${
