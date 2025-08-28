@@ -8,6 +8,7 @@ import { JwtStrategy } from 'src/strategies/jwt.strategy';
 import { GoogleAdminStrategy } from 'src/strategies/google.strategy';
 
 @Module({
+  //
   imports: [TypeOrmModule.forFeature([Admin]), JwtModule.register({
         secret: 'andreanadjasylvanoilaina',
         signOptions: { expiresIn: '60m' },

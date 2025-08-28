@@ -11,6 +11,7 @@ import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
+//
 export class AdminService {
   constructor(
     private readonly jwtService: JwtService,
