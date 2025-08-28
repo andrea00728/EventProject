@@ -343,6 +343,7 @@ const LocationSalle = () => {
       setGeocodeResult(null);
       setGeocodeResultText("");
       await fetchLocations();
+      setShowSaveConfirmationModal(true);
       // Mettre à jour la carte avec les données renvoyées
       if (response.data.latitude && response.data.longitude) {
         if (mapRef.current) {
@@ -560,37 +561,16 @@ const LocationSalle = () => {
           </div>
 
           {/* Bulk Actions */}
-          <div className={`px-6 py-3 border-b flex justify-between items-center ${darkMode ? "bg-gray-900 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
-            <div className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-              {filteredLocations.length} {filteredLocations.length > 1 ? 'lieux trouvés' : 'lieu trouvé'}
-            </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={expandAll}
-                className={`px-3 py-1 text-xs border rounded-lg transition ${darkMode ? "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}
-              >
-                Tout développer
-              </button>
-              <button
-                onClick={collapseAll}
-                className={`px-3 py-1 text-xs border rounded-lg transition ${darkMode ? "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}
-              >
-                Tout réduire
-              </button>
-            </div>
-          </div>
-
-          {/* Locations List */}
           <div className={`divide-y ${darkMode ? "divide-gray-700" : "divide-gray-200"}`}>
             {isLoading ? (
-              <div className="p-6 space-y-6">
+              <div className="p-4 sm:p-6 space-y-6">
                 {[...Array(3)].map((_, i) => (
                   <LocationSkeleton key={i} />
                 ))}
               </div>
             ) : filteredLocations.length === 0 ? (
-              <div className="p-8 text-center">
-                <div className={`mx-auto h-24 w-24 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              <div className="p-4 sm:p-6 text-center">
+                <div className={`mx-auto h-20 w-20 sm:h-24 sm:w-24 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
                   <MdLocationCity className="w-full h-full" />
                 </div>
                 <h3 className={`mt-2 text-lg font-medium ${darkMode ? "text-gray-300" : "text-gray-900"}`}>Aucun lieu trouvé</h3>
@@ -598,10 +578,10 @@ const LocationSalle = () => {
                   {searchTerm ? "Aucun résultat pour votre recherche." : "Commencez par ajouter un nouveau lieu."}
                 </p>
                 {!searchTerm && (
-                  <div className="mt-6">
+                  <div className="mt-4">
                     <button
                       onClick={() => document.querySelector('form')?.scrollIntoView({ behavior: 'smooth' })}
-                      className={`inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${darkMode ? "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 focus:ring-offset-gray-800" : "bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"}`}
+                      className={`inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${darkMode ? "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 focus:ring-offset-gray-800" : "bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"}`}
                     >
                       <MdAdd className="-ml-1 mr-2 h-5 w-5" />
                       Ajouter un lieu
@@ -611,10 +591,10 @@ const LocationSalle = () => {
               </div>
             ) : (
               filteredLocations.map((location) => (
-                <div key={location.id} className={`p-6 transition ${darkMode ? "hover:bg-gray-800" : "hover:bg-gray-50"}`}>
+                <div key={location.id} className={`p-4 sm:p-6 transition ${darkMode ? "hover:bg-gray-800" : "hover:bg-gray-50"}`}>
                   {/* Location Header */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                    <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
                       <button
                         onClick={() => toggleLocation(location.id)}
                         className={`transition flex-shrink-0 ${darkMode ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"}`}
@@ -626,49 +606,49 @@ const LocationSalle = () => {
                         )}
                       </button>
                       {editLocationId === location.id ? (
-                        <div className="flex gap-3 items-center flex-1 min-w-0">
+                        <div className="flex gap-2 sm:gap-3 items-center flex-1 min-w-0 w-full">
                           <div className="flex-1 min-w-0">
                             <input
                               type="text"
                               value={editLocationName}
                               onChange={(e) => setEditLocationName(e.target.value)}
-                              className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition ${darkMode ? "bg-gray-700 border-gray-600 focus:ring-blue-500 text-white" : "border-gray-300 focus:ring-indigo-500"}`}
+                              className={`w-full p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition ${darkMode ? "bg-gray-700 border-gray-600 focus:ring-blue-500 text-white" : "border-gray-300 focus:ring-indigo-500"}`}
                               autoFocus
                             />
                           </div>
-                          <div className="flex space-x-2">
+                          <div className="flex space-x-1 sm:space-x-2">
                             <button
                               onClick={() => handleUpdateLocation(location.id)}
                               disabled={!editLocationName.trim()}
-                              className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="p-1 sm:p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                               title="Sauvegarder"
                             >
-                              <MdSave className="text-xl" />
+                              <MdSave className="text-lg sm:text-xl" />
                             </button>
                             <button
                               onClick={() => setEditLocationId(null)}
-                              className={`p-2 rounded-lg transition duration-200 ${darkMode ? "bg-gray-600 text-gray-300 hover:bg-gray-500" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+                              className={`p-1 sm:p-2 rounded-lg transition duration-200 ${darkMode ? "bg-gray-600 text-gray-300 hover:bg-gray-500" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
                               title="Annuler"
                             >
-                              <MdClose className="text-xl" />
+                              <MdClose className="text-lg sm:text-xl" />
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-center min-w-0">
-                          <MdRoom className={`mr-3 text-xl flex-shrink-0 ${darkMode ? "text-blue-400" : "text-indigo-500"}`} />
-                          <h3 className={`text-lg font-medium truncate ${darkMode ? "text-gray-300" : "text-gray-800"}`} title={location.nom}>
+                        <div className="flex items-center min-w-0 w-full">
+                          <MdRoom className={`mr-1 sm:mr-3 text-lg sm:text-xl flex-shrink-0 ${darkMode ? "text-blue-400" : "text-indigo-500"}`} />
+                          <h3 className={`text-base sm:text-lg font-medium truncate ${darkMode ? "text-gray-300" : "text-gray-800"}`} title={location.nom}>
                             {location.nom}
                           </h3>
                           {location.salles && location.salles.length > 0 && (
-                            <span className={`ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${darkMode ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800"}`}>
+                            <span className={`ml-1 sm:ml-3 inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${darkMode ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800"}`}>
                               {location.salles.length} {location.salles.length > 1 ? 'salles' : 'salle'}
                             </span>
                           )}
                         </div>
                       )}
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-1 sm:space-x-2 mt-2 sm:mt-0">
                       {editLocationId !== location.id && (
                         <>
                           <button
@@ -683,19 +663,17 @@ const LocationSalle = () => {
                               setEditLocationId(location.id);
                               setEditLocationName(location.nom);
                             }}
-                            className={`p-2 rounded-lg transition duration-200 shadow-xs ${darkMode ? "bg-gray-700 text-blue-400 hover:bg-gray-600" : "bg-blue-100 text-blue-600 hover:bg-blue-200"}`}
+                            className={`p-1 sm:p-2 rounded-lg transition duration-200 shadow-xs ${darkMode ? "bg-gray-700 text-blue-400 hover:bg-gray-600" : "bg-blue-100 text-blue-600 hover:bg-blue-200"}`}
                             title="Modifier le lieu"
                           >
-                            <MdEdit className="text-xl" />
+                            <MdEdit className="text-lg sm:text-xl" />
                           </button>
                           <button
-                            onClick={() =>
-                              openDeleteLocationModal(location.id, location.nom)
-                            }
-                            className={`p-2 rounded-lg transition duration-200 shadow-xs ${darkMode ? "bg-gray-700 text-red-400 hover:bg-gray-600" : "bg-red-100 text-red-600 hover:bg-red-200"}`}
+                            onClick={() => openDeleteLocationModal(location.id, location.nom)}
+                            className={`p-1 sm:p-2 rounded-lg transition duration-200 shadow-xs ${darkMode ? "bg-gray-700 text-red-400 hover:bg-gray-600" : "bg-red-100 text-red-600 hover:bg-red-200"}`}
                             title="Supprimer le lieu"
                           >
-                            <MdDelete className="text-xl" />
+                            <MdDelete className="text-lg sm:text-xl" />
                           </button>
                         </>
                       )}
@@ -1173,21 +1151,24 @@ const LocationSalle = () => {
       <AnimatePresence>
         {showAddModal && (
           <motion.div
-            className="fixed inset-0 flex justify-center items-center z-50 bg-black/70 p-4"
+            className="fixed inset-0 flex justify-center items-center z-50 bg-black/70 p-4 sm:p-6"
             initial="hidden"
             animate="visible"
             exit="hidden"
             variants={backdropVariants}
           >
             <motion.div
-              className={`rounded-2xl shadow-2xl p-8 relative border transition-colors duration-300 ${isModalFullScreen ? 'fixed inset-0 rounded-none overflow-auto' : 'max-w-4xl w-full'
-                } ${darkMode ? "bg-gray-800 text-gray-100 border-gray-700" : "bg-white text-gray-900 border-gray-200"}`}
+              className={`rounded-2xl shadow-2xl p-6 sm:p-8 relative border transition-colors duration-300 ${isModalFullScreen
+                ? 'fixed inset-0 rounded-none overflow-y-auto'
+                : 'max-w-4xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-y-auto'
+                } ${darkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}
               variants={modalVariants}
             >
               <div className="absolute top-4 right-4 flex space-x-2">
                 <button
                   onClick={() => setIsModalFullScreen(!isModalFullScreen)}
-                  className={`text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? "dark:text-gray-400 dark:hover:text-gray-200" : ""}`}
+                  className={`text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? 'dark:text-gray-400 dark:hover:text-gray-200' : ''
+                    }`}
                 >
                   {isModalFullScreen ? <MdFullscreenExit size={24} /> : <MdFullscreen size={24} />}
                 </button>
@@ -1196,7 +1177,8 @@ const LocationSalle = () => {
                     setShowAddModal(false);
                     handleResetGeocode();
                   }}
-                  className={`text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? "dark:text-gray-400 dark:hover:text-gray-200" : ""}`}
+                  className={`text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? 'dark:text-gray-400 dark:hover:text-gray-200' : ''
+                    }`}
                 >
                   <MdClose size={24} />
                 </button>
@@ -1211,7 +1193,8 @@ const LocationSalle = () => {
                   value={geocodeAddress}
                   onChange={(e) => setGeocodeAddress(e.target.value)}
                   placeholder="Entrez l'adresse ou cliquez sur la carte"
-                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition ${darkMode ? "bg-gray-700 border-gray-600 focus:ring-blue-500 text-white" : "border-gray-300 focus:ring-indigo-500"}`}
+                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition ${darkMode ? 'bg-gray-700 border-gray-600 focus:ring-blue-500 text-white' : 'border-gray-300 focus:ring-indigo-500'
+                    }`}
                 />
                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                   <button onClick={handleGeocode} className={`p-3 rounded-lg flex-1 ${gradientButton}`}>
@@ -1228,20 +1211,23 @@ const LocationSalle = () => {
                     Réinitialiser
                   </button>
                 </div>
-                <div className={`p-4 rounded-lg border ${darkMode ? "bg-gray-700 border-gray-600 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-800"}`}>
-                  Résultat : {geocodeResultText || "Aucun résultat pour le moment."}
+                <div
+                  className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-300' : 'bg-gray-50 border-gray-200 text-gray-800'
+                    }`}
+                >
+                  Résultat : {geocodeResultText || 'Aucun résultat pour le moment.'}
                 </div>
-                <div className="h-96 rounded-lg overflow-hidden">
+                <div className="h-[40vh] sm:h-[50vh] max-h-[400px] rounded-lg overflow-hidden">
                   <MapContainer
                     center={geocodeResult ? [geocodeResult.latitude, geocodeResult.longitude] : 
                             (editingLocation ? [editingLocation.latitude, editingLocation.longitude] : [48.8566, 2.3522])}
                     zoom={13}
-                    style={{ height: "100%", width: "100%" }}
-                    className={darkMode ? "leaflet-dark" : ""}
+                    style={{ height: '100%', width: '100%' }}
+                    className={darkMode ? 'leaflet-dark' : ''}
                     ref={mapRef}
                   >
                     <TileLayer
-                      url={darkMode ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
+                      url={darkMode ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'}
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
                     <MapClickHandler
@@ -1259,21 +1245,6 @@ const LocationSalle = () => {
                       </Marker>
                     )}
                   </MapContainer>
-                </div>
-                <div>
-                  <h3 className={`text-lg font-semibold ${darkMode ? "text-gray-300" : "text-gray-700"}`}>Localisations enregistrées :</h3>
-                  <ul className="space-y-2 mt-2">
-                    {locations.map((loc) => (
-                      <li key={loc.id} className={`flex justify-between items-center p-2 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-50"}`}>
-                        <span className="truncate">{loc.nom}</span>
-                        <div className="flex space-x-2">
-                          <button onClick={() => handleEditInModal(loc.id, loc.nom)} className={`p-1 rounded ${darkMode ? "text-blue-400 hover:bg-gray-600" : "text-blue-600 hover:bg-blue-100"}`}><MdEdit /></button>
-                          <button onClick={() => handleDeleteInModal(loc.id)} className={`p-1 rounded ${darkMode ? "text-red-400 hover:bg-gray-600" : "text-red-600 hover:bg-red-100"}`}><MdDelete /></button>
-                        </div>
-                      </li>
-                    ))}
-                    {locations.length === 0 && <li className={`text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Aucune localisation enregistrée.</li>}
-                  </ul>
                 </div>
               </div>
             </motion.div>
