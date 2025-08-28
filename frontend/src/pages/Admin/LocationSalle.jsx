@@ -1048,11 +1048,12 @@ const LocationSalle = () => {
                     center={geocodeResult ? [parseFloat(geocodeResult.latitude), parseFloat(geocodeResult.longitude)] : [48.8566, 2.3522]}
                     zoom={13}
                     style={{ height: '100%', width: '100%' }}
-                    className={darkMode ? 'leaflet-dark' : ''}
+                    // className={darkMode ? 'leaflet-dark' : ''}
                     ref={mapRef}
                   >
                     <TileLayer
-                      url={darkMode ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'}
+                      // url={darkMode ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'}
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
                     <MapClickHandler
