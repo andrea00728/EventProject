@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpStatus, Param, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
 import { Response, Request } from 'express';
@@ -68,6 +68,25 @@ export class AdminController {
   async checkHasPassword(@Req() req: any) {
     const adminId = req.user.id; // récupéré depuis le token JWT
     return this.adminService.hasPassword(adminId);
+  }
+
+
+  @UseGuards(AuthGuard('jwt')) // Protégé par JWT
+  @Get('all')
+  async getAllAdmins() {
+    return this.adminService.getAllAdmins();
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Put(':id')
+  async updateAdmin(@Param('id') id: string, @Body() body: any) {
+    return this.adminService.updateAdmin(id, body);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete(':id')
+  async deleteAdmin(@Param('id') id: string) {
+    return this.adminService.deleteAdmin(id);
   }
 
 }

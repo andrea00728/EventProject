@@ -241,7 +241,7 @@ async logout(req: Request, res: Response): Promise<{ success: boolean; message: 
   }
 }
 
-async hasPassword(adminId: string): Promise<{ hasPassword: boolean }> {
+  async hasPassword(adminId: string): Promise<{ hasPassword: boolean }> {
     const admin = await this.userRepository.findOne({
       where: { id: adminId },
       select: ['id', 'password'], // on récupère uniquement l'id et le password
@@ -253,4 +253,43 @@ async hasPassword(adminId: string): Promise<{ hasPassword: boolean }> {
 
     return { hasPassword: !!admin.password }; // true si password existe, false sinon
   }
+
+
+  async getAllAdmins(): Promise<Admin[]> {
+    const admins = await this.userRepository.find({
+      where: { role: 'admin' },
+      select: ['id', 'name', 'email', 'photo', 'role', 'isOnline', 'lastLogin', 'lastLogout'],
+      order: { lastLogin: 'DESC' }, // optionnel : les admins les plus récents d’abord
+    });
+    return admins;
+  }
+
+  async updateAdmin(adminId: string, data: Partial<Admin>): Promise<Admin> {
+    const admin = await this.userRepository.findOne({ where: { id: adminId } });
+
+    if (!admin) {
+      throw new NotFoundException('Administrateur non trouvé');
+    }
+
+    // Si le password est dans les données, on le hash avant
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, 10);
+    }
+
+    Object.assign(admin, data); // fusionne les nouvelles données
+    return this.userRepository.save(admin);
+  }
+
+
+  async deleteAdmin(adminId: string): Promise<{ message: string }> {
+    const admin = await this.userRepository.findOne({ where: { id: adminId } });
+
+    if (!admin) {
+      throw new NotFoundException('Administrateur non trouvé');
+    }
+
+    await this.userRepository.remove(admin);
+    return { message: 'Administrateur supprimé avec succès' };
+  }
+
 }
