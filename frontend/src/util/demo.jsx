@@ -1,6 +1,10 @@
+// Note: Le composant AuthModal doit être importé dans votre fichier parent
+// import AuthModal from './path/to/AuthModal';
+
 import { ArrowBack } from "@mui/icons-material";
 import { Edit, Plus, RefreshCcw, User } from "lucide-react";
 import { useState, useRef } from "react";
+import { AuthModal } from "../components/Modal/authModal";
 
 const TABLE_TYPES = [
   { value: "ronde", label: "Table ronde", width: 80, height: 80 },
@@ -8,6 +12,10 @@ const TABLE_TYPES = [
   { value: "ovale", label: "Table ovale", width: 112, height: 64 },
   { value: "carree", label: "Table carrée", width: 80, height: 80 },
 ];
+
+// Limites pour la démo
+const MAX_TABLES = 3;
+const MAX_GUESTS = 10;
 
 function snapToGrid(value, gridSize = 40) {
   return Math.round(value / gridSize) * gridSize;
@@ -122,6 +130,9 @@ export default function DemoTable({ closeModal }) {
   const [ajoutTable, setAjoutTable] = useState(false);
   const [ajoutGuest, setAjoutGuest] = useState(false);
   const [movingGuest, setMovingGuest] = useState(null); // {guestId, sourceTableId, sourceChairIndex}
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitType, setLimitType] = useState(''); // 'tables' ou 'guests'
+  const [isModalOpen, setModalOpen] = useState(false);
 
   // Refs pour le drag tactile
   const dragAreaRef = useRef(null);
@@ -133,11 +144,32 @@ export default function DemoTable({ closeModal }) {
   const handleGuestFormChange = (e) =>
     setGuestForm({ ...guestForm, [e.target.name]: e.target.value });
 
+  const checkTableLimit = (newTablesCount) => {
+    if (tables.length + newTablesCount > MAX_TABLES) {
+      setLimitType('tables');
+      setShowLimitModal(true);
+      return false;
+    }
+    return true;
+  };
+
+  const checkGuestLimit = () => {
+    if (guests.length >= MAX_GUESTS) {
+      setLimitType('guests');
+      setShowLimitModal(true);
+      return false;
+    }
+    return true;
+  };
+
   const handleAddTable = (e) => {
     e.preventDefault();
     const newTables = [];
     const nombre = Number(form.nombre);
     if (nombre <= 0) return;
+
+    // Vérifier la limite avant d'ajouter
+    if (!checkTableLimit(nombre)) return;
 
     for (let i = 0; i < nombre; i++) {
       const typeInfo = TABLE_TYPES.find((t) => t.value === selectedType);
@@ -160,6 +192,10 @@ export default function DemoTable({ closeModal }) {
 
   const handleAddGuest = (e) => {
     e.preventDefault();
+    
+    // Vérifier la limite avant d'ajouter
+    if (!checkGuestLimit()) return;
+
     const table = tables.find(t => t.id === Number(guestForm.tableId));
     if (!table) return;
 
@@ -366,6 +402,54 @@ export default function DemoTable({ closeModal }) {
               <ArrowBack onClick={closeModal} className="text-transparent"/>
             </div>
 
+      {/* Modal de limite atteinte */}
+      {showLimitModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-1000">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
+            <h2 className="text-xl font-semibold mb-4 text-center text-gray-800">
+              Limite atteinte
+            </h2>
+            <div className="text-center mb-6">
+              <p className="text-gray-600 mb-4">
+                {limitType === 'tables' 
+                  ? `Vous avez atteint la limite de ${MAX_TABLES} tables pour cette démonstration.`
+                  : `Vous avez atteint la limite de ${MAX_GUESTS} invités pour cette démonstration.`
+                }
+              </p>
+              <p className="text-indigo-600 font-semibold">
+                Connectez-vous pour débloquer toutes les fonctionnalités et créer des événements sans limites !
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => setShowLimitModal(false)}
+                className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 cursor-pointer transition"
+              >
+                Continuer la démo
+              </button>
+              <button
+                onClick={() => {
+                  setShowLimitModal(false);
+                  setModalOpen(true);
+                }}
+                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer transition"
+              >
+                Se connecter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal AuthModal pour la connexion */}
+      {isModalOpen && (
+        <AuthModal
+          isOpen={isModalOpen}
+          onClose={() => setModalOpen(false)}
+          isSignIn={true}
+        />
+      )}
+
       {/* Formulaire */}
       {!showDragZone && (
         <div className="w-full max-w-md lg:w-[400px] mx-auto ">
@@ -422,6 +506,9 @@ export default function DemoTable({ closeModal }) {
             >
               Ajouter
             </button>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Limite démo: {tables.length}/{MAX_TABLES} tables
+            </p>
           </form>
         </div>
       )}
@@ -432,7 +519,7 @@ export default function DemoTable({ closeModal }) {
           {/* Modal Ajouter Invité */}
           {ajoutGuest && (
             <div className="fixed inset-0 bg-black/30 backdrop-blur-lg flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
+              <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4 ">
                 <h2 className="text-xl font-semibold mb-4">
                   Ajouter un Invité
                 </h2>
@@ -470,6 +557,9 @@ export default function DemoTable({ closeModal }) {
                     Ajouter
                   </button>
                 </form>
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  Limite démo: {guests.length}/{MAX_GUESTS} invités
+                </p>
                 <button
                   onClick={() => setAjoutGuest(false)}
                   className="mt-4 w-full bg-gray-300 text-gray-800 font-semibold py-2 rounded-lg hover:bg-gray-400 cursor-pointer"
@@ -534,6 +624,9 @@ export default function DemoTable({ closeModal }) {
                     Ajouter
                   </button>
                 </form>
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  Limite démo: {tables.length}/{MAX_TABLES} tables
+                </p>
                 <button
                   onClick={() => setAjoutTable(false)}
                   className="mt-4 w-full bg-gray-300 text-gray-800 font-semibold py-2 rounded-lg hover:bg-gray-400 cursor-pointer"
@@ -751,9 +844,20 @@ export default function DemoTable({ closeModal }) {
           <li>Les chaises se positionnent automatiquement autour de la table selon sa forme et sa capacité.</li>
           <li>Tables rondes/ovales → chaises en cercle. Tables carrées/rectangulaires → chaises sur les côtés.</li>
           <li>Une fois la table créée, vous pouvez ajouter des invités à chaque table.</li>
-          <li>Ajoutez plusieurs tables en répétant l’opération depuis le formulaire.</li>
-          <li>Faites glisser les tables pour réorganiser votre plan et optimiser l’espace.</li>
+          <li>Ajoutez plusieurs tables en répétant l'opération depuis le formulaire.</li>
+          <li>Faites glisser les tables pour réorganiser votre plan et optimiser l'espace.</li>
         </ul>
+
+        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-800 font-medium">
+            📝 Version démo limitée:
+          </p>
+          <p className="text-xs text-amber-700 mt-1">
+            • Maximum {MAX_TABLES} tables<br/>
+            • Maximum {MAX_GUESTS} invités<br/>
+            • Connectez-vous pour des événements illimités
+          </p>
+        </div>
 
         <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-500 italic">
           Astuce : <br />
