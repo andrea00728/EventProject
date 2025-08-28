@@ -482,39 +482,6 @@ const connectSocket = async () => {
     setIsModalOpen(false);
   };
 
-  const notifications = [
-    {
-    id: 1,
-    title: "Nouvel organisateur inscrit",
-    message: "Stephan Ravelojaona vient de s'inscrire.",
-    time: new Date().toLocaleString("fr-FR"),
-    organizerImage: "https://i.pravatar.cc/150?u=stephan"
-    },
-    {
-      id: 2,
-      title: "Événement mis à jour",
-      message: "La conférence React a été modifiée.",
-      time: new Date().toLocaleString("fr-FR"),
-      organizerImage: "https://i.pravatar.cc/150?u=react"
-    },
-    {
-      id: 3,
-      title: "Paiement reçu",
-      message: "Un paiement a été confirmé pour l'Atelier Vue.js.",
-      time: new Date().toLocaleString("fr-FR"),
-      organizerImage: "https://i.pravatar.cc/150?u=vue"
-    },
-    "Événement 'Conférence Tech' mis à jour",
-    "Paiement reçu pour 'Atelier React'",
-    "Nouveau message de support",
-  ];
-
-  const messages = [
-    { from: "Alice", text: "Bonjour, j'ai une question sur l'événement." },
-    { from: "Bob", text: "Le planning a été modifié." },
-    { from: "Charlie", text: "Merci pour la confirmation." },
-  ];
-
   const handleDownload = () => {
     const page = data.map((p) => ({
       Nom: p.name,

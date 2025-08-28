@@ -1,84 +1,135 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useStateContext } from '../../context/ContextProvider';
-import { signInWithGoogle, signInWithFacebook } from '../../services/firebase/authService'; 
-import { FcGoogle } from 'react-icons/fc';
-import { FaFacebook, FaLock } from 'react-icons/fa';
-import { motion } from 'framer-motion';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { FcGoogle } from "react-icons/fc";
+import { FaLock, FaEnvelope } from "react-icons/fa";
+import { url } from "../../api/url";
+import axiosClient from "../../api/axios-client";
 
 const LoginPage = () => {
-  const { setUser, setIsAuthenticated } = useStateContext();
   const navigate = useNavigate();
-  const [errorMessage, setErrorMessage] = useState(null); 
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (provider) => {
-    setErrorMessage(null); // Réinitialiser l'erreur
+  // Simulation login email
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMessage("");
+
     try {
-      const res = provider === "Google" 
-        ? await signInWithGoogle() 
-        : await signInWithFacebook();
-
-      // Sauvegarde token + user dans localStorage
-      localStorage.setItem("ACCESS_TOKEN", res.access_token);
-      localStorage.setItem("USER", JSON.stringify(res.user));
-
-      // Mise à jour du contexte
-      setUser(res.user);
-      setIsAuthenticated(true);
-
-      navigate('/AdminAccueil');
-    } catch (error) {
-      console.error("Erreur lors de la connexion :", error);
-      if (error.response && error.response.status === 401) {
-        setErrorMessage("Accès non autorisé. Votre compte n'a pas les droits d'admin.");
-      } else {
-        setErrorMessage("Erreur de connexion. Veuillez réessayer.");
+      if (!email || !password) {
+        throw new Error("Veuillez remplir tous les champs !");
       }
+
+      // Appel à l'API NestJS
+      const response = await axiosClient.post(
+        "/admin/login-email",
+        { email, password },
+        { withCredentials: true } // très important pour les cookies HTTP-only
+      );
+
+      console.log("Réponse login :", response.data);
+
+      // Redirection après succès
+      if(response.data){
+        window.location.href = '/AdminAccueil';
+      }
+
+      } catch (error) {
+      console.error(error);
+      if (error.response?.data?.message) {
+        setErrorMessage(error.response.data.message);
+      } else {
+        setErrorMessage(error.message || "Erreur lors de la connexion");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Google login
+  const handleGoogleLogin = () => {
+    window.location.href = `${url}/admin/google`;
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-gray-800">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 px-4">
       <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-lg w-full max-w-md text-center"
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl p-8"
       >
-        <div className="flex justify-center mb-6">
-          <FaLock className="text-4xl text-blue-600" />
-        </div>
-        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">Connexion Admin</h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-8">Veuillez vous connecter avec votre compte</p>
+        <h2 className="text-3xl font-bold text-center text-white mb-6">
+          Connexion
+        </h2>
 
         {errorMessage && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm"
+            className="mb-4 p-3 rounded bg-red-600 text-white text-sm text-center"
           >
             {errorMessage}
           </motion.div>
         )}
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => handleLogin('Google')}
-          className="w-full flex items-center justify-center gap-3 bg-white text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 py-3 rounded-xl shadow hover:shadow-md transition mb-4"
-        >
-          <FcGoogle size={24} />
-          Connexion avec Google
-        </motion.button>
+        <form onSubmit={handleLogin} className="space-y-5">
+          {/* Champ Email */}
+          <div className="relative">
+            <FaEnvelope className="absolute top-3 left-3 text-gray-400" />
+            <input
+              type="email"
+              placeholder="Adresse email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full pl-10 pr-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
+          {/* Champ Mot de passe */}
+          <div className="relative">
+            <FaLock className="absolute top-3 left-3 text-gray-400" />
+            <input
+              type="password"
+              placeholder="Mot de passe"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full pl-10 pr-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Bouton Connexion */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.95 }}
+            type="submit"
+            disabled={loading}
+            className="w-full py-2 bg-blue-600 hover:bg-blue-700 transition text-white font-semibold rounded-lg shadow-md"
+          >
+            {loading ? "Connexion..." : "Se connecter"}
+          </motion.button>
+        </form>
+
+        {/* Séparateur */}
+        <div className="flex items-center my-6">
+          <hr className="flex-grow border-gray-600" />
+          <span className="mx-3 text-gray-400">ou</span>
+          <hr className="flex-grow border-gray-600" />
+        </div>
+
+        {/* Bouton Google */}
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => handleLogin('Facebook')}
-          className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white py-3 rounded-xl shadow hover:bg-blue-700 transition"
+          onClick={handleGoogleLogin}
+          className="flex items-center justify-center w-full gap-3 py-2 bg-white text-gray-900 font-medium rounded-lg shadow-md hover:bg-gray-100"
         >
-          <FaFacebook size={24} />
-          Connexion avec Facebook
+          <FcGoogle size={22} /> Continuer avec Google
         </motion.button>
       </motion.div>
     </div>

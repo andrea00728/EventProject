@@ -14,6 +14,7 @@ export const ContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  localStorage.setItem('hidePasswordModal', localStorage.getItem('hidePasswordModal') || false)
 
   //Vérifie l'état d'authentification au chargement initial de l'application
   useEffect(() => {
@@ -62,6 +63,5 @@ export const ContextProvider = ({ children }) => {
 };
 
 export const useStateContext = () => useContext(StateContext);
-
 
 

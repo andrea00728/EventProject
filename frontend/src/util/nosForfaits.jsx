@@ -29,7 +29,7 @@ const textColorMap = {
 };
 
 export default function NosForfaits() {
-  const { isAuthenticated } = useStateContext();
+  const { isAuthenticated, user } = useStateContext();
   const [activeForfait, setActiveForfait] = useState(null);
   const [expirationDate, setExpirationDate] = useState(null);
   const [selectedForfait, setSelectedForfait] = useState(null);
@@ -47,15 +47,17 @@ export default function NosForfaits() {
   useEffect(() => {
     const fetchUserForfait = async () => {
       if (!isAuthenticated) return;
-      try {
-        const userForfait = await getUserForfait();
-        if (userForfait?.forfait) {
-          setActiveForfait(userForfait.forfait);
-          setExpirationDate(userForfait.forfaitExpirationDate);
+      if(user?.role === "organisateur"){
+        try {
+          const userForfait = await getUserForfait();
+          if (userForfait?.forfait) {
+            setActiveForfait(userForfait.forfait);
+            setExpirationDate(userForfait.forfaitExpirationDate);
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Impossible de charger votre forfait actif.");
         }
-      } catch (err) {
-        console.error(err);
-        alert("Impossible de charger votre forfait actif.");
       }
     };
     fetchUserForfait();
