@@ -475,30 +475,62 @@ export default function AdminLayout() {
       navigate("/AdminParametre");
     };
 
+    const READ_MESSAGES_KEY = "readMessages";
+    const READ_NOTIFS_KEY = "readNotifications";
+
+    const getReadSet = (key) =>
+      new Set((JSON.parse(localStorage.getItem(key)) || []).map(String));
+
+    const upsertReadId = (id, key) => {
+      const set = getReadSet(key);
+      const sid = String(id);
+      if (!set.has(sid)) {
+        set.add(sid);
+        localStorage.setItem(key, JSON.stringify([...set]));
+      }
+    };
+
+    const applyLocalRead = (items, key) => {
+      const readSet = getReadSet(key);
+      return items.map((it) =>
+        readSet.has(String(it.id)) ? { ...it, read: true } : it
+      );
+    };
+
+    const dedupeById = (items) => {
+      const map = new Map();
+      for (const it of items) {
+        map.set(String(it.id), { ...map.get(String(it.id)), ...it });
+      }
+      return [...map.values()];
+    };
+
     useEffect(() => {
       const fetchMessages = async () => {
         try {
           const response = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/auth/messages`
           );
-          if (!response.ok)
-            throw new Error("Erreur lors de la récupération des messages");
+          if (!response.ok) throw new Error("Erreur lors de la récupération des messages");
           const data = await response.json();
 
-          // Adapter le format au même style que ton tableau statique
           const formatted = data.map((msg) => ({
             ...msg,
             from: `${msg.firstName} ${msg.lastName}`,
             text: msg.message,
-            read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+            read: !!msg.read,            // valeur serveur si dispo
           }));
 
-          setMessages(formatted);
+          // ✅ merge + dédupe + applique localStorage
+          setMessages((prev) =>
+            applyLocalRead(dedupeById([...prev, ...formatted]), READ_MESSAGES_KEY)
+          );
         } catch (error) {
           console.error("Erreur lors de la récupération des messages :", error);
           setMessages([]);
         }
       };
+
       const fetchNotifications = async () => {
         try {
           const response = await fetch(
