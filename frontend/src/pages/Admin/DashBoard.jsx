@@ -85,26 +85,31 @@ export default function Dashboard() {
         const orgaStat = await getOrgStats();
         const transaction = await getLastTransactions();
         // Requête pour le Taux d'ouverture
-        const userStats = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/user/stats`).then(res => res.json());
+        const userStats = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/auth/user/stats`
+        ).then((res) => res.json());
 
         // Requête pour les statistiques de temps passé
-        const sessionStats = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/session-stats`).then(res => res.json())
+        const sessionStats = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/auth/session-stats`
+        ).then((res) => res.json());
 
         setTransactions(transaction);
         setOrgStats(orgaStat);
         setStatEvent(CountForAllEventStats);
-        setTotalRevenu(SumForUsersForfait);
+        setTotalRevenu(Number(SumForUsersForfait).toFixed(2));
         setSessionStats(sessionStats);
 
         // Mise à jour des statistiques d'engagement
-        setEngagementStats(prevStats =>
-          prevStats.map(stat => {
+        setEngagementStats((prevStats) =>
+          prevStats.map((stat) => {
             if (stat.label === "Taux d'ouverture") {
               return {
                 ...stat,
-                value: Number(userStats.onlinePercentage) % 1 === 0
-                  ? `${Math.floor(Number(userStats.onlinePercentage))}%`
-                  : `${Number(userStats.onlinePercentage).toFixed(2)}%`,
+                value:
+                  Number(userStats.onlinePercentage) % 1 === 0
+                    ? `${Math.floor(Number(userStats.onlinePercentage))}%`
+                    : `${Number(userStats.onlinePercentage).toFixed(2)}%`,
                 progress: parseFloat(userStats.onlinePercentage),
               };
             }
@@ -112,7 +117,10 @@ export default function Dashboard() {
               return {
                 ...stat,
                 value: `${sessionStats.averageSessionDuration} min`,
-                progress: Math.min(parseFloat(sessionStats.averageSessionDuration), 100), // Limiter à 100 pour la barre de progression
+                progress: Math.min(
+                  parseFloat(sessionStats.averageSessionDuration),
+                  100
+                ), // Limiter à 100 pour la barre de progression
               };
             }
             return stat;
@@ -171,28 +179,13 @@ export default function Dashboard() {
   ];
 
   const quickActions = [
-    { label: "Gérer organisateurs", icon: <FaUsers/>, path: "/AdminOrganisateur" },
-    { label: "Paramètres", icon: <FaCogs/>, path: "/AdminParametre" },
+    {
+      label: "Gérer organisateurs",
+      icon: <FaUsers />,
+      path: "/AdminOrganisateur",
+    },
+    { label: "Paramètres", icon: <FaCogs />, path: "/AdminParametre" },
     { label: "Voir rapports", icon: <MdEventNote /> },
-  ];
-
-  const notifications = [
-    "Nouvel organisateur inscrit",
-    "Événement 'Conférence Tech' mis à jour",
-    "Paiement reçu pour 'Atelier React'",
-    "Nouveau message de support",
-  ];
-
-  const messages = [
-    { from: "Alice", text: "Bonjour, j’ai une question sur l’événement." },
-    { from: "Bob", text: "Le planning a été modifié." },
-    { from: "Charlie", text: "Merci pour la confirmation." },
-  ];
-
-  const recentOrganizers = [
-    { name: "Claire Dupont", email: "claire.dupont@mail.com" },
-    { name: "Jean Martin", email: "jean.martin@mail.com" },
-    { name: "Sophie Lemoine", email: "sophie.lemoine@mail.com" },
   ];
 
   const engagementGradientColors = [
@@ -233,19 +226,20 @@ export default function Dashboard() {
               <motion.div
                 key={index}
                 whileHover={{ scale: 1.05 }}
-                className={`flex-1 min-w-[150px] sm:min-w-[180px] max-w-[230px] pt-5 px-6 rounded-2xl shadow-xl transition duration-300 cursor-pointer ${darkMode
-                  ? "bg-gray-800 text-gray-200"
-                  : "bg-white text-gray-900"
-                  }`}
+                className={`flex-1 max-w-[300px] min-w-[250px] pt-5 px-4 sm:px-6 rounded-2xl shadow-xl transition duration-300 cursor-pointer ${
+                  darkMode
+                    ? "bg-gray-800 text-gray-200"
+                    : "bg-white text-gray-900"
+                }`}
               >
                 <h3 className={`font-semibold ${gradientTitle}`}>
                   {stat.label}
                 </h3>
                 <div className="flex justify-between items-center pt-8 pb-3">
-                  <span className="text-[20px] sm:text-[22px] font-bold">
+                  <span className="text-[20px] sm:text-[22px] font-bold break-words overflow-hidden text-ellipsis max-w-full">
                     {stat.value}
                   </span>
-                  <span className="text-[24px] sm:text-[26px] text-gray-500 dark:text-gray-400">
+                  <span className="text-[24px] sm:text-[26px] text-gray-500 dark:text-gray-400 flex-shrink-0">
                     {stat.icon}
                   </span>
                 </div>
@@ -256,19 +250,24 @@ export default function Dashboard() {
           <div className="flex flex-wrap gap-6 justify-center">
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px] ${darkMode
-                ? "bg-gray-800 text-gray-200"
-                : "bg-white text-gray-900"
-                }`}
+              className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px] ${
+                darkMode
+                  ? "bg-gray-800 text-gray-200"
+                  : "bg-white text-gray-900"
+              }`}
             >
-              <EventChart darkMode={darkMode} eventData={statEvent.eventTypeStat} />
+              <EventChart
+                darkMode={darkMode}
+                eventData={statEvent.eventTypeStat}
+              />
             </motion.div>
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px] ${darkMode
-                ? "bg-gray-800 text-gray-200"
-                : "bg-white text-gray-900"
-                }`}
+              className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px] ${
+                darkMode
+                  ? "bg-gray-800 text-gray-200"
+                  : "bg-white text-gray-900"
+              }`}
             >
               <MoneyChart darkMode={darkMode} />
             </motion.div>
@@ -303,7 +302,7 @@ export default function Dashboard() {
             gradientTitle={gradientTitle}
           >
             {Array.isArray(orgStats?.lastOrganizers) &&
-              orgStats.lastOrganizers.length > 0 ? (
+            orgStats.lastOrganizers.length > 0 ? (
               <ul className="space-y-3">
                 {orgStats.lastOrganizers.map(
                   ({ name, email, photo, createdAt }, i) => (
@@ -323,27 +322,33 @@ export default function Dashboard() {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm sm:text-base ">
-                          <p className={`font-semibold text-base sm:text-lg  ${
-                            darkMode
-                              ? "bg-transparent border-gray-700 text-gray-200"
-                              : "bg-transparent border-gray-200 text-gray-900"
-                          }`}>
+                          <p
+                            className={`font-semibold text-base sm:text-lg  ${
+                              darkMode
+                                ? "bg-transparent border-gray-700 text-gray-200"
+                                : "bg-transparent border-gray-200 text-gray-900"
+                            }`}
+                          >
                             {name}
                           </p>
-                          <p className={`text-xs sm:text-sm text-gray-300 dark:text-gray-400 mt-1 sm:mt-0 ${
-                            darkMode
-                              ? "bg-transparent border-gray-700 text-gray-200"
-                              : "bg-transparent border-gray-200 text-gray-900"
-                          }`}>
+                          <p
+                            className={`text-xs sm:text-sm text-gray-300 dark:text-gray-400 mt-1 sm:mt-0 ${
+                              darkMode
+                                ? "bg-transparent border-gray-700 text-gray-200"
+                                : "bg-transparent border-gray-200 text-gray-900"
+                            }`}
+                          >
                             Inscrit le{" "}
                             {format(new Date(createdAt), "dd/MM/yyyy")}
                           </p>
                         </div>
-                        <p className={`text-sm text-gray-300 dark:text-gray-400 truncate ${
-                          darkMode
-                            ? "bg-transparent border-gray-700 text-gray-200"
-                            : "bg-transparent border-gray-200 text-gray-900"
-                        }`}>
+                        <p
+                          className={`text-sm text-gray-300 dark:text-gray-400 truncate ${
+                            darkMode
+                              ? "bg-transparent border-gray-700 text-gray-200"
+                              : "bg-transparent border-gray-200 text-gray-900"
+                          }`}
+                        >
                           {email}
                         </p>
                       </div>
@@ -400,18 +405,22 @@ export default function Dashboard() {
                             {name}
                           </span>
                         </td>
-                        <td className={`p-3 font-semibold ${
-                          darkMode
-                            ? "bg-transparent border-gray-700 text-green-400"
-                            : "bg-transparent border-gray-200 text-green-600"
-                        }`}>
+                        <td
+                          className={`p-3 font-semibold ${
+                            darkMode
+                              ? "bg-transparent border-gray-700 text-green-400"
+                              : "bg-transparent border-gray-200 text-green-600"
+                          }`}
+                        >
                           ${Number(amount).toFixed(2)}
                         </td>
-                        <td className={`p-3 text-sm ${
-                          darkMode
-                            ? "bg-transparent border-gray-700 text-gray-400"
-                            : "bg-transparent border-gray-200 text-gray-600"
-                        }`}>
+                        <td
+                          className={`p-3 text-sm ${
+                            darkMode
+                              ? "bg-transparent border-gray-700 text-gray-400"
+                              : "bg-transparent border-gray-200 text-gray-600"
+                          }`}
+                        >
                           {format(new Date(date), "dd MMM yyyy, HH:mm", {
                             locale: fr,
                           })}
@@ -464,8 +473,9 @@ const Dropdown = React.forwardRef(
       <div className="relative" ref={ref}>
         <button
           onClick={() => setShow(!show)}
-          className={`relative p-2 rounded-full transition-all duration-200 ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-            }`}
+          className={`relative p-2 rounded-full transition-all duration-200 ${
+            darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+          }`}
           aria-label={label}
         >
           <div className="relative">
@@ -479,11 +489,13 @@ const Dropdown = React.forwardRef(
         </button>
         {show && (
           <div
-            className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] overflow-y-auto rounded-xl shadow-xl border ${darkMode
-              ? "bg-gray-800 border-gray-700 text-gray-200"
-              : "bg-white border-gray-200 text-gray-900"
-              } z-50 transition-all duration-200 ${isMobile ? "left-4 right-4" : "right-0"
-              }`}
+            className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] overflow-y-auto rounded-xl shadow-xl border ${
+              darkMode
+                ? "bg-gray-800 border-gray-700 text-gray-200"
+                : "bg-white border-gray-200 text-gray-900"
+            } z-50 transition-all duration-200 ${
+              isMobile ? "left-4 right-4" : "right-0"
+            }`}
           >
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
               {React.cloneElement(icon, { className: "w-5 h-5" })}
@@ -500,10 +512,11 @@ const Dropdown = React.forwardRef(
                 items.map((item, i) => (
                   <div
                     key={i}
-                    className={`p-3 transition-colors duration-150 border-b ${darkMode
-                      ? "border-gray-700 hover:bg-gray-700"
-                      : "border-gray-200 hover:bg-gray-50"
-                      } cursor-pointer`}
+                    className={`p-3 transition-colors duration-150 border-b ${
+                      darkMode
+                        ? "border-gray-700 hover:bg-gray-700"
+                        : "border-gray-200 hover:bg-gray-50"
+                    } cursor-pointer`}
                   >
                     <p className="text-sm line-clamp-2">
                       {typeof item === "object"
@@ -511,8 +524,9 @@ const Dropdown = React.forwardRef(
                         : item}
                     </p>
                     <p
-                      className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"
-                        }`}
+                      className={`text-xs mt-1 ${
+                        darkMode ? "text-gray-400" : "text-gray-500"
+                      }`}
                     >
                       Il y a {Math.floor(Math.random() * 60)} min
                     </p>
@@ -521,8 +535,9 @@ const Dropdown = React.forwardRef(
               ) : (
                 <div className="p-4 text-center">
                   <p
-                    className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"
-                      }`}
+                    className={`text-sm ${
+                      darkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
                   >
                     Aucun {label.toLowerCase()}
                   </p>
@@ -539,8 +554,9 @@ const Dropdown = React.forwardRef(
 function SectionWrapper({ children, title, darkMode, gradientTitle }) {
   return (
     <section
-      className={`p-5 sm:p-6 rounded-2xl shadow-xl ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-        }`}
+      className={`p-5 sm:p-6 rounded-2xl shadow-xl ${
+        darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+      }`}
     >
       <h3 className={`text-xl font-semibold mb-4 ${gradientTitle}`}>{title}</h3>
       {children}
@@ -689,8 +705,10 @@ function MoneyChart({ darkMode }) {
         ]}
         height={270}
         margin={{ top: 20, right: 10, bottom: 20, left: 5 }}
-        // 4. Utilisation de l'état pour la largeur
-        width={chartWidth}
+        width={480}
+        className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px]${
+          darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
+        }`}
       />
     </div>
   );

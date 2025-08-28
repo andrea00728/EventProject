@@ -1,40 +1,73 @@
-import { Controller, Post, UseGuards, UploadedFile, UseInterceptors, Body, Headers, UnauthorizedException } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Body, Controller, Get, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { JwtService } from '@nestjs/jwt';
+import { Response, Request } from 'express';
 import { AdminService } from 'src/services/admin/admin.service';
 import { FirebaseAuthGuard } from 'src/guards/firebase-auth.guard';
 
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(private readonly jwtService: JwtService, 
+    private readonly adminService: AdminService
+  ) {}
 
-  @UseGuards(FirebaseAuthGuard)
-  @Post('/login/admin')
-  async logSuperAd(@Headers('authorization') authHeader: string) {
-    const idToken = authHeader?.split('Bearer ')[1];
-    if (!idToken) throw new UnauthorizedException('Token manquant');
-    return await this.adminService.loginWithFirebase(idToken);
+  @Get('google')
+  @UseGuards(AuthGuard('google-admin'))
+  async googleLogin() {
+    // redirige vers Google
   }
 
-  // -----------------------------
-  // Mettre à jour le profil admin
-  // -----------------------------
-  @UseGuards(FirebaseAuthGuard)
-  @Post('/update-profile')
-  @UseInterceptors(FileInterceptor('photo'))
-  async updateProfile(
-    @UploadedFile() file: Express.Multer.File,
-    @Body() body: { name?: string; bio?: string },
-    @Headers('authorization') authHeader: string,
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google-admin'))
+  async googleAuthRedirect(@Req() req, @Res() res: Response) {
+    const user = req.user;
+
+    await this.adminService.loginWithGoogleOAuth(user, res);
+    // on met le token dans un cookie
+    const redirectUrl = `http://localhost:5173/AdminAccueil`;
+    return res.redirect(redirectUrl);
+  }
+
+  @Post('logout')
+  async logout(@Req() req: Request, @Res() res: Response) {
+    try {
+      const result = await this.adminService.logout(req, res);
+      return res.status(HttpStatus.OK).json(result);
+    } catch (error) {
+      return res.status(HttpStatus.UNAUTHORIZED).json({
+        message: error.message || 'Erreur lors de la déconnexion',
+      });
+    }
+  }
+
+  @UseGuards(AuthGuard('jwt')) // Protégé par JWT
+  @Post('update-password')
+  async updatePassword(
+    @Req() req,
+    @Body() body: { newPassword: string },
   ) {
-    const idToken = authHeader?.split('Bearer ')[1];
-    if (!idToken) throw new UnauthorizedException('Token manquant');
-
-    const updateData: { name?: string; bio?: string; photo?: string } = {
-      name: body.name,
-      bio: body.bio,
-      photo: file ? file.buffer.toString('base64') : undefined, // transforme la photo en base64
-    };
-
-    return this.adminService.updateProfile(idToken, updateData);
+    const adminId = req.user.id; // ID de l’utilisateur récupéré depuis le JWT
+    return this.adminService.updatePassword(
+      adminId,
+      body.newPassword,
+    );
   }
+
+  @Post('login-email')
+  async loginWithEmail(
+    @Body() body: { email: string; password: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.adminService.loginWithEmailAndPass(body, res);
+    return result;
+  }
+
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('has-password')
+  async checkHasPassword(@Req() req: any) {
+    const adminId = req.user.id; // récupéré depuis le token JWT
+    return this.adminService.hasPassword(adminId);
+  }
+
 }

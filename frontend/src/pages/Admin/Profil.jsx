@@ -72,13 +72,7 @@ export default function SuperAdminProfileEdit() {
 
       const auth = getAuth();
       const currentUser = auth.currentUser;
-      const idToken = await currentUser.getIdToken(true);
-
       const response = await axiosClient.post('/admin/update-profile', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${idToken}`
-        }
       });
 
       setUser(response.data);

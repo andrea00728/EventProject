@@ -199,9 +199,9 @@ export default function DemoTable({ closeModal }) {
         return;
       }
 
-      setGuests(prev =>
-        prev.map(g =>
-          g.id === movingGuest.guestId
+      setGuests(prev => 
+        prev.map(g => 
+          g.id === movingGuest.guestId 
             ? { ...g, tableId, chairIndex }
             : g
         )
