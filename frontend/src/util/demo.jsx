@@ -2,7 +2,7 @@
 // import AuthModal from './path/to/AuthModal';
 
 import { ArrowBack } from "@mui/icons-material";
-import { Edit, Plus, RefreshCcw, User } from "lucide-react";
+import { Clock, Edit, Plus, RefreshCcw, Star, User } from "lucide-react";
 import { useState, useRef, useCallback } from "react";
 import { AuthModal } from "../components/Modal/authModal";
 
@@ -997,8 +997,8 @@ export default function DemoTable({ closeModal }) {
         </ul>
 
         <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-sm text-amber-800 font-medium">
-            📝 Version démo limitée:
+          <p className="text-sm text-amber-800 font-medium flex items-center">
+            <Clock className="w-[1vw] h-[1vw] mr-1"/>  Version démo limitée:
           </p>
           <p className="text-xs text-amber-700 mt-1">
             • Maximum {MAX_TABLES} tables<br/>
