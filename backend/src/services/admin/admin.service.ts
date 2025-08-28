@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuidv4 } from 'uuid';
@@ -173,18 +173,36 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
     return { message: 'Mot de passe mis à jour avec succès' };
   }
   
-  async createUser(user : {name : string; email: string; photo ?: string}):Promise<{ message: string }>{
-    const adminUser = this.userRepository.create({
-          id: uuidv4(),
-          email:user.email,
-          name: user.name,
-          photo: user.photo,
-          role: 'admin',
-          isOnline: true,
-          lastLogin: new Date(),
-        } as Partial<Admin>);
-    await this.userRepository.save(adminUser);
-    return { message: 'Administrateur créé' };
+  async createUser(user: { name: string; email: string }): Promise<Admin> {
+    try {
+      // Vérifier si l'email existe déjà
+      const existingUser = await this.userRepository.findOne({ where: { email: user.email } });
+      if (existingUser) {
+        throw new BadRequestException('Un administrateur avec cet email existe déjà.');
+      }
+
+      // Création de l'utilisateur
+      const adminUser = this.userRepository.create({
+        id: uuidv4(),
+        email: user.email,
+        name: user.name,
+        role: 'admin',
+        isOnline: true,
+        lastLogin: new Date(),
+      } as Partial<Admin>);
+
+      const res = await this.userRepository.save(adminUser);
+      return res;
+
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        // On renvoie l'erreur déjà gérée (email existant)
+        throw error;
+      }
+      console.error('Erreur lors de la création de l’administrateur :', error);
+      // Pour toute autre erreur inconnue
+      throw new InternalServerErrorException('Impossible de créer l’administrateur pour le moment.');
+    }
   }
 
 

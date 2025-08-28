@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpStatus, Param, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpStatus, InternalServerErrorException, Param, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
 import { Response, Request } from 'express';
@@ -87,6 +87,22 @@ export class AdminController {
   @Delete(':id')
   async deleteAdmin(@Param('id') id: string) {
     return this.adminService.deleteAdmin(id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post()
+  async createAdmin(@Body() user: { name: string; email: string }): Promise<any> {
+    try {
+      const newAdmin = await this.adminService.createUser(user);
+      return newAdmin
+    } catch (error) {
+      // Si c'est une erreur connue (ex: BadRequestException)
+      if (error.status && error.message) {
+        throw new BadRequestException(error.message);
+      }
+      console.error('Erreur serveur lors de la création de l’admin :', error);
+      throw new InternalServerErrorException('Impossible de créer l’administrateur pour le moment.');
+    }
   }
 
 }

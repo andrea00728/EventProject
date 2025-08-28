@@ -4,15 +4,15 @@ import { useDarkMode } from '../../context/DarkModeContext';
 import { motion } from 'framer-motion';
 
 const AdminForm = ({ onAdd, onClose }) => {
-  const { darkMode } = useDarkMode(); // Utilisation du contexte
+  const { darkMode } = useDarkMode();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('Rédacteur');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name || !email || !role) return;
-    onAdd({ name, email, role });
+    if (!name || !email) return;
+
+    onAdd({ name, email });
   };
 
   const modalVariants = {
@@ -23,7 +23,7 @@ const AdminForm = ({ onAdd, onClose }) => {
 
   return (
     <motion.div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50 p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -37,10 +37,10 @@ const AdminForm = ({ onAdd, onClose }) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Ajouter un nouvel Administrateur</h2>
+        <h2 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Ajouter un nouvel Administrateur</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-gray-700 font-semibold mb-2 dark:text-gray-300" htmlFor="name">Nom</label>
+            <label className={`block font-semibold mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`} htmlFor="name">Nom</label>
             <input
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-gray-100 border-gray-300'}`}
               id="name"
@@ -51,7 +51,7 @@ const AdminForm = ({ onAdd, onClose }) => {
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 font-semibold mb-2 dark:text-gray-300" htmlFor="email">Email</label>
+            <label className={`block font-semibold mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`} htmlFor="email">Email</label>
             <input
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-gray-100 border-gray-300'}`}
               id="email"
@@ -61,8 +61,8 @@ const AdminForm = ({ onAdd, onClose }) => {
               placeholder="Email de l'administrateur"
             />
           </div>
-          <div className="mb-6">
-            <label className="block text-gray-700 font-semibold mb-2 dark:text-gray-300" htmlFor="role">Rôle</label>
+          {/* <div className="mb-6">
+            <label className={`block font-semibold mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`} htmlFor="role">Rôle</label>
             <select
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-gray-100 border-gray-300'}`}
               id="role"
@@ -73,7 +73,7 @@ const AdminForm = ({ onAdd, onClose }) => {
               <option>Modérateur</option>
               <option>Rédacteur</option>
             </select>
-          </div>
+          </div> */}
           <div className="flex justify-end space-x-2">
             <button
               type="button"
