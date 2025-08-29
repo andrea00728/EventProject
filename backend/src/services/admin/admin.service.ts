@@ -156,7 +156,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
     } catch (error) {
       console.error('Login with Google OAuth error:', error);
       throw new UnauthorizedException(
-        'Erreur lors de l’authentification Google OAuth',
+        error.message ||'Erreur lors de l’authentification Google OAuth',
       );
     }
   }
