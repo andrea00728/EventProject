@@ -29,4 +29,6 @@ public
 *.sw?   
 socket.js
 .env
+package.json
+package-lock.json
 
