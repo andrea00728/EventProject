@@ -88,7 +88,7 @@ export default function Evenemenpage() {
           <div className="w-2 h-2 bg-pink-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
         </div>
 
-        <style jsx>{`
+        <style >{`
       @keyframes fade-in {
         from { opacity: 0; transform: translateY(-20px); }
         to { opacity: 1; transform: translateY(0); }

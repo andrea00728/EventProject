@@ -18,7 +18,7 @@ export const getAllForfait = async () => {
     throw new Error('Erreur lors de la récupération des forfaits', { cause: error });
   }
 };
-//
+
 
 
 export const getSuccessForfait = async (subscriptionId) => {

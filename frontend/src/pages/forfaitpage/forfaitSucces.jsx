@@ -18,7 +18,7 @@ const ForfaitSuccess = () => {
       setMessage('Aucun identifiant de souscription trouvé.');
       return;
     }
-//
+
     setSubscriptionId(subId);
   }, [location.search]);
 

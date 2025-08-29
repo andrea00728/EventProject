@@ -12,7 +12,7 @@ const ForfaitModal = ({ forfaits, loading, onChoisir, onClose, activeForfait, ex
     setSelectedForfait(forfait);
     setOpenPaymentModal(true);
   };
-//
+
   return (
     <AnimatePresence>
       {/* Modal principal */}
