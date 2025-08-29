@@ -19,13 +19,24 @@ export const ContextProvider = ({ children }) => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        // Inclure les cookies dans la requête
         const response = await axiosClient.get("/auth/status", {
-          withCredentials: true, // Permet d'envoyer les cookies
+          withCredentials: true,
+        });
+        console.log("Réponse de /auth/status:", response.data);
+        console.log("Utilisateur chargé:", {
+          id: response.data.user?.id,
+          name: response.data.user?.name,
+          email: response.data.user?.email,
+          photo: response.data.user?.photo,
         });
         setUser(response.data.user);
         setIsAuthenticated(true);
       } catch (error) {
+        console.error("Erreur lors de la vérification du statut:", error);
+        console.error("Détails de l'erreur:", {
+          status: error.response?.status,
+          data: error.response?.data,
+        });
         setUser(null);
         setIsAuthenticated(false);
       } finally {
@@ -36,19 +47,30 @@ export const ContextProvider = ({ children }) => {
   }, []);
 
   // Fonction centralisée pour la déconnexion
-const handleLogout = async () => {
-  try {
-    await axiosClient.post("/auth/logout");
-  } catch (error) {
-    if (error.response?.status !== 401) {
-      console.error("Erreur lors de la déconnexion :", error);
+  const handleLogout = async () => {
+    try {
+      await axiosClient.post("/auth/logout");
+    } catch (error) {
+      if (error.response?.status !== 401) {
+        console.error("Erreur lors de la déconnexion :", error);
+      }
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
+      document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+      document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+      localStorage.removeItem("jwt");
     }
-  } finally {
-    setUser(null);
-    setIsAuthenticated(false);
-  }
-};
+  };
 
+  // Ajout : Fonction pour mettre à jour le token
+  const updateToken = (newToken) => {
+    if (newToken) {
+      localStorage.setItem("jwt", newToken);
+      document.cookie = `jwt=${newToken}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 jours
+      console.log("Nouveau token stocké:", newToken);
+    }
+  };
 
   return (
     <StateContext.Provider
@@ -60,6 +82,7 @@ const handleLogout = async () => {
         role: user?.role || null,
         setIsAuthenticated,
         handleLogout,
+        updateToken, // Ajout : Exposer updateToken
       }}
     >
       {children}
