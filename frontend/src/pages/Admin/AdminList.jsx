@@ -3,6 +3,7 @@ import React from 'react';
 import { useDarkMode } from '../../context/DarkModeContext';
 import { FaTrash, FaEdit, FaUserCircle } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { formatDate } from 'date-fns';
 
 const AdminList = ({ admins, onDelete }) => {
   const { darkMode } = useDarkMode();
@@ -35,7 +36,8 @@ const AdminList = ({ admins, onDelete }) => {
             <th scope="col" className="px-6 py-3">Nom</th>
             <th scope="col" className="px-6 py-3">Email</th>
             <th scope="col" className="px-6 py-3">Rôle</th>
-            {/* <th scope="col" className="px-6 py-3">Statut</th> */}
+            <th scope="col" className="px-6 py-3">Dernière connexion</th>
+            <th scope="col" className="px-6 py-3">Statut</th>
             <th scope="col" className="px-6 py-3 text-right">Actions</th>
           </tr>
         </thead>
@@ -54,6 +56,14 @@ const AdminList = ({ admins, onDelete }) => {
               <td className="px-6 py-4">
                 <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${admin.role === 'super_admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300'}`}>
                   {admin.role}
+                </span>
+              </td>
+              <td scope="row" className={`px-6 py-4 font-medium whitespace-nowrap flex items-center gap-3 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                {formatDate(admin?.createdAt, 'dd/MM/yyyy HH:mm:ss')}
+              </td>
+              <td className="px-6 py-4">
+                <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${admin.isOnline ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'}`}>
+                  {admin.isOnline ? 'Actif' : 'Non actif'}
                 </span>
               </td>
               {/* <td className="px-6 py-4">

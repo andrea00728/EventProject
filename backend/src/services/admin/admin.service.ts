@@ -37,6 +37,9 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
   const isPasswordValid = await bcrypt.compare(user.password, adminUser.password);
   if (!isPasswordValid) throw new UnauthorizedException('Mot de passe incorrect');
 
+  adminUser.lastLogin = new Date();
+  await this.userRepository.save(adminUser);
+
   // Payload JWT
   const payload = { 
     sub: adminUser.id, 
@@ -218,7 +221,23 @@ async logout(req: Request, res: Response): Promise<{ success: boolean; message: 
       return { success: false, message: 'Aucun jeton fourni' };
     }
 
-    // Vérification du token
+    let decoded: any;
+    try {
+      decoded = await this.jwtService.verifyAsync(jwtCookie, {
+        secret: process.env.JWT_SECRET || 'your-secret-key',
+      });
+    } catch (err) {
+      console.error("❌ Token invalide :", err.message);
+      return { success: false, message: 'Token invalide' };
+    }
+
+    if (decoded?.sub) {
+      await this.userRepository.update(
+        { id: decoded.sub },
+        { lastLogout: new Date(), isOnline: false }
+      );
+    }
+
     try {
       await this.jwtService.verifyAsync(jwtCookie, {
         secret: process.env.JWT_SECRET || 'your-secret-key',
@@ -276,7 +295,7 @@ async logout(req: Request, res: Response): Promise<{ success: boolean; message: 
   async getAllAdmins(): Promise<Admin[]> {
     const admins = await this.userRepository.find({
       where: { role: 'admin' },
-      select: ['id', 'name', 'email', 'photo', 'role', 'isOnline', 'lastLogin', 'lastLogout'],
+      select: ['id', 'name', 'email', 'photo', 'role', 'isOnline', 'lastLogin', 'lastLogout', 'createdAt'],
       order: { lastLogin: 'DESC' }, // optionnel : les admins les plus récents d’abord
     });
     return admins;

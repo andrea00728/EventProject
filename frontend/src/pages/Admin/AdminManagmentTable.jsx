@@ -13,6 +13,7 @@ import {
   getListOfAllAdmins,
 } from "../../services/userService";
 import { useStateContext } from "../../context/ContextProvider";
+import { handleDownloadXLSX } from "../../services/downloadXLSX";
 
 const glows = [
   "0 0 15px rgba(59, 130, 246, 0.6)",
@@ -30,14 +31,11 @@ export default function AdminManagementPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const {user} = useStateContext()
+  const { user } = useStateContext();
 
-  useEffect(() => {
-    if(user.role == "admin") {
-      return <Navigate to={'/AdminAccueil'} />
-    }
-  }, [])
-  
+  if (user?.role === "admin") {
+    return <Navigate to="/AdminAccueil" replace />;
+  }
 
   useEffect(() => {
     const fetchAdmins = async () => {
@@ -76,7 +74,6 @@ export default function AdminManagementPage() {
     try {
       const res = await createOneAdmin(newAdmin);
       if (res) {
-        console.log("Admin created:", res);
         setAdmins([...admins, res]);
         setIsModalOpen(false);
         setSuccess("Administrateur ajouté avec succès !");
@@ -114,9 +111,24 @@ export default function AdminManagementPage() {
     return matchesName && matchesRole;
   });
 
+  const handleExportExcel = () => {
+    const page = (filteredAdmins.length != 0 && filteredAdmins).map(
+      (value) => ({
+        Nom: value.name,
+        Email: value.email,
+        Date_creation: value.createdAt,
+        Derniere_connexion: value.lastLogin,
+        Debut_connexion: value.lastLogin,
+        Fin_connexion: value.lastLogout,
+      })
+    );
+    handleDownloadXLSX(page, "liste_Admin");
+  };
+
   const exportAdmins = () => {
     try {
       // ... (votre code d'exportation)
+      handleExportExcel();
       setSuccess("Exportation réussie !");
     } catch (error) {
       console.error("Erreur d'exportation :", error);
