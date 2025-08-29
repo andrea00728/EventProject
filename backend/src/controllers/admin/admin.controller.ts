@@ -74,9 +74,9 @@ async googleAuthRedirect(@Req() req, @Res() res: Response) {
 
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('has-password')
-  async checkHasPassword(@Req() req: any) {
-    const adminId = req.user.id; // récupéré depuis le token JWT
+  @Get('has-password/:id')
+  async checkHasPassword(@Req() req: any, @Param('id') id: string) {
+    const adminId = req.user.id || id; // récupéré depuis le token JWT
     return this.adminService.hasPassword(adminId);
   }
 
