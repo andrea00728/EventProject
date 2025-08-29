@@ -121,7 +121,7 @@ export default function ModalChangeForfait({ isOpen, onClose, activeForfait }) {
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
         <div className="bg-white rounded-3xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto scrollbar-hide">
           {/* Header */}
-          <div className="sticky top-0 bg-white rounded-t-3xl border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+          <div className="sticky top-0 bg-white rounded-t-3xl border-b border-gray-200 px-6 py-4 flex justify-between items-center z-50">
             <h2 className="text-2xl font-bold text-gray-900">
               Changer de forfait
             </h2>
