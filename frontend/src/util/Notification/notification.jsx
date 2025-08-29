@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { toast } from 'react-toastify'; 
+import { url } from '../../api/url';
 
-const SOCKET_URL = 'http://localhost:3000';
+
 
 const NotificationListener = () => {
   useEffect(() => {
-    const socket = io(SOCKET_URL);
+    const socket = io(url);
 
     socket.on('connect', () => {
       console.log('Connecté au WebSocket');

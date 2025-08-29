@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 const ForfaitSuccess = () => {
   const [message, setMessage] = useState('');
   const [subscriptionId, setSubscriptionId] = useState(null);
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -24,10 +24,10 @@ const ForfaitSuccess = () => {
 
   useEffect(() => {
     const fetchConfirmation = async () => {
-      if (!subscriptionId || !token) return;
+      if (!subscriptionId || !isAuthenticated) return;
 
       try {
-        const res = await getSuccessForfait(token, subscriptionId);
+        const res = await getSuccessForfait( subscriptionId);
         setMessage(res.message);
         // Rediriger vers la page des forfaits après 3 secondes
         setTimeout(() => navigate('/forfaits'), 1000);
@@ -39,7 +39,7 @@ const ForfaitSuccess = () => {
     };
 
     fetchConfirmation();
-  }, [token, subscriptionId, navigate]);
+  }, [isAuthenticated, subscriptionId, navigate]);
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6">
@@ -49,7 +49,7 @@ const ForfaitSuccess = () => {
         </div>
       )}
 
-      {!token && (
+      {!isAuthenticated && (
         <div className="text-center mt-6">
           <p className="text-red-600 mb-4">Vous devez être connecté pour activer votre forfait.</p>
           <button

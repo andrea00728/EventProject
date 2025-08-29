@@ -30,9 +30,9 @@ export class ForfaitController {
     private userRepository: Repository<User>,
     @InjectRepository(Forfait)
     private forfaitRepository: Repository<Forfait>,
-    private readonly notificationService:NotificationService,
+    private readonly notificationService: NotificationService,
     private readonly forfaitService: ForfaitService,
-  ) {}
+  ) { }
 
   @Post('upgrade')
   @UseGuards(AuthGuard('jwt'))
@@ -65,23 +65,24 @@ export class ForfaitController {
     }
   }
 
-/**
- * 
- * @param subscriptionId 
- * 
- * 
- * 
- * @param res 
- * @returns 
- */
-@Get('success')
-async redirectToFrontend(
-  @Query('subscription_id') subscriptionId: string,
-  @Res() res: Response,
-) {
-  const url = `http://localhost:5173/forfait/success?subscription_id=${subscriptionId}`;
-  return res.redirect(url); // redirection vers le frontend
-}
+  /**
+   * 
+   * @param subscriptionId 
+   * 
+   * 
+   * 
+   * @param res 
+   * @returns 
+   */
+  @Get('success')
+  async redirectToFrontend(
+    @Query('subscription_id') subscriptionId: string,
+    @Res() res: Response,
+  ) {
+    const url = `https://mastertable.site/forfait/success?subscription_id=${subscriptionId}`;
+     
+    return res.redirect(url); // redirection vers le frontend
+  }
 
 
 
@@ -112,65 +113,65 @@ async redirectToFrontend(
 
 
 
-@Get('success-confirmation')
-@UseGuards(AuthGuard('jwt'))
-async handleSuccess(
-  @Query('subscription_id') subscriptionId: string,
-  @Req() req: any,
-) {
-  const userId = req.user?.sub;
-  if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
+  @Get('success-confirmation')
+  @UseGuards(AuthGuard('jwt'))
+  async handleSuccess(
+    @Query('subscription_id') subscriptionId: string,
+    @Req() req: any,
+  ) {
+    const userId = req.user?.sub;
+    if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
 
-  if (!subscriptionId) throw new BadRequestException('Subscription ID manquant');
+    if (!subscriptionId) throw new BadRequestException('Subscription ID manquant');
 
-  const subscription = await this.paypalService.getSubscriptionDetails(subscriptionId);
-  const planId = subscription.plan_id;
+    const subscription = await this.paypalService.getSubscriptionDetails(subscriptionId);
+    const planId = subscription.plan_id;
 
-  const forfait = await this.forfaitRepository.findOne({
-    where: { paypalplanid: planId },
-  });
-  if (!forfait) throw new BadRequestException(`Aucun forfait trouvé pour planId : ${planId}`);
+    const forfait = await this.forfaitRepository.findOne({
+      where: { paypalplanid: planId },
+    });
+    if (!forfait) throw new BadRequestException(`Aucun forfait trouvé pour planId : ${planId}`);
 
-  const user = await this.userRepository.findOne({ where: { id: userId } });
-  if (!user) throw new BadRequestException('Utilisateur introuvable');
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new BadRequestException('Utilisateur introuvable');
 
-  // Mettre à jour le forfait et la date d'expiration
-  user.forfait = forfait;
-  user.datedowngraded = null;
-  user.forfaitexpirationdate = addDays(new Date(), forfait.validationduration); // Ajouter la durée de validation
+    // Mettre à jour le forfait et la date d'expiration
+    user.forfait = forfait;
+    user.datedowngraded = null;
+    user.forfaitexpirationdate = addDays(new Date(), forfait.validationduration); // Ajouter la durée de validation
 
-  const success=await this.userRepository.save(user);
-  await this.notificationService.notifyAll(
-    'payement accepté',
-    `votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
-  )
+    const success = await this.userRepository.save(user);
+    await this.notificationService.notifyAll(
+      'payement accepté',
+      `votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
+    )
 
-  return success;
+    return success;
 
-  // return {
-  //   message: `Paiement accepté, votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
-  // };
-}
+    // return {
+    //   message: `Paiement accepté, votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
+    // };
+  }
 
 
 
-@Get('user/forfait')
-@UseGuards(AuthGuard('jwt'))
-async getUserForfait(@Req() req: any) {
-  const userId = req.user?.sub;
-  if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
+  @Get('user/forfait')
+  @UseGuards(AuthGuard('jwt'))
+  async getUserForfait(@Req() req: any) {
+    const userId = req.user?.sub;
+    if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
 
-  const user = await this.userRepository.findOne({
-    where: { id: userId },
-    relations: ['forfait'],
-  });
-  if (!user) throw new BadRequestException('Utilisateur introuvable');
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['forfait'],
+    });
+    if (!user) throw new BadRequestException('Utilisateur introuvable');
 
-  return {
-    forfait: user.forfait,
-    forfaitExpirationDate: user.forfaitexpirationdate,
-  };
-}
+    return {
+      forfait: user.forfait,
+      forfaitExpirationDate: user.forfaitexpirationdate,
+    };
+  }
 
   @Get('sumAllUsers')
   async getSumForUsersForfait(): Promise<any> {
@@ -179,11 +180,11 @@ async getUserForfait(@Req() req: any) {
 
 
   // Pour le super Admin 
-  
+
   @Get('get/lastTransactions')
   //@UseGuards(AuthGuard('jwt'))
   async getLastTransactions(): Promise<
-    { name: string; photo: string; nameForfait : string; amount: number; date: Date }[]
+    { name: string; photo: string; nameForfait: string; amount: number; date: Date }[]
   > {
     return this.forfaitService.findLastTransactions();
   }
@@ -194,8 +195,8 @@ async getUserForfait(@Req() req: any) {
     return this.forfaitService.getRevenusPourcentagesParForfait();
   }
 
-   // stat by lioka
-@Get('dashboard-charts')
+  // stat by lioka
+  @Get('dashboard-charts')
 async getDashboardCharts(@Query('period') period: string = '12') {
   console.log('🔥 Route dashboard-charts appelée avec period:', period);
   

@@ -1,8 +1,11 @@
+
+
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { getUserIdForToken } from './services/userService';
+import { url } from './api/url';
 
-export const SOCKET_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
 
 export function useSocket() {
   const [socket, setSocket] = useState(null);
@@ -11,10 +14,10 @@ export function useSocket() {
     let newSocket;
 
     async function connectSocket() {
-      const userId = await getUserIdForToken();
-      if (!userId) return;
+        const userId = await getUserIdForToken();
+        if (!userId) return;
 
-      newSocket = io(SOCKET_URL, {
+      newSocket = io(`${url}`, {
         transports: ['websocket'],
         auth: { userId },
       });

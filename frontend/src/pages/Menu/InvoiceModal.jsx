@@ -1,30 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import jsPDF from 'jspdf';
 import PropTypes from 'prop-types';
 import FocusTrap from 'focus-trap-react';
-
-const InvoiceForm = ({ email, setEmail, handleEmailCheck, isLoading, isEmailChecked, validateEmail }) => (
-  <div className="flex gap-2 mb-4">
-    <input
-      type="email"
-      value={email}
-      onChange={(e) => setEmail(e.target.value)}
-      placeholder="client@example.com"
-      className="w-full px-3 py-2 border rounded-md"
-      disabled={isLoading}
-      aria-label="Adresse email"
-    />
-    <button
-      onClick={handleEmailCheck}
-      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-      disabled={!validateEmail(email) || isLoading}
-      aria-label={isLoading ? 'Vérification en cours' : 'Vérifier l’email'}
-    >
-      {isLoading ? '...' : 'Vérifier'}
-    </button>
-  </div>
-);
+import { useStateContext } from '../../context/ContextProvider';
+import axiosClient from '../../api/axios-client';
 
 const InvoiceModal = ({
   isOpen,
@@ -37,7 +16,7 @@ const InvoiceModal = ({
   currentSlug,
   onValidateSuccess,
 }) => {
-  const token = localStorage.getItem('token');
+  const { isAuthenticated } = useStateContext();
   const [email, setEmail] = useState('');
   const [inviteExists, setInviteExists] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,6 +35,7 @@ const InvoiceModal = ({
       setIsEmailChecked(false);
       setError(null);
       setSuccess(null);
+      setIsLoading(false); // Assure que isLoading est réinitialisé à false
     }
   }, [isOpen]);
 
@@ -76,23 +56,22 @@ const InvoiceModal = ({
     setSuccess(null);
 
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/guests/check/${eventId}?email=${encodeURIComponent(email)}`
+      const res = await axiosClient.get(
+        `/guests/check/${eventId}?email=${encodeURIComponent(email)}`
       );
 
       if (res.data.exists) {
         setInviteExists(true);
         setSuccess('Invité existant pour cet événement.');
       } else {
-        await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/guests/${eventId}`,
+        await axiosClient.post(
+          `/guests/${eventId}`,
           {
             nom: 'Client invité',
             prenom: 'Automatique',
             email,
             sex: 'M',
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
+          }
         );
         setInviteExists(false);
         setSuccess('Nouvel invité enregistré avec succès.');
@@ -106,7 +85,7 @@ const InvoiceModal = ({
     } finally {
       setIsLoading(false);
     }
-  }, [email, eventId, token]);
+  }, [email, eventId]);
 
   const handleSubmit = useCallback(async () => {
     if (!eventId || !tableId || !email) {
@@ -124,8 +103,8 @@ const InvoiceModal = ({
     setError(null);
 
     try {
-      await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/orders`,
+      await axiosClient.post(
+        `/orders`,
         {
           tableId,
           items: cart.map((item) => ({
@@ -135,8 +114,7 @@ const InvoiceModal = ({
           nom: 'Client invité',
           email,
           slug: crypto.randomUUID(),
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+        }
       );
 
       setSuccess('Commande validée avec succès !');
@@ -148,7 +126,7 @@ const InvoiceModal = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [eventId, tableId, email, isEmailChecked, cart, token, onValidateSuccess, onClose]);
+  }, [eventId, tableId, email, isEmailChecked, cart, onValidateSuccess, onClose]);
 
   const generatePDF = () => {
     const doc = new jsPDF();
@@ -219,19 +197,30 @@ const InvoiceModal = ({
           <label className="block mb-1 text-sm font-medium" htmlFor="email-input">
             Votre email :
           </label>
-          <InvoiceForm
-            email={email}
-            setEmail={(e) => {
-              setEmail(e.target.value);
-              setIsEmailChecked(false);
-              setError(null);
-              setSuccess(null);
-            }}
-            handleEmailCheck={handleEmailCheck}
-            isLoading={isLoading}
-            isEmailChecked={isEmailChecked}
-            validateEmail={validateEmail}
-          />
+          <div className="flex gap-2 mb-4">
+            <input
+              id="email-input"
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setIsEmailChecked(false);
+                setError(null);
+                setSuccess(null);
+              }}
+              placeholder="client@example.com"
+              className="w-full px-3 py-2 border rounded-md"
+              aria-label="Adresse email"
+            />
+            <button
+              onClick={handleEmailCheck}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+              disabled={!validateEmail(email) || isLoading}
+              aria-label={isLoading ? 'Vérification en cours' : 'Vérifier l’email'}
+            >
+              {isLoading ? '...' : 'Vérifier'}
+            </button>
+          </div>
 
           <div className="space-y-2 mb-4">
             {cart.map((item) => (

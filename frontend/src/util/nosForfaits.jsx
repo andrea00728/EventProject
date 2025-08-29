@@ -4,7 +4,7 @@ import PaymentPage from "../pages/paiment";
 import { AuthModal } from "../components/Modal/authModal";
 import { useStateContext } from "../context/ContextProvider";
 import { getUserForfait } from "../services/forfaitService";
-import { Event, MobileFriendly } from "@mui/icons-material";
+import { Close, Event, MobileFriendly } from "@mui/icons-material";
 import { Calendar } from "react-feather";
 
 const iconMap = {
@@ -29,7 +29,7 @@ const textColorMap = {
 };
 
 export default function NosForfaits() {
-  const { token } = useStateContext();
+  const { isAuthenticated, user } = useStateContext();
   const [activeForfait, setActiveForfait] = useState(null);
   const [expirationDate, setExpirationDate] = useState(null);
   const [selectedForfait, setSelectedForfait] = useState(null);
@@ -46,20 +46,22 @@ export default function NosForfaits() {
 
   useEffect(() => {
     const fetchUserForfait = async () => {
-      if (!token) return;
-      try {
-        const userForfait = await getUserForfait(token);
-        if (userForfait?.forfait) {
-          setActiveForfait(userForfait.forfait);
-          setExpirationDate(userForfait.forfaitExpirationDate);
+      if (!isAuthenticated) return;
+      if(user?.role === "organisateur"){
+        try {
+          const userForfait = await getUserForfait();
+          if (userForfait?.forfait) {
+            setActiveForfait(userForfait.forfait);
+            setExpirationDate(userForfait.forfaitExpirationDate);
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Impossible de charger votre forfait actif.");
         }
-      } catch (err) {
-        console.error(err);
-        alert("Impossible de charger votre forfait actif.");
       }
     };
     fetchUserForfait();
-  }, [token]);
+  }, [isAuthenticated]);
 
   const handleAcheter = (forfait) => {
     setSelectedForfait(forfait);
@@ -120,7 +122,7 @@ export default function NosForfaits() {
                 <li>Durée : <span className="font-semibold">{f.duration}</span></li>
               </ul>
 
-              {token ? (
+              {isAuthenticated ? (
                 isActive ? (
                   <button
                     disabled
@@ -130,22 +132,22 @@ export default function NosForfaits() {
                   </button>
                 ) : (
                   <div className="flex gap-2  sm:flex-row">
-                  <button
-                    onClick={() => handleVoirDetails(f)}
-                    className={`absolute top-0 right-0 flex items-center justify-center w-12 h-12 rounded-full`}>
-                    <Info className="w-6 h-6 " /> {/* icône info centrée */}
-                  </button>
-                  <button
-                    onClick={() => handleAcheter(f)}
-                    disabled={isDisabled}
-                    className={`w-full py-3 rounded-xl font-semibold shadow transition-all duration-300 focus:outline-none focus:ring ${isDisabled
-                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                      : `bg-gradient-to-r ${defaultColorMap[f.nom]} text-white hover:opacity-90`
-                      }`}
-                  >
-                    Acheter 
-                  </button>
-                </div>
+                    <button
+                      onClick={() => handleVoirDetails(f)}
+                      className={`absolute top-0 right-0 flex items-center justify-center w-12 h-12 rounded-full`}>
+                      <Info className="w-6 h-6 " /> {/* icône info centrée */}
+                    </button>
+                    <button
+                      onClick={() => handleAcheter(f)}
+                      disabled={isDisabled}
+                      className={`w-full py-3 rounded-xl font-semibold shadow transition-all duration-300 focus:outline-none focus:ring ${isDisabled
+                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                        : `bg-gradient-to-r ${defaultColorMap[f.nom]} text-white hover:opacity-90`
+                        }`}
+                    >
+                      Acheter
+                    </button>
+                  </div>
                 )
               ) : (
                 <div className="flex gap-2  sm:flex-row">
@@ -173,7 +175,8 @@ export default function NosForfaits() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
           {/* Fond semi-transparent + blur pour le focus sur la modal */}
 
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8 relative overflow-hidden animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8 relative overflow-y-auto  max-h-[90vh] scrollbar-hide">
+          <span className="absolute top-4 right-4" onClick={() => setDetailsOpen(false)}><Close/></span>
             {/* Conteneur principal de la modal : arrondi, ombre, padding responsive */}
 
             {/* Bandeau coloré en haut */}

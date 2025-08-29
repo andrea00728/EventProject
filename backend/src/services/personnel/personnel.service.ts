@@ -187,8 +187,8 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
     { expiresIn: '2d' }
   );
 
-  const confirmationLink = `http://localhost:5173/personnel/response?token=${token}&action=confirm`;
-  const refuseLink = `http://localhost:5173/personnel/response?token=${token}&action=refuse`;
+  const confirmationLink = `https://mastertable.site/personnel/response?token=${token}&action=confirm`;
+  const refuseLink = `https://mastertable.site/personnel/response?token=${token}&action=refuse`;
 
   const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -254,4 +254,17 @@ async findCountPersonnelByEvenement(evenementId: number): Promise<number> {
     });
     return count;
   }
+
+  /**
+   * 
+   * @returns 
+   * utilise pour filtre a partire des historique les personnel disponnible
+   */
+  async findAvailablePersonnel(): Promise<Personnel[]> {
+  return this.personnelRepository.find({
+    where: { isActive: true },
+  });
+}
+
+
 }

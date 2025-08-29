@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef, use } from "react";
 import { deleteManager, getManagerList } from "../../services/inviteService";
 import { formatDate } from "./Evenement";
 import {
@@ -23,8 +23,9 @@ import { useDarkMode } from "../../context/DarkModeContext";
 import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { ChevronDown } from "lucide-react";
 import { io } from "socket.io-client";
-import { SOCKET_URL } from "../../socket";
+import { getUserIdForToken } from "../../services/userService";
 import { useStateContext } from "../../context/ContextProvider";
+import { url } from "../../api/url";
 
 // Composant StatsCard
 const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
@@ -311,7 +312,7 @@ export default function Organisateur() {
   const [showProfile, setShowProfile] = useState(false);
 
   const { darkMode, toggleDarkMode } = useDarkMode();
-  const { user } = useStateContext()
+  const { user } = useStateContext();
 
   const notifRef = useRef(null);
   const msgRef = useRef(null);
@@ -366,74 +367,71 @@ export default function Organisateur() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const socketRef = useRef(null);
   useEffect(() => {
-    document.title = "Organisateur - Admin";
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const data = await getManagerList();
-        setData(
-          data.map((org) => ({
-            ...org,
-            forfait: org.forfait || null,
-            createdAt: formatDate(org.createdAt),
-            forfaitexpirationdate: org.forfaitexpirationdate
-              ? formatDate(org.forfaitexpirationdate)
-              : "N/A",
-          }))
-        );
-      } catch (error) {
-        console.error(
-          "Erreur lors de la récupération des organisateurs :",
-          error
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  document.title = "Organisateur - Admin";
 
-    // const userId = await getUserIdForToken(token);
-    const socket = io(SOCKET_URL, {
-      auth: {
-        userId: user.id,
-      },
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const data = await getManagerList();
+      setData(
+        data.map((org) => ({
+          ...org,
+          forfait: org.forfait || null,
+          createdAt: formatDate(org.createdAt),
+          forfaitexpirationdate: org.forfaitexpirationdate
+            ? formatDate(org.forfaitexpirationdate)
+            : "N/A",
+        }))
+      );
+    } catch (error) {
+      console.error("Erreur lors de la récupération des organisateurs :", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchData();
+
+
+
+const connectSocket = async () => {
+    const userId = await getUserIdForToken();
+    if (!userId || socketRef.current) return; // éviter doublon
+
+    const socket = io(`${url}`, {
+      path: "/socket.io/",
+      transports: ["websocket", "polling"],
+      auth: { userId },
     });
 
-    socket.on("connect", () => {
-      console.log("🟢 SuperAdmin connecté au WebSocket !");
-    });
-
-    socket.on("connect_error", (err) => {
-      console.error("❌ Erreur WebSocket SuperAdmin :", err.message);
-    });
+    socket.on("connect", () => console.log("🟢 SuperAdmin connecté !"));
 
     socket.on("organizer_connected", ({ userId }) => {
-      // console.log("📡 SuperAdmin reçoit organizer_connected :", userId);
-      
-      setData((prev) => {
-        return prev.map((m) =>
-          m.id === userId
-            ? { ...m, isOnline: true, lastLogin: new Date().toISOString() }
-            : m
-        );
-      });
-    });
-
-    socket.on("organizer_disconnected", ({ userId }) => {
-      setData((prev) =>
-        prev.map((m) =>
-          m.id === userId
-            ? { ...m, isOnline: false, lastLogin: new Date().toISOString() }
-            : m
-        )
+      setData(prev =>
+        prev.map(m => m.id === userId ? { ...m, isOnline: true, lastLogin: new Date().toISOString() } : m)
       );
     });
 
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+    socket.on("organizer_disconnected", ({ userId }) => {
+      setData(prev =>
+        prev.map(m => m.id === userId ? { ...m, isOnline: false, lastLogin: new Date().toISOString() } : m)
+      );
+    });
+
+    socketRef.current = socket;
+  };
+
+  connectSocket();
+
+  return () => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+  };
+}, []);
+
 
   const filteredData = data.filter((organisateur) =>
     organisateur[filterType]?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -483,19 +481,6 @@ export default function Organisateur() {
     setModalData({});
     setIsModalOpen(false);
   };
-
-  const notifications = [
-    "Nouvel organisateur inscrit",
-    "Événement 'Conférence Tech' mis à jour",
-    "Paiement reçu pour 'Atelier React'",
-    "Nouveau message de support",
-  ];
-
-  const messages = [
-    { from: "Alice", text: "Bonjour, j'ai une question sur l'événement." },
-    { from: "Bob", text: "Le planning a été modifié." },
-    { from: "Charlie", text: "Merci pour la confirmation." },
-  ];
 
   const handleDownload = () => {
     const page = data.map((p) => ({

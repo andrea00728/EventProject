@@ -4,6 +4,7 @@ import { FormaNumber } from "../services/controll_champs/controll_limite";
 import { findFourthLastCommentaireRecent, findOneRecent, findSecondLastCommentaireRecent, findThirdLastCommentaireRecent } from "../services/testimonyService";
 import { mapSatisfactionToStars, satisfactionDisplay } from "./SatisfactionEtoils/SatisfactionLevel";
 import { FaStar } from "react-icons/fa";
+import TestimonialsSection from "./testimonialsSection";
 
 export default function Testimonials() {
   const [organisateurCount, setOrganisateurCount] = useState(0);
@@ -416,7 +417,6 @@ export default function Testimonials() {
           </div>
         </div>
       </section>
-
       <style>{`
         @keyframes fadeIn {
           from {

@@ -1,45 +1,51 @@
-import { GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, signOut, getAuth, getRedirectResult } from 'firebase/auth';
-import { auth } from './firebaseConfig';
-import axios from 'axios';
+import {
+  GoogleAuthProvider,
+  FacebookAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult
+} from "firebase/auth";
+import { auth } from "./firebaseConfig";
+import axiosClient from "../../api/axios-client";
 
-const URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
+// Détection simple mobile/desktop
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+// Connexion avec Google
 export const signInWithGoogle = async () => {
   const provider = new GoogleAuthProvider();
-  const result = await signInWithPopup(auth, provider);
-  const token = await result.user.getIdToken(true);
-  const response = await axios.post(`${URL}/admin/login/admin`, {}, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  return response.data;
+  if (isMobile) {
+    await signInWithRedirect(auth, provider);
+  } else {
+    return await signInWithPopup(auth, provider);
+  }
 };
 
+// Connexion avec Facebook
 export const signInWithFacebook = async () => {
   const provider = new FacebookAuthProvider();
-  const result = await signInWithPopup(auth, provider);
-  const token = await result.user.getIdToken(true);
-  const response = await axios.post(`${URL}/admin/login/admin`, {}, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  return response.data;
+  if (isMobile) {
+    await signInWithRedirect(auth, provider);
+  } else {
+    return await signInWithPopup(auth, provider);
+  }
 };
 
+// Récupérer le résultat après redirection (mobile)
 export const handleRedirectResult = async () => {
-  const auth = getAuth();
-  const result = await getRedirectResult(auth);
-
-  if (result) {
-    const token = await result.user.getIdToken();
-    return token;
-  } else {
+  try {
+    const result = await getRedirectResult(auth);
+    return result;
+  } catch (error) {
+    console.error("Erreur handleRedirectResult:", error);
     return null;
   }
 };
 
-export const logout = () => signOut(auth);
+
+// Déconnexion
+export const logout = async () => {
+  const res = await axiosClient.post(`/admin/logout`);
+  //await signOut(auth);
+  return res;
+};

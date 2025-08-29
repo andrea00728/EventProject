@@ -10,8 +10,10 @@ import { AuthService } from 'src/Authentication/auth.service';
 
 @WebSocketGateway({
   cors: {
-    origin: '*', // autoriser tous les domaines (ajuste selon besoin)
-  },
+  origin: 'https://mastertable.site',
+  credentials: true,
+  //  path: '/socket.io',
+},
 })
 export class PresenceGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()

@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { X } from 'lucide-react';
 
 import HeaderSection from './HeaderSection';
 import MenuGrid from './MenuGrid';
@@ -12,22 +13,21 @@ import CartDrawer from './CartDrawer';
 import InvoiceModal from './InvoiceModal';
 
 const useMenuFilter = (menus, searchQuery, minPrice, maxPrice, selectedCategory) => {
-  return useMemo(
-    () =>
-      menus
-        .map((menu) => ({
-          ...menu,
-          items: menu.items.filter(
-            (item) =>
-              item.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-              (minPrice === '' || item.price >= parseFloat(minPrice)) &&
-              (maxPrice === '' || item.price <= parseFloat(maxPrice)) &&
-              (!selectedCategory || menu.category === selectedCategory)
-          ),
-        }))
-        .filter((menu) => menu.items.length > 0),
-    [menus, searchQuery, minPrice, maxPrice, selectedCategory]
-  );
+  return useMemo(() => {
+    const filtered = menus
+      .map((menu) => ({
+        ...menu,
+        items: menu.items.filter(
+          (item) =>
+            item.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+            (minPrice === '' || item.price >= parseFloat(minPrice)) &&
+            (maxPrice === '' || item.price <= parseFloat(maxPrice)) &&
+            (!selectedCategory || menu.category === selectedCategory)
+        ),
+      }))
+      .filter((menu) => menu.items.length > 0);
+    return filtered;
+  }, [menus, searchQuery, minPrice, maxPrice, selectedCategory]);
 };
 
 const MenuListWithCart = () => {
@@ -50,15 +50,14 @@ const MenuListWithCart = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const itemsPerPage = 8;
-  const token = localStorage.getItem('token');
 
-  // Catégories dynamiques
+  // Dynamic categories
   const categories = useMemo(() => {
     const cats = new Set(menus.map((menu) => menu.category || 'Autres'));
     return ['Tous', ...cats];
   }, [menus]);
 
-  // Charger panier localStorage
+  // Load cart from localStorage
   useEffect(() => {
     const savedCart = JSON.parse(localStorage.getItem('cart'));
     if (savedCart) setCart(savedCart);
@@ -68,7 +67,7 @@ const MenuListWithCart = () => {
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
 
-  // Charger infos du lien court
+  // Fetch short link info
   useEffect(() => {
     const fetchShortLinkInfo = async () => {
       if (!slug) {
@@ -94,16 +93,14 @@ const MenuListWithCart = () => {
     fetchShortLinkInfo();
   }, [slug, navigate]);
 
-  // Charger menus
+  // Fetch menus
   useEffect(() => {
     const fetchMenus = async () => {
       if (!selectedEvent) return;
 
       try {
         setIsLoading(true);
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`);
 
         const formattedMenus = res.data.map((menu) => ({
           ...menu,
@@ -125,9 +122,9 @@ const MenuListWithCart = () => {
     };
 
     fetchMenus();
-  }, [selectedEvent, token]);
+  }, [selectedEvent]);
 
-  // Panier
+  // Cart management
   const clearCart = useCallback(() => {
     const updatedMenus = menus.map((menu) => ({
       ...menu,
@@ -167,7 +164,10 @@ const MenuListWithCart = () => {
         setCart([...cart, { ...item, quantity: 1 }]);
       }
 
-      toast.success('Article ajouté au panier !', { autoClose: 2000 });
+      // Clear all notifications and messages
+      toast.dismiss(); // Dismiss all active toasts
+      setMessage(''); // Clear the message state
+      // Notification supprimée ici
     },
     [cart, menus]
   );
@@ -240,7 +240,7 @@ const MenuListWithCart = () => {
     return isNaN(num) ? '0.00' : num.toFixed(2);
   };
 
-  // Filtres & pagination
+  // Filters & Pagination
   const filteredMenus = useMenuFilter(menus, searchQuery, minPrice, maxPrice, selectedCategory);
 
   const paginatedMenus = useMemo(
@@ -268,8 +268,8 @@ const MenuListWithCart = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-100 via-cyan-50 to-white px-4 sm:px-6 lg:px-8 py-8 font-sans">
-      {/* Notifications */}
+    <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-8 py-8 font-sans">
+      {/* Notifications with close button */}
       <ToastContainer
         position="top-right"
         autoClose={2000}
@@ -278,7 +278,16 @@ const MenuListWithCart = () => {
         closeOnClick
         pauseOnHover
         theme="light"
-        toastClassName="rounded-lg shadow-lg bg-white text-gray-800"
+        closeButton={({ closeToast }) => (
+          <button
+            onClick={closeToast}
+            className="p-1 text-gray-600 hover:text-gray-800 transition"
+          >
+            <X size={16} />
+          </button>
+        )}
+        toastClassName="rounded-lg shadow-lg bg-white text-gray-800 border border-gray-200"
+        bodyClassName="flex items-center p-4"
       />
 
       {/* Header */}
@@ -289,37 +298,40 @@ const MenuListWithCart = () => {
         onCartOpen={() => setIsCartOpen(true)}
       />
 
-      {/* Filtres */}
+      {/* Filters */}
       <motion.div
-        className="sticky top-0 z-10 bg-white/90 backdrop-blur-md rounded-xl shadow-md p-4 mb-6"
+        className="sticky top-0 z-10 bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
       >
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-          {/* Prix */}
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          {/* Price Filters */}
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <input
               type="number"
               placeholder="Min €"
               value={minPrice}
               onChange={(e) => setMinPrice(e.target.value)}
-              className="w-28 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+              className="w-28 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none transition"
+              aria-label="Minimum price"
             />
-            <span>-</span>
+            <span className="text-gray-500">-</span>
             <input
               type="number"
               placeholder="Max €"
               value={maxPrice}
               onChange={(e) => setMaxPrice(e.target.value)}
-              className="w-28 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+              className="w-28 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none transition"
+              aria-label="Maximum price"
             />
           </div>
-          {/* Catégories */}
+          {/* Category Filter */}
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full sm:w-48 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500"
+            className="w-full sm:w-48 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none transition"
+            aria-label="Select category"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat === 'Tous' ? '' : cat}>
@@ -352,7 +364,10 @@ const MenuListWithCart = () => {
           animate={{ opacity: 1 }}
         >
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-xl shadow animate-pulse p-6 h-40" />
+            <div
+              key={i}
+              className="bg-white rounded-xl shadow-md animate-pulse p-6 h-40 border border-gray-100"
+            />
           ))}
         </motion.div>
       ) : filteredMenus.length === 0 ? (
@@ -361,9 +376,19 @@ const MenuListWithCart = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="bg-white rounded-xl p-8 shadow-md">
-            <svg className="w-16 h-16 mx-auto mb-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <div className="bg-white rounded-xl p-8 shadow-md border border-gray-100">
+            <svg
+              className="w-16 h-16 mx-auto mb-4 text-teal-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
             <p className="text-teal-600 font-semibold text-base">Aucun menu disponible</p>
             <p className="text-gray-600 text-sm mt-2">Aucun menu ne correspond à vos critères.</p>
@@ -389,11 +414,12 @@ const MenuListWithCart = () => {
                 <button
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`px-4 py-2 rounded-full transition ${
+                  className={`px-4 py-2 rounded-full transition-all duration-200 ${
                     currentPage === i + 1
-                      ? 'bg-teal-600 text-white shadow'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                      ? 'bg-teal-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-teal-100 hover:text-teal-700'
+                  } focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                  aria-label={`Page ${i + 1}`}
                 >
                   {i + 1}
                 </button>
@@ -403,7 +429,7 @@ const MenuListWithCart = () => {
         </motion.div>
       )}
 
-      {/* Drawer Panier */}
+      {/* Cart Drawer */}
       <CartDrawer
         isOpen={isCartOpen}
         cart={cart}
@@ -415,7 +441,7 @@ const MenuListWithCart = () => {
         onValidateOrder={handleValidateOrder}
       />
 
-      {/* Modal Facture */}
+      {/* Invoice Modal */}
       <InvoiceModal
         isOpen={isInvoiceOpen}
         onClose={() => setIsInvoiceOpen(false)}

@@ -179,9 +179,9 @@ export class OrderController {
   @Get('event/:eventId')
   async findOrdersByEvent(@Param('eventId', ParseIntPipe) eventId: number): Promise<(Order & { total: number })[]> {
     const orders = await this.orderService.findOrdersByEvent(eventId);
-    if (!orders || orders.length === 0) {
-      throw new NotFoundException(`Aucune commande trouvée pour l'événement avec l'id ${eventId}`);
-    }
+    // if (!orders || orders.length === 0) {
+    //   throw new NotFoundException(`Aucune commande trouvée pour l'événement avec l'id ${eventId}`);
+    // }
     return orders;
   }
 

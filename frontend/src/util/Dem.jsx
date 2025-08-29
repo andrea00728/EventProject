@@ -1,12 +1,12 @@
 import { useRef, useState } from "react";
 import tutorialVideo from "../assets/demo.mp4"; // import de la vidéo
-import DemoTable from "./demo";
 import { FaPlay, FaEyeSlash, FaDownload, FaEye } from 'react-icons/fa';
+import DemoTable from "./demo";
 
-const Demo = () => {
+const Dem = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpenDemo, setIsOpenDemo] = useState(false);
   const [showVideo, setShowVideo] = useState(true);
 
 
@@ -58,8 +58,8 @@ const Demo = () => {
             <div className="flex flex-wrap gap-4 mt-4 align-center justify-center">
                 {/* Bouton pour ouvrir le modal */}
                 <button
-                    onClick={() => setIsOpen(true)}
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-3 rounded-xl font-semibold hover:scale-105 transition"
+                    onClick={() => setIsOpenDemo(true)}
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-3 rounded-xl font-semibold hover:scale-105 transition cursor-pointer"
                 >
                     <FaPlay />
                     <span className="hidden md:inline">Voir la démo</span>
@@ -88,18 +88,20 @@ const Demo = () => {
       </section>
 
       {/* Modal plein écran (inchangé) */}
-      {isOpen && (
+      {isOpenDemo && (
           <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
               <div className="relative w-full h-full bg-white flex flex-col items-center justify-center">
-                  {/* Bouton fermer */}
-                  <button
-                      onClick={() => setIsOpen(false)}
-                      className="absolute top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors"
-                  >
-                      ✕
-                  </button>
+
+                {/* Bouton fermer */}
+              <button
+                onClick={() => setIsOpenDemo(false)}
+                className="fixed top-4 right-6 text-2xl font-bold text-gray-800 hover:text-red-500 transition-colors z-500"
+              >
+                ✕
+              </button>
+                 
                   {/* Contenu du modal */}
-                  <DemoTable />
+                  <DemoTable closeModal={() => setIsOpen(false)}/>
               </div>
           </div>
       )}
@@ -107,4 +109,4 @@ const Demo = () => {
   );
 };
 
-export default Demo;
+export default Dem;

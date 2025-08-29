@@ -1,19 +1,108 @@
-import { Controller, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
-import { FirebaseAuthGuard } from 'src/guards/firebase-auth.guard';
+import { BadRequestException, Body, Controller, Delete, Get, HttpStatus, InternalServerErrorException, Param, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { JwtService } from '@nestjs/jwt';
+import { Response, Request } from 'express';
 import { AdminService } from 'src/services/admin/admin.service';
+import { FirebaseAuthGuard } from 'src/guards/firebase-auth.guard';
 
 @Controller('admin')
 export class AdminController {
+  constructor(private readonly jwtService: JwtService, 
+    private readonly adminService: AdminService
+  ) {}
 
-    constructor(private readonly adminService: AdminService) { }
+  @Get('google')
+  @UseGuards(AuthGuard('google-admin'))
+  async googleLogin() {
+    // redirige vers Google
+  }
 
-    @UseGuards(FirebaseAuthGuard)
-    @Post('/login/admin')
-    async logSuperAd(@Req() request : any) {
-    const idToken = request.headers.authorization?.split('Bearer ')[1];
-    if (!idToken) {
-        throw new UnauthorizedException('Token manquant');
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google-admin'))
+  async googleAuthRedirect(@Req() req, @Res() res: Response) {
+    const user = req.user;
+
+    await this.adminService.loginWithGoogleOAuth(user, res);
+    // on met le token dans un cookie
+    const redirectUrl = `http://localhost:5173/AdminAccueil`;
+    return res.redirect(redirectUrl);
+  }
+
+  @Post('logout')
+  async logout(@Req() req: Request, @Res() res: Response) {
+    try {
+      const result = await this.adminService.logout(req, res);
+      return res.status(HttpStatus.OK).json(result);
+    } catch (error) {
+      return res.status(HttpStatus.UNAUTHORIZED).json({
+        message: error.message || 'Erreur lors de la déconnexion',
+      });
     }
-    return await this.adminService.loginWithFirebase(idToken);
+  }
+
+  @UseGuards(AuthGuard('jwt')) // Protégé par JWT
+  @Post('update-password')
+  async updatePassword(
+    @Req() req,
+    @Body() body: { newPassword: string },
+  ) {
+    const adminId = req.user.id; // ID de l’utilisateur récupéré depuis le JWT
+    return this.adminService.updatePassword(
+      adminId,
+      body.newPassword,
+    );
+  }
+
+  @Post('login-email')
+  async loginWithEmail(
+    @Body() body: { email: string; password: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.adminService.loginWithEmailAndPass(body, res);
+    return result;
+  }
+
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('has-password')
+  async checkHasPassword(@Req() req: any) {
+    const adminId = req.user.id; // récupéré depuis le token JWT
+    return this.adminService.hasPassword(adminId);
+  }
+
+
+  @UseGuards(AuthGuard('jwt')) // Protégé par JWT
+  @Get('all')
+  async getAllAdmins() {
+    return this.adminService.getAllAdmins();
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Put(':id')
+  async updateAdmin(@Param('id') id: string, @Body() body: any) {
+    return this.adminService.updateAdmin(id, body);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete(':id')
+  async deleteAdmin(@Param('id') id: string) {
+    return this.adminService.deleteAdmin(id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post()
+  async createAdmin(@Body() user: { name: string; email: string }): Promise<any> {
+    try {
+      const newAdmin = await this.adminService.createUser(user);
+      return newAdmin
+    } catch (error) {
+      // Si c'est une erreur connue (ex: BadRequestException)
+      if (error.status && error.message) {
+        throw new BadRequestException(error.message);
+      }
+      console.error('Erreur serveur lors de la création de l’admin :', error);
+      throw new InternalServerErrorException('Impossible de créer l’administrateur pour le moment.');
     }
+  }
+
 }

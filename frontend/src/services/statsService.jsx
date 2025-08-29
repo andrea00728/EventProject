@@ -120,10 +120,10 @@ const statsService = {
   },
 
   // Définir le token pour les requêtes authentifiées
-  setAuthToken(token) {
-    console.log("Setting auth token:", token ? "Token set" : "Token removed");
-    if (token) {
-      axiosClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  setAuthToken(isAuthenticated) {
+    console.log("Setting auth token:",isAuthenticated  ? "Token set" : "Token removed");
+    if (isAuthenticated) {
+      axiosClient.defaults.headers.common["Authorization"] ;
     } else {
       delete axiosClient.defaults.headers.common["Authorization"];
     }

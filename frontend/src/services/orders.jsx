@@ -5,15 +5,11 @@ export const getAllOrdersForOnEvent = async (id) => {
   return response.data;
 };
 
-export const updateOrderStatus = async (orderId, status, token) => {
+export const updateOrderStatus = async (orderId, status) => {
   try {
     const response = await axiosClient.patch(
-      `${import.meta.env.VITE_API_BASE_URL}/orders/${orderId}/status`,
-      { status } , {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  }
+      `/orders/${orderId}/status`,
+      { status } 
   );
   } catch (error) {
     console.error('Erreur lors de la mise à jour:', error);

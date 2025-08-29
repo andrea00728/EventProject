@@ -16,5 +16,5 @@ export class ShortLink {
   tableId: number;
 
   @Column()
-  originalUrl: string; // URL longue, ex: "http://localhost:3000/menus/event/123/table/456"
+  originalUrl: string; // URL longue, ex: "http://mastee/menus/event/123/table/456"
 }

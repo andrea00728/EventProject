@@ -21,6 +21,13 @@ export class Personnel {
   evenement: Evenement;
 
 
+  /**
+   * utilise pour la desactivation du personnel apres expiration de l'evenement
+   */
+  @Column({type:'boolean',default:true})
+  isActive:boolean;
+
+
   @Column({ type: 'enum', enum: ['attent', 'accepter'], default: 'attent' })
   status: 'attent' | 'accepter';
 

@@ -82,7 +82,7 @@ const paymentMethods = [
 ];
 
 const PaymentPage = ({ forfait, onClose }) => {
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState(
     forfait && forfait.nom ? forfait.nom.toLowerCase() : "pro"
@@ -94,14 +94,14 @@ const PaymentPage = ({ forfait, onClose }) => {
   const selectedPlanDetails = plans[selectedPlan];
 
   const handlePayment = useCallback(async () => {
-    if (!token) {
+    if (!isAuthenticated) {
       setError("Vous devez être connecté pour effectuer un paiement.");
       return;
     }
 
     if (selectedPlan === "freemium") {
       try {
-        await updateForfait(token, selectedPlan);
+        await updateForfait( selectedPlan);
         setError(null);
         alert("Plan Freemium activé avec succès !");
       } catch (err) {
@@ -112,13 +112,15 @@ const PaymentPage = ({ forfait, onClose }) => {
 
     setLoading(true);
     setError(null);
+
     try {
       if (selectedPaymentMethod === "paypal") {
-        const res = await updateForfait(token, selectedPlan);
-        // Ajout du console.log pour vérifier l'URL
-        console.log("URL retournée par updateForfait:", res?.url || "Aucune URL retournée");
+        const res = await updateForfait( selectedPlan);
+        console.log("URL PayPal:", res?.url || "Aucune URL");
+
         if (res?.url && typeof res.url === "string" && res.url.startsWith("https://")) {
-          window.open(res.url, "_blank");
+          // Redirection dans le même onglet
+          window.location.href = res.url;
         } else {
           setError("URL de paiement PayPal non valide.");
         }
@@ -131,7 +133,8 @@ const PaymentPage = ({ forfait, onClose }) => {
     } finally {
       setLoading(false);
     }
-  }, [token, selectedPlan, selectedPaymentMethod]);
+  }, [isAuthenticated, selectedPlan, selectedPaymentMethod]);
+
 
   if (!selectedPlanDetails) {
     return (
@@ -153,13 +156,14 @@ const PaymentPage = ({ forfait, onClose }) => {
         onClick={onClose}
       >
         <motion.div
-          className="bg-white w-full sm:max-w-5xl sm:h-[95vh] rounded-xl shadow-2xl p-6 sm:p-10 overflow-y-auto relative"
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -50 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          onClick={(e) => e.stopPropagation()}
-        >
+  className="bg-white w-full h-full sm:max-w-5xl sm:h-[85vh] rounded-xl shadow-2xl p-6 sm:p-10 
+             overflow-auto sm:relative fixed top-0 left-0 sm:top-auto sm:left-auto sm:m-auto"
+  initial={{ opacity: 0, y: -50 }}
+  animate={{ opacity: 1, y: 0 }}
+  exit={{ opacity: 0, y: -50 }}
+  transition={{ duration: 0.4, ease: "easeOut" }}
+  onClick={(e) => e.stopPropagation()}
+>
           <button
             className="absolute top-5 right-5 text-gray-500 hover:text-gray-800 transition"
             onClick={onClose}
@@ -186,10 +190,9 @@ const PaymentPage = ({ forfait, onClose }) => {
 
           <div className="mb-8">
             <h2 className="text-3xl font-extrabold text-gray-900 mb-4">{selectedPlanDetails.name}</h2>
-            <p className="text-gray-600 text-lg">Choisissez votre plan et méthode de paiement</p>
           </div>
 
-          <div className="flex flex-wrap gap-3 mb-8">
+          {/* <div className="flex flex-wrap gap-3 mb-8">
             {Object.entries(plans).map(([key, plan]) => {
               const IconComp = plan.icon;
               const isSelected = selectedPlan === key;
@@ -197,18 +200,17 @@ const PaymentPage = ({ forfait, onClose }) => {
                 <button
                   key={key}
                   onClick={() => setSelectedPlan(key)}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all duration-300 shadow ${
-                    isSelected
+                  className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all duration-300 shadow ${isSelected
                       ? `${plan.buttonColor} text-white shadow-lg scale-105`
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
+                    }`}
                 >
                   <IconComp className="w-5 h-5" />
                   {plan.name}
                 </button>
               );
             })}
-          </div>
+          </div> */}
 
           <div className="grid lg:grid-cols-2 gap-8">
             <div className={`${selectedPlanDetails.bgColor} rounded-2xl p-6 shadow-lg`}>
@@ -235,9 +237,8 @@ const PaymentPage = ({ forfait, onClose }) => {
                 {selectedPlanDetails.features.map((feature, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <div
-                      className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
-                        selectedPlanDetails.buttonColor.split(" ")[0]
-                      }`}
+                      className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${selectedPlanDetails.buttonColor.split(" ")[0]
+                        }`}
                     >
                       <Check className="w-4 h-4 text-white" />
                     </div>
@@ -257,9 +258,8 @@ const PaymentPage = ({ forfait, onClose }) => {
                     return (
                       <div
                         key={method.id}
-                        className={`border-2 rounded-xl p-4 flex flex-col items-center cursor-pointer transition-all duration-300 ${
-                          isSelected ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-200 hover:bg-gray-50"
-                        }`}
+                        className={`border-2 rounded-xl p-4 flex flex-col items-center cursor-pointer transition-all duration-300 ${isSelected ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-200 hover:bg-gray-50"
+                          }`}
                         onClick={() => setSelectedPaymentMethod(method.id)}
                       >
                         <IconComp className={`w-7 h-7 mb-2 ${isSelected ? "text-blue-600" : "text-gray-400"}`} />

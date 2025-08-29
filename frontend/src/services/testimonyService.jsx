@@ -1,14 +1,11 @@
-import { data } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // ✅ correct
+
 import axiosClient from "../api/axios-client";
 
 
 
-export  const createTestimony =async (payload,token)=>{
-    const response= await axiosClient.post('/commentaire',payload,{
-        headers:{
-            Authorization:`Bearer ${token}`
-        }
-    });
+export  const createTestimony =async (payload)=>{
+    const response= await axiosClient.post('/commentaire',payload);
     return response.data;
 }
 
@@ -81,5 +78,16 @@ export const findFourthLastCommentaireRecent =async ()=>{
 
 export const findCountSatisfied =async ()=>{
     const response  = await  axiosClient.get('/commentaire/count-satisfaction');
+    return response.data;
+}
+
+/**
+ * @returns {Promise<Object>} - Le pourcentage de satisfaction des commentaires.
+ * 
+ * Ce service récupère le pourcentage de satisfaction basé sur les commentaires.
+ */
+
+export const findCount_pourcentage =async ()=>{
+    const response  = await  axiosClient.get('/commentaire/count-pourcentage-satisfaction');
     return response.data;
 }
