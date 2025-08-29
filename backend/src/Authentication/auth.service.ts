@@ -612,31 +612,46 @@ async logout(req: Request, res: Response): Promise<{ message: string }> {
     };
   }
 
-  async updateProfile(
-      userId: string,
-      data: { name?: string; photo?: string }
-    ) {
-      const user = await this.userRepository.findOne({ where: { id: userId } });
-      if (!user) {
-        throw new NotFoundException("Utilisateur non trouvé");
-      }
+  async getUserById(userId: string) {
+    const cached = await this.redis.get(`user:${userId}`);
+    if (cached) {
+      return JSON.parse(cached);
+    }
 
-      if (data.name) user.name = data.name;
-      if (data.photo) user.photo = data.photo;
-
-      await this.userRepository.save(user);
-
-      return {
-        message: "Profil mis à jour avec succès",
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          photo: user.photo,
-          role: user.role,
-        },
-      };
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (user) {
+      await this.redis.set(`user:${userId}`, JSON.stringify(user), 'EX', 3600);
+    }
+    return user;
   }
+
+
+  async updateProfile(userId: string, data: { name?: string; photo?: string }) {
+  const user = await this.userRepository.findOne({ where: { id: userId } });
+  if (!user) throw new NotFoundException("Utilisateur non trouvé");
+
+  if (data.name) user.name = data.name;
+  if (data.photo) user.photo = data.photo;
+
+  await this.userRepository.save(user);
+
+  // Stocker la mise à jour en cache Redis
+  await this.redis.set(
+    `user:${userId}`,
+    JSON.stringify({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      photo: user.photo,
+      role: user.role,
+    }),
+    'EX',
+    3600 // expire en 1h
+  );
+
+  return { message: "Profil mis à jour avec succès", user };
+}
+
 
 
 
