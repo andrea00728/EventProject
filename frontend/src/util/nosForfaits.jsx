@@ -42,9 +42,9 @@ export default function NosForfaits() {
 
   const forfaits = [
     { id: 1, nom: "STARTER", price: "$10", invitations: 10, events: 2, duration: "1 mois" },
-    { id: 2, nom: "PRO", price: "$20", invitations: 50, events: 5, duration: "3 mois" },
-    { id: 3, nom: "PREMIUM", price: "$50", invitations: 200, events: 20, duration: "6 mois" },
-    { id: 4, nom: "GOLD", price: "$100", invitations: 500, events: 50, duration: "12 mois" },
+    { id: 2, nom: "PRO", price: "$25,99", invitations: 50, events: 5, duration: "3 mois" },
+    { id: 3, nom: "PREMIUM", price: "$39,99", invitations: 200, events: 20, duration: "6 mois" },
+    { id: 4, nom: "GOLD", price: "$59,99", invitations: 500, events: 50, duration: "12 mois" },
   ];
 
   useEffect(() => {
