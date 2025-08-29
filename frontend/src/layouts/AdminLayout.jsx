@@ -171,12 +171,12 @@ export default function AdminLayout() {
       path: "/AdminStats",
       name: "Statistique",
       icon: <MdQueryStats className="text-lg" />,
-    },
-    {
+    },(user.role !== "admin" && {
       path: "/AdminManagement",
       name: "Gestion Admin",
       icon: <MdAdminPanelSettings className="text-lg" />,
-    },
+    })
+    ,
     {
       path: "/AdminParametre",
       name: "Paramètres",

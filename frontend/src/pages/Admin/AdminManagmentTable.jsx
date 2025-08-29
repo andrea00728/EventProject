@@ -6,12 +6,13 @@ import AdminFilters from "../Admin/AdminFilters";
 import ActionButton from "../Admin/ActionBoutton";
 import { FaUserPlus, FaFileExport } from "react-icons/fa";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import {
   createOneAdmin,
   deleteOneAdmin,
   getListOfAllAdmins,
 } from "../../services/userService";
+import { useStateContext } from "../../context/ContextProvider";
 
 const glows = [
   "0 0 15px rgba(59, 130, 246, 0.6)",
@@ -29,6 +30,14 @@ export default function AdminManagementPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const {user} = useStateContext()
+
+  useEffect(() => {
+    if(user.role == "admin") {
+      return <Navigate to={'/AdminAccueil'} />
+    }
+  }, [])
+  
 
   useEffect(() => {
     const fetchAdmins = async () => {
@@ -37,7 +46,6 @@ export default function AdminManagementPage() {
       try {
         const data = await getListOfAllAdmins();
         setAdmins(data);
-        console.log("Admins fetched:", data);
       } catch (error) {
         console.error(
           "Erreur lors de la récupération des administrateurs :",
