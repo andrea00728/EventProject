@@ -6,6 +6,29 @@ import { MdSave } from "react-icons/md";
 import { FaSpinner } from "react-icons/fa";
 import axiosClient from '../../api/axios-client';
 import { getAuth } from "firebase/auth";
+import md5 from "blueimp-md5";
+
+// Helpers pour détecter le type de photo
+const isDataUrl = (v) => typeof v === "string" && v.startsWith("data:");
+const isHttpUrl = (v) => typeof v === "string" && /^https?:\/\//i.test(v);
+const isLikelyBase64 = (v) =>
+  typeof v === "string" &&
+  /^[A-Za-z0-9+/]+={0,2}$/.test(v) &&
+  v.length % 4 === 0;
+
+// Résolution de la meilleure source
+function resolvePhotoSrc(photo, gravatar, placeholder) {
+  if (isDataUrl(photo)) return photo;
+  if (isHttpUrl(photo)) return photo;
+  if (isLikelyBase64(photo)) return `data:image/jpeg;base64,${photo}`;
+  return gravatar || placeholder;
+}
+
+// Utilitaire : dériver le nom à partir de l'email
+function deriveNameFromEmail(email) {
+  if (!email) return "";
+  return email.split("@")[0].replace(/\./g, " "); // exemple: "john.doe" → "john doe"
+}
 
 export default function SuperAdminProfileEdit() {
   const { darkMode } = useDarkMode();
@@ -21,6 +44,9 @@ export default function SuperAdminProfileEdit() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState({ type: '', message: '', visible: false });
+  const [gravatarUrl, setGravatarUrl] = useState(null);
+
+  const placeholder = "https://via.placeholder.com/150";
 
   const showNotification = (type, message, duration = 4000) => {
     setNotification({ type, message, visible: true });
@@ -29,20 +55,32 @@ export default function SuperAdminProfileEdit() {
 
   useEffect(() => {
     if (!user || !isAuthenticated) {
-      setProfile({ name: '', email: '', bio: '', photo: 'https://via.placeholder.com/150', newFile: null });
+      setProfile({ name: '', email: '', bio: '', photo: '', newFile: null });
       setLoading(false);
       return;
     }
 
+    const autoName = deriveNameFromEmail(user.email);
+
     setProfile({
-      name: user.name || '',
+      name: autoName,
       email: user.email || '',
       bio: user.bio || '',
-      photo: user.photo || 'https://via.placeholder.com/150',
+      photo: user.photo || '',
       newFile: null,
     });
     setLoading(false);
   }, [user, isAuthenticated]);
+
+  // Gravatar auto selon l'email
+  useEffect(() => {
+    if (profile?.email) {
+      const hash = md5(profile.email.trim().toLowerCase());
+      setGravatarUrl(`https://www.gravatar.com/avatar/${hash}?d=identicon&s=200`);
+    } else {
+      setGravatarUrl(null);
+    }
+  }, [profile?.email]);
 
   const handleChange = e => {
     const { name, value } = e.target;
@@ -72,8 +110,7 @@ export default function SuperAdminProfileEdit() {
 
       const auth = getAuth();
       const currentUser = auth.currentUser;
-      const response = await axiosClient.post('/admin/update-profile', formData, {
-      });
+      const response = await axiosClient.post('/admin/update-profile', formData);
 
       setUser(response.data);
       setProfile(prev => ({ ...prev, photo: response.data.photo, newFile: null }));
@@ -102,6 +139,8 @@ export default function SuperAdminProfileEdit() {
     </div>
   );
 
+  const photoSrc = resolvePhotoSrc(profile.photo, gravatarUrl, placeholder);
+
   return (
     <div className={containerClasses}>
       <div className="max-w-full mx-auto">
@@ -115,15 +154,18 @@ export default function SuperAdminProfileEdit() {
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col items-center mb-10">
               <img
-                src={
-                  profile.photo?.startsWith('data:')
-                    ? profile.photo
-                    : profile.photo
-                    ? `data:image/jpeg;base64,${profile.photo}`
-                    : 'https://via.placeholder.com/150'
-                }
+                src={photoSrc}
                 alt="Photo de profil"
                 className={`w-32 h-32 rounded-full object-cover border-4 shadow-md transition-all duration-300 ${darkMode ? "border-blue-500" : "border-indigo-500"}`}
+                onError={(e) => {
+                  if (gravatarUrl && e.currentTarget.src !== gravatarUrl) {
+                    e.currentTarget.src = gravatarUrl;
+                    return;
+                  }
+                  if (e.currentTarget.src !== placeholder) {
+                    e.currentTarget.src = placeholder;
+                  }
+                }}
               />
 
               <div className="flex space-x-4 mt-2">
@@ -138,7 +180,7 @@ export default function SuperAdminProfileEdit() {
               <div>
                 <div className="mb-6">
                   <label htmlFor="name" className={labelClasses}>Nom de l'Admin</label>
-                  <input type="text" id="name" name="name" value={profile.name} onChange={handleChange} className={inputClasses(false)} />
+                  <input type="text" id="name" name="name" value={profile.name} readOnly className={inputClasses(true)} />
                 </div>
                 <div className="mb-6">
                   <label htmlFor="email" className={labelClasses}>Adresse E-mail</label>
@@ -166,7 +208,7 @@ export default function SuperAdminProfileEdit() {
                 )}
               </motion.button>
 
-              {/* Notifications juste en dessous du bouton */}
+              {/* Notifications */}
               <AnimatePresence>
                 {notification.visible && (
                   <motion.div

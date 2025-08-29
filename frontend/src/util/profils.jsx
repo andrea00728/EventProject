@@ -5,58 +5,6 @@ import { Camera, LogOut, Mail, User, X, Save, Upload } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axiosClient from "../api/axios-client";
 import { useNavigate } from "react-router-dom";
-import md5 from "blueimp-md5";
-
-// ---------- Helpers photo ----------
-const isDataUrl = (v) => typeof v === "string" && v.startsWith("data:");
-const isHttpUrl = (v) => typeof v === "string" && /^https?:\/\//i.test(v);
-const isLikelyBase64 = (v) =>
-  typeof v === "string" &&
-  /^[A-Za-z0-9+/]+={0,2}$/.test(v) &&
-  v.length % 4 === 0;
-
-  const gravatarUrl = (email) => {
-    if (!email) return "https://via.placeholder.com/150";
-    const hash = md5(email.trim().toLowerCase());
-    return `https://www.gravatar.com/avatar/${hash}?d=mp&s=150`;
-  };
-
-/**
- * Résout la meilleure source d'image à afficher
- * Ordre: previewImage (si l'utilisateur vient d'en choisir une)
- *        user.photo (data:, base64, http, ou chemin backend)
- *        gravatar(email)
- *        placeholder
- */
-const resolvePhotoSrc = (photo, email, previewImage) => {
-  const placeholder = "https://via.placeholder.com/150";
-
-  // 1) Si l'utilisateur vient de choisir une image, on l'affiche
-  if (previewImage) return previewImage;
-
-  // 2) Photo depuis le backend / store
-  if (photo && typeof photo === "string") {
-    if (isDataUrl(photo)) return photo;
-    if (isLikelyBase64(photo)) return `data:image/jpeg;base64,${photo}`;
-    if (isHttpUrl(photo)) return photo;
-
-    // Chemin relatif renvoyé par le backend (ex: "/uploads/xxx.jpg")
-    const base =
-      import.meta?.env?.VITE_API_BASE_URL?.replace(/\/$/, "") ||
-      "http://localhost:3000";
-    const path = photo.startsWith("/") ? photo : `/${photo}`;
-    return `${base}${path}`;
-  }
-
-  // 3) Gravatar basé sur l'email
-  const grav = gravatarUrl(email);
-  if (grav) return grav;
-
-  // 4) Fallback final
-  return placeholder;
-};
-
-
 
 export default function Profil() {
   const { user, setUser, isLoading, handleLogout } = useStateContext();
@@ -64,7 +12,7 @@ export default function Profil() {
 
   const [userName, setUserName] = useState("Utilisateur");
   const [userEmail, setUserEmail] = useState("email@example.com");
-
+  const [userPhoto, setUserPhoto] = useState("https://via.placeholder.com/150");
   const [openEditProfil, setOpenEditProfil] = useState(false);
   const [isOpenProfil, setIsOpenProfil] = useState(false);
   const [confirmLogOut, setConfirmLogOut] = useState(false);
@@ -79,9 +27,7 @@ export default function Profil() {
     confirmPassword: "",
   });
 
-  // IMPORTANT: null par défaut (sinon ça bloque les fallbacks)
-  const [previewImage, setPreviewImage] = useState(null);
-
+  const [previewImage, setPreviewImage] = useState("https://via.placeholder.com/150");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
@@ -91,15 +37,21 @@ export default function Profil() {
       setUserName(user.name || "Utilisateur");
       setUserEmail(user.email || "email@example.com");
 
-      // Init form
+      // Corrige l'URL photo
+      const photoUrl = user.photo
+        ? `http://localhost:3000${user.photo}`
+        : "https://via.placeholder.com/150";
+
+      setUserPhoto(photoUrl);
+
+      // Initialiser le formulaire d'édition
       setEditFormData((prev) => ({
         ...prev,
         name: user.name || "",
         email: user.email || "",
       }));
 
-      // Surtout ne pas mettre ici setPreviewImage(placeholder) !
-      setPreviewImage(null);
+      setPreviewImage(photoUrl);
     }
   }, [user]);
 
@@ -133,46 +85,43 @@ export default function Profil() {
   };
 
   const handlePhotoChange = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors((prev) => ({
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors((prev) => ({
+          ...prev,
+          photo: "La taille de l'image ne doit pas dépasser 5MB",
+        }));
+        return;
+      }
+
+      if (!file.type.startsWith("image/")) {
+        setErrors((prev) => ({
+          ...prev,
+          photo: "Veuillez sélectionner une image valide",
+        }));
+        return;
+      }
+
+      setEditFormData((prev) => ({
         ...prev,
-        photo: "La taille de l'image ne doit pas dépasser 5MB",
+        photo: file,
       }));
-      return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewImage(e.target.result);
+      };
+      reader.readAsDataURL(file);
+
+      if (errors.photo) {
+        setErrors((prev) => ({
+          ...prev,
+          photo: "",
+        }));
+      }
     }
-
-    if (!file.type.startsWith("image/")) {
-      setErrors((prev) => ({
-        ...prev,
-        photo: "Veuillez sélectionner une image valide",
-      }));
-      return;
-    }
-
-    setEditFormData((prev) => ({
-      ...prev,
-      photo: file,
-    }));
-
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setPreviewImage(ev.target.result); // data URL → prend la priorité
-    };
-    reader.readAsDataURL(file);
-
-    if (errors.photo) {
-      setErrors((prev) => ({
-        ...prev,
-        photo: "",
-      }));
-    }
-  } else {
-    setPreviewImage(null); // ✅ Reset si pas de fichier
-  }
-};
-
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -215,22 +164,30 @@ export default function Profil() {
       }
 
       const response = await axiosClient.post("/auth/update-profile", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      const updatedUser = { ...response.data.user };
-      setUser(updatedUser);
+      // Corrige la photo après mise à jour
+      const updatedUser = {
+        ...response.data.user,
+        photo: response.data.user.photo
+          ? `http://localhost:3000${response.data.user.photo}`
+          : "https://via.placeholder.com/150",
+      };
 
-      // On enlève l'aperçu pour revenir à la source officielle (backend/gravatar)
-      setPreviewImage(null);
+      setUser(updatedUser);
+      setUserPhoto(updatedUser.photo);
+      setPreviewImage(updatedUser.photo);
 
       setSuccessMessage("Profil mis à jour avec succès !");
+
       setEditFormData((prev) => ({
         ...prev,
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
-        photo: null,
       }));
 
       setTimeout(() => {
@@ -273,9 +230,6 @@ export default function Profil() {
     tap: { scale: 0.95 },
   };
 
-  // Image à afficher partout (avatar + modale)
-  const displayPhoto = resolvePhotoSrc(user?.photo, user?.email, previewImage);
-
   return (
     <>
       {/* avatar cliquable */}
@@ -286,8 +240,8 @@ export default function Profil() {
         onClick={() => setIsOpenProfil(true)}
       >
         <img
-          src={displayPhoto}
-          alt={userName || userEmail || "Utilisateur"}
+          src={userPhoto}
+          alt="Photo de profil"
           className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-gray-200"
         />
       </motion.div>
@@ -325,8 +279,8 @@ export default function Profil() {
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-md opacity-30 group-hover:opacity-50 transition-opacity" />
                   <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-r from-blue-400 to-purple-500">
                     <img
-                      src={displayPhoto}
-                      alt={userName || userEmail || "Utilisateur"}
+                      src={userPhoto}
+                      alt="Photo de profil"
                       className="w-full h-full rounded-full object-cover border-2 border-white"
                     />
                   </div>
@@ -441,9 +395,9 @@ export default function Profil() {
                 <div className="flex flex-col items-center space-y-4">
                   <div className="relative">
                     <img
-                      src={displayPhoto}
-                      alt={userName || userEmail || "Utilisateur"}
-                      className="w-20 h-20 rounded-full object-cover border-4 border-gray-200"        
+                      src={previewImage || "https://via.placeholder.com/150"}
+                      alt="Aperçu de la photo"
+                      className="w-20 h-20 rounded-full object-cover border-4 border-gray-200"
                     />
                     <label className="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 rounded-full shadow-md flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors">
                       <Upload size={16} className="text-white" />
@@ -468,9 +422,8 @@ export default function Profil() {
                     name="name"
                     value={editFormData.name}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.name ? "border-red-300" : "border-gray-300"
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.name ? 'border-red-300' : 'border-gray-300'
+                      }`}
                     placeholder="Entrez votre nom"
                   />
                   {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
@@ -486,9 +439,8 @@ export default function Profil() {
                     name="email"
                     value={editFormData.email}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.email ? "border-red-300" : "border-gray-300"
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.email ? 'border-red-300' : 'border-gray-300'
+                      }`}
                     placeholder="Entrez votre email"
                   />
                   {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
