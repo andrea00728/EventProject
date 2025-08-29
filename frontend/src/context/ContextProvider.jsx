@@ -14,13 +14,15 @@ export const ContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  localStorage.setItem('hidePasswordModal', localStorage.getItem('hidePasswordModal') || false)
 
-  //Vérifie l'état d'authentification au chargement initial de l'application
+  // Vérifie l'état d'authentification au chargement initial de l'application
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const response = await axiosClient.get("/auth/status");
+        // Inclure les cookies dans la requête
+        const response = await axiosClient.get("/auth/status", {
+          withCredentials: true, // Permet d'envoyer les cookies
+        });
         setUser(response.data.user);
         setIsAuthenticated(true);
       } catch (error) {
@@ -33,17 +35,20 @@ export const ContextProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-
-
   // Fonction centralisée pour la déconnexion
-  const handleLogout = () => {
+const handleLogout = async () => {
+  try {
+    await axiosClient.post("/auth/logout");
+  } catch (error) {
+    if (error.response?.status !== 401) {
+      console.error("Erreur lors de la déconnexion :", error);
+    }
+  } finally {
     setUser(null);
     setIsAuthenticated(false);
-    // On ne met pas isLoading à false ici car il est déjà false après la vérification initiale
-    // et il est géré par la logique du useEffect
-    localStorage.removeItem("ACCESS_TOKEN");
-    localStorage.removeItem("USER");
-  };
+  }
+};
+
 
   return (
     <StateContext.Provider
@@ -63,5 +68,3 @@ export const ContextProvider = ({ children }) => {
 };
 
 export const useStateContext = () => useContext(StateContext);
-
-

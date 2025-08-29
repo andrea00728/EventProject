@@ -14,75 +14,36 @@ export class ForfaitService {
     private evenementRepository: Repository<Evenement>,
     @InjectRepository(Forfait)
     private forfaitRepository: Repository<Forfait>
-  ) { }
+  ) {}
 
   async canCreateEvent(userId: string): Promise<boolean> {
-    console.log(`Checking if user ${userId} can create event`);
-
-    // Charger juste l'utilisateur avec son forfait
     const user = await this.userRepo.findOne({
       where: { id: userId },
       relations: ['forfait'],
     });
-
-    if (!user) {
-      console.log(`User ${userId} not found`);
-      return false; // ou throw une erreur selon ton besoin
-    }
+    if (!user) return false;
 
     const maxEvents = user.forfait?.maxevents;
+    if (maxEvents == null) return true;
 
-    console.log(`Max events for this forfait is ${maxEvents}`);
-
-    // Si maxEvents est null ou undefined => illimité
-    if (maxEvents === null || maxEvents === undefined) {
-      console.log('No max events specified, allowing creation');
-      return true;
-    }
-
-    // Compter directement le nombre d'événements de l'utilisateur dans la base
     const count = await this.evenementRepository.count({
       where: { user: { id: userId } },
     });
 
-    console.log(`User has already created ${count} events`);
-
     return count < maxEvents;
   }
-
 
   async canAddInvite(userId: string, currentInviteCount: number): Promise<boolean> {
     const user = await this.userRepo.findOne({
       where: { id: userId },
       relations: ['forfait'],
     });
-
     const maxInvites = user?.forfait?.maxinvites;
-
-    if (maxInvites === null || maxInvites === undefined) return true;
+    if (maxInvites == null) return true;
 
     return currentInviteCount < maxInvites;
   }
 
-  // async isForfaitExpired(userId: string): Promise<boolean> {
-  //   const user = await this.userRepo.findOne({
-  //     where: { id: userId },
-  //     relations: ['forfait'],
-  //   });
-
-  //   const expiration = user?.forfait?.expirationdate;
-  //   if (!expiration) return false;
-
-  //   return new Date() > new Date(expiration);
-  // }
-
-
-
-  /**
-   * 
-   * @param userId 
-   * utilise pour léxpiration
-   */
   async checkForfaitExpiration(userId: string): Promise<void> {
     const user = await this.userRepo.findOne({
       where: { id: userId },
@@ -92,24 +53,15 @@ export class ForfaitService {
 
     const now = new Date();
     if (user.forfaitexpirationdate && user.forfaitexpirationdate < now && user.forfait.nom !== 'freemium') {
-      // Rétrograder vers freemium si le forfait a expiré
       const freemiumForfait = await this.forfaitRepository.findOne({ where: { nom: 'freemium' } });
       if (!freemiumForfait) throw new BadRequestException('Forfait freemium introuvable');
 
       user.forfait = freemiumForfait;
       user.datedowngraded = now;
-      user.forfaitexpirationdate = null; // Pas d'expiration pour freemium
+      user.forfaitexpirationdate = null;
       await this.userRepo.save(user);
-      console.log(`Utilisateur ${userId} rétrogradé à freemium car le forfait a expiré.`);
     }
   }
-
-  /*************************************************************************************
-   * ***************  Pour la page Super Admin dans le dashboard *********************
-   * ********************************************************************************
-   */
-
-  /*************   Total des revenus des forfaits ********************** */
 
   async getSumForUsersForfait(): Promise<number> {
     const result = await this.userRepo
@@ -118,10 +70,9 @@ export class ForfaitService {
       .select('SUM(forfait.price)', 'sum')
       .getRawOne();
 
-    return Number(result.sum); // conversion en number
+    return Number(result?.sum) || 0;
   }
 
-  // user.service.ts
   async findLastTransactions(limit: number = 5): Promise<
     { name: string; photo: string; nameForfait: string; amount: number; date: Date }[]
   > {
@@ -144,86 +95,30 @@ export class ForfaitService {
     return results.map(r => ({
       name: r.name,
       photo: r.photo,
-      nameForfait: r.nameforfait,
+      nameForfait: r.nameForfait,
       amount: Number(r.amount),
       date: new Date(r.date),
     }));
   }
 
-  //
-
-  // async getMonthlyForfaitRevenue(): Promise<{ month: string; total: number }[]> {
-  //   const result = await this.userRepo
-  //     .createQueryBuilder('user')
-  //     .leftJoin('user.forfait', 'forfait')
-  //     .select([
-  //       "TO_CHAR(user.forfaitexpirationdate, 'YYYY-MM') as month",
-  //       'SUM(forfait.price) as total',
-  //     ])
-  //     .where('forfait.price > 0')
-  //     .andWhere('user.forfaitexpirationdate IS NOT NULL')
-  //     .groupBy("TO_CHAR(user.forfaitexpirationdate, 'YYYY-MM')")
-  //     .orderBy("month", "ASC")
-  //     .getRawMany();
-
-  //   return result.map(r => ({
-  //     month: r.month,
-  //     total: parseFloat(r.total),
-  //   }));
-  // }
-
-  // async getRevenusParForfait(): Promise<{ name: string; total: number }[]> {
-  //   const results = await this.userRepo
-  //     .createQueryBuilder('user')
-  //     .leftJoin('user.forfait', 'forfait')
-  //     .select('forfait.nom', 'name')
-  //     .addSelect('SUM(forfait.price)', 'total')
-  //     .where('forfait.price > 0')
-  //     .groupBy('forfait.nom')
-  //     .getRawMany();
-
-  //   return results.map(r => ({
-  //     name: r.name,
-  //     total: parseFloat(r.total),
-  //   }));
-  // }
-
-  // Dans ForfaitService
   async getMonthlyForfaitRevenue(months: number = 12): Promise<{ month: string; total: number }[]> {
-    try {
-      console.log('📊 Calcul des revenus mensuels pour', months, 'mois');
-
-      // Requête SQL brute plus simple
-      const results = await this.userRepo.query(`
+    const results = await this.userRepo.query(`
       SELECT 
         TO_CHAR(u.forfaitexpirationdate, 'YYYY-MM') as month_key,
         SUM(f.price) as total
       FROM users u
       LEFT JOIN forfait f ON f.id = u.forfait_id
-      WHERE f.price > 0 
-        AND u.forfaitexpirationdate IS NOT NULL 
+      WHERE f.price > 0
+        AND u.forfaitexpirationdate IS NOT NULL
         AND u.forfaitexpirationdate >= NOW() - INTERVAL '${months} months'
       GROUP BY TO_CHAR(u.forfaitexpirationdate, 'YYYY-MM')
       ORDER BY TO_CHAR(u.forfaitexpirationdate, 'YYYY-MM') ASC
     `);
 
-      console.log('💰 Revenus calculés:', results);
-
-      return results.map(result => ({
-        month: this.formatMonth(result.month_key),
-        total: parseFloat(result.total) || 0
-      }));
-
-    } catch (error) {
-      console.error('❌ Erreur dans getMonthlyForfaitRevenue:', error);
-
-      // Retour de données de test
-      return [
-        { month: 'Janvier 2025', total: 1200 },
-        { month: 'Février 2025', total: 1500 },
-        { month: 'Mars 2025', total: 900 }
-      ];
-    }
+    return results.map(result => ({
+      month: this.formatMonth(result.month_key),
+      total: parseFloat(result.total) || 0
+    }));
   }
 
   private formatMonth(monthKey: string): string {
@@ -235,41 +130,7 @@ export class ForfaitService {
     return `${months[parseInt(month) - 1]} ${year}`;
   }
 
-
-  // -- Supprimer uniquement les données de test que nous venons de créer
-// DELETE FROM users 
-// WHERE email LIKE '%@test.com';
-
-
-
-  async getEventsByType(): Promise<{ type: string; count: number }[]> {
-    try {
-      const evenementRepository = this.forfaitRepository.manager.getRepository('Evenement');
-
-      const results = await evenementRepository
-        .createQueryBuilder('evenement')
-        .select('evenement.type', 'type') // ← type au lieu de typeevent
-        .addSelect('COUNT(*)', 'count')
-        .where('evenement.type IS NOT NULL')
-        .groupBy('evenement.type')
-        .orderBy('COUNT(*)', 'DESC')
-        .getRawMany();
-
-      return results.map(result => ({
-        type: result.type,
-        count: parseInt(result.count) || 0
-      }));
-    } catch (error) {
-      console.error('❌ Erreur dans getEventsByType:', error);
-      return [];
-    }
-  }
-
-
-
-
   async getRevenusPourcentagesParForfait(): Promise<{ name: string; total: number; percentage: number }[]> {
-    // Étape 1 : récupérer les revenus groupés par forfait depuis userRepo
     const results = await this.userRepo
       .createQueryBuilder('user')
       .leftJoin('user.forfait', 'forfait')
@@ -279,14 +140,11 @@ export class ForfaitService {
       .groupBy('forfait.nom')
       .getRawMany();
 
-    // Étape 2 : somme totale des revenus
-    const totalRevenu = results.reduce((acc, curr) => acc + parseFloat(curr.total), 0);
+    const totalRevenu = results.reduce((acc, curr) => acc + parseFloat(curr.total || 0), 0);
 
-    // Étape 3 : formater les résultats avec pourcentage
     const allForfaits = await this.forfaitRepository.find();
 
     return allForfaits.map(forfait => {
-
       const revenu = results.find(r => r.name === forfait.nom);
       const total = revenu ? parseFloat(revenu.total) : 0;
       const percentage = totalRevenu > 0 ? (total / totalRevenu) * 100 : 0;
@@ -296,12 +154,22 @@ export class ForfaitService {
         total,
         percentage: parseFloat(percentage.toFixed(2)),
       };
-
     });
-
   }
 
+  async getEventsByType(): Promise<{ type: string; count: number }[]> {
+    const results = await this.evenementRepository
+      .createQueryBuilder('evenement')
+      .select('evenement.type', 'type')
+      .addSelect('COUNT(*)', 'count')
+      .where('evenement.type IS NOT NULL')
+      .groupBy('evenement.type')
+      .orderBy('COUNT(*)', 'DESC')
+      .getRawMany();
 
-
-
+    return results.map(result => ({
+      type: result.type,
+      count: parseInt(result.count) || 0
+    }));
+  }
 }
