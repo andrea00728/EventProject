@@ -6,6 +6,7 @@ import { useStateContext } from "../context/ContextProvider";
 import { getUserForfait } from "../services/forfaitService";
 import { Close, Event, MobileFriendly } from "@mui/icons-material";
 import { Calendar } from "react-feather";
+import ModalChangeForfait from "./modalChangeForfait";
 
 const iconMap = {
   STARTER: <Rocket className="w-12 h-12 text-blue-500" strokeWidth={2.5} />,
@@ -36,6 +37,8 @@ export default function NosForfaits() {
   const [isOpenPaiement, setIsOpenPaiement] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
   const [isDetailsOpen, setDetailsOpen] = useState(false);
+
+  const [modalChangeForfait, setModalChangeForfait] = useState(false);
 
   const forfaits = [
     { id: 1, nom: "STARTER", price: "$10", invitations: 10, events: 2, duration: "1 mois" },
@@ -126,12 +129,17 @@ export default function NosForfaits() {
 
               {isAuthenticated ? (
                 isActive ? (
-                  <button
-                    disabled
-                    className={`w-full py-3 rounded-xl font-semibold shadow cursor-default bg-white ${textColorMap[f.nom]} border-2 border-white transition-all`}
-                  >
-                    Expire le {expirationDate ? new Date(expirationDate).toLocaleDateString() : "N/A"}
-                  </button>
+                  <div>
+                    <button
+                      disabled
+                      className={`w-full py-3 rounded-xl font-semibold shadow cursor-default bg-white ${textColorMap[f.nom]} border-2 border-white transition-all`}
+                    >
+                      Expire le {expirationDate ? new Date(expirationDate).toLocaleDateString() : "N/A"}
+                    </button>
+                    <button className="w-full py-3 rounded-xl font-semibold shadow cursor-pointer border-2 border-white transition-all mt-5 hover:bg-gray-400 hover:text-gray-800"
+                      onClick={() => setModalChangeForfait(true)}
+                    >Changer de forfait</button>
+                  </div>
                 ) : (
                   <div className="flex gap-2  sm:flex-row">
                     <button
@@ -172,7 +180,7 @@ export default function NosForfaits() {
         })}
       </div>
 
-      {/* Modal détails forfait */}
+      {/* Modal détail forfait */}
       {isDetailsOpen && selectedForfait && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
           {/* Fond semi-transparent + blur pour le focus sur la modal */}
@@ -273,6 +281,14 @@ export default function NosForfaits() {
         </div>
       )}
 
+      {/* modal change forfait */}
+      {modalChangeForfait && (
+        <ModalChangeForfait
+          isOpen={modalChangeForfait}
+          onClose={() => setModalChangeForfait(false)}
+          activeForfait={activeForfait}
+        />
+      )}
 
       {/* Paiement */}
       {isOpenPaiement && selectedForfait && (
