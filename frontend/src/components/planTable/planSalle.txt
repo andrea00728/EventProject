@@ -1,0 +1,650 @@
+import React, { useState, useRef, useEffect } from "react";
+import { Edit, Plus, RefreshCcw, User } from "lucide-react";
+import { useStateContext } from "../../context/ContextProvider";
+import {
+  updateTablePosition,
+  updateRotation,
+  deleteTable,
+  reassignGuestToTable,
+} from "../../services/tableService";
+
+// Types de tables avec leurs propriétés
+const TABLE_TYPES = [
+  { value: "ronde", label: "Table ronde", width: 80, height: 80 },
+  { value: "rectangle", label: "Table rectangulaire", width: 112, height: 64 },
+  { value: "ovale", label: "Table ovale", width: 112, height: 64 },
+  { value: "carree", label: "Table carrée", width: 80, height: 80 },
+];
+
+// === Snap to grid function ===
+function snapToGrid(value, gridSize = 40) {
+  return Math.round(value / gridSize) * gridSize;
+}
+
+// === Algorithme pour calculer les positions des chaises (comme le demo) ===
+function getChairPositions(type, capacity, tableWidth, tableHeight) {
+  const positions = [];
+  const chairSize = 30; // Taille approximative d'une chaise
+  const minDistanceFromTable = 0; // Distance minimale entre la chaise et la table
+
+  if (type === "ronde" || type === "ovale") {
+    // Pour les tables rondes/ovales
+    const centerX = tableWidth / 2;
+    const centerY = tableHeight / 2;
+
+    // Calculer le rayon en fonction de la forme
+    const tableRadius = type === "ronde"
+      ? Math.min(tableWidth, tableHeight) / 2
+      : Math.max(tableWidth, tableHeight) / 2;
+
+    const radius = tableRadius + minDistanceFromTable + chairSize / 2;
+
+    for (let i = 0; i < capacity; i++) {
+      // Commencer à -π/2 pour que la première chaise soit en haut
+      const angle = (2 * Math.PI * i) / capacity - Math.PI / 2;
+      const x = centerX + radius * Math.cos(angle) - chairSize / 2;
+      const y = centerY + radius * Math.sin(angle) - chairSize / 2;
+      positions.push({ left: `${x}px`, top: `${y}px` });
+    }
+  } else {
+    // Pour les tables rectangulaires/carrées
+    const perimetre = 2 * (tableWidth + tableHeight);
+    const spacingBetweenChairs = perimetre / capacity;
+
+    // Calculer combien de chaises par côté en fonction de l'espacement uniforme
+    const topChairs = Math.round((tableWidth / spacingBetweenChairs));
+    const rightChairs = Math.round((tableHeight / spacingBetweenChairs));
+    const bottomChairs = Math.round((tableWidth / spacingBetweenChairs));
+    const leftChairs = capacity - topChairs - rightChairs - bottomChairs;
+
+    let count = 0;
+
+    // Côté du haut
+    if (topChairs > 0) {
+      const spacing = tableWidth / (topChairs + 1);
+      for (let i = 0; i < topChairs && count < capacity; i++, count++) {
+        positions.push({
+          left: `${(i + 1) * spacing - chairSize / 2}px`,
+          top: `${-minDistanceFromTable - chairSize}px`
+        });
+      }
+    }
+
+    // Côté droit
+    if (rightChairs > 0) {
+      const spacing = tableHeight / (rightChairs + 1);
+      for (let i = 0; i < rightChairs && count < capacity; i++, count++) {
+        positions.push({
+          left: `${tableWidth + minDistanceFromTable}px`,
+          top: `${(i + 1) * spacing - chairSize / 2}px`,
+        });
+      }
+    }
+
+    // Côté du bas
+    if (bottomChairs > 0) {
+      const spacing = tableWidth / (bottomChairs + 1);
+      for (let i = 0; i < bottomChairs && count < capacity; i++, count++) {
+        positions.push({
+          left: `${tableWidth - (i + 1) * spacing - chairSize / 2}px`,
+          top: `${tableHeight + minDistanceFromTable}px`,
+        });
+      }
+    }
+
+    // Côté gauche
+    if (leftChairs > 0) {
+      const spacing = tableHeight / (leftChairs + 1);
+      for (let i = 0; i < leftChairs && count < capacity; i++, count++) {
+        positions.push({
+          left: `${-minDistanceFromTable - chairSize}px`,
+          top: `${tableHeight - (i + 1) * spacing - chairSize / 2}px`,
+        });
+      }
+    }
+  }
+
+  return positions;
+}
+
+// === Chair Component (comme dans le demo) ===
+function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMoving }) {
+  return (
+    <div
+      className={`w-5 h-5 rounded-full absolute border border-white shadow-sm flex items-center justify-center text-[10px] font-bold text-white cursor-pointer transition-all duration-200 ${
+        isOccupied
+          ? "bg-gradient-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600"
+          : "bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600"
+        } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''} ${
+        isMoving ? 'ring-2 ring-yellow-400 ring-offset-1 animate-pulse' : ''
+        }`}
+      style={style}
+      title={isOccupied ? `Place ${number} - ${guestName}` : `Place ${number} - Libre`}
+      onClick={onClick}
+    >
+      {number}
+    </div>
+  );
+}
+
+// === Table Component (améliorée avec le style du demo) ===
+function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace, onEdit, movingGuest }) {
+  if (!table) return null;
+
+  const ref = useRef(null);
+  const [dragging, setDragging] = useState(false);
+  const [pos, setPos] = useState(table.position ?? { left: 100, top: 100 });
+  const [rotation, setRotation] = useState(table.rotation ?? 0);
+
+  // Refs pour le drag tactile
+  const touchDataRef = useRef({});
+
+  useEffect(() => {
+    setPos(table.position ?? { left: 100, top: 100 });
+    setRotation(table.rotation ?? 0);
+  }, [table.position, table.rotation]);
+
+  // Get table dimensions from TABLE_TYPES
+  const tableType = TABLE_TYPES.find(t => t.value === table.type) || TABLE_TYPES[0];
+  const { width: tableWidth, height: tableHeight } = tableType;
+
+  // Gestion drag souris
+  const handleDragStart = (e) => {
+    const img = new Image();
+    img.src = "";
+    e.dataTransfer.setDragImage(img, 0, 0);
+    setDragging(true);
+  };
+
+  const handleDragEnd = (e) => {
+    if (!ref.current) return;
+    const parentRect = ref.current.parentNode.getBoundingClientRect();
+    const x = snapToGrid(e.clientX - parentRect.left - tableWidth / 2);
+    const y = snapToGrid(e.clientY - parentRect.top - tableHeight / 2);
+    const maxX = 900 - tableWidth;
+    const maxY = 650 - tableHeight;
+    const boundedX = Math.max(0, Math.min(x, maxX));
+    const boundedY = Math.max(0, Math.min(y, maxY));
+
+    const newPos = { left: boundedX, top: boundedY };
+    setPos(newPos);
+    setDragging(false);
+    onMove(table.id, newPos);
+  };
+
+  // Gestion tactile améliorée
+  const handleTouchStart = (e) => {
+    e.preventDefault();
+
+    const touch = e.touches[0];
+    if (!ref.current) return;
+
+    // Calculer l'offset du toucher par rapport à la position de la table
+    const tableElement = e.currentTarget;
+    const tableRect = tableElement.getBoundingClientRect();
+    const dragAreaRect = ref.current.parentNode.getBoundingClientRect();
+
+    touchDataRef.current[table.id] = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      initialLeft: pos.left,
+      initialTop: pos.top,
+      offsetX: touch.clientX - tableRect.left,
+      offsetY: touch.clientY - tableRect.top,
+      dragAreaLeft: dragAreaRect.left,
+      dragAreaTop: dragAreaRect.top
+    };
+
+    setDragging(true);
+  };
+
+  const handleTouchMove = (e) => {
+    e.preventDefault();
+
+    const touch = e.touches[0];
+    const touchData = touchDataRef.current[table.id];
+
+    if (!touchData) return;
+
+    // Calculer la nouvelle position basée sur le mouvement du doigt
+    const newX = touch.clientX - touchData.dragAreaLeft - touchData.offsetX;
+    const newY = touch.clientY - touchData.dragAreaTop - touchData.offsetY;
+
+    // Appliquer le snap et les limites
+    const maxX = 900 - tableWidth;
+    const maxY = 650 - tableHeight;
+    const boundedX = Math.max(0, Math.min(snapToGrid(newX), maxX));
+    const boundedY = Math.max(0, Math.min(snapToGrid(newY), maxY));
+
+    setPos({ left: boundedX, top: boundedY });
+  };
+
+  const handleTouchEnd = () => {
+    delete touchDataRef.current[table.id];
+    setDragging(false);
+    onMove(table.id, pos);
+  };
+
+  const isChairOccupied = (chairIndex) => {
+    return table.guests?.some(g => g.place === chairIndex + 1);
+  };
+
+  const getGuestForChair = (chairIndex) => {
+    return table.guests?.find(g => g.place === chairIndex + 1);
+  };
+
+  const handleChairClick = (chairIndex) => {
+    onPlaceClick(table, chairIndex + 1);
+  };
+
+  // Styles des tables comme dans le demo
+  const tableShape = {
+    ronde: "rounded-full",
+    carree: "rounded-md", 
+    rectangle: "rounded-md",
+    ovale: "rounded-xl",
+  };
+
+  return (
+    <div
+      ref={ref}
+      className="absolute select-none"
+      style={{
+        left: pos.left,
+        top: pos.top,
+        width: tableWidth,
+        height: tableHeight,
+        zIndex: dragging ? 50 : 10,
+        touchAction: 'none',
+      }}
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onDoubleClick={() => onEdit(table)}
+    >
+      {/* Bouton d'édition pour mobile */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit(table);
+        }}
+        className="absolute -top-2 -right-2 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-indigo-700 z-30 md:hidden"
+        title="Modifier la table"
+      >
+        <Edit className="w-3 h-3" />
+      </button>
+
+      <div
+        className={`border-4 border-indigo-400 shadow-md flex items-center justify-center ${
+          table.type === "ronde" || table.type === "ovale"
+            ? "rounded-full"
+            : "rounded-md"
+          } w-full h-full bg-pink-200 relative transition-shadow duration-200 ${
+          dragging ? 'shadow-2xl scale-105' : 'shadow-md'
+          }`}
+        style={{
+          transform: `rotate(${rotation}deg)`,
+        }}
+      >
+        <span className="font-bold text-indigo-700 select-none pointer-events-none">
+          {table.nom}
+        </span>
+
+        {/* Chaises */}
+        {getChairPositions(
+          table.type,
+          table.capacite,
+          tableWidth,
+          tableHeight
+        ).map((chairPos, i) => {
+          const isOccupied = isChairOccupied(i);
+          const guest = getGuestForChair(i);
+          const isSelected = selectedPlace?.tableId === table.id && selectedPlace?.placeNumber === i + 1;
+          const isMovingTarget = movingGuest && movingGuest.guestId !== guest?.id;
+
+          return (
+            <Chair
+              key={i}
+              number={i + 1}
+              style={chairPos}
+              isOccupied={isOccupied}
+              guestName={guest?.nom}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleChairClick(i);
+              }}
+              isSelected={isSelected}
+              isMoving={isMovingTarget}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// === PlanSalle Principal ===
+export default function PlanSalle({ event, tables, setTables, onAddTable, onAddGuest }) {
+  const { isAuthenticated } = useStateContext();
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  const [editingTable, setEditingTable] = useState(null);
+  const [movingGuest, setMovingGuest] = useState(null);
+
+  // Gestion du clic sur une place (invité)
+  const handlePlaceClick = (table, placeNumber) => {
+    const guestAtPlace = table.guests?.find((g) => g.place === placeNumber);
+
+    if (movingGuest) {
+      // Mode déplacement - déplacer l'invité vers cette chaise
+      const targetGuest = table.guests?.find(g => g.place === placeNumber);
+
+      if (targetGuest) {
+        alert("Cette chaise est déjà occupée!");
+        return;
+      }
+
+      // Déplacer l'invité
+      reassignGuestToTable(movingGuest.guestId, table.id, placeNumber)
+        .then(() => {
+          setTables((prevTables) =>
+            prevTables.map((t) => {
+              if (t.id === movingGuest.sourceTableId && t.id === table.id) {
+                // Même table : juste changer la place
+                return {
+                  ...t,
+                  guests: t.guests.map((g) =>
+                    g.id === movingGuest.guestId ? { ...g, place: placeNumber } : g
+                  ),
+                };
+              } else if (t.id === movingGuest.sourceTableId) {
+                // Table source : retirer l'invité
+                return {
+                  ...t,
+                  guests: t.guests.filter((g) => g.id !== movingGuest.guestId),
+                };
+              } else if (t.id === table.id) {
+                // Table destination : ajouter l'invité
+                return {
+                  ...t,
+                  guests: [
+                    ...t.guests.filter((g) => g.id !== movingGuest.guestId),
+                    { id: movingGuest.guestId, nom: movingGuest.guestName, place: placeNumber },
+                  ],
+                };
+              }
+              return t;
+            })
+          );
+          setMovingGuest(null);
+          setSelectedPlace(null);
+        })
+        .catch((err) => {
+          console.error("Erreur déplacement invité :", err);
+          alert("Erreur lors du déplacement de l'invité : " + err.message);
+        });
+    } else {
+      // Mode sélection - sélectionner un invité à déplacer
+      if (guestAtPlace) {
+        setMovingGuest({
+          guestId: guestAtPlace.id,
+          guestName: guestAtPlace.nom,
+          sourceTableId: table.id,
+          sourceChairIndex: placeNumber
+        });
+        setSelectedPlace({
+          tableId: table.id,
+          placeNumber,
+          guestId: guestAtPlace.id,
+          guestName: guestAtPlace.nom,
+        });
+      }
+    }
+  };
+
+  const cancelMove = () => {
+    setMovingGuest(null);
+    setSelectedPlace(null);
+  };
+
+  // Déplacement table
+  const handleTableMove = async (tableId, position) => {
+    try {
+      await updateTablePosition(tableId, position);
+      setTables((prev) => prev.map((t) => (t.id === tableId ? { ...t, position } : t)));
+    } catch (error) {
+      console.error("Erreur mise à jour position :", error);
+    }
+  };
+
+  // Rotation table
+  const handleTableRotate = async (tableId, rotation) => {
+    try {
+      await updateRotation(tableId, rotation);
+      setTables((prev) => prev.map((t) => (t.id === tableId ? { ...t, rotation } : t)));
+    } catch (error) {
+      console.error("Erreur rotation :", error);
+    }
+  };
+
+  // Suppression table
+  const handleTableDelete = async (tableId) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette table ? Tous les invités assignés seront également supprimés.")) return;
+    try {
+      await deleteTable(tableId);
+      setTables((prev) => prev.filter((t) => t.id !== tableId));
+      if (selectedPlace?.tableId === tableId) {
+        setSelectedPlace(null);
+        setMovingGuest(null);
+      }
+    } catch (error) {
+      console.error("Erreur suppression table :", error);
+      alert("Erreur lors de la suppression de la table : " + error.message);
+    }
+  };
+
+  // Edition table
+  const handleOpenEdit = (table) => setEditingTable(table);
+  const handleCloseEdit = () => setEditingTable(null);
+
+  const handleTableChange = async (id, field, value) => {
+    try {
+      const updatedData = { [field]: value };
+      
+      // Si on change le type, ajuster les dimensions
+      if (field === "type") {
+        const typeInfo = TABLE_TYPES.find((type) => type.value === value);
+        updatedData.width = typeInfo.width;
+        updatedData.height = typeInfo.height;
+      }
+
+      if (field === "capacite") {
+        updatedData.capacite = Number(value) || 1;
+      }
+
+      // Appel API pour mettre à jour la table
+      await updateTable(id, updatedData);
+
+      setTables((prev) =>
+        prev.map((t) => {
+          if (t.id === id) {
+            const updatedTable = { ...t, ...updatedData };
+            
+            // Si la capacité diminue, supprimer les invités excédentaires
+            if (field === "capacite" && updatedTable.guests) {
+              updatedTable.guests = updatedTable.guests.filter(g => g.place <= updatedTable.capacite);
+            }
+            
+            return updatedTable;
+          }
+          return t;
+        })
+      );
+    } catch (error) {
+      console.error("Erreur mise à jour table :", error);
+      alert("Erreur lors de la modification de la table : " + error.message);
+    }
+  };
+
+  return (
+    <div className="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center p-4">
+      {/* Boutons fixes flottants */}
+      <div className="fixed bottom-4 left-4 flex flex-col gap-2 z-50">
+        {/* Bouton Ajouter invité */}
+        <button
+          onClick={onAddGuest}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition hover:bg-green-700"
+        >
+          <User className="w-5 h-5" />
+          <span className="hidden sm:inline">Ajouter invité</span>
+        </button>
+
+        {/* Bouton Ajouter des tables */}
+        <button
+          onClick={onAddTable}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition hover:bg-indigo-700"
+        >
+          <Plus className="w-5 h-5" />
+          <span className="hidden sm:inline">Ajouter des tables</span>
+        </button>
+
+        {/* Bouton Réinitialiser */}
+        <button
+          onClick={() => {
+            if (window.confirm("Êtes-vous sûr de vouloir supprimer toutes les tables ?")) {
+              // Ici vous devriez appeler une fonction pour supprimer toutes les tables du backend
+              setTables([]);
+              setMovingGuest(null);
+              setSelectedPlace(null);
+            }
+          }}
+          className="bg-red-600 text-white px-4 py-2 rounded-lg cursor-pointer shadow flex items-center justify-center sm:justify-start gap-2 transition hover:bg-red-700"
+        >
+          <RefreshCcw className="w-5 h-5" />
+          <span className="hidden sm:inline">Réinitialiser</span>
+        </button>
+
+        {/* Bouton Annuler déplacement */}
+        {movingGuest && (
+          <button
+            onClick={cancelMove}
+            className="bg-yellow-600 text-white px-4 py-2 rounded-lg cursor-pointer shadow flex items-center justify-center sm:justify-start gap-2 transition hover:bg-yellow-700"
+          >
+            <span className="hidden sm:inline">Annuler déplacement</span>
+            <span className="sm:hidden">✕</span>
+          </button>
+        )}
+      </div>
+
+      {/* Zone principale */}
+      <div className="relative w-[900px] h-[650px] bg-white border border-gray-300 rounded-2xl shadow-2xl max-w-full max-h-[80vh] overflow-hidden">
+        
+        {/* Message de déplacement */}
+        {movingGuest && (
+          <div className="absolute top-4 left-4 right-4 bg-yellow-100 border border-yellow-300 text-yellow-800 px-3 py-2 rounded-lg z-40 text-center">
+            Mode déplacement: <strong>{movingGuest.guestName}</strong> - Cliquez sur une chaise libre pour déplacer l'invité
+          </div>
+        )}
+
+        {/* Titre */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 text-xl font-extrabold text-indigo-700 tracking-wide drop-shadow z-30">
+          Plan des Tables - {event?.nom || "Événement"}
+        </div>
+
+        {/* Grille de fond */}
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(200,200,255,0.08)_1px,transparent_1px),linear-gradient(180deg,rgba(200,200,255,0.08)_1px,transparent_1px)] bg-[size:40px_40px]" />
+
+        {/* Tables */}
+        {tables.map((table) => (
+          <Table
+            key={table.id}
+            table={table}
+            onMove={handleTableMove}
+            onRotate={handleTableRotate}
+            onDelete={handleTableDelete}
+            onPlaceClick={handlePlaceClick}
+            selectedPlace={selectedPlace}
+            onEdit={handleOpenEdit}
+            movingGuest={movingGuest}
+          />
+        ))}
+
+        {/* Message si aucune table */}
+        {tables.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-lg">
+            Aucune table créée. Ajoutez des tables depuis le bouton en bas à gauche.
+          </div>
+        )}
+      </div>
+
+      {/* Modal Modification de table */}
+      {editingTable && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
+            <h2 className="text-xl font-semibold mb-4">
+              Modifier {editingTable.nom}
+            </h2>
+            <div className="space-y-4">
+              <input
+                defaultValue={editingTable.nom}
+                onChange={(e) =>
+                  handleTableChange(editingTable.id, "nom", e.target.value)
+                }
+                placeholder="Nom de la table"
+                className="w-full border rounded-lg px-3 py-2"
+              />
+              <input
+                type="number"
+                defaultValue={editingTable.capacite}
+                onChange={(e) =>
+                  handleTableChange(editingTable.id, "capacite", e.target.value)
+                }
+                min="1"
+                placeholder="Capacité"
+                className="w-full border rounded-lg px-3 py-2"
+              />
+              <select
+                defaultValue={editingTable.type}
+                onChange={(e) =>
+                  handleTableChange(editingTable.id, "type", e.target.value)
+                }
+                className="w-full border rounded-lg px-3 py-2"
+              >
+                {TABLE_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
+              <button
+                className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 cursor-pointer"
+                onClick={handleCloseEdit}
+              >
+                Annuler
+              </button>
+              <button
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer"
+                onClick={handleCloseEdit}
+              >
+                OK
+              </button>
+              <button
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cursor-pointer"
+                onClick={() => {
+                  handleTableDelete(editingTable.id);
+                  handleCloseEdit();
+                }}
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -29,7 +29,7 @@ async function bootstrap() {
       const server = super.createIOServer(port, {
         ...options,
         cors: {
-          origin: 'http://locahost:5173',
+          origin: 'http://localhost:5173',
           methods: ['GET', 'POST'],
           credentials: true,
         },

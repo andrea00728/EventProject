@@ -1,0 +1,135 @@
+import axiosClient from "../api/axios-client";
+
+/**
+ * Creates a table using the provided data.
+ * @param {Object} data - The data for the table creation.
+ * @param {string} token - The authentication token.
+ * @returns {Promise<Object>} - The created table's data.
+ */
+
+/**
+ * Cr e une table li e  un  evenement.
+ * @param {Object} data - Les donn es de la table (eventId, name, capacity, form)
+ * @param {string} token - Le token d'authentification
+ * @returns {Promise<Object>} - La table cr e e
+ */
+export const createTable = async (data) => {
+
+  const response = await axiosClient.post("/tables/create/by_event", data);
+
+  return response.data;
+  }
+
+    export const createTableByIdevent = async (data, token) => {
+    const response = await axiosClient.post("/tables/create/by_event", data);
+    return response.data;
+  };
+
+/**
+ * Recupre les tables lies  un  evenement.
+ * @param {number} eventId - L'ID de l' v nement.
+ * @param {string} token - Le token d'authentification.
+ * @returns {Promise<Array<Object>>} - Les tables lies  l' evenement.
+ */
+
+export const getTablesByEventId = async (eventId) => {
+  const response = await axiosClient.get(`/tables/event/${eventId}`);
+  return response.data;
+};
+
+
+/**
+ * Recuperation le nombre de places disponibles pour une table.
+ * @param {number} tableId - L'ID de la table.
+ * @returns {Promise<number>} - Le nombre de places disponibles.
+ */
+export const getAvailableSeats = async (tableId) => {
+  const response = await axiosClient.get(`/tables/${tableId}/available-seats`);
+  return response.data;
+};
+
+
+
+
+
+/**
+ * Met   jour la position d'une table.
+ * @param {number} tableId - L'ID de la table.
+ * @param {Object} position - La position de la table (x, y, z).
+ * @param {string} token - Le token d'authentification.
+ * @returns {Promise<Object>} - La table mise   jour.
+ */
+export const updateTablePosition = async (tableId, position) => {
+  const response = await axiosClient.patch(
+    `/tables/${tableId}/position`,
+     position ,
+  );
+  return response.data;
+};
+
+
+/**
+ * 
+ * @param {*} tableId 
+ * @param {*} rotation 
+ * @param {*} token 
+ * @returns 
+ * 
+ * service pour la rotation du table 
+ */
+export const updateRotation = async (tableId, rotation) => {
+  const response = await axiosClient.patch(
+    `/tables/${tableId}/rotation`,
+    { rotation },
+  );
+  return response.data;
+};
+
+
+/**
+ * 
+ * @param {*} tableId 
+ * @param {*} token 
+ * @returns 
+ * service pour la suppression de table
+ */
+export const deleteTable = async (tableId) => {
+  const response = await axiosClient.delete(`/tables/${tableId}`);
+  return response.data;
+};
+
+
+
+/**
+ * Réassigne un invité à une autre table et place.
+ * @param {number} guestId - L'ID de l'invité à réassigner.
+ * @param {number} tableId - L'ID de la nouvelle table.
+ * @param {number} place - Le numéro de la nouvelle place à la table.
+ * @param {string} token - Le token d'authentification.
+ * @returns {Promise<Object>} - Les données de la réponse après réassignation.
+ */
+
+export const reassignGuestToTable = async (guestId, tableId,place) => {
+  const response = await axiosClient.patch(
+    `/guests/${guestId}/reassign`,
+    {
+      tableId,
+      place,
+    },
+  );
+  return response.data;
+};
+
+
+//BY LIOKA
+/**
+ * Met à jour les données d'une table.
+ * @param {number} tableId - L'ID de la table à mettre à jour.
+ * @param {Object} data - Les nouvelles données de la table.
+ * @returns {Promise<Object>} - La table mise à jour.
+ */
+export const updateTable = async (tableId, data) => {
+  const response = await axiosClient.patch(`/tables/${tableId}`, data);
+  return response.data;
+};
+
