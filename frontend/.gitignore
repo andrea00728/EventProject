@@ -27,6 +27,5 @@ public
 *.njsproj
 *.sln
 *.sw?   
-socket.js
 .env
 
