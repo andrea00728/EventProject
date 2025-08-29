@@ -9,7 +9,7 @@ lerna-debug.log*
 package-lock.json
 package.json
 yarn.lock
-node_modules
+/node_modules
 dist
 dist-ssr
 *.local
