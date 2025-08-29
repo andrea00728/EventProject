@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { updatePasswordUser } from "../../services/service";
+import { useStateContext } from "../../context/ContextProvider";
 
 export const PasswordSetupModal = ({ show, onClose, darkMode }) => {
   const [password, setPassword] = useState("");
@@ -8,6 +9,7 @@ export const PasswordSetupModal = ({ show, onClose, darkMode }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const {user} = useStateContext()
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,7 +31,7 @@ export const PasswordSetupModal = ({ show, onClose, darkMode }) => {
     }
 
     try {
-      const res = await updatePasswordUser(password);
+      const res = await updatePasswordUser({adminId : user.sub ,newPassword: password});
       setSuccess(res.data.message || "Mot de passe défini avec succès !");
 
       if (dontShowAgain) {
@@ -70,7 +72,7 @@ export const PasswordSetupModal = ({ show, onClose, darkMode }) => {
             exit={{ scale: 0.8, opacity: 0 }}
           >
             <h2 className="text-2xl font-extrabold mb-2 text-center">
-              Bienvenue, Super Admin ! ✨
+              Bienvenue, {user.role != "admin" ? "Super Admin" : "Admin"} ! ✨
             </h2>
             <p
               className={`mb-4 text-center ${darkMode ? "text-gray-300" : "text-gray-600"}`}

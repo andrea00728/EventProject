@@ -92,6 +92,34 @@ const PaymentPage = ({ forfait, onClose }) => {
   const [error, setError] = useState(null);
 
   const selectedPlanDetails = plans[selectedPlan];
+  
+  // Dans PaymentPage ou le composant qui gère l'achat
+const initiatePayment = async () => {
+  try {
+    // Récupérer le token JWT actuel
+    const token = getCookie('jwt'); // Fonction pour récupérer le cookie
+    
+    const response = await axiosClient.post('/forfait/upgrade', {
+      forfaitNom: forfait.nom,
+      token: token // Envoyer le token avec la requête
+    }, {
+      withCredentials: true
+    });
+
+    // Rediriger vers PayPal
+    window.location.href = response.data.url;
+  } catch (error) {
+    toast.error('Erreur lors du démarrage du paiement');
+  }
+};
+  
+// Fonction utilitaire pour récupérer les cookies
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+};
 
   const handlePayment = useCallback(async () => {
     if (!isAuthenticated) {

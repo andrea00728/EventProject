@@ -38,6 +38,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
   if (!isPasswordValid) throw new UnauthorizedException('Mot de passe incorrect');
 
   adminUser.lastLogin = new Date();
+  adminUser.isOnline = true;
   await this.userRepository.save(adminUser);
 
   // Payload JWT
@@ -112,6 +113,10 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
         await this.userRepository.save(adminUser);
       }
 
+      adminUser.lastLogin = new Date();
+      adminUser.isOnline = true;
+      await this.userRepository.save(adminUser);
+
       // Générer les tokens JWT
       const payload = {
         sub: adminUser.id,
@@ -151,7 +156,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
     } catch (error) {
       console.error('Login with Google OAuth error:', error);
       throw new UnauthorizedException(
-        'Erreur lors de l’authentification Google OAuth',
+        error.message ||'Erreur lors de l’authentification Google OAuth',
       );
     }
   }

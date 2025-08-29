@@ -190,6 +190,7 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
   const confirmationLink = `https://mastertable.site/personnel/response?token=${token}&action=confirm`;
   const refuseLink = `https://mastertable.site/personnel/response?token=${token}&action=refuse`;
 
+
   const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: 465, 

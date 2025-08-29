@@ -49,7 +49,7 @@ export default function getPlacePositions(type, capacity) {
   const spacing = 20;
 let count = 0;
 
-// Déterminer combien de places par côté
+///Déterminer combien de places par côté
 const basePerSide = Math.floor(capacity / 4);
 const extraSeats = capacity % 4; // reste à répartir
 // Tableau contenant le nombre de places par côté

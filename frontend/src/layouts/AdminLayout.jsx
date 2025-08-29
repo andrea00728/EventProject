@@ -162,11 +162,11 @@ const menuItems = [
     name: "Salles & Localisation",
     icon: <MdRoom className="text-lg" />,
   },
-  {
-    path: "/AdminHistorique",
-    name: "Historique d'activité",
-    icon: <MdHistory className="text-lg" />,
-  },
+  // {
+  //   path: "/AdminHistorique",
+  //   name: "Historique d'activité",
+  //   icon: <MdHistory className="text-lg" />,
+  // },
   {
     path: "/AdminStats",
     name: "Statistique",
