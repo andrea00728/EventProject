@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import GestionPlan from "../../components/planTable/GestionPlan";
 import { getMyEvents } from "../../services/evenementServ";
-import { Tabs, Tab } from "@mui/material";
 import { useStateContext } from "../../context/ContextProvider";
 
 export default function Apercu() {
@@ -43,17 +42,17 @@ export default function Apercu() {
   }, [isAuthenticated]);
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-8 text-center text-gray-900">Graphique</h1>
+    <div className="p-4 w-full overflow-x-hidden">
+      <h1 className="text-2xl font-bold mb-6 text-center text-gray-900">Graphique</h1>
 
-      <div className="relative mb-8">
+      <div className="relative mb-6">
         {/* Background decorative elements */}
-        <div className="absolute -top-4 right-0 w-32 h-32 bg-gradient-to-bl from-indigo-100/30 to-transparent rounded-full blur-2xl"></div>
-        <div className="absolute -bottom-2 left-0 w-24 h-24 bg-gradient-to-tr from-purple-100/20 to-transparent rounded-full blur-xl"></div>
+        <div className="absolute -top-4 right-0 w-16 h-16 bg-gradient-to-bl from-indigo-100/30 to-transparent rounded-full blur-xl"></div>
+        <div className="absolute -bottom-2 left-0 w-16 h-16 bg-gradient-to-tr from-purple-100/20 to-transparent rounded-full blur-xl"></div>
 
-        <div className="relative z-10">
+        <div className="relative z-10 w-full">
           {/* Enhanced Header */}
-          <div className="flex items-center space-x-4 mb-6">
+          <div className="flex items-center space-x-4 mb-4">
             <div className="flex items-center space-x-3">
               <div className="relative">
                 <div className="w-1 h-8 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full"></div>
@@ -86,7 +85,7 @@ export default function Apercu() {
           {eventError && (
             <div className="relative bg-gradient-to-r from-red-50 to-rose-50/70 border border-red-200/60 rounded-xl p-5 shadow-sm overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-red-400 to-red-600"></div>
-              <div className="absolute top-0 right-0 w-16 h-16 bg-red-100/40 rounded-full blur-xl"></div>
+              <div className="absolute top-0 right-0 w-12 h-12 bg-red-100/40 rounded-full blur-xl"></div>
 
               <div className="relative flex items-center space-x-3">
                 <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
@@ -105,7 +104,7 @@ export default function Apercu() {
           {!isLoadingEvents && !eventError && events.length === 0 && (
             <div className="relative bg-gradient-to-r from-amber-50 to-yellow-50/60 border border-amber-200/60 rounded-xl p-6 shadow-sm overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-yellow-500"></div>
-              <div className="absolute top-0 right-0 w-20 h-20 bg-amber-100/30 rounded-full blur-xl"></div>
+              <div className="absolute top-0 right-0 w-12 h-12 bg-amber-100/30 rounded-full blur-xl"></div>
 
               <div className="relative flex items-start space-x-4">
                 <div className="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
@@ -123,31 +122,33 @@ export default function Apercu() {
 
           {/* Events Tabs */}
           {!isLoadingEvents && !eventError && events.length > 0 && (
-            <div className="relative">
+            <div className="relative w-full">
               {/* Custom Tabs Container */}
               <div className="relative bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-gray-50/50 to-transparent"></div>
 
                 {/* Tabs Navigation */}
-                <div className="relative flex overflow-x-auto scrollbar-hide border-b border-gray-100">
-                  {events.map((event, index) => {
+                <div className="relative flex flex-wrap border-b border-gray-100">
+                  {events.map((event) => {
                     const isSelected = selectedEvent?.id === event.id;
                     return (
                       <button
                         key={event.id}
                         onClick={() => setSelectedEvent(event)}
-                        className={`group relative flex-shrink-0 px-6 py-4 font-medium text-sm transition-all duration-300 ${isSelected
+                        className={`group relative flex-shrink-0 px-4 py-3 font-medium text-sm transition-all duration-300 min-w-[100px] ${
+                          isSelected
                             ? 'text-indigo-600 bg-white'
                             : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50/80'
-                          }`}
+                        }`}
                       >
                         {/* Tab Content */}
                         <div className="relative flex items-center space-x-2">
-                          <div className={`w-2 h-2 rounded-full transition-all duration-300 ${isSelected
+                          <div className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                            isSelected
                               ? 'bg-gradient-to-r from-indigo-500 to-purple-600 shadow-sm'
                               : 'bg-gray-300 group-hover:bg-indigo-400'
-                            }`}></div>
-                          <span className="whitespace-nowrap">{event.nom}</span>
+                          }`}></div>
+                          <span className="whitespace-nowrap truncate">{event.nom}</span>
                         </div>
 
                         {/* Active Tab Indicator */}
@@ -156,10 +157,11 @@ export default function Apercu() {
                         )}
 
                         {/* Hover Effect Background */}
-                        <div className={`absolute inset-0 transition-all duration-300 ${isSelected
+                        <div className={`absolute inset-0 transition-all duration-300 ${
+                          isSelected
                             ? 'bg-gradient-to-b from-indigo-50/50 to-transparent'
                             : 'bg-gradient-to-b from-gray-50/0 to-gray-50/50 opacity-0 group-hover:opacity-100'
-                          }`}></div>
+                        }`}></div>
                       </button>
                     );
                   })}
@@ -167,7 +169,7 @@ export default function Apercu() {
 
                 {/* Selection Info Bar */}
                 {selectedEvent && (
-                  <div className="relative px-6 py-3 bg-gradient-to-r from-indigo-50/50 to-purple-50/30 border-t border-indigo-100/50">
+                  <div className="relative px-4 py-2 bg-gradient-to-r from-indigo-50/50 to-purple-50/30 border-t border-indigo-100/50">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="w-6 h-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -175,7 +177,7 @@ export default function Apercu() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
-                        <span className="text-sm font-medium text-gray-700">
+                        <span className="text-sm font-medium text-gray-700 truncate">
                           Événement sélectionné : <span className="text-indigo-600 font-semibold">{selectedEvent.nom}</span>
                         </span>
                       </div>
@@ -196,9 +198,6 @@ export default function Apercu() {
                   </div>
                 )}
               </div>
-
-              {/* Scroll Indicator */}
-              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none opacity-50"></div>
             </div>
           )}
         </div>
@@ -215,12 +214,14 @@ export default function Apercu() {
       </div>
 
       {selectedEvent && (
-        <>
-          <h2 className="text-xl font-semibold mb-4 text-gray-900">
+        <div className="w-full overflow-x-hidden">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 truncate">
             Plan de salle pour : {selectedEvent.nom}
           </h2>
-          <GestionPlan selectedEventId={selectedEvent.id} />
-        </>
+          <div className="w-full overflow-x-hidden">
+            <GestionPlan selectedEventId={selectedEvent.id} />
+          </div>
+        </div>
       )}
     </div>
   );
