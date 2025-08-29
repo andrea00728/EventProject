@@ -190,7 +190,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
         email: user.email,
         name: user.name,
         role: 'admin',
-        isOnline: true,
+        isOnline: false,
         lastLogin: new Date(),
       } as Partial<Admin>);
 
