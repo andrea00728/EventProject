@@ -6,7 +6,6 @@ import {
   Typography,
   useTheme,
   useMediaQuery,
-  CircularProgress,
 } from "@mui/material";
 import { RxCaretRight, RxCaretLeft } from "react-icons/rx";
 
@@ -17,7 +16,6 @@ export default function TableLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [selectedPath, setSelectedPath] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const currentPath = location.pathname.split("/evenement/tables/")[1] || "";
@@ -49,7 +47,7 @@ export default function TableLayout() {
     setSelectedPath(path);
     navigate(`/evenement/tables/${path}`, { replace: true });
     if (isMobile) {
-      setIsMenuOpen(false); // Ferme le menu mobile après la navigation
+      setIsMenuOpen(false);
     }
   };
 
@@ -79,13 +77,12 @@ export default function TableLayout() {
 
   return (
     <Box
-      className="relative flex h-screen bg-gray-100"
+      className="relative flex bg-gray-100"
       sx={{
-        width: "100vw",
+        width: "100%",
         minHeight: "100vh",
-        position: "relative",
-        height: "100%",
-        boxSizing: 'border-box'
+        boxSizing: "border-box",
+        overflowX: "hidden",
       }}
     >
       {/* Bouton de menu pour les petits écrans */}
@@ -108,7 +105,7 @@ export default function TableLayout() {
         </button>
       </div>
 
-      {/* Sidebar : cachée par défaut, s'anime pour apparaître, visible sur les grands écrans */}
+      {/* Sidebar */}
       <Box
         component="aside"
         className={`
@@ -126,15 +123,18 @@ export default function TableLayout() {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: 2,
           boxSizing: "border-box",
           bgcolor: "#f4f6f9",
           borderRadius: 1,
           boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+          minHeight: "100vh",
+          overflowX: "hidden",
+          width: "100%",
         }}
-        className="flex-1 flex flex-col overflow-hidden lg:ml-64"
+        className="flex-1 flex flex-col lg:ml-64"
       >
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 w-full">
           <Outlet />
         </div>
       </Box>

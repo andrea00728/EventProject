@@ -68,10 +68,11 @@ export class EvenementService {
 
     const notification = this.notificationRepository.create({
       title: 'Nouvel évènement crée',
-      message: `${user.name || user.email} a crée l'evenement de ${evenement.nom}.`,
+      message: `${user} a crée l'evenement de ${evenement.nom}.`,
       type: 'info',
       date: new Date(),
     });
+    console.log("voici le contenu de user: ", user);
     await this.notificationRepository.save(notification);
     this.notificationGateway.emitNotifEventForAdmin({
       ...notification,

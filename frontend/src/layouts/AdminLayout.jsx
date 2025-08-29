@@ -141,48 +141,54 @@ export default function AdminLayout() {
     setShowLogoutModal(false);
   };
 
-  const menuItems = [
-    {
-      path: "/AdminAccueil",
-      name: "Tableau de bord",
-      icon: <FiLayout className="text-lg" />,
-    },
-    {
-      path: "/AdminEvenement",
-      name: "Événements",
-      icon: <MdCalendarToday className="text-lg" />,
-    },
-    {
-      path: "/AdminOrganisateur",
-      name: "Organisateurs",
-      icon: <FaUsers className="text-lg" />,
-    },
-    {
-      path: "/LocationSalle",
-      name: "Salles & Localisation",
-      icon: <MdRoom className="text-lg" />,
-    },
-    {
-      path: "/AdminHistorique",
-      name: "Historique d'activité",
-      icon: <MdHistory className="text-lg" />,
-    },
-    {
-      path: "/AdminStats",
-      name: "Statistique",
-      icon: <MdQueryStats className="text-lg" />,
-    },
-    {
-      path: "/AdminManagement",
-      name: "Gestion Admin",
-      icon: <MdAdminPanelSettings className="text-lg" />,
-    },
-    {
-      path: "/AdminParametre",
-      name: "Paramètres",
-      icon: <FaCogs className="text-lg" />,
-    },
-  ];
+const menuItems = [
+  {
+    path: "/AdminAccueil",
+    name: "Tableau de bord",
+    icon: <FiLayout className="text-lg" />,
+  },
+  {
+    path: "/AdminEvenement",
+    name: "Événements",
+    icon: <MdCalendarToday className="text-lg" />,
+  },
+  {
+    path: "/AdminOrganisateur",
+    name: "Organisateurs",
+    icon: <FaUsers className="text-lg" />,
+  },
+  {
+    path: "/LocationSalle",
+    name: "Salles & Localisation",
+    icon: <MdRoom className="text-lg" />,
+  },
+  // {
+  //   path: "/AdminHistorique",
+  //   name: "Historique d'activité",
+  //   icon: <MdHistory className="text-lg" />,
+  // },
+  {
+    path: "/AdminStats",
+    name: "Statistique",
+    icon: <MdQueryStats className="text-lg" />,
+  },
+  // On ajoute la condition proprement
+  ...(user.role !== "admin"
+    ? [
+        {
+          path: "/AdminManagement",
+          name: "Gestion Admin",
+          icon: <MdAdminPanelSettings className="text-lg" />,
+        },
+      ]
+    : []),
+  {
+    path: "/AdminParametre",
+    name: "Paramètres",
+    icon: <FaCogs className="text-lg" />,
+  },
+];
+
 
   const gradientTitle =
     "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";

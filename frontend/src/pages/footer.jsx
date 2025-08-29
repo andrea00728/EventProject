@@ -221,7 +221,7 @@ function Footer() {
                     <a href="tel:+33123456789" className="group w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center hover:bg-green-500/20 hover:border-green-400/30 border border-white/20 transition-all duration-300 hover:scale-110">
                       <FaPhone className="w-5 h-5 text-white group-hover:text-green-400 transition-colors" />
                     </a>
-                    <a href="mailto:contact@rapexgroup.com" className="group w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center hover:bg-blue-500/20 hover:border-blue-400/30 border border-white/20 transition-all duration-300 hover:scale-110">
+                    <a href="mailto:mastertable37@gmail.com" className="group w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center hover:bg-blue-500/20 hover:border-blue-400/30 border border-white/20 transition-all duration-300 hover:scale-110">
                       <MdEmail className="w-5 h-5 text-white group-hover:text-blue-400 transition-colors" />
                     </a>
                     <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="group w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center hover:bg-blue-600/20 hover:border-blue-500/30 border border-white/20 transition-all duration-300 hover:scale-110">

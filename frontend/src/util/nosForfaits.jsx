@@ -47,7 +47,7 @@ export default function NosForfaits() {
   useEffect(() => {
     const fetchUserForfait = async () => {
       if (!isAuthenticated) return;
-      if(user?.role === "organisateur"){
+      if (user?.role === "organisateur") {
         try {
           const userForfait = await getUserForfait();
           if (userForfait?.forfait) {
@@ -119,7 +119,9 @@ export default function NosForfaits() {
               <ul className="text-sm space-y-2 mb-6">
                 <li>Invitations : <span className="font-semibold">{f.invitations}</span></li>
                 <li>Événements : <span className="font-semibold">{f.events}</span></li>
-                <li>Durée : <span className="font-semibold">{f.duration}</span></li>
+                <li>
+                  {f.nom === "STARTER" ? "Module personnel" : "Modules personnel et restauration"}
+                </li>
               </ul>
 
               {isAuthenticated ? (
@@ -176,7 +178,7 @@ export default function NosForfaits() {
           {/* Fond semi-transparent + blur pour le focus sur la modal */}
 
           <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8 relative overflow-y-auto  max-h-[90vh] scrollbar-hide">
-          <span className="absolute top-4 right-4" onClick={() => setDetailsOpen(false)}><Close/></span>
+            <span className="absolute top-4 right-4" onClick={() => setDetailsOpen(false)}><Close /></span>
             {/* Conteneur principal de la modal : arrondi, ombre, padding responsive */}
 
             {/* Bandeau coloré en haut */}
@@ -227,18 +229,25 @@ export default function NosForfaits() {
                 <Calendar className="text-pink-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
                   <span className="font-semibold">Durée :</span>{" "}
-                  Profitez de ce forfait pendant <span className="font-semibold">{selectedForfait.duration}</span>, avec accès complet à toutes les fonctionnalités.
+                  Ce forfait est actif pendant <span className="font-semibold">{selectedForfait.duration}</span>, avec la possibilité de changer de forfait à tout moment selon vos besoins.
                 </div>
+
               </li>
 
-              {/* Avantages exclusifs */}
+              {/* Avantages et fonctionnalités */}
               <li className="flex items-start gap-3">
                 <Star className="text-yellow-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
-                  <span className="font-semibold">Avantages exclusifs :</span>{" "}
-                  Accédez à des fonctionnalités premium : gestion avancée des invités, rapports détaillés et support prioritaire.
+                  <span className="font-semibold">Fonctionnalités :</span>{" "}
+                  {selectedForfait.nom === "STARTER" &&
+                    "Vous avez un fonction personnel."}
+                  {(selectedForfait.nom === "PRO" ||
+                    selectedForfait.nom === "PREMIUM" ||
+                    selectedForfait.nom === "GOLD") &&
+                    "Vous avez toutes les fonctionnalités, incluant le module personnel et restauration."}
                 </div>
               </li>
+
 
               {/* Idéal pour */}
               <li className="flex items-start gap-3">
