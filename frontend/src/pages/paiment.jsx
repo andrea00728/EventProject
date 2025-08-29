@@ -31,7 +31,7 @@ const plans = {
   starter: {
     name: "Starter",
     icon: Clock,
-    price: "9.99€",
+    price: "10€",
     duration: "/mois",
     features: ["Toutes les fonctionnalités Freemium", "Support prioritaire"],
     buttonColor: "bg-blue-500 hover:bg-blue-600",

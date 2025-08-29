@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useDarkMode } from "../context/DarkModeContext"; // <--- AJOUTEZ CETTE LIGNE
+import { useDarkMode } from "../context/DarkModeContext";
 import {
   createEvent,
   getLocations,
@@ -162,8 +162,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   const [searchLieu, setSearchLieu] = useState("");
   const [selectedLieu, setSelectedLieu] = useState(null);
   const [error, setError] = useState(null);
-  const [map, setMap] = useState(null);
-
+  const mapRef = useRef(null);
 
   useEffect(() => {
     getLocations()
@@ -212,11 +211,6 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       return;
     }
 
-    if (new Date(form.date) >= new Date(form.date_fin)) {
-      setError("La date de fin doit être après la date de début.");
-      return;
-    }
-
     const finalType = form.type === "autre" ? customType : form.type;
     const finalTheme = form.theme === "autre" ? customTheme : form.theme;
 
@@ -260,15 +254,11 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   );
 
   const handleSelectLieu = (loc) => {
-  setSelectedLieu(loc);
-  if (map && loc.latitude && loc.longitude) {
-    map.setView(
-      [parseFloat(loc.latitude), parseFloat(loc.longitude)],
-      13
-    );
-  }
-};
-
+    setSelectedLieu(loc);
+    if (mapRef.current && loc.latitude && loc.longitude) {
+      mapRef.current.setView([parseFloat(loc.latitude), parseFloat(loc.longitude)], 13);
+    }
+  };
 
   const handleConfirmLieu = () => {
     if (selectedLieu) {
@@ -368,7 +358,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">
+            <label he="text-sm font-semibold text-gray-700 mb-1">
               Date de début
             </label>
             <input
@@ -554,7 +544,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                   center={[48.8566, 2.3522]} // Paris par défaut
                   zoom={13}
                   style={{ height: "100%", width: "100%" }}
-                  whenCreated={setMap}
+                  ref={mapRef}
                   dragging={true}
                   zoomControl={true}
                   scrollWheelZoom={false}

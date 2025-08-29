@@ -49,6 +49,7 @@
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
     "leaflet": "^1.9.4",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.475.0",
     "prop-types": "^15.8.1",
     "qr-scanner": "^1.4.2",
