@@ -266,7 +266,7 @@ export default function Profil() {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-purple-50/30 rounded-2xl" />
               <motion.button
-                className="absolute top-3 right-3 p-1.5 bg-gray-100/80 rounded-full text-gray-500 hover:bg-gray-200 transition-colors"
+                className="absolute top-3 right-3 p-1.5 bg-gray-100/80 rounded-full text-gray-500 hover:bg-gray-200 transition-colors cursor-pointer"
                 onClick={() => setIsOpenProfil(false)}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}

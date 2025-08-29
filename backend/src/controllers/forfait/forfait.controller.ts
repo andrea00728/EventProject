@@ -74,15 +74,16 @@ export class ForfaitController {
    * @param res 
    * @returns 
    */
-  @Get('success')
-  async redirectToFrontend(
-    @Query('subscription_id') subscriptionId: string,
-    @Res() res: Response,
-  ) {
-    //  const url = `https://mastertable.site/forfait/success?subscription_id=${subscriptionId}`;
-     const url = `http//localhost:5173/forfait/success?subscription_id=${subscriptionId}`;
-    return res.redirect(url); // redirection vers le frontend
-  }
+ @Get('success')
+async redirectToFrontend(
+  @Query('subscription_id') subscriptionId: string,
+  @Query('token') token: string, // Ajoutez le token dans la redirection PayPal
+  @Res() res: Response,
+) {
+  // Inclure le token JWT dans la redirection
+  const url = `https://mastertable.site/forfait/success?subscription_id=${subscriptionId}&token=${token}`;
+  return res.redirect(url);
+}
 
 
 

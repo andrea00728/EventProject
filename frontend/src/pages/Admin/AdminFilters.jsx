@@ -7,7 +7,7 @@ const AdminFilters = ({ onFilterChange }) => {
 
   return (
     <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 w-full">
-      <div className="relative w-full md:w-1/2">
+      <div className="relative w-full md:w-full">
         <input
           type="text"
           placeholder="Rechercher par nom..."
@@ -18,7 +18,7 @@ const AdminFilters = ({ onFilterChange }) => {
           <path d="M12.9 14.32a8 8 0 111.41-1.41l5.35 5.33-1.42 1.42-5.33-5.35zM8 14A6 6 0 108 2a6 6 0 000 12z" />
         </svg>
       </div>
-      <div className="w-full md:w-1/2">
+      {/* <div className="w-full md:w-1/2">
         <select
           onChange={(e) => onFilterChange(prev => ({ ...prev, role: e.target.value }))}
           className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-gray-100 border-gray-300'}`}
@@ -28,7 +28,7 @@ const AdminFilters = ({ onFilterChange }) => {
           <option value="Modérateur">Modérateur</option>
           <option value="Rédacteur">Rédacteur</option>
         </select>
-      </div>
+      </div> */}
     </div>
   );
 };
