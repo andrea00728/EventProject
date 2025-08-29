@@ -1,4 +1,3 @@
-// src/components/Profil.jsx
 import { useEffect, useState } from "react";
 import { useStateContext } from "../context/ContextProvider";
 import { Camera, LogOut, Mail, User, X, Save, Upload } from "lucide-react";
@@ -59,12 +58,12 @@ const resolvePhotoSrc = (photo, email, previewImage) => {
 
 
 export default function Profil() {
-  const { user, setUser, isLoading, handleLogout } = useStateContext();
+  const { user, setUser, isLoading, handleLogout, updateToken } = useStateContext(); // Ajout : updateToken
   const navigate = useNavigate();
 
   const [userName, setUserName] = useState("Utilisateur");
   const [userEmail, setUserEmail] = useState("email@example.com");
-
+  const [userPhoto, setUserPhoto] = useState("/default-avatar.png"); // Modification : Image par défaut locale
   const [openEditProfil, setOpenEditProfil] = useState(false);
   const [isOpenProfil, setIsOpenProfil] = useState(false);
   const [confirmLogOut, setConfirmLogOut] = useState(false);
@@ -79,27 +78,32 @@ export default function Profil() {
     confirmPassword: "",
   });
 
-  // IMPORTANT: null par défaut (sinon ça bloque les fallbacks)
-  const [previewImage, setPreviewImage] = useState(null);
-
+  const [previewImage, setPreviewImage] = useState("/default-avatar.png"); // Modification : Image par défaut locale
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
+    console.log("User chargé:", {
+      id: user?.id,
+      name: user?.name,
+      email: user?.email,
+      photo: user?.photo,
+    });
     if (user) {
       setUserName(user.name || "Utilisateur");
       setUserEmail(user.email || "email@example.com");
-
-      // Init form
+      const photoUrl = user.photo || "/default-avatar.png"; // Modification : Image par défaut locale
+      console.log("URL de l'image utilisée:", photoUrl);
+      setUserPhoto(photoUrl);
+      setPreviewImage(photoUrl);
       setEditFormData((prev) => ({
         ...prev,
         name: user.name || "",
         email: user.email || "",
       }));
-
-      // Surtout ne pas mettre ici setPreviewImage(placeholder) !
-      setPreviewImage(null);
+    } else {
+      console.warn("Aucun utilisateur chargé, utilisation des valeurs par défaut");
     }
   }, [user]);
 
@@ -217,16 +221,31 @@ export default function Profil() {
       const response = await axiosClient.post("/auth/update-profile", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      console.log("Réponse du backend (/auth/update-profile):", response.data);
+      console.log("Utilisateur mis à jour:", {
+        id: response.data.user?.id,
+        name: response.data.user?.name,
+        email: response.data.user?.email,
+        photo: response.data.user?.photo,
+      });
 
-      const updatedUser = { ...response.data.user };
+      // Mettre à jour l'utilisateur et le token dans le contexte
+      const updatedUser = response.data.user;
+      const newToken = response.data.token; // Ajout : Récupérer le nouveau token
       setUser(updatedUser);
+      if (newToken) {
+        updateToken(newToken); // Ajout : Mettre à jour le token
+      }
 
-      // On enlève l'aperçu pour revenir à la source officielle (backend/gravatar)
-      setPreviewImage(null);
+      const newPhotoUrl = updatedUser.photo || "/default-avatar.png"; // Modification : Image par défaut locale
+      console.log("Nouvelle URL de l'image:", newPhotoUrl);
+      setUserPhoto(newPhotoUrl);
+      setPreviewImage(newPhotoUrl);
 
       setSuccessMessage("Profil mis à jour avec succès !");
       setEditFormData((prev) => ({
         ...prev,
+        photo: null,
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
@@ -239,7 +258,10 @@ export default function Profil() {
       }, 2000);
     } catch (error) {
       console.error("Erreur lors de la mise à jour:", error);
-
+      console.error("Détails de l'erreur:", {
+        status: error.response?.status,
+        data: error.response?.data,
+      });
       if (error.response?.data?.errors) {
         setErrors(error.response.data.errors);
       } else if (error.response?.data?.message) {
@@ -278,7 +300,7 @@ export default function Profil() {
 
   return (
     <>
-      {/* avatar cliquable */}
+      {/* Avatar cliquable */}
       <motion.div
         className="flex items-center gap-2 cursor-pointer"
         whileHover={{ scale: 1.05 }}
@@ -286,9 +308,11 @@ export default function Profil() {
         onClick={() => setIsOpenProfil(true)}
       >
         <img
-          src={displayPhoto}
-          alt={userName || userEmail || "Utilisateur"}
+          src={userPhoto}
+          alt="Photo de profil"
+          key={userPhoto}
           className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-gray-200"
+          onError={() => console.log("Erreur de chargement de l'image (avatar):", userPhoto)}
         />
       </motion.div>
 
@@ -325,9 +349,11 @@ export default function Profil() {
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-md opacity-30 group-hover:opacity-50 transition-opacity" />
                   <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-r from-blue-400 to-purple-500">
                     <img
-                      src={displayPhoto}
-                      alt={userName || userEmail || "Utilisateur"}
+                      src={userPhoto}
+                      alt="Photo de profil"
+                      key={userPhoto}
                       className="w-full h-full rounded-full object-cover border-2 border-white"
+                      onError={() => console.log("Erreur de chargement de l'image (modale):", userPhoto)}
                     />
                   </div>
                   <motion.button
@@ -386,7 +412,6 @@ export default function Profil() {
         )}
       </AnimatePresence>
 
-      {/* Modale d'édition du profil */}
       <AnimatePresence>
         {openEditProfil && (
           <motion.div
@@ -425,7 +450,6 @@ export default function Profil() {
               </div>
 
               <form onSubmit={handleSubmitEdit} className="p-6 space-y-4">
-                {/* Messages d'erreur et succès */}
                 {errors.general && (
                   <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">
                     {errors.general}
@@ -437,13 +461,14 @@ export default function Profil() {
                   </div>
                 )}
 
-                {/* Photo de profil */}
                 <div className="flex flex-col items-center space-y-4">
                   <div className="relative">
                     <img
-                      src={displayPhoto}
-                      alt={userName || userEmail || "Utilisateur"}
-                      className="w-20 h-20 rounded-full object-cover border-4 border-gray-200"        
+                      src={previewImage || "/default-avatar.png"} // Modification : Image par défaut locale
+                      alt="Aperçu de la photo"
+                      key={previewImage}
+                      className="w-20 h-20 rounded-full object-cover border-4 border-gray-200"
+                      onError={() => console.log("Erreur de chargement de l'image (édition):", previewImage)}
                     />
                     <label className="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 rounded-full shadow-md flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors">
                       <Upload size={16} className="text-white" />
@@ -458,7 +483,6 @@ export default function Profil() {
                   {errors.photo && <p className="text-red-500 text-xs">{errors.photo}</p>}
                 </div>
 
-                {/* Nom */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Nom complet
@@ -469,14 +493,13 @@ export default function Profil() {
                     value={editFormData.name}
                     onChange={handleInputChange}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.name ? "border-red-300" : "border-gray-300"
+                      errors.name ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="Entrez votre nom"
                   />
                   {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                 </div>
 
-                {/* Email */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Adresse email
@@ -487,14 +510,13 @@ export default function Profil() {
                     value={editFormData.email}
                     onChange={handleInputChange}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.email ? "border-red-300" : "border-gray-300"
+                      errors.email ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="Entrez votre email"
                   />
                   {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                 </div>
 
-                {/* Boutons d'action */}
                 <div className="flex justify-end gap-3 pt-4">
                   <motion.button
                     type="button"
@@ -533,7 +555,6 @@ export default function Profil() {
         )}
       </AnimatePresence>
 
-      {/* Modale de confirmation de déconnexion */}
       <AnimatePresence>
         {confirmLogOut && (
           <motion.div
