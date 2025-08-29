@@ -78,6 +78,8 @@ export default function AdminLayout() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        if (!user || !user.sub) return; 
+
         const res = await getIfAdminHasPassword(user.sub);
         const hidden = localStorage.getItem("hidePasswordModal");
 
