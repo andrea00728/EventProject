@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "@liaoliaots/nestjs-redis": "^10.0.0",
-    "blueimp-md5": "^2.19.0",
-    "ioredis": "^5.7.0",
-    "react-hot-toast": "^2.6.0"
-  }
-}

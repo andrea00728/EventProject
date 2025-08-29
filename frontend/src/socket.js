@@ -4,9 +4,7 @@ import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { getUserIdForToken } from './services/userService';
 import { url } from './api/url';
-//***
-// commit
-//  */
+
 
 
 export function useSocket() {
@@ -37,5 +35,3 @@ export function useSocket() {
 
   return socket;
 }
-
-/////

@@ -13,7 +13,7 @@ const ForfaitPage = ({ open, onClose }) => {
 
   useEffect(() => {
     if (!open || !isAuthenticated) return;
-
+//
     const fetchData = async () => {
       try {
         // Récupérer tous les forfaits

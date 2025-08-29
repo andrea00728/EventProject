@@ -19,7 +19,7 @@ const ForfaitActive = () => {
       navigate('');
       return;
     }
-
+//
     const fetchForfait = async () => {
       try {
         const data = await getUserForfait();
