@@ -25,7 +25,7 @@ export class AdminController {
     await this.adminService.loginWithGoogleOAuth(user, res);
     // on met le token dans un cookie
     // const redirectUrl = `http://mastertable.site/AdminAccueil`;
-      const redirectUrl = `http://mastertable.site/AdminAccueil`;
+      const redirectUrl = `http://localhost:5173/AdminAccueil`;
     return res.redirect(redirectUrl);
   }
   //
