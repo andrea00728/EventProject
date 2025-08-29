@@ -7,7 +7,7 @@ export default function Contact() {
     const [messageStatus, setMessageStatus] = useState(null); // 'success', 'error', or null
     // L'environnement de compilation actuel ne prend pas en charge import.meta.env.
     // Nous utiliserons donc une URL de base fixe.
-    const URL = "http://localhost:3000";
+    const URL = `${url}`;
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',

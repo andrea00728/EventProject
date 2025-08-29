@@ -1,4 +1,3 @@
-
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './Exception/http-exception.filter';
@@ -6,10 +5,25 @@ import * as express from 'express';
 import { join } from 'path';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-
 import { TasksService } from './services/tasks/tasks.service';
 import cookieParser from 'cookie-parser';
+import { ForfaitService } from './services/forfait/forfait.service';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { Observable } from 'rxjs';
 
+@Injectable()
+export class ForfaitExpirationInterceptor implements NestInterceptor {
+  constructor(private forfaitService: ForfaitService) {}
+
+  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+    const req = context.switchToHttp().getRequest();
+    const userId = req.user?.sub;
+    if (userId) {
+      await this.forfaitService.checkForfaitExpiration(userId);
+    }
+    return next.handle();
+  }
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -39,8 +53,8 @@ async function bootstrap() {
   }
   app.useWebSocketAdapter(new CustomIoAdapter(app));
 
-  // Swagger API documentation
- app.use(cookieParser())
+  app.use(cookieParser());
+
   // Configuration de Swagger
   const config = new DocumentBuilder()
     .setTitle('Commentaire API')
@@ -59,12 +73,14 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   // Servir les fichiers statiques
-  app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
+  app.use('/uploads', express.static(join(__dirname, '..', 'Uploads')));
 
   // Gestion globale des exceptions
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  // Intercepteur global pour vérifier l'expiration des forfaits
+  app.useGlobalInterceptors(new ForfaitExpirationInterceptor(app.get(ForfaitService)));
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
-

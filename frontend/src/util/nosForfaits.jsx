@@ -6,6 +6,9 @@ import { useStateContext } from "../context/ContextProvider";
 import { getUserForfait } from "../services/forfaitService";
 import { Close, Event, MobileFriendly } from "@mui/icons-material";
 import { Calendar } from "react-feather";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { getConditionalSubMenus } from "./menuUtils"; 
 
 const iconMap = {
   STARTER: <Rocket className="w-12 h-12 text-blue-500" strokeWidth={2.5} />,
@@ -29,13 +32,14 @@ const textColorMap = {
 };
 
 export default function NosForfaits() {
-  const { isAuthenticated, user } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const [activeForfait, setActiveForfait] = useState(null);
   const [expirationDate, setExpirationDate] = useState(null);
   const [selectedForfait, setSelectedForfait] = useState(null);
   const [isOpenPaiement, setIsOpenPaiement] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
   const [isDetailsOpen, setDetailsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const forfaits = [
     { id: 1, nom: "STARTER", price: "$10", invitations: 10, events: 2, duration: "1 mois" },
@@ -47,23 +51,34 @@ export default function NosForfaits() {
   useEffect(() => {
     const fetchUserForfait = async () => {
       if (!isAuthenticated) return;
-      if(user?.role === "organisateur"){
-        try {
-          const userForfait = await getUserForfait();
-          if (userForfait?.forfait) {
-            setActiveForfait(userForfait.forfait);
-            setExpirationDate(userForfait.forfaitExpirationDate);
-          }
-        } catch (err) {
-          console.error(err);
-          alert("Impossible de charger votre forfait actif.");
+      try {
+        const userForfait = await getUserForfait();
+        if (userForfait?.forfait) {
+          setActiveForfait(userForfait.forfait);
+          setExpirationDate(userForfait.forfaitExpirationDate);
+
+          // ⚡ Utilisation des sous-menus corrigée
+          const subMenus = getConditionalSubMenus(userForfait.forfait.nom);
+          console.log("Sous-menus disponibles :", subMenus);
+        }
+      } catch (err) {
+        console.error("Erreur dans fetchUserForfait :", err);
+        if (err.response?.status === 401) {
+          toast.error("Veuillez vous reconnecter pour accéder à votre forfait.");
+          navigate("/login");
+        } else {
+          toast.error("Impossible de charger votre forfait actif.");
         }
       }
     };
     fetchUserForfait();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, navigate]);
 
   const handleAcheter = (forfait) => {
+    if (!isAuthenticated) {
+      setModalOpen(true);
+      return;
+    }
     setSelectedForfait(forfait);
     setIsOpenPaiement(true);
   };
@@ -92,7 +107,6 @@ export default function NosForfaits() {
         </p>
       </div>
 
-      {/* Cartes forfaits */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {forfaits.map((f) => {
           const isActive =
@@ -105,10 +119,11 @@ export default function NosForfaits() {
           return (
             <div
               key={f.id}
-              className={`relative rounded-3xl shadow-lg p-8 border transition-transform transform hover:-translate-y-2 hover:shadow-2xl ${isActive
-                ? `bg-gradient-to-br ${defaultColorMap[f.nom]} text-white scale-105 border-white`
-                : "bg-white border-gray-200 text-gray-800"
-                }`}
+              className={`relative rounded-3xl shadow-lg p-8 border transition-transform transform hover:-translate-y-2 hover:shadow-2xl ${
+                isActive
+                  ? `bg-gradient-to-br ${defaultColorMap[f.nom]} text-white scale-105 border-white`
+                  : "bg-white border-gray-200 text-gray-800"
+              }`}
             >
               <div className="flex justify-center mb-4">{iconMap[f.nom]}</div>
               <h3 className="text-2xl font-extrabold mb-2">{f.nom}</h3>
@@ -131,31 +146,33 @@ export default function NosForfaits() {
                     Expire le {expirationDate ? new Date(expirationDate).toLocaleDateString() : "N/A"}
                   </button>
                 ) : (
-                  <div className="flex gap-2  sm:flex-row">
+                  <div className="flex gap-2 sm:flex-row">
                     <button
                       onClick={() => handleVoirDetails(f)}
-                      className={`absolute top-0 right-0 flex items-center justify-center w-12 h-12 rounded-full`}>
-                      <Info className="w-6 h-6 " /> {/* icône info centrée */}
+                      className="absolute top-0 right-0 flex items-center justify-center w-12 h-12 rounded-full"
+                    >
+                      <Info className="w-6 h-6" />
                     </button>
                     <button
                       onClick={() => handleAcheter(f)}
                       disabled={isDisabled}
-                      className={`w-full py-3 rounded-xl font-semibold shadow transition-all duration-300 focus:outline-none focus:ring ${isDisabled
-                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                        : `bg-gradient-to-r ${defaultColorMap[f.nom]} text-white hover:opacity-90`
-                        }`}
+                      className={`w-full py-3 rounded-xl font-semibold shadow transition-all duration-300 focus:outline-none focus:ring ${
+                        isDisabled
+                          ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                          : `bg-gradient-to-r ${defaultColorMap[f.nom]} text-white hover:opacity-90`
+                      }`}
                     >
                       Acheter
                     </button>
                   </div>
                 )
               ) : (
-                <div className="flex gap-2  sm:flex-row">
+                <div className="flex gap-2 sm:flex-row">
                   <button
                     onClick={() => handleVoirDetails(f)}
-                    className={`absolute top-0 right-0 flex items-center justify-center w-12 h-12 rounded-full`}>
-
-                    <Info className="w-6 h-6 " /> {/* icône info centrée */}
+                    className="absolute top-0 right-0 flex items-center justify-center w-12 h-12 rounded-full"
+                  >
+                    <Info className="w-6 h-6" />
                   </button>
                   <button
                     onClick={() => setModalOpen(true)}
@@ -170,22 +187,15 @@ export default function NosForfaits() {
         })}
       </div>
 
-      {/* Modal détails forfait */}
       {isDetailsOpen && selectedForfait && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-          {/* Fond semi-transparent + blur pour le focus sur la modal */}
-
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8 relative overflow-y-auto  max-h-[90vh] scrollbar-hide">
-          <span className="absolute top-4 right-4" onClick={() => setDetailsOpen(false)}><Close/></span>
-            {/* Conteneur principal de la modal : arrondi, ombre, padding responsive */}
-
-            {/* Bandeau coloré en haut */}
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8 relative overflow-y-auto max-h-[90vh] scrollbar-hide">
+            <span className="absolute top-4 right-4 cursor-pointer" onClick={() => setDetailsOpen(false)}>
+              <Close />
+            </span>
             <div
               className={`absolute inset-x-0 top-0 h-2 rounded-t-3xl bg-gradient-to-r ${defaultColorMap[selectedForfait.nom]}`}
             ></div>
-            {/* Barre colorée en haut de la modal correspondant au forfait */}
-
-            {/* Titre et prix */}
             <div className="text-center mb-6">
               <h3 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
                 {selectedForfait.nom}
@@ -194,13 +204,7 @@ export default function NosForfaits() {
                 {selectedForfait.price}
               </p>
             </div>
-            {/* Affiche le nom et le prix du forfait, responsive selon la taille écran */}
-
-            {/* Infos détaillées */}
             <ul className="space-y-4 text-gray-700 leading-relaxed">
-              {/* Chaque <li> correspond à une section d'information avec icône et texte */}
-
-              {/* Invitations */}
               <li className="flex items-start gap-3">
                 <MobileFriendly className="text-blue-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
@@ -210,8 +214,6 @@ export default function NosForfaits() {
                     : "Invitations illimitées incluses pour tous vos événements."}
                 </div>
               </li>
-
-              {/* Événements */}
               <li className="flex items-start gap-3">
                 <Event className="text-purple-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
@@ -221,8 +223,6 @@ export default function NosForfaits() {
                     : "Nombre d’événements illimité, sans restriction."}
                 </div>
               </li>
-
-              {/* Durée */}
               <li className="flex items-start gap-3">
                 <Calendar className="text-pink-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
@@ -230,8 +230,6 @@ export default function NosForfaits() {
                   Profitez de ce forfait pendant <span className="font-semibold">{selectedForfait.duration}</span>, avec accès complet à toutes les fonctionnalités.
                 </div>
               </li>
-
-              {/* Avantages exclusifs */}
               <li className="flex items-start gap-3">
                 <Star className="text-yellow-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
@@ -239,8 +237,6 @@ export default function NosForfaits() {
                   Accédez à des fonctionnalités premium : gestion avancée des invités, rapports détaillés et support prioritaire.
                 </div>
               </li>
-
-              {/* Idéal pour */}
               <li className="flex items-start gap-3">
                 <Rocket className="text-green-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
@@ -252,8 +248,6 @@ export default function NosForfaits() {
                 </div>
               </li>
             </ul>
-
-            {/* Bouton fermer */}
             <button
               onClick={() => setDetailsOpen(false)}
               className="mt-6 w-full py-3 rounded-2xl font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:opacity-90 transition-shadow shadow-lg"
@@ -264,13 +258,10 @@ export default function NosForfaits() {
         </div>
       )}
 
-
-      {/* Paiement */}
       {isOpenPaiement && selectedForfait && (
         <PaymentPage forfait={selectedForfait} onClose={handleClosePayment} />
       )}
 
-      {/* Auth modal désactivé pour l’instant */}
       {isModalOpen && (
         <AuthModal
           isOpen={isModalOpen}
