@@ -22,6 +22,13 @@ const TABLE_TYPES = [
   { value: "carree", label: "Table carrée", width: 80, height: 80 },
 ];
 
+// Définir les tailles prédéfinies pour le canvas
+const CANVAS_SIZES = [
+  { label: "Normal", width: 900, height: 650 },
+  { label: "Grand", width: 1200, height: 800 },
+  { label: "Très grand", width: 1600, height: 1000 },
+];
+
 // Fonction pour aligner les positions sur une grille (snap to grid)
 function snapToGrid(value, gridSize = 40) {
   return Math.round(value / gridSize) * gridSize;
@@ -125,11 +132,11 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
 }
 
 // Composant Table : représente une table avec ses chaises
-function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace, onEdit, movingGuest }) {
+function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace, onEdit, movingGuest, zoomLevel }) {
   if (!table) return null;
 
   const ref = useRef(null);
-  const touchDataRef = useRef({}); // Ajout de touchDataRef pour stocker les données tactiles
+  const touchDataRef = useRef({});
   const [dragging, setDragging] = useState(false);
   const [rotating, setRotating] = useState(false);
   const [pos, setPos] = useState(table.position ?? { left: 100, top: 100 });
@@ -153,10 +160,10 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   const handleDragEnd = (e) => {
     if (!ref.current) return;
     const parentRect = ref.current.parentNode.getBoundingClientRect();
-    const x = snapToGrid(e.clientX - parentRect.left - tableWidth / 2);
-    const y = snapToGrid(e.clientY - parentRect.top - tableHeight / 2);
-    const maxX = 900 - tableWidth;
-    const maxY = 650 - tableHeight;
+    const x = snapToGrid((e.clientX - parentRect.left - tableWidth / 2) / zoomLevel);
+    const y = snapToGrid((e.clientY - parentRect.top - tableHeight / 2) / zoomLevel);
+    const maxX = parentRect.width / zoomLevel - tableWidth;
+    const maxY = parentRect.height / zoomLevel - tableHeight;
     const boundedX = Math.max(0, Math.min(x, maxX));
     const boundedY = Math.max(0, Math.min(y, maxY));
 
@@ -167,7 +174,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   };
 
   const handleTouchStart = (e) => {
-    e.preventDefault(); // Empêche le défilement par défaut
+    e.preventDefault();
     const touch = e.touches[0];
     if (!ref.current) return;
 
@@ -190,17 +197,17 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   };
 
   const handleTouchMove = (e) => {
-    e.preventDefault(); // Empêche le défilement par défaut
+    e.preventDefault();
     const touch = e.touches[0];
     const touchData = touchDataRef.current[table.id];
 
     if (!touchData || !ref.current) return;
 
-    const newX = touch.clientX - touchData.dragAreaLeft - touchData.offsetX;
-    const newY = touch.clientY - touchData.dragAreaTop - touchData.offsetY;
+    const newX = (touch.clientX - touchData.dragAreaLeft - touchData.offsetX) / zoomLevel;
+    const newY = (touch.clientY - touchData.dragAreaTop - touchData.offsetY) / zoomLevel;
 
-    const maxX = 900 - tableWidth;
-    const maxY = 650 - tableHeight;
+    const maxX = ref.current.parentNode.getBoundingClientRect().width / zoomLevel - tableWidth;
+    const maxY = ref.current.parentNode.getBoundingClientRect().height / zoomLevel - tableHeight;
     const boundedX = Math.max(0, Math.min(snapToGrid(newX), maxX));
     const boundedY = Math.max(0, Math.min(snapToGrid(newY), maxY));
 
@@ -225,7 +232,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     );
     setRotation(newRotation);
     onRotate(table.id, newRotation);
-    setTimeout(() => setRotating(false), 300); // Durée de l'animation
+    setTimeout(() => setRotating(false), 300);
     toast.success(`Table ${table.nom} pivotée à ${newRotation}°`);
   };
 
@@ -246,12 +253,12 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       ref={ref}
       className="absolute select-none"
       style={{
-        left: pos.left,
-        top: pos.top,
-        width: tableWidth,
-        height: tableHeight,
+        left: pos.left * zoomLevel,
+        top: pos.top * zoomLevel,
+        width: tableWidth * zoomLevel,
+        height: tableHeight * zoomLevel,
         zIndex: dragging || rotating ? 50 : 10,
-        touchAction: 'none', // Empêche le comportement tactile par défaut
+        touchAction: 'none',
         transition: rotating ? 'none' : 'transform 0.3s ease'
       }}
       draggable
@@ -260,7 +267,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd} // Ajout pour gérer l'annulation des touch
+      onTouchCancel={handleTouchEnd}
     >
       <button
         onClick={(e) => {
@@ -323,7 +330,14 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
             <Chair
               key={i}
               number={i + 1}
-              style={chairPos}
+              style={{
+                ...chairPos,
+                left: `calc(${chairPos.left} * ${zoomLevel})`,
+                top: `calc(${chairPos.top} * ${zoomLevel})`,
+                width: `${20 * zoomLevel}px`,
+                height: `${20 * zoomLevel}px`,
+                fontSize: `${10 * zoomLevel}px`
+              }}
               isOccupied={isOccupied}
               guestName={guest?.nom}
               onClick={(e) => {
@@ -821,6 +835,101 @@ function GuestCreationModal({ isOpen, onClose, onAddGuest, tables, events }) {
   );
 }
 
+// Modal pour définir une taille de canvas personnalisée
+function CanvasSizeModal({ isOpen, onClose, onApplySize }) {
+  const [customSize, setCustomSize] = useState({ width: 900, height: 650 });
+  const [error, setError] = useState(null);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const numericValue = Number(value);
+    if (numericValue < 400) {
+      setError("La largeur et la hauteur doivent être d'au moins 400px.");
+      return;
+    }
+    setError(null);
+    setCustomSize((prev) => ({ ...prev, [name]: numericValue }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (customSize.width < 400 || customSize.height < 400) {
+      setError("La largeur et la hauteur doivent être d'au moins 400px.");
+      return;
+    }
+    onApplySize({ label: "Personnalisé", width: customSize.width, height: customSize.height });
+    onClose();
+    toast.success(`Taille personnalisée appliquée : ${customSize.width}x${customSize.height}px`);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Taille du Canvas</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col">
+              <label className="text-gray-700 font-medium mb-2 text-sm">Largeur (px)</label>
+              <input
+                name="width"
+                type="number"
+                value={customSize.width}
+                onChange={handleChange}
+                placeholder="Ex: 900"
+                min="400"
+                required
+                className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-gray-700 font-medium mb-2 text-sm">Hauteur (px)</label>
+              <input
+                name="height"
+                type="number"
+                value={customSize.height}
+                onChange={handleChange}
+                placeholder="Ex: 650"
+                min="400"
+                required
+                className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3"
+              />
+            </div>
+          </div>
+
+          {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
+
+          <div className="flex justify-end gap-4 mt-8">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            >
+              Appliquer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // Composant principal : PlanSalle
 export default function PlanSalle({ event, tables, setTables, onAddTable, onAddGuest }) {
   const { isAuthenticated } = useStateContext();
@@ -829,7 +938,11 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
   const [movingGuest, setMovingGuest] = useState(null);
   const [showTableModal, setShowTableModal] = useState(false);
   const [showGuestModal, setShowGuestModal] = useState(false);
+  const [showCanvasSizeModal, setShowCanvasSizeModal] = useState(false);
   const [events, setEvents] = useState([]);
+  const [canvasSize, setCanvasSize] = useState(CANVAS_SIZES[0]); // Taille par défaut : Normal
+  const [zoomLevel, setZoomLevel] = useState(1); // Niveau de zoom initial (100%)
+  const canvasRef = useRef(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -848,6 +961,21 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
   useEffect(() => {
     console.log("État tables mis à jour:", tables);
   }, [tables]);
+
+  // Gestion du zoom avec boutons (pas de 5%)
+  const handleZoom = (direction) => {
+    setZoomLevel((prev) => {
+      const newZoom = direction === "in" ? prev + 0.05 : prev - 0.05;
+      const boundedZoom = Math.max(0.5, Math.min(newZoom, 2)); // Limiter entre 50% et 200%
+      toast.success(`Zoom : ${(boundedZoom * 100).toFixed(0)}%`);
+      return boundedZoom;
+    });
+  };
+
+  // Application d'une taille personnalisée
+  const handleApplyCanvasSize = (newSize) => {
+    setCanvasSize(newSize);
+  };
 
   const handlePlaceClick = (table, placeNumber) => {
     const guestAtPlace = table.guests?.find((g) => g.place === placeNumber);
@@ -1039,272 +1167,335 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
   };
 
   return (
-  <div className="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center p-4">
-    <Toaster position="top-right" />
+    <div className="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center p-4">
+      <Toaster position="top-right" />
 
-    <div className="fixed bottom-4 left-4 flex flex-col gap-2 z-50">
-      <button
-        onClick={() => setShowGuestModal(true)}
-        className="bg-green-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition hover:bg-green-700"
-      >
-        <User className="w-5 h-5" />
-        <span className="hidden sm:inline">Ajouter invité</span>
-      </button>
-
-      <button
-        onClick={() => setShowTableModal(true)}
-        className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition hover:bg-indigo-700"
-      >
-        <Plus className="w-5 h-5" />
-        <span className="hidden sm:inline">Ajouter des tables</span>
-      </button>
-
-      <button
-        onClick={() => {
-          const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer toutes les tables ?");
-          if (confirmed) {
-            setTables([]);
-            setMovingGuest(null);
-            setSelectedPlace(null);
-            toast.success("Plan réinitialisé avec succès !");
-          }
-        }}
-        className="bg-red-600 text-white px-4 py-2 rounded-lg cursor-pointer shadow flex items-center justify-center sm:justify-start gap-2 transition hover:bg-red-700"
-      >
-        <RefreshCcw className="w-5 h-5" />
-        <span className="hidden sm:inline">Réinitialiser</span>
-      </button>
-
-      {movingGuest && (
+      <div className="fixed bottom-4 left-4 flex flex-col gap-2 z-50">
         <button
-          onClick={cancelMove}
-          className="bg-yellow-600 text-white px-4 py-2 rounded-lg cursor-pointer shadow flex items-center justify-center sm:justify-start gap-2 transition hover:bg-yellow-700"
+          onClick={() => setShowGuestModal(true)}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition hover:bg-green-700"
         >
-          <span className="hidden sm:inline">Annuler déplacement</span>
-          <span className="sm:hidden">✕</span>
+          <User className="w-5 h-5" />
+          <span className="hidden sm:inline">Ajouter invité</span>
         </button>
-      )}
-    </div>
 
-    <div className="relative w-[900px] h-[650px] bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 border-2 border-gray-200/60 rounded-3xl shadow-2xl max-w-full max-h-[80vh] overflow-auto sm:overflow-hidden backdrop-blur-sm">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-indigo-100/20 to-transparent rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-purple-100/15 to-transparent rounded-full blur-2xl"></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-50/10 to-indigo-50/10 rounded-full blur-3xl"></div>
+        <button
+          onClick={() => setShowTableModal(true)}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition hover:bg-indigo-700"
+        >
+          <Plus className="w-5 h-5" />
+          <span className="hidden sm:inline">Ajouter des tables</span>
+        </button>
 
-      {movingGuest && (
-        <div className="absolute top-4 left-4 right-4 z-40 animate-slide-down">
-          <div className="relative bg-gradient-to-r from-amber-50 to-yellow-50/80 border border-amber-200/60 rounded-2xl p-4 shadow-xl overflow-hidden backdrop-blur-sm">
-            <div className="absolute inset-0 bg-gradient-to-r from-amber-100/20 to-yellow-100/20 animate-pulse"></div>
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-yellow-500"></div>
-            <div className="relative flex items-center justify-center space-x-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center animate-bounce">
-                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div className="flex-1 text-center">
-                <div className="text-amber-800 font-medium">
-                  <span className="text-sm">Mode déplacement activé</span>
-                  <div className="mt-1">
-                    <span className="font-bold text-amber-900 bg-amber-200/50 px-2 py-1 rounded-lg">
-                      {movingGuest.guestName}
-                    </span>
+        <button
+          onClick={() => {
+            const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer toutes les tables ?");
+            if (confirmed) {
+              setTables([]);
+              setMovingGuest(null);
+              setSelectedPlace(null);
+              toast.success("Plan réinitialisé avec succès !");
+            }
+          }}
+          className="bg-red-600 text-white px-4 py-2 rounded-lg cursor-pointer shadow flex items-center justify-center sm:justify-start gap-2 transition hover:bg-red-700"
+        >
+          <RefreshCcw className="w-5 h-5" />
+          <span className="hidden sm:inline">Réinitialiser</span>
+        </button>
+
+        {movingGuest && (
+          <button
+            onClick={cancelMove}
+            className="bg-yellow-600 text-white px-4 py-2 rounded-lg cursor-pointer shadow flex items-center justify-center sm:justify-start gap-2 transition hover:bg-yellow-700"
+          >
+            <span className="hidden sm:inline">Annuler déplacement</span>
+            <span className="sm:hidden">✕</span>
+          </button>
+        )}
+
+        {/* Contrôle de la taille du canvas */}
+        <div className="flex items-center gap-2">
+          <select
+            value={canvasSize.label}
+            onChange={(e) => {
+              if (e.target.value === "Personnalisé") {
+                setShowCanvasSizeModal(true);
+              } else {
+                const selectedSize = CANVAS_SIZES.find(size => size.label === e.target.value);
+                setCanvasSize(selectedSize);
+                toast.success(`Taille du canvas : ${selectedSize.label}`);
+              }
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow cursor-pointer transition hover:bg-blue-700"
+          >
+            {[...CANVAS_SIZES, { label: "Personnalisé", width: 0, height: 0 }].map(size => (
+              <option key={size.label} value={size.label}>
+                Taille : {size.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Contrôle du zoom */}
+        <div className="flex items-center gap-2 bg-white rounded-lg shadow p-2">
+          <button
+            onClick={() => handleZoom("out")}
+            disabled={zoomLevel <= 0.5}
+            className="w-8 h-8 bg-gray-200 text-gray-700 rounded-full flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            -
+          </button>
+          <span className="text-sm font-medium text-gray-700">{(zoomLevel * 100).toFixed(0)}%</span>
+          <button
+            onClick={() => handleZoom("in")}
+            disabled={zoomLevel >= 2}
+            className="w-8 h-8 bg-gray-200 text-gray-700 rounded-full flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      <div
+        ref={canvasRef}
+        className="relative border-2 border-gray-200/60 rounded-3xl shadow-2xl max-w-full max-h-[80vh] overflow-auto bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50"
+        style={{ width: canvasSize.width, height: canvasSize.height }}
+      >
+        <div
+          className="relative"
+          style={{
+            width: `${canvasSize.width}px`,
+            height: `${canvasSize.height}px`,
+            transform: `scale(${zoomLevel})`,
+            transformOrigin: 'center',
+          }}
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-indigo-100/20 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-purple-100/15 to-transparent rounded-full blur-2xl"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-50/10 to-indigo-50/10 rounded-full blur-3xl"></div>
+
+          {movingGuest && (
+            <div className="absolute top-4 left-4 right-4 z-40 animate-slide-down">
+              <div className="relative bg-gradient-to-r from-amber-50 to-yellow-50/80 border border-amber-200/60 rounded-2xl p-4 shadow-xl overflow-hidden backdrop-blur-sm">
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-100/20 to-yellow-100/20 animate-pulse"></div>
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-yellow-500"></div>
+                <div className="relative flex items-center justify-center space-x-3">
+                  <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center animate-bounce">
+                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 text-center">
+                    <div className="text-amber-800 font-medium">
+                      <span className="text-sm">Mode déplacement activé</span>
+                      <div className="mt-1">
+                        <span className="font-bold text-amber-900 bg-amber-200/50 px-2 py-1 rounded-lg">
+                          {movingGuest.guestName}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-amber-700 mt-1">Cliquez sur une chaise libre pour déplacer l'invité</p>
+                  </div>
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                    <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
                   </div>
                 </div>
-                <p className="text-xs text-amber-700 mt-1">Cliquez sur une chaise libre pour déplacer l'invité</p>
-              </div>
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
-                <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30">
-        <div className="relative text-center">
-          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50"></div>
-          <div className="relative px-6 py-3">
-            <h1 className="text-2xl font-black bg-gradient-to-r from-indigo-700 via-purple-600 to-indigo-800 bg-clip-text text-transparent tracking-wide drop-shadow-sm">
-              Plan des Tables - {event?.nom || "Événement"}
-            </h1>
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"></div>
-          </div>
-        </div>
-      </div>
-
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(99,102,241,0.08)_1px,transparent_1px),linear-gradient(180deg,rgba(99,102,241,0.08)_1px,transparent_1px)] bg-[size:40px_40px]" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(129,140,248,0.04)_1px,transparent_1px),linear-gradient(180deg,rgba(129,140,248,0.04)_1px,transparent_1px)] bg-[size:20px_20px]" />
-        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-indigo-200/30 to-transparent"></div>
-        <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-200/30 to-transparent"></div>
-      </div>
-
-      <div className="relative z-20 w-full h-full min-w-[900px] min-h-[650px] sm:min-w-0 sm:min-h-0">
-        {tables.map((table) => (
-          <Table
-            key={table.id}
-            table={table}
-            onMove={handleTableMove}
-            onRotate={handleTableRotate}
-            onDelete={handleTableDelete}
-            onPlaceClick={handlePlaceClick}
-            selectedPlace={selectedPlace}
-            onEdit={handleOpenEdit}
-            movingGuest={movingGuest}
-          />
-        ))}
-      </div>
-
-      {tables.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center z-10">
-          <div className="text-center space-y-6 max-w-md mx-auto px-6">
-            <div className="relative mx-auto w-24 h-24">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-3xl animate-pulse"></div>
-              <div className="relative w-full h-full bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl flex items-center justify-center shadow-lg">
-                <svg className="w-12 h-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
-                </svg>
-              </div>
-              <div className="absolute -top-2 -right-2 w-4 h-4 bg-indigo-400 rounded-full animate-bounce"></div>
-              <div className="absolute -bottom-2 -left-2 w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.3s'}}></div>
-            </div>
-            <div className="space-y-3">
-              <h3 className="text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-500 bg-clip-text text-transparent">
-                Canvas vide
-              </h3>
-              <div className="space-y-2">
-                <p className="text-gray-600 leading-relaxed">
-                  Aucune table créée pour le moment
-                </p>
-                <p className="text-sm text-gray-500 bg-gray-50/80 px-4 py-2 rounded-xl border border-gray-200/50">
-                  💡 Astuce : Ajoutez des tables depuis le bouton en bas à gauche pour commencer l'organisation de votre événement
-                </p>
-              </div>
-            </div>
-            <div className="flex justify-center space-x-2">
-              <div className="w-2 h-2 bg-indigo-300 rounded-full animate-pulse"></div>
-              <div className="w-2 h-2 bg-purple-300 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
-              <div className="w-2 h-2 bg-pink-300 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
-            </div>
-            <div className="relative">
-              <div className="absolute -bottom-12 -left-16 transform rotate-12 animate-bounce text-indigo-400">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path>
-                </svg>
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30">
+            <div className="relative text-center">
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50"></div>
+              <div className="relative px-6 py-3">
+                <h1 className="text-2xl font-black bg-gradient-to-r from-indigo-700 via-purple-600 to-indigo-800 bg-clip-text text-transparent tracking-wide drop-shadow-sm">
+                  Plan des Tables - {event?.nom || "Événement"}
+                </h1>
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"></div>
               </div>
             </div>
           </div>
-        </div>
-      )}
 
-      <div className="absolute top-4 left-4 w-6 h-6 border-l-2 border-t-2 border-indigo-200/50 rounded-tl-lg"></div>
-      <div className="absolute top-4 right-4 w-6 h-6 border-r-2 border-t-2 border-indigo-200/50 rounded-tr-lg"></div>
-      <div className="absolute bottom-4 left-4 w-6 h-6 border-l-2 border-b-2 border-indigo-200/50 rounded-bl-lg"></div>
-      <div className="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-indigo-200/50 rounded-br-lg"></div>
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(99,102,241,0.08)_1px,transparent_1px),linear-gradient(180deg,rgba(99,102,241,0.08)_1px,transparent_1px)] bg-[size:40px_40px]" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(129,140,248,0.04)_1px,transparent_1px),linear-gradient(180deg,rgba(129,140,248,0.04)_1px,transparent_1px)] bg-[size:20px_20px]" />
+            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-indigo-200/30 to-transparent"></div>
+            <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-200/30 to-transparent"></div>
+          </div>
 
-      <style jsx>{`
-        @keyframes slide-down {
-          from { 
-            opacity: 0; 
-            transform: translateY(-20px); 
-          }
-          to { 
-            opacity: 1; 
-            transform: translateY(0); 
-          }
-        }
-        .animate-slide-down {
-          animation: slide-down 0.5s ease-out;
-        }
-      `}</style>
-    </div>
-
-    <TableCreationModal
-      isOpen={showTableModal}
-      onClose={() => setShowTableModal(false)}
-      onAddTables={addNewTables}
-      events={events}
-      tables={tables}
-      eventId={event?.id}
-    />
-
-    <GuestCreationModal
-      isOpen={showGuestModal}
-      onClose={() => setShowGuestModal(false)}
-      onAddGuest={addNewGuest}
-      tables={tables}
-      events={events}
-    />
-
-    {editingTable && (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
-          <h2 className="text-xl font-semibold mb-4">
-            Modification de {editingTable.nom}
-          </h2>
-          <div className="space-y-4">
-            <p className="text-yellow-600 bg-yellow-100 border border-yellow-300 rounded-lg p-3 text-center">
-              🚧 <strong>Fonctionnalité en maintenance</strong> 🚧<br />
-              La modification des tables est temporairement désactivée. Veuillez réessayer plus tard.
-            </p>
-            <div>
-              <label className="text-gray-700 font-medium mb-2 text-sm">Nom</label>
-              <input
-                value={editingTable.nom}
-                disabled
-                placeholder="Nom de la table"
-                className="w-full border rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed"
+          <div className="relative z-20 w-full h-full">
+            {tables.map((table) => (
+              <Table
+                key={table.id}
+                table={table}
+                onMove={handleTableMove}
+                onRotate={handleTableRotate}
+                onDelete={handleTableDelete}
+                onPlaceClick={handlePlaceClick}
+                selectedPlace={selectedPlace}
+                onEdit={handleOpenEdit}
+                movingGuest={movingGuest}
+                zoomLevel={zoomLevel}
               />
+            ))}
+          </div>
+
+          {tables.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <div className="text-center space-y-6 max-w-md mx-auto px-6">
+                <div className="relative mx-auto w-24 h-24">
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-3xl animate-pulse"></div>
+                  <div className="relative w-full h-full bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl flex items-center justify-center shadow-lg">
+                    <svg className="w-12 h-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                    </svg>
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-4 h-4 bg-indigo-400 rounded-full animate-bounce"></div>
+                  <div className="absolute -bottom-2 -left-2 w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.3s'}}></div>
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-500 bg-clip-text text-transparent">
+                    Canvas vide
+                  </h3>
+                  <div className="space-y-2">
+                    <p className="text-gray-600 leading-relaxed">
+                      Aucune table créée pour le moment
+                    </p>
+                    <p className="text-sm text-gray-500 bg-gray-50/80 px-4 py-2 rounded-xl border border-gray-200/50">
+                      💡 Astuce : Ajoutez des tables depuis le bouton en bas à gauche pour commencer l'organisation de votre événement
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-center space-x-2">
+                  <div className="w-2 h-2 bg-indigo-300 rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-purple-300 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                  <div className="w-2 h-2 bg-pink-300 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
+                </div>
+                <div className="relative">
+                  <div className="absolute -bottom-12 -left-16 transform rotate-12 animate-bounce text-indigo-400">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="text-gray-700 font-medium mb-2 text-sm">Capacité</label>
-              <input
-                type="number"
-                value={editingTable.capacite}
-                disabled
-                min="1"
-                placeholder="Capacité"
-                className="w-full border rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed"
-              />
+          )}
+
+          <div className="absolute top-4 left-4 w-6 h-6 border-l-2 border-t-2 border-indigo-200/50 rounded-tl-lg"></div>
+          <div className="absolute top-4 right-4 w-6 h-6 border-r-2 border-t-2 border-indigo-200/50 rounded-tr-lg"></div>
+          <div className="absolute bottom-4 left-4 w-6 h-6 border-l-2 border-b-2 border-indigo-200/50 rounded-bl-lg"></div>
+          <div className="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-indigo-200/50 rounded-br-lg"></div>
+        </div>
+
+        <style jsx>{`
+          @keyframes slide-down {
+            from { 
+              opacity: 0; 
+              transform: translateY(-20px); 
+            }
+            to { 
+              opacity: 1; 
+              transform: translateY(0); 
+            }
+          }
+          .animate-slide-down {
+            animation: slide-down 0.5s ease-out;
+          }
+        `}</style>
+      </div>
+
+      <TableCreationModal
+        isOpen={showTableModal}
+        onClose={() => setShowTableModal(false)}
+        onAddTables={addNewTables}
+        events={events}
+        tables={tables}
+        eventId={event?.id}
+      />
+
+      <GuestCreationModal
+        isOpen={showGuestModal}
+        onClose={() => setShowGuestModal(false)}
+        onAddGuest={addNewGuest}
+        tables={tables}
+        events={events}
+      />
+
+      <CanvasSizeModal
+        isOpen={showCanvasSizeModal}
+        onClose={() => setShowCanvasSizeModal(false)}
+        onApplySize={handleApplyCanvasSize}
+      />
+
+      {editingTable && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
+            <h2 className="text-xl font-semibold mb-4">
+              Modification de {editingTable.nom}
+            </h2>
+            <div className="space-y-4">
+              <p className="text-yellow-600 bg-yellow-100 border border-yellow-300 rounded-lg p-3 text-center">
+                🚧 <strong>Fonctionnalité en maintenance</strong> 🚧<br />
+                La modification des tables est temporairement désactivée. Veuillez réessayer plus tard.
+              </p>
+              <div>
+                <label className="text-gray-700 font-medium mb-2 text-sm">Nom</label>
+                <input
+                  value={editingTable.nom}
+                  disabled
+                  placeholder="Nom de la table"
+                  className="w-full border rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="text-gray-700 font-medium mb-2 text-sm">Capacité</label>
+                <input
+                  type="number"
+                  value={editingTable.capacite}
+                  disabled
+                  min="1"
+                  placeholder="Capacité"
+                  className="w-full border rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="text-gray-700 font-medium mb-2 text-sm">Type</label>
+                <select
+                  value={editingTable.type}
+                  disabled
+                  className="w-full border rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed"
+                >
+                  {TABLE_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="text-gray-700 font-medium mb-2 text-sm">Type</label>
-              <select
-                value={editingTable.type}
-                disabled
-                className="w-full border rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed"
+            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
+              <button
+                className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 cursor-pointer"
+                onClick={handleCloseEdit}
               >
-                {TABLE_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
+                Annuler
+              </button>
+              <button
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cursor-pointer"
+                onClick={() => {
+                  handleTableDelete(editingTable.id);
+                  handleCloseEdit();
+                }}
+              >
+                Supprimer
+              </button>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
-            <button
-              className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 cursor-pointer"
-              onClick={handleCloseEdit}
-            >
-              Annuler
-            </button>
-            <button
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cursor-pointer"
-              onClick={() => {
-                handleTableDelete(editingTable.id);
-                handleCloseEdit();
-              }}
-            >
-              Supprimer
-            </button>
-          </div>
         </div>
-      </div>
-    )}
-  </div>
-);
+      )}
+    </div>
+  );
 }
