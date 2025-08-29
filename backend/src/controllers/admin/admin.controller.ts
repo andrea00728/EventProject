@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpStatus, InternalServerErrorException, Param, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
 import { Response, Request } from 'express';
@@ -68,6 +68,41 @@ export class AdminController {
   async checkHasPassword(@Req() req: any) {
     const adminId = req.user.id; // récupéré depuis le token JWT
     return this.adminService.hasPassword(adminId);
+  }
+
+
+  @UseGuards(AuthGuard('jwt')) // Protégé par JWT
+  @Get('all')
+  async getAllAdmins() {
+    return this.adminService.getAllAdmins();
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Put(':id')
+  async updateAdmin(@Param('id') id: string, @Body() body: any) {
+    return this.adminService.updateAdmin(id, body);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete(':id')
+  async deleteAdmin(@Param('id') id: string) {
+    return this.adminService.deleteAdmin(id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post()
+  async createAdmin(@Body() user: { name: string; email: string }): Promise<any> {
+    try {
+      const newAdmin = await this.adminService.createUser(user);
+      return newAdmin
+    } catch (error) {
+      // Si c'est une erreur connue (ex: BadRequestException)
+      if (error.status && error.message) {
+        throw new BadRequestException(error.message);
+      }
+      console.error('Erreur serveur lors de la création de l’admin :', error);
+      throw new InternalServerErrorException('Impossible de créer l’administrateur pour le moment.');
+    }
   }
 
 }
