@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuidv4 } from 'uuid';
@@ -36,6 +36,10 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
 
   const isPasswordValid = await bcrypt.compare(user.password, adminUser.password);
   if (!isPasswordValid) throw new UnauthorizedException('Mot de passe incorrect');
+
+  adminUser.lastLogin = new Date();
+  adminUser.isOnline = true;
+  await this.userRepository.save(adminUser);
 
   // Payload JWT
   const payload = { 
@@ -89,8 +93,8 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
 
       if (!adminUser) {
         if (
-          email !== process.env.ADMIN_EMAIL
-        ) {
+           email !== process.env.ADMIN_EMAIL
+          ) {
           throw new UnauthorizedException(
             "Non autorisé : vous n'êtes pas autorisé à vous connecter en tant qu'admin",
           );
@@ -108,6 +112,10 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
 
         await this.userRepository.save(adminUser);
       }
+
+      adminUser.lastLogin = new Date();
+      adminUser.isOnline = true;
+      await this.userRepository.save(adminUser);
 
       // Générer les tokens JWT
       const payload = {
@@ -173,18 +181,36 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
     return { message: 'Mot de passe mis à jour avec succès' };
   }
   
-  async createUser(user : {name : string; email: string; photo ?: string}):Promise<{ message: string }>{
-    const adminUser = this.userRepository.create({
-          id: uuidv4(),
-          email:user.email,
-          name: user.name,
-          photo: user.photo,
-          role: 'admin',
-          isOnline: true,
-          lastLogin: new Date(),
-        } as Partial<Admin>);
-    await this.userRepository.save(adminUser);
-    return { message: 'Administrateur créé' };
+  async createUser(user: { name: string; email: string }): Promise<Admin> {
+    try {
+      // Vérifier si l'email existe déjà
+      const existingUser = await this.userRepository.findOne({ where: { email: user.email } });
+      if (existingUser) {
+        throw new BadRequestException('Un administrateur avec cet email existe déjà.');
+      }
+
+      // Création de l'utilisateur
+      const adminUser = this.userRepository.create({
+        id: uuidv4(),
+        email: user.email,
+        name: user.name,
+        role: 'admin',
+        isOnline: false,
+        lastLogin: new Date(),
+      } as Partial<Admin>);
+
+      const res = await this.userRepository.save(adminUser);
+      return res;
+
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        // On renvoie l'erreur déjà gérée (email existant)
+        throw error;
+      }
+      console.error('Erreur lors de la création de l’administrateur :', error);
+      // Pour toute autre erreur inconnue
+      throw new InternalServerErrorException('Impossible de créer l’administrateur pour le moment.');
+    }
   }
 
 
@@ -200,7 +226,23 @@ async logout(req: Request, res: Response): Promise<{ success: boolean; message: 
       return { success: false, message: 'Aucun jeton fourni' };
     }
 
-    // Vérification du token
+    let decoded: any;
+    try {
+      decoded = await this.jwtService.verifyAsync(jwtCookie, {
+        secret: process.env.JWT_SECRET || 'your-secret-key',
+      });
+    } catch (err) {
+      console.error("❌ Token invalide :", err.message);
+      return { success: false, message: 'Token invalide' };
+    }
+
+    if (decoded?.sub) {
+      await this.userRepository.update(
+        { id: decoded.sub },
+        { lastLogout: new Date(), isOnline: false }
+      );
+    }
+
     try {
       await this.jwtService.verifyAsync(jwtCookie, {
         secret: process.env.JWT_SECRET || 'your-secret-key',
@@ -241,7 +283,7 @@ async logout(req: Request, res: Response): Promise<{ success: boolean; message: 
   }
 }
 
-async hasPassword(adminId: string): Promise<{ hasPassword: boolean }> {
+  async hasPassword(adminId: string): Promise<{ hasPassword: boolean }> {
     const admin = await this.userRepository.findOne({
       where: { id: adminId },
       select: ['id', 'password'], // on récupère uniquement l'id et le password
@@ -253,4 +295,43 @@ async hasPassword(adminId: string): Promise<{ hasPassword: boolean }> {
 
     return { hasPassword: !!admin.password }; // true si password existe, false sinon
   }
+
+
+  async getAllAdmins(): Promise<Admin[]> {
+    const admins = await this.userRepository.find({
+      where: { role: 'admin' },
+      select: ['id', 'name', 'email', 'photo', 'role', 'isOnline', 'lastLogin', 'lastLogout', 'createdAt'],
+      order: { lastLogin: 'DESC' }, // optionnel : les admins les plus récents d’abord
+    });
+    return admins;
+  }
+
+  async updateAdmin(adminId: string, data: Partial<Admin>): Promise<Admin> {
+    const admin = await this.userRepository.findOne({ where: { id: adminId } });
+
+    if (!admin) {
+      throw new NotFoundException('Administrateur non trouvé');
+    }
+
+    // Si le password est dans les données, on le hash avant
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, 10);
+    }
+
+    Object.assign(admin, data); // fusionne les nouvelles données
+    return this.userRepository.save(admin);
+  }
+
+
+  async deleteAdmin(adminId: string): Promise<{ message: string }> {
+    const admin = await this.userRepository.findOne({ where: { id: adminId } });
+
+    if (!admin) {
+      throw new NotFoundException('Administrateur non trouvé');
+    }
+
+    await this.userRepository.remove(admin);
+    return { message: 'Administrateur supprimé avec succès' };
+  }
+
 }

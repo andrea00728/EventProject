@@ -7,12 +7,12 @@ const AdminForm = ({ onAdd, onClose }) => {
   const { darkMode } = useDarkMode();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('Rédacteur');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name || !email || !role) return;
-    onAdd({ name, email, role });
+    if (!name || !email) return;
+
+    onAdd({ name, email });
   };
 
   const modalVariants = {

@@ -26,31 +26,37 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 
 // Component to handle map click events
+const customIcon = L.icon({
+  iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', // URL de l'image de l'icône
+  iconSize: [25, 41], // Taille de l'icône
+  iconAnchor: [12.5, 41], // Point d'ancrage de l'icône (la pointe)
+  popupAnchor: [0, -41], // Point d'ancrage du popup pour qu'il soit au-dessus de l'icône
+});
+
 const MapClickHandler = ({ setGeocodeResult, setGeocodeResultText }) => {
   const map = useMap();
-  const markerRef = useRef(null); // Référence pour stocker le marqueur actuel
+  const markerRef = useRef(null);
 
   useEffect(() => {
     const handleClick = async (e) => {
       const { lat, lng } = e.latlng;
 
-      // Supprimer l'ancien marqueur s'il existe
       if (markerRef.current) {
         map.removeLayer(markerRef.current);
       }
 
-      // Ajouter un nouveau marqueur
-      const marker = L.marker([lat, lng]).addTo(map)
+      // Utilisez l'icône personnalisée
+      const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map)
         .bindPopup(`Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)}`)
         .openPopup();
-      markerRef.current = marker; // Stocker le nouveau marqueur
+      markerRef.current = marker;
 
-      // Effectuer le géocodage inversé
       try {
         const response = await fetch(
           `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`
         );
         const data = await response.json();
+
         if (data.display_name) {
           setGeocodeResult({
             nom: data.display_name,
@@ -71,7 +77,6 @@ const MapClickHandler = ({ setGeocodeResult, setGeocodeResultText }) => {
 
     map.on("click", handleClick);
 
-    // Nettoyer l'événement et le marqueur au démontage
     return () => {
       map.off("click", handleClick);
       if (markerRef.current) {
@@ -606,7 +611,7 @@ const LocationSalle = () => {
                       ) : (
                         <div className="flex items-center min-w-0 w-full">
                           <MdRoom className={`mr-1 sm:mr-3 text-lg sm:text-xl flex-shrink-0 ${darkMode ? "text-blue-400" : "text-indigo-500"}`} />
-                          <h3 className={`text-base sm:text-lg font-medium truncate ${darkMode ? "text-gray-300" : "text-gray-800"}`} title={location.nom}>
+                          <h3 className={`text-base sm:text-lg font-medium ${darkMode ? "text-gray-300" : "text-gray-800"}`} title={location.nom}>
                             {location.nom}
                           </h3>
                           {location.salles && location.salles.length > 0 && (
@@ -1048,11 +1053,12 @@ const LocationSalle = () => {
                     center={geocodeResult ? [parseFloat(geocodeResult.latitude), parseFloat(geocodeResult.longitude)] : [48.8566, 2.3522]}
                     zoom={13}
                     style={{ height: '100%', width: '100%' }}
-                    className={darkMode ? 'leaflet-dark' : ''}
+                    // className={darkMode ? 'leaflet-dark' : ''}
                     ref={mapRef}
                   >
                     <TileLayer
-                      url={darkMode ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'}
+                      // url={darkMode ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'}
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
                     <MapClickHandler
@@ -1061,9 +1067,15 @@ const LocationSalle = () => {
                       setGeocodeResultText={setGeocodeResultText}
                     />
                     {geocodeResult && (
-                      <Marker position={[parseFloat(geocodeResult.latitude), parseFloat(geocodeResult.longitude)]}>
-                        <Popup>{geocodeResult.nom}</Popup>
-                      </Marker>
+                      <Marker 
+                      position={[parseFloat(geocodeResult.latitude), parseFloat(geocodeResult.longitude)]}
+                      icon={customIcon} // Ajoutez l'icône à ce marqueur
+                    >
+                      <Popup>{geocodeResult.nom}</Popup>
+                    </Marker>
+                      // <Marker position={[parseFloat(geocodeResult.latitude), parseFloat(geocodeResult.longitude)]}>
+                      //   <Popup>{geocodeResult.nom}</Popup>
+                      // </Marker>
                     )}
                   </MapContainer>
                 </div>

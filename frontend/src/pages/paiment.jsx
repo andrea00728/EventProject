@@ -31,7 +31,7 @@ const plans = {
   starter: {
     name: "Starter",
     icon: Clock,
-    price: "9.99€",
+    price: "10€",
     duration: "/mois",
     features: ["Toutes les fonctionnalités Freemium", "Support prioritaire"],
     buttonColor: "bg-blue-500 hover:bg-blue-600",
@@ -42,7 +42,7 @@ const plans = {
   pro: {
     name: "Pro",
     icon: Users,
-    price: "19.99€",
+    price: "25.99€",
     duration: "/mois",
     features: ["Toutes les fonctionnalités Starter", "Accès avancé", "Analyses détaillées"],
     buttonColor: "bg-green-500 hover:bg-green-600",
@@ -53,7 +53,7 @@ const plans = {
   premium: {
     name: "Premium",
     icon: Gift,
-    price: "29.99€",
+    price: "39.99€",
     duration: "/mois",
     features: ["Toutes les fonctionnalités Pro", "Outils premium", "Personnalisation"],
     buttonColor: "bg-purple-500 hover:bg-purple-600",
@@ -64,7 +64,7 @@ const plans = {
   gold: {
     name: "Gold",
     icon: Crown,
-    price: "49.99€",
+    price: "59.99€",
     duration: "/mois",
     features: ["Toutes les fonctionnalités Premium", "Support VIP", "Fonctionnalités exclusives"],
     buttonColor: "bg-yellow-500 hover:bg-yellow-600",
@@ -92,6 +92,34 @@ const PaymentPage = ({ forfait, onClose }) => {
   const [error, setError] = useState(null);
 
   const selectedPlanDetails = plans[selectedPlan];
+  
+  // Dans PaymentPage ou le composant qui gère l'achat
+const initiatePayment = async () => {
+  try {
+    // Récupérer le token JWT actuel
+    const token = getCookie('jwt'); // Fonction pour récupérer le cookie
+    
+    const response = await axiosClient.post('/forfait/upgrade', {
+      forfaitNom: forfait.nom,
+      token: token // Envoyer le token avec la requête
+    }, {
+      withCredentials: true
+    });
+
+    // Rediriger vers PayPal
+    window.location.href = response.data.url;
+  } catch (error) {
+    toast.error('Erreur lors du démarrage du paiement');
+  }
+};
+  
+// Fonction utilitaire pour récupérer les cookies
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+};
 
   const handlePayment = useCallback(async () => {
     if (!isAuthenticated) {
