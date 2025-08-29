@@ -21,77 +21,114 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
   const navigate = useNavigate();
   const { setUser, setIsAuthenticated } = useStateContext();
 
-  if (!isOpen) {
-    return null;
-  }
+  if (!isOpen) return null;
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-
     if (name === "photo" && files && files[0]) {
       const file = files[0];
-      setFormData((prev) => ({
-        ...prev,
-        [name]: file,
-      }));
+      setFormData((prev) => ({ ...prev, photo: file }));
 
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setPhotoPreview(e.target.result);
-      };
+      reader.onload = (e) => setPhotoPreview(e.target.result);
       reader.readAsDataURL(file);
     } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
+  const validateForm = () => {
+  if (isSignUp) {
+    if (!formData.name.trim()) {
+      return "Le nom est requis";
+    }
+    if (formData.name.length < 2) {
+      return "Le nom doit contenir au moins 2 caractères";
+    }
+  }
 
-  const handleSubmit = async (e) => {
+  if (!formData.email.includes('@')) {
+    return "Email invalide";
+  }
+
+  if (formData.password.length < 6) {
+    return "Le mot de passe doit contenir au moins 6 caractères";
+  }
+
+  return null;
+};
+ const handleSubmit = async (e) => {
   e.preventDefault();
   setError(null);
   setLoading(true);
 
+  console.log("Données envoyées:", {
+    isSignUp,
+    formData: {
+      ...formData,
+      photo: formData.photo ? formData.photo.name : 'Aucune photo'
+    }
+  });
+
   try {
     if (isSignUp) {
-      await registerUser(formData);
-      toast.success("Inscription réussie. Veuillez vous connecter.");
-      setIsSignUp(false);
+      // 🔹 Inscription
+      const result = await registerUser(formData);
+      
+      if (!result) throw new Error("Erreur lors de l'inscription");
+      
+      toast.success("Inscription réussie !");
+      
+      // 🔹 Connexion automatique après inscription
+      const loginResult = await loginUser({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (!loginResult?.user) throw new Error("Connexion automatique échouée");
+
+      setUser(loginResult.user);
+      setIsAuthenticated(true);
+      toast.success("Connexion automatique réussie ✅");
+      onClose();
+
+      // 🔥 REDIRECTION VERS PAGEPUBLIC APRÈS SUCCÈS
+      navigate("/pagepublic", { replace: true });
+      
     } else {
+      // 🔹 Connexion
       const result = await loginUser({
         email: formData.email,
         password: formData.password,
       });
 
-      if (!result.user) {
-        throw new Error("Utilisateur absent dans la réponse.");
-      }
+      if (!result?.user) throw new Error("Utilisateur non trouvé.");
 
       setUser(result.user);
       setIsAuthenticated(true);
-
-      // ✅ Fermer le modal après connexion
+      toast.success("Connexion réussie ✅");
       onClose();
 
-      // Redirection selon rôle / type
-      if (result.user.isInPersonnel) {
-        navigate("/choix-role", { replace: true });
-      } else if (result.user.role === "organisateur") {
-        navigate("/pagepublic", { replace: true });
-      } else {
-        navigate("/pagepublic", { replace: false });
-      }
-
-      toast.success("Connexion réussie !");
+      // 🔥 REDIRECTION VERS PAGEPUBLIC APRÈS SUCCÈS
+      navigate("/pagepublic", { replace: true });
     }
+
   } catch (err) {
-    setError(err.message || "Une erreur est survenue.");
+    console.error("❌ Auth error :", err);
+    
+    let errorMessage = "Une erreur est survenue.";
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    
+    setError(errorMessage);
+    toast.error(errorMessage);
+    
   } finally {
     setLoading(false);
   }
 };
-
 
   const removePhoto = () => {
     setPhotoPreview(null);
@@ -101,10 +138,13 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/60 backdrop-blur-sm">
       <div className="relative bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[95vh] overflow-hidden">
+        
+        {/* Bandeau gradient */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-400">
           <div className="h-full bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-pulse"></div>
         </div>
 
+        {/* Bouton fermer */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 z-10 shadow-lg hover:shadow-xl"
@@ -112,6 +152,7 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
           <X size={20} className="text-gray-600" />
         </button>
 
+        {/* Contenu */}
         <div className="overflow-y-auto max-h-[95vh] p-6 sm:p-8 pt-12">
           <div className="text-center mb-6">
             <div className="mb-3">
@@ -129,9 +170,11 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
             </p>
           </div>
 
-          <div className="space-y-4">
+          {/* FORMULAIRE */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
               <>
+                {/* Photo */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Photo de profil (optionnelle)
@@ -165,20 +208,19 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
                         htmlFor="photo-upload"
                         className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors group"
                       >
-                        <div className="flex flex-col items-center">
-                          <Camera
-                            className="text-gray-400 group-hover:text-gray-500 mb-1"
-                            size={24}
-                          />
-                          <p className="text-xs text-gray-500 group-hover:text-gray-600">
-                            Cliquez pour ajouter une photo
-                          </p>
-                        </div>
+                        <Camera
+                          className="text-gray-400 group-hover:text-gray-500 mb-1"
+                          size={24}
+                        />
+                        <p className="text-xs text-gray-500 group-hover:text-gray-600">
+                          Cliquez pour ajouter une photo
+                        </p>
                       </label>
                     </div>
                   )}
                 </div>
 
+                {/* Nom */}
                 <div className="relative">
                   <User
                     className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -197,6 +239,7 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
               </>
             )}
 
+            {/* Email */}
             <div className="relative">
               <Mail
                 className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -213,6 +256,7 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
               />
             </div>
 
+            {/* Password */}
             <div className="relative">
               <Lock
                 className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -236,15 +280,16 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
               </button>
             </div>
 
+            {/* Erreur */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
                 {error}
               </div>
             )}
 
+            {/* Submit */}
             <button
-              type="button"
-              onClick={handleSubmit}
+              type="submit"
               disabled={loading}
               className={`
                 w-full py-3 sm:py-4 px-6 rounded-xl font-semibold text-white text-base sm:text-lg
@@ -271,14 +316,17 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
                 )}
               </div>
             </button>
-            <div className="transform hover:-translate-y-2 transition-all duration-300 cursor-pointer">
-              <ButtonConnexion />
-            </div>
+          </form>
+
+          {/* Connexion Google */}
+          <div className="transform hover:-translate-y-2 transition-all duration-300 cursor-pointer mt-4">
+            <ButtonConnexion />
           </div>
 
+          {/* Bascule inscription/connexion */}
           <div className="text-center mt-5">
             <p className="text-gray-600 text-sm">
-              {isSignUp ? "Déjà membre de notre communauté ?" : "Première visite ?"}
+              {isSignUp ? "Déjà membre ?" : "Première visite ?"}
             </p>
             <button
               onClick={() => {

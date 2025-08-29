@@ -23,7 +23,6 @@ import { NotificationService } from 'src/services/notification/notification.serv
 import { ForfaitService } from 'src/services/forfait/forfait.service';
 @Controller('forfait')
 export class ForfaitController {
-  jwtService: any;
   constructor(
     private readonly paypalService: PaypalService,
     private readonly paypalWebhookService: PaypalWebhookService,
@@ -116,27 +115,13 @@ async redirectToFrontend(
 
 
   @Get('success-confirmation')
-async handleSuccess(
-  @Query('subscription_id') subscriptionId: string,
-  @Query('token') token: string, // Récupérer le token depuis l'URL
-  @Req() req: any,
-) {
-  try {
-    // Vérifier le token depuis l'URL si présent
-    let userId;
-    
-    if (token) {
-      // Décoder le token depuis l'URL
-      const decoded = this.jwtService.verify(token, {
-        secret: process.env.JWT_SECRET || 'your-secret-key',
-      });
-      userId = decoded.sub;
-    } else if (req.user?.sub) {
-      // Fallback sur l'utilisateur authentifié
-      userId = req.user.sub;
-    } else {
-      throw new UnauthorizedException('Utilisateur non authentifié');
-    }
+  @UseGuards(AuthGuard('jwt'))
+  async handleSuccess(
+    @Query('subscription_id') subscriptionId: string,
+    @Req() req: any,
+  ) {
+    const userId = req.user?.sub;
+    if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
 
     if (!subscriptionId) throw new BadRequestException('Subscription ID manquant');
 
@@ -151,29 +136,23 @@ async handleSuccess(
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new BadRequestException('Utilisateur introuvable');
 
-    // Mettre à jour le forfait
+    // Mettre à jour le forfait et la date d'expiration
     user.forfait = forfait;
     user.datedowngraded = null;
-    user.forfaitexpirationdate = addDays(new Date(), forfait.validationduration);
+    user.forfaitexpirationdate = addDays(new Date(), forfait.validationduration); // Ajouter la durée de validation
 
-    await this.userRepository.save(user);
-    
+    const success = await this.userRepository.save(user);
     await this.notificationService.notifyAll(
-      'Paiement accepté',
-      `Votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
-    );
+      'payement accepté',
+      `votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
+    )
 
-    return {
-      success: true,
-      message: `Paiement accepté, votre forfait ${forfait.nom} a été activé !`,
-      forfait: forfait.nom,
-      expirationDate: user.forfaitexpirationdate,
-    };
-  } catch (error) {
-    console.error('Erreur lors de la confirmation du succès:', error);
-    throw error;
+    return success;
+
+    // return {
+    //   message: `Paiement accepté, votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
+    // };
   }
-}
 
 
 

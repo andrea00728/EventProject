@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param, UseInterceptors, UploadedFile, BadRequestException, HttpStatus, UnauthorizedException, HttpCode } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Res, Body, Post, Delete, Param, UseInterceptors, UploadedFile, BadRequestException, HttpStatus, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-auth.dto';
@@ -11,7 +11,6 @@ import { extname } from 'path';
 import { User } from './entities/auth.entity';
 import { Request, Response } from 'express';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
-import * as jwt from 'jsonwebtoken';
 
 @Controller('auth')
 export class AuthController {
@@ -39,29 +38,16 @@ export class AuthController {
     return res.redirect(`http://localhost:5173/callback`);
   }
 
-@Post('login')
-@HttpCode(HttpStatus.OK)
-async login(@Body() body: any, @Res() res: Response) {
-  const { email, password } = body;
-  try {
-    const result = await this.authService.loginUser(email, password, res);
-    return res.json(result);
-  } catch (error) {
-    return res.status(400).json({ 
-      message: error.message || 'Email ou mot de passe invalide' 
-    });
-  }
-}
-
   @Post('logout')
-  async logout(@Res() res: Response) {
-    res.clearCookie('jwt', {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: false,
-    });
-
-    return res.json({ message: 'Déconnecté avec succès' });
+  async logout(@Req() req: Request, @Res() res: Response) {
+    try {
+      const result = await this.authService.logout(req, res);
+      return res.status(HttpStatus.OK).json(result);
+    } catch (error) {
+      return res.status(HttpStatus.UNAUTHORIZED).json({
+        message: error.message || 'Erreur lors de la déconnexion',
+      });
+    }
   }
 
   @UseGuards(JwtAuthGuard)
@@ -143,6 +129,12 @@ async login(@Body() body: any, @Res() res: Response) {
     return this.authService.registerUser({ ...body, photo: file?.filename || null });
   }
 
+  @Post('login')
+  async login(@Body() body: any, @Res({ passthrough: true }) res: Response) {
+    const { email, password } = body;
+    if (!email || !password) throw new BadRequestException('Email et mot de passe requis');
+    return this.authService.loginUser(email, password, res);
+  }
 
   @Get('validate-token')
   async validateToken(@Req() req: Request) {
@@ -152,26 +144,4 @@ async login(@Body() body: any, @Res() res: Response) {
     }
     return { valid: true };
   }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('update-profile')
-  @UseInterceptors(FileInterceptor('photo', { dest: './uploads' }))
-  async updateProfile(
-    @Req() req,
-    @UploadedFile() file: Express.Multer.File,
-    @Body() body: { name?: string }
-  ) {
-    const userId = req.user.sub;
-    return this.authService.updateProfile(userId, {
-      name: body.name,
-      photo: file?.filename, // tu sauvegardes le nom du fichier
-    });
-  }
-
-
-
-
- //Login user manuel
-  //Login user manuel
-
 }

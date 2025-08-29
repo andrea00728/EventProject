@@ -5,11 +5,11 @@ import { AuthGuard } from '@nestjs/passport';
 export class JwtAuthGuard extends AuthGuard('jwt') {
   getRequest(context: ExecutionContext) {
     const req = context.switchToHttp().getRequest();
-    
+
     if (!req.headers.authorization && req.cookies?.jwt) {
       req.headers.authorization = `Bearer ${req.cookies.jwt}`;
     }
-    
+
     return req;
   }
 }

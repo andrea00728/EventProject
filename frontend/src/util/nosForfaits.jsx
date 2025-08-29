@@ -73,46 +73,15 @@ export default function NosForfaits() {
     };
     fetchUserForfait();
   }, [isAuthenticated, navigate]);
-  
-const checkAndRefreshSession = async () => {
-  try {
-    const response = await axiosClient.get('/auth/status', {
-      withCredentials: true
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Session expirée, tentative de rafraîchissement...');
-    try {
-      await axiosClient.post('/auth/refresh', {}, {
-        withCredentials: true
-      });
-      const retryResponse = await axiosClient.get('/auth/status', {
-        withCredentials: true
-      });
-      return retryResponse.data;
-    } catch (refreshError) {
-      throw new Error('Session expirée, veuillez vous reconnecter');
+
+  const handleAcheter = (forfait) => {
+    if (!isAuthenticated) {
+      setModalOpen(true);
+      return;
     }
-  }
-};
-
-const handleAcheter = async (forfait) => {
-  if (!isAuthenticated) {
-    setModalOpen(true);
-    return;
-  }
-
-  try {
-    // Vérifier et rafraîchir la session avant l'achat
-    await checkAndRefreshSession();
-    
     setSelectedForfait(forfait);
     setIsOpenPaiement(true);
-  } catch (error) {
-    toast.error('Session expirée, veuillez vous reconnecter');
-    setModalOpen(true);
-  }
-};
+  };
 
   const handleClosePayment = () => {
     setIsOpenPaiement(false);
