@@ -1038,7 +1038,7 @@ const menuItems = [
               e.currentTarget.src = getGravatarUrl(null, { size: 80 });
             }}
           />
-          <div>
+          <div className="min-w-0">
             <p className="font-medium">{getUserDisplayName(user)}</p>
             <p className="truncate text-xs">{user?.email || "aucun email"}</p>
           </div>

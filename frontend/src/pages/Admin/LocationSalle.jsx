@@ -1068,11 +1068,11 @@ const LocationSalle = () => {
                     />
                     {geocodeResult && (
                       <Marker 
-                        position={[parseFloat(geocodeResult.latitude), parseFloat(geocodeResult.longitude)]}
-                        icon={customIcon} // Ajoutez l'icône à ce marqueur
-                      >
-                        <Popup>{geocodeResult.nom}</Popup>
-                      </Marker>
+                      position={[parseFloat(geocodeResult.latitude), parseFloat(geocodeResult.longitude)]}
+                      icon={customIcon} // Ajoutez l'icône à ce marqueur
+                    >
+                      <Popup>{geocodeResult.nom}</Popup>
+                    </Marker>
                       // <Marker position={[parseFloat(geocodeResult.latitude), parseFloat(geocodeResult.longitude)]}>
                       //   <Popup>{geocodeResult.nom}</Popup>
                       // </Marker>
