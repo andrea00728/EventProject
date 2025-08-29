@@ -611,7 +611,7 @@ const LocationSalle = () => {
                       ) : (
                         <div className="flex items-center min-w-0 w-full">
                           <MdRoom className={`mr-1 sm:mr-3 text-lg sm:text-xl flex-shrink-0 ${darkMode ? "text-blue-400" : "text-indigo-500"}`} />
-                          <h3 className={`text-base sm:text-lg font-medium truncate ${darkMode ? "text-gray-300" : "text-gray-800"}`} title={location.nom}>
+                          <h3 className={`text-base sm:text-lg font-medium ${darkMode ? "text-gray-300" : "text-gray-800"}`} title={location.nom}>
                             {location.nom}
                           </h3>
                           {location.salles && location.salles.length > 0 && (
