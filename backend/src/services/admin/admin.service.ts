@@ -38,6 +38,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
   if (!isPasswordValid) throw new UnauthorizedException('Mot de passe incorrect');
 
   adminUser.lastLogin = new Date();
+  adminUser.isOnline = true;
   await this.userRepository.save(adminUser);
 
   // Payload JWT
@@ -111,6 +112,10 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
 
         await this.userRepository.save(adminUser);
       }
+
+      adminUser.lastLogin = new Date();
+      adminUser.isOnline = true;
+      await this.userRepository.save(adminUser);
 
       // Générer les tokens JWT
       const payload = {
