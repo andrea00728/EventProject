@@ -89,20 +89,20 @@ export default function PublicLayout() {
     }
   }, [forfait, isAuthenticated]);
 
+  const roles = ["caissier", "cuisinier", "accueil"];
 
   useEffect(() => {
-  if (isAuthenticated) {
-    console.log("Token:", isAuthenticated, "User:", user, "Role:", role); // Debug log
-    if (user?.role !== "organisateur") {
-      navigate("/choix-role", { replace: true });
-    } else {
-      navigate("/pagepublic", { replace: true });
+    if (isAuthenticated) {
+      // console.log("Token:", isAuthenticated, "User:", user, "Role:", role); // Debug log
+      if (roles.includes(user?.role)) {
+        navigate("/choix-role", { replace: true });
+      } else if (!roles.includes(user?.role) && user?.role !== "organisateur") {
+        navigate("/AdminAccueil", { replace: true });
+      } else {
+        navigate("/pagepublic", { replace: true });
+      }
     }
-  }
-}, [isAuthenticated, user, role, navigate]);
-
-
-
+  }, [isAuthenticated, user, role, navigate]);
 
   // Le reste du code...
   const subMenuVariants = {

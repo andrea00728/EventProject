@@ -17,16 +17,29 @@ export class AdminController {
     // redirige vers Google
   }
 
-  @Get('google/callback')
-  @UseGuards(AuthGuard('google-admin'))
-  async googleAuthRedirect(@Req() req, @Res() res: Response) {
+@Get('google/callback')
+@UseGuards(AuthGuard('google-admin'))
+async googleAuthRedirect(@Req() req, @Res() res: Response) {
+  try {
     const user = req.user;
+    if (!user) throw new Error('Utilisateur Google non trouvé');
 
     await this.adminService.loginWithGoogleOAuth(user, res);
-    // on met le token dans un cookie
+
+    // Redirection en cas de succès
     const redirectUrl = `http://localhost:5173/AdminAccueil`;
     return res.redirect(redirectUrl);
+
+  } catch (error) {
+    console.error("Erreur Google OAuth :", error.message);
+
+    // Encoder le message d'erreur pour l'URL
+    const errorMsg = encodeURIComponent(error.message || 'Erreur lors de la connexion Google');
+    const redirectUrl = `http://localhost:5173/login-site/super/admin?error=${errorMsg}`;
+    return res.redirect(redirectUrl);
   }
+}
+
 
   @Post('logout')
   async logout(@Req() req: Request, @Res() res: Response) {
@@ -40,17 +53,14 @@ export class AdminController {
     }
   }
 
-  @UseGuards(AuthGuard('jwt')) // Protégé par JWT
   @Post('update-password')
+  @UseGuards(AuthGuard('jwt'))
   async updatePassword(
-    @Req() req,
-    @Body() body: { newPassword: string },
+    @Body() body: { adminId?: string; newPassword: string },
+    @Req() req
   ) {
-    const adminId = req.user.id; // ID de l’utilisateur récupéré depuis le JWT
-    return this.adminService.updatePassword(
-      adminId,
-      body.newPassword,
-    );
+    const adminId = body.adminId || req.user.id; // Si adminId fourni, sinon user courant
+    return this.adminService.updatePassword(adminId, body.newPassword);
   }
 
   @Post('login-email')
@@ -64,9 +74,9 @@ export class AdminController {
 
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('has-password')
-  async checkHasPassword(@Req() req: any) {
-    const adminId = req.user.id; // récupéré depuis le token JWT
+  @Get('has-password/:id')
+  async checkHasPassword(@Req() req: any, @Param('id') id: string) {
+    const adminId = req.user.id || id; // récupéré depuis le token JWT
     return this.adminService.hasPassword(adminId);
   }
 
