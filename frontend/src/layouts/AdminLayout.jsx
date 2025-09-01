@@ -637,7 +637,6 @@ const menuItems = [
           });
 
           socket.on("notificationMessageAdmin", (value) => {
-            console.log("nana ", value);
             const formatted1 = data.map((msg) => ({
               ...msg,
               from: `${msg.firstName} ${msg.lastName}`,
@@ -650,7 +649,7 @@ const menuItems = [
               text: msg.message,
               read: msg.isRead || false, // ou msg.read si tu ajoutes ce champ dans la DB
             }));
-            setMessages([...formatted1, ...formatted2]);
+            setMessages([...formatted2, ...formatted1]);
           });
         } catch (error) {
           console.error("Erreur de connexion au socket :", error);
@@ -992,7 +991,8 @@ const menuItems = [
                 {/* Avatar = photo basée sur l'email (Gravatar) */}
                 <div className="relative">
                   <img
-                    src={getGravatarUrl(user?.email, { size: 96 })}
+                    //src={getGravatarUrl(user?.email, { size: 96 })}
+                    src={user?.photo}
                     alt="User avatar"
                     className="w-10 h-10 rounded-full object-cover"
                     onError={(e) => {
@@ -1029,7 +1029,8 @@ const menuItems = [
                       }`}
                     >
                       <img
-                        src={getGravatarUrl(user?.email, { size: 80 })}
+                        // src={getGravatarUrl(user?.email, { size: 80 })}
+                        src={user?.photo}
                         alt="User avatar"
                         className="w-8 h-8 rounded-full object-cover"
                         onError={(e) => {

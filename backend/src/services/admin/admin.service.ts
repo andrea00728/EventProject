@@ -84,7 +84,9 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
     try {
       const email = user.email;
       const displayName = user.displayName || 'Admin';
-      const photoURL = user.photos?.[0]?.value || null;
+      const photoURL = user.photo || null;
+
+      console.log("Photo dans Url", photoURL);
 
       // Chercher l'admin existant
       let adminUser = await this.userRepository.findOne({
@@ -104,7 +106,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
           id: uuidv4(),
           email,
           name: displayName,
-          photo: photoURL,
+          photoEmail: photoURL || null,
           role: 'super_admin',
           isOnline: true,
           lastLogin: new Date(),
@@ -123,7 +125,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
         email: adminUser.email,
         role: adminUser.role,
         name: adminUser.name,
-        photo: adminUser.photo,
+        photo: adminUser.photo || adminUser.photoEmail,
       };
 
       const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
@@ -149,7 +151,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
           id: adminUser.id,
           email: adminUser.email,
           name: adminUser.name,
-          photo: adminUser.photo,
+          photo: adminUser.photo || adminUser.photoEmail,
           role: adminUser.role,
         },
       };
