@@ -21,7 +21,7 @@ const QrScannerComponent = () => {
       return null;
     }
   };
-
+//ito annn 
   const stopScanner = () => {
     scannerRef.current?.stop();
     scannerRef.current = null;

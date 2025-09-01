@@ -30,7 +30,7 @@ const textColorMap = {
   GOLD: "text-yellow-500",
 };
 
-// Fonction pour déterminer la durée basée sur validationduration
+// Fonction pour déterminer la durée basée sur validationduration ito ko  mbola izy aan 
 const getDurationText = (validationDuration) => {
   if (validationDuration === 30) return "1 mois";
   if (validationDuration === 180) return "6 mois";

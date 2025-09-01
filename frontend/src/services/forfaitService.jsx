@@ -40,7 +40,7 @@ export async function getUserForfait() {
     if (error.response?.status === 401) {
       return null;
     }
-
+//
     // Autres erreurs → on log et throw
     console.error("Erreur lors de la récupération du forfait actif", error);
     throw new Error("Erreur lors de la récupération du forfait actif");
@@ -48,7 +48,7 @@ export async function getUserForfait() {
 }
 
 export const getSumForUsersForfait = async (/*token*/) => {
-  // if (!token) throw new Error('Utilisateur non authentifié');
+
   try {
     const response = await axiosClient.get('/forfait/sumAllUsers', /*{
       headers: {
@@ -61,7 +61,7 @@ export const getSumForUsersForfait = async (/*token*/) => {
     throw new Error('Erreur lors de la récupération de la somme des forfaits', { cause: error });
   }
 }
-
+/**ito ann */
 export const getLastTransactions = async (/*token*/) => {
   // if (!token) throw new Error('Utilisateur non authentifié');
   try {

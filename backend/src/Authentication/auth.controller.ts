@@ -30,7 +30,7 @@ export class AuthController {
   async createUser(@Body() dto: CreateUserDto) {
     return this.authService.createUser(dto);
   }
-
+//ito ann
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res) {
