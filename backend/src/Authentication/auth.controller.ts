@@ -15,7 +15,7 @@ import { JwtPayload } from 'src/interfaces/auth.interface';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Get('/count-users')
   async findCountUsers(): Promise<number> {
@@ -83,20 +83,10 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('status')
-  async getAuthStatus(@Req() req: Request & { user: JwtPayload }) {
-    // Récupérer les infos depuis la DB via le service
-    const user = await this.authService.getStatus(req.user.sub);
-
-    // Fusionner les données du JWT et celles de la DB
+  async getAuthStatus(@Req() req) {
     return {
       isAuthenticated: true,
-      user: {
-        id: user.id,
-        name: user.name || req.user.name,
-        email: user.email || req.user.email,
-        role: user.role || req.user.role,
-        photo: user.photo || req.user.photo,
-      },
+      user: req.user,
     };
   }
 
@@ -155,7 +145,7 @@ export class AuthController {
   @Post('register')
   @UseInterceptors(FileInterceptor('photo', {
     storage: diskStorage({
-      destination: './Uploads',
+      destination: './uploads',
       filename: (req, file, callback) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const ext = extname(file.originalname);

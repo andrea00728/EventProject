@@ -6,69 +6,52 @@ import axiosClient from "../api/axios-client";
 import { useNavigate } from "react-router-dom";
 import md5 from "blueimp-md5";
 
-// ---------- Helpers photo ----------
+// ---------- Helpers ----------
 const isDataUrl = (v) => typeof v === "string" && v.startsWith("data:");
 const isHttpUrl = (v) => typeof v === "string" && /^https?:\/\//i.test(v);
 const isLikelyBase64 = (v) =>
-  typeof v === "string" &&
-  /^[A-Za-z0-9+/]+={0,2}$/.test(v) &&
-  v.length % 4 === 0;
+  typeof v === "string" && /^[A-Za-z0-9+/]+={0,2}$/.test(v) && v.length % 4 === 0;
 
-  const gravatarUrl = (email) => {
-    if (!email) return "https://via.placeholder.com/150";
-    const hash = md5(email.trim().toLowerCase());
-    return `https://www.gravatar.com/avatar/${hash}?d=mp&s=150`;
-  };
-
-/**
- * Résout la meilleure source d'image à afficher
- * Ordre: previewImage (si l'utilisateur vient d'en choisir une)
- *        user.photo (data:, base64, http, ou chemin backend)
- *        gravatar(email)
- *        placeholder
- */
 const resolvePhotoSrc = (photo, email, previewImage) => {
   const placeholder = "https://via.placeholder.com/150";
-
-  // 1) Si l'utilisateur vient de choisir une image, on l'affiche
   if (previewImage) return previewImage;
-
-  // 2) Photo depuis le backend / store
   if (photo && typeof photo === "string") {
     if (isDataUrl(photo)) return photo;
     if (isLikelyBase64(photo)) return `data:image/jpeg;base64,${photo}`;
     if (isHttpUrl(photo)) return photo;
-
-    // Chemin relatif renvoyé par le backend (ex: "/uploads/xxx.jpg")
-    const base =
-      import.meta?.env?.VITE_API_BASE_URL?.replace(/\/$/, "") ||
-      "http://localhost:3000";
+    const base = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "http://localhost:3000";
     const path = photo.startsWith("/") ? photo : `/${photo}`;
     return `${base}${path}`;
   }
-
-  // 3) Gravatar basé sur l'email
-  const grav = gravatarUrl(email);
-  if (grav) return grav;
-
-  // 4) Fallback final
+  if (email) {
+    const hash = md5(email.trim().toLowerCase());
+    return `https://www.gravatar.com/avatar/${hash}?d=mp&s=150`;
+  }
   return placeholder;
 };
 
-
+// ---------- Framer Motion Variants ----------
+const backdropVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.3 } } };
+const modalVariants = {
+  hidden: { opacity: 0, scale: 0.95, y: 20 },
+  visible: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", damping: 20, stiffness: 300 } },
+  exit: { opacity: 0, scale: 0.95, y: 20, transition: { duration: 0.2 } },
+};
+const buttonVariants = { hover: { scale: 1.05 }, tap: { scale: 0.95 } };
 
 export default function Profil() {
-  const { user, setUser, isLoading, handleLogout, updateToken } = useStateContext(); // Ajout : updateToken
+  const { user, setUser, isLoading, handleLogout, setToken } = useStateContext();
   const navigate = useNavigate();
 
   const [userName, setUserName] = useState("Utilisateur");
   const [userEmail, setUserEmail] = useState("email@example.com");
-  const [userPhoto, setUserPhoto] = useState("/default-avatar.png"); // Modification : Image par défaut locale
-  const [openEditProfil, setOpenEditProfil] = useState(false);
+  const [userPhoto, setUserPhoto] = useState("/default-avatar.png");
+  const [previewImage, setPreviewImage] = useState("/default-avatar.png");
+
   const [isOpenProfil, setIsOpenProfil] = useState(false);
+  const [openEditProfil, setOpenEditProfil] = useState(false);
   const [confirmLogOut, setConfirmLogOut] = useState(false);
 
-  // États pour l'édition du profil
   const [editFormData, setEditFormData] = useState({
     name: "",
     email: "",
@@ -77,41 +60,51 @@ export default function Profil() {
     newPassword: "",
     confirmPassword: "",
   });
-
-  const [previewImage, setPreviewImage] = useState("/default-avatar.png"); // Modification : Image par défaut locale
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
 
-  useEffect(() => {
-    if (!user) return;
+  // ---------- Sync user data ----------
+  // ---------- Sync user data ----------
+useEffect(() => {
+  if (!user) return;
 
-    const photoUrl = user.photo || "/default-avatar.png";
+  const photoUrl = resolvePhotoSrc(
+    user.photo,
+    user.email,
+    localStorage.getItem("userPhoto")
+  );
 
-    setUserName(user.name || "");
-    setUserEmail(user.email || "");
-    setUserPhoto(photoUrl);
-    setPreviewImage(photoUrl);
+  // Sauvegarde locale du nom complet et de la photo
+  if (user.name) {
+    localStorage.setItem("userFullName", user.name);
+  }
+  if (photoUrl) {
+    localStorage.setItem("userPhoto", photoUrl);
+  }
 
-    setEditFormData({
-      name: user.name || "",
-      email: user.email || "",
-      photo: null, // on reset l’upload à chaque fois
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-  }, [user]);
+  setUserName(user.name || "");
+  setUserEmail(user.email || "");
+  setUserPhoto(photoUrl);
+  setPreviewImage(photoUrl);
+
+  setEditFormData({
+    name: user.name || "",
+    email: user.email || "",
+    photo: null,
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+}, [user]);
 
 
   if (isLoading) return <p className="text-center text-gray-600">Chargement...</p>;
 
+  // ---------- Handlers ----------
   const handleConfirmLogOut = async () => {
-    try {
-      await axiosClient.post("/auth/logout");
-    } catch (error) {
-      console.error("Erreur lors de la déconnexion :", error);
-    } finally {
+    try { await axiosClient.post("/auth/logout"); } 
+    finally {
       handleLogout();
       setConfirmLogOut(false);
       navigate("/pagepublic", { replace: true });
@@ -120,74 +113,34 @@ export default function Profil() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setEditFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
+    setEditFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handlePhotoChange = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors((prev) => ({
-        ...prev,
-        photo: "La taille de l'image ne doit pas dépasser 5MB",
-      }));
-      return;
-    }
+    const file = e.target.files[0];
+    if (!file) return setPreviewImage(null);
 
-    if (!file.type.startsWith("image/")) {
-      setErrors((prev) => ({
-        ...prev,
-        photo: "Veuillez sélectionner une image valide",
-      }));
-      return;
-    }
+    if (file.size > 5 * 1024 * 1024) return setErrors({ ...errors, photo: "La taille de l'image ne doit pas dépasser 5MB" });
+    if (!file.type.startsWith("image/")) return setErrors({ ...errors, photo: "Veuillez sélectionner une image valide" });
 
-    setEditFormData((prev) => ({
-      ...prev,
-      photo: file,
-    }));
+    setEditFormData((prev) => ({ ...prev, photo: file }));
 
     const reader = new FileReader();
     reader.onload = (ev) => {
-      setPreviewImage(ev.target.result); // data URL → prend la priorité
+      setPreviewImage(ev.target.result);
+      localStorage.setItem("userPhoto", ev.target.result); // Stockage temporaire
     };
     reader.readAsDataURL(file);
 
-    if (errors.photo) {
-      setErrors((prev) => ({
-        ...prev,
-        photo: "",
-      }));
-    }
-  } else {
-    setPreviewImage(null); // ✅ Reset si pas de fichier
-  }
-};
-
+    if (errors.photo) setErrors((prev) => ({ ...prev, photo: "" }));
+  };
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!editFormData.name.trim()) {
-      newErrors.name = "Le nom est requis";
-    }
-
-    if (!editFormData.email.trim()) {
-      newErrors.email = "L'email est requis";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editFormData.email)) {
-      newErrors.email = "Veuillez entrer un email valide";
-    }
-
+    if (!editFormData.name.trim()) newErrors.name = "Le nom est requis";
+    if (!editFormData.email.trim()) newErrors.email = "L'email est requis";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editFormData.email)) newErrors.email = "Veuillez entrer un email valide";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -202,207 +155,118 @@ export default function Profil() {
 
     try {
       const formData = new FormData();
-      formData.append("name", editFormData.name);
       formData.append("email", editFormData.email);
-
-      if (editFormData.photo) {
-        formData.append("photo", editFormData.photo);
-      }
-
+      if (editFormData.photo) formData.append("photo", editFormData.photo);
+      if (editFormData.name) formData.append("name", editFormData.name);
       if (editFormData.newPassword) {
         formData.append("current_password", editFormData.currentPassword);
         formData.append("new_password", editFormData.newPassword);
-        formData.append("new_password_confirmation", editFormData.confirmPassword);
+        formData.append(
+          "new_password_confirmation",
+          editFormData.confirmPassword
+        );
       }
 
-      // Exemple dans ton frontend, après avoir fait appel à updateProfile
-      const response = await axiosClient.post("/auth/update-profile", formData);
+      const response = await axiosClient.post(
+        "/auth/update-profile",
+        formData,
+        { withCredentials: true }
+      );
 
-      if (response.data.token) {
-        localStorage.setItem("jwt", response.data.token);
-      }
-      console.log("Réponse du backend (/auth/update-profile):", response.data);
-      console.log("Utilisateur mis à jour:", {
-        id: response.data.user?.id,
-        name: response.data.user?.name,
-        email: response.data.user?.email,
-        photo: response.data.user?.photo,
-      });
-
-      // Mettre à jour l'utilisateur et le token dans le contexte
       const updatedUser = response.data.user;
-      const newToken = response.data.token; // Ajout : Récupérer le nouveau token
       setUser(updatedUser);
-      if (newToken) {
-        updateToken(newToken); // Ajout : Mettre à jour le token
-      }
 
-      const newPhotoUrl = updatedUser.photo || "/default-avatar.png"; // Modification : Image par défaut locale
-      console.log("Nouvelle URL de l'image:", newPhotoUrl);
+      if (response.data.token) setToken(response.data.token);
+
+      // 🔹 Générer la nouvelle photo
+      const newPhotoUrl = resolvePhotoSrc(
+        updatedUser.photo,
+        updatedUser.name,
+        updatedUser.email
+      );
       setUserPhoto(newPhotoUrl);
       setPreviewImage(newPhotoUrl);
 
+      // 🔹 Mettre à jour le localStorage
+      if (updatedUser.name) {
+        localStorage.setItem("userName", updatedUser.name);
+      }
+      if (newPhotoUrl) {
+        localStorage.setItem("userPhoto", newPhotoUrl);
+      }
+
       setSuccessMessage("Profil mis à jour avec succès !");
-      setEditFormData((prev) => ({
-        ...prev,
+      setEditFormData({
+        ...editFormData,
         photo: null,
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
-      }));
+      });
 
       setTimeout(() => {
         setSuccessMessage("");
         setOpenEditProfil(false);
       }, 2000);
     } catch (error) {
-      console.error("Erreur lors de la mise à jour:", error);
-      console.error("Détails de l'erreur:", {
-        status: error.response?.status,
-        data: error.response?.data,
-      });
       if (error.response?.data?.errors) {
         setErrors(error.response.data.errors);
       } else if (error.response?.data?.message) {
         setErrors({ general: error.response.data.message });
       } else {
-        setErrors({ general: "Une erreur est survenue lors de la mise à jour" });
+        setErrors({
+          general: "Une erreur est survenue lors de la mise à jour",
+        });
       }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const backdropVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.3 } },
-  };
 
-  const modalVariants = {
-    hidden: { opacity: 0, scale: 0.95, y: 20 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: { type: "spring", damping: 20, stiffness: 300 },
-    },
-    exit: { opacity: 0, scale: 0.95, y: 20, transition: { duration: 0.2 } },
-  };
-
-  const buttonVariants = {
-    hover: { scale: 1.05 },
-    tap: { scale: 0.95 },
-  };
-
-  // Image à afficher partout (avatar + modale)
-  const displayPhoto = resolvePhotoSrc(user?.photo, user?.email, previewImage);
-
+  // ---------- Render ----------
   return (
     <>
-      {/* Avatar cliquable */}
-      <motion.div
-        className="flex items-center gap-2 cursor-pointer"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpenProfil(true)}
-      >
-        <img
-          src={userPhoto}
-          alt="Photo de profil"
-          key={userPhoto}
-          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-gray-200"
-          onError={() => console.log("Erreur de chargement de l'image (avatar):", userPhoto)}
-        />
+      {/* Avatar */}
+      <motion.div className="flex items-center gap-2 cursor-pointer" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setIsOpenProfil(true)}>
+        <img src={userPhoto} alt="Photo de profil" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-gray-200" />
       </motion.div>
 
+      {/* Profil Modal */}
       <AnimatePresence>
         {isOpenProfil && (
-          <motion.div
-            className="fixed top-15 inset-0 z-50 flex items-start justify-end p-4 sm:p-6"
-            variants={backdropVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            onClick={() => setIsOpenProfil(false)}
-          >
-            <motion.div
-              className="relative bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100/20 w-full max-w-xs sm:max-w-sm p-6"
-              variants={modalVariants}
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-labelledby="profil-title"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-purple-50/30 rounded-2xl" />
-              <motion.button
-                className="absolute top-3 right-3 p-1.5 bg-gray-100/80 rounded-full text-gray-500 hover:bg-gray-200 transition-colors cursor-pointer"
-                onClick={() => setIsOpenProfil(false)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                aria-label="Fermer le menu"
-              >
+          <motion.div className="fixed top-15 inset-0 z-50 flex items-start justify-end p-4 sm:p-6" variants={backdropVariants} initial="hidden" animate="visible" exit="hidden" onClick={() => setIsOpenProfil(false)}>
+            <motion.div className="relative bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100/20 w-full max-w-xs sm:max-w-sm p-6" variants={modalVariants} onClick={(e) => e.stopPropagation()}>
+              {/* Close button */}
+              <motion.button className="absolute top-3 right-3 p-1.5 bg-gray-100/80 rounded-full" onClick={() => setIsOpenProfil(false)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                 <X size={18} />
               </motion.button>
 
               <div className="relative z-10 flex flex-col items-center">
                 <div className="relative group mb-6">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-md opacity-30 group-hover:opacity-50 transition-opacity" />
                   <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-r from-blue-400 to-purple-500">
-                    <img
-                      src={userPhoto}
-                      alt="Photo de profil"
-                      key={userPhoto}
-                      className="w-full h-full rounded-full object-cover border-2 border-white"
-                      onError={() => console.log("Erreur de chargement de l'image (modale):", userPhoto)}
-                    />
+                    <img src={userPhoto} alt="Photo de profil" className="w-full h-full rounded-full object-cover border-2 border-white" />
                   </div>
-                  <motion.button
-                    className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-100 group-hover:bg-blue-50 transition-colors"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setOpenEditProfil(true)}
-                    aria-label="Modifier la photo de profil"
-                  >
+                  <motion.button className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-100" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setOpenEditProfil(true)}>
                     <Camera size={16} className="text-gray-600" />
                   </motion.button>
                 </div>
 
                 <div className="text-center mb-6">
-                  <h2 id="profil-title" className="text-xl sm:text-2xl font-bold text-gray-800 break-words">
-                    {userName}
-                  </h2>
-                  <p className="text-gray-600 text-sm flex items-center justify-center gap-2 mt-2">
-                    <Mail size={16} />
-                    <span className="truncate max-w-[200px]">{userEmail}</span>
-                  </p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 break-words">{userName}</h2>
+                  <p className="text-gray-600 text-sm flex items-center justify-center gap-2 mt-2"><Mail size={16} />{userEmail}</p>
                   <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    En ligne
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />En ligne
                   </div>
                 </div>
 
                 <div className="w-full space-y-3">
-                  <motion.button
-                    className="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-semibold hover:shadow-md transition-all"
-                    onClick={() => setOpenEditProfil(true)}
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                    aria-label="Éditer le profil"
-                  >
-                    <User size={18} />
-                    Éditer mon profil
+                  <motion.button className="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-semibold" onClick={() => setOpenEditProfil(true)} variants={buttonVariants} whileHover="hover" whileTap="tap">
+                    <User size={18} />Éditer mon profil
                   </motion.button>
 
-                  <motion.button
-                    className="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg font-semibold hover:shadow-md transition-all"
-                    onClick={() => setConfirmLogOut(true)}
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                    aria-label="Se déconnecter"
-                  >
-                    <LogOut size={18} />
-                    Déconnexion
+                  <motion.button className="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg font-semibold" onClick={() => setConfirmLogOut(true)} variants={buttonVariants} whileHover="hover" whileTap="tap">
+                    <LogOut size={18} />Déconnexion
                   </motion.button>
                 </div>
               </div>
@@ -411,141 +275,50 @@ export default function Profil() {
         )}
       </AnimatePresence>
 
+      {/* Edit Profil Modal */}
       <AnimatePresence>
         {openEditProfil && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center h-screen bg-black/30 backdrop-blur-xs p-2"
-            variants={backdropVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            onClick={() => setOpenEditProfil(false)}
-          >
-            <motion.div
-              className="bg-white rounded-2xl shadow-xl border border-gray-100/20 w-full max-w-md mx-auto my-8"
-              variants={modalVariants}
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-labelledby="edit-profile-title"
-            >
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center h-screen bg-black/30 backdrop-blur-xs p-2" variants={backdropVariants} initial="hidden" animate="visible" exit="hidden" onClick={() => setOpenEditProfil(false)}>
+            <motion.div className="bg-white rounded-2xl shadow-xl border border-gray-100/20 w-full max-w-md mx-auto my-8" variants={modalVariants} onClick={(e) => e.stopPropagation()}>
               <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-4 text-white rounded-t-2xl relative">
-                <motion.button
-                  className="absolute top-3 right-3 p-1.5 hover:bg-white/20 rounded-full transition-colors"
-                  onClick={() => setOpenEditProfil(false)}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  aria-label="Fermer la modale"
-                >
-                  <X size={18} />
-                </motion.button>
+                <motion.button className="absolute top-3 right-3 p-1.5" onClick={() => setOpenEditProfil(false)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}><X size={18} /></motion.button>
                 <div className="flex items-center justify-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-full">
-                    <User size={20} />
-                  </div>
-                  <h2 id="edit-profile-title" className="text-lg font-bold">
-                    Éditer mon profil
-                  </h2>
+                  <div className="p-2 bg-white/20 rounded-full"><User size={20} /></div>
+                  <h2 className="text-lg font-bold">Éditer mon profil</h2>
                 </div>
               </div>
 
               <form onSubmit={handleSubmitEdit} className="p-6 space-y-4">
-                {errors.general && (
-                  <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">
-                    {errors.general}
-                  </div>
-                )}
-                {successMessage && (
-                  <div className="p-3 bg-green-100 border border-green-300 text-green-700 rounded-lg text-sm">
-                    {successMessage}
-                  </div>
-                )}
+                {errors.general && <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">{errors.general}</div>}
+                {successMessage && <div className="p-3 bg-green-100 border border-green-300 text-green-700 rounded-lg text-sm">{successMessage}</div>}
 
                 <div className="flex flex-col items-center space-y-4">
                   <div className="relative">
-                    <img
-                      src={previewImage || "/default-avatar.png"} // Modification : Image par défaut locale
-                      alt="Aperçu de la photo"
-                      key={previewImage}
-                      className="w-20 h-20 rounded-full object-cover border-4 border-gray-200"
-                      onError={() => console.log("Erreur de chargement de l'image (édition):", previewImage)}
-                    />
+                    <img src={previewImage || "/default-avatar.png"} alt="Aperçu" className="w-20 h-20 rounded-full object-cover border-4 border-gray-200" />
                     <label className="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 rounded-full shadow-md flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors">
                       <Upload size={16} className="text-white" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoChange}
-                        className="hidden"
-                      />
+                      <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
                     </label>
                   </div>
                   {errors.photo && <p className="text-red-500 text-xs">{errors.photo}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom complet
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={editFormData.name}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.name ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="Entrez votre nom"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nom complet</label>
+                  <input type="text" name="name" value={editFormData.name} onChange={handleInputChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.name ? 'border-red-300' : 'border-gray-300'}`} placeholder="Entrez votre nom" />
                   {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Adresse email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={editFormData.email}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.email ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="Entrez votre email"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Adresse email</label>
+                  <input type="email" name="email" value={editFormData.email} onChange={handleInputChange} className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.email ? 'border-red-300' : 'border-gray-300'}`} placeholder="Entrez votre email" />
                   {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">
-                  <motion.button
-                    type="button"
-                    onClick={() => setOpenEditProfil(false)}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                  >
-                    Annuler
-                  </motion.button>
-                  <motion.button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-medium hover:shadow-md transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Enregistrement...
-                      </>
-                    ) : (
-                      <>
-                        <Save size={16} />
-                        Enregistrer
-                      </>
-                    )}
+                  <motion.button type="button" onClick={() => setOpenEditProfil(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium" variants={buttonVariants} whileHover="hover" whileTap="tap">Annuler</motion.button>
+                  <motion.button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" variants={buttonVariants} whileHover="hover" whileTap="tap">
+                    {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><Save size={16} />Enregistrer</>}
                   </motion.button>
                 </div>
               </form>
@@ -554,65 +327,23 @@ export default function Profil() {
         )}
       </AnimatePresence>
 
+      {/* Logout Modal */}
       <AnimatePresence>
         {confirmLogOut && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center h-screen bg-black/30 backdrop-blur-xs"
-            variants={backdropVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            onClick={() => setConfirmLogOut(false)}
-          >
-            <motion.div
-              className="bg-white/95 rounded-2xl shadow-xl border border-gray-100/20 max-w-md mx-auto"
-              variants={modalVariants}
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-labelledby="logout-title"
-            >
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center h-screen bg-black/30 backdrop-blur-xs" variants={backdropVariants} initial="hidden" animate="visible" exit="hidden" onClick={() => setConfirmLogOut(false)}>
+            <motion.div className="bg-white/95 rounded-2xl shadow-xl border border-gray-100/20 max-w-md mx-auto" variants={modalVariants} onClick={(e) => e.stopPropagation()}>
               <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-4 text-white rounded-t-2xl relative">
-                <motion.button
-                  className="absolute top-3 right-3 p-1.5 hover:bg-white/20 rounded-full transition-colors"
-                  onClick={() => setConfirmLogOut(false)}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  aria-label="Fermer la modale"
-                >
-                  <X size={18} />
-                </motion.button>
+                <motion.button className="absolute top-3 right-3 p-1.5" onClick={() => setConfirmLogOut(false)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}><X size={18} /></motion.button>
                 <div className="flex items-center justify-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-full">
-                    <LogOut size={20} />
-                  </div>
-                  <h2 id="logout-title" className="text-lg font-bold">
-                    Confirmer la déconnexion
-                  </h2>
+                  <div className="p-2 bg-white/20 rounded-full"><LogOut size={20} /></div>
+                  <h2 className="text-lg font-bold">Confirmer la déconnexion</h2>
                 </div>
               </div>
               <div className="p-6 text-center">
                 <p className="text-gray-700 mb-6">Êtes-vous sûr de vouloir vous déconnecter ?</p>
                 <div className="flex justify-center gap-4">
-                  <motion.button
-                    className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full font-semibold hover:shadow-md transition-all"
-                    onClick={handleConfirmLogOut}
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                    aria-label="Confirmer la déconnexion"
-                  >
-                    Oui
-                  </motion.button>
-                  <motion.button
-                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-full font-semibold hover:bg-gray-200 transition-all"
-                    onClick={() => setConfirmLogOut(false)}
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                    aria-label="Annuler"
-                  >
-                    Non
-                  </motion.button>
+                  <motion.button className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full font-semibold" onClick={handleConfirmLogOut} variants={buttonVariants} whileHover="hover" whileTap="tap">Oui</motion.button>
+                  <motion.button className="px-6 py-2 bg-gray-100 text-gray-700 rounded-full font-semibold" onClick={() => setConfirmLogOut(false)} variants={buttonVariants} whileHover="hover" whileTap="tap">Non</motion.button>
                 </div>
               </div>
             </motion.div>

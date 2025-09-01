@@ -20,19 +20,13 @@ export const ContextProvider = ({ children }) => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
+        // Inclure les cookies dans la requête
         const response = await axiosClient.get("/auth/status", {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("jwt") || ""}`,
-          },
+          withCredentials: true, // Permet d'envoyer les cookies
         });
-
-        console.log("Utilisateur chargé:", response.data.user);
-
         setUser(response.data.user);
         setIsAuthenticated(true);
       } catch (error) {
-        console.error("Erreur statut:", error.response?.status, error.response?.data);
         setUser(null);
         setIsAuthenticated(false);
       } finally {
@@ -43,32 +37,20 @@ export const ContextProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-  // --- Déconnexion ---
-  const handleLogout = async () => {
-    try {
-      await axiosClient.post("/auth/logout", {}, { withCredentials: true });
-    } catch (error) {
-      if (error.response?.status !== 401) {
-        console.error("Erreur déconnexion :", error);
-      }
-    } finally {
-      setUser(null);
-      setIsAuthenticated(false);
-      document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-      document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-      localStorage.removeItem("jwt");
+  // Fonction centralisée pour la déconnexion
+const handleLogout = async () => {
+  try {
+    await axiosClient.post("/auth/logout");
+  } catch (error) {
+    if (error.response?.status !== 401) {
+      console.error("Erreur lors de la déconnexion :", error);
     }
-  };
+  } finally {
+    setUser(null);
+    setIsAuthenticated(false);
+  }
+};
 
-  // --- Mise à jour du token ---
-  const updateToken = (newToken) => {
-    if (newToken) {
-      localStorage.setItem("jwt", newToken);
-      document.cookie = `jwt=${newToken}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 jours
-      setIsAuthenticated(true);
-      console.log("✅ Nouveau token stocké:", newToken);
-    }
-  };
 
   return (
     <StateContext.Provider
@@ -80,7 +62,6 @@ export const ContextProvider = ({ children }) => {
         role: user?.role || null,
         setIsAuthenticated,
         handleLogout,
-        updateToken,
       }}
     >
       {children}

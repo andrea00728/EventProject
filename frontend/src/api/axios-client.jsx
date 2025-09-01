@@ -6,21 +6,12 @@ const axiosClient = axios.create({
   withCredentials: true, // ⬅️ IMPORTANT pour envoyer les cookies
 });
 
-// Intercepteur de requête : Ajouter le token JWT
+// Intercepteur de requête : ne fait plus rien avec le token
 axiosClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("jwt") || document.cookie.match(/jwt=([^;]+)/)?.[1];
-    if (token && !config.headers.Authorization) {
-      config.headers.Authorization = `Bearer ${token}`;
-      // Ajout : Log pour déboguer l'en-tête
-      console.log(`Requête à ${config.url} avec Authorization: Bearer ${token}`);
-    }
-    return config;
-  },
+  (config) => config,
   (error) => Promise.reject(error)
 );
 
-// Intercepteur de réponse existant (inchangé)
 axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -34,7 +25,6 @@ axiosClient.interceptors.response.use(
   }
 );
 
-// Deuxième intercepteur de réponse existant (inchangé)
 axiosClient.interceptors.response.use(
   response => response,
   async error => {
@@ -47,7 +37,9 @@ axiosClient.interceptors.response.use(
         return axiosClient(originalRequest);
       } catch (refreshError) {
         console.error('Échec du rafraîchissement:', refreshError);
-        window.location.href = '/login';
+        setUser(null);
+        setIsAuthenticated(false);
+        window.location.href = '/login'; // Redirigez vers la page de connexion
         return Promise.reject(refreshError);
       }
     }
@@ -56,3 +48,5 @@ axiosClient.interceptors.response.use(
 );
 
 export default axiosClient;
+
+
