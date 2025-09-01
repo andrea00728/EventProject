@@ -12,10 +12,11 @@ import { NotificationModule } from '../notification/notification.module';
 
 // IMPORT du LocationModule pour utiliser LocationService
 import { LocationModule } from '../localisation/localisation.module';
+import { NotificationEntity } from 'src/entities/notification.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Evenement, Localisation, Salle, TableEvent, User]),
+    TypeOrmModule.forFeature([Evenement, Localisation, Salle, TableEvent, User, NotificationEntity]),
     ForfaitModule,
     NotificationModule,
     LocationModule,

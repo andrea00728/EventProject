@@ -6,6 +6,8 @@ import { LocationService } from '../localisation-service/localisation-service.se
 import { CreateEventDto } from 'src/dto/CreateEvenementDTO';
 import { User } from 'src/Authentication/entities/auth.entity';
 import { NotificationService } from '../notification/notification.service';
+import { NotificationEntity } from 'src/entities/notification.entity';
+import { NotificationGateway } from 'src/gateway/notification.gateway';
 
 @Injectable()
 export class EvenementService {
@@ -16,6 +18,9 @@ export class EvenementService {
     private readonly notificationService: NotificationService,
      @InjectRepository(User)
     private userRepo: Repository<User>,
+    @InjectRepository(NotificationEntity)
+    private readonly notificationRepository: Repository<NotificationEntity>,
+    private readonly notificationGateway: NotificationGateway
   ) {}
 
   async create(dto: CreateEventDto): Promise<Evenement> {
@@ -60,6 +65,19 @@ export class EvenementService {
       'Nouvel Événement',
       `Le nouvel Événement ${event.nom} a bien été créé`
     );
+
+    const notification = this.notificationRepository.create({
+      title: 'Nouvel évènement crée',
+      message: `${user} a crée l'evenement de ${evenement.nom}.`,
+      type: 'info',
+      date: new Date(),
+    });
+    console.log("voici le contenu de user: ", user);
+    await this.notificationRepository.save(notification);
+    this.notificationGateway.emitNotifEventForAdmin({
+      ...notification,
+      date: notification.date.toISOString(),
+    });
 
     return event;
   }
@@ -192,4 +210,3 @@ async findCountForAllEventStats(): Promise<{
 }
 
 }
-

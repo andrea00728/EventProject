@@ -648,6 +648,36 @@ export default function AdminLayout() {
             });
           });
 
+
+          //notification pour un nouveau evenement
+          socket.on("notifNewEventForAdmin", (notif) => {
+            console.log(
+              "NotifNewEvent reçu:",
+              notif,
+              "Listener ID:",
+              Date.now()
+            );
+            setNotifications((prevNotifications) => {
+              // Vérifier si la notification existe déjà pour éviter les doublons
+              console.log("notif vaovao", notif);
+              const exists = prevNotifications.some(
+                (n) => n.id === (notif.id || Date.now().toString())
+              );
+              if (exists) {
+                console.log("Notification déjà existante, ignorée:", notif);
+                return prevNotifications;
+              }
+              return [
+                {
+                  ...notif,
+                  id: notif.id || Date.now().toString(),
+                  read: false,
+                },
+                ...prevNotifications,
+              ];
+            });
+          });
+
           socket.on("notificationMessageAdmin", (value) => {
             console.log("nana ", value);
             const formatted1 = data.map((msg) => ({
