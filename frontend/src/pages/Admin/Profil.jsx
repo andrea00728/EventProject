@@ -4,7 +4,7 @@ import { useDarkMode } from "../../context/DarkModeContext";
 import { useStateContext } from "../../context/ContextProvider";
 import { MdSave } from "react-icons/md";
 import { FaSpinner } from "react-icons/fa";
-import axiosClient from "../../api/axios-client";
+import { updateAdmin } from "../../services/userService";
 
 export default function SuperAdminProfileEdit() {
   const { darkMode } = useDarkMode();
@@ -56,11 +56,9 @@ export default function SuperAdminProfileEdit() {
       formData.append("password", passwords.newPassword);
 
     try {
-      const response = await axiosClient.put(`/admin/${user.sub}`, formData, {
-        withCredentials: true, // Ne pas mettre Content-Type
-      });
-      console.log(response.data);
-      setUser(response.data.user)
+      if (!user) return;
+      const response = await updateAdmin(user?.sub, formData)
+      setUser(response.user)
     } catch (err) {
       console.error(err);
     } finally {
