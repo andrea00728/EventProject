@@ -8,25 +8,27 @@ const StateContext = createContext({
   setUser: () => {},
   setIsAuthenticated: () => {},
   handleLogout: () => {},
-  updateToken: () => {},
 });
 
 export const ContextProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem("user");
+    return stored ? JSON.parse(stored) : null;
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState(!!user);
+  const [isLoading, setIsLoading] = useState(!user);
 
-  // --- Charger l'utilisateur si token présent ---
+  // Charger l'utilisateur depuis le backend si pas dans localStorage
   useEffect(() => {
+    if (user) return setIsLoading(false);
+
     const checkAuthStatus = async () => {
       try {
-        // Inclure les cookies dans la requête
-        const response = await axiosClient.get("/auth/status", {
-          withCredentials: true, // Permet d'envoyer les cookies
-        });
+        const response = await axiosClient.get("/auth/status", { withCredentials: true });
         setUser(response.data.user);
         setIsAuthenticated(true);
-      } catch (error) {
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+      } catch {
         setUser(null);
         setIsAuthenticated(false);
       } finally {
@@ -37,20 +39,24 @@ export const ContextProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-  // Fonction centralisée pour la déconnexion
-const handleLogout = async () => {
-  try {
-    await axiosClient.post("/auth/logout");
-  } catch (error) {
-    if (error.response?.status !== 401) {
-      console.error("Erreur lors de la déconnexion :", error);
-    }
-  } finally {
-    setUser(null);
-    setIsAuthenticated(false);
-  }
-};
+  // Centraliser la mise à jour du user et stockage local
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    setIsAuthenticated(!!updatedUser);
+  };
 
+  const handleLogout = async () => {
+    try {
+      await axiosClient.post("/auth/logout");
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion :", error);
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem("user");
+    }
+  };
 
   return (
     <StateContext.Provider
@@ -58,8 +64,7 @@ const handleLogout = async () => {
         user,
         isAuthenticated,
         isLoading,
-        setUser,
-        role: user?.role || null,
+        setUser: updateUser,
         setIsAuthenticated,
         handleLogout,
       }}
