@@ -28,7 +28,7 @@ import { RedisModule } from '@liaoliaots/nestjs-redis';
         port:6379,
       },
     }),
-    PassportModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
 
     JwtModule.register({
       secret: 'andreanadjasylvanoilaina',
