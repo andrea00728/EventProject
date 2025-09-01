@@ -15,7 +15,7 @@ function App() {
         {/* Exemple : route pour un événement spécifique */}
         { <Route path="/evenement/:id" element={<EventDetail />} /> }
         <Route path="*" element={<NotFound />} />
-        <Route path="/" element={<EvenementForm />} />
+        <Route path="/" element={<Evenementform />} />
         <Route path="/creer-evenement-prive" element={<Evenementform />} />
       </Routes>
       </ErrorBoundary>
