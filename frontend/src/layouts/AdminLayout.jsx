@@ -678,6 +678,35 @@ export default function AdminLayout() {
             });
           });
 
+          //notification pour une suppression evenement
+          socket.on("notifDeleteEventForAdmin", (notif) => {
+            console.log(
+              "NotifDeleteEvent reçu:",
+              notif,
+              "Listener ID:",
+              Date.now()
+            );
+            setNotifications((prevNotifications) => {
+              // Vérifier si la notification existe déjà pour éviter les doublons
+              console.log("notif vaovao", notif);
+              const exists = prevNotifications.some(
+                (n) => n.id === (notif.id || Date.now().toString())
+              );
+              if (exists) {
+                console.log("Notification déjà existante, ignorée:", notif);
+                return prevNotifications;
+              }
+              return [
+                {
+                  ...notif,
+                  id: notif.id || Date.now().toString(),
+                  read: false,
+                },
+                ...prevNotifications,
+              ];
+            });
+          });
+
           socket.on("notificationMessageAdmin", (value) => {
             console.log("nana ", value);
             const formatted1 = data.map((msg) => ({
@@ -702,17 +731,6 @@ export default function AdminLayout() {
       fetchNotifications();
       fetchMessages();
       connectSocket();
-
-      // return () => {
-      //   if (socket) {
-      //     console.log("Nettoyage des listeners socket");
-      //     socket.off("connect");
-      //     socket.off("connect_error");
-      //     socket.off("disconnect");
-      //     socket.off("notifRegister");
-      //     socket.off("notificationMessageAdmin");
-      //   }
-      // };
     }, []);
 
     // Handle click outside for dropdowns
