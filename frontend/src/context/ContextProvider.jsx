@@ -8,6 +8,7 @@ const StateContext = createContext({
   setUser: () => {},
   setIsAuthenticated: () => {},
   handleLogout: () => {},
+  updateToken: () => {},
 });
 
 export const ContextProvider = ({ children }) => {
@@ -15,44 +16,40 @@ export const ContextProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Vérifie l'état d'authentification au chargement initial de l'application
+  // --- Charger l'utilisateur si token présent ---
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
         const response = await axiosClient.get("/auth/status", {
           withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("jwt") || ""}`,
+          },
         });
-        console.log("Réponse de /auth/status:", response.data);
-        console.log("Utilisateur chargé:", {
-          id: response.data.user?.id,
-          name: response.data.user?.name,
-          email: response.data.user?.email,
-          photo: response.data.user?.photo,
-        });
+
+        console.log("Utilisateur chargé:", response.data.user);
+
         setUser(response.data.user);
         setIsAuthenticated(true);
       } catch (error) {
-        console.error("Erreur lors de la vérification du statut:", error);
-        console.error("Détails de l'erreur:", {
-          status: error.response?.status,
-          data: error.response?.data,
-        });
+        console.error("Erreur statut:", error.response?.status, error.response?.data);
         setUser(null);
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
       }
     };
+
     checkAuthStatus();
   }, []);
 
-  // Fonction centralisée pour la déconnexion
+  // --- Déconnexion ---
   const handleLogout = async () => {
     try {
-      await axiosClient.post("/auth/logout");
+      await axiosClient.post("/auth/logout", {}, { withCredentials: true });
     } catch (error) {
       if (error.response?.status !== 401) {
-        console.error("Erreur lors de la déconnexion :", error);
+        console.error("Erreur déconnexion :", error);
       }
     } finally {
       setUser(null);
@@ -63,12 +60,13 @@ export const ContextProvider = ({ children }) => {
     }
   };
 
-  // Ajout : Fonction pour mettre à jour le token
+  // --- Mise à jour du token ---
   const updateToken = (newToken) => {
     if (newToken) {
       localStorage.setItem("jwt", newToken);
       document.cookie = `jwt=${newToken}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 jours
-      console.log("Nouveau token stocké:", newToken);
+      setIsAuthenticated(true);
+      console.log("✅ Nouveau token stocké:", newToken);
     }
   };
 
@@ -82,7 +80,7 @@ export const ContextProvider = ({ children }) => {
         role: user?.role || null,
         setIsAuthenticated,
         handleLogout,
-        updateToken, // Ajout : Exposer updateToken
+        updateToken,
       }}
     >
       {children}

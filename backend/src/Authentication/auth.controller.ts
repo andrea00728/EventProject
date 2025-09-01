@@ -32,14 +32,7 @@ export class AuthController {
     return this.authService.createUser(dto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('status')
-  getStatus(@Req() req) {
-    return {
-      isAuthenticated: true,
-      user: req.user, // payload JWT décodé
-    };
-  }
+  
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
@@ -59,6 +52,15 @@ export class AuthController {
       });
     }
   }
+
+  // @UseGuards(JwtAuthGuard)
+  // @Get('status')
+  // getStatus(@Req() req) {
+  //   return {
+  //     isAuthenticated: true,
+  //     user: req.user, // payload JWT décodé
+  //   };
+  // }
 
   @UseGuards(JwtAuthGuard)
   @Get('status')
@@ -178,6 +180,7 @@ export class AuthController {
     }),
     limits: { fileSize: 5 * 1024 * 1024 },
   }))
+
   @ApiOperation({ summary: 'Mettre à jour le profil utilisateur' })
   @ApiResponse({ status: 200, description: 'Profil mis à jour avec succès' })
   @ApiResponse({ status: 400, description: 'Requête invalide' })

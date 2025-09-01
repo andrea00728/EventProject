@@ -84,28 +84,25 @@ export default function Profil() {
   const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
-    console.log("User chargé:", {
-      id: user?.id,
-      name: user?.name,
-      email: user?.email,
-      photo: user?.photo,
+    if (!user) return;
+
+    const photoUrl = user.photo || "/default-avatar.png";
+
+    setUserName(user.name || "");
+    setUserEmail(user.email || "");
+    setUserPhoto(photoUrl);
+    setPreviewImage(photoUrl);
+
+    setEditFormData({
+      name: user.name || "",
+      email: user.email || "",
+      photo: null, // on reset l’upload à chaque fois
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     });
-    if (user) {
-      setUserName(user.name || "Utilisateur");
-      setUserEmail(user.email || "email@example.com");
-      const photoUrl = user.photo || "/default-avatar.png"; // Modification : Image par défaut locale
-      console.log("URL de l'image utilisée:", photoUrl);
-      setUserPhoto(photoUrl);
-      setPreviewImage(photoUrl);
-      setEditFormData((prev) => ({
-        ...prev,
-        name: user.name || "",
-        email: user.email || "",
-      }));
-    } else {
-      console.warn("Aucun utilisateur chargé, utilisation des valeurs par défaut");
-    }
   }, [user]);
+
 
   if (isLoading) return <p className="text-center text-gray-600">Chargement...</p>;
 
@@ -218,9 +215,12 @@ export default function Profil() {
         formData.append("new_password_confirmation", editFormData.confirmPassword);
       }
 
-      const response = await axiosClient.post("/auth/update-profile", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      // Exemple dans ton frontend, après avoir fait appel à updateProfile
+      const response = await axiosClient.post("/auth/update-profile", formData);
+
+      if (response.data.token) {
+        localStorage.setItem("jwt", response.data.token);
+      }
       console.log("Réponse du backend (/auth/update-profile):", response.data);
       console.log("Utilisateur mis à jour:", {
         id: response.data.user?.id,
@@ -249,7 +249,6 @@ export default function Profil() {
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
-        photo: null,
       }));
 
       setTimeout(() => {
