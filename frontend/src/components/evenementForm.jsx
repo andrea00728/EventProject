@@ -10,6 +10,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 import Select from "react-select";
 
 // Fix Leaflet marker icon
