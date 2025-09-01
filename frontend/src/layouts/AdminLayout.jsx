@@ -563,32 +563,33 @@ const menuItems = [
         }
       };
 
-      const fetchNotifications = async () => {
-        try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`
-          );
-          if (!response.ok)
-            throw new Error("Erreur lors de la récupération des notifications");
+     const fetchNotifications = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`
+        );
+        if (!response.ok)
+          throw new Error("Erreur lors de la récupération des notifications");
 
-          const data = await response.json();
+        const data = await response.json();
 
-          // 🔹 Récupérer IDs lus depuis localStorage
-          const readIds =
-            JSON.parse(localStorage.getItem("readNotifications")) || [];
+        // 🔹 Récupérer IDs lus depuis localStorage
+        const readIds =
+          JSON.parse(localStorage.getItem("readNotifications")) || [];
 
-          // 🔹 Marquer les notifications comme lues si elles sont dans le localStorage
-          const formatted = data.map((notif) => ({
-            ...notif,
-            read: readIds.includes(notif.id) ? true : notif.read || false,
-          }));
+        // 🔹 Harmonisation : backend => `isRead`, frontend => `read`
+        const formatted = data.map((notif) => ({
+          ...notif,
+          read: readIds.includes(notif.id) ? true : notif.isRead || false,
+        }));
 
-          setNotifications(formatted);
-        } catch (error) {
-          console.error("Erreur fetchNotifications:", error);
-          setNotifications([]);
-        }
-      };
+        setNotifications(formatted);
+      } catch (error) {
+        console.error("Erreur fetchNotifications:", error);
+        setNotifications([]);
+      }
+    };
+
 
       async function connectSocket() {
         const userId = await getUserIdForToken();
@@ -642,13 +643,13 @@ const menuItems = [
               ...msg,
               from: `${msg.firstName} ${msg.lastName}`,
               text: msg.message,
-              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+              read: msg.isRead || false, // ou msg.read si tu ajoutes ce champ dans la DB
             }));
             const formatted2 = value.data.map((msg) => ({
               ...msg,
-              from: `${msg.firstName} ${msg.lastName}`,
+              from: `${msg.firstName} ${msg.lastName}`, 
               text: msg.message,
-              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+              read: msg.isRead || false, // ou msg.read si tu ajoutes ce champ dans la DB
             }));
             setMessages([...formatted1, ...formatted2]);
           });
@@ -836,14 +837,11 @@ const menuItems = [
               label="Notifications"
               count={filteredNotifications.filter((n) => !n.read).length}
               items={filteredNotifications}
-              onItemClick={(item) => {
-                handleNotificationClick(item);
-                setSelectedNotification(item); // on stocke la notif cliquée
-                setIsModalOpen(true); // on ouvre le modal
-              }}
+              onItemClick={handleNotificationClick}
               onDelete={handleDeleteNotification}
-              onViewMore={() => setShowNotificationsModal(true)}
+              onViewMore={() => console.log("Voir plus de notifications")}
             >
+              {/* Filtres */}
               <div className="flex gap-2 p-2">
                 <button
                   onClick={() => setNotifFilter("all")}

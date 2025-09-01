@@ -96,7 +96,8 @@ export default function Profil() {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
   };
 
-  const handlePhotoChange = (e) => {
+  const 
+  handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (!file) return setPreviewImage(null);
 

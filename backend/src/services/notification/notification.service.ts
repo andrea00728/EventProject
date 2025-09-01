@@ -41,11 +41,11 @@ export class NotificationService {
     }
 
 
-   async findAll(): Promise<NotificationEntity[]> {
+    async findAll(): Promise<NotificationEntity[]> {
         const response=this.notificationRepository.find({
             order:{date:'DESC'},
         });
-
+        
         return response;
     }
 
@@ -56,6 +56,16 @@ export class NotificationService {
     }
     await this.notificationRepository.delete(id);
     }
+
+    async updateReadStatus(id: number, isRead: boolean): Promise<NotificationEntity> {
+    const notif = await this.notificationRepository.findOne({ where: { id } });
+    if (!notif) {
+        throw new Error(`Notification avec l'id ${id} introuvable`);
+    }
+    notif.isRead = isRead;
+    return this.notificationRepository.save(notif);
+    }
+
 
 
 }
