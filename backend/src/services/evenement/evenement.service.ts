@@ -45,8 +45,10 @@ export class EvenementService {
     if (existingEvent) {
       throw new BadRequestException(`Cette salle est déjà réservée pendant cette période`);
     }
-    const user = new User();
-    user.id = dto.utilisateur_id;
+    const user = await this.userRepo.findOneBy({ id: dto.utilisateur_id });
+    if (!user) {
+      throw new NotFoundException("Utilisateur introuvable");
+    }
 
     const evenement = this.evenementRepository.create({
       nom: dto.nom,
@@ -60,6 +62,8 @@ export class EvenementService {
       isPublic: dto.isPublic,
     });
 
+    console.log("evenement: ", evenement);
+
     const event = await this.evenementRepository.save(evenement);
     await this.notificationService.notifyAll(
       'Nouvel Événement',
@@ -68,7 +72,7 @@ export class EvenementService {
 
     const notification = this.notificationRepository.create({
       title: 'Nouvel évènement crée',
-      message: `${user} a crée l'evenement de ${evenement.nom}.`,
+      message: `${user.name} a crée l'evenement de ${evenement.nom}.`,
       type: 'info',
       date: new Date(),
     });
