@@ -126,7 +126,7 @@ const EventAccept = () => {
                       'from-amber-500 to-blue-500'
                     }`}></div>
 
-                    <div className="p-6">
+                    <div className="p-6 relative ">
                       {/* Event Title */}
                       <div className="flex items-start justify-between mb-6">
                         <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide leading-tight">
