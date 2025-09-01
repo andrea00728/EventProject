@@ -9,6 +9,8 @@ import {Request, Response } from 'express';
 import Redis from 'ioredis';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import * as bcrypt from 'bcrypt';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class AdminService {
@@ -308,7 +310,11 @@ async logout(req: Request, res: Response): Promise<{ success: boolean; message: 
     return admins;
   }
 
-  async updateAdmin(adminId: string, data: Partial<Admin>): Promise<Admin> {
+  async updateAdmin(
+    adminId: string,
+    data: Partial<Admin>,
+    photoFilename?: string,
+  ): Promise<Admin> {
     const admin = await this.userRepository.findOne({ where: { id: adminId } });
 
     if (!admin) {
@@ -320,7 +326,21 @@ async logout(req: Request, res: Response): Promise<{ success: boolean; message: 
       data.password = await bcrypt.hash(data.password, 10);
     }
 
-    Object.assign(admin, data); // fusionne les nouvelles données
+    // Gestion de la photo
+    if (photoFilename) {
+      // S’il y a déjà une photo enregistrée, on peut la supprimer
+      if (admin.photo) {
+        const oldPath = path.join(__dirname, '..', 'uploads', 'photos', admin.photo);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath); // supprime l'ancienne photo
+        }
+      }
+      admin.photo = photoFilename;
+    }
+
+    // Fusionne les nouvelles données
+    Object.assign(admin, data);
+
     return this.userRepository.save(admin);
   }
 
