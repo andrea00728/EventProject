@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ContactMessage } from '../../entities/ContactMessage';
@@ -29,6 +29,15 @@ export class ContactService {
 
     async delete(id: number) {
     return await this.contactMessageRepository.delete(id);
+    }
+
+    async updateReadStatus(id: number, isRead: boolean): Promise<ContactMessage> {
+        const message = await this.contactMessageRepository.findOne({ where: { id } });
+        if (!message) {
+            throw new NotFoundException(`Message ${id} introuvable`);
+        }
+        message.isRead = isRead;
+        return this.contactMessageRepository.save(message);
     }
 
 
