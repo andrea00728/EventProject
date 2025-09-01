@@ -1,8 +1,9 @@
+// frontend/src/api/axios-client.jsx
 import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: `${import.meta.env.VITE_API_BASE_URL}`,
-  withCredentials: true,
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000",
+  withCredentials: true, // ⬅️ IMPORTANT pour envoyer les cookies
 });
 
 // Intercepteur de requête : ne fait plus rien avec le token

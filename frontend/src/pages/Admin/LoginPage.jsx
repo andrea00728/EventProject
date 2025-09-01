@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FcGoogle } from "react-icons/fc";
 import { FaLock, FaEnvelope } from "react-icons/fa";
@@ -12,8 +12,16 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const location = useLocation();
 
-  // Simulation login email
+  useEffect(() => {
+    // Vérifie si un paramètre "error" est présent dans l'URL
+    const params = new URLSearchParams(location.search);
+    const error = params.get("error");
+    if (error) {
+      setErrorMessage(decodeURIComponent(error));
+    }
+  }, [location.search]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
