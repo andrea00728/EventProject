@@ -41,6 +41,10 @@ export default function SuperAdminProfileEdit() {
     photo: "",
     newFile: null,
   });
+  const [passwords, setPasswords] = useState({
+    newPassword: "",
+    confirmPassword: "",
+  });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState({
@@ -48,6 +52,8 @@ export default function SuperAdminProfileEdit() {
     message: "",
     visible: false,
   });
+  const [passwordError, setPasswordError] = useState("");
+  const [nameError, setNameError] = useState(""); // Nouvel état pour l'erreur de nom
   const [gravatarUrl, setGravatarUrl] = useState(null);
 
   const placeholder = "https://via.placeholder.com/150";
@@ -98,7 +104,11 @@ export default function SuperAdminProfileEdit() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProfile((prev) => ({ ...prev, [name]: value }));
+    if (name === "newPassword" || name === "confirmPassword") {
+      setPasswords((prev) => ({ ...prev, [name]: value }));
+    } else {
+      setProfile((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -112,44 +122,60 @@ export default function SuperAdminProfileEdit() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSaving(true);
+    e.preventDefault();
+    setIsSaving(true);
+    setPasswordError(""); // Réinitialiser l'erreur de mot de passe
+    setNameError(""); // Réinitialiser l'erreur de nom
 
-  try {
-    const formData = new FormData();
-    formData.append("name", profile.name);
-    formData.append("email", profile.email);
-    formData.append("bio", profile.bio || "");
-    if (profile.newFile) formData.append("photo", profile.newFile);
-
-    const response = await axiosClient.post("/auth/update-profile", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-      withCredentials: true, // 🔑 pour envoyer le cookie JWT
-    });
-
-    // 🔑 Mettre à jour localStorage
-    if (response.data.user) {
-      localStorage.setItem("adminName", response.data.user.name);
-      localStorage.setItem("adminPhoto", response.data.user.photo);
-      localStorage.setItem("adminEmail", response.data.user.email);
+    // Validation du nom
+    if (!profile.name.trim()) {
+      setNameError("Le nom ne peut pas être vide.");
+      setIsSaving(false);
+      return;
     }
 
-    // 🔑 Mettre à jour le contexte global (user)
-    setUser(response.data.user);
+    try {
+      // Validation des mots de passe s'ils sont remplis
+      if (passwords.newPassword || passwords.confirmPassword) {
+        if (passwords.newPassword !== passwords.confirmPassword) {
+          setPasswordError("Les mots de passe ne correspondent pas.");
+          showNotification("error", "Les mots de passe ne correspondent pas.");
+          setIsSaving(false);
+          return;
+        }
+      }
 
-    showNotification("success", "Profil mis à jour avec succès !");
-  } catch (err) {
-    console.error(
-      "Erreur lors de la mise à jour du profil:",
-      err.response?.data || err.message
-    );
-    showNotification("error", "Erreur lors de la mise à jour du profil");
-  } finally {
-    setIsSaving(false);
-  }
-};
+      const formData = new FormData();
+      formData.append("name", profile.name);
+      formData.append("email", profile.email);
+      formData.append("bio", profile.bio || "");
+      if (profile.newFile) formData.append("photo", profile.newFile);
+      if (passwords.newPassword)
+        formData.append("password", passwords.newPassword);
 
+      const response = await axiosClient.post("/auth/update-profile", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true,
+      });
 
+      if (response.data.user) {
+        localStorage.setItem("adminName", response.data.user.name);
+        localStorage.setItem("adminPhoto", response.data.user.photo);
+        localStorage.setItem("adminEmail", response.data.user.email);
+      }
+
+      setUser(response.data.user);
+      showNotification("success", "Profil mis à jour avec succès !");
+    } catch (err) {
+      console.error(
+        "Erreur lors de la mise à jour du profil:",
+        err.response?.data || err.message
+      );
+      showNotification("error", "Erreur lors de la mise à jour du profil");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const containerClasses = `min-h-auto py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${
     darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"
@@ -159,12 +185,14 @@ export default function SuperAdminProfileEdit() {
       ? "bg-gray-800 border border-gray-700"
       : "bg-white border border-gray-200"
   }`;
-  const inputClasses = (disabled) =>
+  const inputClasses = (disabled, hasError) =>
     `w-full p-4 border rounded-lg focus:outline-none focus:ring-2 resize-none transition-all duration-300 ${
       disabled
         ? darkMode
           ? "bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed"
           : "bg-gray-200 border-gray-300 text-gray-600 cursor-not-allowed"
+        : hasError
+        ? "border-red-500 focus:ring-red-500"
         : darkMode
         ? "bg-gray-700 border-gray-600 text-gray-200 focus:ring-blue-500"
         : "bg-gray-50 border-gray-200 text-gray-800 focus:ring-indigo-500"
@@ -257,9 +285,13 @@ export default function SuperAdminProfileEdit() {
                     id="name"
                     name="name"
                     value={profile.name}
-                    readOnly
-                    className={inputClasses(true)}
+                    onChange={handleChange}
+                    className={inputClasses(false, !!nameError)} // Ajout de l'état d'erreur
+                    required
                   />
+                  {nameError && (
+                    <p className="text-red-500 text-sm mt-1">{nameError}</p>
+                  )}
                 </div>
                 <div className="mb-6">
                   <label htmlFor="email" className={labelClasses}>
@@ -274,9 +306,7 @@ export default function SuperAdminProfileEdit() {
                     className={inputClasses(true)}
                   />
                 </div>
-              </div>
-              <div>
-                <div className="mb-6">
+                {/* <div className="mb-6">
                   <label htmlFor="bio" className={labelClasses}>
                     Biographie
                   </label>
@@ -288,7 +318,40 @@ export default function SuperAdminProfileEdit() {
                     rows="6"
                     className={inputClasses(false)}
                   />
+                </div> */}
+              </div>
+              <div>
+                <div className="mb-6">
+                  <label htmlFor="new-password" className={labelClasses}>
+                    Nouveau mot de passe
+                  </label>
+                  <input
+                    id="new-password"
+                    name="newPassword"
+                    type="password"
+                    value={passwords.newPassword}
+                    onChange={handleChange}
+                    className={inputClasses(false, !!passwordError)}
+                    required
+                  />
                 </div>
+                <div className="mb-6">
+                  <label htmlFor="confirm-password" className={labelClasses}>
+                    Confirmer le mot de passe
+                  </label>
+                  <input
+                    id="confirm-password"
+                    name="confirmPassword"
+                    type="password"
+                    value={passwords.confirmPassword}
+                    onChange={handleChange}
+                    className={inputClasses(false, !!passwordError)}
+                    required
+                  />
+                </div>
+                {passwordError && (
+                  <p className="text-red-500 text-sm mb-4">{passwordError}</p>
+                )}
               </div>
             </div>
 
@@ -317,7 +380,6 @@ export default function SuperAdminProfileEdit() {
                 )}
               </motion.button>
 
-              {/* Notifications */}
               <AnimatePresence>
                 {notification.visible && (
                   <motion.div
