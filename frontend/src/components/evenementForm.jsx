@@ -20,7 +20,7 @@ L.Icon.Default.mergeOptions({
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
-//
+
 // Custom blue marker icon
 const blueIcon = new L.Icon({
   iconUrl:

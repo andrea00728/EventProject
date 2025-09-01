@@ -563,32 +563,33 @@ const menuItems = [
         }
       };
 
-      const fetchNotifications = async () => {
-        try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`
-          );
-          if (!response.ok)
-            throw new Error("Erreur lors de la récupération des notifications");
+     const fetchNotifications = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`
+        );
+        if (!response.ok)
+          throw new Error("Erreur lors de la récupération des notifications");
 
-          const data = await response.json();
+        const data = await response.json();
 
-          // 🔹 Récupérer IDs lus depuis localStorage
-          const readIds =
-            JSON.parse(localStorage.getItem("readNotifications")) || [];
+        // 🔹 Récupérer IDs lus depuis localStorage
+        const readIds =
+          JSON.parse(localStorage.getItem("readNotifications")) || [];
 
-          // 🔹 Marquer les notifications comme lues si elles sont dans le localStorage
-          const formatted = data.map((notif) => ({
-            ...notif,
-            read: readIds.includes(notif.id) ? true : notif.read || false,
-          }));
+        // 🔹 Harmonisation : backend => `isRead`, frontend => `read`
+        const formatted = data.map((notif) => ({
+          ...notif,
+          read: readIds.includes(notif.id) ? true : notif.isRead || false,
+        }));
 
-          setNotifications(formatted);
-        } catch (error) {
-          console.error("Erreur fetchNotifications:", error);
-          setNotifications([]);
-        }
-      };
+        setNotifications(formatted);
+      } catch (error) {
+        console.error("Erreur fetchNotifications:", error);
+        setNotifications([]);
+      }
+    };
+
 
       async function connectSocket() {
         const userId = await getUserIdForToken();
@@ -642,13 +643,13 @@ const menuItems = [
               ...msg,
               from: `${msg.firstName} ${msg.lastName}`,
               text: msg.message,
-              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+              read: msg.isRead || false, // ou msg.read si tu ajoutes ce champ dans la DB
             }));
             const formatted2 = value.data.map((msg) => ({
               ...msg,
-              from: `${msg.firstName} ${msg.lastName}`,
+              from: `${msg.firstName} ${msg.lastName}`, 
               text: msg.message,
-              read: msg.read || false, // ou msg.read si tu ajoutes ce champ dans la DB
+              read: msg.isRead || false, // ou msg.read si tu ajoutes ce champ dans la DB
             }));
             setMessages([...formatted1, ...formatted2]);
           });
@@ -836,14 +837,11 @@ const menuItems = [
               label="Notifications"
               count={filteredNotifications.filter((n) => !n.read).length}
               items={filteredNotifications}
-              onItemClick={(item) => {
-                handleNotificationClick(item);
-                setSelectedNotification(item); // on stocke la notif cliquée
-                setIsModalOpen(true); // on ouvre le modal
-              }}
+              onItemClick={handleNotificationClick}
               onDelete={handleDeleteNotification}
-              onViewMore={() => setShowNotificationsModal(true)}
+              onViewMore={() => console.log("Voir plus de notifications")}
             >
+              {/* Filtres */}
               <div className="flex gap-2 p-2">
                 <button
                   onClick={() => setNotifFilter("all")}
@@ -893,7 +891,7 @@ const menuItems = [
                 if (!item.read) {
                   const readIds =
                     JSON.parse(localStorage.getItem("readMessages")) || [];
-                  if (!readIds.includes(item.id)) {
+                  if (!readIds.includes(item.id)) { 
                     readIds.push(item.id);
                     localStorage.setItem(
                       "readMessages",
@@ -909,13 +907,11 @@ const menuItems = [
 
                   // Appel API pour marquer comme lu côté backend
                   try {
-                    await fetch(
-                      `${import.meta.env.VITE_API_BASE_URL}/contact_messages/${item.id}`,
-                      {
-                        method: "PATCH",
-                        body: JSON.stringify({ read: true }),
-                      }
-                    );
+                    await fetch(`${import.meta.env.VITE_API_BASE_URL}/contact_messages/${item.id}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ isRead: true }),
+                    });
                   } catch (error) {
                     console.error("Erreur mark as read:", error);
                   }
@@ -984,100 +980,100 @@ const menuItems = [
             </Dropdown>
 
             <div ref={profileRef} className="relative">
-  <button
-    onClick={() => setShowProfile(!showProfile)}
-    className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
-      darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-    }`}
-    aria-label="Menu profil"
-  >
-    {/* Avatar = photo basée sur l'email (Gravatar) */}
-    <div className="relative">
-      <img
-        src={getGravatarUrl(user?.email, { size: 96 })}
-        alt="User avatar"
-        className="w-10 h-10 rounded-full object-cover"
-        onError={(e) => {
-          // Sécurité: fallback si jamais l’URL échoue
-          e.currentTarget.src = getGravatarUrl(null, { size: 96 });
-        }}
-      />
-    </div>
+              <button
+                onClick={() => setShowProfile(!showProfile)}
+                className={`flex items-center gap-2 p-2 rounded-full transition-all duration-200 ${
+                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                }`}
+                aria-label="Menu profil"
+              >
+                {/* Avatar = photo basée sur l'email (Gravatar) */}
+                <div className="relative">
+                  <img
+                    src={getGravatarUrl(user?.email, { size: 96 })}
+                    alt="User avatar"
+                    className="w-10 h-10 rounded-full object-cover"
+                    onError={(e) => {
+                      // Sécurité: fallback si jamais l’URL échoue
+                      e.currentTarget.src = getGravatarUrl(null, { size: 96 });
+                    }}
+                  />
+                </div>
 
-    {/* Nom dynamique – plus jamais "Admin" */}
-    <span className="hidden sm:inline text-sm font-medium">
-      {getUserDisplayName(user)}
-    </span>
+                {/* Nom dynamique – plus jamais "Admin" */}
+                <span className="hidden sm:inline text-sm font-medium">
+                  {getUserDisplayName(user)}
+                </span>
 
-    <ChevronDown
-      className={`w-4 h-4 transition-transform duration-200 ${
-        showProfile ? "rotate-180" : ""
-      }`}
-    />
-  </button>
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    showProfile ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
 
-  {showProfile && (
-    <div
-      className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
-        darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-      } z-50 transition-all duration-200 ${
-        window.innerWidth < 640 ? "left-4 right-4" : "right-0"
-      }`}
-    >
-      <div className="p-2">
-        <div
-          className={`flex items-center gap-3 px-3 py-2 text-sm ${
-            darkMode ? "text-gray-300" : "text-gray-700"
-          }`}
-        >
-          <img
-            src={getGravatarUrl(user?.email, { size: 80 })}
-            alt="User avatar"
-            className="w-8 h-8 rounded-full object-cover"
-            onError={(e) => {
-              e.currentTarget.src = getGravatarUrl(null, { size: 80 });
-            }}
-          />
-          <div className="min-w-0">
-            <p className="font-medium">{getUserDisplayName(user)}</p>
-            <p className="truncate text-xs">{user?.email || "aucun email"}</p>
-          </div>
-        </div>
+              {showProfile && (
+                <div
+                  className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
+                    darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+                  } z-50 transition-all duration-200 ${
+                    window.innerWidth < 640 ? "left-4 right-4" : "right-0"
+                  }`}
+                >
+                  <div className="p-2">
+                    <div
+                      className={`flex items-center gap-3 px-3 py-2 text-sm ${
+                        darkMode ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
+                      <img
+                        src={getGravatarUrl(user?.email, { size: 80 })}
+                        alt="User avatar"
+                        className="w-8 h-8 rounded-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = getGravatarUrl(null, { size: 80 });
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <p className="font-medium">{getUserDisplayName(user)}</p>
+                        <p className="truncate text-xs">{user?.email || "aucun email"}</p>
+                      </div>
+                    </div>
 
-        <div className={`border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`} />
+                    <div className={`border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`} />
 
-        <button
-          onClick={handleRedirect}
-          className={`w-full text-left px-3 py-2 text-sm ${
-            darkMode ? "hover:bg-gray-700 text-gray-200" : "hover:bg-gray-100 text-gray-800"
-          } transition-colors duration-150`}
-        >
-          Mon profil
-        </button>
+                    <button
+                      onClick={handleRedirect}
+                      className={`w-full text-left px-3 py-2 text-sm ${
+                        darkMode ? "hover:bg-gray-700 text-gray-200" : "hover:bg-gray-100 text-gray-800"
+                      } transition-colors duration-150`}
+                    >
+                      Mon profil
+                    </button>
 
-        <button
-          onClick={handleRedirect}
-          className={`w-full text-left px-3 py-2 text-sm ${
-            darkMode ? "hover:bg-gray-700 text-gray-200" : "hover:bg-gray-100 text-gray-800"
-          } transition-colors duration-150`}
-        >
-          Paramètres
-        </button>
+                    <button
+                      onClick={handleRedirect}
+                      className={`w-full text-left px-3 py-2 text-sm ${
+                        darkMode ? "hover:bg-gray-700 text-gray-200" : "hover:bg-gray-100 text-gray-800"
+                      } transition-colors duration-150`}
+                    >
+                      Paramètres
+                    </button>
 
-        <div className={`border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`} />
+                    <div className={`border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`} />
 
-        <button
-          onClick={handleShowLogout}
-          className={`w-full text-left px-3 py-2 text-sm ${
-            darkMode ? "hover:bg-gray-700 text-red-400" : "hover:bg-gray-100 text-red-600"
-          } transition-colors duration-150`}
-        >
-          Déconnexion
-        </button>
-      </div>
-    </div>
-  )}
-</div>
+                    <button
+                      onClick={handleShowLogout}
+                      className={`w-full text-left px-3 py-2 text-sm ${
+                        darkMode ? "hover:bg-gray-700 text-red-400" : "hover:bg-gray-100 text-red-600"
+                      } transition-colors duration-150`}
+                    >
+                      Déconnexion
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
 
 

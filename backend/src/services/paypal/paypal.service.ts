@@ -42,9 +42,8 @@ export class PaypalService {
         application_context: {
           brand_name: 'MonApp Événements',
           user_action: 'SUBSCRIBE_NOW',
-           return_url: 'https://mastertable.site/forfait/success',
+          return_url: 'https://mastertable.site/forfait/success',
           cancel_url: 'https://mastertable.site/forfait/cancel',
-        
         },
       },
       {

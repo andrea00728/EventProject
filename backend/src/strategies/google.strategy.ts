@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 
 @Injectable()
-//
 export class GoogleAdminStrategy extends PassportStrategy(Strategy, 'google-admin') {
   constructor() {
     super({

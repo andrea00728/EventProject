@@ -68,7 +68,7 @@ export class ForfaitController {
   /**
    * 
    * @param subscriptionId 
-   * ito annnn
+   * 
    * 
    * 
    * @param res 

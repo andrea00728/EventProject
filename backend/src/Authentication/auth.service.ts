@@ -616,12 +616,100 @@ async logout(req: Request, res: Response): Promise<{ message: string }> {
       name: user.name,
       email: user.email,
       role: user.role,
-      photo: user.photo,
+      photo: user.photo ? `https://api.mastertable.site${user.photo}` : null,
     },
   };
 }
 
+async updateProfile(
+    userId: string,
+    data: {
+      name: string;
+      email: string;
+      currentPassword?: string;
+      newPassword?: string;
+      newPasswordConfirmation?: string;
+      photo?: string | null;
+    },
+  ): Promise<{ user: User; token?: string }> { // Modifier pour renvoyer user et token
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
 
+    if (data.email && data.email !== user.email) {
+      const emailExists = await this.userRepository.findOne({ where: { email: data.email } });
+      if (emailExists) {
+        throw new BadRequestException('Cet email est déjà utilisé');
+      }
+      user.email = data.email;
+    }
 
-   
+    if (data.newPassword) {
+      if (!data.currentPassword) {
+        throw new BadRequestException('Mot de passe actuel requis pour changer le mot de passe');
+      }
+      const isMatch = await bcrypt.compare(data.currentPassword, user.password);
+      if (!isMatch) {
+        throw new BadRequestException('Mot de passe actuel incorrect');
+      }
+      if (data.newPassword !== data.newPasswordConfirmation) {
+        throw new BadRequestException('Les nouveaux mots de passe ne correspondent pas');
+      }
+      user.password = await bcrypt.hash(data.newPassword, 10);
+    }
+
+    if (data.name) {
+      user.name = data.name;
+    }
+    if (data.photo) {
+      user.photo = `/uploads/${data.photo}`; // Stocker le chemin relatif
+    }
+
+    await this.userRepository.save(user);
+
+    // Ajout : Générer un nouveau token JWT avec les données mises à jour
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+      photo: user.photo ? `https://api.mastertable.site${user.photo}` : null,
+    };
+    const newToken = this.jwtService.sign(payload);
+
+    // Log pour débogage
+    console.log('Utilisateur mis à jour:', {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      photo: user.photo ? `https://api.mastertable.site${user.photo}?t=${Date.now()}` : null,
+    });
+
+    return {
+      user: {
+        ...user,
+        photo: user.photo ? `https://api.mastertable.site${user.photo}?t=${Date.now()}` : null,
+      } as User,
+      token: newToken, // Retourner le nouveau token
+    };
+  }
+
+  // Ajout : Méthode pour /auth/status
+  async getStatus(userId: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+    // Log pour débogage
+    console.log('Statut utilisateur:', {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      photo: user.photo ? `https://api.mastertable.site${user.photo}?t=${Date.now()}` : null,
+    });
+    return {
+      ...user,
+      photo: user.photo ? `https://api.mastertable.site${user.photo}?t=${Date.now()}` : null,
+    } as User;
+  }
 }

@@ -39,5 +39,8 @@ export class Admin {
 
   @Column({ type: 'timestamp', nullable: true })
   lastLogout: Date;
-  bio: any;
+  
+  @Column({ type: 'text', nullable: true })
+  bio: string;
+
 }

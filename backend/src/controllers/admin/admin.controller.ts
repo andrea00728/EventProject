@@ -25,10 +25,9 @@ export class AdminController {
     await this.adminService.loginWithGoogleOAuth(user, res);
     // on met le token dans un cookie
     const redirectUrl = `https://mastertable.site/AdminAccueil`;
-     
     return res.redirect(redirectUrl);
   }
-  //
+
   @Post('logout')
   async logout(@Req() req: Request, @Res() res: Response) {
     try {
@@ -53,7 +52,7 @@ export class AdminController {
       body.newPassword,
     );
   }
-/** */
+
   @Post('login-email')
   async loginWithEmail(
     @Body() body: { email: string; password: string },

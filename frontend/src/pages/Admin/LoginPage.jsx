@@ -33,7 +33,7 @@ const LoginPage = () => {
       );
 
       console.log("Réponse login :", response.data);
-      //
+
       // Redirection après succès
       if(response.data){
         window.location.href = '/AdminAccueil';

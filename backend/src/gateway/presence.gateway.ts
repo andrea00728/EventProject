@@ -10,7 +10,7 @@ import { AuthService } from 'src/Authentication/auth.service';
 
 @WebSocketGateway({
   cors: {
-  origin: 'https://mastertable.site',
+   origin: 'https://mastertable.site',
   credentials: true,
   //  path: '/socket.io',
 },
