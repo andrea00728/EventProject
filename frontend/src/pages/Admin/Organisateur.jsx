@@ -650,7 +650,7 @@ const connectSocket = async () => {
             {/* Version desktop - DataGrid */}
             <div className={tableContainerClasses}>
               {/* En-têtes du tableau */}
-              <div className={headerClasses}>
+              <div className={`rounded-t-xl ${headerClasses}`}>
                 <div className="truncate">NOM</div>
                 <div className="truncate">EMAIL</div>
                 <div className="truncate">FORFAIT</div>
@@ -726,7 +726,7 @@ const connectSocket = async () => {
 
               {/* Pagination */}
               {filteredData.length > 0 && (
-                <div className={paginationClasses}>
+                <div className={`rounded-b-xl ${paginationClasses}`}>
                   <div className="flex items-center space-x-2">
                     <span className={textMuted}>Lignes par page:</span>
                     <select

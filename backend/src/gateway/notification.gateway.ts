@@ -22,4 +22,15 @@ export class NotificationGateway{
         console.log('Envoi notification message:', payload);
         this.server.emit('notificationMessageAdmin', payload);
     }
+
+    //Notification pour un nouveau evenement
+    emitNotifEventForAdmin(newEvent : any){
+        console.log('Envoi notif pour nouveau event a l admin :', newEvent);
+        this.server.emit('notifNewEventForAdmin', newEvent);
+    }
+
+    emitDeleteEventForAdmin(delEvent : any){
+        console.log('Envoi notif pour suppression event a l admin :', delEvent);
+        this.server.emit('notifDeleteEventForAdmin', delEvent);
+    }
 }

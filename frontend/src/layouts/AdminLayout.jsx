@@ -77,19 +77,29 @@ export default function AdminLayout() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getIfAdminHasPassword();
-      const hidden = localStorage.getItem("hidePasswordModal");
-      // console.log("Connaître si l'admin a un mot de passe : ", res);
-      if (res.hasPassword == false && hidden == "false") {
-        setTimeout(() => {
-          setShowModalModifyPassword(true);
-        }, 2000);
-      } else {
-        setShowModalModifyPassword(false);
+      try {
+        if (!user || !user.sub) return; 
+
+        const res = await getIfAdminHasPassword(user.sub);
+        const hidden = localStorage.getItem("hidePasswordModal");
+
+        if (res?.hasPassword === false && hidden === "false") {
+          setTimeout(() => {
+            setShowModalModifyPassword(true);
+          }, 2000);
+        } else {
+          setShowModalModifyPassword(false);
+        }
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des données de l'admin :",
+          error
+        );
       }
     };
+
     fetchData();
-  }, []);
+  }, [user]); // on ajoute user comme dépendance
 
   console.log("Auth State:", { isLoading, isAuthenticated, role, user });
 
@@ -638,6 +648,65 @@ export default function AdminLayout() {
             });
           });
 
+
+          //notification pour un nouveau evenement
+          socket.on("notifNewEventForAdmin", (notif) => {
+            console.log(
+              "NotifNewEvent reçu:",
+              notif,
+              "Listener ID:",
+              Date.now()
+            );
+            setNotifications((prevNotifications) => {
+              // Vérifier si la notification existe déjà pour éviter les doublons
+              console.log("notif vaovao", notif);
+              const exists = prevNotifications.some(
+                (n) => n.id === (notif.id || Date.now().toString())
+              );
+              if (exists) {
+                console.log("Notification déjà existante, ignorée:", notif);
+                return prevNotifications;
+              }
+              return [
+                {
+                  ...notif,
+                  id: notif.id || Date.now().toString(),
+                  read: false,
+                },
+                ...prevNotifications,
+              ];
+            });
+          });
+
+          //notification pour une suppression evenement
+          socket.on("notifDeleteEventForAdmin", (notif) => {
+            console.log(
+              "NotifDeleteEvent reçu:",
+              notif,
+              "Listener ID:",
+              Date.now()
+            );
+            setNotifications((prevNotifications) => {
+              // Vérifier si la notification existe déjà pour éviter les doublons
+              console.log("notif vaovao", notif);
+              const exists = prevNotifications.some(
+                (n) => n.id === (notif.id || Date.now().toString())
+              );
+              if (exists) {
+                console.log("Notification déjà existante, ignorée:", notif);
+                return prevNotifications;
+              }
+              return [
+                {
+                  ...notif,
+                  id: notif.id || Date.now().toString(),
+                  read: false,
+                },
+                ...prevNotifications,
+              ];
+            });
+          });
+
           socket.on("notificationMessageAdmin", (value) => {
             console.log("nana ", value);
             const formatted1 = data.map((msg) => ({
@@ -662,17 +731,6 @@ export default function AdminLayout() {
       fetchNotifications();
       fetchMessages();
       connectSocket();
-
-      // return () => {
-      //   if (socket) {
-      //     console.log("Nettoyage des listeners socket");
-      //     socket.off("connect");
-      //     socket.off("connect_error");
-      //     socket.off("disconnect");
-      //     socket.off("notifRegister");
-      //     socket.off("notificationMessageAdmin");
-      //   }
-      // };
     }, []);
 
     // Handle click outside for dropdowns
