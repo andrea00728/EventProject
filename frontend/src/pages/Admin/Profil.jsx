@@ -53,6 +53,7 @@ export default function SuperAdminProfileEdit() {
     visible: false,
   });
   const [passwordError, setPasswordError] = useState("");
+  const [nameError, setNameError] = useState(""); // Nouvel état pour l'erreur de nom
   const [gravatarUrl, setGravatarUrl] = useState(null);
 
   const placeholder = "https://via.placeholder.com/150";
@@ -124,6 +125,14 @@ export default function SuperAdminProfileEdit() {
     e.preventDefault();
     setIsSaving(true);
     setPasswordError(""); // Réinitialiser l'erreur de mot de passe
+    setNameError(""); // Réinitialiser l'erreur de nom
+
+    // Validation du nom
+    if (!profile.name.trim()) {
+      setNameError("Le nom ne peut pas être vide.");
+      setIsSaving(false);
+      return;
+    }
 
     try {
       // Validation des mots de passe s'ils sont remplis
@@ -176,12 +185,14 @@ export default function SuperAdminProfileEdit() {
       ? "bg-gray-800 border border-gray-700"
       : "bg-white border border-gray-200"
   }`;
-  const inputClasses = (disabled) =>
+  const inputClasses = (disabled, hasError) =>
     `w-full p-4 border rounded-lg focus:outline-none focus:ring-2 resize-none transition-all duration-300 ${
       disabled
         ? darkMode
           ? "bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed"
           : "bg-gray-200 border-gray-300 text-gray-600 cursor-not-allowed"
+        : hasError
+        ? "border-red-500 focus:ring-red-500"
         : darkMode
         ? "bg-gray-700 border-gray-600 text-gray-200 focus:ring-blue-500"
         : "bg-gray-50 border-gray-200 text-gray-800 focus:ring-indigo-500"
@@ -274,9 +285,13 @@ export default function SuperAdminProfileEdit() {
                     id="name"
                     name="name"
                     value={profile.name}
-                    readOnly
-                    className={inputClasses(true)}
+                    onChange={handleChange}
+                    className={inputClasses(false, !!nameError)} // Ajout de l'état d'erreur
+                    required
                   />
+                  {nameError && (
+                    <p className="text-red-500 text-sm mt-1">{nameError}</p>
+                  )}
                 </div>
                 <div className="mb-6">
                   <label htmlFor="email" className={labelClasses}>
@@ -316,7 +331,7 @@ export default function SuperAdminProfileEdit() {
                     type="password"
                     value={passwords.newPassword}
                     onChange={handleChange}
-                    className={inputClasses(!!passwordError)}
+                    className={inputClasses(false, !!passwordError)}
                     required
                   />
                 </div>
@@ -330,7 +345,7 @@ export default function SuperAdminProfileEdit() {
                     type="password"
                     value={passwords.confirmPassword}
                     onChange={handleChange}
-                    className={inputClasses(!!passwordError)}
+                    className={inputClasses(false, !!passwordError)}
                     required
                   />
                 </div>
