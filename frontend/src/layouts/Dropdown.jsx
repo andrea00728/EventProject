@@ -151,7 +151,7 @@ const Dropdown = forwardRef(
                       />
                       <div className="flex-1 truncate">
                         <p className={`text-sm ${!item.read ? "font-semibold" : "font-medium"}`}>
-                          {item.content.title || `${item.content.from || item.content.firstName} ${item.content.lastName || ""}`}
+                          {item.content.title || `${item.content.from}`}
                         </p>
                         <p className={`text-xs truncate ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                           {item.content.message || item.content.text}
