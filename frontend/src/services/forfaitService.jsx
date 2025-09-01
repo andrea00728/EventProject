@@ -30,7 +30,7 @@ export const getSuccessForfait = async (subscriptionId) => {
     throw new Error('Erreur lors de la confirmation du forfait', { cause: error });
   }
 };
-
+//
 export async function getUserForfait() {
   try {
     const res = await axiosClient.get("/forfait/user/forfait");
