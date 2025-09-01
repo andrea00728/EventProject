@@ -68,7 +68,7 @@ export default function ModalChangeForfait({ isOpen, onClose, activeForfait }) {
             nom: forfait.nom.toUpperCase(),
             price: formatPrice(forfait.price),
             invitations: forfait.maxinvites || "Illimité",
-            events: forfait.maxevents || "Illimité",
+            events: forfait.nom == "freemium" ? "1" : "" || forfait.nom == "starter" ? "2" : "" || forfait.nom == "pro" ? "5" : "" || forfait.nom == "premium" ? "20" : "" || forfait.nom == "gold" ? "50" : "",
             duration: getDurationText(forfait.validationduration),
             paypalplanid: forfait.paypalplanid,
             rawPrice: forfait.price,
@@ -84,10 +84,10 @@ export default function ModalChangeForfait({ isOpen, onClose, activeForfait }) {
         // Fallback sur des données statiques si l'API échoue
         console.warn("Utilisation des données de fallback pour ModalChangeForfait");
         const fallbackForfaits = [
-          { id: 12, nom: "STARTER", price: "$10", invitations: 100, events: "Illimité", duration: "6 mois", rawPrice: 10, maxInvites: 100, validationDuration: 180 },
-          { id: 13, nom: "PRO", price: "$25.99", invitations: 500, events: "Illimité", duration: "6 mois", rawPrice: 25.99, maxInvites: 500, validationDuration: 180 },
-          { id: 14, nom: "PREMIUM", price: "$39.99", invitations: 1000, events: "Illimité", duration: "6 mois", rawPrice: 39.99, maxInvites: 1000, validationDuration: 180 },
-          { id: 15, nom: "GOLD", price: "$59.99", invitations: "Illimité", events: "Illimité", duration: "12 mois", rawPrice: 59.99, maxInvites: null, validationDuration: 365 },
+          { id: 12, nom: "STARTER", price: "$10", invitations: 100, events: "2", duration: "6 mois", rawPrice: 10, maxInvites: 100, validationDuration: 180 },
+          { id: 13, nom: "PRO", price: "$25.99", invitations: 500, events: "5", duration: "6 mois", rawPrice: 25.99, maxInvites: 500, validationDuration: 180 },
+          { id: 14, nom: "PREMIUM", price: "$39.99", invitations: 1000, events: "20", duration: "6 mois", rawPrice: 39.99, maxInvites: 1000, validationDuration: 180 },
+          { id: 15, nom: "GOLD", price: "$59.99", invitations: "Illimité", events: "50", duration: "12 mois", rawPrice: 59.99, maxInvites: null, validationDuration: 365 },
         ];
         setForfaits(fallbackForfaits);
       } finally {
@@ -121,7 +121,7 @@ export default function ModalChangeForfait({ isOpen, onClose, activeForfait }) {
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
         <div className="bg-white rounded-3xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto scrollbar-hide">
           {/* Header */}
-          <div className="sticky top-0 bg-white rounded-t-3xl border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+          <div className="sticky top-0 bg-white rounded-t-3xl border-b border-gray-200 px-6 py-4 flex justify-between items-center z-50">
             <h2 className="text-2xl font-bold text-gray-900">
               Changer de forfait
             </h2>
