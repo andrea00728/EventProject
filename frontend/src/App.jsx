@@ -8,6 +8,7 @@ import Evenementform from "../components/Evenementform"; // Le formulaire privé
 function App() {
   return (
     <Router>
+       <ErrorBoundary>
       <Routes>
         <Route path="/" element={<Pagepublic />} />
         <Route path="/evenements-publics" element={<PublicEvents />} />
@@ -17,6 +18,7 @@ function App() {
         <Route path="/" element={<EvenementForm />} />
         <Route path="/creer-evenement-prive" element={<Evenementform />} />
       </Routes>
+      </ErrorBoundary>
     </Router>
   );
 }
