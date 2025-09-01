@@ -8,6 +8,7 @@ const StateContext = createContext({
   setUser: () => {},
   setIsAuthenticated: () => {},
   handleLogout: () => {},
+  updateToken: () => {},
 });
 
 export const ContextProvider = ({ children }) => {
@@ -15,7 +16,7 @@ export const ContextProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Vérifie l'état d'authentification au chargement initial de l'application
+  // --- Charger l'utilisateur si token présent ---
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
@@ -32,6 +33,7 @@ export const ContextProvider = ({ children }) => {
         setIsLoading(false);
       }
     };
+
     checkAuthStatus();
   }, []);
 
