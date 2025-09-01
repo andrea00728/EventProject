@@ -62,6 +62,25 @@ export class AuthController {
   //   };
   // }
 
+  // @UseGuards(JwtAuthGuard)
+  // @Get('status')
+  // async getAuthStatus(@Req() req: Request & { user: JwtPayload }) {
+  //   const user = await this.authService.getStatus(req.user.sub); // Ajout : Appeler getStatus
+  //   console.log('Réponse de /auth/status:', { // Ajout : Log pour débogage
+  //     isAuthenticated: true,
+  //     user: {
+  //       id: user.id,
+  //       name: user.name,
+  //       email: user.email,
+  //       photo: user.photo,
+  //     },
+  //   });
+  //   return {
+  //     isAuthenticated: true,
+  //     user,
+  //   };
+  // }
+
   @UseGuards(JwtAuthGuard)
   @Get('status')
   async getAuthStatus(@Req() req) {
@@ -70,6 +89,7 @@ export class AuthController {
       user: req.user,
     };
   }
+
 
   @Get('ManagerList')
   async getManagerList() {
@@ -170,7 +190,7 @@ export class AuthController {
     }),
     limits: { fileSize: 5 * 1024 * 1024 },
   }))
-
+  
   @ApiOperation({ summary: 'Mettre à jour le profil utilisateur' })
   @ApiResponse({ status: 200, description: 'Profil mis à jour avec succès' })
   @ApiResponse({ status: 400, description: 'Requête invalide' })
