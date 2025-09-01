@@ -17,23 +17,28 @@ export const ContextProvider = ({ children }) => {
 
   // Vérifie l'état d'authentification au chargement initial de l'application
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        // Inclure les cookies dans la requête
-        const response = await axiosClient.get("/auth/status", {
-          withCredentials: true, // Permet d'envoyer les cookies
-        });
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-      } catch (error) {
+  const checkAuthStatus = async () => {
+    try {
+      const response = await axiosClient.get("/auth/status", {
+        withCredentials: true,
+      });
+      setUser(response.data.user);
+      setIsAuthenticated(true);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        // Pas connecté → ne pas spammer la console
         setUser(null);
         setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
+      } else {
+        // console.error("Erreur auth/status :", error);
       }
-    };
-    checkAuthStatus();
-  }, []);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  checkAuthStatus();
+}, []);
 
   // Fonction centralisée pour la déconnexion
 const handleLogout = async () => {

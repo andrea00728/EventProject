@@ -109,24 +109,39 @@ export default function NosForfaits() {
     fetchForfaits();
   }, []);
 
-  useEffect(() => {
-    const fetchUserForfait = async () => {
-      if (!isAuthenticated) return;
-      if (user?.role === "organisateur") {
-        try {
-          const userForfait = await getUserForfait();
-          if (userForfait?.forfait) {
-            setActiveForfait(userForfait.forfait);
-            setExpirationDate(userForfait.forfaitExpirationDate);
-          }
-        } catch (err) {
-          console.error(err);
-          alert("Impossible de charger votre forfait actif.");
+ useEffect(() => {
+  const fetchUserForfait = async () => {
+    if (!isAuthenticated) return;
+    if (user?.role === "organisateur") {
+      try {
+        const userForfait = await getUserForfait();
+
+        if (userForfait?.forfait) {
+          setActiveForfait(userForfait.forfait);
+          setExpirationDate(userForfait.forfaitExpirationDate);
+        } else {
+          // Pas de forfait actif → pas d’erreur rouge
+          setActiveForfait(null);
+          setExpirationDate(null);
         }
+      } catch (err) {
+        // Si c’est juste un 401 → ignorer silencieusement
+        if (err.response?.status === 401) {
+          setActiveForfait(null);
+          setExpirationDate(null);
+          return;
+        }
+
+        // Sinon → vraie erreur
+        console.error("Erreur lors du chargement du forfait actif :", err);
+        alert("Impossible de charger votre forfait actif.");
       }
-    };
-    fetchUserForfait();
-  }, [isAuthenticated]);
+    }
+  };
+
+  fetchUserForfait();
+}, [isAuthenticated, user]);
+
 
   const handleAcheter = (forfait) => {
     setSelectedForfait(forfait);

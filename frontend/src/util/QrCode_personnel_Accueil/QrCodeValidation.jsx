@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import QrScanner from "qr-scanner";
-QrScanner.WORKER_PATH = "/qr-scanner-worker.min.js";
 import Swal from "sweetalert2";
 import { useStateContext } from "../../context/ContextProvider";
 import { QrCodeValidation } from "../../services/invitationService";
 
 const QrScannerComponent = () => {
-  const {isAuthenticated } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const videoRef = useRef(null);
   const scannerRef = useRef(null);
   const lastCodeRef = useRef(null);
@@ -68,7 +67,7 @@ const QrScannerComponent = () => {
           const messages = {
             "Invitation déjà utilisée": {
               title: "Attention",
-              text: " Ce QR code a déjà été utilisé.",
+              text: "Ce QR code a déjà été utilisé.",
               icon: "warning",
             },
             "Invitation introuvable": {
@@ -121,7 +120,9 @@ const QrScannerComponent = () => {
   };
 
   useEffect(() => {
-    startScanner();
+    if (isAuthenticated) {
+      startScanner();
+    }
     return () => stopScanner();
   }, [isAuthenticated]);
 
@@ -157,7 +158,9 @@ const QrScannerComponent = () => {
         Place le QR code devant la caméra
       </p>
       {isProcessing && (
-        <p style={{ marginTop: "1rem", color: "#007bff" }}> Analyse en cours...</p>
+        <p style={{ marginTop: "1rem", color: "#007bff" }}>
+          Analyse en cours...
+        </p>
       )}
     </div>
   );
