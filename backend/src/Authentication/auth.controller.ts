@@ -62,24 +62,44 @@ export class AuthController {
   //   };
   // }
 
+  // @UseGuards(JwtAuthGuard)
+  // @Get('status')
+  // async getAuthStatus(@Req() req: Request & { user: JwtPayload }) {
+  //   const user = await this.authService.getStatus(req.user.sub); // Ajout : Appeler getStatus
+  //   console.log('Réponse de /auth/status:', { // Ajout : Log pour débogage
+  //     isAuthenticated: true,
+  //     user: {
+  //       id: user.id,
+  //       name: user.name,
+  //       email: user.email,
+  //       photo: user.photo,
+  //     },
+  //   });
+  //   return {
+  //     isAuthenticated: true,
+  //     user,
+  //   };
+  // }
+
   @UseGuards(JwtAuthGuard)
   @Get('status')
   async getAuthStatus(@Req() req: Request & { user: JwtPayload }) {
-    const user = await this.authService.getStatus(req.user.sub); // Ajout : Appeler getStatus
-    console.log('Réponse de /auth/status:', { // Ajout : Log pour débogage
+    // Récupérer les infos depuis la DB via le service
+    const user = await this.authService.getStatus(req.user.sub);
+
+    // Fusionner les données du JWT et celles de la DB
+    return {
       isAuthenticated: true,
       user: {
         id: user.id,
-        name: user.name,
-        email: user.email,
-        photo: user.photo,
+        name: user.name || req.user.name,
+        email: user.email || req.user.email,
+        role: user.role || req.user.role,
+        photo: user.photo || req.user.photo,
       },
-    });
-    return {
-      isAuthenticated: true,
-      user,
     };
   }
+
 
   @Get('ManagerList')
   async getManagerList() {
@@ -180,7 +200,7 @@ export class AuthController {
     }),
     limits: { fileSize: 5 * 1024 * 1024 },
   }))
-
+  
   @ApiOperation({ summary: 'Mettre à jour le profil utilisateur' })
   @ApiResponse({ status: 200, description: 'Profil mis à jour avec succès' })
   @ApiResponse({ status: 400, description: 'Requête invalide' })
