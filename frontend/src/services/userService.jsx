@@ -34,8 +34,8 @@ export const getOrgStats = async () => {
   return response.data;
 }
 
-export const getIfAdminHasPassword = async () => {
-  const response = await axiosClient.get("/admin/has-password")
+export const getIfAdminHasPassword = async (id) => {
+  const response = await axiosClient.get(`/admin/has-password/${id}`,)
   return response.data;
 }
 

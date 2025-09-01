@@ -31,7 +31,7 @@ export const PasswordSetupModal = ({ show, onClose, darkMode }) => {
     }
 
     try {
-      const res = await updatePasswordUser(password);
+      const res = await updatePasswordUser({adminId : user.sub ,newPassword: password});
       setSuccess(res.data.message || "Mot de passe défini avec succès !");
 
       if (dontShowAgain) {
