@@ -100,7 +100,7 @@ export default function SuperAdminProfileEdit() {
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col items-center mb-10">
               <img
-                src={profile.photo || ""}
+                src={profile.newFile || user.photo}
                 alt="Photo de profil"
                 className={`w-32 h-32 rounded-full object-cover border-4 shadow-md transition-all duration-300 ${
                   darkMode ? "border-blue-500" : "border-indigo-500"
