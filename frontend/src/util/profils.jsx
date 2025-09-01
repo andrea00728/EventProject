@@ -6,7 +6,6 @@ import axiosClient from "../api/axios-client";
 import { useNavigate } from "react-router-dom";
 import md5 from "blueimp-md5";
 
-// ---------- Helpers ----------
 const isDataUrl = (v) => typeof v === "string" && v.startsWith("data:");
 const isHttpUrl = (v) => typeof v === "string" && /^https?:\/\//i.test(v);
 const isLikelyBase64 = (v) =>
@@ -30,23 +29,21 @@ const resolvePhotoSrc = (photo, email, previewImage) => {
   return placeholder;
 };
 
-// ---------- Framer Motion Variants ----------
 const backdropVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.3 } } };
 const modalVariants = {
   hidden: { opacity: 0, scale: 0.95, y: 20 },
   visible: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", damping: 20, stiffness: 300 } },
-  exit: { opacity: 0, scale: 0.95, y: 20, transition: { duration: 0.2 } },
+  exit: { opacity: 0, scale: 0.95, y: 20, transition: { duration: 0.2 } }
 };
 const buttonVariants = { hover: { scale: 1.05 }, tap: { scale: 0.95 } };
 
 export default function Profil() {
-  const { user, setUser, isLoading, handleLogout, setToken } = useStateContext();
+  const { user, setUser, isLoading, handleLogout } = useStateContext();
   const navigate = useNavigate();
 
-  const [userName, setUserName] = useState("Utilisateur");
-  const [userEmail, setUserEmail] = useState("email@example.com");
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
   const [userPhoto, setUserPhoto] = useState("/default-avatar.png");
-  const [previewImage, setPreviewImage] = useState("/default-avatar.png");
 
   const [isOpenProfil, setIsOpenProfil] = useState(false);
   const [openEditProfil, setOpenEditProfil] = useState(false);
@@ -60,50 +57,32 @@ export default function Profil() {
     newPassword: "",
     confirmPassword: "",
   });
+  const [previewImage, setPreviewImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
 
-  // ---------- Sync user data ----------
-  // ---------- Sync user data ----------
-useEffect(() => {
-  if (!user) return;
-
-  const photoUrl = resolvePhotoSrc(
-    user.photo,
-    user.email,
-    localStorage.getItem("userPhoto")
-  );
-
-  // Sauvegarde locale du nom complet et de la photo
-  if (user.name) {
-    localStorage.setItem("userFullName", user.name);
-  }
-  if (photoUrl) {
-    localStorage.setItem("userPhoto", photoUrl);
-  }
-
-  setUserName(user.name || "");
-  setUserEmail(user.email || "");
-  setUserPhoto(photoUrl);
-  setPreviewImage(photoUrl);
-
-  setEditFormData({
-    name: user.name || "",
-    email: user.email || "",
-    photo: null,
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-}, [user]);
-
+  useEffect(() => {
+    if (!user) return;
+    const photoUrl = resolvePhotoSrc(user.photo, user.email);
+    setUserName(user.name || "");
+    setUserEmail(user.email || "");
+    setUserPhoto(photoUrl);
+    setPreviewImage(null);
+    setEditFormData({
+      name: user.name || "",
+      email: user.email || "",
+      photo: null,
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+  }, [user]);
 
   if (isLoading) return <p className="text-center text-gray-600">Chargement...</p>;
 
-  // ---------- Handlers ----------
   const handleConfirmLogOut = async () => {
-    try { await axiosClient.post("/auth/logout"); } 
+    try { await axiosClient.post("/auth/logout"); }
     finally {
       handleLogout();
       setConfirmLogOut(false);
@@ -113,27 +92,22 @@ useEffect(() => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setEditFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+    setEditFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
   };
 
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (!file) return setPreviewImage(null);
 
-    if (file.size > 5 * 1024 * 1024) return setErrors({ ...errors, photo: "La taille de l'image ne doit pas dépasser 5MB" });
-    if (!file.type.startsWith("image/")) return setErrors({ ...errors, photo: "Veuillez sélectionner une image valide" });
+    if (file.size > 5 * 1024 * 1024) return setErrors(prev => ({ ...prev, photo: "La taille de l'image ne doit pas dépasser 5MB" }));
+    if (!file.type.startsWith("image/")) return setErrors(prev => ({ ...prev, photo: "Veuillez sélectionner une image valide" }));
 
-    setEditFormData((prev) => ({ ...prev, photo: file }));
-
+    setEditFormData(prev => ({ ...prev, photo: file }));
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      setPreviewImage(ev.target.result);
-      localStorage.setItem("userPhoto", ev.target.result); // Stockage temporaire
-    };
+    reader.onload = (ev) => setPreviewImage(ev.target.result);
     reader.readAsDataURL(file);
-
-    if (errors.photo) setErrors((prev) => ({ ...prev, photo: "" }));
+    if (errors.photo) setErrors(prev => ({ ...prev, photo: "" }));
   };
 
   const validateForm = () => {
@@ -174,9 +148,9 @@ useEffect(() => {
       );
 
       const updatedUser = response.data.user;
-      setUser(updatedUser);
 
-      if (response.data.token) setToken(response.data.token);
+      // Persistance dans ContextProvider (et localStorage)
+      setUser(updatedUser);
 
       // 🔹 Générer la nouvelle photo
       const newPhotoUrl = resolvePhotoSrc(
@@ -185,24 +159,10 @@ useEffect(() => {
         updatedUser.email
       );
       setUserPhoto(newPhotoUrl);
-      setPreviewImage(newPhotoUrl);
-
-      // 🔹 Mettre à jour le localStorage
-      if (updatedUser.name) {
-        localStorage.setItem("userName", updatedUser.name);
-      }
-      if (newPhotoUrl) {
-        localStorage.setItem("userPhoto", newPhotoUrl);
-      }
+      setPreviewImage(null);
 
       setSuccessMessage("Profil mis à jour avec succès !");
-      setEditFormData({
-        ...editFormData,
-        photo: null,
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
+      setEditFormData(prev => ({ ...prev, photo: null, currentPassword: "", newPassword: "", confirmPassword: "" }));
 
       setTimeout(() => {
         setSuccessMessage("");
@@ -236,8 +196,7 @@ useEffect(() => {
       <AnimatePresence>
         {isOpenProfil && (
           <motion.div className="fixed top-15 inset-0 z-50 flex items-start justify-end p-4 sm:p-6" variants={backdropVariants} initial="hidden" animate="visible" exit="hidden" onClick={() => setIsOpenProfil(false)}>
-            <motion.div className="relative bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100/20 w-full max-w-xs sm:max-w-sm p-6" variants={modalVariants} onClick={(e) => e.stopPropagation()}>
-              {/* Close button */}
+            <motion.div className="relative bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100/20 w-full max-w-xs sm:max-w-sm p-6" variants={modalVariants} onClick={e => e.stopPropagation()}>
               <motion.button className="absolute top-3 right-3 p-1.5 bg-gray-100/80 rounded-full" onClick={() => setIsOpenProfil(false)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                 <X size={18} />
               </motion.button>
@@ -264,7 +223,6 @@ useEffect(() => {
                   <motion.button className="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-semibold" onClick={() => setOpenEditProfil(true)} variants={buttonVariants} whileHover="hover" whileTap="tap">
                     <User size={18} />Éditer mon profil
                   </motion.button>
-
                   <motion.button className="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg font-semibold" onClick={() => setConfirmLogOut(true)} variants={buttonVariants} whileHover="hover" whileTap="tap">
                     <LogOut size={18} />Déconnexion
                   </motion.button>
@@ -279,7 +237,8 @@ useEffect(() => {
       <AnimatePresence>
         {openEditProfil && (
           <motion.div className="fixed inset-0 z-50 flex items-center justify-center h-screen bg-black/30 backdrop-blur-xs p-2" variants={backdropVariants} initial="hidden" animate="visible" exit="hidden" onClick={() => setOpenEditProfil(false)}>
-            <motion.div className="bg-white rounded-2xl shadow-xl border border-gray-100/20 w-full max-w-md mx-auto my-8" variants={modalVariants} onClick={(e) => e.stopPropagation()}>
+            <motion.div className="bg-white rounded-2xl shadow-xl border border-gray-100/20 w-full max-w-md mx-auto my-8" variants={modalVariants} onClick={e => e.stopPropagation()}>
+              {/* Header */}
               <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-4 text-white rounded-t-2xl relative">
                 <motion.button className="absolute top-3 right-3 p-1.5" onClick={() => setOpenEditProfil(false)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}><X size={18} /></motion.button>
                 <div className="flex items-center justify-center gap-3">
@@ -294,7 +253,7 @@ useEffect(() => {
 
                 <div className="flex flex-col items-center space-y-4">
                   <div className="relative">
-                    <img src={previewImage || "/default-avatar.png"} alt="Aperçu" className="w-20 h-20 rounded-full object-cover border-4 border-gray-200" />
+                    <img src={previewImage || userPhoto || "/default-avatar.png"} alt="Aperçu" className="w-20 h-20 rounded-full object-cover border-4 border-gray-200" />
                     <label className="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 rounded-full shadow-md flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors">
                       <Upload size={16} className="text-white" />
                       <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
@@ -331,7 +290,7 @@ useEffect(() => {
       <AnimatePresence>
         {confirmLogOut && (
           <motion.div className="fixed inset-0 z-50 flex items-center justify-center h-screen bg-black/30 backdrop-blur-xs" variants={backdropVariants} initial="hidden" animate="visible" exit="hidden" onClick={() => setConfirmLogOut(false)}>
-            <motion.div className="bg-white/95 rounded-2xl shadow-xl border border-gray-100/20 max-w-md mx-auto" variants={modalVariants} onClick={(e) => e.stopPropagation()}>
+            <motion.div className="bg-white/95 rounded-2xl shadow-xl border border-gray-100/20 max-w-md mx-auto" variants={modalVariants} onClick={e => e.stopPropagation()}>
               <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-4 text-white rounded-t-2xl relative">
                 <motion.button className="absolute top-3 right-3 p-1.5" onClick={() => setConfirmLogOut(false)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}><X size={18} /></motion.button>
                 <div className="flex items-center justify-center gap-3">
