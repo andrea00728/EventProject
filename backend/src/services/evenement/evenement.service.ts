@@ -16,12 +16,12 @@ export class EvenementService {
     private readonly evenementRepository: Repository<Evenement>,
     private readonly locationService: LocationService,
     private readonly notificationService: NotificationService,
-     @InjectRepository(User)
+    @InjectRepository(User)
     private userRepo: Repository<User>,
     @InjectRepository(NotificationEntity)
     private readonly notificationRepository: Repository<NotificationEntity>,
     private readonly notificationGateway: NotificationGateway
-  ) {}
+  ) { }
 
   async create(dto: CreateEventDto): Promise<Evenement> {
     const location = await this.locationService.findLocationById(dto.locationId);
@@ -45,8 +45,10 @@ export class EvenementService {
     if (existingEvent) {
       throw new BadRequestException(`Cette salle est déjà réservée pendant cette période`);
     }
-    const user = new User();
-    user.id = dto.utilisateur_id;
+    const user = await this.userRepo.findOneBy({ id: dto.utilisateur_id });
+    if (!user) {
+      throw new NotFoundException("Utilisateur introuvable");
+    }
 
     const evenement = this.evenementRepository.create({
       nom: dto.nom,
@@ -60,6 +62,8 @@ export class EvenementService {
       isPublic: dto.isPublic,
     });
 
+    console.log("evenement: ", evenement);
+
     const event = await this.evenementRepository.save(evenement);
     await this.notificationService.notifyAll(
       'Nouvel Événement',
@@ -68,7 +72,7 @@ export class EvenementService {
 
     const notification = this.notificationRepository.create({
       title: 'Nouvel évènement crée',
-      message: `${user} a crée l'evenement de ${evenement.nom}.`,
+      message: `${user.name} a crée l'evenement de ${evenement.nom}.`,
       type: 'info',
       date: new Date(),
     });
@@ -133,6 +137,26 @@ export class EvenementService {
     if (!event) {
       throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de le supprimer`);
     }
+
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) {
+      throw new NotFoundException("Utilisateur introuvable");
+    }
+
+    // notification pour la suppression d'un evenement
+    const notification = this.notificationRepository.create({
+      title: 'Suppression d\'un évènement',
+      message: `${user.name} a supprimé l'evenement de ${event.nom}.`,
+      type: 'warning',
+      date: new Date(),
+    });
+    await this.notificationRepository.save(notification);
+    this.notificationGateway.emitDeleteEventForAdmin({
+      ...notification,
+      date: notification.date.toISOString(),
+    });
+
+
     await this.evenementRepository.manager.delete('Invite', { event: { id } });
     await this.evenementRepository.manager.delete('TableEvent', { event: { id } });
     await this.evenementRepository.remove(event);
@@ -159,54 +183,54 @@ export class EvenementService {
     });
   }
 
-/*** */
+  /*** */
 
-async findCountForAllEventStats(): Promise<{
-  total: number;
-  passes: number;
-  avenir: number;
-  eventTypeStat: any;
-}> {
-  const now = new Date();
+  async findCountForAllEventStats(): Promise<{
+    total: number;
+    passes: number;
+    avenir: number;
+    eventTypeStat: any;
+  }> {
+    const now = new Date();
 
-  const total = await this.evenementRepository.count();
+    const total = await this.evenementRepository.count();
 
-  const passes = await this.evenementRepository.count({
-    where: {
-      date_fin: LessThanOrEqual(now),
-    },
-  });
+    const passes = await this.evenementRepository.count({
+      where: {
+        date_fin: LessThanOrEqual(now),
+      },
+    });
 
-  const avenir = await this.evenementRepository.count({
-    where: {
-      date_fin: MoreThanOrEqual(now),
-    },
-  });
+    const avenir = await this.evenementRepository.count({
+      where: {
+        date_fin: MoreThanOrEqual(now),
+      },
+    });
 
-  const eventTypeStats = await this.userRepo
-    .createQueryBuilder('user')
-    .leftJoin('user.evenement', 'evenement')
-    .select('evenement.type', 'type')
-    .addSelect('COUNT(evenement.type)', 'total')
-    .groupBy('evenement.type')
-    .getRawMany();
+    const eventTypeStats = await this.userRepo
+      .createQueryBuilder('user')
+      .leftJoin('user.evenement', 'evenement')
+      .select('evenement.type', 'type')
+      .addSelect('COUNT(evenement.type)', 'total')
+      .groupBy('evenement.type')
+      .getRawMany();
 
-  const eventTypeStat = eventTypeStats.map((r) => {
-    const count = parseFloat(r.total);
-    const percentage = total > 0 ? (count / total) * 100 : 0;
+    const eventTypeStat = eventTypeStats.map((r) => {
+      const count = parseFloat(r.total);
+      const percentage = total > 0 ? (count / total) * 100 : 0;
+      return {
+        type: r.type,
+        total: count,
+        percentage: parseFloat(percentage.toFixed(2)), // garde 2 chiffres après la virgule
+      };
+    });
+
     return {
-      type: r.type,
-      total: count,
-      percentage: parseFloat(percentage.toFixed(2)), // garde 2 chiffres après la virgule
+      total,
+      passes,
+      avenir,
+      eventTypeStat
     };
-  });
-
-  return {
-    total,
-    passes,
-    avenir,
-    eventTypeStat
-  };
-}
+  }
 
 }
