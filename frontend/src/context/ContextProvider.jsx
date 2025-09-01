@@ -11,25 +11,28 @@ const StateContext = createContext({
 });
 
 export const ContextProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("user");
-    return stored ? JSON.parse(stored) : null;
-  });
-  const [isAuthenticated, setIsAuthenticated] = useState(!!user);
-  const [isLoading, setIsLoading] = useState(!user);
+  const [user, setUserState] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Charger l'utilisateur depuis le backend si pas dans localStorage
+  // --- Chargement initial : vérifie localStorage d'abord ---
   useEffect(() => {
-    if (user) return setIsLoading(false);
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUserState(JSON.parse(storedUser));
+      setIsAuthenticated(true);
+      setIsLoading(false);
+      return; // pas besoin d'appeler /auth/status si localStorage existe
+    }
 
+    // Sinon, vérifie le serveur
     const checkAuthStatus = async () => {
       try {
         const response = await axiosClient.get("/auth/status", { withCredentials: true });
-        setUser(response.data.user);
+        setUserState(response.data.user);
         setIsAuthenticated(true);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-      } catch {
-        setUser(null);
+      } catch (error) {
+        setUserState(null);
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
@@ -39,22 +42,24 @@ export const ContextProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-  // Centraliser la mise à jour du user et stockage local
-  const updateUser = (updatedUser) => {
-    setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    setIsAuthenticated(!!updatedUser);
+  // --- Wrapper pour setUser avec persistance locale ---
+  const setUser = (userData) => {
+    setUserState(userData);
+    if (userData) localStorage.setItem("user", JSON.stringify(userData));
+    else localStorage.removeItem("user");
   };
 
+  // --- Déconnexion ---
   const handleLogout = async () => {
     try {
       await axiosClient.post("/auth/logout");
     } catch (error) {
-      console.error("Erreur lors de la déconnexion :", error);
+      if (error.response?.status !== 401) {
+        console.error("Erreur lors de la déconnexion :", error);
+      }
     } finally {
       setUser(null);
       setIsAuthenticated(false);
-      localStorage.removeItem("user");
     }
   };
 
@@ -64,7 +69,8 @@ export const ContextProvider = ({ children }) => {
         user,
         isAuthenticated,
         isLoading,
-        setUser: updateUser,
+        setUser,
+        role: user?.role || null,
         setIsAuthenticated,
         handleLogout,
       }}

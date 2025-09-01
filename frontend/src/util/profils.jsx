@@ -29,7 +29,6 @@ const resolvePhotoSrc = (photo, email, previewImage) => {
   return placeholder;
 };
 
-// ---------- Motion Variants ----------
 const backdropVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.3 } } };
 const modalVariants = {
   hidden: { opacity: 0, scale: 0.95, y: 20 },
@@ -63,7 +62,6 @@ export default function Profil() {
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
 
-  // ---------- Sync user data ----------
   useEffect(() => {
     if (!user) return;
     const photoUrl = resolvePhotoSrc(user.photo, user.email);
@@ -83,7 +81,6 @@ export default function Profil() {
 
   if (isLoading) return <p className="text-center text-gray-600">Chargement...</p>;
 
-  // ---------- Handlers ----------
   const handleConfirmLogOut = async () => {
     try { await axiosClient.post("/auth/logout"); }
     finally {
@@ -143,7 +140,9 @@ export default function Profil() {
 
       const response = await axiosClient.post("/auth/update-profile", formData, { withCredentials: true });
       const updatedUser = response.data.user;
-      setUser(updatedUser); // stocke aussi dans localStorage
+
+      // Persistance dans ContextProvider (et localStorage)
+      setUser(updatedUser);
 
       const newPhotoUrl = resolvePhotoSrc(updatedUser.photo, updatedUser.email);
       setUserPhoto(newPhotoUrl);
