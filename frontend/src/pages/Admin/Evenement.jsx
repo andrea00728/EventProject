@@ -592,7 +592,7 @@ export default function EvenementAd() {
             {/* Version desktop - DataGrid */}
             <div className={tableContainerClasses}>
               {/* En-têtes du tableau */}
-              <div className={headerClasses}>
+              <div className={`rounded-t-xl ${headerClasses}`}>
                 <div className="col-span-3">ÉVÉNEMENT</div>
                 <div className="col-span-1">TYPE</div>
                 <div className="col-span-2">THÈME</div>
@@ -683,7 +683,7 @@ export default function EvenementAd() {
 
               {/* Pagination */}
               {filteredData.length > 0 && (
-                <div className={paginationClasses}>
+                <div className={`rounded-b-xl ${paginationClasses}`}>
                   {/* Sélection du nombre de lignes */}
                   <div className="flex items-center space-x-2">
                     <span className={textMuted}>Lignes par page:</span>

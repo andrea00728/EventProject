@@ -17,7 +17,8 @@ import {
   MdRefresh,
   MdFullscreen,
   MdFullscreenExit,
-  MdCheckCircle
+  MdCheckCircle,
+  MdMap
 } from "react-icons/md";
 import { TbAlertTriangle } from "react-icons/tb";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,7 +26,7 @@ import { useDarkMode } from "../../context/DarkModeContext";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 
-// Component to handle map click events
+// Définition de l'icône personnalisée
 const customIcon = L.icon({
   iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', // URL de l'image de l'icône
   iconSize: [25, 41], // Taille de l'icône
@@ -33,6 +34,7 @@ const customIcon = L.icon({
   popupAnchor: [0, -41], // Point d'ancrage du popup pour qu'il soit au-dessus de l'icône
 });
 
+// Component to handle map click events
 const MapClickHandler = ({ setGeocodeResult, setGeocodeResultText }) => {
   const map = useMap();
   const markerRef = useRef(null);
@@ -45,7 +47,6 @@ const MapClickHandler = ({ setGeocodeResult, setGeocodeResultText }) => {
         map.removeLayer(markerRef.current);
       }
 
-      // Utilisez l'icône personnalisée
       const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map)
         .bindPopup(`Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)}`)
         .openPopup();
@@ -108,18 +109,18 @@ const LocationSalle = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
-
   const { darkMode } = useDarkMode();
   const [showAddModal, setShowAddModal] = useState(false);
   const [geocodeAddress, setGeocodeAddress] = useState("");
   const [geocodeResult, setGeocodeResult] = useState(null);
   const [geocodeResultText, setGeocodeResultText] = useState("");
   const [isModalFullScreen, setIsModalFullScreen] = useState(false);
-  const mapRef = useRef(null); // Référence pour la carte
-  // nouvel état pour le modal de confirmation
+  const [editingLocation, setEditingLocation] = useState(null);
+  const [showEditConfirmationModal, setShowEditConfirmationModal] = useState(false);
+  const [showEditSuccessModal, setShowEditSuccessModal] = useState(false);
   const [showSaveConfirmationModal, setShowSaveConfirmationModal] = useState(false);
+  const mapRef = useRef(null);
 
-  // Fetch all locations with memoization
   const fetchLocations = useCallback(async () => {
     setIsLoading(true);
     setIsRefreshing(true);
@@ -127,8 +128,6 @@ const LocationSalle = () => {
       const response = await axios.get(API_URL);
       setLocations(response.data);
       setError(null);
-
-      // Initialize expanded state for each location
       const expandedState = {};
       response.data.forEach(loc => {
         expandedState[loc.id] = expandedLocations[loc.id] || false;
@@ -147,20 +146,39 @@ const LocationSalle = () => {
     fetchLocations();
   }, [fetchLocations]);
 
-  // Filter locations based on search term and active tab
+  useEffect(() => {
+    if (editingLocation && editingLocation.latitude != null && editingLocation.longitude != null) {
+      setGeocodeAddress(editingLocation.nom);
+      setGeocodeResult({
+        nom: editingLocation.nom,
+        latitude: parseFloat(editingLocation.latitude),
+        longitude: parseFloat(editingLocation.longitude)
+      });
+      setGeocodeResultText(`Lieu actuel : ${editingLocation.nom} (Lat: ${editingLocation.latitude}, Lon: ${editingLocation.longitude})`);
+    }
+  }, [editingLocation]);
+
+  // Recentrer la carte lorsque le modal de modification s'ouvre
+  useEffect(() => {
+    if (showAddModal && editingLocation && editingLocation.latitude != null && editingLocation.longitude != null && mapRef.current) {
+      const lat = parseFloat(editingLocation.latitude);
+      const lng = parseFloat(editingLocation.longitude);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        mapRef.current.setView([lat, lng], 13);
+      }
+    }
+  }, [showAddModal, editingLocation]);
+
   const filteredLocations = locations.filter(location => {
     const matchesSearch = location.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (location.salles && location.salles.some(salle =>
         salle.nom.toLowerCase().includes(searchTerm.toLowerCase())));
-
     if (activeTab === "all") return matchesSearch;
     if (activeTab === "withRooms") return matchesSearch && location.salles && location.salles.length > 0;
     if (activeTab === "withoutRooms") return matchesSearch && (!location.salles || location.salles.length === 0);
-
     return matchesSearch;
   });
 
-  // Toggle location expansion
   const toggleLocation = (id) => {
     setExpandedLocations(prev => ({
       ...prev,
@@ -168,7 +186,6 @@ const LocationSalle = () => {
     }));
   };
 
-  // Expand all locations
   const expandAll = () => {
     const allExpanded = {};
     locations.forEach(loc => {
@@ -177,33 +194,10 @@ const LocationSalle = () => {
     setExpandedLocations(allExpanded);
   };
 
-  // Collapse all locations
   const collapseAll = () => {
     setExpandedLocations({});
   };
 
-  // Create a new location
-  // const handleCreateLocation = async (e) => {
-  //   e.preventDefault();
-  //   if (!newLocationName.trim()) {
-  //     setError("Le nom du lieu est requis");
-  //     return;
-  //   }
-  //   try {
-  //     setIsLoading(true);
-  //     await axios.post(API_URL, { nom: newLocationName });
-  //     setNewLocationName("");
-  //     await fetchLocations();
-  //     setError(null);
-  //   } catch (err) {
-  //     setError(err.response?.data?.message || "Erreur lors de la création du lieu");
-  //     console.error("Create location error:", err);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // Update a location
   const handleUpdateLocation = async (id) => {
     if (!editLocationName.trim()) {
       setError("Le nom du lieu est requis");
@@ -224,7 +218,6 @@ const LocationSalle = () => {
     }
   };
 
-  // Delete handlers
   const openDeleteLocationModal = (id, nom) => {
     setDeleteItem({ type: "location", id, nom });
     setShowDeleteModal(true);
@@ -237,7 +230,6 @@ const LocationSalle = () => {
 
   const handleConfirmDelete = async () => {
     if (!deleteItem) return;
-
     const { type, id } = deleteItem;
     try {
       setIsLoading(true);
@@ -262,7 +254,6 @@ const LocationSalle = () => {
     }
   };
 
-  // Create a new salle
   const handleCreateSalle = async (locationId) => {
     if (!newSalleName.trim()) {
       setError("Le nom de la salle est requis");
@@ -285,7 +276,6 @@ const LocationSalle = () => {
     }
   };
 
-  // Update a salle
   const handleUpdateSalle = async (id) => {
     if (!editSalleName.trim()) {
       setError("Le nom de la salle est requis");
@@ -312,17 +302,16 @@ const LocationSalle = () => {
       return;
     }
     try {
-      console.log("Geocoding address:", geocodeAddress); // Debug log
       const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(geocodeAddress)}`);
       const data = await response.json();
-      console.log("Geocode response:", data); // Debug log
-      if (data.length > 0) {
+      if (data.length > 0 && data[0].lat != null && data[0].lon != null) {
         const { lat, lon, display_name } = data[0];
-        setGeocodeResult({ nom: display_name, latitude: lat, longitude: lon });
+        const latitude = parseFloat(lat);
+        const longitude = parseFloat(lon);
+        setGeocodeResult({ nom: display_name, latitude, longitude });
         setGeocodeResultText(`Nom: ${display_name}, Latitude: ${lat}, Longitude: ${lon}`);
-        // Recentrer la carte sur le résultat du géocodage
-        if (mapRef.current) {
-          mapRef.current.setView([parseFloat(lat), parseFloat(lon)], 13);
+        if (mapRef.current && !isNaN(latitude) && !isNaN(longitude)) {
+          mapRef.current.setView([latitude, longitude], 13);
         }
       } else {
         setGeocodeResult(null);
@@ -334,27 +323,43 @@ const LocationSalle = () => {
     }
   };
 
-  console.log("Voici les resultats du géocode:", geocodeResult);
   const handleSave = async () => {
-    if (!geocodeResult) return;
+    if (!geocodeResult || geocodeResult.latitude == null || geocodeResult.longitude == null) return;
+    if (editingLocation) {
+      setShowEditConfirmationModal(true);
+      return;
+    }
     try {
-      const response = await axios.post(`${API_URL}/save`, {
+      await axios.post(`${API_URL}/save`, {
         query: `${geocodeResult.nom}, ${geocodeResult.latitude}, ${geocodeResult.longitude}`
       });
       setGeocodeAddress("");
       setGeocodeResult(null);
       setGeocodeResultText("");
       await fetchLocations();
+      setShowAddModal(false);
       setShowSaveConfirmationModal(true);
-      // Mettre à jour la carte avec les données renvoyées
-      if (response.data.latitude && response.data.longitude) {
-        if (mapRef.current) {
-          mapRef.current.setView([parseFloat(response.data.latitude), parseFloat(response.data.longitude)], 13);
-        }
-      }
     } catch (err) {
       setError("Erreur lors de la sauvegarde de la localisation.");
       console.error("Save error:", err);
+    }
+  };
+
+  const handleConfirmEdit = async () => {
+    if (!geocodeResult || !editingLocation || geocodeResult.latitude == null || geocodeResult.longitude == null) return;
+    try {
+      await axios.put(`${API_URL}/geocode/${editingLocation.id}`, {
+        query: `${geocodeResult.nom}, ${geocodeResult.latitude}, ${geocodeResult.longitude}`
+      });
+      setShowEditConfirmationModal(false);
+      setShowAddModal(false);
+      setEditingLocation(null);
+      handleResetGeocode();
+      await fetchLocations();
+      setShowEditSuccessModal(true);
+    } catch (err) {
+      setError("Erreur lors de la modification du lieu.");
+      console.error("Edit error:", err);
     }
   };
 
@@ -385,14 +390,18 @@ const LocationSalle = () => {
     }
   };
 
-  // Reset geocode states
   const handleResetGeocode = () => {
     setGeocodeAddress("");
     setGeocodeResult(null);
     setGeocodeResultText("");
+    setEditingLocation(null);
   };
 
-  // Skeleton loader for locations
+  const openEditLocationWithMap = (location) => {
+    setEditingLocation(location);
+    setShowAddModal(true);
+  };
+
   const LocationSkeleton = () => (
     <div className={`p-6 rounded-lg shadow-xs border ${darkMode ? "bg-gray-700 border-gray-600" : "bg-white border-gray-100"}`}>
       <div className="animate-pulse flex justify-between items-center mb-4">
@@ -410,7 +419,6 @@ const LocationSalle = () => {
     </div>
   );
 
-  // Skeleton loader for table rows
   const TableRowSkeleton = () => (
     <tr>
       <td className="px-4 py-4 whitespace-nowrap">
@@ -453,9 +461,7 @@ const LocationSalle = () => {
   return (
     <div className={`min-h-100vh ${darkMode ? "bg-gray-900 text-gray-200" : "bg-white text-gray-800"}`}>
       <div className={`h-full flex flex-col ${darkMode ? "bg-gray-900" : "bg-white"}`}>
-        {/* Main Content */}
         <div className={`shadow-sm border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
-          {/* Panel Header */}
           <div className={`px-6 py-4 border-b ${darkMode ? "bg-gray-900 border-gray-700" : "bg-gray-50 border-none"}`}>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-2 mb-1">
               <div className={`mt-4 flex space-x-1 border-b ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
@@ -501,7 +507,6 @@ const LocationSalle = () => {
             </div>
           </div>
 
-          {/* Error Message */}
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -519,7 +524,6 @@ const LocationSalle = () => {
             </motion.div>
           )}
 
-          {/* Create Location Form */}
           <div className={`p-6 border-b ${darkMode ? "bg-gray-900 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
             <h3 className={`text-lg font-semibold mb-4 flex items-center ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
               <MdAdd className={`mr-2 ${darkMode ? "text-blue-400" : "text-indigo-600"}`} />
@@ -534,7 +538,6 @@ const LocationSalle = () => {
             </button>
           </div>
 
-          {/* Bulk Actions */}
           <div className={`divide-y ${darkMode ? "divide-gray-700" : "divide-gray-200"}`}>
             {isLoading ? (
               <div className="p-4 sm:p-6 space-y-6">
@@ -566,7 +569,6 @@ const LocationSalle = () => {
             ) : (
               filteredLocations.map((location) => (
                 <div key={location.id} className={`p-4 sm:p-6 transition ${darkMode ? "hover:bg-gray-800" : "hover:bg-gray-50"}`}>
-                  {/* Location Header */}
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
                     <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
                       <button
@@ -626,6 +628,13 @@ const LocationSalle = () => {
                       {editLocationId !== location.id && (
                         <>
                           <button
+                            onClick={() => openEditLocationWithMap(location)}
+                            className={`p-1 sm:p-2 rounded-lg transition duration-200 shadow-xs ${darkMode ? "bg-gray-700 text-green-400 hover:bg-gray-600" : "bg-green-100 text-green-600 hover:bg-green-200"}`}
+                            title="Modifier l'adresse avec la carte"
+                          >
+                            <MdMap className="text-lg sm:text-xl" />
+                          </button>
+                          <button
                             onClick={() => {
                               setEditLocationId(location.id);
                               setEditLocationName(location.nom);
@@ -646,8 +655,6 @@ const LocationSalle = () => {
                       )}
                     </div>
                   </div>
-
-                  {/* Add Location */}
                   <AnimatePresence>
                     {expandedLocations[location.id] && (
                       <motion.div
@@ -657,7 +664,6 @@ const LocationSalle = () => {
                         transition={{ duration: 0.2 }}
                         className="mt-4 pl-10 sm:pl-12"
                       >
-                        {/* Add Salle Form */}
                         {selectedLocationId === location.id ? (
                           <motion.div
                             initial={{ opacity: 0 }}
@@ -707,8 +713,6 @@ const LocationSalle = () => {
                             Ajouter une salle
                           </button>
                         )}
-
-                        {/* Salles List */}
                         {location.salles && location.salles.length > 0 ? (
                           <div className="mt-4">
                             <div className="overflow-x-auto">
@@ -821,7 +825,6 @@ const LocationSalle = () => {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {showDeleteModal && deleteItem && (
           <motion.div
@@ -843,62 +846,33 @@ const LocationSalle = () => {
                   setShowDeleteModal(false);
                   setDeleteItem(null);
                 }}
-                className={`absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? "dark:text-gray-400 dark:hover:text-gray-200" : ""
-                  }`}
+                className={`absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? "dark:text-gray-400 dark:hover:text-gray-200" : ""}`}
               >
                 <MdClose size={24} />
               </button>
-
               <div className="flex flex-col items-center text-center">
-                <div
-                  className={`mb-4 p-3 rounded-full transition-colors duration-300 ${darkMode ? "bg-red-900" : "bg-red-100"
-                    }`}
-                >
+                <div className={`mb-4 p-3 rounded-full transition-colors duration-300 ${darkMode ? "bg-red-900" : "bg-red-100"}`}>
                   <TbAlertTriangle className="text-red-500 text-5xl" />
                 </div>
-
-                <h2
-                  className={`text-2xl font-bold mb-2 transition-colors duration-300 ${darkMode ? "text-gray-100" : "text-gray-900"
-                    }`}
-                >
+                <h2 className={`text-2xl font-bold mb-2 transition-colors duration-300 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
                   Confirmer la suppression
                 </h2>
-
-                <p
-                  className={`transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-600"
-                    } mb-6`}
-                >
-                  Êtes-vous sûr de vouloir supprimer{" "}
-                  {deleteItem.type === "location" ? "le lieu" : "la salle"}{" "}
-                  <span
-                    className={`font-extrabold transition-colors duration-300 ${darkMode ? "text-gray-200" : "text-gray-800"
-                      }`}
-                  >
-                    "{deleteItem.nom}"
-                  </span>{" "}
-                  ? Cette action est{" "}
-                  <strong className="text-red-500">irréversible</strong>.
+                <p className={`transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-600"} mb-6`}>
+                  Êtes-vous sûr de vouloir supprimer {deleteItem.type === "location" ? "le lieu" : "la salle"} <span className={`font-extrabold transition-colors duration-300 ${darkMode ? "text-gray-200" : "text-gray-800"}`}>"{deleteItem.nom}"</span> ? Cette action est <strong className="text-red-500">irréversible</strong>.
                 </p>
-
                 <div className="flex flex-col sm:flex-row justify-center w-full gap-4 mt-4">
                   <button
                     onClick={() => {
                       setShowDeleteModal(false);
                       setDeleteItem(null);
                     }}
-                    className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${darkMode
-                      ? "bg-gray-700 hover:bg-gray-600 text-gray-200"
-                      : "bg-gray-200 hover:bg-gray-300 text-gray-800"
-                      }`}
+                    className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${darkMode ? "bg-gray-700 hover:bg-gray-600 text-gray-200" : "bg-gray-200 hover:bg-gray-300 text-gray-800"}`}
                   >
                     Annuler
                   </button>
                   <button
                     onClick={handleConfirmDelete}
-                    className={`flex-1 px-6 py-3 rounded-xl flex items-center justify-center font-semibold transition-all duration-300 ${darkMode
-                      ? "bg-red-700 hover:bg-red-600 text-white shadow-lg shadow-red-700/30"
-                      : "bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/30"
-                      }`}
+                    className={`flex-1 px-6 py-3 rounded-xl flex items-center justify-center font-semibold transition-all duration-300 ${darkMode ? "bg-red-700 hover:bg-red-600 text-white shadow-lg shadow-red-700/30" : "bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/30"}`}
                   >
                     <MdDelete className="mr-2 text-xl" />
                     Supprimer
@@ -910,7 +884,6 @@ const LocationSalle = () => {
         )}
       </AnimatePresence>
 
-      {/* Save Confirmation Modal */}
       <AnimatePresence>
         {showSaveConfirmationModal && (
           <motion.div
@@ -921,10 +894,7 @@ const LocationSalle = () => {
             variants={backdropVariants}
           >
             <motion.div
-              className={`rounded-2xl shadow-2xl p-8 max-w-md w-full relative border transition-colors duration-300 ${darkMode
-                ? "bg-gray-800 text-gray-100 border-gray-700"
-                : "bg-white text-gray-900 border-gray-200"
-                }`}
+              className={`rounded-2xl shadow-2xl p-8 max-w-md w-full relative border transition-colors duration-300 ${darkMode ? "bg-gray-800 text-gray-100 border-gray-700" : "bg-white text-gray-900 border-gray-200"}`}
               variants={modalVariants}
             >
               <button
@@ -933,33 +903,20 @@ const LocationSalle = () => {
               >
                 <MdClose size={24} />
               </button>
-
               <div className="flex flex-col items-center text-center">
-                <div
-                  className={`mb-4 p-3 rounded-full transition-colors duration-300 ${darkMode ? "bg-green-900" : "bg-green-100"}`}
-                >
+                <div className={`mb-4 p-3 rounded-full transition-colors duration-300 ${darkMode ? "bg-green-900" : "bg-green-100"}`}>
                   <MdCheckCircle className="text-green-500 text-5xl" />
                 </div>
-
-                <h2
-                  className={`text-2xl font-bold mb-2 transition-colors duration-300 ${darkMode ? "text-gray-100" : "text-gray-900"}`}
-                >
+                <h2 className={`text-2xl font-bold mb-2 transition-colors duration-300 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
                   Lieu sauvegardé
                 </h2>
-
-                <p
-                  className={`transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-600"} mb-6`}
-                >
+                <p className={`transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-600"} mb-6`}>
                   Le lieu a été sauvegardé avec succès !
                 </p>
-
                 <div className="flex flex-col sm:flex-row justify-center w-full gap-4 mt-4">
                   <button
                     onClick={() => setShowSaveConfirmationModal(false)}
-                    className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${darkMode
-                      ? "bg-gray-700 hover:bg-gray-600 text-gray-200"
-                      : "bg-gray-200 hover:bg-gray-300 text-gray-800"
-                      }`}
+                    className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${darkMode ? "bg-gray-700 hover:bg-gray-600 text-gray-200" : "bg-gray-200 hover:bg-gray-300 text-gray-800"}`}
                   >
                     Fermer
                   </button>
@@ -980,7 +937,99 @@ const LocationSalle = () => {
         )}
       </AnimatePresence>
 
-      {/* Add Location Modal */}
+      <AnimatePresence>
+        {showEditConfirmationModal && (
+          <motion.div
+            className="fixed inset-0 flex justify-center items-center z-52 bg-black/70 p-4"
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={backdropVariants}
+          >
+            <motion.div
+              className={`rounded-2xl shadow-2xl p-8 max-w-md w-full relative border transition-colors duration-300 ${darkMode ? "bg-gray-800 text-gray-100 border-gray-700" : "bg-white text-gray-900 border-gray-200"}`}
+              variants={modalVariants}
+            >
+              <button
+                onClick={() => setShowEditConfirmationModal(false)}
+                className={`absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? "dark:text-gray-400 dark:hover:text-gray-200" : ""}`}
+              >
+                <MdClose size={24} />
+              </button>
+              <div className="flex flex-col items-center text-center">
+                <div className={`mb-4 p-3 rounded-full transition-colors duration-300 ${darkMode ? "bg-blue-900" : "bg-blue-100"}`}>
+                  <TbAlertTriangle className="text-blue-500 text-5xl" />
+                </div>
+                <h2 className={`text-2xl font-bold mb-2 transition-colors duration-300 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
+                  Confirmer la modification
+                </h2>
+                <p className={`transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-600"} mb-6`}>
+                  Êtes-vous sûr de vouloir modifier le lieu <span className={`font-extrabold transition-colors duration-300 ${darkMode ? "text-gray-200" : "text-gray-800"}`}>"{editingLocation?.nom}"</span> ?
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center w-full gap-4 mt-4">
+                  <button
+                    onClick={() => setShowEditConfirmationModal(false)}
+                    className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${darkMode ? "bg-gray-700 hover:bg-gray-600 text-gray-200" : "bg-gray-200 hover:bg-gray-300 text-gray-800"}`}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleConfirmEdit}
+                    className={`flex-1 px-6 py-3 rounded-xl flex items-center justify-center font-semibold transition-all duration-300 ${gradientButton}`}
+                  >
+                    <MdSave className="mr-2 text-xl" />
+                    Confirmer
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showEditSuccessModal && (
+          <motion.div
+            className="fixed inset-0 flex justify-center items-center z-53 bg-black/70 p-4"
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={backdropVariants}
+          >
+            <motion.div
+              className={`rounded-2xl shadow-2xl p-8 max-w-md w-full relative border transition-colors duration-300 ${darkMode ? "bg-gray-800 text-gray-100 border-gray-700" : "bg-white text-gray-900 border-gray-200"}`}
+              variants={modalVariants}
+            >
+              <button
+                onClick={() => setShowEditSuccessModal(false)}
+                className={`absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? "dark:text-gray-400 dark:hover:text-gray-200" : ""}`}
+              >
+                <MdClose size={24} />
+              </button>
+              <div className="flex flex-col items-center text-center">
+                <div className={`mb-4 p-3 rounded-full transition-colors duration-300 ${darkMode ? "bg-green-900" : "bg-green-100"}`}>
+                  <MdCheckCircle className="text-green-500 text-5xl" />
+                </div>
+                <h2 className={`text-2xl font-bold mb-2 transition-colors duration-300 ${darkMode ? "text-gray-100" : "text-gray-900"}`}>
+                  Lieu modifié
+                </h2>
+                <p className={`transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-600"} mb-6`}>
+                  Le lieu a été modifié avec succès !
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center w-full gap-4 mt-4">
+                  <button
+                    onClick={() => setShowEditSuccessModal(false)}
+                    className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${darkMode ? "bg-gray-700 hover:bg-gray-600 text-gray-200" : "bg-gray-200 hover:bg-gray-300 text-gray-800"}`}
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {showAddModal && (
           <motion.div
@@ -991,17 +1040,13 @@ const LocationSalle = () => {
             variants={backdropVariants}
           >
             <motion.div
-              className={`rounded-2xl shadow-2xl p-6 sm:p-8 relative border transition-colors duration-300 ${isModalFullScreen
-                ? 'fixed inset-0 rounded-none overflow-y-auto'
-                : 'max-w-4xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-y-auto'
-                } ${darkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}
+              className={`rounded-2xl shadow-2xl p-6 sm:p-8 relative border transition-colors duration-300 ${isModalFullScreen ? 'fixed inset-0 rounded-none overflow-y-auto' : 'max-w-4xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-y-auto'} ${darkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}
               variants={modalVariants}
             >
               <div className="absolute top-4 right-4 flex space-x-2">
                 <button
                   onClick={() => setIsModalFullScreen(!isModalFullScreen)}
-                  className={`text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? 'dark:text-gray-400 dark:hover:text-gray-200' : ''
-                    }`}
+                  className={`text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? 'dark:text-gray-400 dark:hover:text-gray-200' : ''}`}
                 >
                   {isModalFullScreen ? <MdFullscreenExit size={24} /> : <MdFullscreen size={24} />}
                 </button>
@@ -1010,22 +1055,21 @@ const LocationSalle = () => {
                     setShowAddModal(false);
                     handleResetGeocode();
                   }}
-                  className={`text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? 'dark:text-gray-400 dark:hover:text-gray-200' : ''
-                    }`}
+                  className={`text-gray-500 hover:text-gray-700 transition-colors ${darkMode ? 'dark:text-gray-400 dark:hover:text-gray-200' : ''}`}
                 >
                   <MdClose size={24} />
                 </button>
               </div>
-
               <div className="flex flex-col space-y-4">
-                <h2 className={`text-2xl font-bold ${gradientTitle}`}>Chercher un lieu</h2>
+                <h2 className={`text-2xl font-bold ${gradientTitle}`}>
+                  {editingLocation ? 'Modifier le lieu' : 'Chercher un lieu'}
+                </h2>
                 <input
                   type="text"
                   value={geocodeAddress}
                   onChange={(e) => setGeocodeAddress(e.target.value)}
                   placeholder="Entrez l'adresse ou cliquez sur la carte"
-                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition ${darkMode ? 'bg-gray-700 border-gray-600 focus:ring-blue-500 text-white' : 'border-gray-300 focus:ring-indigo-500'
-                    }`}
+                  className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition ${darkMode ? 'bg-gray-700 border-gray-600 focus:ring-blue-500 text-white' : 'border-gray-300 focus:ring-indigo-500'}`}
                 />
                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                   <button onClick={handleGeocode} className={`p-3 rounded-lg flex-1 ${gradientButton}`}>
@@ -1033,24 +1077,27 @@ const LocationSalle = () => {
                   </button>
                   <button
                     onClick={handleSave}
-                    disabled={!geocodeResult}
+                    disabled={!geocodeResult || geocodeResult.latitude == null || geocodeResult.longitude == null}
                     className={`p-3 rounded-lg flex-1 disabled:opacity-50 ${gradientButton}`}
                   >
-                    Sauvegarder
+                    {editingLocation ? 'Modifier' : 'Sauvegarder'}
                   </button>
                   <button onClick={handleResetGeocode} className={`p-3 rounded-lg flex-1 ${gradientButton}`}>
                     Réinitialiser
                   </button>
                 </div>
-                <div
-                  className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-300' : 'bg-gray-50 border-gray-200 text-gray-800'
-                    }`}
-                >
+                <div className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-300' : 'bg-gray-50 border-gray-200 text-gray-800'}`}>
                   Résultat : {geocodeResultText || 'Aucun résultat pour le moment.'}
                 </div>
                 <div className="h-[40vh] sm:h-[50vh] max-h-[400px] rounded-lg overflow-hidden">
                   <MapContainer
-                    center={geocodeResult ? [parseFloat(geocodeResult.latitude), parseFloat(geocodeResult.longitude)] : [48.8566, 2.3522]}
+                    center={
+                      geocodeResult && geocodeResult.latitude != null && geocodeResult.longitude != null
+                        ? [geocodeResult.latitude, geocodeResult.longitude]
+                        : editingLocation && editingLocation.latitude != null && editingLocation.longitude != null
+                        ? [parseFloat(editingLocation.latitude), parseFloat(editingLocation.longitude)]
+                        : [48.8566, 2.3522]
+                    }
                     zoom={13}
                     style={{ height: '100%', width: '100%' }}
                     // className={darkMode ? 'leaflet-dark' : ''}
@@ -1062,20 +1109,18 @@ const LocationSalle = () => {
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
                     <MapClickHandler
-                      setGeocodeAddress={setGeocodeAddress}
                       setGeocodeResult={setGeocodeResult}
                       setGeocodeResultText={setGeocodeResultText}
                     />
-                    {geocodeResult && (
-                      <Marker 
-                      position={[parseFloat(geocodeResult.latitude), parseFloat(geocodeResult.longitude)]}
-                      icon={customIcon} // Ajoutez l'icône à ce marqueur
-                    >
-                      <Popup>{geocodeResult.nom}</Popup>
-                    </Marker>
-                      // <Marker position={[parseFloat(geocodeResult.latitude), parseFloat(geocodeResult.longitude)]}>
-                      //   <Popup>{geocodeResult.nom}</Popup>
-                      // </Marker>
+                    {geocodeResult && geocodeResult.latitude != null && geocodeResult.longitude != null && (
+                      <Marker position={[geocodeResult.latitude, geocodeResult.longitude]} icon={customIcon}>
+                        <Popup>{geocodeResult.nom}</Popup>
+                      </Marker>
+                    )}
+                    {editingLocation && !geocodeResult && editingLocation.latitude != null && editingLocation.longitude != null && (
+                      <Marker position={[parseFloat(editingLocation.latitude), parseFloat(editingLocation.longitude)]} icon={customIcon}>
+                        <Popup>{editingLocation.nom}</Popup>
+                      </Marker>
                     )}
                   </MapContainer>
                 </div>

@@ -6,7 +6,7 @@ import axiosClient from "../api/axios-client";
 };
 
 
-export const updatePasswordUser = async (password) => {
-  const res = await axiosClient.post("/admin/update-password", { newPassword : password });
+export const updatePasswordUser = async (data) => {
+  const res = await axiosClient.post("/admin/update-password", data);
   return res
 }
