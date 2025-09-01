@@ -6,7 +6,7 @@ import { AdminService } from 'src/services/admin/admin.service';
 import { FirebaseAuthGuard } from 'src/guards/firebase-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, resolve } from 'path';
 
 @Controller('admin')
 export class AdminController {
@@ -91,11 +91,11 @@ async googleAuthRedirect(@Req() req, @Res() res: Response) {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Put(':id')
+  @Put('/:id')
   @UseInterceptors(
     FileInterceptor('photo', {
       storage: diskStorage({
-        destination: './src/uploads/photos',
+        destination: resolve(__dirname, '../../../uploads'),
         filename: (req, file, callback) => {
           const uniqueName =
             Date.now() + '-' + Math.round(Math.random() * 1e9);
@@ -110,6 +110,7 @@ async googleAuthRedirect(@Req() req, @Res() res: Response) {
     @Body() body: any,
     @UploadedFile() photo?: Express.Multer.File,
   ) {
+    console.log('photo rec : ', photo)
     return this.adminService.updateAdmin(id, body, photo?.filename);
   }
 

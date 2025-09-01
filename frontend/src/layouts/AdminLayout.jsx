@@ -47,7 +47,6 @@ import { io } from "socket.io-client";
 import { PasswordSetupModal } from "../pages/Admin/PasswordSetupModal";
 import md5 from "blueimp-md5"; // npm i blueimp-md5 si pas déjà fait
 
-
 export default function AdminLayout() {
   const { isAuthenticated, role, isLoading, setUser, user, handleLogout } =
     useStateContext();
@@ -78,16 +77,18 @@ export default function AdminLayout() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getIfAdminHasPassword();
-      const hidden = localStorage.getItem("hidePasswordModal");
-      // console.log("Connaître si l'admin a un mot de passe : ", res);
-      if (res.hasPassword == false && hidden == "false") {
-        setTimeout(() => {
-          setShowModalModifyPassword(true);
-        }, 2000);
-      } else {
-        setShowModalModifyPassword(false);
+      if (user) {
+        const res = await getIfAdminHasPassword(user.sub);
+        const hidden = localStorage.getItem("hidePasswordModal");
+        if (res.hasPassword == false && hidden == "false") {
+          setTimeout(() => {
+            setShowModalModifyPassword(true);
+          }, 2000);
+        } else {
+          setShowModalModifyPassword(false);
+        }
       }
+      // console.log("Connaître si l'admin a un mot de passe : ", res);
     };
     fetchData();
   }, []);
@@ -141,54 +142,53 @@ export default function AdminLayout() {
     setShowLogoutModal(false);
   };
 
-const menuItems = [
-  {
-    path: "/AdminAccueil",
-    name: "Tableau de bord",
-    icon: <FiLayout className="text-lg" />,
-  },
-  {
-    path: "/AdminEvenement",
-    name: "Événements",
-    icon: <MdCalendarToday className="text-lg" />,
-  },
-  {
-    path: "/AdminOrganisateur",
-    name: "Organisateurs",
-    icon: <FaUsers className="text-lg" />,
-  },
-  {
-    path: "/LocationSalle",
-    name: "Salles & Localisation",
-    icon: <MdRoom className="text-lg" />,
-  },
-  // {
-  //   path: "/AdminHistorique",
-  //   name: "Historique d'activité",
-  //   icon: <MdHistory className="text-lg" />,
-  // },
-  {
-    path: "/AdminStats",
-    name: "Statistique",
-    icon: <MdQueryStats className="text-lg" />,
-  },
-  // On ajoute la condition proprement
-  ...(user.role !== "admin"
-    ? [
-        {
-          path: "/AdminManagement",
-          name: "Gestion Admin",
-          icon: <MdAdminPanelSettings className="text-lg" />,
-        },
-      ]
-    : []),
-  {
-    path: "/AdminParametre",
-    name: "Paramètres",
-    icon: <FaCogs className="text-lg" />,
-  },
-];
-
+  const menuItems = [
+    {
+      path: "/AdminAccueil",
+      name: "Tableau de bord",
+      icon: <FiLayout className="text-lg" />,
+    },
+    {
+      path: "/AdminEvenement",
+      name: "Événements",
+      icon: <MdCalendarToday className="text-lg" />,
+    },
+    {
+      path: "/AdminOrganisateur",
+      name: "Organisateurs",
+      icon: <FaUsers className="text-lg" />,
+    },
+    {
+      path: "/LocationSalle",
+      name: "Salles & Localisation",
+      icon: <MdRoom className="text-lg" />,
+    },
+    // {
+    //   path: "/AdminHistorique",
+    //   name: "Historique d'activité",
+    //   icon: <MdHistory className="text-lg" />,
+    // },
+    {
+      path: "/AdminStats",
+      name: "Statistique",
+      icon: <MdQueryStats className="text-lg" />,
+    },
+    // On ajoute la condition proprement
+    ...(user.role !== "admin"
+      ? [
+          {
+            path: "/AdminManagement",
+            name: "Gestion Admin",
+            icon: <MdAdminPanelSettings className="text-lg" />,
+          },
+        ]
+      : []),
+    {
+      path: "/AdminParametre",
+      name: "Paramètres",
+      icon: <FaCogs className="text-lg" />,
+    },
+  ];
 
   const gradientTitle =
     "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";
@@ -543,19 +543,23 @@ const menuItems = [
           const response = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/auth/messages`
           );
-          if (!response.ok) throw new Error("Erreur lors de la récupération des messages");
+          if (!response.ok)
+            throw new Error("Erreur lors de la récupération des messages");
           const data = await response.json();
 
           const formatted = data.map((msg) => ({
             ...msg,
             from: `${msg.firstName} ${msg.lastName}`,
             text: msg.message,
-            read: !!msg.read,            // valeur serveur si dispo
+            read: !!msg.read, // valeur serveur si dispo
           }));
 
           // ✅ merge + dédupe + applique localStorage
           setMessages((prev) =>
-            applyLocalRead(dedupeById([...prev, ...formatted]), READ_MESSAGES_KEY)
+            applyLocalRead(
+              dedupeById([...prev, ...formatted]),
+              READ_MESSAGES_KEY
+            )
           );
         } catch (error) {
           console.error("Erreur lors de la récupération des messages :", error);
@@ -892,7 +896,7 @@ const menuItems = [
                 if (!item.read) {
                   const readIds =
                     JSON.parse(localStorage.getItem("readMessages")) || [];
-                  if (!readIds.includes(item.id)) { 
+                  if (!readIds.includes(item.id)) {
                     readIds.push(item.id);
                     localStorage.setItem(
                       "readMessages",
@@ -908,11 +912,14 @@ const menuItems = [
 
                   // Appel API pour marquer comme lu côté backend
                   try {
-                    await fetch(`${import.meta.env.VITE_API_BASE_URL}/contact_messages/${item.id}`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ isRead: true }),
-                    });
+                    await fetch(
+                      `${import.meta.env.VITE_API_BASE_URL}/contact_messages/${item.id}`,
+                      {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ isRead: true }),
+                      }
+                    );
                   } catch (error) {
                     console.error("Erreur mark as read:", error);
                   }
@@ -992,7 +999,7 @@ const menuItems = [
                 <div className="relative">
                   <img
                     //src={getGravatarUrl(user?.email, { size: 96 })}
-                    src={user?.photo}
+                    src={`${user.photo}`}
                     alt="User avatar"
                     className="w-10 h-10 rounded-full object-cover"
                     onError={(e) => {
@@ -1017,7 +1024,9 @@ const menuItems = [
               {showProfile && (
                 <div
                   className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
-                    darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+                    darkMode
+                      ? "bg-gray-800 border-gray-700"
+                      : "bg-white border-gray-200"
                   } z-50 transition-all duration-200 ${
                     window.innerWidth < 640 ? "left-4 right-4" : "right-0"
                   }`}
@@ -1030,25 +1039,35 @@ const menuItems = [
                     >
                       <img
                         // src={getGravatarUrl(user?.email, { size: 80 })}
-                        src={user?.photo}
+                        src={`${user.photo}`}
                         alt="User avatar"
                         className="w-8 h-8 rounded-full object-cover"
                         onError={(e) => {
-                          e.currentTarget.src = getGravatarUrl(null, { size: 80 });
+                          e.currentTarget.src = getGravatarUrl(null, {
+                            size: 80,
+                          });
                         }}
                       />
                       <div className="min-w-0">
-                        <p className="font-medium">{getUserDisplayName(user)}</p>
-                        <p className="truncate text-xs">{user?.email || "aucun email"}</p>
+                        <p className="font-medium">
+                          {getUserDisplayName(user)}
+                        </p>
+                        <p className="truncate text-xs">
+                          {user?.email || "aucun email"}
+                        </p>
                       </div>
                     </div>
 
-                    <div className={`border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`} />
+                    <div
+                      className={`border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}
+                    />
 
                     <button
                       onClick={handleRedirect}
                       className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode ? "hover:bg-gray-700 text-gray-200" : "hover:bg-gray-100 text-gray-800"
+                        darkMode
+                          ? "hover:bg-gray-700 text-gray-200"
+                          : "hover:bg-gray-100 text-gray-800"
                       } transition-colors duration-150`}
                     >
                       Mon profil
@@ -1057,18 +1076,24 @@ const menuItems = [
                     <button
                       onClick={handleRedirect}
                       className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode ? "hover:bg-gray-700 text-gray-200" : "hover:bg-gray-100 text-gray-800"
+                        darkMode
+                          ? "hover:bg-gray-700 text-gray-200"
+                          : "hover:bg-gray-100 text-gray-800"
                       } transition-colors duration-150`}
                     >
                       Paramètres
                     </button>
 
-                    <div className={`border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`} />
+                    <div
+                      className={`border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}
+                    />
 
                     <button
                       onClick={handleShowLogout}
                       className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode ? "hover:bg-gray-700 text-red-400" : "hover:bg-gray-100 text-red-600"
+                        darkMode
+                          ? "hover:bg-gray-700 text-red-400"
+                          : "hover:bg-gray-100 text-red-600"
                       } transition-colors duration-150`}
                     >
                       Déconnexion
@@ -1077,8 +1102,6 @@ const menuItems = [
                 </div>
               )}
             </div>
-
-
 
             <button
               onClick={toggleDarkMode}

@@ -48,7 +48,8 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
     sub: adminUser.id, 
     email: adminUser.email, 
     role: adminUser.role, 
-    name: adminUser.name 
+    name: adminUser.name,
+    photo:adminUser.photo && `http://localhost:3000/uploads/${adminUser.photo}` || adminUser.photoEmail, 
   };
 
   // Générer les tokens
@@ -72,7 +73,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
 
   return { 
     message: "Authentification réussie", 
-    user: { id: adminUser.id, email: adminUser.email, role: adminUser.role },
+    user: { id: adminUser.id, email: adminUser.email, role: adminUser.role, photo:adminUser.photo && `http://localhost:3000/uploads/${adminUser.photo}` || adminUser.photoEmail, },
   };
 }
 
@@ -127,7 +128,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
         email: adminUser.email,
         role: adminUser.role,
         name: adminUser.name,
-        photo: adminUser.photo || adminUser.photoEmail,
+        photo: adminUser.photo && `http://localhost:3000/uploads/${adminUser.photo}` || adminUser.photoEmail,
       };
 
       const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
@@ -153,7 +154,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
           id: adminUser.id,
           email: adminUser.email,
           name: adminUser.name,
-          photo: adminUser.photo || adminUser.photoEmail,
+          photo: adminUser.photo && `http://localhost:3000/uploads/${adminUser.photo}` || adminUser.photoEmail,
           role: adminUser.role,
         },
       };
@@ -165,10 +166,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
     }
   }
 
-  async updatePassword(
-    adminId: string,
-    newPassword: string,
-  ): Promise<{ message: string }> {
+  async updatePassword(adminId: string, newPassword: string,): Promise<{ message: string }> {
     const admin = await this.userRepository.findOne({ where: { id: adminId } });
 
     if (!admin) {
@@ -218,74 +216,74 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
   }
 
 
-async logout(req: Request, res: Response): Promise<{ success: boolean; message: string }> {
-  try {
-    const jwtCookie = req.cookies['jwt'];
-    const refreshToken = req.cookies['refresh_token'];
-
-    console.log("🔑 Cookie JWT reçu :", jwtCookie);
-    console.log("🔑 Refresh token reçu :", refreshToken);
-
-    if (!jwtCookie) {
-      return { success: false, message: 'Aucun jeton fourni' };
-    }
-
-    let decoded: any;
+  async logout(req: Request, res: Response): Promise<{ success: boolean; message: string }> {
     try {
-      decoded = await this.jwtService.verifyAsync(jwtCookie, {
-        secret: process.env.JWT_SECRET || 'your-secret-key',
-      });
-    } catch (err) {
-      console.error("❌ Token invalide :", err.message);
-      return { success: false, message: 'Token invalide' };
-    }
+      const jwtCookie = req.cookies['jwt'];
+      const refreshToken = req.cookies['refresh_token'];
 
-    if (decoded?.sub) {
-      await this.userRepository.update(
-        { id: decoded.sub },
-        { lastLogout: new Date(), isOnline: false }
-      );
-    }
+      console.log("🔑 Cookie JWT reçu :", jwtCookie);
+      console.log("🔑 Refresh token reçu :", refreshToken);
 
-    try {
-      await this.jwtService.verifyAsync(jwtCookie, {
-        secret: process.env.JWT_SECRET || 'your-secret-key',
-      });
-    } catch (err) {
-      console.error("❌ Token invalide :", err.message);
-      return { success: false, message: 'Token invalide' };
-    }
-
-    // Blacklist du JWT
-    try {
-      await this.redis.set(`blacklist:${jwtCookie}`, 'true', 'EX', 24 * 60 * 60);
-      if (refreshToken) {
-        await this.redis.set(`blacklist_refresh:${refreshToken}`, 'true', 'EX', 7 * 24 * 60 * 60); // ex : 7j
+      if (!jwtCookie) {
+        return { success: false, message: 'Aucun jeton fourni' };
       }
-    } catch (err) {
-      console.error("⚠️ Erreur Redis :", err.message);
-      return { success: false, message: 'Erreur lors de la déconnexion (Redis)' };
+
+      let decoded: any;
+      try {
+        decoded = await this.jwtService.verifyAsync(jwtCookie, {
+          secret: process.env.JWT_SECRET || 'your-secret-key',
+        });
+      } catch (err) {
+        console.error("❌ Token invalide :", err.message);
+        return { success: false, message: 'Token invalide' };
+      }
+
+      if (decoded?.sub) {
+        await this.userRepository.update(
+          { id: decoded.sub },
+          { lastLogout: new Date(), isOnline: false }
+        );
+      }
+
+      try {
+        await this.jwtService.verifyAsync(jwtCookie, {
+          secret: process.env.JWT_SECRET || 'your-secret-key',
+        });
+      } catch (err) {
+        console.error("❌ Token invalide :", err.message);
+        return { success: false, message: 'Token invalide' };
+      }
+
+      // Blacklist du JWT
+      try {
+        await this.redis.set(`blacklist:${jwtCookie}`, 'true', 'EX', 24 * 60 * 60);
+        if (refreshToken) {
+          await this.redis.set(`blacklist_refresh:${refreshToken}`, 'true', 'EX', 7 * 24 * 60 * 60); // ex : 7j
+        }
+      } catch (err) {
+        console.error("⚠️ Erreur Redis :", err.message);
+        return { success: false, message: 'Erreur lors de la déconnexion (Redis)' };
+      }
+
+      // Suppression sécurisée des cookies
+      res.clearCookie('jwt', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+      });
+
+      res.clearCookie('refresh_token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+      });
+
+      return { success: true, message: 'Déconnexion réussie' };
+    } catch (error: any) {
+      console.error("⚠️ Erreur générale lors du logout :", error.message);
+      return { success: false, message: 'Erreur interne lors de la déconnexion' };
     }
-
-    // Suppression sécurisée des cookies
-    res.clearCookie('jwt', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
-
-    res.clearCookie('refresh_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
-
-    return { success: true, message: 'Déconnexion réussie' };
-  } catch (error: any) {
-    console.error("⚠️ Erreur générale lors du logout :", error.message);
-    return { success: false, message: 'Erreur interne lors de la déconnexion' };
   }
-}
 
   async hasPassword(adminId: string): Promise<{ hasPassword: boolean }> {
     const admin = await this.userRepository.findOne({
@@ -310,39 +308,58 @@ async logout(req: Request, res: Response): Promise<{ success: boolean; message: 
     return admins;
   }
 
-  async updateAdmin(
-    adminId: string,
-    data: Partial<Admin>,
-    photoFilename?: string,
-  ): Promise<Admin> {
+  async updateAdmin(adminId: string, data: any, photoFilename?: string,): Promise<{ user: any }> {
     const admin = await this.userRepository.findOne({ where: { id: adminId } });
+    if (!admin) throw new NotFoundException('Administrateur non trouvé');
 
-    if (!admin) {
-      throw new NotFoundException('Administrateur non trouvé');
-    }
-
-    // Si le password est dans les données, on le hash avant
-    if (data.password) {
+    // Si password fourni, le hash
+    if (data.password && data.password.trim() !== '') {
       data.password = await bcrypt.hash(data.password, 10);
+    } else {
+      delete data.password; // empêche l'overwrite avec vide
     }
 
-    // Gestion de la photo
+    // Vérifier email
+    if (data.email && data.email.trim() !== '') {
+      admin.email = data.email;
+    } else {
+      delete data.email;
+    }
+
+    // Vérifier name
+    if (data.name && data.name.trim() !== '') {
+      admin.name = data.name;
+    } else {
+      delete data.name;
+    }
+
+    // Gestion photo
     if (photoFilename) {
-      // S’il y a déjà une photo enregistrée, on peut la supprimer
       if (admin.photo) {
-        const oldPath = path.join(__dirname, '..', 'uploads', 'photos', admin.photo);
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath); // supprime l'ancienne photo
-        }
+        const oldPath = path.join(__dirname, '../../../uploads', admin.photo);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
       }
       admin.photo = photoFilename;
     }
 
-    // Fusionne les nouvelles données
+    // Fusionne uniquement les champs valides restants
     Object.assign(admin, data);
 
-    return this.userRepository.save(admin);
+    await this.userRepository.save(admin);
+
+    return {
+      user: {
+        sub: admin.id,
+        email: admin.email,
+        name: admin.name,
+        photo: admin.photo && `http://localhost:3000/uploads/${admin.photo}` || admin.photoEmail,
+        role: admin.role,
+      },
+    };
   }
+
+
+
 
 
   async deleteAdmin(adminId: string): Promise<{ message: string }> {
