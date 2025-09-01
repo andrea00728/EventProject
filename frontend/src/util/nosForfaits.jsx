@@ -62,12 +62,12 @@ export default function NosForfaits() {
       try {
         setLoading(true);
         const forfaitsData = await getAllForfait();
-        
+
         // Vérifier si les données sont valides
         if (!forfaitsData || !Array.isArray(forfaitsData)) {
           throw new Error("Données de forfaits invalides");
         }
-        
+
         // Filtrer pour exclure FREEMIUM et transformer les données
         const transformedForfaits = forfaitsData
           .filter(forfait => forfait.nom.toLowerCase() !== 'freemium')
@@ -77,7 +77,7 @@ export default function NosForfaits() {
             price: formatPrice(forfait.price),
             invitations: forfait.maxinvites || "Illimité",
             // events: forfait.maxevents || "Illimité",
-            events : forfait.nom == "starter" ? "2" : "" ||forfait.nom == "pro" ? "5" : ""  || forfait.nom == "premium" ? "20" : "" || forfait.nom == "gold" ? "50" : ""  ,
+            events: forfait.nom == "freemium" ? "1" : "" || forfait.nom == "starter" ? "2" : "" || forfait.nom == "pro" ? "5" : "" || forfait.nom == "premium" ? "20" : "" || forfait.nom == "gold" ? "50" : "",
             duration: getDurationText(forfait.validationduration),
             paypalplanid: forfait.paypalplanid,
             rawPrice: forfait.price,
@@ -90,14 +90,14 @@ export default function NosForfaits() {
         setError(null); // Réinitialiser l'erreur en cas de succès
       } catch (err) {
         console.error("Erreur détaillée:", err);
-        
+
         // Fallback sur des données statiques si l'API échoue
         console.warn("Utilisation des données de fallback");
         const fallbackForfaits = [
-          { id: 12, nom: "STARTER", price: "$10", invitations: 100, events: "Illimité", duration: "6 mois", rawPrice: 10, maxInvites: 100, validationDuration: 180 },
-          { id: 13, nom: "PRO", price: "$25.99", invitations: 500, events: "Illimité", duration: "6 mois", rawPrice: 25.99, maxInvites: 500, validationDuration: 180 },
-          { id: 14, nom: "PREMIUM", price: "$39.99", invitations: 1000, events: "Illimité", duration: "6 mois", rawPrice: 39.99, maxInvites: 1000, validationDuration: 180 },
-          { id: 15, nom: "GOLD", price: "$59.99", invitations: "Illimité", events: "Illimité", duration: "12 mois", rawPrice: 59.99, maxInvites: null, validationDuration: 365 },
+          { id: 12, nom: "STARTER", price: "$10", invitations: 100, events: "2", duration: "6 mois", rawPrice: 10, maxInvites: 100, validationDuration: 180 },
+          { id: 13, nom: "PRO", price: "$25.99", invitations: 500, events: "5", duration: "6 mois", rawPrice: 25.99, maxInvites: 500, validationDuration: 180 },
+          { id: 14, nom: "PREMIUM", price: "$39.99", invitations: 1000, events: "20", duration: "6 mois", rawPrice: 39.99, maxInvites: 1000, validationDuration: 180 },
+          { id: 15, nom: "GOLD", price: "$59.99", invitations: "Illimité", events: "50", duration: "12 mois", rawPrice: 59.99, maxInvites: null, validationDuration: 365 },
         ];
         setForfaits(fallbackForfaits);
         setError(null); // Ne pas afficher d'erreur si le fallback fonctionne
@@ -121,7 +121,7 @@ export default function NosForfaits() {
           }
         } catch (err) {
           console.error(err);
-          alert("Impossible de charger votre forfait actif.");
+          console.log("Impossible de charger votre forfait actif.");
         }
       }
     };
@@ -216,7 +216,7 @@ export default function NosForfaits() {
           const isActive =
             isAuthenticated && activeForfait && f.nom.toUpperCase() === activeForfait.nom.toUpperCase();
           const isDisabled =
-            isAuthenticated && 
+            isAuthenticated &&
             activeForfait &&
             activeForfait.nom.toUpperCase() !== "FREEMIUM" &&
             !isActive;
@@ -224,23 +224,25 @@ export default function NosForfaits() {
           return (
             <div
               key={f.id}
-              className={`relative rounded-3xl shadow-lg p-8 border transition-transform transform hover:-translate-y-2 hover:shadow-2xl ${isActive
+              className={`relative rounded-3xl shadow-lg p-8 border transition-transform transform hover:-translate-y-2 hover:shadow-2xl text ${isActive
                 ? `bg-gradient-to-br ${defaultColorMap[f.nom]} text-white scale-105 border-white`
                 : "bg-white border-gray-200 text-gray-800"
                 }`}
             >
               <div className="flex justify-center mb-4">{iconMap[f.nom]}</div>
-              <h3 className="text-2xl font-extrabold mb-2">{f.nom}</h3>
-              <p className={`text-3xl font-bold mb-4 ${isActive ? "text-white" : "text-gray-900"}`}>
-                {f.price}
-              </p>
+              <div className="text-center ">
+                <h3 className="text-2xl font-extrabold mb-2">{f.nom}</h3>
+                <p className={`text-3xl font-bold mb-4 ${isActive ? "text-white" : "text-gray-900"}`}>
+                  {f.price}
+                </p>
+              </div>
 
               <ul className="text-sm space-y-2 mb-6">
                 <li>Invitations : <span className="font-semibold">{f.invitations}</span></li>
                 <li>Événements : <span className="font-semibold">{f.events}</span></li>
                 <li>
-                  {f.nom === "STARTER" 
-                    ? "Module personnel" 
+                  {f.nom === "STARTER"
+                    ? "Module personnel"
                     : "Modules personnel et restauration"}
                 </li>
               </ul>
