@@ -999,7 +999,7 @@ const Statique = () => {
                     Répartition des événements par catégorie
                   </p>
                 </div>
-                <button
+                {/* <button
                   className={`flex items-center space-x-2 mt-4 sm:mt-0 ${
                     darkMode
                       ? "text-blue-400 hover:text-blue-300"
@@ -1008,7 +1008,7 @@ const Statique = () => {
                 >
                   <span>Voir détails</span>
                   <ChevronDown className="w-4 h-4" />
-                </button>
+                </button> */}
               </div>
               <div
                 className="chart-container flex items-center justify-center"
