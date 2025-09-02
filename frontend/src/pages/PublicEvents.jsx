@@ -4,71 +4,71 @@ import axiosClient from '../api/axios-client';
 import { createInviteForSpecificEvent } from '../services/inviteService';
 import { textControll } from '../services/controll_champs/controll_champs';
 
-const EventSelectionModal = ({ events, onSelectEvent, onClose }) => {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
-      <div className="bg-white rounded-3xl mt-[80px] shadow-2xl p-8 max-w-4xl mx-auto transform transition-all duration-300 ease-out scale-100 animate-fadeIn">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 text-xl font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-600 rounded-full p-2 transition-colors duration-200 cursor-pointer"
-          aria-label="Fermer la modale"
-        >
-          ×
-        </button>
+// const EventSelectionModal = ({ events, onSelectEvent, onClose }) => {
+//   return (
+//     <div className="fixed inset-0 bg-black/30 backdrop:blur-lg flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+//       <div className="bg-white rounded-3xl mt-[80px] shadow-2xl p-8 max-w-4xl mx-auto transform transition-all duration-300 ease-out scale-100 animate-fadeIn">
+//         <button
+//           onClick={onClose}
+//           className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 text-xl font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-600 rounded-full p-2 transition-colors duration-200 cursor-pointer"
+//           aria-label="Fermer la modale"
+//         >
+//           ×
+//         </button>
 
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center font-sans">
-          Sélectionner un événement
-        </h3>
+//         <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center font-sans">
+//           Sélectionner un événement
+//         </h3>
 
-        <div className="w-[100%] h-[400px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-          {events.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.map((event) => (
-                <div
-                  key={event.id}
-                  className="bg-gradient-to-br from-gray-800 to-gray-900 text-white p-6 rounded-xl shadow-lg hover:shadow-xl hover:from-gray-700 hover:to-gray-800 cursor-pointer transition-all duration-300 transform hover:-translate-y-1"
-                  onClick={() => onSelectEvent(event)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && onSelectEvent(event)}
-                  aria-label={`Sélectionner ${event.nom}`}
-                >
-                  <p className="font-semibold text-lg mb-2">{event.nom}</p>
-                  <p className="text-sm text-gray-200">
-                    Date: {new Date(event.date).toLocaleDateString("fr-FR")}
-                  </p>
-                  {event.description && (
-                    <p className="text-xs text-gray-300 mt-2 line-clamp-2">
-                      {event.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="p-6 text-center text-gray-500 bg-gray-50 rounded-xl">
-              Aucun événement disponible.
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
+//         <div className="w-[100%] h-[400px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+//           {events.length > 0 ? (
+//             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+//               {events.map((event) => (
+//                 <div
+//                   key={event.id}
+//                   className="bg-gradient-to-br from-gray-800 to-gray-900 text-white p-6 rounded-xl shadow-lg hover:shadow-xl hover:from-gray-700 hover:to-gray-800 cursor-pointer transition-all duration-300 transform hover:-translate-y-1"
+//                   onClick={() => onSelectEvent(event)}
+//                   role="button"
+//                   tabIndex={0}
+//                   onKeyDown={(e) => e.key === "Enter" && onSelectEvent(event)}
+//                   aria-label={`Sélectionner ${event.nom}`}
+//                 >
+//                   <p className="font-semibold text-lg mb-2">{event.nom}</p>
+//                   <p className="text-sm text-gray-200">
+//                     Date: {new Date(event.date).toLocaleDateString("fr-FR")}
+//                   </p>
+//                   {event.description && (
+//                     <p className="text-xs text-gray-300 mt-2 line-clamp-2">
+//                       {event.description}
+//                     </p>
+//                   )}
+//                 </div>
+//               ))}
+//             </div>
+//           ) : (
+//             <p className="p-6 text-center text-gray-500 bg-gray-50 rounded-xl">
+//               Aucun événement disponible.
+//             </p>
+//           )}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
 
 const PublicEvents = () => {
   // États pour la gestion des événements
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  
+
   // États pour les modals
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false); // Ajouté
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  
+
   // États pour le formulaire d'inscription
   const [form, setForm] = useState({
     nom: "",
@@ -81,7 +81,7 @@ const PublicEvents = () => {
   const [selectedEventName, setSelectedEventName] = useState(""); // Ajouté
   const [validationErrors, setValidationErrors] = useState({}); // Ajouté
   const [isSubmitting, setIsSubmitting] = useState(false); // Ajouté
-  
+
   // États pour la pagination
   const [filter, setFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -261,7 +261,7 @@ const PublicEvents = () => {
             Découvrez tous les événements disponibles
           </p>
         </div>
-  
+
         {/* Filtre de sélection des événements */}
         <div className="flex justify-center mb-8">
           <select
@@ -274,7 +274,7 @@ const PublicEvents = () => {
             <option value="private">Événements privés</option>
           </select>
         </div>
-  
+
         {/* Indicateur de chargement */}
         {isLoading && (
           <div className="flex flex-col items-center py-24">
@@ -284,7 +284,7 @@ const PublicEvents = () => {
             </p>
           </div>
         )}
-  
+
         {/* Message d'erreur */}
         {error && (
           <div className="max-w-2xl mx-auto mb-8">
@@ -313,7 +313,7 @@ const PublicEvents = () => {
             </div>
           </div>
         )}
-  
+
         {/* Affichage des événements */}
         {!isLoading && !error && (
           <>
@@ -351,21 +351,20 @@ const PublicEvents = () => {
                     >
                       {/* Barre colorée en haut de la carte */}
                       <div
-                        className={`h-2 bg-gradient-to-r ${
-                          event.id % 3 === 0
+                        className={`h-2 bg-gradient-to-r ${event.id % 3 === 0
                             ? "from-indigo-500 to-cyan-500"
                             : event.id % 3 === 1
-                            ? "from-pink-500 to-rose-500"
-                            : "from-emerald-500 to-lime-500"
-                        }`}
+                              ? "from-pink-500 to-rose-500"
+                              : "from-emerald-500 to-lime-500"
+                          }`}
                       ></div>
-  
+
                       <div className="p-6">
                         {/* Titre de l'événement */}
                         <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide mb-4">
                           {event.nom}
                         </h2>
-  
+
                         {/* Détails de l'événement */}
                         <div className="space-y-2 mb-6">
                           <p>
@@ -400,7 +399,7 @@ const PublicEvents = () => {
                             {event.location?.nom || "Non précisé"}
                           </p>
                         </div>
-  
+
                         {/* Boutons d'action conditionnels */}
                         <div className="flex gap-3 justify-end">
                           <button
@@ -418,17 +417,16 @@ const PublicEvents = () => {
                                 e.stopPropagation();
                                 openRegistrationModal(event);
                               }}
-                              className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all duration-200 transform hover:scale-105 ${
-                                event.id % 5 === 0
+                              className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all duration-200 transform hover:scale-105 ${event.id % 5 === 0
                                   ? "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
                                   : event.id % 5 === 1
-                                  ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                                  : event.id % 5 === 2
-                                  ? "bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600"
-                                  : event.id % 5 === 3
-                                  ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
-                                  : "bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600"
-                              }`}
+                                    ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                                    : event.id % 5 === 2
+                                      ? "bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600"
+                                      : event.id % 5 === 3
+                                        ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                                        : "bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600"
+                                }`}
                             >
                               S'inscrire
                             </button>
@@ -466,7 +464,7 @@ const PublicEvents = () => {
             )}
           </>
         )}
-  
+
         {/* Modal de détails d'événement */}
         {isEventModalOpen && selectedEvent && (
           <AnimatePresence>
@@ -506,7 +504,7 @@ const PublicEvents = () => {
                       </svg>
                     </button>
                   </div>
-  
+
                   {/* Description de l'événement */}
                   {selectedEvent.description && (
                     <div className="mb-6">
@@ -516,7 +514,7 @@ const PublicEvents = () => {
                       <p className="text-slate-600">{selectedEvent.description}</p>
                     </div>
                   )}
-  
+
                   {/* Détails structurés de l'événement */}
                   <div className="space-y-4">
                     {/* Type */}
@@ -545,7 +543,7 @@ const PublicEvents = () => {
                         </p>
                       </div>
                     </div>
-  
+
                     {/* Thème */}
                     <div className="flex items-center gap-3">
                       <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -572,7 +570,7 @@ const PublicEvents = () => {
                         </p>
                       </div>
                     </div>
-  
+
                     {/* Date */}
                     <div className="flex items-center gap-3">
                       <div className="flex-shrink-0 w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
@@ -608,7 +606,7 @@ const PublicEvents = () => {
                         </p>
                       </div>
                     </div>
-  
+
                     {/* Lieu */}
                     <div className="flex items-center gap-3">
                       <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -641,7 +639,7 @@ const PublicEvents = () => {
                         </p>
                       </div>
                     </div>
-  
+
                     {/* Salle (si présente) */}
                     {selectedEvent.salle?.nom && (
                       <div className="flex items-center gap-3">
@@ -671,23 +669,22 @@ const PublicEvents = () => {
                       </div>
                     )}
                   </div>
-  
+
                   {/* Boutons d'action du modal */}
                   <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
                     {selectedEvent.isPublic && (
                       <button
                         onClick={openRegistrationModal}
-                        className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${
-                          selectedEvent.id % 5 === 0
+                        className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${selectedEvent.id % 5 === 0
                             ? "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
                             : selectedEvent.id % 5 === 1
-                            ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                            : selectedEvent.id % 5 === 2
-                            ? "bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600"
-                            : selectedEvent.id % 5 === 3
-                            ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
-                            : "bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600"
-                        }`}
+                              ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                              : selectedEvent.id % 5 === 2
+                                ? "bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600"
+                                : selectedEvent.id % 5 === 3
+                                  ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                                  : "bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600"
+                          }`}
                         aria-label={`S'inscrire à l'événement ${selectedEvent.nom}`}
                       >
                         S'inscrire
@@ -705,7 +702,7 @@ const PublicEvents = () => {
             </div>
           </AnimatePresence>
         )}
-  
+
         {/* Registration Modal */}
         {isRegistrationModalOpen && (
           <AnimatePresence>
@@ -718,21 +715,21 @@ const PublicEvents = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
                 transition={{ duration: 0.3 }}
-                className="bg-white rounded-xl shadow-2xl w-full max-w-6xl mx-4 overflow-hidden max-h-[90vh] overflow-y-auto"
+                className="bg-white rounded-xl shadow-2xl w-1/2 mx-4 overflow-hidden max-h-[90vh] overflow-y-auto p-6"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex flex-col lg:flex-row">
                   {/* Section image - cachée sur mobile */}
-                  <div className="hidden lg:block lg:w-1/2 bg-gray-100">
+                  {/* <div className="hidden lg:block lg:w-1/2 bg-gray-100">
                     <img
                       src="/images/IMG1.jpg"
                       alt="Événement"
                       className="w-full h-full object-cover max-h-[65vh]"
                     />
-                  </div>
-  
+                  </div> */}
+
                   {/* Section formulaire */}
-                  <div className="w-full lg:w-1/2 p-4 sm:p-6">
+                  <div className="w-full p-4 sm:p-6">
                     {/* En-tête du formulaire */}
                     <div className="flex items-start justify-between mb-6">
                       <h2 className="text-xl sm:text-2xl font-bold text-slate-800 uppercase tracking-wide leading-tight">
@@ -757,7 +754,7 @@ const PublicEvents = () => {
                         </svg>
                       </button>
                     </div>
-  
+
                     {/* Formulaire d'inscription */}
                     <form onSubmit={handleSubmit}>
                       <div className="space-y-4 mb-6">
@@ -773,11 +770,10 @@ const PublicEvents = () => {
                             onChange={handleChange}
                             required
                             placeholder="Votre nom"
-                            className={`border ${
-                              validationErrors.nom
+                            className={`border ${validationErrors.nom
                                 ? "border-red-500"
                                 : "border-gray-300"
-                            } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
+                              } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
                             aria-invalid={validationErrors.nom ? "true" : "false"}
                           />
                           {validationErrors.nom && (
@@ -799,7 +795,7 @@ const PublicEvents = () => {
                             </p>
                           )}
                         </div>
-  
+
                         {/* Champ Prénom */}
                         <div className="flex flex-col gap-2">
                           <label className="text-sm font-semibold text-gray-700 mb-1">
@@ -812,11 +808,10 @@ const PublicEvents = () => {
                             onChange={handleChange}
                             required
                             placeholder="Votre prénom"
-                            className={`border ${
-                              validationErrors.prenom
+                            className={`border ${validationErrors.prenom
                                 ? "border-red-500"
                                 : "border-gray-300"
-                            } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
+                              } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
                             aria-invalid={validationErrors.prenom ? "true" : "false"}
                           />
                           {validationErrors.prenom && (
@@ -838,7 +833,7 @@ const PublicEvents = () => {
                             </p>
                           )}
                         </div>
-  
+
                         {/* Champ Email */}
                         <div className="flex flex-col gap-2">
                           <label className="text-sm font-semibold text-gray-700 mb-1">
@@ -851,11 +846,10 @@ const PublicEvents = () => {
                             onChange={handleChange}
                             required
                             placeholder="Votre email"
-                            className={`border ${
-                              validationErrors.email
+                            className={`border ${validationErrors.email
                                 ? "border-red-500"
                                 : "border-gray-300"
-                            } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
+                              } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
                             aria-invalid={validationErrors.email ? "true" : "false"}
                           />
                           {validationErrors.email && (
@@ -877,7 +871,7 @@ const PublicEvents = () => {
                             </p>
                           )}
                         </div>
-  
+
                         {/* Champ Sexe */}
                         <div className="flex flex-col gap-2">
                           <label className="text-sm font-semibold text-gray-700 mb-1">
@@ -888,11 +882,10 @@ const PublicEvents = () => {
                             value={form.sex}
                             onChange={handleChange}
                             required
-                            className={`border ${
-                              validationErrors.sex
+                            className={`border ${validationErrors.sex
                                 ? "border-red-500"
                                 : "border-gray-300"
-                            } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
+                              } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
                             aria-invalid={validationErrors.sex ? "true" : "false"}
                           >
                             <option value="">-- Sélectionnez --</option>
@@ -918,74 +911,27 @@ const PublicEvents = () => {
                             </p>
                           )}
                         </div>
-  
+
                         {/* Champ Événement Associé */}
-                        <div className="flex flex-col gap-2">
-                          <label className="text-sm font-semibold text-gray-700 mb-1">
-                            Événement Associé <span className="text-red-500">*</span>
-                          </label>
-                          <div
-                            className={`flex items-center border ${
-                              validationErrors.eventId
-                                ? "border-red-500"
-                                : "border-gray-300"
-                            } bg-gray-50 rounded-lg px-4 py-3 focus-within:ring-2 focus-within:ring-indigo-600 cursor-pointer transition-all duration-200`}
-                            onClick={handleOpenModal}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) =>
-                              e.key === "Enter" && handleOpenModal()
-                            }
-                            aria-label="Sélectionner un événement"
-                          >
-                            <input
-                              type="text"
-                              name="event"
-                              value={selectedEventName}
-                              readOnly
-                              placeholder="Cliquez pour sélectionner un événement"
-                              className="flex-grow bg-transparent outline-none cursor-pointer text-gray-900 placeholder-gray-400"
-                            />
-                            <button
-                              type="button"
-                              className="ml-2 text-gray-500 hover:text-indigo-600 focus:outline-none transition-colors duration-200"
-                              aria-label="Ouvrir la sélection d'événements"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                          {validationErrors.eventId && (
-                            <p className="text-red-500 text-sm mt-1 flex items-center">
-                              <svg
-                                className="h-4 w-4 mr-1"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                              </svg>
-                              {validationErrors.eventId}
-                            </p>
-                          )}
+                        <div
+                          className={`flex items-center border border-gray-300 bg-gray-100 rounded-lg px-4 py-3 opacity-70 cursor-not-allowed`}
+                          role="button"
+                          tabIndex={-1}
+                          aria-disabled="true"
+                        >
+                          <input
+                            type="text"
+                            name="event"
+                            value={selectedEventName}
+                            readOnly
+                            disabled
+                            placeholder="Sélection désactivée"
+                            className="flex-grow bg-transparent outline-none cursor-not-allowed text-gray-500 placeholder-gray-400"
+                          />
                         </div>
+
                       </div>
-  
+
                       {error && (
                         <p className="text-red-500 mt-6 text-center bg-red-50 py-3 rounded-xl flex items-center justify-center transition-all duration-200">
                           <svg
@@ -1004,24 +950,22 @@ const PublicEvents = () => {
                           {error}
                         </p>
                       )}
-  
-                      <div className="relative flex flex-col sm:flex-row items-center gap-4 pt-6 mt-6 border-t border-slate-100">
+
+                      <div className="relative flex flex-col sm:flex-row items-center gap-4 pt-6 my-6 border-t border-slate-100">
                         <button
                           type="submit"
                           disabled={isSubmitting}
-                          className={`absolute top-5 right-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg sm:rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${
-                            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-                          } ${
-                            selectedEvent?.id % 5 === 0
+                          className={`absolute top-5 right-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg sm:rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                            } ${selectedEvent?.id % 5 === 0
                               ? "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
                               : selectedEvent?.id % 5 === 1
-                              ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                              : selectedEvent?.id % 5 === 2
-                              ? "bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600"
-                              : selectedEvent?.id % 5 === 3
-                              ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
-                              : "bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600"
-                          }`}
+                                ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                                : selectedEvent?.id % 5 === 2
+                                  ? "bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600"
+                                  : selectedEvent?.id % 5 === 3
+                                    ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                                    : "bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600"
+                            }`}
                         >
                           {isSubmitting ? (
                             <>
@@ -1058,7 +1002,7 @@ const PublicEvents = () => {
             </div>
           </AnimatePresence>
         )}
-  
+
         {/* Success Modal */}
         {isSuccessModalOpen && (
           <AnimatePresence>
@@ -1108,7 +1052,7 @@ const PublicEvents = () => {
             </div>
           </AnimatePresence>
         )}
-  
+
         {/* Event Selection Modal */}
         {isModalOpen && (
           <EventSelectionModal
