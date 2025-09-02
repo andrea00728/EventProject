@@ -622,9 +622,13 @@ const LocationSalle = () => {
                       ) : (
                         <div className="flex items-center min-w-0 w-full">
                           <MdRoom className={`mr-1 sm:mr-3 text-lg sm:text-xl flex-shrink-0 ${darkMode ? "text-blue-400" : "text-indigo-500"}`} />
-                          <h3 className={`text-base sm:text-lg font-medium ${darkMode ? "text-gray-300" : "text-gray-800"}`} title={location.nom.split(",")[0]}>
-                            {location.nom.split(",")[0]}
+                          <h3
+                            className={`text-base sm:text-lg font-medium ${darkMode ? "text-gray-300" : "text-gray-800"}`}
+                            title={location.nom.split(",").slice(0, 2).join(", ")}
+                          >
+                            {location.nom.split(",").slice(0, 2).join(", ")}
                           </h3>
+
                           {location.salles && location.salles.length > 0 && (
                             <span className={`ml-1 sm:ml-3 inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${darkMode ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800"}`}>
                               {location.salles.length} {location.salles.length > 1 ? 'salles' : 'salle'}
