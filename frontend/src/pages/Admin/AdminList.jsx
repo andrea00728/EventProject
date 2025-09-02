@@ -84,7 +84,7 @@ const AdminList = ({ admins, onDelete }) => {
                     darkMode ? "text-gray-200" : "text-gray-700"
                   }`}
                 >
-                  <FaUserCircle className="text-2xl text-purple-500" />
+                  {admin.photoEmail ? <img src={admin.photoEmail} alt={admin.name} className="w-10 h-10 rounded-full object-cover" /> : <FaUserCircle className="text-2xl text-purple-500" />}
                   {admin.name}
                 </td>
                 <td

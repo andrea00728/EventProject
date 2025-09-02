@@ -304,7 +304,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
   async getAllAdmins(): Promise<Admin[]> {
     const admins = await this.userRepository.find({
       where: { role: 'admin' },
-      select: ['id', 'name', 'email', 'photo', 'role', 'isOnline', 'lastLogin', 'lastLogout', 'createdAt'],
+      select: ['id', 'name', 'email', 'photo', 'role', 'isOnline', 'lastLogin', 'lastLogout', 'createdAt', 'photoEmail'],
       order: { lastLogin: 'DESC' }, // optionnel : les admins les plus récents d’abord
     });
     return admins;
