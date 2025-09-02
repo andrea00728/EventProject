@@ -85,6 +85,17 @@ async redirectToFrontend(
   return res.redirect(url);
 }
 
+@Get('cancel')
+async redirectTofrontend(
+  @Query('subscription_id') subscriptionId: string,
+  @Query('token') token: string,
+  @Query('ba_token') baToken: string,
+  @Res() res: Response,
+) {
+  const url = `https://mastertable.site/forfait/cancel?subscription_id=${subscriptionId}&token=${token}&ba_token=${baToken}`;
+  return res.redirect(url);
+}
+
 
 
   @Get('cancel')
