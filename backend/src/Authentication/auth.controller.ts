@@ -11,6 +11,7 @@ import { extname } from 'path';
 import { User } from './entities/auth.entity';
 import { Request, Response } from 'express';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { JwtPayload } from 'src/interfaces/auth.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -31,6 +32,8 @@ export class AuthController {
     return this.authService.createUser(dto);
   }
 
+  
+
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res) {
@@ -50,6 +53,34 @@ export class AuthController {
     }
   }
 
+  // @UseGuards(JwtAuthGuard)
+  // @Get('status')
+  // getStatus(@Req() req) {
+  //   return {
+  //     isAuthenticated: true,
+  //     user: req.user, // payload JWT décodé
+  //   };
+  // }
+
+  // @UseGuards(JwtAuthGuard)
+  // @Get('status')
+  // async getAuthStatus(@Req() req: Request & { user: JwtPayload }) {
+  //   const user = await this.authService.getStatus(req.user.sub); // Ajout : Appeler getStatus
+  //   console.log('Réponse de /auth/status:', { // Ajout : Log pour débogage
+  //     isAuthenticated: true,
+  //     user: {
+  //       id: user.id,
+  //       name: user.name,
+  //       email: user.email,
+  //       photo: user.photo,
+  //     },
+  //   });
+  //   return {
+  //     isAuthenticated: true,
+  //     user,
+  //   };
+  // }
+
   @UseGuards(JwtAuthGuard)
   @Get('status')
   async getAuthStatus(@Req() req) {
@@ -58,6 +89,7 @@ export class AuthController {
       user: req.user,
     };
   }
+
 
   @Get('ManagerList')
   async getManagerList() {
@@ -143,5 +175,45 @@ export class AuthController {
       throw new UnauthorizedException('Jeton invalide ou blacklisté');
     }
     return { valid: true };
+  }
+
+  @Post('update-profile')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('photo', {
+    storage: diskStorage({
+      destination: './Uploads',
+      filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = extname(file.originalname);
+        callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+      },
+    }),
+    limits: { fileSize: 5 * 1024 * 1024 },
+  }))
+  
+  @ApiOperation({ summary: 'Mettre à jour le profil utilisateur' })
+  @ApiResponse({ status: 200, description: 'Profil mis à jour avec succès' })
+  @ApiResponse({ status: 400, description: 'Requête invalide' })
+  @ApiResponse({ status: 401, description: 'Non autorisé' })
+  async updateProfile(
+    @Req() req: Request & { user: JwtPayload },
+    @Body() body: { name: string; email: string; current_password?: string; new_password?: string; new_password_confirmation?: string },
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    const userId = req.user.sub;
+    const updatedData = await this.authService.updateProfile(userId, {
+      name: body.name,
+      email: body.email,
+      currentPassword: body.current_password,
+      newPassword: body.new_password,
+      newPasswordConfirmation: body.new_password_confirmation,
+      photo: file?.filename || null,
+    });
+    console.log('Réponse de updateProfile:', updatedData); // Ajout : Log pour débogage
+    return {
+      message: 'Profil mis à jour avec succès',
+      user: updatedData.user,
+      token: updatedData.token, // Ajout : Retourner le nouveau token
+    };
   }
 }

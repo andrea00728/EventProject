@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Delete, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Delete, Param, Patch } from '@nestjs/common';
 import { ContactService } from '../../services/contact/contact-message.service';
 import { ContactMessage } from '../../entities/ContactMessage';
 
@@ -19,6 +19,14 @@ export class ContactController {
      @Delete(':id')
     async remove(@Param('id') id: number) {
         return this.contactService.delete(id);
+    }
+
+    @Patch(':id')
+    async updateReadStatus(
+        @Param('id') id: number,
+        @Body('isRead') isRead: boolean,
+    ): Promise<ContactMessage> {
+        return this.contactService.updateReadStatus(id, isRead);
     }
 
 }
