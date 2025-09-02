@@ -3,12 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useDarkMode } from "../../context/DarkModeContext";
 import { useStateContext } from "../../context/ContextProvider";
 import { MdSave } from "react-icons/md";
-import { FaSpinner } from "react-icons/fa";
+import { FaSpinner, FaUpload } from "react-icons/fa";
 import { updateAdmin } from "../../services/userService";
 
 export default function SuperAdminProfileEdit() {
   const { darkMode } = useDarkMode();
-  const { user, isAuthenticated, setUser } = useStateContext();
+  const { user, setUser } = useStateContext();
 
   const [profile, setProfile] = useState({
     name: "",
@@ -16,6 +16,7 @@ export default function SuperAdminProfileEdit() {
     bio: "",
     photo: "",
     newFile: null,
+    preview: null, // 🔹 aperçu local de la photo
   });
 
   const [passwords, setPasswords] = useState({
@@ -23,7 +24,6 @@ export default function SuperAdminProfileEdit() {
     confirmPassword: "",
   });
 
-  const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState({
     type: "",
@@ -34,15 +34,19 @@ export default function SuperAdminProfileEdit() {
   const [passwordError, setPasswordError] = useState("");
   const [nameError, setNameError] = useState("");
 
-  // Gestion du changement de fichier
+  // 🔹 Gestion du changement de fichier
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setProfile((prev) => ({ ...prev, newFile: file }));
+      setProfile((prev) => ({
+        ...prev,
+        newFile: file,
+        preview: URL.createObjectURL(file), // génère un aperçu local
+      }));
     }
   };
 
-  // Soumission du formulaire
+  // 🔹 Soumission du formulaire
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSaving(true);
@@ -51,18 +55,30 @@ export default function SuperAdminProfileEdit() {
     formData.append("name", profile.name);
     formData.append("email", profile.email);
     formData.append("bio", profile.bio || "");
-    if (profile.newFile) formData.append("photo", profile.newFile); // le nom "photo" doit correspondre
+    if (profile.newFile) formData.append("photo", profile.newFile);
     if (passwords.newPassword)
       formData.append("password", passwords.newPassword);
 
     try {
       if (!user) return;
-      const response = await updateAdmin(user?.sub, formData)
-      setUser(response.user)
+      const response = await updateAdmin(user?.sub, formData);
+      setUser(response.user);
+
+      setNotification({
+        type: "success",
+        message: "Profil mis à jour avec succès ✅",
+        visible: true,
+      });
     } catch (err) {
       console.error(err);
+      setNotification({
+        type: "error",
+        message: "Une erreur est survenue ❌",
+        visible: true,
+      });
     } finally {
       setIsSaving(false);
+      setTimeout(() => setNotification({ ...notification, visible: false }), 3000);
     }
   };
 
@@ -98,17 +114,34 @@ export default function SuperAdminProfileEdit() {
           } mb-8`}
         >
           <form onSubmit={handleSubmit}>
+            {/* 🔹 Photo de profil */}
             <div className="flex flex-col items-center mb-10">
               <img
-                src={profile.newFile || user.photo}
+                src={profile.preview || user.photo}
                 alt="Photo de profil"
                 className={`w-32 h-32 rounded-full object-cover border-4 shadow-md transition-all duration-300 ${
                   darkMode ? "border-blue-500" : "border-indigo-500"
                 }`}
               />
-              <input type="file" onChange={handleFileChange} className="mt-4" />
+
+              {/* Bouton upload stylisé avec animation */}
+              <motion.label
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="mt-4 flex items-center cursor-pointer px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition"
+              >
+                <FaUpload className="mr-2" />
+                <span>Choisir une photo</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </motion.label>
             </div>
 
+            {/* 🔹 Formulaire */}
             <div className="grid md:grid-cols-2 gap-8">
               <div>
                 <div className="mb-6">
@@ -179,6 +212,7 @@ export default function SuperAdminProfileEdit() {
               </div>
             </div>
 
+            {/* 🔹 Bouton Sauvegarde */}
             <div className="text-center mt-8">
               <motion.button
                 type="submit"
@@ -193,8 +227,7 @@ export default function SuperAdminProfileEdit() {
               >
                 {isSaving ? (
                   <>
-                    <FaSpinner className="animate-spin mr-2 w-5 h-5" />{" "}
-                    Sauvegarde...
+                    <FaSpinner className="animate-spin mr-2 w-5 h-5" /> Sauvegarde...
                   </>
                 ) : (
                   <>
@@ -203,6 +236,7 @@ export default function SuperAdminProfileEdit() {
                 )}
               </motion.button>
 
+              {/* 🔹 Notifications */}
               <AnimatePresence>
                 {notification.visible && (
                   <motion.div

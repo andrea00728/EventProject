@@ -14,6 +14,7 @@ import * as path from 'path';
 
 @Injectable()
 export class AdminService {
+  private readonly UPLOAD_BASE_URL = process.env.UPLOAD_BASE_URL || 'http://localhost:3000';
   constructor(
     private readonly jwtService: JwtService,
     @InjectRepository(Admin)
@@ -49,7 +50,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
     email: adminUser.email, 
     role: adminUser.role, 
     name: adminUser.name,
-    photo:adminUser.photo && `http://localhost:3000/uploads/${adminUser.photo}` || adminUser.photoEmail, 
+    photo:adminUser.photo && `${this.UPLOAD_BASE_URL}/uploads/${adminUser.photo}` || adminUser.photoEmail, 
   };
 
   // Générer les tokens
@@ -73,7 +74,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
 
   return { 
     message: "Authentification réussie", 
-    user: { id: adminUser.id, email: adminUser.email, role: adminUser.role, photo:adminUser.photo && `http://localhost:3000/uploads/${adminUser.photo}` || adminUser.photoEmail, },
+    user: { id: adminUser.id, email: adminUser.email, role: adminUser.role, photo:adminUser.photo && `${this.UPLOAD_BASE_URL}/uploads/${adminUser.photo}` || adminUser.photoEmail, },
   };
 }
 
@@ -120,6 +121,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
 
       adminUser.lastLogin = new Date();
       adminUser.isOnline = true;
+      adminUser.photoEmail = photoURL;
       await this.userRepository.save(adminUser);
 
       // Générer les tokens JWT
@@ -128,7 +130,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
         email: adminUser.email,
         role: adminUser.role,
         name: adminUser.name,
-        photo: adminUser.photo && `http://localhost:3000/uploads/${adminUser.photo}` || adminUser.photoEmail,
+        photo: adminUser.photo && `${this.UPLOAD_BASE_URL}/uploads/${adminUser.photo}` || adminUser.photoEmail,
       };
 
       const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
@@ -154,7 +156,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
           id: adminUser.id,
           email: adminUser.email,
           name: adminUser.name,
-          photo: adminUser.photo && `http://localhost:3000/uploads/${adminUser.photo}` || adminUser.photoEmail,
+          photo: adminUser.photo && `${this.UPLOAD_BASE_URL}/uploads/${adminUser.photo}` || adminUser.photoEmail,
           role: adminUser.role,
         },
       };
@@ -352,7 +354,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
         sub: admin.id,
         email: admin.email,
         name: admin.name,
-        photo: admin.photo && `http://localhost:3000/uploads/${admin.photo}` || admin.photoEmail,
+        photo: admin.photo && `${this.UPLOAD_BASE_URL}/uploads/${admin.photo}` || admin.photoEmail,
         role: admin.role,
       },
     };
@@ -369,8 +371,24 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
       throw new NotFoundException('Administrateur non trouvé');
     }
 
+    // Vérifier si l’admin a une photo
+    if (admin.photo) {
+      const photoPath = path.join(__dirname, '../../../uploads', admin.photo);
+
+      try {
+        if (fs.existsSync(photoPath)) {
+          fs.unlinkSync(photoPath); // suppression synchrone
+        }
+      } catch (error) {
+        throw new InternalServerErrorException(
+          `Erreur lors de la suppression de la photo : ${error.message}`,
+        );
+      }
+    }
+
     await this.userRepository.remove(admin);
-    return { message: 'Administrateur supprimé avec succès' };
+
+    return { message: 'Administrateur et sa photo supprimés avec succès' };
   }
 
 }
