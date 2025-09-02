@@ -19,7 +19,7 @@ export class LocationService {
     private readonly evenementRepository: Repository<Evenement>,
     private dataSource: DataSource,
     private httpService: HttpService,
-  ) {}
+  ) { }
 
   // Créer un lieu
   async createLocation(nom: string): Promise<Localisation> {
@@ -173,5 +173,19 @@ export class LocationService {
       longitude: geocodeResult.lon,
     });
     return this.locationRepository.save(newLocation);
+  }
+
+
+
+  // mettre à jour avec géocodage
+  async updateLocationWithGeocode(id: number, query: string): Promise<Localisation> {
+    const geocodeResult = await this.geocodeLocation(query);
+    const location = await this.findLocationById(id);
+
+    location.nom = geocodeResult.displayName;
+    location.latitude = geocodeResult.lat;
+    location.longitude = geocodeResult.lon;
+
+    return this.locationRepository.save(location);
   }
 }
