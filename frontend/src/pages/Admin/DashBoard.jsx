@@ -20,6 +20,8 @@ import {
   MdAttachMoney,
   MdEventAvailable,
   MdEventNote,
+  MdMoneyOff,
+  MdOutlineMoney,
 } from "react-icons/md";
 import { ChevronDown } from "lucide-react";
 import {
@@ -165,8 +167,8 @@ export default function Dashboard() {
     },
     {
       label: "Total des revenus",
-      value: `$${totalRevenu}`,
-      icon: <MdAttachMoney />,
+      value: `€ ${totalRevenu}`,
+      icon: <MdOutlineMoney />,
     },
     {
       label: "Événements passés",
@@ -416,7 +418,7 @@ export default function Dashboard() {
                               : "bg-transparent border-gray-200 text-green-600"
                           }`}
                         >
-                          ${Number(amount).toFixed(2)}
+                          € {Number(amount).toFixed(2)}
                         </td>
                         <td
                           className={`p-3 text-sm ${
