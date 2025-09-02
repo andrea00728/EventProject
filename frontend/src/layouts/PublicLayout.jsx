@@ -91,7 +91,6 @@ export default function PublicLayout() {
 
   const roles = ["caissier", "cuisinier", "accueil"];
 
-  // const roles = ["caissier", "cuisinier", "accueil"];
 
   useEffect(() => {
     if (isAuthenticated) {
