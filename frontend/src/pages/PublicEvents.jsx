@@ -1,7 +1,60 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import axiosClient from '../api/axios-client';
+import { createInviteForSpecificEvent } from '../services/inviteService';
+import { textControll } from '../services/controll_champs/controll_champs';
+
+const EventSelectionModal = ({ events, onSelectEvent, onClose }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+      <div className="bg-white rounded-3xl mt-[80px] shadow-2xl p-8 max-w-4xl mx-auto transform transition-all duration-300 ease-out scale-100 animate-fadeIn">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 text-xl font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-600 rounded-full p-2 transition-colors duration-200 cursor-pointer"
+          aria-label="Fermer la modale"
+        >
+          ×
+        </button>
+
+        <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center font-sans">
+          Sélectionner un événement
+        </h3>
+
+        <div className="w-[100%] h-[400px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          {events.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events.map((event) => (
+                <div
+                  key={event.id}
+                  className="bg-gradient-to-br from-gray-800 to-gray-900 text-white p-6 rounded-xl shadow-lg hover:shadow-xl hover:from-gray-700 hover:to-gray-800 cursor-pointer transition-all duration-300 transform hover:-translate-y-1"
+                  onClick={() => onSelectEvent(event)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && onSelectEvent(event)}
+                  aria-label={`Sélectionner ${event.nom}`}
+                >
+                  <p className="font-semibold text-lg mb-2">{event.nom}</p>
+                  <p className="text-sm text-gray-200">
+                    Date: {new Date(event.date).toLocaleDateString("fr-FR")}
+                  </p>
+                  {event.description && (
+                    <p className="text-xs text-gray-300 mt-2 line-clamp-2">
+                      {event.description}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="p-6 text-center text-gray-500 bg-gray-50 rounded-xl">
+              Aucun événement disponible.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const PublicEvents = () => {
   const [events, setEvents] = useState([]);
@@ -10,16 +63,21 @@ const PublicEvents = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    nom: '',
-    prenom: '',
-    email: ''
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [form, setForm] = useState({
+    nom: "",
+    prenom: "",
+    email: "",
+    sex: "",
+    eventId: null,
   });
-  const [registrationStatus, setRegistrationStatus] = useState(null);
-  const [filter, setFilter] = useState("all"); // "all", "public", "private"
+  const [validationErrors, setValidationErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [filter, setFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const eventsPerPage = 5;
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEventName, setSelectedEventName] = useState("");
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -42,7 +100,7 @@ const PublicEvents = () => {
   const filteredEvents = events.filter(ev => {
     if (filter === "public") return ev.isPublic === true;
     if (filter === "private") return ev.isPublic === false;
-    return true; // "all"
+    return true;
   });
 
   const totalPages = Math.ceil(filteredEvents.length / eventsPerPage);
@@ -64,65 +122,92 @@ const PublicEvents = () => {
   const openRegistrationModal = () => {
     setIsRegistrationModalOpen(true);
     setIsEventModalOpen(false);
-    setRegistrationStatus(null);
+    setForm({ nom: "", prenom: "", email: "", sex: "", eventId: selectedEvent?.id || null });
+    setSelectedEventName(selectedEvent ? `${selectedEvent.nom} (${new Date(selectedEvent.date).toLocaleDateString("fr-FR")})` : "");
   };
 
   const closeRegistrationModal = () => {
     setIsRegistrationModalOpen(false);
-    setFormData({ nom: '', prenom: '', email: '' });
+    setForm({ nom: "", prenom: "", email: "", sex: "", eventId: null });
+    setSelectedEventName("");
+    setValidationErrors({});
+    setError(null);
   };
 
-  const handleInputChange = (e) => {
+  const closeSuccessModal = () => {
+    setIsSuccessModalOpen(false);
+  };
+
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setForm(prev => ({
       ...prev,
-      [name]: value
+      [name]: name === "nom" || name === "prenom" ? textControll(value) : value
     }));
+    setValidationErrors(prev => ({ ...prev, [name]: undefined }));
+  };
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleSelectEvent = (event) => {
+    setForm(prev => ({ ...prev, eventId: event.id }));
+    setSelectedEventName(`${event.nom} (${new Date(event.date).toLocaleDateString("fr-FR")})`);
+    setIsModalOpen(false);
+    setValidationErrors(prev => ({ ...prev, eventId: undefined }));
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const newValidationErrors = {};
+    if (!form.nom.trim()) {
+      newValidationErrors.nom = "Le nom est requis.";
+    }
+    if (!form.prenom.trim()) {
+      newValidationErrors.prenom = "Le prénom est requis.";
+    }
+    if (!form.email.trim()) {
+      newValidationErrors.email = "L'email est requis.";
+    }
+    if (!form.sex) {
+      newValidationErrors.sex = "Le sexe est requis.";
+    }
+    if (!form.eventId) {
+      newValidationErrors.eventId = "Veuillez sélectionner un événement.";
+    }
+
+    if (Object.keys(newValidationErrors).length > 0) {
+      setValidationErrors(newValidationErrors);
+      setError("Veuillez corriger les erreurs dans le formulaire.");
+      return;
+    }
+
+    setError(null);
+    setValidationErrors({});
+    setIsSubmitting(true);
+
     try {
-      // Simulation d'envoi de données
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-
-      setRegistrationStatus('success');
-      setFormData({ nom: '', prenom: '', email: '' });
-    } catch (error) {
-      console.error("Erreur lors de l'inscription :", error);
-      setRegistrationStatus('error');
+      const invite = await createInviteForSpecificEvent(form);
+      console.log("Invité créé avec succès:", invite);
+      setForm({ nom: "", prenom: "", email: "", sex: "", eventId: null });
+      setSelectedEventName("");
+      setIsRegistrationModalOpen(false);
+      setIsSuccessModalOpen(true);
+    } catch (err) {
+      console.error("Erreur back-end:", err.response?.data || err.message);
+      setError(
+        err.response?.data?.message ||
+        "Erreur lors de la création de l'invité. Veuillez réessayer."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-
-  /*******************/
-  const [showTableModal, setShowTableModal] = useState(false);
-  const [showPlaceModal, setShowPlaceModal] = useState(false);
-  const [tables, setTables] = useState([]); // Supposons que vous avez une liste de tables
-  const [selectedTable, setSelectedTable] = useState(null);
-  const [places, setPlaces] = useState([]); // Supposons que vous avez une liste de places
-
-  const handleTableClick = () => {
-    // Ici vous pourriez faire un appel API pour récupérer les tables si ce n'est pas déjà fait
-    setShowTableModal(true);
-  };
-
-  const handlePlaceClick = () => {
-    if (selectedTable?.places?.length > 0) {
-      setPlaces(selectedTable.places); // Ou récupérer les places disponibles pour cette table
-      setShowPlaceModal(true);
-    }
-  };
-
-  const selectTable = (table) => {
-    setSelectedTable(table);
-    setShowTableModal(false);
-  };
-
-  const selectPlace = (place) => {
-    // Mettre à jour l'état avec la place sélectionnée
-    setShowPlaceModal(false);
   };
 
   return (
@@ -184,11 +269,7 @@ const PublicEvents = () => {
         {/* Events */}
         {!isLoading && !error && (
           <>
-            {events.filter(ev => {
-              if (filter === "public") return ev.isPublic === true;
-              if (filter === "private") return ev.isPublic === false;
-              return true; // all
-            }).length === 0 ? (
+            {filteredEvents.length === 0 ? (
               <div className="text-center py-16">
                 <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-slate-100 to-slate-200 rounded-full mb-6">
                   <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -200,56 +281,47 @@ const PublicEvents = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                {events
-                  .filter(ev => {
-                    if (filter === "public") return ev.isPublic === true;
-                    if (filter === "private") return ev.isPublic === false;
-                    return true;
-                  })
-                  .map((event) => (
-                    <div
-                      key={event.id}
-                      className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1 cursor-pointer"
-                      onClick={() => openEventModal(event)}
-                    >
-                      {/* Card Header */}
-                      <div className={`h-2 bg-gradient-to-r ${event.id % 3 === 0 ? 'from-indigo-500 to-cyan-500' :
-                        event.id % 3 === 1 ? 'from-pink-500 to-rose-500' :
-                          'from-emerald-500 to-lime-500'
-                        }`}
-                      ></div>
+                {currentEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1 cursor-pointer"
+                    onClick={() => openEventModal(event)}
+                  >
+                    <div className={`h-2 bg-gradient-to-r ${event.id % 3 === 0 ? 'from-indigo-500 to-cyan-500' :
+                      event.id % 3 === 1 ? 'from-pink-500 to-rose-500' :
+                        'from-emerald-500 to-lime-500'
+                      }`}
+                    ></div>
 
-                      <div className="p-6">
-                        <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide mb-4">
-                          {event.nom}
-                        </h2>
+                    <div className="p-6">
+                      <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide mb-4">
+                        {event.nom}
+                      </h2>
 
-                        <div className="space-y-2">
-                          <p><span className="text-slate-500 font-medium">Type :</span> {event.type}</p>
-                          <p><span className="text-slate-500 font-medium">Thème :</span> {event.theme}</p>
-                          <p>
-                            <span className="text-slate-500 font-medium">Date :</span>{' '}
-                            {new Date(event.date).toLocaleDateString("fr-FR", {
-                              weekday: "long",
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
-                          <p><span className="text-slate-500 font-medium">Lieu :</span> {event.location?.nom || "Non précisé"}</p>
-                        </div>
+                      <div className="space-y-2">
+                        <p><span className="text-slate-500 font-medium">Type :</span> {event.type}</p>
+                        <p><span className="text-slate-500 font-medium">Thème :</span> {event.theme}</p>
+                        <p>
+                          <span className="text-slate-500 font-medium">Date :</span>{' '}
+                          {new Date(event.date).toLocaleDateString("fr-FR", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                        <p><span className="text-slate-500 font-medium">Lieu :</span> {event.location?.nom || "Non précisé"}</p>
                       </div>
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             )}
           </>
         )}
       </div>
-
-
 
       {/* Event Modal */}
       {isEventModalOpen && selectedEvent && (
@@ -265,15 +337,7 @@ const PublicEvents = () => {
               className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header */}
-              {/* <div className={`h-2 bg-gradient-to-r ${selectedEvent.id % 3 === 0 ? 'from-indigo-500 to-cyan-500' :
-                selectedEvent.id % 3 === 1 ? 'from-pink-500 to-rose-500' :
-                  'from-emerald-500 to-lime-500'
-                }`}
-              ></div> */}
-
               <div className="p-6">
-                {/* Event Title */}
                 <div className="flex items-start justify-between mb-6">
                   <h2 className="text-2xl font-bold text-slate-800 uppercase tracking-wide leading-tight">
                     {selectedEvent.nom}
@@ -288,7 +352,6 @@ const PublicEvents = () => {
                   </button>
                 </div>
 
-                {/* Event Description */}
                 {selectedEvent.description && (
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold text-slate-700 mb-2">Description</h3>
@@ -296,7 +359,6 @@ const PublicEvents = () => {
                   </div>
                 )}
 
-                {/* Event Details */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -372,7 +434,6 @@ const PublicEvents = () => {
                   )}
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
                   <button
                     onClick={openRegistrationModal}
@@ -395,13 +456,13 @@ const PublicEvents = () => {
                   </button>
                 </div>
               </div>
-            </motion.div >
+            </motion.div>
           </div>
         </AnimatePresence>
       )}
 
       {/* Registration Modal */}
-      {isRegistrationModalOpen && selectedEvent && (
+      {isRegistrationModalOpen && (
         <AnimatePresence>
           <div
             className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50"
@@ -415,15 +476,7 @@ const PublicEvents = () => {
               className="bg-white rounded-xl shadow-2xl w-full max-w-6xl mx-4 overflow-hidden max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header */}
-              {/* <div className={`h-2 bg-gradient-to-r ${selectedEvent.id % 3 === 0 ? 'from-indigo-500 to-cyan-500' :
-                selectedEvent.id % 3 === 1 ? 'from-pink-500 to-rose-500' :
-                  'from-emerald-500 to-lime-500'
-                }`}
-              ></div> */}
-
               <div className='flex flex-col lg:flex-row'>
-                {/* Image Section - Hidden on mobile */}
                 <div className='hidden lg:block lg:w-1/2 bg-gray-100'>
                   <img
                     src="/images/IMG1.jpg"
@@ -432,11 +485,10 @@ const PublicEvents = () => {
                   />
                 </div>
 
-                {/* Form Section */}
                 <div className='w-full lg:w-1/2 p-4 sm:p-6'>
                   <div className="flex items-start justify-between mb-6">
                     <h2 className="text-xl sm:text-2xl font-bold text-slate-800 uppercase tracking-wide leading-tight">
-                      Inscription à {selectedEvent.nom}
+                      Inscription à {selectedEventName || "l'événement"}
                     </h2>
                     <button
                       onClick={closeRegistrationModal}
@@ -455,12 +507,21 @@ const PublicEvents = () => {
                         <input
                           type="text"
                           name="nom"
-                          value={formData.nom}
-                          onChange={handleInputChange}
+                          value={form.nom}
+                          onChange={handleChange}
                           required
                           placeholder="Votre nom"
-                          className="border border-gray-300 rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition"
+                          className={`border ${validationErrors.nom ? "border-red-500" : "border-gray-300"} rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
+                          aria-invalid={validationErrors.nom ? "true" : "false"}
                         />
+                        {validationErrors.nom && (
+                          <p className="text-red-500 text-sm mt-1 flex items-center">
+                            <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {validationErrors.nom}
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex flex-col gap-2">
@@ -468,12 +529,21 @@ const PublicEvents = () => {
                         <input
                           type="text"
                           name="prenom"
-                          value={formData.prenom}
-                          onChange={handleInputChange}
+                          value={form.prenom}
+                          onChange={handleChange}
                           required
                           placeholder="Votre prénom"
-                          className="border border-gray-300 rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition"
+                          className={`border ${validationErrors.prenom ? "border-red-500" : "border-gray-300"} rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
+                          aria-invalid={validationErrors.prenom ? "true" : "false"}
                         />
+                        {validationErrors.prenom && (
+                          <p className="text-red-500 text-sm mt-1 flex items-center">
+                            <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {validationErrors.prenom}
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex flex-col gap-2">
@@ -481,120 +551,126 @@ const PublicEvents = () => {
                         <input
                           type="email"
                           name="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
+                          value={form.email}
+                          onChange={handleChange}
                           required
                           placeholder="Votre email"
-                          className="border border-gray-300 rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition"
+                          className={`border ${validationErrors.email ? "border-red-500" : "border-gray-300"} rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
+                          aria-invalid={validationErrors.email ? "true" : "false"}
                         />
+                        {validationErrors.email && (
+                          <p className="text-red-500 text-sm mt-1 flex items-center">
+                            <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {validationErrors.email}
+                          </p>
+                        )}
                       </div>
 
-                      <div>
-                        {/* Table */}
-                        <div className="flex flex-col gap-2">
-                          <label className="text-sm font-semibold text-gray-700 mb-1">Table <span className="text-red-500">*</span></label>
-                          <div
-                            onClick={handleTableClick}
-                            className="border border-gray-300 rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 bg-gray-50 cursor-pointer focus:ring-2 focus:ring-indigo-200 transition"
+                      <div className="flex flex-col gap-2">
+                        <label className="text-sm font-semibold text-gray-700 mb-1">Sexe <span className="text-red-500">*</span></label>
+                        <select
+                          name="sex"
+                          value={form.sex}
+                          onChange={handleChange}
+                          required
+                          className={`border ${validationErrors.sex ? "border-red-500" : "border-gray-300"} rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
+                          aria-invalid={validationErrors.sex ? "true" : "false"}
+                        >
+                          <option value="">-- Sélectionnez --</option>
+                          <option value="M">Masculin</option>
+                          <option value="F">Féminin</option>
+                        </select>
+                        {validationErrors.sex && (
+                          <p className="text-red-500 text-sm mt-1 flex items-center">
+                            <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {validationErrors.sex}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="text-sm font-semibold text-gray-700 mb-1">Événement Associé <span className="text-red-500">*</span></label>
+                        <div
+                          className={`flex items-center border ${validationErrors.eventId ? "border-red-500" : "border-gray-300"} bg-gray-50 rounded-lg px-4 py-3 focus-within:ring-2 focus-within:ring-indigo-600 cursor-pointer transition-all duration-200`}
+                          onClick={handleOpenModal}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => e.key === "Enter" && handleOpenModal()}
+                          aria-label="Sélectionner un événement"
+                        >
+                          <input
+                            type="text"
+                            name="event"
+                            value={selectedEventName}
+                            readOnly
+                            placeholder="Cliquez pour sélectionner un événement"
+                            className="flex-grow bg-transparent outline-none cursor-pointer text-gray-900 placeholder-gray-400"
+                          />
+                          <button
+                            type="button"
+                            className="ml-2 text-gray-500 hover:text-indigo-600 focus:outline-none transition-colors duration-200"
+                            aria-label="Ouvrir la sélection d'événements"
                           >
-                            {selectedTable?.nom || "Sélectionner une table"}
-                          </div>
-                        </div>
-
-                        {/* Place */}
-                        {selectedTable && (
-                          <div className="flex flex-col gap-2 mt-4">
-                            <label className="text-sm font-semibold text-gray-700 mb-1">Place <span className="text-red-500">*</span></label>
-                            <div
-                              onClick={handlePlaceClick}
-                              className={`border border-gray-300 rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition ${selectedTable.places?.length > 0 ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
-                                }`}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
                             >
-                              {selectedEvent.salle?.nom || "Sélectionner une place"}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Modal pour les tables */}
-                        {showTableModal && (
-                          <AnimatePresence>
-                            <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center p-4 z-50">
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0 }}
-                                transition={{ duration: 0.3 }} 
-                                className="bg-white rounded-lg p-6 w-full max-w-md">
-                                <h2 className="text-xl font-bold mb-4">Liste des tables</h2>
-                                <div className="max-h-96 overflow-y-auto">
-                                  {tables.length > 0 ? (
-                                    tables.map((table) => (
-                                      <div
-                                        key={table.id}
-                                        onClick={() => selectTable(table)}
-                                        className="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
-                                      >
-                                        {table.nom} - {table.places?.length || 0} places disponibles
-                                      </div>
-                                    ))
-                                  ) : (
-                                    <p>Aucune table disponible</p>
-                                  )}
-                                </div>
-                                <button
-                                  onClick={() => setShowTableModal(false)}
-                                  className="mt-4 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                                >
-                                  Fermer
-                                </button>
-                              </motion.div>
-                            </div>
-                          </AnimatePresence>
-                        )}
-
-                        {/* Modal pour les places */}
-                        {showPlaceModal && (
-                          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                              <h2 className="text-xl font-bold mb-4">Places disponibles pour {selectedTable.nom}</h2>
-                              <div className="max-h-96 overflow-y-auto">
-                                {places.length > 0 ? (
-                                  places.map((place) => (
-                                    <div
-                                      key={place.id}
-                                      onClick={() => selectPlace(place)}
-                                      className="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
-                                    >
-                                      {place.nom}
-                                    </div>
-                                  ))
-                                ) : (
-                                  <p>Aucune place disponible</p>
-                                )}
-                              </div>
-                              <button
-                                onClick={() => setShowPlaceModal(false)}
-                                className="mt-4 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                              >
-                                Fermer
-                              </button>
-                            </div>
-                          </div>
+                              <path
+                                fillRule="evenodd"
+                                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                        {validationErrors.eventId && (
+                          <p className="text-red-500 text-sm mt-1 flex items-center">
+                            <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {validationErrors.eventId}
+                          </p>
                         )}
                       </div>
                     </div>
 
+                    {error && (
+                      <p className="text-red-500 mt-6 text-center bg-red-50 py-3 rounded-xl flex items-center justify-center transition-all duration-200">
+                        <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {error}
+                      </p>
+                    )}
+
                     <div className="relative flex flex-col sm:flex-row items-center gap-4 pt-6 mt-6 border-t border-slate-100">
                       <button
                         type="submit"
-                        className={`absolute top-5 right-0  w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg sm:rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${selectedEvent.id % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
-                          selectedEvent.id % 5 === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' :
-                            selectedEvent.id % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
-                              selectedEvent.id % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :
+                        disabled={isSubmitting}
+                        className={`absolute top-5 right-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg sm:rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''} ${selectedEvent?.id % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
+                          selectedEvent?.id % 5 === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' :
+                            selectedEvent?.id % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
+                              selectedEvent?.id % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :
                                 'bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600'
                           }`}
                       >
-                        Confirmer l'inscription
+                        {isSubmitting ? (
+                          <>
+                            <svg className="animate-spin h-5 w-5 mr-2 text-white" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            Enregistrement...
+                          </>
+                        ) : (
+                          "Confirmer l'inscription"
+                        )}
                       </button>
                     </div>
                   </form>
@@ -603,6 +679,54 @@ const PublicEvents = () => {
             </motion.div>
           </div>
         </AnimatePresence>
+      )}
+
+      {/* Success Modal */}
+      {isSuccessModalOpen && (
+        <AnimatePresence>
+          <div
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            onClick={closeSuccessModal}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-bold text-slate-800 mb-2">
+                  Inscription réussie
+                </h2>
+                <p className="text-slate-600 mb-6">
+                  Votre inscription à {selectedEventName || "l'événement"} a été enregistrée avec succès.
+                </p>
+                <button
+                  onClick={closeSuccessModal}
+                  className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                >
+                  Fermer
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </AnimatePresence>
+      )}
+
+      {/* Event Selection Modal */}
+      {isModalOpen && (
+        <EventSelectionModal
+          events={events}
+          onSelectEvent={handleSelectEvent}
+          onClose={handleCloseModal}
+        />
       )}
     </div>
   );
