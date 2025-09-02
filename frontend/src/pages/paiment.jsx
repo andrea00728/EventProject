@@ -11,17 +11,22 @@ import {
   Crown,
   DollarSign,
   Smartphone,
+  Calendar,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useStateContext } from "../context/ContextProvider";
 import { updateForfait } from "../services/forfaitService";
+import { Event, MobileFriendly, Rocket } from "@mui/icons-material";
 
 const plans = {
   freemium: {
+    nom: "FREEMIUM",
     name: "Freemium",
     icon: Star,
     price: "0€",
-    duration: "/mois",
+    duration: "Illimité",
+    maxInvites: 50,
+    events: 1,
     features: ["Fonctionnalité basique 1", "Fonctionnalité basique 2"],
     buttonColor: "bg-gray-500 hover:bg-gray-600",
     bgColor: "bg-gray-100",
@@ -29,10 +34,13 @@ const plans = {
     textColor: "text-gray-800",
   },
   starter: {
+    nom: "STARTER",
     name: "Starter",
     icon: Clock,
     price: "10€",
-    duration: "/mois",
+    duration: "1 mois",
+    maxInvites: 200,
+    events: 2,
     features: ["Toutes les fonctionnalités Freemium", "Support prioritaire"],
     buttonColor: "bg-blue-500 hover:bg-blue-600",
     bgColor: "bg-blue-100",
@@ -40,10 +48,13 @@ const plans = {
     textColor: "text-blue-800",
   },
   pro: {
+    nom: "PRO",
     name: "Pro",
     icon: Users,
     price: "25.99€",
-    duration: "/mois",
+    duration: "1 mois",
+    maxInvites: 500,
+    events: 5,
     features: ["Toutes les fonctionnalités Starter", "Accès avancé", "Analyses détaillées"],
     buttonColor: "bg-green-500 hover:bg-green-600",
     bgColor: "bg-green-100",
@@ -51,10 +62,13 @@ const plans = {
     textColor: "text-green-800",
   },
   premium: {
+    nom: "PREMIUM",
     name: "Premium",
     icon: Gift,
     price: "39.99€",
-    duration: "/mois",
+    duration: "1 mois",
+    maxInvites: 1000,
+    events: 20,
     features: ["Toutes les fonctionnalités Pro", "Outils premium", "Personnalisation"],
     buttonColor: "bg-purple-500 hover:bg-purple-600",
     bgColor: "bg-purple-100",
@@ -62,10 +76,13 @@ const plans = {
     textColor: "text-purple-800",
   },
   gold: {
+    nom: "GOLD",
     name: "Gold",
     icon: Crown,
     price: "59.99€",
-    duration: "/mois",
+    duration: "1 mois",
+    maxInvites: "Illimité",
+    events: 50,
     features: ["Toutes les fonctionnalités Premium", "Support VIP", "Fonctionnalités exclusives"],
     buttonColor: "bg-yellow-500 hover:bg-yellow-600",
     bgColor: "bg-yellow-100",
@@ -91,35 +108,8 @@ const PaymentPage = ({ forfait, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const selectedPlanDetails = plans[selectedPlan];
-  
-  // Dans PaymentPage ou le composant qui gère l'achat
-const initiatePayment = async () => {
-  try {
-    // Récupérer le token JWT actuel
-    const token = getCookie('jwt'); // Fonction pour récupérer le cookie
-    
-    const response = await axiosClient.post('/forfait/upgrade', {
-      forfaitNom: forfait.nom,
-      token: token // Envoyer le token avec la requête
-    }, {
-      withCredentials: true
-    });
-
-    // Rediriger vers PayPal
-    window.location.href = response.data.url;
-  } catch (error) {
-    toast.error('Erreur lors du démarrage du paiement');
-  }
-};
-  
-// Fonction utilitaire pour récupérer les cookies
-const getCookie = (name) => {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return null;
-};
+  const selectedForfait = plans[selectedPlan];
+  const PlanIcon = selectedForfait.icon;
 
   const handlePayment = useCallback(async () => {
     if (!isAuthenticated) {
@@ -129,7 +119,7 @@ const getCookie = (name) => {
 
     if (selectedPlan === "freemium") {
       try {
-        await updateForfait( selectedPlan);
+        await updateForfait(selectedPlan);
         setError(null);
         alert("Plan Freemium activé avec succès !");
       } catch (err) {
@@ -143,11 +133,8 @@ const getCookie = (name) => {
 
     try {
       if (selectedPaymentMethod === "paypal") {
-        const res = await updateForfait( selectedPlan);
-        console.log("URL PayPal:", res?.url || "Aucune URL");
-
+        const res = await updateForfait(selectedPlan);
         if (res?.url && typeof res.url === "string" && res.url.startsWith("https://")) {
-          // Redirection dans le même onglet
           window.location.href = res.url;
         } else {
           setError("URL de paiement PayPal non valide.");
@@ -163,16 +150,13 @@ const getCookie = (name) => {
     }
   }, [isAuthenticated, selectedPlan, selectedPaymentMethod]);
 
-
-  if (!selectedPlanDetails) {
+  if (!selectedForfait) {
     return (
       <div className="text-red-500 text-center p-4">
         Plan sélectionné non valide. Veuillez choisir un plan valide.
       </div>
     );
   }
-
-  const PlanIcon = selectedPlanDetails.icon;
 
   return (
     <AnimatePresence>
@@ -184,14 +168,13 @@ const getCookie = (name) => {
         onClick={onClose}
       >
         <motion.div
-  className="bg-white w-full h-full sm:max-w-5xl sm:h-[85vh] rounded-xl shadow-2xl p-6 sm:p-10 
-             overflow-auto sm:relative fixed top-0 left-0 sm:top-auto sm:left-auto sm:m-auto"
-  initial={{ opacity: 0, y: -50 }}
-  animate={{ opacity: 1, y: 0 }}
-  exit={{ opacity: 0, y: -50 }}
-  transition={{ duration: 0.4, ease: "easeOut" }}
-  onClick={(e) => e.stopPropagation()}
->
+          className="bg-white w-full h-full sm:max-w-5xl sm:h-[85vh] rounded-xl shadow-2xl p-6 sm:p-10 overflow-auto sm:relative fixed top-0 left-0 sm:top-auto sm:left-auto sm:m-auto"
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -50 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <button
             className="absolute top-5 right-5 text-gray-500 hover:text-gray-800 transition"
             onClick={onClose}
@@ -217,62 +200,78 @@ const getCookie = (name) => {
           )}
 
           <div className="mb-8">
-            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">{selectedPlanDetails.name}</h2>
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">{selectedForfait.name}</h2>
           </div>
 
-          {/* <div className="flex flex-wrap gap-3 mb-8">
-            {Object.entries(plans).map(([key, plan]) => {
-              const IconComp = plan.icon;
-              const isSelected = selectedPlan === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setSelectedPlan(key)}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all duration-300 shadow ${isSelected
-                      ? `${plan.buttonColor} text-white shadow-lg scale-105`
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                >
-                  <IconComp className="w-5 h-5" />
-                  {plan.name}
-                </button>
-              );
-            })}
-          </div> */}
-
           <div className="grid lg:grid-cols-2 gap-8">
-            <div className={`${selectedPlanDetails.bgColor} rounded-2xl p-6 shadow-lg`}>
+            <div className={`${selectedForfait.bgColor} rounded-2xl p-6 shadow-lg`}>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
-                  <div className={`p-4 rounded-xl ${selectedPlanDetails.iconBg} shadow-inner`}>
-                    <PlanIcon className={`w-8 h-8 ${selectedPlanDetails.textColor}`} />
+                  <div className={`p-4 rounded-xl ${selectedForfait.iconBg} shadow-inner`}>
+                    <PlanIcon className={`w-8 h-8 ${selectedForfait.textColor}`} />
                   </div>
                   <div>
-                    <span className={`text-3xl font-bold ${selectedPlanDetails.textColor}`}>
-                      {selectedPlanDetails.price}
+                    <span className={`text-3xl font-bold ${selectedForfait.textColor}`}>
+                      {selectedForfait.price}
                     </span>
-                    <span className="text-gray-600 ml-2">{selectedPlanDetails.duration}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
+                {/* <div className="flex items-center gap-2 text-gray-600">
                   <Clock className="w-5 h-5" />
                   <span>{selectedPlan === "freemium" ? "Gratuit mais limité" : "Facturation mensuelle"}</span>
-                </div>
+                </div> */}
               </div>
 
-              <h4 className={`font-bold text-lg mb-4 ${selectedPlanDetails.textColor}`}>Fonctionnalités :</h4>
-              <ul className="space-y-3">
-                {selectedPlanDetails.features.map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3">
-                    <div
-                      className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${selectedPlanDetails.buttonColor.split(" ")[0]
-                        }`}
-                    >
-                      <Check className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
+              {/* Section détaillée des fonctionnalités */}
+              <ul className="space-y-4 text-gray-700 leading-relaxed">
+                <li className="flex items-start gap-3">
+                  <MobileFriendly className="text-blue-500 w-5 h-5 flex-shrink-0 mt-1"/>
+                    <div>
+                    <span className="font-semibold">Invitations :</span>{" "}
+                    {selectedForfait.maxInvites
+                      ? `Envoyez jusqu'à ${selectedForfait.maxInvites} invitations personnalisées à vos proches.`
+                      : "Invitations illimitées incluses pour tous vos événements."}
+                  </div>
+                </li>
+
+                <li className="flex items-start gap-3">
+                  <Event className="text-purple-500 w-5 h-5 flex-shrink-0 mt-1" />
+                  <div>
+                    <span className="font-semibold">Événements :</span>{" "}
+                    {selectedForfait.events && selectedForfait.events !== "Illimité"
+                      ? `Organisez jusqu'à ${selectedForfait.events} événements privés ou publics.`
+                      : "Nombre d'événements illimité, sans restriction."}
+                  </div>
+                </li>
+
+                <li className="flex items-start gap-3">
+                  <Calendar className="text-pink-500 w-5 h-5 flex-shrink-0 mt-1" />
+                  <div>
+                    <span className="font-semibold">Durée :</span>{" "}
+                    Ce forfait est actif pendant <span className="font-semibold">{selectedForfait.duration}</span>, avec la possibilité de changer de forfait à tout moment selon vos besoins.
+                  </div>
+                </li>
+
+                <li className="flex items-start gap-3">
+                  <Star className="text-yellow-500 w-5 h-5 flex-shrink-0 mt-1" /> 
+                  <div>
+                    <span className="font-semibold">Fonctionnalités :</span>{" "}
+                    {selectedForfait.nom === "STARTER"
+                      ? "Vous avez accès aux fonctions de base avec le module personnel."
+                      : "Vous avez toutes les fonctionnalités, incluant le module personnel et restauration."}
+                  </div>
+                </li>
+
+                <li className="flex items-start gap-3">
+                  <Rocket className="text-green-500 w-5 h-5 flex-shrink-0 mt-1" />
+                  <div>
+                    <span className="font-semibold">Idéal pour :</span>{" "}
+                    {selectedForfait.nom === "STARTER" && "Petits événements privés ou débutants."}
+                    {selectedForfait.nom === "PRO" && "Organisateurs réguliers d'événements de taille moyenne."}
+                    {selectedForfait.nom === "PREMIUM" && "Événements professionnels et groupes étendus."}
+                    {selectedForfait.nom === "GOLD" && "Entreprises ou organisateurs ambitieux cherchant toutes les fonctionnalités."}
+                  </div>
+                </li>
               </ul>
             </div>
 
@@ -303,7 +302,7 @@ const getCookie = (name) => {
               <button
                 onClick={handlePayment}
                 disabled={loading}
-                className={`w-full py-4 rounded-xl font-bold text-white text-lg transition-transform duration-300 hover:scale-105 shadow-lg ${selectedPlanDetails.buttonColor}`}
+                className={`w-full py-4 rounded-xl font-bold text-white text-lg transition-transform duration-300 hover:scale-105 shadow-lg ${selectedForfait.buttonColor}`}
               >
                 {loading ? "Chargement..." : selectedPlan === "freemium" ? "Commencer gratuitement" : "Confirmer l'abonnement"}
               </button>
