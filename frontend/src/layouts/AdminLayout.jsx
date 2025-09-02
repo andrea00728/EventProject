@@ -639,6 +639,65 @@ const menuItems = [
             });
           });
 
+
+          //notification pour un nouveau evenement
+          socket.on("notifNewEventForAdmin", (notif) => {
+            console.log(
+              "NotifNewEvent reçu:",
+              notif,
+              "Listener ID:",
+              Date.now()
+            );
+            setNotifications((prevNotifications) => {
+              // Vérifier si la notification existe déjà pour éviter les doublons
+              console.log("notif vaovao", notif);
+              const exists = prevNotifications.some(
+                (n) => n.id === (notif.id || Date.now().toString())
+              );
+              if (exists) {
+                console.log("Notification déjà existante, ignorée:", notif);
+                return prevNotifications;
+              }
+              return [
+                {
+                  ...notif,
+                  id: notif.id || Date.now().toString(),
+                  read: false,
+                },
+                ...prevNotifications,
+              ];
+            });
+          });
+
+          //notification pour une suppression evenement
+          socket.on("notifDeleteEventForAdmin", (notif) => {
+            console.log(
+              "NotifDeleteEvent reçu:",
+              notif,
+              "Listener ID:",
+              Date.now()
+            );
+            setNotifications((prevNotifications) => {
+              // Vérifier si la notification existe déjà pour éviter les doublons
+              console.log("notif vaovao", notif);
+              const exists = prevNotifications.some(
+                (n) => n.id === (notif.id || Date.now().toString())
+              );
+              if (exists) {
+                console.log("Notification déjà existante, ignorée:", notif);
+                return prevNotifications;
+              }
+              return [
+                {
+                  ...notif,
+                  id: notif.id || Date.now().toString(),
+                  read: false,
+                },
+                ...prevNotifications,
+              ];
+            });
+          });
+
           socket.on("notificationMessageAdmin", (value) => {
             const formatted1 = data.map((msg) => ({
               ...msg,
