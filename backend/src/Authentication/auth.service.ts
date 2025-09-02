@@ -582,7 +582,7 @@ async logout(req: Request, res: Response): Promise<{ message: string }> {
   //   return user;
   // }
 
-   async loginUser(email: string, password: string, res: Response) {
+async loginUser(email: string, password: string, res: Response) {
   const user = await this.userRepository.findOne({ where: { email } });
   if (!user) throw new BadRequestException('Email ou mot de passe incorrect');
 

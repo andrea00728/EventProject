@@ -1,9 +1,12 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpStatus, InternalServerErrorException, Param, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpStatus, InternalServerErrorException, Param, Post, Put, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
 import { Response, Request } from 'express';
 import { AdminService } from 'src/services/admin/admin.service';
 import { FirebaseAuthGuard } from 'src/guards/firebase-auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname, resolve } from 'path';
 
 @Controller('admin')
 export class AdminController {
@@ -17,16 +20,29 @@ export class AdminController {
     // redirige vers Google
   }
 
-  @Get('google/callback')
-  @UseGuards(AuthGuard('google-admin'))
-  async googleAuthRedirect(@Req() req, @Res() res: Response) {
+@Get('google/callback')
+@UseGuards(AuthGuard('google-admin'))
+async googleAuthRedirect(@Req() req, @Res() res: Response) {
+  try {
     const user = req.user;
+    if (!user) throw new Error('Utilisateur Google non trouvé');
 
     await this.adminService.loginWithGoogleOAuth(user, res);
-    // on met le token dans un cookie
+
+    // Redirection en cas de succès
     const redirectUrl = `https://mastertable.site/AdminAccueil`;
     return res.redirect(redirectUrl);
+
+  } catch (error) {
+    console.error("Erreur Google OAuth :", error.message);
+
+    // Encoder le message d'erreur pour l'URL
+    const errorMsg = encodeURIComponent(error.message || 'Erreur lors de la connexion Google');
+    const redirectUrl = `https://mastertable.site/login-site/super/admin?error=${errorMsg}`;
+    return res.redirect(redirectUrl);
   }
+}
+
 
   @Post('logout')
   async logout(@Req() req: Request, @Res() res: Response) {
@@ -40,17 +56,14 @@ export class AdminController {
     }
   }
 
-  @UseGuards(AuthGuard('jwt')) // Protégé par JWT
   @Post('update-password')
+  @UseGuards(AuthGuard('jwt'))
   async updatePassword(
-    @Req() req,
-    @Body() body: { newPassword: string },
+    @Body() body: { adminId?: string; newPassword: string },
+    @Req() req
   ) {
-    const adminId = req.user.id; // ID de l’utilisateur récupéré depuis le JWT
-    return this.adminService.updatePassword(
-      adminId,
-      body.newPassword,
-    );
+    const adminId = body.adminId || req.user.id; // Si adminId fourni, sinon user courant
+    return this.adminService.updatePassword(adminId, body.newPassword);
   }
 
   @Post('login-email')
@@ -64,9 +77,9 @@ export class AdminController {
 
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('has-password')
-  async checkHasPassword(@Req() req: any) {
-    const adminId = req.user.id; // récupéré depuis le token JWT
+  @Get('has-password/:id')
+  async checkHasPassword(@Req() req: any, @Param('id') id: string) {
+    const adminId = req.user.id || id; // récupéré depuis le token JWT
     return this.adminService.hasPassword(adminId);
   }
 
@@ -78,10 +91,29 @@ export class AdminController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Put(':id')
-  async updateAdmin(@Param('id') id: string, @Body() body: any) {
-    return this.adminService.updateAdmin(id, body);
+  @Put('/:id')
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      storage: diskStorage({
+        destination: resolve(__dirname, '../../../uploads'),
+        filename: (req, file, callback) => {
+          const uniqueName =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `${uniqueName}${ext}`);
+        },
+      }),
+    }),
+  )
+  async updateAdmin(
+    @Param('id') id: string,
+    @Body() body: any,
+    @UploadedFile() photo?: Express.Multer.File,
+  ) {
+    console.log('photo rec : ', photo)
+    return this.adminService.updateAdmin(id, body, photo?.filename);
   }
+
 
   @UseGuards(AuthGuard('jwt'))
   @Delete(':id')

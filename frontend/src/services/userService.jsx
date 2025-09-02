@@ -34,11 +34,17 @@ export const getOrgStats = async () => {
   return response.data;
 }
 
-export const getIfAdminHasPassword = async () => {
-  const response = await axiosClient.get("/admin/has-password")
+export const getIfAdminHasPassword = async (id) => {
+  const response = await axiosClient.get(`/admin/has-password/${id}`,)
   return response.data;
 }
 
+export const updateAdmin = async (id, data) => {
+  const response = await axiosClient.put(`/admin/${id}`, data, {
+    withCredentials: true, // Ne pas mettre Content-Type
+  });
+  return response.data;
+}
 
 
 export const getListOfAllAdmins = async () => {

@@ -78,16 +78,18 @@ export default function AdminLayout() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getIfAdminHasPassword();
-      const hidden = localStorage.getItem("hidePasswordModal");
-      // console.log("Connaître si l'admin a un mot de passe : ", res);
-      if (res.hasPassword == false && hidden == "false") {
-        setTimeout(() => {
-          setShowModalModifyPassword(true);
-        }, 2000);
-      } else {
-        setShowModalModifyPassword(false);
+      if (user) {
+        const res = await getIfAdminHasPassword(user.sub);
+        const hidden = localStorage.getItem("hidePasswordModal");
+        if (res.hasPassword == false && hidden == "false") {
+          setTimeout(() => {
+            setShowModalModifyPassword(true);
+          }, 2000);
+        } else {
+          setShowModalModifyPassword(false);
+        }
       }
+      // console.log("Connaître si l'admin a un mot de passe : ", res);
     };
     fetchData();
   }, []);
@@ -637,8 +639,66 @@ const menuItems = [
             });
           });
 
+
+          //notification pour un nouveau evenement
+          socket.on("notifNewEventForAdmin", (notif) => {
+            console.log(
+              "NotifNewEvent reçu:",
+              notif,
+              "Listener ID:",
+              Date.now()
+            );
+            setNotifications((prevNotifications) => {
+              // Vérifier si la notification existe déjà pour éviter les doublons
+              console.log("notif vaovao", notif);
+              const exists = prevNotifications.some(
+                (n) => n.id === (notif.id || Date.now().toString())
+              );
+              if (exists) {
+                console.log("Notification déjà existante, ignorée:", notif);
+                return prevNotifications;
+              }
+              return [
+                {
+                  ...notif,
+                  id: notif.id || Date.now().toString(),
+                  read: false,
+                },
+                ...prevNotifications,
+              ];
+            });
+          });
+
+          //notification pour une suppression evenement
+          socket.on("notifDeleteEventForAdmin", (notif) => {
+            console.log(
+              "NotifDeleteEvent reçu:",
+              notif,
+              "Listener ID:",
+              Date.now()
+            );
+            setNotifications((prevNotifications) => {
+              // Vérifier si la notification existe déjà pour éviter les doublons
+              console.log("notif vaovao", notif);
+              const exists = prevNotifications.some(
+                (n) => n.id === (notif.id || Date.now().toString())
+              );
+              if (exists) {
+                console.log("Notification déjà existante, ignorée:", notif);
+                return prevNotifications;
+              }
+              return [
+                {
+                  ...notif,
+                  id: notif.id || Date.now().toString(),
+                  read: false,
+                },
+                ...prevNotifications,
+              ];
+            });
+          });
+
           socket.on("notificationMessageAdmin", (value) => {
-            console.log("nana ", value);
             const formatted1 = data.map((msg) => ({
               ...msg,
               from: `${msg.firstName} ${msg.lastName}`,
@@ -651,7 +711,7 @@ const menuItems = [
               text: msg.message,
               read: msg.isRead || false, // ou msg.read si tu ajoutes ce champ dans la DB
             }));
-            setMessages([...formatted1, ...formatted2]);
+            setMessages([...formatted2, ...formatted1]);
           });
         } catch (error) {
           console.error("Erreur de connexion au socket :", error);
@@ -907,11 +967,14 @@ const menuItems = [
 
                   // Appel API pour marquer comme lu côté backend
                   try {
-                    await fetch(`${import.meta.env.VITE_API_BASE_URL}/contact_messages/${item.id}`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ isRead: true }),
-                    });
+                    await fetch(
+                      `${import.meta.env.VITE_API_BASE_URL}/contact_messages/${item.id}`,
+                      {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ isRead: true }),
+                      }
+                    );
                   } catch (error) {
                     console.error("Erreur mark as read:", error);
                   }

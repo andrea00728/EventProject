@@ -4,7 +4,7 @@ import { Query } from '@nestjs/common';
 
 @Controller('locations')
 export class LocationController {
-  constructor(private readonly locationService: LocationService) {}
+  constructor(private readonly locationService: LocationService) { }
 
   @Get()
   findLocations(@Query('search') search?: string) {
@@ -113,5 +113,19 @@ export class LocationController {
       throw new BadRequestException('Un terme de recherche est requis');
     }
     return this.locationService.saveSelectedLocation(query);
+  }
+
+
+  // mise à jour avec géocodage
+  @Put('geocode/:id')
+  async updateLocationWithGeocode(
+    @Param('id') id: string,
+    @Body('query') query: string
+  ) {
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum) || idNum <= 0) {
+      throw new BadRequestException('L\'ID doit être un entier positif valide');
+    }
+    return this.locationService.updateLocationWithGeocode(idNum, query);
   }
 }

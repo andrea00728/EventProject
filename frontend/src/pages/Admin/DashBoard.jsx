@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import { useDarkMode } from "../../context/DarkModeContext";
 import {
   FaCogs,
@@ -34,6 +35,7 @@ import { FaRegMoneyBill1 } from "react-icons/fa6";
 import { Link } from "react-router-dom";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { darkMode, toggleDarkMode } = useDarkMode();
 
   const [showNotifications, setShowNotifications] = useState(false);
@@ -159,6 +161,7 @@ export default function Dashboard() {
       label: "Nombre d'événements",
       value: statEvent.total,
       icon: <MdCalendarToday />,
+      path: "/AdminEvenement"
     },
     {
       label: "Total des revenus",
@@ -175,7 +178,7 @@ export default function Dashboard() {
       value: statEvent.avenir,
       icon: <MdEventAvailable />,
     },
-    { label: "Organisateurs", value: orgStats.count, icon: <FaUsers /> },
+    { label: "Organisateurs", value: orgStats.count, icon: <FaUsers />, path: "/AdminOrganisateur" },
   ];
 
   const quickActions = [
@@ -185,7 +188,7 @@ export default function Dashboard() {
       path: "/AdminOrganisateur",
     },
     { label: "Paramètres", icon: <FaCogs />, path: "/AdminParametre" },
-    { label: "Voir rapports", icon: <MdEventNote /> },
+    // { label: "Voir rapports", icon: <MdEventNote /> },
   ];
 
   const engagementGradientColors = [
@@ -225,6 +228,7 @@ export default function Dashboard() {
             {stats.map((stat, index) => (
               <motion.div
                 key={index}
+                onClick={stat.path ? () => navigate(stat.path) : undefined}
                 whileHover={{ scale: 1.05 }}
                 className={`flex-1 max-w-[300px] min-w-[250px] pt-5 px-4 sm:px-6 rounded-2xl shadow-xl transition duration-300 cursor-pointer ${
                   darkMode

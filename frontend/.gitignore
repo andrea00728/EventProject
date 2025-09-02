@@ -29,4 +29,6 @@ App.jsx
 *.sln
 *.sw?   
 .env
+package.json
+package-lock.json
 

@@ -51,20 +51,17 @@ export const ContextProvider = ({ children }) => {
 
   // --- Déconnexion ---
   const handleLogout = async () => {
-  try {
-    await axiosClient.post("/auth/logout");
-  } catch (err) {
-    if (err.response?.status === 401) {
-      // On n'affiche rien, l'intercepteur gère déjà le message
-      return;
+    try {
+      await axiosClient.post("/auth/logout");
+    } catch (error) {
+      if (error.response?.status !== 401) {
+        console.error("Erreur lors de la déconnexion :", error);
+      }
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
     }
-    console.error("Erreur lors du logout:", err);
-  } finally {
-    setUser(null);
-    setIsAuthenticated(false);
-    window.location.href = "/";
-  }
-};
+  };
 
   return (
     <StateContext.Provider

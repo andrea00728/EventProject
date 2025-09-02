@@ -16,6 +16,7 @@ import DemoTable from "../util/demo";
 import { useStateContext } from "../context/ContextProvider";
 import TestimonialsSection from "../util/testimonialsSection";
 import Confidentialite from "../util/Confidentialite";
+import ChatWidget from "./ChatWidget";
 
 const images = [
   "/images/music-7238254_1280.jpg",
@@ -345,6 +346,7 @@ const Publicacc = () => {
           <Footer onShowConfidentialite={() => setIsConfidentialiteOpen(true)} />
         </div>
       </section>
+      <ChatWidget/>
     </>
   );
 };

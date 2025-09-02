@@ -5,16 +5,17 @@ import "slick-carousel/slick/slick-theme.css";
 import { getAllEvents } from "../services/evenementServ";
 import { FaCalendarAlt, FaClock } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+// import defaultImage from "../../public/defaulImage.png"
 
 const SuccessEvent = () => {
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const navigate =useNavigate()
+  const navigate = useNavigate()
 
   const handleRedirect = () => {
-      navigate("/evenements-publics");
+    navigate("/evenements-publics");
   };
 
   useEffect(() => {
@@ -38,9 +39,8 @@ const SuccessEvent = () => {
         let errorMessage = "Erreur lors du chargement des événements";
 
         if (err.response) {
-          errorMessage = `Erreur serveur: ${err.response.status} - ${
-            err.response.data?.message || err.response.statusText
-          }`;
+          errorMessage = `Erreur serveur: ${err.response.status} - ${err.response.data?.message || err.response.statusText
+            }`;
         } else if (err.request) {
           errorMessage = "Impossible de contacter le serveur. Vérifiez votre connexion.";
         } else if (err.message) {
@@ -56,20 +56,20 @@ const SuccessEvent = () => {
     fetchAllEvents();
   }, []);
 
-  const getEventIcon = (type) => {
-    const icons = {
-      mariage: "💒",
-      anniversaire: "🎂",
-      conference: "🎤",
-      seminaire: "📚",
-      concert: "🎵",
-      exposition: "🖼️",
-      formation: "🎓",
-      reunion: "👥",
-      default: "🎉",
-    };
-    return icons[type?.toLowerCase()] || icons.default;
-  };
+  // const getEventIcon = (type) => {
+  //   const icons = {
+  //     mariage: "💒",
+  //     anniversaire: "🎂",
+  //     conference: "🎤",
+  //     seminaire: "📚",
+  //     concert: "🎵",
+  //     exposition: "🖼️",
+  //     formation: "🎓",
+  //     reunion: "👥",
+  //     default: "🎉",
+  //   };
+  //   return icons[type?.toLowerCase()] || icons.default;
+  // };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -171,12 +171,11 @@ const SuccessEvent = () => {
                           }}
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-500 via-purple-500 to-fuchsia-600 relative flex items-center justify-center">
-                          <div className="absolute inset-0 bg-black/10"></div>
-                          <div className="text-white/90 text-6xl group-hover:scale-110 transition-transform duration-500 ease-in-out">
-                            {getEventIcon(event.type)}
-                          </div>
-                        </div>
+                        <img
+                          src="/public/defaultImage.png"
+                          alt="Image par défaut"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ease-in-out"
+                        />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent">
                         <div className="absolute top-4 left-4 flex flex-wrap gap-2">
@@ -184,11 +183,10 @@ const SuccessEvent = () => {
                             {event.type || "Événement"}
                           </span>
                           <span
-                            className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ring-1 ${
-                              event.isPublic
-                                ? "bg-green-100/90 text-green-700 border border-green-200/50"
-                                : "bg-blue-100/90 text-blue-700 border border-blue-200/50"
-                            }`}
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ring-1 ${event.isPublic
+                              ? "bg-green-100/90 text-green-700 border border-green-200/50"
+                              : "bg-blue-100/90 text-blue-700 border border-blue-200/50"
+                              }`}
                           >
                             {event.isPublic ? "Public" : "Privé"}
                           </span>
@@ -265,19 +263,19 @@ const SuccessEvent = () => {
             })}
           </div>
 
-        {allEvents.length > 4 && (
+          {allEvents.length > 4 && (
             <div className="text-center mt-12">
-                <button
-                    onClick={handleRedirect} 
-                    className="inline-flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 transition-colors px-6 py-3 text-sm font-semibold text-white shadow-lg"
-                >
-                    Voir plus d'événements
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 ml-2">
-                        <path fillRule="evenodd" d="M3.293 7.293a1 1 0 011.414 0L10 12.586l5.293-5.293a1 1 0 111.414 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                </button>
+              <button
+                onClick={handleRedirect}
+                className="inline-flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 transition-colors px-6 py-3 text-sm font-semibold text-white shadow-lg"
+              >
+                Voir plus d'événements
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 ml-2">
+                  <path fillRule="evenodd" d="M3.293 7.293a1 1 0 011.414 0L10 12.586l5.293-5.293a1 1 0 111.414 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
             </div>
-        )}
+          )}
 
           <div className="md:hidden">
             <Slider {...sliderSettings}>
@@ -297,12 +295,11 @@ const SuccessEvent = () => {
                             }}
                           />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-blue-500 via-purple-500 to-fuchsia-600 relative flex items-center justify-center">
-                            <div className="absolute inset-0 bg-black/10"></div>
-                            <div className="text-white/90 text-6xl">
-                              {getEventIcon(event.type)}
-                            </div>
-                          </div>
+                          <img
+                            src="/public/defaultImage.png"
+                            alt="Image par défaut"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ease-in-out"
+                          />
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent">
                           <div className="absolute top-4 left-4 flex flex-wrap gap-2">
@@ -310,11 +307,10 @@ const SuccessEvent = () => {
                               {event.type || "Événement"}
                             </span>
                             <span
-                              className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ring-1 ${
-                                event.isPublic
-                                  ? "bg-green-100/90 text-green-700 border border-green-200/50"
-                                  : "bg-blue-100/90 text-blue-700 border border-blue-200/50"
-                              }`}
+                              className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ring-1 ${event.isPublic
+                                ? "bg-green-100/90 text-green-700 border border-green-200/50"
+                                : "bg-blue-100/90 text-blue-700 border border-blue-200/50"
+                                }`}
                             >
                               {event.isPublic ? "Public" : "Privé"}
                             </span>
