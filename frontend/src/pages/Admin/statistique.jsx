@@ -39,8 +39,13 @@ const centerTextPlugin = {
     const centerX = (chartArea.left + chartArea.right) / 2;
     const centerY = (chartArea.top + chartArea.bottom) / 2;
 
-    // Responsive font size based on chart size
-    const fontSize = Math.min(height / 120, 16).toFixed(2);
+    // Detect mobile view (screen width < 640px)
+    const isMobile = window.innerWidth < 640;
+
+    // Responsive font size: smaller for mobile
+    const fontSize = isMobile
+      ? Math.min(height / 150, 12).toFixed(2) // Smaller font for mobile
+      : Math.min(height / 120, 16).toFixed(2); // Default for larger screens
     ctx.font = `bold ${fontSize}em sans-serif`;
     ctx.textBaseline = "middle";
     ctx.textAlign = "center";
@@ -855,7 +860,7 @@ const Statique = () => {
                   <h3 className={`mb-1 text-2xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
                     Types d'Événements
                   </h3>
-                  <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                  <p className={`text-sm ${darkMode ? "text-gray- Or400" : "text-gray-600"}`}>
                     Répartition des événements par catégorie
                   </p>
                 </div>

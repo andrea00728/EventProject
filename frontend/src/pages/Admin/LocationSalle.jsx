@@ -35,9 +35,8 @@ const customIcon = L.icon({
 });
 
 // Component to handle map click events
-const MapClickHandler = ({ setGeocodeResult, setGeocodeResultText }) => {
+const MapClickHandler = ({ setGeocodeResult, setGeocodeResultText, markerRef, mapRef }) => {
   const map = useMap();
-  const markerRef = useRef(null);
 
   useEffect(() => {
     const handleClick = async (e) => {
@@ -120,6 +119,7 @@ const LocationSalle = () => {
   const [showEditSuccessModal, setShowEditSuccessModal] = useState(false);
   const [showSaveConfirmationModal, setShowSaveConfirmationModal] = useState(false);
   const mapRef = useRef(null);
+  const markerRef = useRef(null);
 
   const fetchLocations = useCallback(async () => {
     setIsLoading(true);
@@ -395,6 +395,15 @@ const LocationSalle = () => {
     setGeocodeResult(null);
     setGeocodeResultText("");
     setEditingLocation(null);
+    // Supprimer le marqueur Leaflet
+    if (markerRef.current && mapRef.current) {
+      mapRef.current.removeLayer(markerRef.current);
+      markerRef.current = null;
+    }
+    // Recentrer la carte sur Paris, France
+    if (mapRef.current) {
+      mapRef.current.setView([48.8566, 2.3522], 13);
+    }
   };
 
   const openEditLocationWithMap = (location) => {
@@ -1095,8 +1104,8 @@ const LocationSalle = () => {
                       geocodeResult && geocodeResult.latitude != null && geocodeResult.longitude != null
                         ? [geocodeResult.latitude, geocodeResult.longitude]
                         : editingLocation && editingLocation.latitude != null && editingLocation.longitude != null
-                        ? [parseFloat(editingLocation.latitude), parseFloat(editingLocation.longitude)]
-                        : [48.8566, 2.3522]
+                          ? [parseFloat(editingLocation.latitude), parseFloat(editingLocation.longitude)]
+                          : [48.8566, 2.3522]
                     }
                     zoom={13}
                     style={{ height: '100%', width: '100%' }}
@@ -1111,6 +1120,8 @@ const LocationSalle = () => {
                     <MapClickHandler
                       setGeocodeResult={setGeocodeResult}
                       setGeocodeResultText={setGeocodeResultText}
+                      markerRef={markerRef}
+                      mapRef={mapRef}
                     />
                     {geocodeResult && geocodeResult.latitude != null && geocodeResult.longitude != null && (
                       <Marker position={[geocodeResult.latitude, geocodeResult.longitude]} icon={customIcon}>
