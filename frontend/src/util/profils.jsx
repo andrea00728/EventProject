@@ -96,7 +96,8 @@ export default function Profil() {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
   };
 
-  const handlePhotoChange = (e) => {
+  const 
+  handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (!file) return setPreviewImage(null);
 
@@ -129,35 +130,61 @@ export default function Profil() {
 
     try {
       const formData = new FormData();
-      formData.append("name", editFormData.name);
       formData.append("email", editFormData.email);
       if (editFormData.photo) formData.append("photo", editFormData.photo);
+      if (editFormData.name) formData.append("name", editFormData.name);
       if (editFormData.newPassword) {
         formData.append("current_password", editFormData.currentPassword);
         formData.append("new_password", editFormData.newPassword);
-        formData.append("new_password_confirmation", editFormData.confirmPassword);
+        formData.append(
+          "new_password_confirmation",
+          editFormData.confirmPassword
+        );
       }
 
-      const response = await axiosClient.post("/auth/update-profile", formData, { withCredentials: true });
+      const response = await axiosClient.post(
+        "/auth/update-profile",
+        formData,
+        { withCredentials: true }
+      );
+
       const updatedUser = response.data.user;
 
       // Persistance dans ContextProvider (et localStorage)
       setUser(updatedUser);
 
-      const newPhotoUrl = resolvePhotoSrc(updatedUser.photo, updatedUser.email);
+      // 🔹 Générer la nouvelle photo
+      const newPhotoUrl = resolvePhotoSrc(
+        updatedUser.photo,
+        updatedUser.name,
+        updatedUser.email
+      );
       setUserPhoto(newPhotoUrl);
       setPreviewImage(null);
 
       setSuccessMessage("Profil mis à jour avec succès !");
       setEditFormData(prev => ({ ...prev, photo: null, currentPassword: "", newPassword: "", confirmPassword: "" }));
 
-      setTimeout(() => { setSuccessMessage(""); setOpenEditProfil(false); }, 2000);
+      setTimeout(() => {
+        setSuccessMessage("");
+        setOpenEditProfil(false);
+      }, 2000);
     } catch (error) {
-      if (error.response?.data?.errors) setErrors(error.response.data.errors);
-      else if (error.response?.data?.message) setErrors({ general: error.response.data.message });
-      else setErrors({ general: "Une erreur est survenue lors de la mise à jour" });
-    } finally { setIsSubmitting(false); }
+      if (error.response?.data?.errors) {
+        setErrors(error.response.data.errors);
+      } else if (error.response?.data?.message) {
+        setErrors({ general: error.response.data.message });
+      } else {
+        setErrors({
+          general: "Une erreur est survenue lors de la mise à jour",
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+
   // ---------- Render ----------
   return (
     <>
