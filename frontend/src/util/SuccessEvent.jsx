@@ -3,7 +3,7 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { getAllEvents } from "../services/evenementServ";
-import { FaCalendarAlt, FaClock } from "react-icons/fa";
+import { FaCalendarAlt, FaClock, FaInfoCircle, FaUserPlus } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 const SuccessEvent = () => {
@@ -158,7 +158,7 @@ const SuccessEvent = () => {
             {allEvents.slice(0, 4).map((event) => {
               const { status, color, text } = getEventStatus(event);
               return (
-                <div key={event.id} className="group perspective-1000  flex-1 min-w-0 max-w-[280px]">
+                <div key={event.id} className="group perspective-1000 flex-1 min-w-0 max-w-[280px]">
                   <div className="relative transform-gpu transition-all duration-700 ease-in-out hover:rotate-y-3 hover:-translate-y-2 hover:scale-[1.02] shadow-xl hover:shadow-2xl hover:shadow-purple-200/50 rounded-2xl overflow-hidden bg-white/70 border border-white/80">
                     <div className="relative h-48 overflow-hidden">
                       {event.image ? (
@@ -176,6 +176,29 @@ const SuccessEvent = () => {
                           <div className="text-white/90 text-6xl group-hover:scale-110 transition-transform duration-500 ease-in-out">
                             {getEventIcon(event.type)}
                           </div>
+                          {/* Bouton d'information en haut à droite */}
+                          <div className="absolute top-4 right-4">
+                            <button
+                              onClick={() => handleInfoClick(event.id)}
+                              className="bg-white/90 backdrop-blur-sm text-slate-800 p-2 rounded-full shadow-sm ring-1 ring-white/30 hover:bg-slate-100 transition-colors"
+                              title="Plus d'informations"
+                            >
+                              <FaInfoCircle className="w-5 h-5 text-purple-600" />
+                            </button>
+                          </div>
+                          {/* Bouton S'inscrire en bas à gauche */}
+                          {event.isPublic && (
+                            <div className="absolute bottom-4 left-4">
+                              <button
+                                onClick={() => handleInscriptionClick(event.id)}
+                                className="inline-flex items-center gap-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors px-4 py-2 text-sm font-semibold text-white shadow-lg"
+                                title="S'inscrire à l'événement"
+                              >
+                                <FaUserPlus className="w-4 h-4" />
+                                S'inscrire
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent">
@@ -265,19 +288,19 @@ const SuccessEvent = () => {
             })}
           </div>
 
-        {allEvents.length > 4 && (
+          {allEvents.length > 4 && (
             <div className="text-center mt-12">
-                <button
-                    onClick={handleRedirect} 
-                    className="inline-flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 transition-colors px-6 py-3 text-sm font-semibold text-white shadow-lg"
-                >
-                    Voir plus d'événements
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 ml-2">
-                        <path fillRule="evenodd" d="M3.293 7.293a1 1 0 011.414 0L10 12.586l5.293-5.293a1 1 0 111.414 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                </button>
+              <button
+                onClick={handleRedirect} 
+                className="inline-flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 transition-colors px-6 py-3 text-sm font-semibold text-white shadow-lg"
+              >
+                Voir plus d'événements
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 ml-2">
+                  <path fillRule="evenodd" d="M3.293 7.293a1 1 0 011.414 0L10 12.586l5.293-5.293a1 1 0 111.414 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
             </div>
-        )}
+          )}
 
           <div className="md:hidden">
             <Slider {...sliderSettings}>
@@ -302,6 +325,29 @@ const SuccessEvent = () => {
                             <div className="text-white/90 text-6xl">
                               {getEventIcon(event.type)}
                             </div>
+                            {/* Bouton d'information en haut à droite */}
+                            <div className="absolute top-4 right-4">
+                              <button
+                                onClick={() => handleInfoClick(event.id)}
+                                className="bg-white/90 backdrop-blur-sm text-slate-800 p-2 rounded-full shadow-sm ring-1 ring-white/30 hover:bg-slate-100 transition-colors"
+                                title="Plus d'informations"
+                              >
+                                <FaInfoCircle className="w-5 h-5 text-purple-600" />
+                              </button>
+                            </div>
+                            {/* Bouton S'inscrire en bas à gauche */}
+                            {event.isPublic && (
+                              <div className="absolute bottom-4 left-4">
+                                <button
+                                  onClick={() => handleInscriptionClick(event.id)}
+                                  className="inline-flex items-center gap-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors px-4 py-2 text-sm font-semibold text-white shadow-lg"
+                                  title="S'inscrire à l'événement"
+                                >
+                                  <FaUserPlus className="w-4 h-4" />
+                                  S'inscrire
+                                </button>
+                              </div>
+                            )}
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent">
