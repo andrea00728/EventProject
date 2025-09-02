@@ -41,7 +41,7 @@ axiosClient.interceptors.response.use(
         console.error('Échec du rafraîchissement:', refreshError);
         setUser(null);
         setIsAuthenticated(false);
-        window.location.href = '/pagepublic'; // Redirigez vers la page de connexion
+        window.location.href = '/'; // Redirigez vers la page de connexion
         return Promise.reject(refreshError);
       }
     }

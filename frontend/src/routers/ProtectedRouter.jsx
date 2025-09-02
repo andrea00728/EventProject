@@ -28,7 +28,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   
   if (!isAuthenticated || !allowedRoles.includes(user?.role)) {
     // Si non authentifié ou rôle non autorisé, redirige
-    return <Navigate to="/pagepublic" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;

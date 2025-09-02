@@ -1,22 +1,15 @@
-// import React from "react";
-// import DefaultLayout from "../layouts/DefaultLayout";
+
 import { createBrowserRouter, Navigate, Router } from "react-router-dom";
 import GuestLayout from "../layouts/GuestLayout";
-// import Accueil from "../pages/Accueil";
-// import Evenement from "../pages/Evenement";
 import Notfound from "../pages/Notofoundpage";
-// import Pagepublic from "../pages/Pagepublic";
 import Connexionorganisateur from "../pages/Connexionorganisateur";
 import Inscription from "../pages/Inscription";
 import Connnexiongoogle from "../services/connexiongoogl.jsx";
 import Evenemenpage from "../pages/Evenementpage";
 import Apropos from "../pages/apropos";
 import PublicEvents from "../pages/PublicEvents"; // adapte le chemin si besoin
-// import PagePublic from "../pages/PagePublic";
 import PageEvenementDetail from "../pages/PageEvenementDetail";
-// import Table3DScene from "../components/table3D";
 import ChoixModeInvite from "../layouts/ChoixModeInvite";
-// import Inviteform from "../pages/choixModInvite/inviteForm";
 import ImportGuestsCSV from "../pages/choixModInvite/importation";
 import AffichageInvite from "../pages/choixModInvite/affichageInvite";
 import InviteformWithId from "../pages/choixModInvite/InviteFormparId";
@@ -30,7 +23,6 @@ import PaypalSuccess from "../pages/choixModInvite/PaypalSucces.jsx";
 import PersonnelAccueil from "../layouts/personnel/PersonnelAccueil.jsx";
 import DashboardpersAccueil from "../pages/PersonnelAccueil/Dashboard.jsx";
 import PersonnelCaisse from "../layouts/personnel/Personnelcaissie.jsx";
-// import DashboardpersCaisse from "../pages/PersonnelCaisse/Dashboard.jsx";
 import PersonnelCuisine from "../layouts/personnel/Personnalcuisine.jsx";
 import DashboardpersCuisine from "../pages/PersonnelCuisine/Dashboard.jsx";
 import ProtectedRoute from "./ProtectedRouter.jsx";
@@ -44,9 +36,7 @@ import EvenementAd from "../pages/Admin/Evenement.jsx";
 import Organisateur from "../pages/Admin/Organisateur.jsx";
 import Parametre from "../pages/Admin/Parametre.jsx";
 import LocationSalle from "../pages/Admin/LocationSalle.jsx";
-// import MyComponent from "../pages/PersonnelCuisine/OrderGateway.jsx";
 import MenuListWithCart from "../pages/Menu/MenuListWithCart.jsx";
-// import SystemPromptManager from "../pages/Admin/SystemPromptManager.jsx";
 import MenuForm from "../pages/menu.jsx";
 import MenuItemForm from "../pages/menuItem.jsx";
 import InvitePage from "../layouts/InvitePage.jsx";
@@ -54,13 +44,11 @@ import ForfaitSuccess from "../pages/forfaitpage/forfaitSucces.jsx";
 import ForfaitActive from "../pages/forfaitpage/forfaitActive.jsx";
 import QrScannerComponent from "../util/QrCode_personnel_Accueil/QrCodeValidation.jsx";
 import Envoy from "../pages/PersonnelAccueil/EvoyerVerRout.jsx";
-// import OrganisationChart from "../pages/oranisation_personnel/OrganisationChart.jsx";
 import PersonnelOrganigrammeDashboard from "../pages/oranisation_personnel/Organigramme.jsx";
 import InvitationLayout from "../layouts/InvitationLayout.jsx";
 import RestaurationPage from "../pages/restauration/RestaurationPage.jsx";
 import MenuRestauration from "../pages/restauration/MenuRestauration.jsx";
 import RoleSelector from "../pages/RoleSelector.jsx";
-// import Public_Accueil from "../pages/public_Accueil.jsx";
 import Caisse from "../pages/DashbordCaisse/DashboardCaisse.jsx";
 import GestionCommandesPage from "../pages/DashbordCaisse/GestionCommandes.jsx";
 import PaiementPage from "../pages/DashbordCaisse/PaiementPage.jsx";
@@ -84,12 +72,12 @@ const router = createBrowserRouter([
     path: "/",
     element: <PublicLayout />,
     children: [
+      // {
+      //   path: "/",
+      //   element: <Navigate to="/pagepublic" />,
+      // },
       {
         path: "/",
-        element: <Navigate to="/pagepublic" />,
-      },
-      {
-        path: "/pagepublic",
         element: <Publicacc />,
       },
       // {

@@ -14,7 +14,7 @@ export default function RoleSelector() {
     }
     setUser({ ...user, role });
     if (role === "organisateur") {
-      navigate("/pagepublic");
+      navigate("/");
     } else if (role === "accueil") {
       navigate("/personnelAccueil");
     } else if (role === "caissier") {

@@ -106,7 +106,7 @@ export default function AdminLayout() {
   }, []);
 
   if (isLoading) return <div>Chargement ...</div>;
-  if (!isAuthenticated) return <Navigate to="/pagepublic" replace />;
+  if (!isAuthenticated) return <Navigate to="/" replace />;
 
   switch (role) {
     case "admin":
@@ -120,7 +120,7 @@ export default function AdminLayout() {
     case "cuisinier":
       return <Navigate to="/personnelCuisine" replace />;
     case "organisateur":
-      return <Navigate to="/pagepublic" replace />;
+      return <Navigate to="/" replace />;
     default:
       return <Navigate to={location.pathname || "/AdminAccueil"} replace />;
   }

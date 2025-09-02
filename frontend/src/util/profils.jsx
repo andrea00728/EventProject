@@ -86,7 +86,7 @@ export default function Profil() {
     finally {
       handleLogout();
       setConfirmLogOut(false);
-      navigate("/pagepublic", { replace: true });
+      navigate("/", { replace: true });
     }
   };
 

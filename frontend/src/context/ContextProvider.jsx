@@ -62,7 +62,7 @@ export const ContextProvider = ({ children }) => {
   } finally {
     setUser(null);
     setIsAuthenticated(false);
-    window.location.href = "/pagepublic";
+    window.location.href = "/";
   }
 };
 

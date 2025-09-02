@@ -71,7 +71,7 @@ export default function DashboardpersCuisine() {
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
-        navigate("/pagepublic", { replace: true });
+        navigate("/", { replace: true });
       }, 2000);
     }
   };
@@ -176,7 +176,7 @@ export default function DashboardpersCuisine() {
   };
 
   if (!isAuthenticated) {
-  return <Navigate to="/pagepublic" replace />;
+  return <Navigate to="/" replace />;
 }
   // ----- Rendu -----
   return (

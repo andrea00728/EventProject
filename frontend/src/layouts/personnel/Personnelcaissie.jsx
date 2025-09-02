@@ -5,7 +5,7 @@ export default function PersonnelCaisse() {
   const { isAuthenticated, role } = useStateContext();
 
   if (!isAuthenticated) {
-    return <Navigate to="/pagepublic" replace />;
+    return <Navigate to="/" replace />;
   }
   switch (role) {
     case "caissier":
@@ -17,7 +17,7 @@ export default function PersonnelCaisse() {
     case "cuisinier":
       return <Navigate to="/personnelCuisine" replace />;
     default:
-      return <Navigate to="/pagepublic" replace />;
+      return <Navigate to="/" replace />;
   }
   return (
     <>
