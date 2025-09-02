@@ -243,6 +243,10 @@ const router = createBrowserRouter([
         element: <ForfaitSuccess />,
       },
       {
+        path: "/forfait/cancel",
+        element: <Navigate to="/pagepublic" />,
+      },
+      {
         path: "/forfaits",
         element: <ForfaitActive />,
       },
