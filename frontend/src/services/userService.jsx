@@ -39,6 +39,12 @@ export const getIfAdminHasPassword = async (id) => {
   return response.data;
 }
 
+export const updateAdmin = async (id, data) => {
+  const response = await axiosClient.put(`/admin/${id}`, data, {
+    withCredentials: true, // Ne pas mettre Content-Type
+  });
+  return response.data;
+}
 
 
 export const getListOfAllAdmins = async () => {

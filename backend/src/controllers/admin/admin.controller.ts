@@ -1,9 +1,12 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpStatus, InternalServerErrorException, Param, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpStatus, InternalServerErrorException, Param, Post, Put, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
 import { Response, Request } from 'express';
 import { AdminService } from 'src/services/admin/admin.service';
 import { FirebaseAuthGuard } from 'src/guards/firebase-auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname, resolve } from 'path';
 
 @Controller('admin')
 export class AdminController {
@@ -88,10 +91,29 @@ async googleAuthRedirect(@Req() req, @Res() res: Response) {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Put(':id')
-  async updateAdmin(@Param('id') id: string, @Body() body: any) {
-    return this.adminService.updateAdmin(id, body);
+  @Put('/:id')
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      storage: diskStorage({
+        destination: resolve(__dirname, '../../../uploads'),
+        filename: (req, file, callback) => {
+          const uniqueName =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `${uniqueName}${ext}`);
+        },
+      }),
+    }),
+  )
+  async updateAdmin(
+    @Param('id') id: string,
+    @Body() body: any,
+    @UploadedFile() photo?: Express.Multer.File,
+  ) {
+    console.log('photo rec : ', photo)
+    return this.adminService.updateAdmin(id, body, photo?.filename);
   }
+
 
   @UseGuards(AuthGuard('jwt'))
   @Delete(':id')
