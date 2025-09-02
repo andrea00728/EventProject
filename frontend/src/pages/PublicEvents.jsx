@@ -397,7 +397,7 @@ const PublicEvents = () => {
                             <span className="text-slate-500 font-medium">
                               Lieu :
                             </span>{" "}
-                            {event.location?.nom || "Non précisé"}
+                            {event.location?.nom.split(",")[0] || "Non précisé"}
                           </p>
                         </div>
   

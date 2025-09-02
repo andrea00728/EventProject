@@ -196,7 +196,7 @@ const EventAccept = () => {
                           </div>
                           <div>
                             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Lieu</p>
-                            <p className="text-slate-800 font-semibold">{event.location.nom}</p>
+                            <p className="text-slate-800 font-semibold">{event.location.nom.split(",")[0]}</p>
                           </div>
                         </div>
 
