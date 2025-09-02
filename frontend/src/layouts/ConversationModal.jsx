@@ -63,7 +63,7 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
     if (!show) return null;
 
     return (
-      <div className="fixed inset-0 bg-gray-900 bg-opacity-30 z-[100] flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-gray-900 bg-opacity-30 z-[101] flex items-center justify-center p-4">
         <div
           className={`w-full max-w-2xl h-[80vh] rounded-lg shadow-xl ${
             darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
