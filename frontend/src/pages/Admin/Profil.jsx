@@ -82,6 +82,16 @@ export default function SuperAdminProfileEdit() {
     }
   };
 
+  const containerClasses = `min-h-auto py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"}`;
+  const cardClasses = `p-6 w-full rounded-xl shadow-lg transition-colors duration-300 ${darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"}`;
+  const inputClasses = disabled => `w-full p-4 border rounded-lg focus:outline-none focus:ring-2 resize-none transition-all duration-300 ${
+    disabled
+      ? (darkMode ? "bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed" : "bg-gray-200 border-gray-300 text-gray-600 cursor-not-allowed")
+      : (darkMode ? "bg-gray-700 border-gray-600 text-gray-200 focus:ring-blue-500" : "bg-gray-50 border-gray-200 text-gray-800 focus:ring-indigo-500")
+  }`;
+  const buttonClasses = `inline-flex items-center px-6 py-3 font-semibold rounded-lg shadow-md transition-all duration-300`;
+  const labelClasses = `block font-semibold mb-2 transition-colors duration-300 ${darkMode ? "text-gray-200" : "text-gray-700"}`;
+
   return (
     <div
       className={`min-h-auto py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${
@@ -161,14 +171,14 @@ export default function SuperAdminProfileEdit() {
                   )}
                 </div>
                 <div className="mb-6">
-                  <label className="block font-semibold mb-2">
+                  <label className={labelClasses}>
                     Adresse E-mail
                   </label>
                   <input
                     type="email"
                     value={user.email}
                     disabled
-                    className="w-full p-4 border rounded-lg bg-gray-200 text-gray-600"
+                    className={inputClasses(true)}
                   />
                 </div>
               </div>
