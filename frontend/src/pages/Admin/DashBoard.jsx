@@ -188,7 +188,7 @@ export default function Dashboard() {
       path: "/AdminOrganisateur",
     },
     { label: "Paramètres", icon: <FaCogs />, path: "/AdminParametre" },
-    { label: "Voir rapports", icon: <MdEventNote /> },
+    // { label: "Voir rapports", icon: <MdEventNote /> },
   ];
 
   const engagementGradientColors = [

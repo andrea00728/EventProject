@@ -1040,7 +1040,7 @@ const Statique = () => {
               )}
             </div>
 
-            <div
+            {/* <div
               className={`rounded-2xl border p-6 ${
                 darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
               }`}
@@ -1064,7 +1064,7 @@ const Statique = () => {
                   </span>
                 </p>
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div
