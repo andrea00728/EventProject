@@ -80,9 +80,7 @@ const Modalist = ({ show, onClose, title, items, onItemClick, onDelete }) => {
                     >
                       {item.content.title ||
                         (typeof item.content === "object"
-                          ? `${item.content.from || item.content.firstName} ${
-                              item.content.lastName
-                            } : `
+                          ? `${item.content.from || item.content.firstName} : `
                           : item.content)}
                     </p>
                     {item.content.message && (
