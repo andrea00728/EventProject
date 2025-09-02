@@ -36,7 +36,7 @@ const getDurationText = (validationDuration) => {
 
 // Fonction pour formatter le prix
 const formatPrice = (price) => {
-  return `$${price}`;
+  return `£${price}`;
 };
 
 export default function ModalChangeForfait({ isOpen, onClose, activeForfait }) {
