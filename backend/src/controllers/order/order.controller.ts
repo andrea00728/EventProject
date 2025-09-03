@@ -25,8 +25,24 @@ export class OrderController {
     private balanceRepository: Repository<Balance>,
     @InjectRepository(Payment)
     private paymentRepository: Repository<Payment>,
-    private ordersGateway: OrdersGateway
+    private trolleyGateway: OrdersGateway
   ) {}
+
+  @Post('reserve')
+  @UsePipes(new ValidationPipe())
+  async reserveStock(@Body() dto: CreateOrderDto): Promise<{ message: string }> {
+    // Vérifier le stock sans créer de commande
+    for (const item of dto.items) {
+      const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
+      if (!menuItem) {
+        throw new NotFoundException(`Article de menu ${item.menuItemId} non trouvé`);
+      }
+      if (menuItem.stock < item.quantity) {
+        throw new BadRequestException(`Stock insuffisant pour ${menuItem.name}. Disponible: ${menuItem.stock}, Demandé: ${item.quantity}`);
+      }
+    }
+    return { message: 'Stock réservé temporairement' };
+  }
 
   @Post()
   @UsePipes(new ValidationPipe())
@@ -49,56 +65,7 @@ export class OrderController {
         throw new UnauthorizedException('Seul un caissier peut annuler une commande');
       }
 
-      const order = await this.orderRepository.findOne({
-        where: { id },
-        relations: ['items', 'items.menuItem', 'payments', 'table', 'table.event'],
-      });
-      if (!order) {
-        throw new NotFoundException('Commande non trouvée');
-      }
-      if (!order.table?.event) {
-        throw new NotFoundException('Événement associé non trouvé');
-      }
-
-      // Supprimer les paiements associés
-      if (order.payments && order.payments.length > 0) {
-        await this.paymentRepository.delete({ orderId: id });
-      }
-
-      // Restaurer le stock des articles
-      for (const orderItem of order.items || []) {
-        if (!orderItem.menuItem) {
-          throw new NotFoundException(`Article de menu non trouvé pour orderItem ${orderItem.id}`);
-        }
-        const menuItem = await this.menuItemRepository.findOne({ where: { id: orderItem.menuItem.id } });
-        if (!menuItem) {
-          throw new NotFoundException(`Article de menu non trouvé pour menuItemId ${orderItem.menuItem.id}`);
-        }
-        menuItem.stock += orderItem.quantity;
-        await this.menuItemRepository.save(menuItem);
-      }
-
-      // Mettre à jour le solde
-      if (order.paymentStatus === 'paid') {
-        order.paymentStatus = 'refunded';
-        await this.orderRepository.save(order);
-
-        const eventId = order.table.event.id;
-        let balance = await this.balanceRepository.findOne({ where: { eventId } });
-        if (balance) {
-          balance.total -= order.total;
-          balance.updatedAt = new Date();
-          await this.balanceRepository.save(balance);
-        }
-      }
-
-      // Supprimer la commande
-      await this.orderRepository.delete(id);
-
-      // Émettre l'événement Socket.IO
-      this.ordersGateway.handleOrderDeleted({ id });
-
-      return { message: 'Commande annulée et supprimée avec succès' };
+      return await this.orderService.cancelOrder(id, req.user.sub);
     } catch (error) {
       console.error(`Erreur dans cancelOrder pour orderId: ${id}`, {
         message: error.message,
@@ -132,15 +99,15 @@ export class OrderController {
     return this.orderService.updateOrderStatus(id, body.status, req.user.email);
   }
 
-  @Patch(':id/payment')
-  @UseGuards(AuthGuard('jwt'))
-  async validatePayment(@Param('id', ParseIntPipe) id: number, @Request() req: any): Promise<Order> {
-    const userId = req.user?.sub;
-    if (!userId) {
-      throw new UnauthorizedException('Utilisateur non authentifié');
-    }
-    return this.orderService.validatePayment(id, req.user.email);
+@Patch(':id/payment')
+@UseGuards(AuthGuard('jwt'))
+async validatePayment(@Param('id', ParseIntPipe) id: number, @Request() req: any): Promise<Order> {
+  const userId = req.user?.sub;
+  if (!userId) {
+    throw new UnauthorizedException('Utilisateur non authentifié');
   }
+  return this.orderService.validatePayment(id, req.user.email);
+}
 
   @Get('balance/:eventId')
   @UseGuards(AuthGuard('jwt'))
@@ -178,11 +145,7 @@ export class OrderController {
 
   @Get('event/:eventId')
   async findOrdersByEvent(@Param('eventId', ParseIntPipe) eventId: number): Promise<(Order & { total: number })[]> {
-    const orders = await this.orderService.findOrdersByEvent(eventId);
-    // if (!orders || orders.length === 0) {
-    //   throw new NotFoundException(`Aucune commande trouvée pour l'événement avec l'id ${eventId}`);
-    // }
-    return orders;
+    return this.orderService.findOrdersByEvent(eventId);
   }
 
   @Get('search')
@@ -190,11 +153,7 @@ export class OrderController {
     if (!search) {
       throw new BadRequestException('Requête de recherche requise');
     }
-    const orders = await this.orderService.findOrdersByNameOrEmail(search);
-    if (!orders || orders.length === 0) {
-      throw new NotFoundException(`Aucune commande trouvée pour la requête : ${search}`);
-    }
-    return orders;
+    return this.orderService.findOrdersByNameOrEmail(search);
   }
 
   @Get('event-name')
@@ -202,11 +161,7 @@ export class OrderController {
     if (!eventName) {
       throw new BadRequestException('Nom de l\'événement requis');
     }
-    const orders = await this.orderService.findOrdersByEventName(eventName);
-    if (!orders || orders.length === 0) {
-      throw new NotFoundException(`Aucune commande trouvée pour le nom de l'événement : ${eventName}`);
-    }
-    return orders;
+    return this.orderService.findOrdersByEventName(eventName);
   }
 
   @Get('refunded/:eventId')
@@ -216,21 +171,7 @@ export class OrderController {
     if (!userId) {
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    console.log('Utilisateur pour getRefundedOrders:', { userId, role: user?.role });
-    if (!user || user.role !== 'caissier') {
-      throw new UnauthorizedException('Seul un caissier peut voir les commandes remboursées');
-    }
-    const orders = await this.orderRepository.find({
-      where: { table: { event: { id: eventId } }, paymentStatus: 'refunded' },
-      relations: ['items', 'items.menuItem', 'table', 'table.event'],
-    });
-    if (!orders || orders.length === 0) {
-      throw new NotFoundException(`Aucune commande remboursée trouvée pour l'événement avec l'id ${eventId}`);
-    }
-    return orders.map((order) => ({
-      ...order,
-    }));
+    return this.orderService.getRefundedOrders(eventId, userId);
   }
 
   @Patch(':id/refunded')
@@ -312,8 +253,8 @@ export class OrderController {
       console.log(`Commande supprimée pour orderId: ${id}`);
 
       // Émettre l'événement Socket.IO
-      this.ordersGateway.handleOrderRefunded({ id, paymentStatus: 'refunded' });
-      this.ordersGateway.handleOrderDeleted({ id });
+      this.trolleyGateway.handleOrderRefunded({ id, paymentStatus: 'refunded' });
+      this.trolleyGateway.handleOrderDeleted({ id });
 
       return { message: 'Commande remboursée et supprimée avec succès' };
     } catch (error) {
