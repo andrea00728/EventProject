@@ -1,10 +1,11 @@
-import { X } from "lucide-react";
+import { X, Minus, Maximize } from "lucide-react";
 import { useState } from "react";
 import { FaPaperPlane } from "react-icons/fa";
+import { toast } from "react-toastify";
+
 
 const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
   const [emailData, setEmailData] = useState({
-    to: "",
     subject: "",
     message: "",
   });
@@ -13,101 +14,155 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
     setEmailData({ ...emailData, [e.target.name]: e.target.value });
   };
 
-  const handleSendEmail = (e) => {
+  const handleSendEmail = async (e) => {
     e.preventDefault();
-    if (!emailData.to || !emailData.message) {
-      alert("Veuillez remplir tous les champs.");
+
+    // Vérifie que le message n'est pas vide
+    if (!emailData.message) {
+      toast.warning("⚠️ Veuillez écrire un message avant d'envoyer.");
       return;
     }
 
-    console.log("Email envoyé :", emailData);
+    try {
+      const res = await fetch("http://localhost:3000/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: conversation?.content?.email,
+          subject: emailData.subject || "Réponse à votre message",
+          message: emailData.message,
+        }),
+      });
 
-    // 🔹 Ici tu peux connecter ton backend (NestJS, Laravel, Nodemailer, etc.)
-    setEmailData({ to: "", subject: "", message: "" });
-    onClose();
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success(`✅ Email envoyé avec succès à ${conversation.content.email}`);
+        setEmailData({ subject: "", message: "" });
+        onClose();
+      } else if (res.status === 400) {
+        toast.error("❌ Erreur : Email destinataire invalide");
+      } else if (res.status === 403) {
+        toast.error(
+          "❌ Envoi interdit par SendGrid (403). Vérifie la clé API et l'adresse expéditeur."
+        );
+      } else {
+        toast.error(`❌ Erreur inattendue : ${data.message || JSON.stringify(data)}`);
+      }
+    } catch (err) {
+      console.error("Erreur envoi email:", err);
+      toast.error("❌ Impossible d’envoyer l’email (erreur réseau ou serveur).");
+    }
   };
+
 
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-30 z-[101] flex items-center justify-center p-4">
+    <div className="fixed bottom-0 right-4 z-[101] flex items-end justify-end p-4">
       <div
-        className={`w-full max-w-2xl rounded-lg shadow-xl ${
+        className={`w-full max-w-[640px] rounded-t-lg shadow-[0_1px_8px_rgba(0,0,0,0.2)] ${
           darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-        } flex flex-col`}
+        } flex flex-col font-sans text-sm`}
       >
         {/* Header */}
         <div
-          className={`p-4 border-b flex items-center justify-between ${
-            darkMode ? "border-gray-700" : "border-gray-200"
+          className={`flex items-center justify-between px-4 py-2 border-b ${
+            darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-gray-100"
           }`}
         >
-          <h3 className="font-semibold text-lg">Nouveau message</h3>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <h2 className="font-normal text-sm text-gray-700 dark:text-gray-300">New Message</h2>
+          <div className="flex items-center gap-1">
+            <button
+              className={`p-1 rounded-full ${
+                darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
+              }`}
+            >
+              <Minus className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            </button>
+            <button
+              className={`p-1 rounded-full ${
+                darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
+              }`}
+            >
+              <Maximize className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            </button>
+            <button
+              onClick={onClose}
+              className={`p-1 rounded-full ${
+                darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
+              }`}
+            >
+              <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            </button>
+          </div>
         </div>
 
-        {/* Ancien message + infos expéditeur */}
+        {/* Previous Message Info */}
         {conversation?.content && (
           <div
-            className={`px-4 py-3 border-b space-y-2 ${
-              darkMode
-                ? "border-gray-700 bg-gray-700 text-gray-300"
-                : "border-gray-100 bg-gray-50 text-gray-700"
-            } text-sm`}
+            className={`px-4 py-2 border-b ${
+              darkMode ? "border-gray-700 bg-gray-700 text-gray-300" : "border-gray-200 bg-gray-50 text-gray-600"
+            } text-xs`}
           >
-            <p className="font-medium">Message précédent :</p>
-            <p className="italic">{conversation.content.text}</p>
-            <div className="mt-2">
+            <p className="font-medium">Previous Message:</p>
+            <p className="italic truncate">{conversation.content.text}</p>
+            <div className="mt-1">
               <p>
-                <span className="font-medium">Nom :</span>{" "}
+                <span className="font-medium">From:</span>{" "}
                 {conversation.content.firstName} {conversation.content.lastName}
               </p>
               <p>
-                <span className="font-medium">Email :</span>{" "}
-                {conversation.content.email}
+                <span className="font-medium">Email:</span> {conversation.content.email}
               </p>
             </div>
           </div>
         )}
 
-        {/* Formulaire Email */}
+        {/* Email Form */}
         <form onSubmit={handleSendEmail} className="flex-1 flex flex-col">
-          <div className="p-4 space-y-4 flex-1 overflow-y-auto">
+          <div className="flex-1 flex flex-col px-4 py-2 space-y-2">
             <div>
-              <label className="block text-sm font-medium mb-1">À :</label>
               <input
                 disabled
                 type="email"
-                name="to"
                 value={conversation?.content?.email || ""}
-                onChange={handleChange}
-                placeholder="exemple@entreprise.com"
-                className={`w-full px-3 py-2 rounded-lg border ${
+                className={`w-full px-2 py-1 border-b ${
                   darkMode
-                    ? "bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400"
+                    ? "bg-gray-800 border-gray-600 text-gray-200 placeholder-gray-400"
                     : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                required
+                } focus:outline-none text-sm`}
+                placeholder="To"
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium mb-1">Message :</label>
+              <input
+                type="text"
+                name="subject"
+                value={emailData.subject}
+                onChange={handleChange}
+                className={`w-full px-2 py-1 border-b ${
+                  darkMode
+                    ? "bg-gray-800 border-gray-600 text-gray-200 placeholder-gray-400"
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+                } focus:outline-none text-sm`}
+                placeholder="Subject"
+              />
+            </div>
+
+            <div className="flex-1">
               <textarea
                 name="message"
-                rows="8"
+                rows="12"
                 value={emailData.message}
                 onChange={handleChange}
-                placeholder="Rédigez votre message ici..."
-                className={`w-full px-3 py-2 rounded-lg border resize-none ${
+                className={`w-full h-full px-2 py-2 border-none resize-none ${
                   darkMode
-                    ? "bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400"
-                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    ? "bg-gray-800 text-gray-200 placeholder-gray-400"
+                    : "bg-white text-gray-900 placeholder-gray-500"
+                } focus:outline-none text-sm font-sans leading-relaxed`}
+                placeholder="Compose email"
                 required
               />
             </div>
@@ -115,17 +170,35 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
 
           {/* Footer */}
           <div
-            className={`p-4 border-t flex justify-end ${
+            className={`flex items-center justify-between px-4 py-3 border-t ${
               darkMode ? "border-gray-700" : "border-gray-200"
             }`}
           >
             <button
               type="submit"
-              className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-5 py-1.5 bg-blue-600 text-white rounded font-medium text-sm hover:bg-blue-700 transition-colors"
             >
-              <FaPaperPlane className="w-4 h-4" />
-              Envoyer
+              <FaPaperPlane className="w-3.5 h-3.5" />
+              Send
             </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className={`text-xs ${
+                  darkMode ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Formatting options
+              </button>
+              <button
+                type="button"
+                className={`text-xs ${
+                  darkMode ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Attach files
+              </button>
+            </div>
           </div>
         </form>
       </div>

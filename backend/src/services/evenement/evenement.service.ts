@@ -21,7 +21,7 @@ export class EvenementService {
     @InjectRepository(NotificationEntity)
     private readonly notificationRepository: Repository<NotificationEntity>,
     private readonly notificationGateway: NotificationGateway
-  ) { }
+  ) {}
 
   async create(dto: CreateEventDto): Promise<Evenement> {
     const location = await this.locationService.findLocationById(dto.locationId);

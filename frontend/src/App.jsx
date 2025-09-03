@@ -4,10 +4,14 @@ import Pagepublic from './pages/Pagepublic';
 import PublicEvents from './pages/PublicEvents';
 import NotFound from './pages/NotFound';
 import Evenementform from "../components/Evenementform"; // Le formulaire privé complet
+import { Toaster } from 'react-hot-toast';
+
 
 function App() {
   return (
+    
     <Router>
+      <Toaster position="top-right" reverseOrder={false} />
       <ErrorBoundary>
       <Routes>
         <Route path="/" element={<Pagepublic />} />
