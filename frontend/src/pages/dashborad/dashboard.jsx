@@ -52,7 +52,7 @@ export default function DashboardPage() {
         width: "100vw",
         minHeight: "90vh",
         position: "relative",
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
       }}
     >
       {/* Bouton de menu pour les petits écrans */}
@@ -104,14 +104,7 @@ export default function DashboardPage() {
       {/* Contenu principal */}
       <Box
         component="main"
-        // sx={{
-        //   width: "screen",
-        //   minHeight: "20vh",
-        //   flex: 1,
-        //   p: 4,
-        //   // overflow: "auto",
-        //   boxSizing: 'border-box'
-        // }}
+       
         className="flex-1 flex flex-col p-4 overflow-hidden lg:ml-64"
       >
         <Box sx={{ bgcolor: "white", borderRadius: 1, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", border: "1px solid #e0e0e0" }}>
