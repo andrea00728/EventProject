@@ -5,7 +5,7 @@ import "slick-carousel/slick/slick-theme.css";
 import { getAllEvents } from "../services/evenementServ";
 import { FaCalendarAlt, FaClock } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import defaultImage from "../../public/event.jpg"
+import defaultImage from "../assets/event.jpg"
 
 const SuccessEvent = () => {
   const [allEvents, setAllEvents] = useState([]);
@@ -56,20 +56,7 @@ const SuccessEvent = () => {
     fetchAllEvents();
   }, []);
 
-  // const getEventIcon = (type) => {
-  //   const icons = {
-  //     mariage: "💒",
-  //     anniversaire: "🎂",
-  //     conference: "🎤",
-  //     seminaire: "📚",
-  //     concert: "🎵",
-  //     exposition: "🖼️",
-  //     formation: "🎓",
-  //     reunion: "👥",
-  //     default: "🎉",
-  //   };
-  //   return icons[type?.toLowerCase()] || icons.default;
-  // };
+  
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
