@@ -3,8 +3,7 @@ import { Rocket, Star, Gem, Crown, Info } from "lucide-react";
 import PaymentPage from "../pages/paiment";
 import { AuthModal } from "../components/Modal/authModal";
 import { useStateContext } from "../context/ContextProvider";
-import { getUserForfait } from "../services/forfaitService";
-import { getAllForfait } from "../services/forfaitService";
+import { getUserForfait, getAllForfait } from "../services/forfaitService";
 import { Close, Event, MobileFriendly } from "@mui/icons-material";
 import { Calendar } from "react-feather";
 import ModalChangeForfait from "./modalChangeForfait";
@@ -35,12 +34,12 @@ const getDurationText = (validationDuration) => {
   if (validationDuration === 30) return "1 mois";
   if (validationDuration === 180) return "6 mois";
   if (validationDuration === 365) return "12 mois";
-  return `${Math.round(validationDuration / 30)} mois`;
+  return `${Math.round((validationDuration || 0) / 30)} mois`;
 };
 
 // Fonction pour formatter le prix
 const formatPrice = (price) => {
-  return `$${price}`;
+  return `€${price}`;
 };
 
 export default function NosForfaits() {
@@ -63,44 +62,52 @@ export default function NosForfaits() {
         setLoading(true);
         const forfaitsData = await getAllForfait();
 
-        // Vérifier si les données sont valides
         if (!forfaitsData || !Array.isArray(forfaitsData)) {
           throw new Error("Données de forfaits invalides");
         }
 
+        // Map pour les événements en fonction du nom
+        const eventsMap = { freemium: "1", starter: "2", pro: "5", premium: "20", gold: "50" };
+
         // Filtrer pour exclure FREEMIUM et transformer les données
         const transformedForfaits = forfaitsData
-          .filter(forfait => forfait.nom.toLowerCase() !== 'freemium')
-          .map(forfait => ({
-            id: forfait.id,
-            nom: forfait.nom.toUpperCase(),
-            price: formatPrice(forfait.price),
-            invitations: forfait.maxinvites || "Illimité",
-            // events: forfait.maxevents || "Illimité",
-            events: forfait.nom == "freemium" ? "1" : "" || forfait.nom == "starter" ? "2" : "" || forfait.nom == "pro" ? "5" : "" || forfait.nom == "premium" ? "20" : "" || forfait.nom == "gold" ? "50" : "",
-            duration: getDurationText(forfait.validationduration),
-            paypalplanid: forfait.paypalplanid,
-            rawPrice: forfait.price,
-            maxEvents: forfait.maxevents,
-            maxInvites: forfait.maxinvites,
-            validationDuration: forfait.validationduration
-          }));
+          .filter((forfait) => (forfait.nom || "").toLowerCase() !== "freemium")
+          .map((forfait) => {
+            const nameLower = (forfait.nom || "").toLowerCase();
+            const events = eventsMap[nameLower] ?? "Illimité";
+
+            return {
+              id: forfait.id,
+              nom: (forfait.nom || "").toUpperCase(),
+              price: formatPrice(forfait.price),
+              invitations: forfait.maxinvites ?? "Illimité",
+              events, // ✅ corrigé: toujours défini
+              duration: getDurationText(forfait.validationduration),
+              paypalplanid: forfait.paypalplanid,
+              rawPrice: forfait.price,
+              maxEvents:
+                forfait.maxevents ??
+                (events !== "Illimité" ? Number(events) : null), // utile si tu veux un nombre
+              maxInvites: forfait.maxinvites,
+              validationDuration: forfait.validationduration,
+            };
+          });
 
         setForfaits(transformedForfaits);
-        setError(null); // Réinitialiser l'erreur en cas de succès
+        setError(null);
       } catch (err) {
         console.error("Erreur détaillée:", err);
 
         // Fallback sur des données statiques si l'API échoue
         console.warn("Utilisation des données de fallback");
         const fallbackForfaits = [
-          { id: 12, nom: "STARTER", price: "$10", invitations: 100, events: "2", duration: "6 mois", rawPrice: 10, maxInvites: 100, validationDuration: 180 },
-          { id: 13, nom: "PRO", price: "$25.99", invitations: 500, events: "5", duration: "6 mois", rawPrice: 25.99, maxInvites: 500, validationDuration: 180 },
-          { id: 14, nom: "PREMIUM", price: "$39.99", invitations: 1000, events: "20", duration: "6 mois", rawPrice: 39.99, maxInvites: 1000, validationDuration: 180 },
-          { id: 15, nom: "GOLD", price: "$59.99", invitations: "Illimité", events: "50", duration: "12 mois", rawPrice: 59.99, maxInvites: null, validationDuration: 365 },
+          { id: 12, nom: "STARTER", price: "€10", invitations: 100, events: "2", duration: "6 mois", rawPrice: 10, maxInvites: 100, validationDuration: 180 },
+          { id: 13, nom: "PRO", price: "€25.99", invitations: 500, events: "5", duration: "6 mois", rawPrice: 25.99, maxInvites: 500, validationDuration: 180 },
+          { id: 14, nom: "PREMIUM", price: "€39.99", invitations: 1000, events: "20", duration: "6 mois", rawPrice: 39.99, maxInvites: 1000, validationDuration: 180 },
+          { id: 15, nom: "GOLD", price: "€59.99", invitations: "Illimité", events: "50", duration: "12 mois", rawPrice: 59.99, maxInvites: null, validationDuration: 365 },
         ];
         setForfaits(fallbackForfaits);
-        setError(null); // Ne pas afficher d'erreur si le fallback fonctionne
+        setError(null);
       } finally {
         setLoading(false);
       }
@@ -126,7 +133,7 @@ export default function NosForfaits() {
       }
     };
     fetchUserForfait();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
   const handleAcheter = (forfait) => {
     setSelectedForfait(forfait);
@@ -154,9 +161,7 @@ export default function NosForfaits() {
               Tarifs
             </span>
           </h2>
-          <p className="text-gray-500 max-w-xl mx-auto">
-            Chargement des forfaits...
-          </p>
+          <p className="text-gray-500 max-w-xl mx-auto">Chargement des forfaits...</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {[...Array(4)].map((_, index) => (
@@ -216,18 +221,16 @@ export default function NosForfaits() {
           const isActive =
             isAuthenticated && activeForfait && f.nom.toUpperCase() === activeForfait.nom.toUpperCase();
           const isDisabled =
-            isAuthenticated &&
-            activeForfait &&
-            activeForfait.nom.toUpperCase() !== "FREEMIUM" &&
-            !isActive;
+            isAuthenticated && activeForfait && activeForfait.nom.toUpperCase() !== "FREEMIUM" && !isActive;
 
           return (
             <div
               key={f.id}
-              className={`relative rounded-3xl shadow-lg p-8 border transition-transform transform hover:-translate-y-2 hover:shadow-2xl text ${isActive
-                ? `bg-gradient-to-br ${defaultColorMap[f.nom]} text-white scale-105 border-white`
-                : "bg-white border-gray-200 text-gray-800"
-                }`}
+              className={`relative rounded-3xl shadow-lg p-8 border transition-transform transform hover:-translate-y-2 hover:shadow-2xl text ${
+                isActive
+                  ? `bg-gradient-to-br ${defaultColorMap[f.nom]} text-white scale-105 border-white`
+                  : "bg-white border-gray-200 text-gray-800"
+              }`}
             >
               <div className="flex justify-center mb-4">{iconMap[f.nom]}</div>
               <div className="text-center ">
@@ -238,13 +241,13 @@ export default function NosForfaits() {
               </div>
 
               <ul className="text-sm space-y-2 mb-6">
-                <li>Invitations : <span className="font-semibold">{f.invitations}</span></li>
-                <li>Événements : <span className="font-semibold">{f.events}</span></li>
                 <li>
-                  {f.nom === "STARTER"
-                    ? "Module personnel"
-                    : "Modules personnel et restauration"}
+                  Invitations : <span className="font-semibold">{f.invitations}</span>
                 </li>
+                <li>
+                  Événements : <span className="font-semibold">{f.events}</span>
+                </li>
+                <li>{f.nom === "STARTER" ? "Module personnel" : "Modules personnel et restauration"}</li>
               </ul>
 
               {isAuthenticated ? (
@@ -256,7 +259,8 @@ export default function NosForfaits() {
                     >
                       Expire le {expirationDate ? new Date(expirationDate).toLocaleDateString() : "N/A"}
                     </button>
-                    <button className="w-full py-3 rounded-xl font-semibold shadow cursor-pointer border-2 border-white transition-all mt-5 hover:bg-gray-400 hover:text-gray-800"
+                    <button
+                      className="w-full py-3 rounded-xl font-semibold shadow cursor-pointer border-2 border-white transition-all mt-5 hover:bg-gray-400 hover:text-gray-800"
                       onClick={() => setModalChangeForfait(true)}
                     >
                       Changer de forfait
@@ -266,16 +270,18 @@ export default function NosForfaits() {
                   <div className="flex gap-2 sm:flex-row">
                     <button
                       onClick={() => handleVoirDetails(f)}
-                      className={`absolute top-0 right-0 flex items-center justify-center w-12 h-12 rounded-full`}>
+                      className={`absolute top-0 right-0 flex items-center justify-center w-12 h-12 rounded-full`}
+                    >
                       <Info className="w-6 h-6 " />
                     </button>
                     <button
                       onClick={() => handleAcheter(f)}
                       disabled={isDisabled}
-                      className={`w-full py-3 rounded-xl font-semibold shadow transition-all duration-300 focus:outline-none focus:ring ${isDisabled
-                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                        : `bg-gradient-to-r ${defaultColorMap[f.nom]} text-white hover:opacity-90`
-                        }`}
+                      className={`w-full py-3 rounded-xl font-semibold shadow transition-all duration-300 focus:outline-none focus:ring ${
+                        isDisabled
+                          ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                          : `bg-gradient-to-r ${defaultColorMap[f.nom]} text-white hover:opacity-90`
+                      }`}
                     >
                       Acheter
                     </button>
@@ -286,7 +292,8 @@ export default function NosForfaits() {
                 <div className="flex gap-2 sm:flex-row">
                   <button
                     onClick={() => handleVoirDetails(f)}
-                    className={`absolute top-0 right-0 flex items-center justify-center w-12 h-12 rounded-full`}>
+                    className={`absolute top-0 right-0 flex items-center justify-center w-12 h-12 rounded-full`}
+                  >
                     <Info className="w-6 h-6 " />
                   </button>
                   <button
@@ -306,21 +313,17 @@ export default function NosForfaits() {
       {isDetailsOpen && selectedForfait && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
           <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8 relative overflow-y-auto max-h-[90vh] scrollbar-hide">
-            <span className="absolute top-4 right-4" onClick={() => setDetailsOpen(false)}><Close /></span>
+            <span className="absolute top-4 right-4" onClick={() => setDetailsOpen(false)}>
+              <Close />
+            </span>
 
             {/* Bandeau coloré en haut */}
-            <div
-              className={`absolute inset-x-0 top-0 h-2 rounded-t-3xl bg-gradient-to-r ${defaultColorMap[selectedForfait.nom]}`}
-            ></div>
+            <div className={`absolute inset-x-0 top-0 h-2 rounded-t-3xl bg-gradient-to-r ${defaultColorMap[selectedForfait.nom]}`}></div>
 
             {/* Titre et prix */}
             <div className="text-center mb-6">
-              <h3 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
-                {selectedForfait.nom}
-              </h3>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">
-                {selectedForfait.price}
-              </p>
+              <h3 className="text-3xl sm:text-4xl font-extrabold text-gray-900">{selectedForfait.nom}</h3>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">{selectedForfait.price}</p>
             </div>
 
             {/* Infos détaillées */}
@@ -341,8 +344,8 @@ export default function NosForfaits() {
                 <Event className="text-purple-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
                   <span className="font-semibold">Événements :</span>{" "}
-                  {selectedForfait.maxEvents
-                    ? `Organisez jusqu'à ${selectedForfait.maxEvents} événements privés ou publics.`
+                  {selectedForfait.events && selectedForfait.events !== "Illimité"
+                    ? `Organisez jusqu'à ${selectedForfait.events} événements privés ou publics.`
                     : "Nombre d'événements illimité, sans restriction."}
                 </div>
               </li>
@@ -361,12 +364,9 @@ export default function NosForfaits() {
                 <Star className="text-yellow-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
                   <span className="font-semibold">Fonctionnalités :</span>{" "}
-                  {selectedForfait.nom === "STARTER" &&
-                    "Vous avez accès aux fonctions de base avec le module personnel."}
-                  {(selectedForfait.nom === "PRO" ||
-                    selectedForfait.nom === "PREMIUM" ||
-                    selectedForfait.nom === "GOLD") &&
-                    "Vous avez toutes les fonctionnalités, incluant le module personnel et restauration."}
+                  {selectedForfait.nom === "STARTER"
+                    ? "Vous avez accès aux fonctions de base avec le module personnel."
+                    : "Vous avez toutes les fonctionnalités, incluant le module personnel et restauration."}
                 </div>
               </li>
 
@@ -409,13 +409,7 @@ export default function NosForfaits() {
       )}
 
       {/* Auth modal */}
-      {isModalOpen && (
-        <AuthModal
-          isOpen={isModalOpen}
-          onClose={() => setModalOpen(false)}
-          isSignIn={true}
-        />
-      )}
+      {isModalOpen && <AuthModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} isSignIn={true} />}
     </section>
   );
 }

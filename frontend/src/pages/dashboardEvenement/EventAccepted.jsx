@@ -13,31 +13,31 @@ const EventAccept = () => {
   3
   const [error, setError] = useState(null);
 
- useEffect(() => {
-  // Vérifier si l'utilisateur est authentifié.
-  // La logique du ContextProvider gère déjà le chargement et la récupération de l'état.
-  if (!isAuthenticated) {
-    setError("Authentification requise pour voir les événements.");
-    setIsLoading(false); // S'assurer que le chargement est terminé
-    return;
-  }
-
-  const fetchEvents = async () => {
-    setIsLoading(true);
-    try {
-      const data = await getMyEvents();
-      setEvents(data);
-      setError(null);
-    } catch (error) {
-      console.error('Erreur lors de la récupération des événements:', error);
-      setError("Erreur lors du chargement des événements.");
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    // Vérifier si l'utilisateur est authentifié.
+    // La logique du ContextProvider gère déjà le chargement et la récupération de l'état.
+    if (!isAuthenticated) {
+      setError("Authentification requise pour voir les événements.");
+      setIsLoading(false); // S'assurer que le chargement est terminé
+      return;
     }
-  };
 
-  fetchEvents();
-}, [isAuthenticated]); 
+    const fetchEvents = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getMyEvents();
+        setEvents(data);
+        setError(null);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des événements:', error);
+        setError("Erreur lors du chargement des événements.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [isAuthenticated]);
 
   const openModal = (event) => {
     setSelectedEvent(event);
@@ -113,18 +113,17 @@ const EventAccept = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-stretch">
                 {events.map((event, index) => (
-                      <div
-                        key={event.id}
-                        className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1 h-full flex flex-col"
-                      >
+                  <div
+                    key={event.id}
+                    className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1 h-full flex flex-col"
+                  >
                     {/* Card Header */}
-                    <div className={`h-2 bg-gradient-to-r ${
-                      index % 5 === 0 ? 'from-blue-500 to-purple-500' :
-                      index % 5 === 1 ? 'from-purple-500 to-pink-500' :
-                      index % 5 === 2 ? 'from-pink-500 to-orange-500' :
-                      index % 5 === 3 ? 'from-orange-500 to-amber-500' :
-                      'from-amber-500 to-blue-500'
-                    }`}></div>
+                    <div className={`h-2 bg-gradient-to-r ${index % 5 === 0 ? 'from-blue-500 to-purple-500' :
+                        index % 5 === 1 ? 'from-purple-500 to-pink-500' :
+                          index % 5 === 2 ? 'from-pink-500 to-orange-500' :
+                            index % 5 === 3 ? 'from-orange-500 to-amber-500' :
+                              'from-amber-500 to-blue-500'
+                      }`}></div>
 
                     <div className="p-6 relative ">
                       {/* Event Title */}
@@ -132,13 +131,12 @@ const EventAccept = () => {
                         <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide leading-tight">
                           {event.nom}
                         </h2>
-                        <div className={`w-3 h-3 rounded-full ${
-                          index % 5 === 0 ? 'bg-blue-500' :
-                          index % 5 === 1 ? 'bg-purple-500' :
-                          index % 5 === 2 ? 'bg-pink-500' :
-                          index % 5 === 3 ? 'bg-orange-500' :
-                          'bg-amber-500'
-                        }`}></div>
+                        <div className={`w-3 h-3 rounded-full ${index % 5 === 0 ? 'bg-blue-500' :
+                            index % 5 === 1 ? 'bg-purple-500' :
+                              index % 5 === 2 ? 'bg-pink-500' :
+                                index % 5 === 3 ? 'bg-orange-500' :
+                                  'bg-amber-500'
+                          }`}></div>
                       </div>
 
                       {/* Event Details */}
@@ -196,7 +194,8 @@ const EventAccept = () => {
                           </div>
                           <div>
                             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Lieu</p>
-                            <p className="text-slate-800 font-semibold">{event.location.nom.split(",")[0]}</p>
+                            <p className="text-slate-800 font-semibold">{event.location?.nom.split(",").slice(0, 2).join(", ") || "Non précisé"}
+                            </p>
                           </div>
                         </div>
 
@@ -217,13 +216,12 @@ const EventAccept = () => {
                       <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
                         <button
                           onClick={() => openModal(event)}
-                          className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${
-                            index % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
-                            index % 5 === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' :
-                            index % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
-                            index % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :
-                            'bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600'
-                          }`}
+                          className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${index % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
+                              index % 5 === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' :
+                                index % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
+                                  index % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :
+                                    'bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600'
+                            }`}
                           aria-label={`Voir les tables pour l'événement ${event.nom}`}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

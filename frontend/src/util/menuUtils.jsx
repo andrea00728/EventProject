@@ -42,6 +42,12 @@ export const getConditionalSubMenus = (forfait) => {
       icon: "/invitation.png",
       description: "Gérez les services de restauration pour vos événements",
     },
+    {
+      path: "/evenement/dashboard",
+      name: "dashboard",
+      icon: "/iconDash.png",
+      description: "Vus d'ensemble de votre organisation",
+    },
   ];
 
   const forfaitName = forfait ? forfait.toLowerCase() : "default";

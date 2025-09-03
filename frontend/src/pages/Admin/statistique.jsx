@@ -209,7 +209,7 @@ const Statique = () => {
   const [userRate, setUserRate] = useState("0.0");
   const [organizerRate, setOrganizerRate] = useState("0.0");
   const [eventCount, setEventCount] = useState(0);
-  const [revenueTotal, setRevenueTotal] = useState("$0");
+  const [revenueTotal, setRevenueTotal] = useState("€ 0");
   const [eventTypeData, setEventTypeData] = useState([]);
   const [registrationData, setRegistrationData] = useState([]);
   const [error, setError] = useState(null);

@@ -15,6 +15,8 @@ import { AuthModal } from "../components/Modal/authModal";
 import { getUserForfait } from "../services/forfaitService";
 import { getConditionalSubMenus } from "../util/menuUtils";
 import { useSocket } from "../socket";
+import { io } from "socket.io-client";
+import { url } from "../api/url";
 
 export default function PublicLayout() {
   const { isAuthenticated, role, user } = useStateContext();
@@ -27,7 +29,6 @@ export default function PublicLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const isPublicEventsPage = location.pathname === "/evenements-publics";
-  const socket = useSocket();
 
   const defaultNavItems = [
     { path: "/pagepublic#pagepublic", name: "Accueil" },
@@ -64,8 +65,14 @@ export default function PublicLayout() {
     if (isAuthenticated) {
       fetchAndSetForfait();
       setConnected(true);
+      if(!user) return ; 
+      const userId = user.sub || user.id;
+      const socket = io(`${url}`, {
+        transports: ['websocket'],
+        auth: { userId },
+      });
       if (!socket) return;
-      socket.on("connect", () => console.log("Socket connectée : ", socket.id));
+      socket.on("connect", () => console.log("Socket connectée"));
     } else {
       setConnected(false);
       setForfait(null);
@@ -105,7 +112,6 @@ export default function PublicLayout() {
     }
   }, [isAuthenticated, user, role, navigate]);
 
-  // Le reste du code...
   const subMenuVariants = {
     hidden: {
       opacity: 0,
