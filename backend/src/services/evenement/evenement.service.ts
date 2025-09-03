@@ -166,7 +166,7 @@ export class EvenementService {
   async findManagerEvents(utilisateur_id: string): Promise<Evenement[]> {
     return this.evenementRepository.find({
       where: { user: { id: utilisateur_id } },
-      relations: ['user', 'location', 'salle', 'tables', 'invites'],
+      relations: ['user', 'location', 'salle', 'tables', 'invites', 'user.forfait'],
     });
   }
 
