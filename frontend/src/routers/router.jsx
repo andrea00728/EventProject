@@ -80,7 +80,7 @@ import EventProtectLayout from "../layouts/eventProtectLayout.jsx";
 import AdminManagementPage from "../pages/Admin/AdminManagmentTable.jsx";
 import DashboardPage from "../pages/dashborad/dashboard.jsx";
 import DashboardGlobal from "../pages/dashborad/Global.jsx";
-import DashboardEvenement from "../pages/restauration/DashboardEvenement.jsx";
+import DashboardEvenement from "../pages/dashborad/DashboardEvenement.jsx";
 
 const router = createBrowserRouter([
   {
