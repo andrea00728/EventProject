@@ -509,7 +509,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                         className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
                           }`}
                       >
-                        {loc.nom}
+                        {loc.nom.split(",").slice(0, 2).join(", ") || "Non précisé"}
                       </div>
                     ))
                   ) : (
