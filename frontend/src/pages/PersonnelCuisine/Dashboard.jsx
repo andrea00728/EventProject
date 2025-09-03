@@ -51,7 +51,7 @@ export default function DashboardpersCuisine() {
   const [error, setError] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [userId, setUserId] = useState(null);
+  const [UserId, setUserId] = useState(null);
 
   const navigate = useNavigate();
   const { user, isAuthenticated, setUser, handleLogout } = useStateContext();
@@ -59,19 +59,15 @@ export default function DashboardpersCuisine() {
   // ----- Déconnexion -----
   const onLogoutClick = async () => {
     try {
-      await axiosClient.post("/auth/logout");
+      await handleLogout()
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
     } finally {
-      sessionStorage.removeItem("ACCESS_TOKEN");
-      sessionStorage.removeItem("USER");
-      setUser(null);
-      if (handleLogout) handleLogout();
       setShowLogoutModal(false);
       setShowToast(true);
       setTimeout(() => {
-        setShowToast(false);
-        navigate("/pagepublic", { replace: true });
+      setShowToast(false);
+      navigate("/pagepublic", { replace: true });
       }, 2000);
     }
   };
@@ -100,9 +96,7 @@ export default function DashboardpersCuisine() {
     };
     if(!isAuthenticated) return;
     const fetchData = async () => {
-      const UserId = await getUserIdForToken();
-      setUserId(UserId);
-
+      setUserId(user.id || user.sub);
       const newSocket = io(`${url}`, {
         auth: { userId: UserId },
         transports: ["websocket"],

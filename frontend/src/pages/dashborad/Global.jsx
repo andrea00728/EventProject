@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useStateContext } from "../../context/ContextProvider";
 import { FaHandshake } from 'react-icons/fa';
+import { getAllManagerEvents } from '../../services/evenementServ';
 
 const DashboardGlobal = () => {
   const { user, isLoading } = useStateContext();
@@ -26,6 +27,16 @@ const DashboardGlobal = () => {
       });
     }
   }, [user]);
+
+  useEffect(() => {
+
+    const fetchData = async () => {
+      const data = await getAllManagerEvents(user.id || user.sub);
+      console.log("Données récupérés : ", data);
+    }
+
+    fetchData()
+  }, [])
 
   if (isLoading) {
     return <p className="text-center text-gray-600">Chargement des données du tableau de bord...</p>;
