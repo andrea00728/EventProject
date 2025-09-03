@@ -6,7 +6,7 @@ import { RxCaretRight, RxCaretLeft } from 'react-icons/rx';
 export default function EventLayout() {
     const navigate = useNavigate()
     const versDash  = () => {
-      navigate("/evenement/dashboard/eventsDash")
+      navigate("/evenement/dashboard")
     }
     
     const choixItems = [
