@@ -95,7 +95,7 @@ export default function AdminLayout() {
     fetchData();
   }, []);
 
-  console.log("Auth State:", { isLoading, isAuthenticated, role, user });
+  // console.log("Auth State:", { isLoading, isAuthenticated, role, user });
 
   useEffect(() => {
     const handleResize = () => {
@@ -133,7 +133,6 @@ export default function AdminLayout() {
   };
 
   const confirmLogout = async () => {
-    setUser(null);
     await logout();
     handleLogout();
     setShowLogoutModal(false);

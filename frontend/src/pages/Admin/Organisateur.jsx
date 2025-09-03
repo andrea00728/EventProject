@@ -16,7 +16,7 @@ import { TbTrashXFilled } from "react-icons/tb";
 import { getAllManagerEvents } from "../../services/evenementServ";
 import ModalManager from "./ModalManager";
 import DeleteModal from "./DeleteModal";
-import { FaUsers, FaEye, FaUser, FaUserSlash } from "react-icons/fa"; // Ajout de FaUserSlash
+import { FaUsers, FaEye, FaUser, FaUserSlash, FaSort, FaSortUp, FaSortDown } from "react-icons/fa"; // Ajout de FaUserSlash
 import { handleDownloadXLSX } from "../../services/downloadXLSX";
 import { DataGrid } from "@mui/x-data-grid";
 import { useDarkMode } from "../../context/DarkModeContext";
@@ -528,6 +528,51 @@ const connectSocket = async () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+
+  const onSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedData = useMemo(() => {
+    let sortableItems = [...filteredData];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+        
+        if (aValue === null || aValue === undefined) aValue = '';
+        if (bValue === null || bValue === undefined) bValue = '';
+        
+        if (sortConfig.key === 'forfait') {
+          aValue = a.forfait?.nom || '';
+          bValue = b.forfait?.nom || '';
+        }
+        
+        if (sortConfig.key === 'lastLogin' && a.lastLogin && b.lastLogin) {
+          const dateA = new Date(a.lastLogin);
+          const dateB = new Date(b.lastLogin);
+          return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
+        }
+        
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          if (aValue.toLowerCase() < bValue.toLowerCase()) {
+            return sortConfig.direction === 'asc' ? -1 : 1;
+          }
+          if (aValue.toLowerCase() > bValue.toLowerCase()) {
+            return sortConfig.direction === 'asc' ? 1 : -1;
+          }
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filteredData, sortConfig]);
+
   return (
     <div
       className={`min-h-100vh p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${bgClass}`}
@@ -651,13 +696,25 @@ const connectSocket = async () => {
             <div className={tableContainerClasses}>
               {/* En-têtes du tableau */}
               <div className={`rounded-t-xl ${headerClasses}`}>
-                <div className="truncate">NOM</div>
-                <div className="truncate">EMAIL</div>
-                <div className="truncate">FORFAIT</div>
+                <button onClick={() => onSort('name')} className="truncate flex items-center gap-2">
+                  NOM
+                  {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />) : <FaSort className="opacity-50" />}
+                </button>
+                <button onClick={() => onSort('email')} className="truncate flex items-center gap-2">
+                  EMAIL
+                  {sortConfig.key === 'email' ? (sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />) : <FaSort className="opacity-50" />}
+                </button>
+                <button onClick={() => onSort('forfait')} className="truncate flex items-center gap-2">
+                  FORFAIT
+                  {sortConfig.key === 'forfait' ? (sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />) : <FaSort className="opacity-50" />}
+                </button>
                 <div className="truncate">DATE CRÉATION</div>
                 <div className="truncate">EXPIRATION</div>
                 <div className="truncate">STATUT</div>
-                <div className="truncate">DERNIÈRE CONNEXION</div>
+                <button onClick={() => onSort('lastLogin')} className="truncate flex items-center gap-2">
+                  DERNIÈRE CONNEXION
+                  {sortConfig.key === 'lastLogin' ? (sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />) : <FaSort className="opacity-50" />}
+                </button>
                 <div className="truncate text-center">ACTIONS</div>
               </div>
 
@@ -666,8 +723,8 @@ const connectSocket = async () => {
                 className="divide-y transition-colors duration-300"
                 style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}
               >
-                {filteredData.length > 0 ? (
-                  filteredData
+                {sortedData.length > 0 ? (
+                  sortedData
                     .slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage)
                     .map((manager, index) => (
                       <div key={index} className={rowClasses}>
@@ -725,7 +782,7 @@ const connectSocket = async () => {
               </div>
 
               {/* Pagination */}
-              {filteredData.length > 0 && (
+              {sortedData.length > 0 && (
                 <div className={`rounded-b-xl ${paginationClasses}`}>
                   <div className="flex items-center space-x-2">
                     <span className={textMuted}>Lignes par page:</span>
@@ -749,19 +806,14 @@ const connectSocket = async () => {
 
                   <div className={textMuted}>
                     Affichage de {currentPage * rowsPerPage + 1} à{" "}
-                    {Math.min(
-                      (currentPage + 1) * rowsPerPage,
-                      filteredData.length
-                    )}{" "}
-                    sur {filteredData.length} gestionnaires
+                    {Math.min((currentPage + 1) * rowsPerPage, sortedData.length)}{" "}
+                    sur {sortedData.length} gestionnaires
                   </div>
 
                   <div className="flex space-x-2">
                     <button
                       className={`px-4 py-2 rounded-lg border transition-colors duration-200 ${
-                        darkMode
-                          ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800"
-                          : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"
+                        darkMode ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800" : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"
                       } disabled:opacity-50`}
                       disabled={currentPage === 0}
                       onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
@@ -770,13 +822,9 @@ const connectSocket = async () => {
                     </button>
                     <button
                       className={`px-4 py-2 rounded-lg border transition-colors duration-200 ${
-                        darkMode
-                          ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800"
-                          : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"
+                        darkMode ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800" : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"
                       } disabled:opacity-50`}
-                      disabled={
-                        (currentPage + 1) * rowsPerPage >= filteredData.length
-                      }
+                      disabled={(currentPage + 1) * rowsPerPage >= sortedData.length}
                       onClick={() => setCurrentPage((prev) => prev + 1)}
                     >
                       Suivant

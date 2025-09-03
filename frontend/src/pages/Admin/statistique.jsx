@@ -918,14 +918,14 @@ const Statique = () => {
                     Pourcentage d'activité des organisateurs par heure
                   </p>
                 </div>
-                <button
+                {/* <button
                   className={`mt-4 flex items-center space-x-2 text-sm sm:mt-0 ${
                     darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-800"
                   }`}
                 >
                   <span>Rapport détaillé</span>
                   <ChevronDown className="h-4 w-4" />
-                </button>
+                </button> */}
               </div>
               <div className="chart-container" style={{ height: "300px" }}>
                 <canvas ref={peakHoursChartCanvasRef} />
