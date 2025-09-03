@@ -51,11 +51,13 @@ const MenuListWithCart = () => {
 
   const itemsPerPage = 8;
 
+  // Dynamic categories
   const categories = useMemo(() => {
     const cats = new Set(menus.map((menu) => menu.category || 'Autres'));
     return ['Tous', ...cats];
   }, [menus]);
 
+  // Load cart from localStorage
   useEffect(() => {
     const savedCart = JSON.parse(localStorage.getItem('cart'));
     if (savedCart) setCart(savedCart);
@@ -65,6 +67,7 @@ const MenuListWithCart = () => {
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
 
+  // Fetch short link info
   useEffect(() => {
     const fetchShortLinkInfo = async () => {
       if (!slug) {
@@ -90,49 +93,59 @@ const MenuListWithCart = () => {
     fetchShortLinkInfo();
   }, [slug, navigate]);
 
-  useEffect(() => {
-    const fetchMenus = async () => {
-      if (!selectedEvent) return;
+  // Fetch menus
+  const fetchMenus = useCallback(async () => {
+    if (!selectedEvent) return;
 
-      try {
-        setIsLoading(true);
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`);
+    try {
+      setIsLoading(true);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`);
 
-        const formattedMenus = res.data.map((menu) => ({
-          ...menu,
-          items: menu.items.map((item) => ({
-            ...item,
-            category: menu.category || 'Autres',
-            price: parseFloat(item.price),
-          })),
-        }));
+      const formattedMenus = res.data.map((menu) => ({
+        ...menu,
+        items: menu.items.map((item) => ({
+          ...item,
+          category: menu.category || 'Autres',
+          price: parseFloat(item.price),
+        })),
+      }));
 
-        setMenus(formattedMenus);
-      } catch (error) {
-        console.error('Erreur lors du chargement des menus:', error);
-        setMessage('Oups, impossible de charger les menus.');
-        setTimeout(() => setMessage(''), 3000);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchMenus();
+      setMenus(formattedMenus);
+    } catch (error) {
+      console.error('Erreur lors du chargement des menus:', error);
+      setMessage('Oups, impossible de charger les menus.');
+      setTimeout(() => setMessage(''), 3000);
+    } finally {
+      setIsLoading(false);
+    }
   }, [selectedEvent]);
 
+  useEffect(() => {
+    fetchMenus();
+  }, [fetchMenus]);
+
+  // Cart management
   const clearCart = useCallback(() => {
     setCart([]);
-    toast.success('Commande validée et panier vidé !', { autoClose: 2000 });
-  }, []);
+    fetchMenus(); // Recharger les menus pour mettre à jour les stocks
+    toast.success('Commande validée avec succès !', { autoClose: 2000 });
+  }, [fetchMenus]);
 
   const addToCart = useCallback(
-    async (item) => {
+    (item) => {
       if (item.stock <= 0) {
         toast.error(`Stock épuisé pour "${item.name}".`, { autoClose: 2000 });
         return;
       }
 
-      // Ajouter au panier sans modifier le stock localement
+      const updatedMenus = menus.map((menu) => ({
+        ...menu,
+        items: menu.items.map((i) =>
+          i.id === item.id ? { ...i, stock: i.stock - 1 } : i
+        ),
+      }));
+      setMenus(updatedMenus);
+
       const existing = cart.find((ci) => ci.id === item.id);
       if (existing) {
         setCart(
@@ -144,45 +157,16 @@ const MenuListWithCart = () => {
         setCart([...cart, { ...item, quantity: 1 }]);
       }
 
-      // Vérifier la disponibilité du stock via le backend
-      try {
-        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/orders/reserve`, {
-          tableId: selectedTable,
-          items: [{ menuItemId: item.id, quantity: 1 }],
-          nom: 'Client temporaire',
-          email: 'temp@temp.com',
-        });
-        // Mettre à jour le stock après confirmation du backend
-        setMenus(
-          menus.map((menu) => ({
-            ...menu,
-            items: menu.items.map((i) =>
-              i.id === item.id ? { ...i, stock: i.stock - 1 } : i
-            ),
-          }))
-        );
-      } catch (error) {
-        toast.error('Erreur lors de la réservation de l\'article.', { autoClose: 2000 });
-        // Revenir en arrière si la réservation échoue
-        if (existing) {
-          setCart(
-            cart.map((ci) =>
-              ci.id === item.id ? { ...ci, quantity: ci.quantity - 1 } : ci
-            ).filter((ci) => ci.quantity > 0)
-          );
-        } else {
-          setCart(cart.filter((ci) => ci.id !== item.id));
-        }
-      }
-
-      toast.dismiss();
-      setMessage('');
+      // Clear all notifications and messages
+      toast.dismiss(); // Dismiss all active toasts
+      setMessage(''); // Clear the message state
+      // Notification supprimée ici
     },
-    [cart, menus, selectedTable]
+    [cart, menus]
   );
 
   const updateQuantity = useCallback(
-    async (itemId, delta) => {
+    (itemId, delta) => {
       const cartItem = cart.find((ci) => ci.id === itemId);
       if (!cartItem) return;
 
@@ -197,53 +181,42 @@ const MenuListWithCart = () => {
         return;
       }
 
-      // Vérifier la disponibilité via le backend
-      try {
-        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/orders/reserve`, {
-          tableId: selectedTable,
-          items: [{ menuItemId: itemId, quantity: delta }],
-          nom: 'Client temporaire',
-          email: 'temp@temp.com',
-        });
-        setMenus(
-          menus.map((menu) => ({
-            ...menu,
-            items: menu.items.map((item) =>
-              item.id === itemId
-                ? { ...item, stock: item.stock - delta }
-                : item
-            ),
-          }))
-        );
-        setCart(
-          cart.map((ci) =>
-            ci.id === itemId
-              ? { ...ci, quantity: Math.max(1, ci.quantity + delta) }
-              : ci
-          )
-        );
-      } catch (error) {
-        toast.error('Erreur lors de la mise à jour de la quantité.', { autoClose: 2000 });
-      }
+      const updatedMenus = menus.map((menu) => ({
+        ...menu,
+        items: menu.items.map((item) =>
+          item.id === itemId
+            ? { ...item, stock: item.stock + (delta < 0 ? 1 : -1) }
+            : item
+        ),
+      }));
+      setMenus(updatedMenus);
+
+      setCart(
+        cart.map((ci) =>
+          ci.id === itemId
+            ? { ...ci, quantity: Math.max(1, ci.quantity + delta) }
+            : ci
+        )
+      );
     },
-    [cart, menus, selectedTable]
+    [cart, menus]
   );
 
   const removeFromCart = useCallback(
     (itemId) => {
       const itemInCart = cart.find((ci) => ci.id === itemId);
       if (itemInCart) {
-        setMenus(
-          menus.map((menu) => ({
-            ...menu,
-            items: menu.items.map((item) =>
-              item.id === itemId
-                ? { ...item, stock: item.stock + itemInCart.quantity }
-                : item
-            ),
-          }))
-        );
+        const updatedMenus = menus.map((menu) => ({
+          ...menu,
+          items: menu.items.map((item) =>
+            item.id === itemId
+              ? { ...item, stock: item.stock + itemInCart.quantity }
+              : item
+          ),
+        }));
+        setMenus(updatedMenus);
       }
+
       setCart(cart.filter((ci) => ci.id !== itemId));
       toast.info('Article retiré du panier.', { autoClose: 2000 });
     },
@@ -260,6 +233,7 @@ const MenuListWithCart = () => {
     return isNaN(num) ? '0.00' : num.toFixed(2);
   };
 
+  // Filters & Pagination
   const filteredMenus = useMenuFilter(menus, searchQuery, minPrice, maxPrice, selectedCategory);
 
   const paginatedMenus = useMemo(
@@ -288,6 +262,7 @@ const MenuListWithCart = () => {
 
   return (
     <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-8 py-8 font-sans">
+      {/* Notifications with close button */}
       <ToastContainer
         position="top-right"
         autoClose={2000}
@@ -308,6 +283,7 @@ const MenuListWithCart = () => {
         bodyClassName="flex items-center p-4"
       />
 
+      {/* Header */}
       <HeaderSection
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -315,6 +291,7 @@ const MenuListWithCart = () => {
         onCartOpen={() => setIsCartOpen(true)}
       />
 
+      {/* Filters */}
       <motion.div
         className="sticky top-0 z-10 bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200"
         initial={{ opacity: 0, y: -20 }}
@@ -322,6 +299,7 @@ const MenuListWithCart = () => {
         transition={{ duration: 0.4, ease: 'easeOut' }}
       >
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+          {/* Price Filters */}
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <input
               type="number"
@@ -341,6 +319,7 @@ const MenuListWithCart = () => {
               aria-label="Maximum price"
             />
           </div>
+          {/* Category Filter */}
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
@@ -356,6 +335,7 @@ const MenuListWithCart = () => {
         </div>
       </motion.div>
 
+      {/* Message */}
       {message && (
         <motion.div
           className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-teal-500 text-white px-4 py-2 rounded-lg shadow-lg"
@@ -369,6 +349,7 @@ const MenuListWithCart = () => {
         </motion.div>
       )}
 
+      {/* Loader */}
       {isLoading || !selectedEvent ? (
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -419,6 +400,7 @@ const MenuListWithCart = () => {
             <MenuGrid menus={paginatedMenus} addToCart={addToCart} formatPrice={formatPrice} />
           </motion.div>
 
+          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center mt-8 gap-2">
               {Array.from({ length: totalPages }).map((_, i) => (
@@ -440,6 +422,7 @@ const MenuListWithCart = () => {
         </motion.div>
       )}
 
+      {/* Cart Drawer */}
       <CartDrawer
         isOpen={isCartOpen}
         cart={cart}
@@ -451,6 +434,7 @@ const MenuListWithCart = () => {
         onValidateOrder={handleValidateOrder}
       />
 
+      {/* Invoice Modal */}
       <InvoiceModal
         isOpen={isInvoiceOpen}
         onClose={() => setIsInvoiceOpen(false)}
