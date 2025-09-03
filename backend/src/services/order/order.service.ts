@@ -39,66 +39,64 @@ export class OrderService {
   ) {}
 
   async createOrder(tableId: number, items: { menuItemId: number; quantity: number }[], nom?: string, email?: string): Promise<Order> {
-  console.log(`Création d'une commande pour tableId: ${tableId}`);
-  const table = await this.tableEventRepository.findOne({ where: { id: tableId }, relations: ['event'] });
-  if (!table) {
-    console.error(`Tableau non trouvé pour tableId: ${tableId}`);
-    throw new NotFoundException('Tableau non trouvé');
-  }
-
-  // Vérifier le stock avant de créer la commande
-  for (const item of items) {
-    const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
-    if (!menuItem) {
-      console.error(`Article de menu non trouvé pour menuItemId: ${item.menuItemId}`);
-      throw new NotFoundException(`Article de menu ${item.menuItemId} non trouvé`);
+    console.log(`Création d'une commande pour tableId: ${tableId}`);
+    const table = await this.tableEventRepository.findOne({ where: { id: tableId }, relations: ['event'] });
+    if (!table) {
+      console.error(`Tableau non trouvé pour tableId: ${tableId}`);
+      throw new NotFoundException('Tableau non trouvé');
     }
-    if (menuItem.stock < item.quantity) {
-      console.error(`Stock insuffisant pour ${menuItem.name}. Disponible: ${menuItem.stock}, Demandé: ${item.quantity}`);
-      throw new BadRequestException(`Stock insuffisant pour ${menuItem.name}. Disponible: ${menuItem.stock}, Demandé: ${item.quantity}`);
-    }
-  }
 
-  const order = this.orderRepository.create({
-    table,
-    nom: nom || 'Client invité',
-    email: email,
-    orderDate: new Date(),
-    status: 'pending',
-    paymentStatus: 'unpaid',
-    total: 0,
-  });
-  const savedOrder = await this.orderRepository.save(order);
-  console.log(`Commande créée avec ID: ${savedOrder.id}`);
-
-  const orderItems = await Promise.all(
-    items.map(async (item) => {
+    for (const item of items) {
       const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
-      if (!menuItem) throw new NotFoundException(`Article de menu ${item.menuItemId} non trouvé`);
-      const subtotal = menuItem.price * item.quantity;
+      if (!menuItem) {
+        console.error(`Article de menu non trouvé pour menuItemId: ${item.menuItemId}`);
+        throw new NotFoundException(`Article de menu ${item.menuItemId} non trouvé`);
+      }
+      if (menuItem.stock < item.quantity) {
+        console.error(`Stock insuffisant pour ${menuItem.name}. Disponible: ${menuItem.stock}, Demandé: ${item.quantity}`);
+        throw new BadRequestException(`Stock insuffisant pour ${menuItem.name}. Disponible: ${menuItem.stock}, Demandé: ${item.quantity}`);
+      }
+    }
 
-      // Mettre à jour le stock - C'EST ICI QUE LE STOCK DIMINUE
-      menuItem.stock -= item.quantity;
-      await this.menuItemRepository.save(menuItem);
-      console.log(`Stock mis à jour pour menuItemId: ${menuItem.id}, nouveau stock: ${menuItem.stock}`);
+    const order = this.orderRepository.create({
+      table,
+      nom: nom,
+      email: email,
+      orderDate: new Date(),
+      status: 'pending',
+      paymentStatus: 'unpaid',
+      total: 0,
+    });
+    const savedOrder = await this.orderRepository.save(order);
+    console.log(`Commande créée avec ID: ${savedOrder.id}`);
 
-      return this.orderItemRepository.create({
-        order: savedOrder,
-        menuItem: menuItem as MenuItem,
-        quantity: item.quantity,
-        subtotal,
-      } as DeepPartial<OrderItem>);
-    }),
-  );
+    const orderItems = await Promise.all(
+      items.map(async (item) => {
+        const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
+        if (!menuItem) throw new NotFoundException(`Article de menu ${item.menuItemId} non trouvé`);
+        const subtotal = menuItem.price * item.quantity;
 
-  const total = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
-  savedOrder.total = total;
+        menuItem.stock -= item.quantity;
+        await this.menuItemRepository.save(menuItem);
+        console.log(`Stock mis à jour pour menuItemId: ${menuItem.id}, nouveau stock: ${menuItem.stock}`);
 
-  savedOrder.items = await this.orderItemRepository.save(orderItems);
-  const finalOrder = await this.orderRepository.save(savedOrder);
-  this.ordersGateway.notifyNewOrder(finalOrder);
-  return finalOrder;
-}
+        return this.orderItemRepository.create({
+          order: savedOrder,
+          menuItem: menuItem as MenuItem,
+          quantity: item.quantity,
+          subtotal,
+        } as DeepPartial<OrderItem>);
+      }),
+    );
+
+    const total = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+    savedOrder.total = total;
+
+    savedOrder.items = await this.orderItemRepository.save(orderItems);
+    const finalOrder = await this.orderRepository.save(savedOrder);
+    this.ordersGateway.notifyNewOrder(finalOrder);
+    return finalOrder;
+  }
 
   async findOrdersByTable(tableId: number): Promise<(Order & { total: number })[]> {
     console.log(`Recherche des commandes pour tableId: ${tableId}`);
