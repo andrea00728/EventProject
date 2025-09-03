@@ -4,7 +4,7 @@ import ModalEvenement from "./ModalEvenement";
 // import { Evenement } from 'backend/src/entities/Evenement';
 // import { EvenementService } from 'backend/src/services/evenement/evenement.service';
 import { getAllEvents } from "../../services/evenementServ";
-import { FaEye, FaUser } from "react-icons/fa";
+import { FaEye, FaUser, FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
 import {
   MdCalendarToday,
   MdFileDownload,
@@ -454,6 +454,51 @@ export default function EvenementAd() {
   const activeStatusClasses = darkMode ? "bg-green-900/50 text-green-300" : "bg-green-100 text-green-800";
   const inactiveStatusClasses = darkMode ? "bg-gray-700/50 text-gray-400" : "bg-gray-100 text-gray-600";
 
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+
+  const onSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedData = useMemo(() => {
+    let sortableItems = [...filteredData];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+        
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          // Tri alphabétique pour les chaînes de caractères
+          if (aValue.toLowerCase() < bValue.toLowerCase()) {
+            return sortConfig.direction === 'asc' ? -1 : 1;
+          }
+          if (aValue.toLowerCase() > bValue.toLowerCase()) {
+            return sortConfig.direction === 'asc' ? 1 : -1;
+          }
+        } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+          // Tri numérique
+          if (aValue < bValue) {
+            return sortConfig.direction === 'asc' ? -1 : 1;
+          }
+          if (aValue > bValue) {
+            return sortConfig.direction === 'asc' ? 1 : -1;
+          }
+        } else if (sortConfig.key === 'date') {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
+        }
+
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filteredData, sortConfig]);
+
 
   return (
     <div className={`min-h-100vh p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${pageBg}`}>
@@ -552,18 +597,14 @@ export default function EvenementAd() {
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <p className={`text-lg ${
-              darkMode ? 'text-red-400' : 'text-red-600'
-            }`}>{error}</p>
+            <p className={`text-lg ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
+              {error}
+            </p>
           </div>
         ) : filteredData.length === 0 ? (
           <div className="text-center py-12">
-            <MdCalendarToday className={`w-16 h-16 mx-auto mb-4 ${
-              darkMode ? 'text-gray-600' : 'text-gray-300'
-            }`} />
-            <p className={`text-lg ${
-              darkMode ? 'text-purple-300' : 'text-purple-600'  // Violet
-            }`}>
+            <MdCalendarToday className={`w-16 h-16 mx-auto mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+            <p className={`text-lg ${darkMode ? 'text-purple-300' : 'text-purple-600'}`}>
               Aucun événement trouvé
             </p>
           </div>
@@ -572,7 +613,7 @@ export default function EvenementAd() {
             {/* Version mobile - Cards */}
             <div className="block md:hidden space-y-4">
               {filteredData.map((event, index) => (
-                <EventCard 
+                <EventCard
                   key={index}
                   event={{
                     ...event,
@@ -581,7 +622,7 @@ export default function EvenementAd() {
                     localisation: event.location.nom,
                     organisateur: event.user.name,
                     status: event.status,
-                    participants: event.participants || 0
+                    participants: event.participants || 0,
                   }}
                   darkMode={darkMode}
                   onViewDetails={openModal}
@@ -591,15 +632,49 @@ export default function EvenementAd() {
 
             {/* Version desktop - DataGrid */}
             <div className={tableContainerClasses}>
-              {/* En-têtes du tableau */}
+              {/* En-têtes du tableau avec filtres de tri */}
               <div className={`rounded-t-xl ${headerClasses}`}>
-                <div className="col-span-3">ÉVÉNEMENT</div>
-                <div className="col-span-1">TYPE</div>
-                <div className="col-span-2">THÈME</div>
+                <button onClick={() => onSort('nom')} className="col-span-3 flex items-center gap-2">
+                  ÉVÉNEMENT
+                  {sortConfig.key === 'nom' ? (
+                    sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />
+                  ) : (
+                    <FaSort className="opacity-50" />
+                  )}
+                </button>
+                <button onClick={() => onSort('type')} className="col-span-1 flex items-center gap-2">
+                  TYPE
+                  {sortConfig.key === 'type' ? (
+                    sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />
+                  ) : (
+                    <FaSort className="opacity-50" />
+                  )}
+                </button>
+                <button onClick={() => onSort('theme')} className="col-span-2 flex items-center gap-2">
+                  THÈME
+                  {sortConfig.key === 'theme' ? (
+                    sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />
+                  ) : (
+                    <FaSort className="opacity-50" />
+                  )}
+                </button>
                 <div className="col-span-1">ÉVÉNEMENT ORGANISE</div>
-                <div className="col-span-2">DATE DÉBUT</div>
-                <div className="col-span-1 text-center">PARTICIPANTS</div>
-                {/* <div className="col-span-1 text-center">STATUT</div> */}
+                <button onClick={() => onSort('date')} className="col-span-2 flex items-center gap-2">
+                  DATE DÉBUT
+                  {sortConfig.key === 'date' ? (
+                    sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />
+                  ) : (
+                    <FaSort className="opacity-50" />
+                  )}
+                </button>
+                <button onClick={() => onSort('invites')} className="col-span-1 text-center flex items-center justify-center gap-2">
+                  PARTICIPANTS
+                  {sortConfig.key === 'invites' ? (
+                    sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />
+                  ) : (
+                    <FaSort className="opacity-50" />
+                  )}
+                </button>
                 <div className="col-span-2 text-center">ACTIONS</div>
               </div>
 
@@ -608,8 +683,8 @@ export default function EvenementAd() {
                 className="divide-y transition-colors duration-300"
                 style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}
               >
-                {filteredData.length > 0 ? (
-                  filteredData
+                {sortedData.length > 0 ? (
+                  sortedData
                     .slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage)
                     .map((event, index) => (
                       <div key={index} className={rowClasses}>
@@ -619,9 +694,7 @@ export default function EvenementAd() {
                         </div>
                         {/* Type */}
                         <div className="col-span-1">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              darkMode ? 'bg-gray-700 text-blue-300' : 'bg-blue-50 text-blue-600'
-                            }`}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${darkMode ? 'bg-gray-700 text-blue-300' : 'bg-blue-50 text-blue-600'}`}>
                             {event.type}
                           </span>
                         </div>
@@ -631,15 +704,7 @@ export default function EvenementAd() {
                         </div>
                         {/* Visibilité */}
                         <div className="col-span-1">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            event.isPublic
-                              ? darkMode
-                                ? 'bg-blue-900/50 text-blue-300'
-                                : 'bg-blue-100 text-blue-800'
-                              : darkMode
-                                ? 'bg-gray-700/50 text-gray-400'
-                                : 'bg-gray-100 text-gray-600'
-                          }`}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${event.isPublic ? (darkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-800') : (darkMode ? 'bg-gray-700/50 text-gray-400' : 'bg-gray-100 text-gray-600')}`}>
                             {event.isPublic ? 'Public' : 'Privé'}
                           </span>
                         </div>
@@ -654,14 +719,6 @@ export default function EvenementAd() {
                             <span>{event.invites.length || 0}</span>
                           </div>
                         </div>
-                        {/* Statut */}
-                        {/* <div className="col-span-1 flex items-center justify-center">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              event.status === 'active' ? activeStatusClasses : inactiveStatusClasses
-                            }`}>
-                            {event.status === 'active' ? 'Actif' : 'Inactif'}
-                          </span>
-                        </div> */}
                         {/* Bouton d'action */}
                         <div className="col-span-2 flex items-center justify-center">
                           <button
@@ -682,52 +739,37 @@ export default function EvenementAd() {
               </div>
 
               {/* Pagination */}
-              {filteredData.length > 0 && (
+              {sortedData.length > 0 && (
                 <div className={`rounded-b-xl ${paginationClasses}`}>
-                  {/* Sélection du nombre de lignes */}
                   <div className="flex items-center space-x-2">
                     <span className={textMuted}>Lignes par page:</span>
-                    <select 
+                    <select
                       value={rowsPerPage}
                       onChange={(e) => {
                         setRowsPerPage(Number(e.target.value));
                         setCurrentPage(0);
                       }}
-                      className={`border rounded px-2 py-1 transition-colors duration-200 ${
-                        darkMode ? "bg-gray-700 border-gray-600 text-gray-200" : "bg-white border-gray-300 text-gray-800"
-                      }`}
+                      className={`border rounded px-2 py-1 transition-colors duration-200 ${darkMode ? "bg-gray-700 border-gray-600 text-gray-200" : "bg-white border-gray-300 text-gray-800"}`}
                     >
                       {[5, 10, 20, 50].map(option => (
                         <option key={option} value={option}>{option}</option>
                       ))}
                     </select>
                   </div>
-
-                  {/* Info de pagination */}
                   <div className={textMuted}>
-                    Affichage de {(currentPage * rowsPerPage) + 1} à {Math.min((currentPage + 1) * rowsPerPage, filteredData.length)} sur {filteredData.length} événements
+                    Affichage de {(currentPage * rowsPerPage) + 1} à {Math.min((currentPage + 1) * rowsPerPage, sortedData.length)} sur {sortedData.length} événements
                   </div>
-
-                  {/* Boutons de navigation */}
                   <div className="flex space-x-2">
-                    <button 
-                      className={`px-4 py-2 rounded-lg border transition-colors duration-200 ${
-                        darkMode
-                          ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800"
-                          : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"
-                      } disabled:opacity-50`}
+                    <button
+                      className={`px-4 py-2 rounded-lg border transition-colors duration-200 ${darkMode ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800" : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"} disabled:opacity-50`}
                       disabled={currentPage === 0}
                       onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
                     >
                       Précédent
                     </button>
-                    <button 
-                      className={`px-4 py-2 rounded-lg border transition-colors duration-200 ${
-                        darkMode
-                          ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800"
-                          : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"
-                      } disabled:opacity-50`}
-                      disabled={(currentPage + 1) * rowsPerPage >= filteredData.length}
+                    <button
+                      className={`px-4 py-2 rounded-lg border transition-colors duration-200 ${darkMode ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800" : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"} disabled:opacity-50`}
+                      disabled={(currentPage + 1) * rowsPerPage >= sortedData.length}
                       onClick={() => setCurrentPage(prev => prev + 1)}
                     >
                       Suivant
