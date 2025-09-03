@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ContactMessage } from '../../entities/ContactMessage';
 import { NotificationGateway } from 'src/gateway/notification.gateway';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class ContactService {
@@ -38,6 +39,24 @@ export class ContactService {
         }
         message.isRead = isRead;
         return this.contactMessageRepository.save(message);
+    }
+
+    async sendResponseMessage(to : string, name : string, message : string){
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+              user: process.env.SMTP_USER,
+              pass: process.env.SMTP_PASS,
+            },
+        });
+        const mailOptions = {
+            from: process.env.SMTP_USER,
+            to: to,
+            subject: `Réponse du message MasterTable`,
+            html: `<p>Bonjour ${name}, ${message}.</p>`,
+        };
+    
+        await transporter.sendMail(mailOptions);
     }
 
 
