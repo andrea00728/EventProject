@@ -4,51 +4,30 @@ import {
     Users,
     UserCheck,
     Table as TableIcon,
-    TrendingUp,
-    Clock,
     MapPin,
-    CheckCircle,
-    AlertCircle,
-    Activity,
-    MoreVertical,
-    Star,
     Eye,
     X,
     Phone,
     Mail,
     User,
-    Settings,
-    Badge
+    List,
+    LayoutGrid
 } from "lucide-react";
 
 export default function DashboardEvenement() {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
-
+    const [viewMode, setViewMode] = useState("list");
     const [activeTab, setActiveTab] = useState("invites");
-
-
-    const [statsGenerales] = useState({
-        totalEvenements: 24,
-        evenementsActifs: 5,
-        totalInvites: 2856,
-        totalPersonnel: 148,
-        totalTables: 286,
-        tauxReussite: 96
-    });
 
     const [evenementsRecents] = useState([
         {
             id: 1,
             nom: "Mariage Sophie & Marc",
             date: "2025-09-05",
-            statut: "En cours",
             invites: 120,
             lieu: "Château de Malmaison",
             type: "Mariage",
-            priorite: "Haute",
-            description: "Célébration du mariage de Sophie et Marc dans un cadre élégant et romantique.",
-            organisateur: "Marie Dubois",
             invitesList: [
                 { id: 1, nom: "Jean Dupont", email: "jean.dupont@email.com", telephone: "+33 6 12 34 56 78", statut: "Confirmé", table: 1 },
                 { id: 2, nom: "Marie Martin", email: "marie.martin@email.com", telephone: "+33 6 98 76 54 32", statut: "En attente", table: 2 },
@@ -72,13 +51,9 @@ export default function DashboardEvenement() {
             id: 2,
             nom: "Conférence Tech Summit",
             date: "2025-09-08",
-            statut: "Planifié",
             invites: 300,
             lieu: "Centre des Congrès",
             type: "Conférence",
-            priorite: "Moyenne",
-            description: "Conférence technologique rassemblant les leaders de l'industrie tech.",
-            organisateur: "Tech Events Co.",
             invitesList: [
                 { id: 1, nom: "Dr. Sarah Johnson", email: "sarah.johnson@tech.com", telephone: "+33 6 11 11 11 11", statut: "Confirmé", table: 5 },
                 { id: 2, nom: "Mark Stevens", email: "mark.stevens@startup.com", telephone: "+33 6 22 22 22 22", statut: "Confirmé", table: 6 },
@@ -99,13 +74,9 @@ export default function DashboardEvenement() {
             id: 3,
             nom: "Gala de Charité",
             date: "2025-09-12",
-            statut: "Planifié",
             invites: 200,
             lieu: "Hôtel Ritz",
             type: "Gala",
-            priorite: "Haute",
-            description: "Gala de bienfaisance pour soutenir les enfants défavorisés.",
-            organisateur: "Association Espoir",
             invitesList: [
                 { id: 1, nom: "Mme Aristocrate", email: "contact@aristocrate.fr", telephone: "+33 6 77 77 77 77", statut: "Confirmé", table: 8 },
                 { id: 2, nom: "M. Philanthrope", email: "don@philanthrope.org", telephone: "+33 6 88 88 88 88", statut: "Confirmé", table: 9 }
@@ -123,13 +94,9 @@ export default function DashboardEvenement() {
             id: 4,
             nom: "Séminaire Corporate",
             date: "2025-09-15",
-            statut: "En préparation",
             invites: 80,
             lieu: "Business Center",
             type: "Séminaire",
-            priorite: "Faible",
-            description: "Séminaire de formation pour les équipes commerciales.",
-            organisateur: "RH Solutions",
             invitesList: [
                 { id: 1, nom: "Équipe Ventes Paris", email: "ventes.paris@corp.com", telephone: "+33 6 11 22 33 44", statut: "Confirmé", table: 10 }
             ],
@@ -141,66 +108,6 @@ export default function DashboardEvenement() {
             ]
         }
     ]);
-
-    const [activitesRecentes] = useState([
-        {
-            id: 1,
-            action: "Nouveau invité ajouté",
-            evenement: "Mariage Sophie & Marc",
-            temps: "Il y a 2 heures",
-            type: "invite"
-        },
-        {
-            id: 2,
-            action: "Personnel assigné",
-            evenement: "Conférence Tech Summit",
-            temps: "Il y a 4 heures",
-            type: "personnel"
-        },
-        {
-            id: 3,
-            action: "Tables réorganisées",
-            evenement: "Gala de Charité",
-            temps: "Il y a 6 heures",
-            type: "table"
-        },
-        {
-            id: 4,
-            action: "Événement créé",
-            evenement: "Séminaire Corporate",
-            temps: "Hier",
-            type: "evenement"
-        }
-    ]);
-
-    const getStatutColor = (statut) => {
-        switch (statut) {
-            case "En cours": return "bg-green-100 text-green-800";
-            case "Planifié": return "bg-blue-100 text-blue-800";
-            case "En préparation": return "bg-orange-100 text-orange-800";
-            case "Terminé": return "bg-gray-100 text-gray-800";
-            default: return "bg-gray-100 text-gray-800";
-        }
-    };
-
-    const getPrioriteColor = (priorite) => {
-        switch (priorite) {
-            case "Haute": return "bg-red-100 text-red-800 border-red-200";
-            case "Moyenne": return "bg-yellow-100 text-yellow-800 border-yellow-200";
-            case "Faible": return "bg-green-100 text-green-800 border-green-200";
-            default: return "bg-gray-100 text-gray-800 border-gray-200";
-        }
-    };
-
-    const getTypeIcon = (type) => {
-        switch (type) {
-            case "invite": return <UserCheck className="w-4 h-4" />;
-            case "personnel": return <Users className="w-4 h-4" />;
-            case "table": return <TableIcon className="w-4 h-4" />;
-            case "evenement": return <Calendar className="w-4 h-4" />;
-            default: return <Activity className="w-4 h-4" />;
-        }
-    };
 
     const getInviteStatutColor = (statut) => {
         switch (statut) {
@@ -243,25 +150,45 @@ export default function DashboardEvenement() {
     };
 
     return (
-        <div className="min-h-screen">
-            {/* En-tête */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Événements</h1>
-                <p className="text-gray-600">Vue d'ensemble de tous vos événements et activités</p>
+        <div className="min-h-screen p-6 bg-gray-50">
+            <div className="mb-8 flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                        Dashboard Événements
+                    </h1>
+                    <p className="text-gray-600">
+                        Vue d'ensemble de tous vos événements
+                    </p>
+                </div>
+                <div className="flex space-x-2">
+                    <button
+                        onClick={() => setViewMode("list")}
+                        className={`p-2 rounded-lg border ${viewMode === "list"
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-white text-gray-600 border-gray-300"
+                            }`}
+                    >
+                        <List className="w-5 h-5" />
+                    </button>
+                    <button
+                        onClick={() => setViewMode("card")}
+                        className={`p-2 rounded-lg border ${viewMode === "card"
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-white text-gray-600 border-gray-300"
+                            }`}
+                    >
+                        <LayoutGrid className="w-5 h-5" />
+                    </button>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Événements récents */}
-                <div className="lg:col-span-2">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-                        <div className="px-6 py-4 border-b border-gray-200">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-semibold text-gray-900">Événements Récents</h2>
-                                <button className="text-gray-400 hover:text-gray-600">
-                                    <MoreVertical className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
+            <div className="grid grid-cols-1 gap-8">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div className="px-6 py-4 border-b border-gray-200">
+                        <h2 className="text-lg font-semibold text-gray-900">Événements Récents</h2>
+                    </div>
+
+                    {viewMode === "list" && (
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead className="bg-gray-50">
@@ -273,16 +200,10 @@ export default function DashboardEvenement() {
                                             Date
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Statut
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Invités
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Lieu
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Priorité
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Actions
@@ -314,11 +235,6 @@ export default function DashboardEvenement() {
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 {new Date(evenement.date).toLocaleDateString('fr-FR')}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatutColor(evenement.statut)}`}>
-                                                    {evenement.statut}
-                                                </span>
-                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 <div className="flex items-center">
                                                     <Users className="w-4 h-4 text-gray-400 mr-1" />
@@ -330,11 +246,6 @@ export default function DashboardEvenement() {
                                                     <MapPin className="w-4 h-4 text-gray-400 mr-1" />
                                                     <span className="truncate max-w-32">{evenement.lieu}</span>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getPrioriteColor(evenement.priorite)}`}>
-                                                    {evenement.priorite}
-                                                </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                 <button
@@ -350,56 +261,77 @@ export default function DashboardEvenement() {
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                </div>
+                    )}
 
-                {/* Activités récentes */}
-                <div>
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-                        <div className="px-6 py-4 border-b border-gray-200">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-semibold text-gray-900">Activités Récentes</h2>
-                                <button className="text-gray-400 hover:text-gray-600">
-                                    <MoreVertical className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
+                    {viewMode === "card" && (
                         <div className="p-6">
-                            <div className="space-y-4">
-                                {activitesRecentes.map((activite, index) => (
-                                    <div key={activite.id} className={`flex items-start space-x-3 ${index < activitesRecentes.length - 1 ? 'pb-4 border-b border-gray-100' : ''}`}>
-                                        <div className="flex-shrink-0">
-                                            <div className="h-8 w-8 bg-gradient-to-r from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
-                                                <div className="text-white">
-                                                    {getTypeIcon(activite.type)}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {evenementsRecents.map((evenement) => (
+                                    <div key={evenement.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200">
+                                        <div className="p-6 border-b border-gray-100">
+                                            <div className="flex items-center mb-4">
+                                                <div className="flex-shrink-0 h-12 w-12">
+                                                    <div className="h-12 w-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                                                        <span className="text-lg font-medium text-white">
+                                                            {evenement.nom.charAt(0)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="ml-4 flex-1">
+                                                    <h3 className="text-lg font-semibold text-gray-900">
+                                                        {evenement.nom}
+                                                    </h3>
+                                                    <p className="text-sm text-gray-500 mt-1">
+                                                        {evenement.type}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900">
-                                                {activite.action}
-                                            </p>
-                                            <p className="text-sm text-blue-600 font-medium">
-                                                {activite.evenement}
-                                            </p>
-                                            <p className="text-xs text-gray-500 flex items-center mt-1">
-                                                <Clock className="w-3 h-3 mr-1" />
-                                                {activite.temps}
-                                            </p>
+                                        <div className="p-6 space-y-4">
+                                            <div className="flex items-center text-gray-700">
+                                                <Calendar className="w-5 h-5 text-gray-400 mr-3" />
+                                                <span className="text-sm font-medium">
+                                                    {new Date(evenement.date).toLocaleDateString('fr-FR', {
+                                                        weekday: 'long',
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
+                                                    })}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center text-gray-700">
+                                                <Users className="w-5 h-5 text-gray-400 mr-3" />
+                                                <span className="text-sm">
+                                                    <span className="font-medium">{evenement.invites}</span> invité{evenement.invites > 1 ? 's' : ''}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center text-gray-700">
+                                                <MapPin className="w-5 h-5 text-gray-400 mr-3" />
+                                                <span className="text-sm truncate" title={evenement.lieu}>
+                                                    {evenement.lieu}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-lg">
+                                            <button
+                                                onClick={() => openEventModal(evenement)}
+                                                className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center"
+                                            >
+                                                <Eye className="w-4 h-4 mr-2" />
+                                                Voir les détails
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
 
-            {/* Modal des détails de l'événement */}
             {modalOpen && selectedEvent && (
                 <div className="fixed inset-0 bg-black/30 backdrop-blur-lg flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
-                        {/* En-tête du modal */}
                         <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 to-purple-600">
                             <div className="flex items-center justify-between">
                                 <div className="text-white">
@@ -416,16 +348,14 @@ export default function DashboardEvenement() {
                         </div>
 
                         <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
-
-                            {/* Onglets */}
                             <div className="px-6">
                                 <div className="border-b border-gray-200">
                                     <nav className="-mb-px flex space-x-8">
                                         <button
                                             onClick={() => setActiveTab("invites")}
                                             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "invites"
-                                                    ? "border-blue-500 text-blue-600"
-                                                    : "border-transparent text-gray-500 hover:text-gray-700"
+                                                ? "border-blue-500 text-blue-600"
+                                                : "border-transparent text-gray-500 hover:text-gray-700"
                                                 }`}
                                         >
                                             Liste des Invités ({selectedEvent.invitesList.length})
@@ -433,8 +363,8 @@ export default function DashboardEvenement() {
                                         <button
                                             onClick={() => setActiveTab("personnel")}
                                             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "personnel"
-                                                    ? "border-blue-500 text-blue-600"
-                                                    : "border-transparent text-gray-500 hover:text-gray-700"
+                                                ? "border-blue-500 text-blue-600"
+                                                : "border-transparent text-gray-500 hover:text-gray-700"
                                                 }`}
                                         >
                                             Personnel ({selectedEvent.personnelList.length})
@@ -442,8 +372,8 @@ export default function DashboardEvenement() {
                                         <button
                                             onClick={() => setActiveTab("tables")}
                                             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "tables"
-                                                    ? "border-blue-500 text-blue-600"
-                                                    : "border-transparent text-gray-500 hover:text-gray-700"
+                                                ? "border-blue-500 text-blue-600"
+                                                : "border-transparent text-gray-500 hover:text-gray-700"
                                                 }`}
                                         >
                                             Tables ({selectedEvent.tablesList.length})
@@ -452,9 +382,7 @@ export default function DashboardEvenement() {
                                 </div>
                             </div>
 
-                            {/* Contenu des onglets */}
                             <div className="px-6 py-4">
-                                {/* Liste des invités */}
                                 {activeTab === "invites" && (
                                     <div className="mb-8">
                                         <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -529,7 +457,6 @@ export default function DashboardEvenement() {
                                     </div>
                                 )}
 
-                                {/* Liste du personnel */}
                                 {activeTab === "personnel" && (
                                     <div className="mb-8">
                                         <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -560,7 +487,7 @@ export default function DashboardEvenement() {
                                                             <td className="px-4 py-4 whitespace-nowrap">
                                                                 <div className="flex items-center">
                                                                     <div className="h-8 w-8 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
-                                                                        <Badge className="w-4 h-4 text-white" />
+                                                                        <UserCheck className="w-4 h-4 text-white" />
                                                                     </div>
                                                                     <div className="ml-3">
                                                                         <div className="text-sm font-medium text-gray-900">
@@ -595,7 +522,6 @@ export default function DashboardEvenement() {
                                     </div>
                                 )}
 
-                                {/* Liste des tables */}
                                 {activeTab === "tables" && (
                                     <div className="mb-4">
                                         <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -639,22 +565,6 @@ export default function DashboardEvenement() {
                                         </div>
                                     </div>
                                 )}
-                            </div>
-
-                            {/* Actions */}
-                            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-2">
-                                        <div className="h-2 w-2 bg-green-400 rounded-full"></div>
-                                        <span className="text-sm text-gray-600">Dernière mise à jour: Il y a 2 heures</span>
-                                    </div>
-                                    <div className="flex items-center space-x-3">
-                                        <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                                            Exporter
-                                        </button>
-                                        
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>

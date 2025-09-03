@@ -1,18 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation, Outlet } from "react-router-dom";
-import {
-  LayoutDashboard,
-  BarChart3,
-  Users,
-  Calendar,
-  Settings,
-} from "lucide-react";
-import {
-  Box,
-  useTheme,
-  useMediaQuery,
-  Typography
-} from "@mui/material";
+import { LayoutDashboard, Calendar } from "lucide-react";
+import { Box, useTheme, useMediaQuery, Typography } from "@mui/material";
 import { RxCaretRight, RxCaretLeft } from "react-icons/rx";
 
 export default function DashboardPage() {
@@ -21,9 +10,7 @@ export default function DashboardPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   const choixItems = [
     { path: "vueDash", name: "Vue d'ensemble", icon: <LayoutDashboard className="w-5 h-5" /> },
@@ -31,38 +18,29 @@ export default function DashboardPage() {
   ];
 
   const linkClass = (path) =>
-    `flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
-      pathname === `/evenement/dashboard/${path}` ||
-      (path === "" && pathname === "/evenement/dashboard")
-        ? "bg-[#6b48ff] font-bold text-white shadow-md"
-        : "hover:bg-[#e6ebfc] text-gray-700"
+    `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors duration-200 ${
+      pathname === `/evenement/dashboard/${path}` || (path === "" && pathname === "/evenement/dashboard")
+        ? "bg-[#6b48ff] text-white font-semibold shadow-md"
+        : "text-gray-700 hover:bg-[#f0f2ff] hover:text-[#4b4bff]"
     }`;
 
   const handleLinkClick = () => {
-    if (isMobile) {
-      setIsMenuOpen(false); // Ferme le menu après la navigation sur mobile
-    }
+    if (isMobile) setIsMenuOpen(false);
   };
 
   return (
-    <Box
-      className="relative flex h-screen bg-slate-100"
-      sx={{
-        width: "100vw",
-        minHeight: "100vh",
-        position: "relative",
-        boxSizing: 'border-box'
-      }}
-    >
-      {/* Bouton de menu pour les petits écrans */}
-      <div className={`
-        absolute top-4 z-40 lg:hidden
-        transform transition-transform duration-300
-        ${isMenuOpen ? 'left-64' : 'left-2'}
-      `}>
+    <Box className="flex h-screen bg-slate-100">
+      {/* Bouton menu mobile */}
+      <div
+        className={`
+          absolute top-4 z-50 lg:hidden
+          transition-all duration-300
+          ${isMenuOpen ? "left-64" : "left-2"}
+        `}
+      >
         <button
           onClick={toggleMenu}
-          className="p-3 bg-white/70 backdrop-blur-sm shadow-lg border border-gray-200 transition-all hover:scale-105 transform hover:rotate-12"
+          className="p-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-md hover:scale-105 transition-transform"
         >
           {isMenuOpen ? (
             <RxCaretLeft className="w-6 h-6 text-gray-700" />
@@ -72,49 +50,47 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* Sidebar : cachée par défaut, s'anime pour apparaître, visible sur les grands écrans */}
+      {/* Sidebar */}
       <Box
         component="aside"
         className={`
-          fixed h-screen w-64 bg-white/90 backdrop-blur-sm border-r border-gray-200 shadow-xl flex flex-col z-30
+          fixed top-0 left-0 h-full w-64 bg-white/95 backdrop-blur-md border-r border-gray-200 shadow-lg flex flex-col z-40
           transform transition-transform duration-300
-          ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${isMenuOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
         `}
       >
-        <Box sx={{ p: 3 }} className="h-full flex flex-col">
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 4 }}>
-            <LayoutDashboard className="w-6 h-6 text-[#2c3e50]" />
-            <Typography variant="h6" fontWeight="bold" color="#2c3e50">
-              Tableau de Bord
-            </Typography>
-          </Box>
-          <Box sx={{ spaceY: 2 }}>
-            {choixItems.map(({ path, name, icon }) => (
-              <Link key={path} to={path} className={linkClass(path)} onClick={handleLinkClick}>
-                {icon}
-                {name}
-              </Link>
-            ))}
+        <Box sx={{ p: 4 }} className="flex flex-col h-full justify-between">
+          <Box>
+            <Box className="flex items-center gap-2 mb-6">
+              <LayoutDashboard className="w-6 h-6 text-[#2c3e50]" />
+              <Typography variant="h6" fontWeight="bold" color="#2c3e50">
+                Tableau de Bord
+              </Typography>
+            </Box>
+            <Box className="flex flex-col gap-2">
+              {choixItems.map(({ path, name, icon }) => (
+                <Link
+                  key={path}
+                  to={path}
+                  className={linkClass(path)}
+                  onClick={handleLinkClick}
+                >
+                  {icon}
+                  <span className="truncate">{name}</span>
+                </Link>
+              ))}
+            </Box>
           </Box>
         </Box>
       </Box>
 
       {/* Contenu principal */}
-      <Box
-        component="main"
-        sx={{
-          flex: 1,
-          p: 4,
-          overflow: "hidden",
-          boxSizing: 'border-box'
-        }}
-        className="flex-1 flex flex-col overflow-hidden lg:ml-64"
-      >
-        <Box sx={{ p: 4, bgcolor: "white", borderRadius: 1, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", border: "1px solid #e0e0e0" }}>
+      <Box className="flex-1 p-6 lg:ml-64 overflow-auto">
+        <Box className="bg-white rounded-lg shadow-md border border-gray-200 p-6 min-h-[calc(100vh-2rem)]">
           <Outlet />
         </Box>
       </Box>
     </Box>
   );
-};
+}
