@@ -92,7 +92,7 @@ const statsService = {
       const organizerRate = totalUsers > 0 ? ((organizerCount / totalUsers) * 100).toFixed(1) : '0.0';
 
       const totalRevenueValue = revenueData.reduce((sum, f) => sum + f.total, 0);
-      const formattedRevenue = totalRevenueValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+      const formattedRevenue = `€ ${totalRevenueValue}`;
 
       const counts = {};
       for (let ev of allEvents) {

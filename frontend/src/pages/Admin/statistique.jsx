@@ -209,7 +209,7 @@ const Statique = () => {
   const [userRate, setUserRate] = useState("0.0");
   const [organizerRate, setOrganizerRate] = useState("0.0");
   const [eventCount, setEventCount] = useState(0);
-  const [revenueTotal, setRevenueTotal] = useState("$0");
+  const [revenueTotal, setRevenueTotal] = useState("€ 0");
   const [eventTypeData, setEventTypeData] = useState([]);
   const [registrationData, setRegistrationData] = useState([]);
   const [error, setError] = useState(null);
@@ -232,7 +232,7 @@ const Statique = () => {
   const fetchChartData = async () => {
     try {
       setLoading(true);
-      console.log(`🔄 Chargement des données pour ${selectedPeriod} mois`);
+      // console.log(`🔄 Chargement des données pour ${selectedPeriod} mois`);
       const response = await fetch(`${url}/forfait/dashboard-charts?period=${selectedPeriod}`);
 
       if (!response.ok) {
@@ -240,7 +240,7 @@ const Statique = () => {
       }
 
       const data = await response.json();
-      console.log("📊 Données reçues:", data);
+      // console.log("📊 Données reçues:", data);
       setChartData(data);
     } catch (error) {
       console.error("❌ Erreur lors du chargement des données:", error);
@@ -251,7 +251,7 @@ const Statique = () => {
 
   // Update revenue chart
   const updateRevenueChart = (revenueData) => {
-    console.log("📈 Mise à jour graphique revenus:", revenueData);
+    // console.log("📈 Mise à jour graphique revenus:", revenueData);
     if (revenueChartRef.current) {
       revenueChartRef.current.destroy();
     }
@@ -298,7 +298,7 @@ const Statique = () => {
 
   // Update events chart
   const updateEventsChart = (eventsData) => {
-    console.log("🎯 Mise à jour graphique événements:", eventsData);
+    // console.log("🎯 Mise à jour graphique événements:", eventsData);
     if (eventsChartRef.current) {
       eventsChartRef.current.destroy();
     }

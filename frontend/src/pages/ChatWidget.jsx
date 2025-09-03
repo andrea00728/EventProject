@@ -73,7 +73,7 @@ export default function ChatWidget() {
     <>
       {/* Floating Button */}
       <button
-        className="fixed bottom-6 right-6 bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 z-50 cursor-pointer"
+        className="fixed bottom-6 right-6 bg-indigo-600 text-white p-1 rounded-full shadow-lg hover:bg-indigo-700 z-50 cursor-pointer"
         onClick={() => {
           if (!isOpen && messages.length === 0) {
             setMessages([{ role: 'bot', text: '👋 Bonjour ! Je suis l’assistant MasterTable. Comment puis-je vous aider ?' }]);
