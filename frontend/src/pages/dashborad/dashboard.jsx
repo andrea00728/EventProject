@@ -27,7 +27,7 @@ export default function DashboardPage() {
 
   const choixItems = [
     { path: "", name: "Vue d'ensemble", icon: <LayoutDashboard className="w-5 h-5" /> },
-    { path: "events", name: "Événements", icon: <Calendar className="w-5 h-5" /> },
+    { path: "eventsDash", name: "Événements", icon: <Calendar className="w-5 h-5" /> },
   ];
 
   const linkClass = (path) =>

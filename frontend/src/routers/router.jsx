@@ -80,6 +80,7 @@ import EventProtectLayout from "../layouts/eventProtectLayout.jsx";
 import AdminManagementPage from "../pages/Admin/AdminManagmentTable.jsx";
 import DashboardPage from "../pages/dashborad/dashboard.jsx";
 import DashboardGlobal from "../pages/dashborad/Global.jsx";
+import DashboardEvenement from "../pages/restauration/DashboardEvenement.jsx";
 
 const router = createBrowserRouter([
   {
@@ -258,10 +259,10 @@ const router = createBrowserRouter([
                 path: "",
                 element: <DashboardGlobal />,
               },
-              // {
-              //   path: "Ev",
-              //   element: <MenuItemForm />,
-              // },
+              {
+                path: "eventsDash",
+                element: <DashboardEvenement />,
+              },
             ],
           },
         ],
