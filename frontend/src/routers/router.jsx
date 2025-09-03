@@ -79,6 +79,7 @@ import PublicLayout from "../layouts/PublicLayout.jsx";
 import EventProtectLayout from "../layouts/eventProtectLayout.jsx";
 import AdminManagementPage from "../pages/Admin/AdminManagmentTable.jsx";
 import DashboardPage from "../pages/dashborad/dashboard.jsx";
+import DashboardEvenement from "../pages/restauration/DashboardEvenement.jsx";
 
 const router = createBrowserRouter([
   {
@@ -252,16 +253,16 @@ const router = createBrowserRouter([
           {
             path: "dashboard",
             element: <DashboardPage />,
-            // children: [
-            //   {
-            //     path: "",
-            //     element: <MenuRestauration />,
-            //   },
-            //   {
-            //     path: "menuItem",
-            //     element: <MenuItemForm />,
-            //   },
-            // ],
+            children: [
+              {
+                path: "vueDash",
+                element: <DashboardEvenement />,
+              },
+              {
+                path: "eventsDash",
+                element: <DashboardEvenement />,
+              },
+            ],
           },
         ],
       },
