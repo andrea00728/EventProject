@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDarkMode } from "../../context/DarkModeContext";
 import { useStateContext } from "../../context/ContextProvider";
@@ -30,142 +30,67 @@ export default function SuperAdminProfileEdit() {
     message: "",
     visible: false,
   });
-  const [gravatarUrl, setGravatarUrl] = useState(null);
 
   const [passwordError, setPasswordError] = useState("");
   const [nameError, setNameError] = useState("");
 
-  const showNotification = (type, message, duration = 4000) => {
-    setNotification({ type, message, visible: true });
-    setTimeout(
-      () => setNotification((prev) => ({ ...prev, visible: false })),
-      duration
-    );
-  };
-
-  // Charger le profil (user + localStorage)
-  useEffect(() => {
-    if (!user || !isAuthenticated) {
-      setProfile({ name: "", email: "", bio: "", photo: "", newFile: null });
-      setLoading(false);
-      return;
-    }
-
-    const autoName = deriveNameFromEmail(user.email);
-
-    // 🔹 Charger depuis localStorage
-    const storedName = localStorage.getItem("adminName");
-    const storedPhoto = localStorage.getItem("adminPhoto");
-
-    setProfile({
-      name: storedName || user.name || autoName,
-      email: user.email || "",
-      bio: user.bio || "",
-      photo: storedPhoto || user.photo || "",
-      newFile: null,
-    });
-    setLoading(false);
-  }, [user, isAuthenticated]);
-
-  // Générer Gravatar auto selon l'email
-  useEffect(() => {
-    if (profile?.email) {
-      const hash = md5(profile.email.trim().toLowerCase());
-      setGravatarUrl(
-        `https://www.gravatar.com/avatar/${hash}?d=identicon&s=200`
-      );
-    } else {
-      setGravatarUrl(null);
-    }
-  }, [profile?.email]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setProfile((prev) => ({ ...prev, [name]: value }));
-  };
-
+  // 🔹 Gestion du changement de fichier
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () =>
-        setProfile((prev) => ({ ...prev, photo: reader.result, newFile: file }));
-      reader.readAsDataURL(file);
+      setProfile((prev) => ({
+        ...prev,
+        newFile: file,
+        preview: URL.createObjectURL(file), // génère un aperçu local
+      }));
     }
   };
 
+  // 🔹 Soumission du formulaire
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSaving(true);
+    e.preventDefault();
+    setIsSaving(true);
 
-  try {
     const formData = new FormData();
     formData.append("name", profile.name);
     formData.append("email", profile.email);
     formData.append("bio", profile.bio || "");
     if (profile.newFile) formData.append("photo", profile.newFile);
+    if (passwords.newPassword)
+      formData.append("password", passwords.newPassword);
 
-    const response = await axiosClient.post("/auth/update-profile", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-      withCredentials: true, // 🔑 pour envoyer le cookie JWT
-    });
+    try {
+      if (!user) return;
+      const response = await updateAdmin(user?.sub, formData);
+      setUser(response.user);
 
-    // 🔑 Mettre à jour localStorage
-    if (response.data.user) {
-      localStorage.setItem("adminName", response.data.user.name);
-      localStorage.setItem("adminPhoto", response.data.user.photo);
-      localStorage.setItem("adminEmail", response.data.user.email);
+      setNotification({
+        type: "success",
+        message: "Profil mis à jour avec succès ✅",
+        visible: true,
+      });
+    } catch (err) {
+      console.error(err);
+      setNotification({
+        type: "error",
+        message: "Une erreur est survenue ❌",
+        visible: true,
+      });
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setNotification({ ...notification, visible: false }), 3000);
     }
+  };
 
-    // 🔑 Mettre à jour le contexte global (user)
-    setUser(response.data.user);
-
-    showNotification("success", "Profil mis à jour avec succès !");
-  } catch (err) {
-    console.error(
-      "Erreur lors de la mise à jour du profil:",
-      err.response?.data || err.message
-    );
-    showNotification("error", "Erreur lors de la mise à jour du profil");
-  } finally {
-    setIsSaving(false);
-  }
-};
-
-
-
-  const containerClasses = `min-h-auto py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${
-    darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"
+  const containerClasses = `min-h-auto py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"}`;
+  const cardClasses = `p-6 w-full rounded-xl shadow-lg transition-colors duration-300 ${darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"}`;
+  const inputClasses = disabled => `w-full p-4 border rounded-lg focus:outline-none focus:ring-2 resize-none transition-all duration-300 ${
+    disabled
+      ? (darkMode ? "bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed" : "bg-gray-200 border-gray-300 text-gray-600 cursor-not-allowed")
+      : (darkMode ? "bg-gray-700 border-gray-600 text-gray-200 focus:ring-blue-500" : "bg-gray-50 border-gray-200 text-gray-800 focus:ring-indigo-500")
   }`;
-  const cardClasses = `p-6 w-full rounded-xl shadow-lg transition-colors duration-300 ${
-    darkMode
-      ? "bg-gray-800 border border-gray-700"
-      : "bg-white border border-gray-200"
-  }`;
-  const inputClasses = (disabled) =>
-    `w-full p-4 border rounded-lg focus:outline-none focus:ring-2 resize-none transition-all duration-300 ${
-      disabled
-        ? darkMode
-          ? "bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed"
-          : "bg-gray-200 border-gray-300 text-gray-600 cursor-not-allowed"
-        : darkMode
-        ? "bg-gray-700 border-gray-600 text-gray-200 focus:ring-blue-500"
-        : "bg-gray-50 border-gray-200 text-gray-800 focus:ring-indigo-500"
-    }`;
-  const buttonClasses =
-    "inline-flex items-center px-6 py-3 font-semibold rounded-lg shadow-md transition-all duration-300";
-  const labelClasses = `block font-semibold mb-2 transition-colors duration-300 ${
-    darkMode ? "text-gray-200" : "text-gray-700"
-  }`;
-
-  if (loading)
-    return (
-      <div className={`${containerClasses} flex items-center justify-center`}>
-        <FaSpinner className="animate-spin text-4xl text-indigo-500" />
-      </div>
-    );
-
-  const photoSrc = resolvePhotoSrc(profile.photo, gravatarUrl, placeholder);
+  const buttonClasses = `inline-flex items-center px-6 py-3 font-semibold rounded-lg shadow-md transition-all duration-300`;
+  const labelClasses = `block font-semibold mb-2 transition-colors duration-300 ${darkMode ? "text-gray-200" : "text-gray-700"}`;
 
   return (
     <div
@@ -312,8 +237,7 @@ export default function SuperAdminProfileEdit() {
               >
                 {isSaving ? (
                   <>
-                    <FaSpinner className="animate-spin mr-2 w-5 h-5" />{" "}
-                    Sauvegarde...
+                    <FaSpinner className="animate-spin mr-2 w-5 h-5" /> Sauvegarde...
                   </>
                 ) : (
                   <>

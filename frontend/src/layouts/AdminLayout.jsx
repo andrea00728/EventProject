@@ -109,7 +109,7 @@ export default function AdminLayout() {
   }, []);
 
   if (isLoading) return <div>Chargement ...</div>;
-  if (!isAuthenticated) return <Navigate to="/" replace />;
+  if (!isAuthenticated) return <Navigate to="/pagepublic" replace />;
 
   switch (role) {
     case "admin":
@@ -123,7 +123,7 @@ export default function AdminLayout() {
     case "cuisinier":
       return <Navigate to="/personnelCuisine" replace />;
     case "organisateur":
-      return <Navigate to="/" replace />;
+      return <Navigate to="/pagepublic" replace />;
     default:
       return <Navigate to={location.pathname || "/AdminAccueil"} replace />;
   }
@@ -787,7 +787,7 @@ const menuItems = [
                 if (!item.read) {
                   const readIds =
                     JSON.parse(localStorage.getItem("readMessages")) || [];
-                  if (!readIds.includes(item.id)) { 
+                  if (!readIds.includes(item.id)) {
                     readIds.push(item.id);
                     localStorage.setItem(
                       "readMessages",
@@ -889,7 +889,8 @@ const menuItems = [
                 {/* Avatar = photo basée sur l'email (Gravatar) */}
                 <div className="relative">
                   <img
-                    src={getGravatarUrl(user?.email, { size: 96 })}
+                    //src={getGravatarUrl(user?.email, { size: 96 })}
+                    src={`${user.photo}`}
                     alt="User avatar"
                     className="w-10 h-10 rounded-full object-cover"
                     onError={(e) => {
@@ -926,25 +927,36 @@ const menuItems = [
                       }`}
                     >
                       <img
-                        src={getGravatarUrl(user?.email, { size: 80 })}
+                        // src={getGravatarUrl(user?.email, { size: 80 })}
+                        src={`${user.photo}`}
                         alt="User avatar"
                         className="w-8 h-8 rounded-full object-cover"
                         onError={(e) => {
-                          e.currentTarget.src = getGravatarUrl(null, { size: 80 });
+                          e.currentTarget.src = getGravatarUrl(null, {
+                            size: 80,
+                          });
                         }}
                       />
                       <div className="min-w-0">
-                        <p className="font-medium">{getUserDisplayName(user)}</p>
-                        <p className="truncate text-xs">{user?.email || "aucun email"}</p>
+                        <p className="font-medium">
+                          {getUserDisplayName(user)}
+                        </p>
+                        <p className="truncate text-xs">
+                          {user?.email || "aucun email"}
+                        </p>
                       </div>
                     </div>
 
-                    <div className={`border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`} />
+                    <div
+                      className={`border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}
+                    />
 
                     <button
                       onClick={handleRedirect}
                       className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode ? "hover:bg-gray-700 text-gray-200" : "hover:bg-gray-100 text-gray-800"
+                        darkMode
+                          ? "hover:bg-gray-700 text-gray-200"
+                          : "hover:bg-gray-100 text-gray-800"
                       } transition-colors duration-150`}
                     >
                       Mon profil
@@ -953,7 +965,9 @@ const menuItems = [
                     <button
                       onClick={handleRedirect}
                       className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode ? "hover:bg-gray-700 text-gray-200" : "hover:bg-gray-100 text-gray-800"
+                        darkMode
+                          ? "hover:bg-gray-700 text-gray-200"
+                          : "hover:bg-gray-100 text-gray-800"
                       } transition-colors duration-150`}
                     >
                       Paramètres

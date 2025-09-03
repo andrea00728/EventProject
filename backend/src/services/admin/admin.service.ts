@@ -14,6 +14,7 @@ import * as path from 'path';
 
 @Injectable()
 export class AdminService {
+  // private readonly UPLOAD_BASE_URL = process.env.UPLOAD_BASE_URL || 'https://api.mastertable.site';
   private readonly UPLOAD_BASE_URL = process.env.UPLOAD_BASE_URL || 'https://api.mastertable.site';
   constructor(
     private readonly jwtService: JwtService,
