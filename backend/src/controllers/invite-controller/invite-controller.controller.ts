@@ -23,11 +23,10 @@ export class GuestController {
    */
 
  @Post('/create')
-  @UseGuards(AuthGuard('jwt'))
+  // @UseGuards(AuthGuard('jwt'))
   async create(@Body() dto: CreateInviteDto, @Req() req): Promise<Invite> {
     console.log("user connecte:",req.user);
     const userId = req.user?.sub;
-    if (!userId) throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
     await this.forfaitService.checkForfaitExpiration(userId);
     const lastEvent = await this.guestService.findLastEventByUser(userId);
     if (!lastEvent) throw new HttpException('Aucun événement trouvé pour cet utilisateur', HttpStatus.BAD_REQUEST);
@@ -215,16 +214,16 @@ async importGuestsToSpecificEvent(
    */
 
  @Post(':eventId') 
-  @UseGuards(AuthGuard('jwt'))
+  // @UseGuards(AuthGuard('jwt'))
   async createInviteForSpecificEvent(
     @Param('eventId', ParseIntPipe) eventId: number, 
     @Body() createInviteDto: CreateInviteDto,
     @Req() req,
   ): Promise<Invite> {
     const userId = req.user?.sub;
-    if (!userId) {
-      throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
-    }
+    // if (!userId) {
+    //   throw new HttpException('Utilisateur non authentifié', HttpStatus.UNAUTHORIZED);
+    // }
     return await this.guestService.createGuest(createInviteDto, eventId,userId);
   }
 

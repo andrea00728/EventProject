@@ -126,7 +126,7 @@ const EventAccept = () => {
                       'from-amber-500 to-blue-500'
                     }`}></div>
 
-                    <div className="p-6">
+                    <div className="p-6 relative ">
                       {/* Event Title */}
                       <div className="flex items-start justify-between mb-6">
                         <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide leading-tight">
@@ -196,7 +196,7 @@ const EventAccept = () => {
                           </div>
                           <div>
                             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Lieu</p>
-                            <p className="text-slate-800 font-semibold">{event.location.nom}</p>
+                            <p className="text-slate-800 font-semibold">{event.location.nom.split(",")[0]}</p>
                           </div>
                         </div>
 
