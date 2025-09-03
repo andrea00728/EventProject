@@ -112,7 +112,6 @@ export default function PublicLayout() {
     }
   }, [isAuthenticated, user, role, navigate]);
 
-  // Le reste du code...
   const subMenuVariants = {
     hidden: {
       opacity: 0,
