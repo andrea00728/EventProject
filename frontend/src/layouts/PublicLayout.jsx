@@ -89,8 +89,8 @@ export default function PublicLayout() {
     }
   }, [forfait, isAuthenticated]);
 
-
   const roles = ["caissier", "cuisinier", "accueil"];
+
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -104,10 +104,6 @@ export default function PublicLayout() {
       }
     }
   }, [isAuthenticated, user, role, navigate]);
-
-
-
-
 
   // Le reste du code...
   const subMenuVariants = {

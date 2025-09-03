@@ -4,23 +4,37 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axiosClient from '../api/axios-client';
 
 const PublicEvents = () => {
+  // États pour la gestion des événements
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // États pour les modals
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
+  
+  // États pour le formulaire d'inscription
   const [formData, setFormData] = useState({
     nom: '',
     prenom: '',
     email: ''
   });
   const [registrationStatus, setRegistrationStatus] = useState(null);
+  
+  // États pour le filtrage et la pagination
   const [filter, setFilter] = useState("all"); // "all", "public", "private"
   const [currentPage, setCurrentPage] = useState(1);
   const eventsPerPage = 5;
 
+  // États pour la gestion des tables et places
+  const [showTableModal, setShowTableModal] = useState(false);
+  const [showPlaceModal, setShowPlaceModal] = useState(false);
+  const [tables, setTables] = useState([]); // Liste des tables disponibles
+  const [selectedTable, setSelectedTable] = useState(null);
+  const [places, setPlaces] = useState([]); // Liste des places disponibles
 
+  // Chargement initial des événements
   useEffect(() => {
     const fetchEvents = async () => {
       setIsLoading(true);
@@ -39,39 +53,49 @@ const PublicEvents = () => {
     fetchEvents();
   }, []);
 
+  // Filtrage des événements selon le filtre sélectionné
   const filteredEvents = events.filter(ev => {
     if (filter === "public") return ev.isPublic === true;
     if (filter === "private") return ev.isPublic === false;
     return true; // "all"
   });
 
+  // Calcul de la pagination
   const totalPages = Math.ceil(filteredEvents.length / eventsPerPage);
   const currentEvents = filteredEvents.slice(
     (currentPage - 1) * eventsPerPage,
     currentPage * eventsPerPage
   );
 
+  // Fonction pour ouvrir le modal de détails d'un événement
   const openEventModal = (event) => {
     setSelectedEvent(event);
     setIsEventModalOpen(true);
   };
 
+  // Fonction pour fermer le modal de détails
   const closeEventModal = () => {
     setIsEventModalOpen(false);
     setSelectedEvent(null);
   };
 
-  const openRegistrationModal = () => {
+  // Fonction pour ouvrir le modal d'inscription directement
+  const openRegistrationModal = (event = null) => {
+    if (event) {
+      setSelectedEvent(event);
+    }
     setIsRegistrationModalOpen(true);
     setIsEventModalOpen(false);
     setRegistrationStatus(null);
   };
 
+  // Fonction pour fermer le modal d'inscription
   const closeRegistrationModal = () => {
     setIsRegistrationModalOpen(false);
     setFormData({ nom: '', prenom: '', email: '' });
   };
 
+  // Gestion des changements dans les champs du formulaire
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -80,12 +104,12 @@ const PublicEvents = () => {
     }));
   };
 
+  // Soumission du formulaire d'inscription
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Simulation d'envoi de données
+      // Simulation d'envoi de données (remplacer par un vrai appel API)
       await new Promise(resolve => setTimeout(resolve, 1000));
-
 
       setRegistrationStatus('success');
       setFormData({ nom: '', prenom: '', email: '' });
@@ -95,19 +119,13 @@ const PublicEvents = () => {
     }
   };
 
-
-  /*******************/
-  const [showTableModal, setShowTableModal] = useState(false);
-  const [showPlaceModal, setShowPlaceModal] = useState(false);
-  const [tables, setTables] = useState([]); // Supposons que vous avez une liste de tables
-  const [selectedTable, setSelectedTable] = useState(null);
-  const [places, setPlaces] = useState([]); // Supposons que vous avez une liste de places
-
+  // Gestion de la sélection des tables
   const handleTableClick = () => {
     // Ici vous pourriez faire un appel API pour récupérer les tables si ce n'est pas déjà fait
     setShowTableModal(true);
   };
 
+  // Gestion de la sélection des places
   const handlePlaceClick = () => {
     if (selectedTable?.places?.length > 0) {
       setPlaces(selectedTable.places); // Ou récupérer les places disponibles pour cette table
@@ -115,11 +133,13 @@ const PublicEvents = () => {
     }
   };
 
+  // Sélection d'une table
   const selectTable = (table) => {
     setSelectedTable(table);
     setShowTableModal(false);
   };
 
+  // Sélection d'une place
   const selectPlace = (place) => {
     // Mettre à jour l'état avec la place sélectionnée
     setShowPlaceModal(false);
@@ -128,7 +148,7 @@ const PublicEvents = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       <div className="container mx-auto px-6 py-12">
-        {/* Header */}
+        {/* En-tête de la page */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-full mb-6">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,7 +163,7 @@ const PublicEvents = () => {
           </p>
         </div>
 
-        {/* Filtre */}
+        {/* Filtre de sélection des événements */}
         <div className="flex justify-center mb-8">
           <select
             value={filter}
@@ -156,7 +176,7 @@ const PublicEvents = () => {
           </select>
         </div>
 
-        {/* Loading */}
+        {/* Indicateur de chargement */}
         {isLoading && (
           <div className="flex flex-col items-center py-24">
             <div className="w-16 h-16 border-4 border-indigo-200 rounded-full animate-spin border-t-indigo-500"></div>
@@ -164,7 +184,7 @@ const PublicEvents = () => {
           </div>
         )}
 
-        {/* Error */}
+        {/* Message d'erreur */}
         {error && (
           <div className="max-w-2xl mx-auto mb-8">
             <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-6">
@@ -181,7 +201,7 @@ const PublicEvents = () => {
           </div>
         )}
 
-        {/* Events */}
+        {/* Affichage des événements */}
         {!isLoading && !error && (
           <>
             {events.filter(ev => {
@@ -189,6 +209,7 @@ const PublicEvents = () => {
               if (filter === "private") return ev.isPublic === false;
               return true; // all
             }).length === 0 ? (
+              // Message quand aucun événement n'est trouvé
               <div className="text-center py-16">
                 <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-slate-100 to-slate-200 rounded-full mb-6">
                   <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,6 +220,7 @@ const PublicEvents = () => {
                 <p className="text-slate-500">Revenez plus tard pour découvrir de nouveaux événements.</p>
               </div>
             ) : (
+              // Grille des cartes d'événements
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 {events
                   .filter(ev => {
@@ -209,10 +231,10 @@ const PublicEvents = () => {
                   .map((event) => (
                     <div
                       key={event.id}
-                      className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1 cursor-pointer"
-                      onClick={() => openEventModal(event)}
+                      // Suppression du onClick sur la carte et du cursor-pointer
+                      className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1"
                     >
-                      {/* Card Header */}
+                      {/* Barre colorée en haut de la carte */}
                       <div className={`h-2 bg-gradient-to-r ${event.id % 3 === 0 ? 'from-indigo-500 to-cyan-500' :
                         event.id % 3 === 1 ? 'from-pink-500 to-rose-500' :
                           'from-emerald-500 to-lime-500'
@@ -220,11 +242,13 @@ const PublicEvents = () => {
                       ></div>
 
                       <div className="p-6">
+                        {/* Titre de l'événement */}
                         <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide mb-4">
                           {event.nom}
                         </h2>
 
-                        <div className="space-y-2">
+                        {/* Détails de l'événement */}
+                        <div className="space-y-2 mb-6">
                           <p><span className="text-slate-500 font-medium">Type :</span> {event.type}</p>
                           <p><span className="text-slate-500 font-medium">Thème :</span> {event.theme}</p>
                           <p>
@@ -240,6 +264,38 @@ const PublicEvents = () => {
                           </p>
                           <p><span className="text-slate-500 font-medium">Lieu :</span> {event.location?.nom || "Non précisé"}</p>
                         </div>
+
+                        {/* Boutons d'action conditionnels */}
+                        <div className="flex gap-3 justify-end">
+                          {/* Bouton Détails - toujours présent */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEventModal(event);
+                            }}
+                            className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors duration-200"
+                          >
+                            Détails
+                          </button>
+
+                          {/* Bouton S'inscrire - seulement pour les événements publics */}
+                          {event.isPublic && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openRegistrationModal(event);
+                              }}
+                              className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all duration-200 transform hover:scale-105 ${event.id % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
+                                event.id % 5 === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' :
+                                  event.id % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
+                                    event.id % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :
+                                      'bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600'
+                                }`}
+                            >
+                              S'inscrire
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -249,9 +305,7 @@ const PublicEvents = () => {
         )}
       </div>
 
-
-
-      {/* Event Modal */}
+      {/* Modal de détails d'événement */}
       {isEventModalOpen && selectedEvent && (
         <AnimatePresence>
           <div
@@ -265,15 +319,8 @@ const PublicEvents = () => {
               className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header */}
-              {/* <div className={`h-2 bg-gradient-to-r ${selectedEvent.id % 3 === 0 ? 'from-indigo-500 to-cyan-500' :
-                selectedEvent.id % 3 === 1 ? 'from-pink-500 to-rose-500' :
-                  'from-emerald-500 to-lime-500'
-                }`}
-              ></div> */}
-
               <div className="p-6">
-                {/* Event Title */}
+                {/* En-tête du modal avec titre et bouton fermer */}
                 <div className="flex items-start justify-between mb-6">
                   <h2 className="text-2xl font-bold text-slate-800 uppercase tracking-wide leading-tight">
                     {selectedEvent.nom}
@@ -288,7 +335,7 @@ const PublicEvents = () => {
                   </button>
                 </div>
 
-                {/* Event Description */}
+                {/* Description de l'événement */}
                 {selectedEvent.description && (
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold text-slate-700 mb-2">Description</h3>
@@ -296,8 +343,9 @@ const PublicEvents = () => {
                   </div>
                 )}
 
-                {/* Event Details */}
+                {/* Détails structurés de l'événement */}
                 <div className="space-y-4">
+                  {/* Type */}
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                       <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -310,6 +358,7 @@ const PublicEvents = () => {
                     </div>
                   </div>
 
+                  {/* Thème */}
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                       <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -322,6 +371,7 @@ const PublicEvents = () => {
                     </div>
                   </div>
 
+                  {/* Date */}
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0 w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
                       <svg className="w-4 h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -342,6 +392,7 @@ const PublicEvents = () => {
                     </div>
                   </div>
 
+                  {/* Lieu */}
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
                       <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -357,6 +408,7 @@ const PublicEvents = () => {
                     </div>
                   </div>
 
+                  {/* Salle (si présente) */}
                   {selectedEvent.salle?.nom && (
                     <div className="flex items-center gap-3">
                       <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
@@ -372,20 +424,23 @@ const PublicEvents = () => {
                   )}
                 </div>
 
-                {/* Action Buttons */}
+                {/* Boutons d'action du modal */}
                 <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
-                  <button
-                    onClick={openRegistrationModal}
-                    className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${selectedEvent.id % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
-                      selectedEvent.id % 5 === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' :
-                        selectedEvent.id % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
-                          selectedEvent.id % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :
-                            'bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600'
-                      }`}
-                    aria-label={`S'inscrire à l'événement ${selectedEvent.nom}`}
-                  >
-                    S'inscrire
-                  </button>
+                  {/* Bouton S'inscrire - affiché seulement pour les événements publics */}
+                  {selectedEvent.isPublic && (
+                    <button
+                      onClick={openRegistrationModal}
+                      className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${selectedEvent.id % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
+                        selectedEvent.id % 5 === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' :
+                          selectedEvent.id % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
+                            selectedEvent.id % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :
+                              'bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600'
+                        }`}
+                      aria-label={`S'inscrire à l'événement ${selectedEvent.nom}`}
+                    >
+                      S'inscrire
+                    </button>
+                  )}
 
                   <button
                     onClick={closeEventModal}
@@ -395,12 +450,12 @@ const PublicEvents = () => {
                   </button>
                 </div>
               </div>
-            </motion.div >
+            </motion.div>
           </div>
         </AnimatePresence>
       )}
 
-      {/* Registration Modal */}
+      {/* Modal d'inscription */}
       {isRegistrationModalOpen && selectedEvent && (
         <AnimatePresence>
           <div
@@ -415,15 +470,8 @@ const PublicEvents = () => {
               className="bg-white rounded-xl shadow-2xl w-full max-w-6xl mx-4 overflow-hidden max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header */}
-              {/* <div className={`h-2 bg-gradient-to-r ${selectedEvent.id % 3 === 0 ? 'from-indigo-500 to-cyan-500' :
-                selectedEvent.id % 3 === 1 ? 'from-pink-500 to-rose-500' :
-                  'from-emerald-500 to-lime-500'
-                }`}
-              ></div> */}
-
               <div className='flex flex-col lg:flex-row'>
-                {/* Image Section - Hidden on mobile */}
+                {/* Section image - cachée sur mobile */}
                 <div className='hidden lg:block lg:w-1/2 bg-gray-100'>
                   <img
                     src="/images/IMG1.jpg"
@@ -432,8 +480,9 @@ const PublicEvents = () => {
                   />
                 </div>
 
-                {/* Form Section */}
+                {/* Section formulaire */}
                 <div className='w-full lg:w-1/2 p-4 sm:p-6'>
+                  {/* En-tête du formulaire */}
                   <div className="flex items-start justify-between mb-6">
                     <h2 className="text-xl sm:text-2xl font-bold text-slate-800 uppercase tracking-wide leading-tight">
                       Inscription à {selectedEvent.nom}
@@ -448,8 +497,10 @@ const PublicEvents = () => {
                     </button>
                   </div>
 
+                  {/* Formulaire d'inscription */}
                   <form onSubmit={handleSubmit}>
                     <div className="space-y-4 mb-6">
+                      {/* Champ Nom */}
                       <div className="flex flex-col gap-2">
                         <label className="text-sm font-semibold text-gray-700 mb-1">Nom <span className="text-red-500">*</span></label>
                         <input
@@ -463,6 +514,7 @@ const PublicEvents = () => {
                         />
                       </div>
 
+                      {/* Champ Prénom */}
                       <div className="flex flex-col gap-2">
                         <label className="text-sm font-semibold text-gray-700 mb-1">Prénom <span className="text-red-500">*</span></label>
                         <input
@@ -476,6 +528,7 @@ const PublicEvents = () => {
                         />
                       </div>
 
+                      {/* Champ Email */}
                       <div className="flex flex-col gap-2">
                         <label className="text-sm font-semibold text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
                         <input
@@ -489,8 +542,9 @@ const PublicEvents = () => {
                         />
                       </div>
 
+                      {/* Section sélection table et place */}
                       <div>
-                        {/* Table */}
+                        {/* Sélection de table */}
                         <div className="flex flex-col gap-2">
                           <label className="text-sm font-semibold text-gray-700 mb-1">Table <span className="text-red-500">*</span></label>
                           <div
@@ -501,7 +555,7 @@ const PublicEvents = () => {
                           </div>
                         </div>
 
-                        {/* Place */}
+                        {/* Sélection de place - affiché seulement si une table est sélectionnée */}
                         {selectedTable && (
                           <div className="flex flex-col gap-2 mt-4">
                             <label className="text-sm font-semibold text-gray-700 mb-1">Place <span className="text-red-500">*</span></label>
@@ -515,7 +569,7 @@ const PublicEvents = () => {
                           </div>
                         )}
 
-                        {/* Modal pour les tables */}
+                        {/* Modal pour la sélection des tables */}
                         {showTableModal && (
                           <AnimatePresence>
                             <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center p-4 z-50">
@@ -552,42 +606,51 @@ const PublicEvents = () => {
                           </AnimatePresence>
                         )}
 
-                        {/* Modal pour les places */}
+                        {/* Modal pour la sélection des places */}
                         {showPlaceModal && (
-                          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                              <h2 className="text-xl font-bold mb-4">Places disponibles pour {selectedTable.nom}</h2>
-                              <div className="max-h-96 overflow-y-auto">
-                                {places.length > 0 ? (
-                                  places.map((place) => (
-                                    <div
-                                      key={place.id}
-                                      onClick={() => selectPlace(place)}
-                                      className="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
-                                    >
-                                      {place.nom}
-                                    </div>
-                                  ))
-                                ) : (
-                                  <p>Aucune place disponible</p>
-                                )}
-                              </div>
-                              <button
-                                onClick={() => setShowPlaceModal(false)}
-                                className="mt-4 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                          <AnimatePresence>
+                            <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center p-4 z-50">
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="bg-white rounded-lg p-6 w-full max-w-md"
                               >
-                                Fermer
-                              </button>
+                                <h2 className="text-xl font-bold mb-4">Places disponibles pour {selectedTable.nom}</h2>
+                                <div className="max-h-96 overflow-y-auto">
+                                  {places.length > 0 ? (
+                                    places.map((place) => (
+                                      <div
+                                        key={place.id}
+                                        onClick={() => selectPlace(place)}
+                                        className="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
+                                      >
+                                        {place.nom}
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p>Aucune place disponible</p>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => setShowPlaceModal(false)}
+                                  className="mt-4 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                                >
+                                  Fermer
+                                </button>
+                              </motion.div>
                             </div>
-                          </div>
+                          </AnimatePresence>
                         )}
                       </div>
                     </div>
 
+                    {/* Section des boutons de soumission */}
                     <div className="relative flex flex-col sm:flex-row items-center gap-4 pt-6 mt-6 border-t border-slate-100">
                       <button
                         type="submit"
-                        className={`absolute top-5 right-0  w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg sm:rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${selectedEvent.id % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
+                        className={`absolute top-5 right-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg sm:rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${selectedEvent.id % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
                           selectedEvent.id % 5 === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' :
                             selectedEvent.id % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
                               selectedEvent.id % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :

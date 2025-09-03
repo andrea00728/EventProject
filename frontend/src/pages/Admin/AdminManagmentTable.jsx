@@ -147,7 +147,7 @@ export default function AdminManagementPage() {
     <div
       className={`min-h-screen p-1 sm:p-6 md:p-6 w-full mx-auto transition duration-500 ${pageBg}`}
     >
-      <p className="text-gray-500 mb-8 dark:text-gray-400">
+      <p className="text-gray-500 mb-8 dark:text-gray-400 text-center md:text-left">
         Gestion des comptes des administrateurs ainsi que leurs permissions.
       </p>
 
@@ -168,17 +168,17 @@ export default function AdminManagementPage() {
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0 md:space-x-4">
+      <div className="flex flex-col md:flex-row justify-between items-center px-4 md:px-0 mb-6 space-y-4 md:space-y-0 md:space-x-4">
         <div className="w-full md:w-auto">
           <AdminFilters onFilterChange={setFilters} />
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-col space-y-2 md:flex-row md:space-x-2 md:space-y-0">
           <motion.div whileHover={{ scale: 1.05, boxShadow: glows[0] }}>
             <ActionButton
               icon={<FaUserPlus />}
               label="Ajouter un Admin"
               onClick={() => setIsModalOpen(true)}
-              className="bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-500 text-white"
+              className="bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-500 text-white w-full"
             />
           </motion.div>
           <motion.div whileHover={{ scale: 1.05, boxShadow: glows[1] }}>
@@ -186,7 +186,7 @@ export default function AdminManagementPage() {
               icon={<FaFileExport />}
               label="Exporter CSV"
               onClick={exportAdmins}
-              className="bg-gradient-to-r from-green-500 via-emerald-600 to-lime-500 text-white"
+              className="bg-gradient-to-r from-green-500 via-emerald-600 to-lime-500 text-white w-full"
             />
           </motion.div>
         </div>
