@@ -746,7 +746,7 @@ const Statique = () => {
               formatter: (value) => value,
             },
           },
-          plugins: [ChartDataLabels],
+          // plugins: [ChartDataLabels],
         },
       });
     }
