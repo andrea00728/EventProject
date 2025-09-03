@@ -106,7 +106,7 @@ export default function DashboardPage() {
         sx={{
           flex: 1,
           p: 4,
-          overflow: "auto",
+          overflow: "hidden",
           boxSizing: 'border-box'
         }}
         className="flex-1 flex flex-col overflow-hidden lg:ml-64"

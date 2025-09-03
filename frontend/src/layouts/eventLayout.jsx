@@ -1,9 +1,14 @@
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useState } from 'react';
 import ChatWidget from "../pages/ChatWidget";
 import { RxCaretRight, RxCaretLeft } from 'react-icons/rx';
 
 export default function EventLayout() {
+    const navigate = useNavigate()
+    const versDash  = () => {
+      navigate("/evenement/dashboard/eventsDash")
+    }
+    
     const choixItems = [
         { 
             path: "eventpadding", 
@@ -128,14 +133,14 @@ export default function EventLayout() {
                     </ul>
 
                     {/* Section stats ou info supplémentaire */}
-                    <div className="mt-8 p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200/50">
+                    <div className="mt-8 p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200/50 cursor-pointer" onClick={versDash}>
                         <div className="flex items-center gap-3 mb-2">
                             <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center flex-shrink-0">
                                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                 </svg>
                             </div>
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0 flex-1 ">
                                 <p className="text-xs font-bold text-slate-700 truncate">Tableau de bord</p>
                                 <p className="text-xs text-slate-500 truncate">Vue d'ensemble</p>
                             </div>

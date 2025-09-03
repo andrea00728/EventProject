@@ -25,7 +25,7 @@ export default function DashboardEvenement() {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
 
-const [activeTab, setActiveTab] = useState("invites");
+    const [activeTab, setActiveTab] = useState("invites");
 
 
     const [statsGenerales] = useState({
@@ -243,7 +243,7 @@ const [activeTab, setActiveTab] = useState("invites");
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen">
             {/* En-tête */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Événements</h1>
@@ -339,7 +339,7 @@ const [activeTab, setActiveTab] = useState("invites");
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                 <button
                                                     onClick={() => openEventModal(evenement)}
-                                                    className="text-blue-600 hover:text-blue-900 flex items-center"
+                                                    className="text-blue-600 hover:text-blue-900 flex items-center cursor-pointer"
                                                 >
                                                     <Eye className="w-4 h-4 mr-1" />
                                                     Voir détails
@@ -416,258 +416,230 @@ const [activeTab, setActiveTab] = useState("invites");
                         </div>
 
                         <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
-                            {/* Informations générales */}
-                            <div className="px-6 py-4 border-b border-gray-200">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <p className="text-sm text-gray-600">Description</p>
-                                        <p className="text-sm font-medium text-gray-900">{selectedEvent.description}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Organisateur</p>
-                                        <p className="text-sm font-medium text-gray-900">{selectedEvent.organisateur}</p>
-                                    </div>
-                                </div>
-                                <div className="mt-4 flex flex-wrap gap-2">
-                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatutColor(selectedEvent.statut)}`}>
-                                        {selectedEvent.statut}
-                                    </span>
-                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getPrioriteColor(selectedEvent.priorite)}`}>
-                                        Priorité {selectedEvent.priorite}
-                                    </span>
-                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                                        <MapPin className="w-4 h-4 mr-1" />
-                                        {selectedEvent.lieu}
-                                    </span>
-                                </div>
-                            </div>
 
                             {/* Onglets */}
-      <div className="px-6">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab("invites")}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "invites"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Liste des Invités ({selectedEvent.invitesList.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("personnel")}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "personnel"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Personnel ({selectedEvent.personnelList.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("tables")}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "tables"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Tables ({selectedEvent.tablesList.length})
-            </button>
-          </nav>
-        </div>
-      </div>
-
-      {/* Contenu des onglets */}
-      <div className="px-6 py-4">
-        {/* Liste des invités */}
-        {activeTab === "invites" && (
-          <div className="mb-8">
-            <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <Users className="w-5 h-5 mr-2 text-blue-600" />
-              Liste des Invités
-            </h4>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Nom
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Email
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Téléphone
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Statut
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Table
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {selectedEvent.invitesList.map((invite) => (
-                    <tr key={invite.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-8 w-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                            <User className="w-4 h-4 text-white" />
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">
-                              {invite.nom}
+                            <div className="px-6">
+                                <div className="border-b border-gray-200">
+                                    <nav className="-mb-px flex space-x-8">
+                                        <button
+                                            onClick={() => setActiveTab("invites")}
+                                            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "invites"
+                                                    ? "border-blue-500 text-blue-600"
+                                                    : "border-transparent text-gray-500 hover:text-gray-700"
+                                                }`}
+                                        >
+                                            Liste des Invités ({selectedEvent.invitesList.length})
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab("personnel")}
+                                            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "personnel"
+                                                    ? "border-blue-500 text-blue-600"
+                                                    : "border-transparent text-gray-500 hover:text-gray-700"
+                                                }`}
+                                        >
+                                            Personnel ({selectedEvent.personnelList.length})
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab("tables")}
+                                            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "tables"
+                                                    ? "border-blue-500 text-blue-600"
+                                                    : "border-transparent text-gray-500 hover:text-gray-700"
+                                                }`}
+                                        >
+                                            Tables ({selectedEvent.tablesList.length})
+                                        </button>
+                                    </nav>
+                                </div>
                             </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <div className="flex items-center text-sm text-gray-900">
-                          <Mail className="w-4 h-4 text-gray-400 mr-2" />
-                          {invite.email}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <div className="flex items-center text-sm text-gray-900">
-                          <Phone className="w-4 h-4 text-gray-400 mr-2" />
-                          {invite.telephone}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getInviteStatutColor(
-                            invite.statut
-                          )}`}
-                        >
-                          {invite.statut}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {invite.table ? `Table ${invite.table}` : "Non assigné"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
 
-        {/* Liste du personnel */}
-        {activeTab === "personnel" && (
-          <div className="mb-8">
-            <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <UserCheck className="w-5 h-5 mr-2 text-purple-600" />
-              Personnel Assigné
-            </h4>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Nom
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Rôle
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Téléphone
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Statut
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {selectedEvent.personnelList.map((personnel) => (
-                    <tr key={personnel.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-8 w-8 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
-                            <Badge className="w-4 h-4 text-white" />
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">
-                              {personnel.nom}
+                            {/* Contenu des onglets */}
+                            <div className="px-6 py-4">
+                                {/* Liste des invités */}
+                                {activeTab === "invites" && (
+                                    <div className="mb-8">
+                                        <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                            <Users className="w-5 h-5 mr-2 text-blue-600" />
+                                            Liste des Invités
+                                        </h4>
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                            Nom
+                                                        </th>
+                                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                            Email
+                                                        </th>
+                                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                            Téléphone
+                                                        </th>
+                                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                            Statut
+                                                        </th>
+                                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                            Table
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {selectedEvent.invitesList.map((invite) => (
+                                                        <tr key={invite.id} className="hover:bg-gray-50">
+                                                            <td className="px-4 py-4 whitespace-nowrap">
+                                                                <div className="flex items-center">
+                                                                    <div className="h-8 w-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                                                                        <User className="w-4 h-4 text-white" />
+                                                                    </div>
+                                                                    <div className="ml-3">
+                                                                        <div className="text-sm font-medium text-gray-900">
+                                                                            {invite.nom}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-4 whitespace-nowrap">
+                                                                <div className="flex items-center text-sm text-gray-900">
+                                                                    <Mail className="w-4 h-4 text-gray-400 mr-2" />
+                                                                    {invite.email}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-4 whitespace-nowrap">
+                                                                <div className="flex items-center text-sm text-gray-900">
+                                                                    <Phone className="w-4 h-4 text-gray-400 mr-2" />
+                                                                    {invite.telephone}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-4 whitespace-nowrap">
+                                                                <span
+                                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getInviteStatutColor(
+                                                                        invite.statut
+                                                                    )}`}
+                                                                >
+                                                                    {invite.statut}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                                {invite.table ? `Table ${invite.table}` : "Non assigné"}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Liste du personnel */}
+                                {activeTab === "personnel" && (
+                                    <div className="mb-8">
+                                        <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                            <UserCheck className="w-5 h-5 mr-2 text-purple-600" />
+                                            Personnel Assigné
+                                        </h4>
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                            Nom
+                                                        </th>
+                                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                            Rôle
+                                                        </th>
+                                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                            Téléphone
+                                                        </th>
+                                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                            Statut
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {selectedEvent.personnelList.map((personnel) => (
+                                                        <tr key={personnel.id} className="hover:bg-gray-50">
+                                                            <td className="px-4 py-4 whitespace-nowrap">
+                                                                <div className="flex items-center">
+                                                                    <div className="h-8 w-8 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
+                                                                        <Badge className="w-4 h-4 text-white" />
+                                                                    </div>
+                                                                    <div className="ml-3">
+                                                                        <div className="text-sm font-medium text-gray-900">
+                                                                            {personnel.nom}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                                {personnel.role}
+                                                            </td>
+                                                            <td className="px-4 py-4 whitespace-nowrap">
+                                                                <div className="flex items-center text-sm text-gray-900">
+                                                                    <Phone className="w-4 h-4 text-gray-400 mr-2" />
+                                                                    {personnel.telephone}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-4 whitespace-nowrap">
+                                                                <span
+                                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPersonnelStatutColor(
+                                                                        personnel.statut
+                                                                    )}`}
+                                                                >
+                                                                    {personnel.statut}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Liste des tables */}
+                                {activeTab === "tables" && (
+                                    <div className="mb-4">
+                                        <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                            <TableIcon className="w-5 h-5 mr-2 text-indigo-600" />
+                                            Configuration des Tables
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {selectedEvent.tablesList.map((table) => (
+                                                <div
+                                                    key={table.id}
+                                                    className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                                                >
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <h5 className="font-medium text-gray-900">
+                                                            Table {table.numero}
+                                                        </h5>
+                                                        <span
+                                                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTableStatutColor(
+                                                                table.statut
+                                                            )}`}
+                                                        >
+                                                            {table.statut}
+                                                        </span>
+                                                    </div>
+                                                    <div className="space-y-2 text-sm text-gray-600">
+                                                        <div className="flex items-center justify-between">
+                                                            <span>Capacité:</span>
+                                                            <span className="font-medium text-gray-900">
+                                                                {table.capacite} places
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between">
+                                                            <span>Occupée:</span>
+                                                            <span className="font-medium text-gray-900">
+                                                                {table.invites}/{table.capacite}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {personnel.role}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <div className="flex items-center text-sm text-gray-900">
-                          <Phone className="w-4 h-4 text-gray-400 mr-2" />
-                          {personnel.telephone}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPersonnelStatutColor(
-                            personnel.statut
-                          )}`}
-                        >
-                          {personnel.statut}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Liste des tables */}
-        {activeTab === "tables" && (
-          <div className="mb-4">
-            <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <TableIcon className="w-5 h-5 mr-2 text-indigo-600" />
-              Configuration des Tables
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {selectedEvent.tablesList.map((table) => (
-                <div
-                  key={table.id}
-                  className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h5 className="font-medium text-gray-900">
-                      Table {table.numero}
-                    </h5>
-                    <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTableStatutColor(
-                        table.statut
-                      )}`}
-                    >
-                      {table.statut}
-                    </span>
-                  </div>
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <div className="flex items-center justify-between">
-                      <span>Capacité:</span>
-                      <span className="font-medium text-gray-900">
-                        {table.capacite} places
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Occupée:</span>
-                      <span className="font-medium text-gray-900">
-                        {table.invites}/{table.capacite}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
 
                             {/* Actions */}
                             <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
@@ -680,10 +652,7 @@ const [activeTab, setActiveTab] = useState("invites");
                                         <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                                             Exporter
                                         </button>
-                                        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center">
-                                            <Settings className="w-4 h-4 mr-2" />
-                                            Modifier
-                                        </button>
+                                        
                                     </div>
                                 </div>
                             </div>
