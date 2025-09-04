@@ -166,7 +166,7 @@ export default function DashboardEvenement() {
 
     const filteredEvents = events.filter(event =>
         event.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.salle?.toLowerCase().includes(searchTerm.toLowerCase())
+        event.salle?.nom.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // --- state pour stocker les invités comptés par événement ---
