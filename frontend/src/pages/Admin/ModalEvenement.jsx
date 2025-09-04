@@ -33,7 +33,7 @@ import NotFound403 from "../../layouts/NotFound403";
 
 const StatsCard = ({ title, value, icon: Icon, color = "blue" }) => {
   const { darkMode } = useDarkMode();
-
+  
   const colors = {
     blue: { bg: "from-blue-500 to-cyan-500", text: "text-blue-500" },
     green: { bg: "from-green-500 to-emerald-500", text: "text-green-500" },
@@ -114,9 +114,6 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
   const [activeTab, setActiveTab] = useState("invites");
   const [isMobile, setIsMobile] = useState(false);
 
-
-  console.log('Données : ', data)
-
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 855);
@@ -174,11 +171,11 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
             <div>
               <h3 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
                 <MdOutlineCalendarToday className="mr-2 sm:mr-3 text-blue-700" />
-                {data.nom}
+                {data?.nom}
               </h3>
               <p className="text-sm mt-1">
                 Organisé par{" "}
-                <span className="font-medium">{data.user.name}</span>
+                <span className="font-medium">{data?.user.name}</span>
               </p>
             </div>
             <button
@@ -193,49 +190,49 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 my-6">
             <StatsCard
               title="Type d'événement"
-              value={data.type}
+              value={data?.type}
               icon={MdEvent}
               color="blue"
             />
             <StatsCard
               title="Thème"
-              value={data.theme}
+              value={data?.theme}
               icon={MdStars}
               color="purple"
             />
             <StatsCard
               title="Date de début"
-              value={formatDate(data.date)}
+              value={formatDate(data?.date)}
               icon={MdCalendarToday}
               color="green"
             />
             <StatsCard
               title="Date de fin"
-              value={formatDate(data.date_fin)}
+              value={formatDate(data?.date_fin)}
               icon={MdOutlineCalendarMonth}
               color="green"
             />
             <StatsCard
               title="Localisation"
-              value={data.location.nom}
+              value={data?.location?.nom}
               icon={MdLocationOn}
               color="orange"
             />
             <StatsCard
               title="Salle"
-              value={data.salle.nom}
+              value={data?.salle?.nom}
               icon={MdLocationCity}
               color="orange"
             />
             <StatsCard
               title="Nombre d'invités"
-              value={data.invites.length}
+              value={data?.invites.length}
               icon={MdPeople}
               color="purple"
             />
             <StatsCard
               title="Type d'abonnement"
-              value="Premium"
+              value={data?.user.forfait?.nom}
               icon={MdVerifiedUser}
               color="blue"
             />
@@ -282,18 +279,16 @@ function Invites({ data, darkMode, isMobile }) {
   const [currentPage, setCurrentPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  console.log('Les invités : ',data)
-
   const handleExportExcel = () => {
-    const exportData = data.invites.map((p) => ({
-      Nom: p.nom,
+    const exportData = data?.invites.map((p) => ({
+      Nom: p?.nom,
       Prénom: p.prenom,
       Email: p.email,
       Sexe: p.sex,
       Place: p.place, // Assuming 'place' exists in invite data
       QrCode: "https://example.com/qrcode",
     }));
-    handleDownloadXLSX(exportData, `invites_${data.nom}`);
+    handleDownloadXLSX(exportData, `invites_${data?.nom}`);
   };
 
   const columns = [
@@ -314,7 +309,7 @@ function Invites({ data, darkMode, isMobile }) {
     },
   ];
 
-  const rows = data.invites.map((invite, index) => ({
+  const rows = data?.invites.map((invite, index) => ({
     id: index,
     ...invite,
   }));
@@ -396,14 +391,14 @@ function Invites({ data, darkMode, isMobile }) {
         </div>
       </div>
 
-      {data.invites.length === 0 ? (
+      {data?.invites.length === 0 ? (
         <NotFound403 message="Aucun invité trouvé" />
       ) : isMobile ? (
         <div className="grid grid-cols-1 gap-4">
           {filteredRows.map((invite) => (
             <ListCard
               key={invite.id}
-              title={`${invite.nom} ${invite.prenom}`}
+              title={`${invite?.nom} ${invite.prenom}`}
               icon={FaUsers}
               darkMode={darkMode}
               details={[
@@ -434,7 +429,7 @@ function Invites({ data, darkMode, isMobile }) {
               .map((invite, index) => (
                 <div key={invite.id} className="grid grid-cols-12 px-4 py-3 items-center text-sm">
                   <div className="col-span-3 truncate font-medium">
-                    {invite.nom} {invite.prenom}
+                    {invite?.nom} {invite.prenom}
                   </div>
                   <div className="col-span-2 truncate">{invite.email}</div>
                   <div className="col-span-2">{invite.sex}</div>
@@ -452,7 +447,7 @@ function Invites({ data, darkMode, isMobile }) {
                     </button> */}
                     <img
                       src={"data:png/image;base64,"+invite.qrCode}
-                      alt={`QR Code pour l'invité ${invite.nom}`}
+                      alt={`QR Code pour l'invité ${invite?.nom}`}
                       className="w-16 h-16 object-contain rounded-md border border-gray-200 group-hover:border-indigo-300 transition-colors"
                     />
                   </div>
@@ -529,9 +524,9 @@ function TablePlace({ data, darkMode }) {
   const [tables, setTables] = useState([]);
 
   useEffect(() => {
-    if (!data.id) return;
-    getTablesByEventId(data.id).then(setTables).catch(console.error);
-  }, [data.id]);
+    if (!data?.id) return;
+    getTablesByEventId(data?.id).then(setTables).catch(console.error);
+  }, [data?.id]);
 
   return (
     <div className="p-4">
@@ -544,7 +539,7 @@ function TablePlace({ data, darkMode }) {
       </h3>
       <div className="overflow-y-auto flex justify-center py-4">
         <PlanSalle
-          event={{ id: data.id }}
+          event={{ id: data?.id }}
           tables={tables}
           setTables={setTables}
           darkMode={darkMode}
@@ -565,23 +560,23 @@ function Personnels({ data, darkMode, isMobile }) {
   useEffect(() => {
     const fetchPersonnel = async () => {
       try {
-        const response = await getPersonnelListByEventId(data.id);
+        const response = await getPersonnelListByEventId(data?.id);
         setPersonnelList(response);
       } catch (error) {
         console.error("Erreur lors de la récupération des personnels : ", error);
       }
     };
     fetchPersonnel();
-  }, [data.id]);
+  }, [data?.id]);
 
   const handleExportExcel = () => {
     const exportData = personnelList.map((p) => ({
-      Nom: p.nom,
+      Nom: p?.nom,
       Email: p.email,
       Status: p.status,
       Role: p.role,
     }));
-    handleDownloadXLSX(exportData, `personnels_${data.nom}`);
+    handleDownloadXLSX(exportData, `personnels_${data?.nom}`);
   };
 
   const columns = [
@@ -679,7 +674,7 @@ function Personnels({ data, darkMode, isMobile }) {
           {filteredRows.map((personnel) => (
             <ListCard
               key={personnel.id}
-              title={personnel.nom}
+              title={personnel?.nom}
               icon={FaUser}
               darkMode={darkMode}
               details={[
@@ -714,7 +709,7 @@ function Personnels({ data, darkMode, isMobile }) {
                     ${darkMode ? "hover:bg-gray-800" : "hover:bg-gray-50"}`}
                   >
                     <div className="col-span-3 font-medium truncate">
-                      {personnel.nom}
+                      {personnel?.nom}
                     </div>
                     <div className="col-span-3 truncate">
                       {personnel.email}
@@ -810,324 +805,5 @@ function Personnels({ data, darkMode, isMobile }) {
     </div>
   );
 }
-
-// Updated Revenus component to use DataGrid and responsive ListCard
-// function Revenus({ data, darkMode, isMobile }) {
-//   const [filterField, setFilterField] = useState("nom");
-//   const [searchValue, setSearchValue] = useState("");
-
-//   // Assuming 'revenue' data might come from 'invites' or elsewhere
-//   // For demonstration, using invites data with a placeholder for revenue-specific fields
-//   const revenueData = data.invites.map((invite) => ({
-//     id: invite.id, // Ensure unique ID
-//     nom: invite.nom,
-//     prenom: invite.prenom,
-//     email: invite.email,
-//     sex: invite.sex,
-//     place: invite.place,
-//     amountPaid: Math.floor(Math.random() * 1000) + 50, // Placeholder revenue amount
-//     paymentStatus: Math.random() > 0.5 ? "Payé" : "En attente", // Placeholder status
-//   }));
-
-//   const handleExportExcel = () => {
-//     const exportData = revenueData.map((item) => ({
-//       Nom: item.nom,
-//       Prénom: item.prenom,
-//       Email: item.email,
-//       Sexe: item.sex,
-//       Place: item.place,
-//       "Montant Payé": item.amountPaid,
-//       "Statut Paiement": item.paymentStatus,
-//     }));
-//     handleDownloadXLSX(exportData, `revenus_${data.nom}`);
-//   };
-
-//   const columns = [
-//     { field: "nom", headerName: "Nom", flex: 1, minWidth: 120 },
-//     { field: "prenom", headerName: "Prénom", flex: 1, minWidth: 120 },
-//     { field: "email", headerName: "Email", flex: 1.5, minWidth: 180 },
-//     { field: "amountPaid", headerName: "Montant Payé", flex: 1, minWidth: 120 },
-//     { field: "paymentStatus", headerName: "Statut Paiement", flex: 1, minWidth: 150 },
-//   ];
-
-//   const filteredRows = revenueData.filter((row) =>
-//     row[filterField]?.toString().toLowerCase().includes(searchValue.toLowerCase())
-//   );
-
-//   return (
-//     <div className="p-4">
-//       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-//         <h3
-//           className={`text-xl font-semibold ${
-//             darkMode ? "text-blue-300" : "text-blue-600"
-//           }`}
-//         >
-//           Les revenus des entrées
-//         </h3>
-
-//         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-//           {/* Filtrage */}
-//           <div
-//             className={`flex items-center gap-2 px-3 py-1 rounded-lg ${
-//               darkMode ? "bg-gray-700" : "bg-gray-100"
-//             }`}
-//           >
-//             <MdFilterList className="text-gray-500" />
-//             <select
-//               className={`p-1 bg-transparent focus:outline-none ${
-//                 darkMode ? "text-blue-300" : "text-blue-600"
-//               }`}
-//               value={filterField}
-//               onChange={(e) => setFilterField(e.target.value)}
-//             >
-//               <option value="nom">Nom</option>
-//               <option value="email">Email</option>
-//               <option value="amountPaid">Montant Payé</option>
-//               <option value="paymentStatus">Statut Paiement</option>
-//             </select>
-//           </div>
-
-//           {/* Recherche */}
-//           <div
-//             className={`relative flex items-center ${
-//               darkMode ? "bg-gray-700" : "bg-white"
-//             } rounded-lg shadow-sm border ${
-//               darkMode ? "border-gray-600" : "border-gray-200"
-//             }`}
-//           >
-//             <MdSearch className="absolute left-3 text-gray-400" />
-//             <input
-//               type="text"
-//               placeholder={`Rechercher par ${filterField}...`}
-//               className={`w-full pl-10 pr-4 py-2 bg-transparent focus:outline-none ${
-//                 darkMode
-//                   ? "text-blue-300 placeholder-gray-400"
-//                   : "text-blue-600 placeholder-gray-500"
-//               }`}
-//               value={searchValue}
-//               onChange={(e) => setSearchValue(e.target.value)}
-//             />
-//           </div>
-
-//           {/* Export */}
-//           <button
-//             onClick={handleExportExcel}
-//             className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg ${
-//               darkMode ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-500 hover:bg-blue-600"
-//             } text-white transition-colors`}
-//           >
-//             <MdFileDownload className="text-lg" />
-//             <span>Exporter</span>
-//           </button>
-//         </div>
-//       </div>
-
-//       {revenueData.length === 0 ? (
-//         <NotFound403 message="Aucun revenu trouvé" />
-//       ) : isMobile ? (
-//         <div className="grid grid-cols-1 gap-4">
-//           {filteredRows.map((item) => (
-//             <ListCard
-//               key={item.id}
-//               title={`${item.nom} ${item.prenom}`}
-//               icon={MdAttachMoney}
-//               darkMode={darkMode}
-//               details={[
-//                 { label: "Email", value: item.email },
-//                 { label: "Montant Payé", value: `${item.amountPaid} USD` },
-//                 { label: "Statut Paiement", value: item.paymentStatus },
-//               ]}
-//             />
-//           ))}
-//         </div>
-//       ) : (
-//         <div
-//           className={`py-4 rounded-xl border ${
-//             darkMode ? "border-gray-700" : "border-gray-200"
-//           }`}
-//         >
-//           <DataGrid
-//             rows={filteredRows}
-//             columns={columns}
-//             pageSize={10}
-//             rowsPerPageOptions={[]}
-//             autoHeight
-//             sx={{
-//               "& .MuiDataGrid-cell": {
-//                 borderColor: darkMode ? "#374151" : "#e5e7eb",
-//                 color: darkMode ? "#e5e7eb" : "#111827",
-//               },
-//               "& .MuiDataGrid-columnHeaders": {
-//                 backgroundColor: darkMode ? "#1f2937" : "#f3f4f6",
-//                 borderColor: darkMode ? "#374151" : "#e5e7eb",
-//                 color: darkMode ? "#93c5fd" : "#2563eb",
-//               },
-//               "& .MuiDataGrid-footerContainer": {
-//                 borderColor: darkMode ? "#374151" : "#e5e7eb",
-//               },
-//             }}
-//           />
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-// // Updated Commandes component to use DataGrid and responsive ListCard
-// function Commandes({ data, darkMode, isMobile }) {
-//   const [filterField, setFilterField] = useState("item");
-//   const [searchValue, setSearchValue] = useState("");
-
-//   // Placeholder for command/order data
-//   const commandsData = data.invites.slice(0, 5).map((invite, index) => ({
-//     id: index, // Ensure unique ID
-//     customerName: `${invite.nom} ${invite.prenom}`,
-//     orderItem: index % 2 === 0 ? "Boissons" : "Nourriture",
-//     quantity: Math.floor(Math.random() * 5) + 1,
-//     orderDate: new Date(Date.now() - index * 86400000).toLocaleDateString("fr-FR"), // Simulate different dates
-//     totalAmount: (Math.random() * 50 + 10).toFixed(2),
-//   }));
-
-//   const handleExportExcel = () => {
-//     const exportData = commandsData.map((item) => ({
-//       "Nom Client": item.customerName,
-//       "Article Commandé": item.orderItem,
-//       Quantité: item.quantity,
-//       "Date Commande": item.orderDate,
-//       "Montant Total": item.totalAmount,
-//     }));
-//     handleDownloadXLSX(exportData, `commandes_${data.nom}`);
-//   };
-
-//   const columns = [
-//     { field: "customerName", headerName: "Client", flex: 1, minWidth: 150 },
-//     { field: "orderItem", headerName: "Article", flex: 1, minWidth: 120 },
-//     { field: "quantity", headerName: "Quantité", type: "number", flex: 0.7, minWidth: 80 },
-//     { field: "totalAmount", headerName: "Montant Total", flex: 1, minWidth: 120 },
-//     { field: "orderDate", headerName: "Date Commande", flex: 1, minWidth: 150 },
-//   ];
-
-//   const filteredRows = commandsData.filter((row) =>
-//     row[filterField]?.toString().toLowerCase().includes(searchValue.toLowerCase())
-//   );
-
-//   return (
-//     <div className="p-4">
-//       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-//         <h3
-//           className={`text-xl font-semibold ${
-//             darkMode ? "text-blue-300" : "text-blue-600"
-//           }`}
-//         >
-//           Liste des commandes
-//         </h3>
-
-//         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-//           {/* Filtrage */}
-//           <div
-//             className={`flex items-center gap-2 px-3 py-1 rounded-lg ${
-//               darkMode ? "bg-gray-700" : "bg-gray-100"
-//             }`}
-//           >
-//             <MdFilterList className="text-gray-500" />
-//             <select
-//               className={`p-1 bg-transparent focus:outline-none ${
-//                 darkMode ? "text-blue-300" : "text-blue-600"
-//               }`}
-//               value={filterField}
-//               onChange={(e) => setFilterField(e.target.value)}
-//             >
-//               <option value="customerName">Client</option>
-//               <option value="orderItem">Article</option>
-//               <option value="orderDate">Date</option>
-//             </select>
-//           </div>
-
-//           {/* Recherche */}
-//           <div
-//             className={`relative flex items-center ${
-//               darkMode ? "bg-gray-700" : "bg-white"
-//             } rounded-lg shadow-sm border ${
-//               darkMode ? "border-gray-600" : "border-gray-200"
-//             }`}
-//           >
-//             <MdSearch className="absolute left-3 text-gray-400" />
-//             <input
-//               type="text"
-//               placeholder={`Rechercher par ${filterField}...`}
-//               className={`w-full pl-10 pr-4 py-2 bg-transparent focus:outline-none ${
-//                 darkMode
-//                   ? "text-blue-300 placeholder-gray-400"
-//                   : "text-blue-600 placeholder-gray-500"
-//               }`}
-//               value={searchValue}
-//               onChange={(e) => setSearchValue(e.target.value)}
-//             />
-//           </div>
-
-//           {/* Export */}
-//           <button
-//             onClick={handleExportExcel}
-//             className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg ${
-//               darkMode ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-500 hover:bg-blue-600"
-//             } text-white transition-colors`}
-//           >
-//             <MdFileDownload className="text-lg" />
-//             <span>Exporter</span>
-//           </button>
-//         </div>
-//       </div>
-
-//       {commandsData.length === 0 ? (
-//         <NotFound403 message="Aucune commande trouvée" />
-//       ) : isMobile ? (
-//         <div className="grid grid-cols-1 gap-4">
-//           {filteredRows.map((item) => (
-//             <ListCard
-//               key={item.id}
-//               title={item.customerName}
-//               icon={MdAttachMoney}
-//               darkMode={darkMode}
-//               details={[
-//                 { label: "Article", value: item.orderItem },
-//                 { label: "Quantité", value: item.quantity },
-//                 { label: "Montant Total", value: `${item.totalAmount} USD` },
-//                 { label: "Date Commande", value: item.orderDate },
-//               ]}
-//             />
-//           ))}
-//         </div>
-//       ) : (
-//         <div
-//           className={`py-4 rounded-xl border ${
-//             darkMode ? "border-gray-700" : "border-gray-200"
-//           }`}
-//         >
-//           <DataGrid
-//             rows={filteredRows}
-//             columns={columns}
-//             pageSize={10}
-//             rowsPerPageOptions={[]}
-//             autoHeight
-//             sx={{
-//               "& .MuiDataGrid-cell": {
-//                 borderColor: darkMode ? "#374151" : "#e5e7eb",
-//                 color: darkMode ? "#e5e7eb" : "#111827",
-//               },
-//               "& .MuiDataGrid-columnHeaders": {
-//                 backgroundColor: darkMode ? "#1f2937" : "#f3f4f6",
-//                 borderColor: darkMode ? "#374151" : "#e5e7eb",
-//                 color: darkMode ? "#93c5fd" : "#2563eb",
-//               },
-//               "& .MuiDataGrid-footerContainer": {
-//                 borderColor: darkMode ? "#374151" : "#e5e7eb",
-//               },
-//             }}
-//           />
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
 
 export default ModalEvenement;

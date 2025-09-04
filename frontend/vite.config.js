@@ -8,5 +8,17 @@ export default defineConfig({
   
   server: {
     port: 5173,
+    proxy: {
+      '/forfait': {
+        target: 'https://api.mastertable.site',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/auth': {
+        target: 'https://api.mastertable.site',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
 });

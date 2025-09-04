@@ -187,7 +187,6 @@ export default function Profil() {
   };
 
 
-  // ---------- Render ----------
   return (
     <>
       {/* Avatar */}

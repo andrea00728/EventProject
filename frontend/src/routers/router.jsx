@@ -66,6 +66,9 @@ import Publicacc from "../pages/Merge.jsx";
 import PublicLayout from "../layouts/PublicLayout.jsx";
 import EventProtectLayout from "../layouts/eventProtectLayout.jsx";
 import AdminManagementPage from "../pages/Admin/AdminManagmentTable.jsx";
+import DashboardPage from "../pages/dashborad/dashboard.jsx";
+import DashboardGlobal from "../pages/dashborad/Global.jsx";
+import DashboardEvenement from "../pages/dashborad/DashboardEvenement.jsx";
 
 const router = createBrowserRouter([
   {
@@ -216,6 +219,20 @@ const router = createBrowserRouter([
               {
                 path: "dashboardCaisse",
                 element: <DashboardCard />,
+              },
+            ],
+          },
+          {
+            path: "dashboard",
+            element: <DashboardPage />,
+            children: [
+              {
+                path: "",
+                element: <DashboardGlobal />,
+              },
+              {
+                path: "eventsDash",
+                element: <DashboardEvenement />,
               },
             ],
           },

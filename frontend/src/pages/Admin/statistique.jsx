@@ -232,7 +232,7 @@ const Statique = () => {
   const fetchChartData = async () => {
     try {
       setLoading(true);
-      console.log(`🔄 Chargement des données pour ${selectedPeriod} mois`);
+      // console.log(`🔄 Chargement des données pour ${selectedPeriod} mois`);
       const response = await fetch(`${url}/forfait/dashboard-charts?period=${selectedPeriod}`);
 
       if (!response.ok) {
@@ -240,7 +240,7 @@ const Statique = () => {
       }
 
       const data = await response.json();
-      console.log("📊 Données reçues:", data);
+      // console.log("📊 Données reçues:", data);
       setChartData(data);
     } catch (error) {
       console.error("❌ Erreur lors du chargement des données:", error);
@@ -251,7 +251,7 @@ const Statique = () => {
 
   // Update revenue chart
   const updateRevenueChart = (revenueData) => {
-    console.log("📈 Mise à jour graphique revenus:", revenueData);
+    // console.log("📈 Mise à jour graphique revenus:", revenueData);
     if (revenueChartRef.current) {
       revenueChartRef.current.destroy();
     }
@@ -298,7 +298,7 @@ const Statique = () => {
 
   // Update events chart
   const updateEventsChart = (eventsData) => {
-    console.log("🎯 Mise à jour graphique événements:", eventsData);
+    // console.log("🎯 Mise à jour graphique événements:", eventsData);
     if (eventsChartRef.current) {
       eventsChartRef.current.destroy();
     }
@@ -918,14 +918,14 @@ const Statique = () => {
                     Pourcentage d'activité des organisateurs par heure
                   </p>
                 </div>
-                <button
+                {/* <button
                   className={`mt-4 flex items-center space-x-2 text-sm sm:mt-0 ${
                     darkMode ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-800"
                   }`}
                 >
                   <span>Rapport détaillé</span>
                   <ChevronDown className="h-4 w-4" />
-                </button>
+                </button> */}
               </div>
               <div className="chart-container" style={{ height: "300px" }}>
                 <canvas ref={peakHoursChartCanvasRef} />

@@ -27,7 +27,7 @@ export class QrCodeService {
       // const { nanoid } = await import('nanoid');
       const { nanoid } = require('nanoid');
       const slug = nanoid(8);// Slug de 8 caractères
-        const originalUrl = `https://api.mastertable.site/menus/event/${eventId}/table/${tableId}`;
+        const originalUrl = `http://localhost:3000/menus/event/${eventId}/table/${tableId}`;
       shortLink = this.shortLinkRepository.create({
         slug,
         eventId,
