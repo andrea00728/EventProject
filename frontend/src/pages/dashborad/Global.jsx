@@ -117,7 +117,7 @@ const DashboardGlobal = () => {
     };
 
     return (
-        <div className="min-h-[86vh] bg-gray-100 p-8 font-sans overflow-auto">
+        <div className="min-h-full bg-gray-100 p-8 font-sans overflow-auto">
             <div className="max-w-7xl mx-auto">
                 {/* Header Section */}
                 <header className="mb-8 text-gray-900">
@@ -265,7 +265,7 @@ const DashboardGlobal = () => {
                                 </p>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                                <div className="h-2.5 rounded-full bg-gradient-to-r from-[#4c7ff7] to-[#7b49f3]" style={{ width: `${(15 / goals.attendeesTarget) * 100}%` }}></div>
+                                <div className="h-2.5 rounded-full bg-gradient-to-r min-w-0 max-w-[100%] from-[#4c7ff7] to-[#7b49f3]" style={{ width: `${(15 / goals.attendeesTarget) * 100}%` }}></div>
                             </div>
                             <div className="flex justify-between items-center mt-2">
                                 <p className="text-xs text-gray-500">
