@@ -784,6 +784,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                     </div>
                   </>
                 ) : (
+                  <>
                   <div className="flex flex-col gap-4">
                     <input
                       type="text"
@@ -816,13 +817,27 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                         Réinitialiser
                       </button>
                     </div>
-                    {geocodeResultText && (
-                      <p className="text-gray-500 text-sm">{geocodeResultText}</p>
-                    )}
-                    <p className="text-gray-500 text-sm">
-                      Cliquez sur la carte pour sélectionner les coordonnées du nouveau lieu et obtenir l'adresse automatiquement.
-                    </p>
                   </div>
+                  <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-xl">
+                  {filteredLocations.length > 0 ? (
+                    filteredLocations.map((loc) => (
+                      <div
+                        key={loc.id}
+                        onClick={() => handleSelectLieu(loc)}
+                        className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${
+                          selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
+                        }`}
+                      >
+                        {loc.nom}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-gray-500 text-center">
+                      Aucun lieu trouvé
+                    </div>
+                  )}
+                </div>
+                </>
                 )}
                 <div className="flex gap-2">
                   <button
