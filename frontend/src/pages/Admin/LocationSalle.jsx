@@ -331,7 +331,8 @@ const LocationSalle = () => {
     }
     try {
       await axios.post(`${API_URL}/save`, {
-        query: `${geocodeResult.nom}, ${geocodeResult.latitude}, ${geocodeResult.longitude}`
+        query: `${geocodeResult.nom}, ${geocodeResult.latitude}, ${geocodeResult.longitude}`,
+        createurId: 0
       });
       setGeocodeAddress("");
       setGeocodeResult(null);

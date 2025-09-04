@@ -182,12 +182,25 @@ export class LocationService {
     }
   }
 
-  async saveSelectedLocation(query: string, createurId: string | number): Promise<Localisation> {
+  async saveSelectedLocation(query: string, createurId: string): Promise<Localisation> {
     const geocodeResult = await this.geocodeLocation(query);
-    const existingLocation = await this.locationRepository.findOne({ where: { nom: geocodeResult.displayName } });
+
+    // Vérifier si une localisation existe avec le même nom ou les mêmes coordonnées
+    const existingLocation = await this.locationRepository.findOne({
+      where: [
+        { nom: geocodeResult.displayName },
+        {
+          latitude: geocodeResult.lat,
+          longitude: geocodeResult.lon,
+        },
+      ],
+      relations: ['createur'],
+    });
+
     if (existingLocation) {
-      if (!existingLocation.createur && createurId !== 0) {
-        const user = await this.userRepository.findOne({ where: { id: createurId.toString() } });
+      // Si le lieu existe mais n'a pas de créateur, essayer de mettre à jour avec l'utilisateur actuel
+      if (!existingLocation.createur && createurId && createurId !== '0') {
+        const user = await this.userRepository.findOne({ where: { id: createurId } });
         if (user) {
           existingLocation.createur = user;
           return this.locationRepository.save(existingLocation);
@@ -195,24 +208,25 @@ export class LocationService {
       }
       return existingLocation;
     }
-  
-    // Validate creator
+
+    // Valider le créateur
     let user: User | undefined;
-    if (createurId && createurId !== 0 && createurId !== '0') { // Check for non-zero/non-admin
-      const foundUser = await this.userRepository.findOne({ where: { id: createurId.toString() } });
-      user = foundUser || undefined;
-      if (!user) {
+    if (createurId && createurId !== '0') {
+      const foundUser = await this.userRepository.findOne({ where: { id: createurId } });
+      if (!foundUser) {
         throw new BadRequestException("L'ID de l'organisateur est invalide");
       }
+      user = foundUser;
     }
-  
+
+    // Créer une nouvelle localisation
     const newLocation = this.locationRepository.create({
       nom: geocodeResult.displayName,
       latitude: geocodeResult.lat,
       longitude: geocodeResult.lon,
-      createur: user, // Will be undefined for admin (createurId = 0)
+      createur: user, // Sera undefined pour admin (createurId = 0)
     });
-    
+
     return this.locationRepository.save(newLocation);
   }
 

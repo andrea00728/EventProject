@@ -146,12 +146,12 @@ export class LocationController {
   }
 
   @Post('save')
-  async saveLocation(@Body() body: { query: string, createurId?: number }) {
+  async saveLocation(@Body() body: { query: string, createurId?: string }) {
     const { query, createurId } = body;
     if (!query?.trim()) {
       throw new BadRequestException('Un terme de recherche est requis');
     }
-    return this.locationService.saveSelectedLocation(query.trim(), createurId ?? 0);
+    return this.locationService.saveSelectedLocation(query.trim(), createurId || '');
   }
 
   @Put('geocode/:id')
