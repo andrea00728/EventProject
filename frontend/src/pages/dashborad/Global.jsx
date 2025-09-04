@@ -4,7 +4,6 @@ import { useStateContext } from "../../context/ContextProvider";
 import { FaHandshake } from 'react-icons/fa';
 import { FaBullseye } from 'react-icons/fa'; // Import de l'icône pour les objectifs
 import { useNavigate } from 'react-router-dom';
-import { getAllManagerEvents } from '../../services/evenementServ';
 
 const DashboardGlobal = () => {
     const navigate = useNavigate();
@@ -41,16 +40,6 @@ const DashboardGlobal = () => {
         // }
         }
     }, [user]);
-
-    useEffect(() => {
-
-      const fetchData = async () => {
-        const data = await getAllManagerEvents(user.id || user.sub);
-        console.log("Données récupérés : ", data);
-      }
-
-      fetchData()
-    }, [])
 
     if (isLoading) {
         return <p className="text-center text-gray-600">Chargement des données du tableau de bord...</p>;
