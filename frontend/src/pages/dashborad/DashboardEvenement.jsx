@@ -461,8 +461,6 @@ export default function DashboardEvenement() {
                     <div className="bg-white/95 backdrop-blur-2xl rounded-[2rem] shadow-2xl border border-white/20 max-w-7xl w-full max-h-[95vh] overflow-hidden animate-in zoom-in-95 duration-300">
                         {/* En-tête du modal premium avec glassmorphism */}
                         <div className="px-8 py-8 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
-                            {/* Effet de grille subtile */}
-                            {/* <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M20 20.5V18H0v-2h20v2.5zm0 2.5v2.5H0V23h20zm0-8V16H0v-2h20v1.5z"/%3E%3C/g%3E%3C/svg%3E')] opacity-30"></div> */}
 
                         {/* Orbes lumineux flous */}
                         <div className="absolute -top-10 -left-10 w-32 h-32 bg-blue-400/30 rounded-full blur-3xl"></div>
