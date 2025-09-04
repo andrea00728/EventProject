@@ -232,7 +232,7 @@ export default function DashboardEvenement() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <div className="min-h-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
             {/* Header avec design moderne */}
             <div className="bg-white shadow-sm border-b border-gray-100">
                 <div className="px-8 py-6">
