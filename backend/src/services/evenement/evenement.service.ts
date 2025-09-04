@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Evenement } from 'src/entities/Evenement';
-import { LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
+import { LessThanOrEqual, MoreThanOrEqual, Not, Repository } from 'typeorm';
 import { LocationService } from '../localisation-service/localisation-service.service';
 import { CreateEventDto } from 'src/dto/CreateEvenementDTO';
 import { User } from 'src/Authentication/entities/auth.entity';
@@ -17,7 +17,7 @@ export class EvenementService {
     private readonly locationService: LocationService,
     private readonly notificationService: NotificationService,
     @InjectRepository(User)
-    private userRepo: Repository<User>,
+    private readonly userRepo: Repository<User>,
     @InjectRepository(NotificationEntity)
     private readonly notificationRepository: Repository<NotificationEntity>,
     private readonly notificationGateway: NotificationGateway
@@ -60,9 +60,8 @@ export class EvenementService {
       salle,
       user,
       isPublic: dto.isPublic,
+      imageUrl: dto.imageUrl,
     });
-
-    console.log("evenement: ", evenement);
 
     const event = await this.evenementRepository.save(evenement);
     await this.notificationService.notifyAll(
@@ -76,7 +75,6 @@ export class EvenementService {
       type: 'info',
       date: new Date(),
     });
-    console.log("voici le contenu de user: ", user);
     await this.notificationRepository.save(notification);
     this.notificationGateway.emitNotifEventForAdmin({
       ...notification,
@@ -84,6 +82,77 @@ export class EvenementService {
     });
 
     return event;
+  }
+
+  async update(id: number, dto: CreateEventDto): Promise<Evenement> {
+    const evenement = await this.evenementRepository.findOne({
+      where: { id },
+      relations: ['user', 'location', 'salle'],
+    });
+    if (!evenement) {
+      throw new NotFoundException(`Événement avec ID ${id} non trouvé`);
+    }
+
+    const location = await this.locationService.findLocationById(dto.locationId);
+    const salle = await this.locationService.findSalleById(dto.salleId);
+    if (salle.location.id !== location.id) {
+      throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
+    }
+
+    const parsedDate = new Date(dto.date);
+    const parsedDateFin = new Date(dto.date_fin);
+    if (isNaN(parsedDate.getTime()) || isNaN(parsedDateFin.getTime())) {
+      throw new BadRequestException('La date ou la date de fin est invalide');
+    }
+
+    // Vérifier les conflits de réservation (exclure l'événement actuel)
+    const conflictingEvent = await this.evenementRepository.findOne({
+      where: {
+        salle: { id: dto.salleId },
+        date: LessThanOrEqual(parsedDateFin),
+        date_fin: MoreThanOrEqual(parsedDate),
+        id: Not(id),
+      },
+    });
+    if (conflictingEvent) {
+      throw new BadRequestException(`Cette salle est déjà réservée pendant cette période`);
+    }
+
+    const user = await this.userRepo.findOneBy({ id: dto.utilisateur_id });
+    if (!user) {
+      throw new NotFoundException("Utilisateur introuvable");
+    }
+
+    // Mettre à jour les champs
+    Object.assign(evenement, {
+      nom: dto.nom,
+      type: dto.type,
+      theme: dto.theme,
+      date: parsedDate,
+      date_fin: parsedDateFin,
+      location,
+      salle,
+      user,
+      isPublic: dto.isPublic,
+      imageUrl: dto.imageUrl || evenement.imageUrl, // Conserver l'ancienne image si aucune nouvelle n'est fournie
+    });
+
+    const updatedEvent = await this.evenementRepository.save(evenement);
+
+    // Notification de mise à jour
+    const notification = this.notificationRepository.create({
+      title: 'Événement mis à jour',
+      message: `${user.name} a mis à jour l'événement ${evenement.nom}.`,
+      type: 'info',
+      date: new Date(),
+    });
+    await this.notificationRepository.save(notification);
+    this.notificationGateway.emitNotifEventForAdmin({
+      ...notification,
+      date: notification.date.toISOString(),
+    });
+
+    return updatedEvent;
   }
 
   async findOneById(eventId: number): Promise<Evenement> {
@@ -143,7 +212,6 @@ export class EvenementService {
       throw new NotFoundException("Utilisateur introuvable");
     }
 
-    // notification pour la suppression d'un evenement
     const notification = this.notificationRepository.create({
       title: 'Suppression d\'un évènement',
       message: `${user.name} a supprimé l'evenement de ${event.nom}.`,
@@ -155,7 +223,6 @@ export class EvenementService {
       ...notification,
       date: notification.date.toISOString(),
     });
-
 
     await this.evenementRepository.manager.delete('Invite', { event: { id } });
     await this.evenementRepository.manager.delete('TableEvent', { event: { id } });
@@ -174,7 +241,6 @@ export class EvenementService {
     return this.evenementRepository.count();
   }
 
-  // *** Nouvelle méthode : récupérer les événements publics ***
   async findPublicEvents(): Promise<Evenement[]> {
     return this.evenementRepository.find({
       where: { isPublic: true },
@@ -182,8 +248,6 @@ export class EvenementService {
       order: { date: 'ASC' },
     });
   }
-
-  /*** */
 
   async findCountForAllEventStats(): Promise<{
     total: number;
@@ -221,7 +285,7 @@ export class EvenementService {
       return {
         type: r.type,
         total: count,
-        percentage: parseFloat(percentage.toFixed(2)), // garde 2 chiffres après la virgule
+        percentage: parseFloat(percentage.toFixed(2)),
       };
     });
 
@@ -232,5 +296,4 @@ export class EvenementService {
       eventTypeStat
     };
   }
-
 }

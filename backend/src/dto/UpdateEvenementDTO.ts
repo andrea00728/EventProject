@@ -2,45 +2,56 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
-  IsUUID,
+  IsUUID
 } from 'class-validator';
-import { EventType } from './CreateEvenementDTO';
+
+export enum EventType {
+  MARIAGE = 'mariage',
+  REUNION = 'reunion',
+  ANNIVERSAIRE = 'anniversaire',
+  ENGAGEMENT = 'engagement',
+  AUTRE = 'autre'
+}
 
 export class UpdateEventDto {
-  @IsOptional()
-  @IsString()
-  nom?: string;
+  @IsUUID()
+  utilisateur_id: string;
 
-  @IsOptional()
+  @IsNotEmpty()
+  @IsString()
+  nom: string;
+
+  @IsNotEmpty()
   @IsEnum(EventType)
-  type?: EventType;
+  type: EventType;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  theme?: string;
+  theme: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsDateString()
-  date?: string;
+  date: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsDateString()
-  date_fin?: string;
+  date_fin: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsNumber()
-  locationId?: number;
+  locationId: number;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsNumber()
-  salleId?: number;
+  salleId: number;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsBoolean()
-  isPublic?: boolean;
+  isPublic: boolean;
 
   @IsOptional()
   @IsNumber()
@@ -49,7 +60,4 @@ export class UpdateEventDto {
   @IsOptional()
   @IsString()
   imageUrl?: string;
-
-  @IsUUID()
-  utilisateur_id: string; // Toujours requis pour vérifier l'utilisateur
 }
