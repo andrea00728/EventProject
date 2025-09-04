@@ -5,7 +5,7 @@ import "slick-carousel/slick/slick-theme.css";
 import { getAllEvents } from "../services/evenementServ";
 import { FaCalendarAlt, FaClock } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-// import defaultImage from "../../public/defaulImage.png"
+import defaultImage from "../../public/images/bouquet.jpg"
 
 const SuccessEvent = () => {
   const [allEvents, setAllEvents] = useState([]);
@@ -172,8 +172,7 @@ const SuccessEvent = () => {
                         />
                       ) : (
                         <img
-                          src="/src/assets/orange.png"
-                          // src="/public/defaultImage.png"
+                          src={defaultImage}
                           alt="Image par défaut"
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ease-in-out"
                         />
@@ -297,7 +296,7 @@ const SuccessEvent = () => {
                           />
                         ) : (
                           <img
-                            src="/public/defaultImage.png"
+                            src={defaultImage}
                             alt="Image par défaut"
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ease-in-out"
                           />
