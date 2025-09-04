@@ -72,18 +72,11 @@ const router = createBrowserRouter([
     path: "/",
     element: <PublicLayout />,
     children: [
-      // {
-      //   path: "/",
-      //   element: <Navigate to="/pagepublic" />,
-      // },
       {
         path: "/",
         element: <Publicacc />,
       },
-      // {
-      //   path: "/accueil",
-      //   element: <Accueil />,
-      // },
+
       {
         path: "/apropos",
         element: <Apropos />,
@@ -117,16 +110,6 @@ const router = createBrowserRouter([
           {
             path: "restauration",
             element: <MenuForm />,
-            // children: [
-            //   {
-            //     path: "createPersonnel",
-            //     element: <CreationPersonnel />,
-            //   },
-            //   {
-            //     path: "",
-            //     element: <DashboardPersonnel />,
-            //   },
-            // ],
           },
           {
             path: "tables",
