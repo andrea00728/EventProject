@@ -121,9 +121,17 @@ const DashboardGlobal = () => {
             <div className="max-w-7xl mx-auto">
                 {/* Header Section */}
                 <header className="mb-8 text-gray-900">
-                    <h1 className="text-4xl font-extrabold flex items-center gap-4">
-                        <Handshake className="w-10 h-10 text-[#4c7ff7]" strokeWidth={2.5} /> Bienvenue sur votre Tableau de Bord, <span className="bg-gradient-to-r from-[#4c7ff7] to-[#7b49f3] bg-clip-text text-transparent">{user.name || 'Organisateur'}</span>
-                    </h1>
+                    <div className="flex flex-col md:flex-row md:items-center md:gap-4">
+                        <div className="flex items-center gap-4">
+                            <Handshake className="w-10 h-10 text-[#4c7ff7] flex-shrink-0" strokeWidth={2.5} />
+                            <h1 className="text-4xl font-extrabold">
+                                Bienvenue sur votre Tableau de Bord,
+                            </h1>
+                        </div>
+                        <span className="bg-gradient-to-r from-[#4c7ff7] to-[#7b49f3] bg-clip-text text-transparent text-4xl font-extrabold mt-2 md:mt-0">
+                        {user.name || 'Organisateur'}
+                        </span>
+                    </div>
                     <p className="mt-2 text-lg text-gray-600">
                         Un aperçu rapide de vos activités d'organisation d'événements.
                     </p>
@@ -195,12 +203,14 @@ const DashboardGlobal = () => {
                     <h2 className="text-2xl font-semibold text-gray-800 mb-4">
                         Actions Rapides
                     </h2>
-                    <div className="flex flex-wrap gap-4">
-                        <button onClick={handleCreateEvent} className="bg-gradient-to-r from-[#4c7ff7] to-[#7b49f3] text-white px-6 py-3 rounded-xl shadow-md hover:opacity-90 transition-opacity duration-300 transform hover:scale-105 flex items-center">
-                            <PlusCircle className="mr-2 h-5 w-5" /> Créer un Nouvel Événement
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 w-full">
+                        <button onClick={handleCreateEvent} className="bg-gradient-to-r from-[#4c7ff7] to-[#7b49f3] text-white px-6 py-3 rounded-xl shadow-md hover:opacity-90 transition-opacity duration-300 transform hover:scale-105 flex-1 sm:flex-initial flex items-center justify-center sm:justify-start">
+                            <PlusCircle className="sm:mr-2 h-5 w-5" />
+                            <span className="ml-2 sm:ml-0">Créer un Nouvel Événement</span>
                         </button>
-                        <button onClick={handleManageGuests} className="bg-gray-200 text-gray-800 px-6 py-3 rounded-xl shadow-md hover:bg-gray-300 transition-colors duration-300 transform hover:scale-105 flex items-center">
-                            <Users className="mr-2 h-5 w-5" /> Gérer les Invités
+                        <button onClick={handleManageGuests} className="bg-gray-200 text-gray-800 px-6 py-3 rounded-xl shadow-md hover:bg-gray-300 transition-colors duration-300 transform hover:scale-105 flex-1 sm:flex-initial flex items-center justify-center sm:justify-start">
+                            <Users className="sm:mr-2 h-5 w-5" />
+                            <span className="ml-2 sm:ml-0">Gérer les Invités</span>
                         </button>
                     </div>
                 </section>
