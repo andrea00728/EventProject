@@ -34,3 +34,9 @@ export class UpdateOrderStatusDto {
   @IsEnum(['pending', 'preparing', 'served', 'canceled'])
   status: 'pending' | 'preparing' | 'served' | 'canceled';
 }
+
+export class RefundOrderDto {
+  @IsString()
+  @IsNotEmpty()
+  refundReason: string;
+}
