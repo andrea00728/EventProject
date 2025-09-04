@@ -38,7 +38,7 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res) {
     await this.authService.login(req.user, res);
-    return res.redirect(`https://mastertable.site/callback`);
+    return res.redirect(`http://localhost:5173/callback`);
   }
 
   @Post('logout')

@@ -187,8 +187,8 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
     { expiresIn: '2d' }
   );
 
-  const confirmationLink = `https://mastertable.site/personnel/response?token=${token}&action=confirm`;
-  const refuseLink = `https://mastertable.site/personnel/response?token=${token}&action=refuse`;
+  const confirmationLink = `http://localhost:5173/personnel/response?token=${token}&action=confirm`;
+  const refuseLink = `http://localhost:5173/personnel/response?token=${token}&action=refuse`;
 
 
   const transporter = nodemailer.createTransport({
