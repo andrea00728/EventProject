@@ -172,7 +172,8 @@ const SuccessEvent = () => {
                         />
                       ) : (
                         <img
-                          src="/public/defaultImage.png"
+                          src="/src/assets/orange.png"
+                          // src="/public/defaultImage.png"
                           alt="Image par défaut"
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ease-in-out"
                         />

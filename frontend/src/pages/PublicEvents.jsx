@@ -435,9 +435,9 @@ const PublicEvents = () => {
                         </div>
 
                         {/* Boutons d'action conditionnels */}
-                        <div className="flex gap-3 justify-end">
+                        {/* <div className="flex gap-3 justify-end"> */}
                           {/* Bouton Détails - toujours présent */}
-                          <button
+                          {/* <button
                             onClick={(e) => {
                               e.stopPropagation();
                               openEventModal(event);
@@ -445,10 +445,10 @@ const PublicEvents = () => {
                             className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors duration-200"
                           >
                             Détails
-                          </button>
+                          </button> */}
 
                           {/* Bouton S'inscrire - seulement pour les événements publics */}
-                          {event.isPublic && (
+                          {/* {event.isPublic && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -464,7 +464,7 @@ const PublicEvents = () => {
                               S'inscrire
                             </button>
                           )}
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                   ))}
