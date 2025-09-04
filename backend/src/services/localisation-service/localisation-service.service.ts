@@ -3,10 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Evenement } from 'src/entities/Evenement';
 import { Localisation } from 'src/entities/Location';
 import { Salle } from 'src/entities/salle';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, FindOptionsWhere, IsNull, Repository } from 'typeorm';
 import { ILike } from 'typeorm';
 import { HttpService } from '@nestjs/axios';
 import { User } from 'src/Authentication/entities/auth.entity';
+
 
 @Injectable()
 export class LocationService {
@@ -240,4 +241,65 @@ export class LocationService {
 
     return this.locationRepository.save(location);
   }
+  
+
+  //recuperer les lieux par createur
+  async findLocationsByCreator(createurId: string): Promise<Localisation[]> {
+    if (!createurId) {
+      throw new BadRequestException("L'ID du créateur est requis");
+    }
+
+    // Cas où createurId = '0' (admin, createur_id est NULL en base)
+    if (createurId === '0') {
+      return this.locationRepository.find({
+        where: { createur: IsNull() },
+        relations: ['salles', 'createur'],
+        order: { nom: 'ASC' },
+      });
+    }
+
+    // Vérifier si l'utilisateur existe
+    const user = await this.userRepository.findOne({ where: { id: createurId } });
+    if (!user) {
+      throw new BadRequestException("L'ID de l'organisateur est invalide");
+    }
+
+    // Rechercher les lieux pour l'utilisateur donné
+    return this.locationRepository.find({
+      where: { createur: { id: createurId } },
+      relations: ['salles', 'createur'],
+      order: { nom: 'ASC' },
+    });
+  }
+
+
+  //lieux crée par utilisateur + celle de l'admin
+  async findLocationsByCreatorAndAdmin(createurId: string): Promise<Localisation[]> {
+    if (!createurId) {
+      throw new BadRequestException("L'ID du créateur est requis");
+    }
+
+    // Préparer les conditions de recherche
+    const whereConditions: FindOptionsWhere<Localisation>[] = [];
+
+    // Inclure les lieux créés par l'admin (createur_id = NULL)
+    whereConditions.push({ createur: IsNull() });
+
+    // Si createurId n'est pas '0', inclure les lieux de l'utilisateur connecté
+    if (createurId !== '0') {
+      const user = await this.userRepository.findOne({ where: { id: createurId } });
+      if (!user) {
+        throw new BadRequestException("L'ID de l'organisateur est invalide");
+      }
+      whereConditions.push({ createur: { id: createurId } });
+    }
+
+    // Rechercher les lieux pour l'admin et l'utilisateur connecté
+    return this.locationRepository.find({
+      where: whereConditions,
+      relations: ['salles', 'createur'],
+      order: { nom: 'ASC' },
+    });
+  }
+  
 }

@@ -2,10 +2,11 @@ import React, { useEffect, useState, useRef } from "react";
 import { useDarkMode } from "../context/DarkModeContext";
 import {
   createEvent,
-  getLocations,
   getSallesByLocation,
   saveLocation,
   createSalle,
+  getLocationsByCreator,
+  getLocationsByCreatorAndAdmin,
 } from "../services/evenementServ";
 import { textControll } from "../services/controll_champs/controll_champs";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
@@ -83,7 +84,6 @@ const EVENT_TYPES = [
   { value: "autre", label: "Autre" },
 ];
 
-// Liste des thèmes
 const EVENT_THEMES = [
   { value: "chic", label: "Chic" },
   { value: "boheme", label: "Bohème" },
@@ -101,7 +101,6 @@ const EVENT_THEMES = [
   { value: "autre", label: "Autre" },
 ];
 
-// Styles personnalisés pour react-select
 const customStyles = {
   control: (provided) => ({
     ...provided,
@@ -160,6 +159,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   const [customType, setCustomType] = useState("");
   const [customTheme, setCustomTheme] = useState("");
   const [locations, setLocations] = useState([]);
+  const [userLocations, setUserLocations] = useState([]);
   const [salles, setSalles] = useState([]);
   const [modalSalleOpen, setModalSalleOpen] = useState(false);
   const [modalLieuOpen, setModalLieuOpen] = useState(false);
@@ -178,15 +178,39 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
 
   const { isAuthenticated, user } = useStateContext();
 
-  // États pour gérer l'ajout d'une salle
   const [isAddingSalle, setIsAddingSalle] = useState(false);
   const [newSalleName, setNewSalleName] = useState("");
 
   useEffect(() => {
-    getLocations()
-      .then((data) => setLocations(Array.isArray(data) ? data : []))
-      .catch(() => setLocations([]));
-  }, []);
+    const fetchLocations = async () => {
+      try {
+        const createurId = isAuthenticated && user?.sub ? user.sub : '0';
+        const data = await getLocationsByCreatorAndAdmin(createurId);
+        setLocations(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Erreur lors du chargement des lieux:', error);
+        setLocations([]);
+      }
+    };
+    fetchLocations();
+  }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    const fetchUserLocations = async () => {
+      try {
+        if (isAuthenticated && user?.sub) {
+          const data = await getLocationsByCreator(user.sub);
+          setUserLocations(Array.isArray(data) ? data : []);
+        } else {
+          setUserLocations([]);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des lieux utilisateur:', error);
+        setUserLocations([]);
+      }
+    };
+    fetchUserLocations();
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     if (form.locationId) {
@@ -276,7 +300,6 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       });
       setCustomType("");
       setCustomTheme("");
-
       onNext && onNext({ eventId: event.id });
     } catch (error) {
       const errorMessage =
@@ -293,6 +316,9 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     locations.find((l) => l.id === form.locationId)?.nom || "";
 
   const filteredLocations = locations.filter((loc) =>
+    loc.nom.toLowerCase().includes(searchLieu.toLowerCase())
+  );
+  const filteredUserLocations = userLocations.filter((loc) =>
     loc.nom.toLowerCase().includes(searchLieu.toLowerCase())
   );
 
@@ -350,6 +376,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         saveLocation(query, createurId)
           .then((createdLoc) => {
             setLocations([...locations, createdLoc]);
+            setUserLocations([...userLocations, createdLoc]);
             setForm({ ...form, locationId: createdLoc.id, salleId: "" });
             setModalLieuOpen(false);
             setCustomMarker(null);
@@ -614,7 +641,6 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         </form>
       </div>
 
-      {/* Modal salles */}
       {modalSalleOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="relative w-full max-w-lg bg-white shadow-2xl rounded-2xl p-8">
@@ -692,7 +718,6 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         </div>
       )}
 
-      {/* Modal lieu avec carte */}
       {modalLieuOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="relative w-full max-w-7xl bg-white shadow-2xl rounded-2xl p-8">
@@ -785,59 +810,59 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                   </>
                 ) : (
                   <>
-                  <div className="flex flex-col gap-4">
-                    <input
-                      type="text"
-                      value={geocodeAddress}
-                      onChange={(e) => setGeocodeAddress(e.target.value)}
-                      placeholder="Entrez une adresse à rechercher"
-                      className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleGeocode}
-                        className="flex-1 bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Rechercher
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSearchLieu("");
-                          setSelectedLieu(null);
-                          setCustomMarker(null);
-                          setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
-                          setGeocodeAddress("");
-                          setGeocodeResult(null);
-                          setGeocodeResultText("");
-                          setActiveTab('specify');
-                        }}
-                        disabled={activeTab === 'default' ? !selectedLieu : !newLocation.nom || !newLocation.latitude}
-                        className="flex-1 bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Réinitialiser
-                      </button>
-                    </div>
-                  </div>
-                  <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-xl">
-                  {filteredLocations.length > 0 ? (
-                    filteredLocations.map((loc) => (
-                      <div
-                        key={loc.id}
-                        onClick={() => handleSelectLieu(loc)}
-                        className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${
-                          selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
-                        }`}
-                      >
-                        {loc.nom}
+                    <div className="flex flex-col gap-4">
+                      <input
+                        type="text"
+                        value={geocodeAddress}
+                        onChange={(e) => setGeocodeAddress(e.target.value)}
+                        placeholder="Entrez une adresse à rechercher"
+                        className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleGeocode}
+                          className="flex-1 bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Rechercher
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSearchLieu("");
+                            setSelectedLieu(null);
+                            setCustomMarker(null);
+                            setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
+                            setGeocodeAddress("");
+                            setGeocodeResult(null);
+                            setGeocodeResultText("");
+                            setActiveTab('specify');
+                          }}
+                          disabled={activeTab === 'default' ? !selectedLieu : !newLocation.nom || !newLocation.latitude}
+                          className="flex-1 bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Réinitialiser
+                        </button>
                       </div>
-                    ))
-                  ) : (
-                    <div className="px-4 py-3 text-gray-500 text-center">
-                      Aucun lieu trouvé
                     </div>
-                  )}
-                </div>
-                </>
+                    <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-xl">
+                      {filteredUserLocations.length > 0 ? (
+                        filteredUserLocations.map((loc) => (
+                          <div
+                            key={loc.id}
+                            onClick={() => handleSelectLieu(loc)}
+                            className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${
+                              selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
+                            }`}
+                          >
+                            {loc.nom}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-3 text-gray-500 text-center">
+                          Aucun lieu créé par vous
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
                 <div className="flex gap-2">
                   <button
@@ -867,7 +892,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               </div>
               <div className="w-full md:w-1/2 h-96 rounded-lg overflow-hidden">
                 <MapContainer
-                  center={[48.8566, 2.3522]} // Paris par défaut
+                  center={[48.8566, 2.3522]}
                   zoom={13}
                   style={{ height: "100%", width: "100%" }}
                   ref={mapRef}

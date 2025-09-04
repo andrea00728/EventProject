@@ -165,4 +165,16 @@ export class LocationController {
     }
     return this.locationService.updateLocationWithGeocode(idNum, query.trim());
   }
+
+  //recuperation des lieu par createur
+  @Get('by-creator/:createurId')
+  async findLocationsByCreator(@Param('createurId') createurId: string) {
+    return this.locationService.findLocationsByCreator(createurId);
+  }
+
+  //recuperation des lieu par createur et admin
+  @Get('byadminandcreator/:createurId')
+  async findLocationsByCreatorAndAdmin(@Param('createurId') createurId: string) {
+    return this.locationService.findLocationsByCreatorAndAdmin(createurId);
+  }
 }
