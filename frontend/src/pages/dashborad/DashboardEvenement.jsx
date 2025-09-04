@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
     Calendar,
     Users,
@@ -23,6 +23,7 @@ import { getGuestsByEventId } from "../../services/inviteService";
 import { getPersonnelByEventId } from "../../services/personnel_service";
 import { getMyEvents } from "../../services/evenementServ";
 import { useStateContext } from "../../context/ContextProvider";
+import axiosClient from "../../api/axios-client";
 
 export default function DashboardEvenement() {
     const { isAuthenticated } = useStateContext();
@@ -37,6 +38,71 @@ export default function DashboardEvenement() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [filterColumn, setFilterColumn] = useState("tous");
+    const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+    const [tableCapacities, setTableCapacities] = useState({});
+    const [inviteCounts, setInviteCounts] = useState({});
+    const [personnelCounts, setPersonnelCounts] = useState({});
+    const [isTableCapacitiesLoading, setIsTableCapacitiesLoading] = useState(false);
+    const filterButtonRef = useRef(null);
+    const dropdownRef = useRef(null);
+
+    // Move filteredEvents into useMemo to ensure inviteCounts is initialized
+    const filteredEvents = useMemo(() => {
+        return events.filter((event) => {
+            const searchLower = searchTerm.toLowerCase();
+            let matchesSearch = true;
+
+            switch (filterColumn) {
+                case "evenement":
+                    matchesSearch = event.nom?.toLowerCase().includes(searchLower);
+                    break;
+                case "lieu":
+                    matchesSearch = event.salle?.nom.toLowerCase().includes(searchLower);
+                    break;
+                case "date":
+                    matchesSearch = new Date(event.date).toLocaleDateString('fr-FR').includes(searchLower);
+                    break;
+                case "invites":
+                    matchesSearch = (inviteCounts[event.id] || 0).toString().includes(searchLower);
+                    break;
+                case "personnel":
+                    matchesSearch = (personnelCounts[event.id]?.total || 0).toString().includes(searchLower);
+                    break;
+                case "capacite":
+                    matchesSearch = (tableCapacities[event.id] || 0).toString().includes(searchLower);
+                    break;
+                case "statut":
+                    matchesSearch = event.statut?.toLowerCase().includes(searchLower);
+                    break;
+                case "tous":
+                default:
+                    matchesSearch =
+                        event.nom?.toLowerCase().includes(searchLower) ||
+                        event.salle?.nom.toLowerCase().includes(searchLower);
+                    break;
+            }
+
+            return matchesSearch;
+        });
+    }, [events, searchTerm, filterColumn, inviteCounts, personnelCounts, tableCapacities]);
+
+    // Handle clicks outside dropdown to close it
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                filterButtonRef.current &&
+                dropdownRef.current &&
+                !filterButtonRef.current.contains(event.target) &&
+                !dropdownRef.current.contains(event.target)
+            ) {
+                setShowFilterDropdown(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     // Récupération des événements
     useEffect(() => {
@@ -60,12 +126,10 @@ export default function DashboardEvenement() {
 
         setIsLoading(true);
 
-        // Récupérer les invités
         getGuestsByEventId(selectedEvent.id)
             .then((guestsData) => {
                 setGuests(guestsData);
 
-                // Générer dynamiquement les tables selon le nombre d'invités
                 const tablesDyn = [];
                 const tableCapacity = 8;
                 const numTables = Math.ceil(guestsData.length / tableCapacity);
@@ -110,6 +174,97 @@ export default function DashboardEvenement() {
                 setIsLoading(false);
             });
     }, [selectedEvent, isAuthenticated]);
+
+    // Récupération des capacités des tables pour chaque événement
+    useEffect(() => {
+        const fetchTableCapacities = async () => {
+            if (!isAuthenticated || events.length === 0) {
+                console.log("fetchTableCapacities: Skipped due to isAuthenticated:", isAuthenticated, "or events.length:", events.length);
+                return;
+            }
+
+            setIsTableCapacitiesLoading(true);
+            const capacities = {};
+            for (const event of events) {
+                let retries = 3;
+                while (retries > 0) {
+                    try {
+                        console.log(`Fetching tables for event ${event.id}, attempt ${4 - retries}`);
+                        const response = await axiosClient.get(`/tables/event/${event.id}`);
+                        console.log(`Response for event ${event.id}:`, response.data);
+
+                        let totalCapacity = 0;
+                        if (Array.isArray(response.data)) {
+                            totalCapacity = response.data.reduce((sum, table) => sum + (table.capacite || 0), 0);
+                        } else if (response.data && typeof response.data === 'object' && response.data.capacite) {
+                            totalCapacity = response.data.capacite;
+                        } else {
+                            console.warn(`Unexpected response format for event ${event.id}:`, response.data);
+                            totalCapacity = 0;
+                        }
+                        capacities[event.id] = totalCapacity;
+                        break; // Success, exit retry loop
+                    } catch (error) {
+                        console.error(`Erreur récupération tables pour événement ${event.id}:`, error.message, error.response?.data);
+                        retries--;
+                        if (retries === 0) {
+                            capacities[event.id] = 0;
+                        }
+                        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+                    }
+                }
+            }
+            setTableCapacities(capacities);
+            setIsTableCapacitiesLoading(false);
+            console.log("Updated tableCapacities:", capacities);
+        };
+
+        fetchTableCapacities();
+    }, [events, isAuthenticated]);
+
+    // Récupération des invités comptés par événement
+    useEffect(() => {
+        const fetchInviteCounts = async () => {
+            if (!isAuthenticated || events.length === 0) return;
+
+            const counts = {};
+            for (const event of events) {
+                try {
+                    const guestsData = await getGuestsByEventId(event.id);
+                    counts[event.id] = guestsData.length;
+                } catch (error) {
+                    console.error(`Erreur récupération invités pour événement ${event.id}:`, error);
+                    counts[event.id] = 0;
+                }
+            }
+            setInviteCounts(counts);
+        };
+
+        fetchInviteCounts();
+    }, [events, isAuthenticated]);
+
+    // Récupération du personnel compté par événement
+    useEffect(() => {
+        const fetchPersonnelCounts = async () => {
+            if (!isAuthenticated || events.length === 0) return;
+
+            const counts = {};
+            for (const event of events) {
+                try {
+                    const personnelData = await getPersonnelByEventId(event.id);
+                    const total = personnelData.length;
+                    const assigned = personnelData.filter(p => p.statut === "Assigné").length;
+                    counts[event.id] = { total, assigned };
+                } catch (error) {
+                    console.error(`Erreur récupération personnel pour événement ${event.id}:`, error);
+                    counts[event.id] = { total: 0, assigned: 0 };
+                }
+            }
+            setPersonnelCounts(counts);
+        };
+
+        fetchPersonnelCounts();
+    }, [events, isAuthenticated]);
 
     const openEventModal = (event) => {
         setSelectedEvent(event);
@@ -164,61 +319,11 @@ export default function DashboardEvenement() {
         }
     };
 
-    const filteredEvents = events.filter(event =>
-        event.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.salle?.nom.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    // --- state pour stocker les invités comptés par événement ---
-    const [inviteCounts, setInviteCounts] = useState({});
-
-    useEffect(() => {
-        const fetchInviteCounts = async () => {
-            if (!isAuthenticated || events.length === 0) return;
-
-            const counts = {};
-            for (const event of events) {
-                try {
-                    const guestsData = await getGuestsByEventId(event.id);
-                    counts[event.id] = guestsData.length; // total des invités
-                } catch (error) {
-                    console.error(`Erreur récupération invités pour événement ${event.id}:`, error);
-                    counts[event.id] = 0;
-                }
-            }
-            setInviteCounts(counts);
-        };
-
-        fetchInviteCounts();
-    }, [events, isAuthenticated]);
-
-
-    // Fonction pour compter le personnel par événement
-    const [personnelCounts, setPersonnelCounts] = useState({});
-
-    useEffect(() => {
-        const fetchPersonnelCounts = async () => {
-            if (!isAuthenticated || events.length === 0) return;
-
-            const counts = {};
-            for (const event of events) {
-                try {
-                    const personnelData = await getPersonnelByEventId(event.id);
-                    const total = personnelData.length;
-                    const assigned = personnelData.filter(p => p.statut === "Assigné").length;
-                    counts[event.id] = { total, assigned };
-                } catch (error) {
-                    console.error(`Erreur récupération personnel pour événement ${event.id}:`, error);
-                    counts[event.id] = { total: 0, assigned: 0 };
-                }
-            }
-            setPersonnelCounts(counts);
-        };
-
-        fetchPersonnelCounts();
-    }, [events, isAuthenticated]);
-
-
+    // Handle filter column selection
+    const handleFilterChange = (value) => {
+        setFilterColumn(value);
+        setShowFilterDropdown(false);
+    };
 
     if (isLoading && events.length === 0) {
         return (
@@ -260,16 +365,48 @@ export default function DashboardEvenement() {
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                             <input
                                 type="text"
-                                placeholder="Rechercher un événement..."
+                                placeholder={`Rechercher par ${filterColumn === "tous" ? "nom ou lieu" : filterColumn === "evenement" ? "nom" : filterColumn === "lieu" ? "lieu" : filterColumn === "date" ? "date" : filterColumn === "invites" ? "nombre d'invités" : filterColumn === "personnel" ? "nombre de personnel" : filterColumn === "capacite" ? "capacité tables" : "statut"}...`}
                                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <button className="flex items-center space-x-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
-                            <Filter className="w-5 h-5" />
-                            <span>Filtres</span>
-                        </button>
+                        <div className="relative" ref={filterButtonRef}>
+                            <button
+                                onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                                className="flex items-center space-x-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                            >
+                                <Filter className="w-5 h-5" />
+                                <span>Filtres</span>
+                            </button>
+                            {showFilterDropdown && (
+                                <div
+                                    ref={dropdownRef}
+                                    className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden"
+                                >
+                                    <ul className="py-1">
+                                        {[
+                                            { value: "tous", label: "Tous" },
+                                            { value: "evenement", label: "Événement" },
+                                            { value: "lieu", label: "Lieu" },
+                                            { value: "date", label: "Date" },
+                                            { value: "invites", label: "Invités" },
+                                            { value: "personnel", label: "Personnel" },
+                                            { value: "capacite", label: "Capacité Tables" },
+                                            { value: "statut", label: "Statut" }
+                                        ].map((option) => (
+                                            <li
+                                                key={option.value}
+                                                onClick={() => handleFilterChange(option.value)}
+                                                className="px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
+                                            >
+                                                {option.label}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
                         <div className="flex items-center bg-gray-100 rounded-xl p-1">
                             <button
                                 onClick={() => setViewMode("list")}
@@ -311,6 +448,7 @@ export default function DashboardEvenement() {
                                         <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Lieu</th>
                                         <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Invités</th>
                                         <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Personnel</th>
+                                        <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Capacité Tables</th>
                                         <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Statut</th>
                                         <th className="px-8 py-6 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">Actions</th>
                                     </tr>
@@ -361,6 +499,16 @@ export default function DashboardEvenement() {
                                                             <Briefcase className="w-5 h-5 text-emerald-600" />
                                                         </div>
                                                         <span className="text-emerald-700 font-bold text-lg">{personnelData.total}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-6">
+                                                    <div className="flex items-center space-x-3">
+                                                        <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                                                            <Grid3X3 className="w-5 h-5 text-purple-600" />
+                                                        </div>
+                                                        <span className="text-purple-700 font-bold text-lg">
+                                                            {isTableCapacitiesLoading ? "Chargement..." : tableCapacities[event.id] || 0}
+                                                        </span>
                                                     </div>
                                                 </td>
                                                 <td className="px-8 py-6">
@@ -426,6 +574,12 @@ export default function DashboardEvenement() {
                                                 <div className="text-3xl font-bold text-purple-600 mb-2">{personnelData.total}</div>
                                                 <div className="text-sm font-semibold text-purple-500 uppercase tracking-wider">Personnel</div>
                                             </div>
+                                            <div className="text-center p-6 bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl border-2 border-emerald-100 shadow-lg">
+                                                <div className="text-3xl font-bold text-emerald-600 mb-2">
+                                                    {isTableCapacitiesLoading ? "Chargement..." : tableCapacities[event.id] || 0}
+                                                </div>
+                                                <div className="text-sm font-semibold text-emerald-500 uppercase tracking-wider">Capacité Tables</div>
+                                            </div>
                                         </div>
 
                                         <button
@@ -443,13 +597,12 @@ export default function DashboardEvenement() {
                     </div>
                 )}
 
-
                 {filteredEvents.length === 0 && !isLoading && (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
                         <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun événement trouvé</h3>
                         <p className="text-gray-500">
-                            {searchTerm ? "Aucun événement ne correspond à votre recherche." : "Vous n'avez pas encore d'événements."}
+                            {searchTerm ? "Aucun événement ne correspond à vos critères." : "Vous n'avez pas encore d'événements."}
                         </p>
                     </div>
                 )}
@@ -459,238 +612,233 @@ export default function DashboardEvenement() {
             {modalOpen && selectedEvent && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-xl flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
                     <div className="bg-white/95 backdrop-blur-2xl rounded-[2rem] shadow-2xl border border-white/20 max-w-7xl w-full max-h-[95vh] overflow-hidden animate-in zoom-in-95 duration-300">
-                        {/* En-tête du modal premium avec glassmorphism */}
                         <div className="px-8 py-8 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
+                            <div className="absolute -top-10 -left-10 w-32 h-32 bg-blue-400/30 rounded-full blur-3xl"></div>
+                            <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-400/20 rounded-full blur-3xl"></div>
 
-                        {/* Orbes lumineux flous */}
-                        <div className="absolute -top-10 -left-10 w-32 h-32 bg-blue-400/30 rounded-full blur-3xl"></div>
-                        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-400/20 rounded-full blur-3xl"></div>
-
-                        <div className="relative flex justify-between items-start text-white">
-                            <div className="flex flex-col space-y-4">
-                                <h3 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                                    {selectedEvent.nom}
-                                </h3>
-                                <div className="flex items-center space-x-8 text-blue-100/90">
-                                    <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/20">
-                                        <Calendar className="w-4 h-4 text-blue-300" />
-                                        <span className="font-medium">
-                                            {new Date(selectedEvent.date).toLocaleDateString('fr-FR')}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/20">
-                                        <MapPin className="w-4 h-4 text-purple-300" />
-                                        <span className="font-medium">{selectedEvent.salle?.nom}</span>
+                            <div className="relative flex justify-between items-start text-white">
+                                <div className="flex flex-col space-y-4">
+                                    <h3 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                                        {selectedEvent.nom}
+                                    </h3>
+                                    <div className="flex items-center space-x-8 text-blue-100/90">
+                                        <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/20">
+                                            <Calendar className="w-4 h-4 text-blue-300" />
+                                            <span className="font-medium">
+                                                {new Date(selectedEvent.date).toLocaleDateString('fr-FR')}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/20">
+                                            <MapPin className="w-4 h-4 text-purple-300" />
+                                            <span className="font-medium">{selectedEvent.salle?.nom}</span>
+                                        </div>
                                     </div>
                                 </div>
+                                <button
+                                    onClick={closeModal}
+                                    className="p-3 hover:bg-white/20 rounded-2xl transition-all duration-200 border border-white/20 backdrop-blur-sm group"
+                                >
+                                    <X className="w-5 h-5 group-hover:rotate-90 transition-transform duration-200" />
+                                </button>
                             </div>
-                            <button
-                                onClick={closeModal}
-                                className="p-3 hover:bg-white/20 rounded-2xl transition-all duration-200 border border-white/20 backdrop-blur-sm group"
-                            >
-                                <X className="w-5 h-5 group-hover:rotate-90 transition-transform duration-200" />
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="overflow-y-auto max-h-[calc(90vh-140px)]">
-                        {/* Navigation des onglets moderne */}
-                        <div className="px-8 py-6 bg-gradient-to-b from-gray-50/80 to-white border-b border-gray-100">
-                            <nav className="flex space-x-2 bg-gray-100/60 p-1.5 rounded-2xl backdrop-blur-sm">
-                                {[
-                                    { id: "invites", label: "Invités", icon: Users, count: guests.length, color: "blue" },
-                                    { id: "personnel", label: "Personnel", icon: User, count: personnel.length, color: "purple" },
-                                    { id: "tables", label: "Tables", icon: Grid3X3, count: tables.length, color: "emerald" }
-                                ].map((tab) => (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={`flex items-center space-x-3 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 relative group ${activeTab === tab.id
-                                                ? `bg-white shadow-lg shadow-${tab.color}-500/10 text-${tab.color}-600 border border-${tab.color}-100`
-                                                : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
-                                            }`}
-                                    >
-                                        <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? `text-${tab.color}-500` : 'text-gray-400'} transition-colors`} />
-                                        <span>{tab.label}</span>
-                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${activeTab === tab.id
-                                                ? `bg-${tab.color}-100 text-${tab.color}-700`
-                                                : "bg-gray-200 text-gray-600"
-                                            }`}>
-                                            {tab.count}
-                                        </span>
-                                        {activeTab === tab.id && (
-                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
-                                        )}
-                                    </button>
-                                ))}
-                            </nav>
                         </div>
 
-                        <div className="p-8 bg-gradient-to-b from-white to-gray-50/30">
-                            {isLoading && (
-                                <div className="flex items-center justify-center py-16">
-                                    <div className="relative">
-                                        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200"></div>
-                                        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600 absolute top-0 left-0"></div>
-                                    </div>
-                                    <span className="text-gray-600 ml-4 font-medium">Chargement des données...</span>
-                                </div>
-                            )}
+                        <div className="overflow-y-auto max-h-[calc(90vh-140px)]">
+                            <div className="px-8 py-6 bg-gradient-to-b from-gray-50/80 to-white border-b border-gray-100">
+                                <nav className="flex space-x-2 bg-gray-100/60 p-1.5 rounded-2xl backdrop-blur-sm">
+                                    {[
+                                        { id: "invites", label: "Invités", icon: Users, count: guests.length, color: "blue" },
+                                        { id: "personnel", label: "Personnel", icon: User, count: personnel.length, color: "purple" },
+                                        { id: "tables", label: "Tables", icon: Grid3X3, count: tables.length, color: "emerald" }
+                                    ].map((tab) => (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={`flex items-center space-x-3 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 relative group ${activeTab === tab.id
+                                                    ? `bg-white shadow-lg shadow-${tab.color}-500/10 text-${tab.color}-600 border border-${tab.color}-100`
+                                                    : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
+                                                }`}
+                                        >
+                                            <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? `text-${tab.color}-500` : 'text-gray-400'} transition-colors`} />
+                                            <span>{tab.label}</span>
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${activeTab === tab.id
+                                                    ? `bg-${tab.color}-100 text-${tab.color}-700`
+                                                    : "bg-gray-200 text-gray-600"
+                                                }`}>
+                                                {tab.count}
+                                            </span>
+                                            {activeTab === tab.id && (
+                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
+                                            )}
+                                        </button>
+                                    ))}
+                                </nav>
+                            </div>
 
-                            {/* Onglet Invités */}
-                            {activeTab === "invites" && !isLoading && (
-                                <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100/50 overflow-hidden">
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full">
-                                            <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
-                                                <tr>
-                                                    <th className="px-8 py-5 text-left text-xs font-bold text-blue-600 uppercase tracking-widest border-b border-blue-100">Nom</th>
-                                                    <th className="px-8 py-5 text-left text-xs font-bold text-blue-600 uppercase tracking-widest border-b border-blue-100">Email</th>
-                                                    <th className="px-8 py-5 text-left text-xs font-bold text-blue-600 uppercase tracking-widest border-b border-blue-100">Téléphone</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {guests.map((guest, index) => (
-                                                    <tr key={guest.id} className={`hover:bg-blue-50/50 transition-all duration-200 group ${index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/30'}`}>
-                                                        <td className="px-8 py-5 font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">
-                                                            <div className="flex items-center space-x-3">
-                                                                <div className="w-2 h-2 bg-blue-400 rounded-full group-hover:bg-blue-600 transition-colors"></div>
-                                                                <span>{guest.nom}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors">{guest.email}</td>
-                                                        <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors">{guest.telephone}</td>
+                            <div className="p-8 bg-gradient-to-b from-white to-gray-50/30">
+                                {isLoading && (
+                                    <div className="flex items-center justify-center py-16">
+                                        <div className="relative">
+                                            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200"></div>
+                                            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600 absolute top-0 left-0"></div>
+                                        </div>
+                                        <span className="text-gray-600 ml-4 font-medium">Chargement des données...</span>
+                                    </div>
+                                )}
+
+                                {/* Onglet Invités */}
+                                {activeTab === "invites" && !isLoading && (
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100/50 overflow-hidden">
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full">
+                                                <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                                                    <tr>
+                                                        <th className="px-8 py-5 text-left text-xs font-bold text-blue-600 uppercase tracking-widest border-b border-blue-100">Nom</th>
+                                                        <th className="px-8 py-5 text-left text-xs font-bold text-blue-600 uppercase tracking-widest border-b border-blue-100">Email</th>
+                                                        <th className="px-8 py-5 text-left text-xs font-bold text-blue-600 uppercase tracking-widest border-b border-blue-100">Téléphone</th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Onglet Personnel */}
-                            {activeTab === "personnel" && !isLoading && (
-                                <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100/50 overflow-hidden">
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full">
-                                            <thead className="bg-gradient-to-r from-purple-50 to-pink-50">
-                                                <tr>
-                                                    <th className="px-8 py-5 text-left text-xs font-bold text-purple-600 uppercase tracking-widest border-b border-purple-100">Nom</th>
-                                                    <th className="px-8 py-5 text-left text-xs font-bold text-purple-600 uppercase tracking-widest border-b border-purple-100">Rôle</th>
-                                                    <th className="px-8 py-5 text-left text-xs font-bold text-purple-600 uppercase tracking-widest border-b border-purple-100">Téléphone</th>
-                                                    <th className="px-8 py-5 text-left text-xs font-bold text-purple-600 uppercase tracking-widest border-b border-purple-100">Statut</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {personnel.map((p, index) => (
-                                                    <tr key={p.id} className={`hover:bg-purple-50/50 transition-all duration-200 group ${index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/30'}`}>
-                                                        <td className="px-8 py-5 font-semibold text-gray-900 group-hover:text-purple-900 transition-colors">
-                                                            <div className="flex items-center space-x-3">
-                                                                <div className="w-2 h-2 bg-purple-400 rounded-full group-hover:bg-purple-600 transition-colors"></div>
-                                                                <span>{p.nom}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-8 py-5">
-                                                            <span className="inline-flex items-center px-4 py-2 rounded-2xl text-xs font-bold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-200 shadow-sm">
-                                                                {p.role}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors">{p.telephone}</td>
-                                                        <td className="px-8 py-5">
-                                                            <span className={`inline-flex items-center px-4 py-2 rounded-2xl text-xs font-bold border shadow-sm ${getPersonnelStatutColor(p.statut)}`}>
-                                                                {p.statut}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Onglet Tables */}
-                            {activeTab === "tables" && !isLoading && (
-                                <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100/50 overflow-hidden">
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full">
-                                            <thead className="bg-gradient-to-r from-emerald-50 to-green-50">
-                                                <tr>
-                                                    <th className="px-8 py-5 text-left text-xs font-bold text-emerald-600 uppercase tracking-widest border-b border-emerald-100">Nom de Table</th>
-                                                    <th className="px-8 py-5 text-left text-xs font-bold text-emerald-600 uppercase tracking-widest border-b border-emerald-100">Capacité</th>
-                                                    <th className="px-8 py-5 text-left text-xs font-bold text-emerald-600 uppercase tracking-widest border-b border-emerald-100">Invités</th>
-                                                    <th className="px-8 py-5 text-left text-xs font-bold text-emerald-600 uppercase tracking-widest border-b border-emerald-100">Places</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {tables.map((t, index) => (
-                                                    <tr key={t.id} className={`hover:bg-emerald-50/50 transition-all duration-200 group ${index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/30'}`}>
-                                                        <td className="px-8 py-5 font-semibold text-gray-900 group-hover:text-emerald-900 transition-colors">
-                                                            <div className="flex items-center space-x-3">
-                                                                <div className="w-2 h-2 bg-emerald-400 rounded-full group-hover:bg-emerald-600 transition-colors"></div>
-                                                                <span>Table {t.numero}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors font-medium">{t.capacite}</td>
-                                                        <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors font-medium">{t.invites}</td>
-                                                        <td className="px-8 py-5">
-                                                            <span className="inline-flex items-center px-4 py-2 rounded-2xl text-xs font-bold bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200 shadow-sm">
-                                                                {t.capacite - t.invites} place{t.capacite - t.invites > 1 ? "s" : ""} disponible{t.capacite - t.invites > 1 ? "s" : ""}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* États vides avec design moderne */}
-                            {activeTab === "invites" && guests.length === 0 && !isLoading && (
-                                <div className="text-center py-24">
-                                    <div className="relative w-32 h-32 mx-auto mb-8">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 rounded-full blur-xl opacity-20"></div>
-                                        <div className="relative w-32 h-32 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-2xl">
-                                            <Users className="w-16 h-16 text-white" />
+                                                </thead>
+                                                <tbody>
+                                                    {guests.map((guest, index) => (
+                                                        <tr key={guest.id} className={`hover:bg-blue-50/50 transition-all duration-200 group ${index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/30'}`}>
+                                                            <td className="px-8 py-5 font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">
+                                                                <div className="flex items-center space-x-3">
+                                                                    <div className="w-2 h-2 bg-blue-400 rounded-full group-hover:bg-blue-600 transition-colors"></div>
+                                                                    <span>{guest.nom}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors">{guest.email}</td>
+                                                            <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors">{guest.telephone}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
-                                    <h3 className="text-3xl font-bold text-gray-900 mb-4 tracking-tight">Aucun invité inscrit</h3>
-                                    <p className="text-gray-600 text-lg max-w-md mx-auto leading-relaxed">Commencez par ajouter des invités à cet événement pour voir la magie opérer.</p>
-                                </div>
-                            )}
+                                )}
 
-                            {activeTab === "personnel" && personnel.length === 0 && !isLoading && (
-                                <div className="text-center py-24">
-                                    <div className="relative w-32 h-32 mx-auto mb-8">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-500 to-rose-600 rounded-full blur-xl opacity-20"></div>
-                                        <div className="relative w-32 h-32 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center shadow-2xl">
-                                            <User className="w-16 h-16 text-white" />
+                                {/* Onglet Personnel */}
+                                {activeTab === "personnel" && !isLoading && (
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100/50 overflow-hidden">
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full">
+                                                <thead className="bg-gradient-to-r from-purple-50 to-pink-50">
+                                                    <tr>
+                                                        <th className="px-8 py-5 text-left text-xs font-bold text-purple-600 uppercase tracking-widest border-b border-purple-100">Nom</th>
+                                                        <th className="px-8 py-5 text-left text-xs font-bold text-purple-600 uppercase tracking-widest border-b border-purple-100">Rôle</th>
+                                                        <th className="px-8 py-5 text-left text-xs font-bold text-purple-600 uppercase tracking-widest border-b border-purple-100">Téléphone</th>
+                                                        <th className="px-8 py-5 text-left text-xs font-bold text-purple-600 uppercase tracking-widest border-b border-purple-100">Statut</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {personnel.map((p, index) => (
+                                                        <tr key={p.id} className={`hover:bg-purple-50/50 transition-all duration-200 group ${index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/30'}`}>
+                                                            <td className="px-8 py-5 font-semibold text-gray-900 group-hover:text-purple-900 transition-colors">
+                                                                <div className="flex items-center space-x-3">
+                                                                    <div className="w-2 h-2 bg-purple-400 rounded-full group-hover:bg-purple-600 transition-colors"></div>
+                                                                    <span>{p.nom}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-8 py-5">
+                                                                <span className="inline-flex items-center px-4 py-2 rounded-2xl text-xs font-bold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-200 shadow-sm">
+                                                                    {p.role}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors">{p.telephone}</td>
+                                                            <td className="px-8 py-5">
+                                                                <span className={`inline-flex items-center px-4 py-2 rounded-2xl text-xs font-bold border shadow-sm ${getPersonnelStatutColor(p.statut)}`}>
+                                                                    {p.statut}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
-                                    <h3 className="text-3xl font-bold text-gray-900 mb-4 tracking-tight">Équipe en attente</h3>
-                                    <p className="text-gray-600 text-lg max-w-md mx-auto leading-relaxed">Assignez du personnel qualifié pour garantir le succès de votre événement.</p>
-                                </div>
-                            )}
+                                )}
 
-                            {activeTab === "tables" && tables.length === 0 && !isLoading && (
-                                <div className="text-center py-24">
-                                    <div className="relative w-32 h-32 mx-auto mb-8">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 rounded-full blur-xl opacity-20"></div>
-                                        <div className="relative w-32 h-32 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center shadow-2xl">
-                                            <Grid3X3 className="w-16 h-16 text-white" />
+                                {/* Onglet Tables */}
+                                {activeTab === "tables" && !isLoading && (
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100/50 overflow-hidden">
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full">
+                                                <thead className="bg-gradient-to-r from-emerald-50 to-green-50">
+                                                    <tr>
+                                                        <th className="px-8 py-5 text-left text-xs font-bold text-emerald-600 uppercase tracking-widest border-b border-emerald-100">Nom de Table</th>
+                                                        <th className="px-8 py-5 text-left text-xs font-bold text-emerald-600 uppercase tracking-widest border-b border-emerald-100">Capacité</th>
+                                                        <th className="px-8 py-5 text-left text-xs font-bold text-emerald-600 uppercase tracking-widest border-b border-emerald-100">Invités</th>
+                                                        <th className="px-8 py-5 text-left text-xs font-bold text-emerald-600 uppercase tracking-widest border-b border-emerald-100">Places</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {tables.map((t, index) => (
+                                                        <tr key={t.id} className={`hover:bg-emerald-50/50 transition-all duration-200 group ${index % 2 === 0 ? 'bg-white/50' : 'bg-gray-50/30'}`}>
+                                                            <td className="px-8 py-5 font-semibold text-gray-900 group-hover:text-emerald-900 transition-colors">
+                                                                <div className="flex items-center space-x-3">
+                                                                    <div className="w-2 h-2 bg-emerald-400 rounded-full group-hover:bg-emerald-600 transition-colors"></div>
+                                                                    <span>Table {t.numero}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors font-medium">{t.capacite}</td>
+                                                            <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors font-medium">{t.invites}</td>
+                                                            <td className="px-8 py-5">
+                                                                <span className="inline-flex items-center px-4 py-2 rounded-2xl text-xs font-bold bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200 shadow-sm">
+                                                                    {t.capacite - t.invites} place{t.capacite - t.invites > 1 ? "s" : ""} disponible{t.capacite - t.invites > 1 ? "s" : ""}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
-                                    <h3 className="text-3xl font-bold text-gray-900 mb-4 tracking-tight">Plan de tables vide</h3>
-                                    <p className="text-gray-600 text-lg max-w-md mx-auto leading-relaxed">Les tables seront générées intelligemment selon le nombre d'invités confirmés.</p>
-                                </div>
-                            )}
+                                )}
+
+                                {/* États vides avec design moderne */}
+                                {activeTab === "invites" && guests.length === 0 && !isLoading && (
+                                    <div className="text-center py-24">
+                                        <div className="relative w-32 h-32 mx-auto mb-8">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 rounded-full blur-xl opacity-20"></div>
+                                            <div className="relative w-32 h-32 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-2xl">
+                                                <Users className="w-16 h-16 text-white" />
+                                            </div>
+                                        </div>
+                                        <h3 className="text-3xl font-bold text-gray-900 mb-4 tracking-tight">Aucun invité inscrit</h3>
+                                        <p className="text-gray-600 text-lg max-w-md mx-auto leading-relaxed">Commencez par ajouter des invités à cet événement pour voir la magie opérer.</p>
+                                    </div>
+                                )}
+
+                                {activeTab === "personnel" && personnel.length === 0 && !isLoading && (
+                                    <div className="text-center py-24">
+                                        <div className="relative w-32 h-32 mx-auto mb-8">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-500 to-rose-600 rounded-full blur-xl opacity-20"></div>
+                                            <div className="relative w-32 h-32 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center shadow-2xl">
+                                                <User className="w-16 h-16 text-white" />
+                                            </div>
+                                        </div>
+                                        <h3 className="text-3xl font-bold text-gray-900 mb-4 tracking-tight">Équipe en attente</h3>
+                                        <p className="text-gray-600 text-lg max-w-md mx-auto leading-relaxed">Assignez du personnel qualifié pour garantir le succès de votre événement.</p>
+                                    </div>
+                                )}
+
+                                {activeTab === "tables" && tables.length === 0 && !isLoading && (
+                                    <div className="text-center py-24">
+                                        <div className="relative w-32 h-32 mx-auto mb-8">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 rounded-full blur-xl opacity-20"></div>
+                                            <div className="relative w-32 h-32 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center shadow-2xl">
+                                                <Grid3X3 className="w-16 h-16 text-white" />
+                                            </div>
+                                        </div>
+                                        <h3 className="text-3xl font-bold text-gray-900 mb-4 tracking-tight">Plan de tables vide</h3>
+                                        <p className="text-gray-600 text-lg max-w-md mx-auto leading-relaxed">Les tables seront générées intelligemment selon le nombre d'invités confirmés.</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
-                </div>
-    )
-}
-        </div >
+            )}
+        </div>
     );
 }

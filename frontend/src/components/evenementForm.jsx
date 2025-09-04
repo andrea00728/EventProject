@@ -4,14 +4,17 @@ import {
   createEvent,
   getLocations,
   getSallesByLocation,
+  saveLocation,
+  createSalle,
 } from "../services/evenementServ";
 import { textControll } from "../services/controll_champs/controll_champs";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import Select from "react-select";
+import { useStateContext } from "../context/ContextProvider";
 
 // Fix Leaflet marker icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -165,6 +168,20 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   const [error, setError] = useState(null);
   const mapRef = useRef(null);
 
+  const [activeTab, setActiveTab] = useState('default');
+  const [newLocation, setNewLocation] = useState({ nom: '', latitude: '', longitude: '', createurId: 0 });
+  const [customMarker, setCustomMarker] = useState(null);
+  const [geocodeAddress, setGeocodeAddress] = useState("");
+  const [geocodeResult, setGeocodeResult] = useState(null);
+  const [geocodeResultText, setGeocodeResultText] = useState("");
+  const markerRef = useRef(null);
+
+  const { isAuthenticated, user } = useStateContext();
+
+  // États pour gérer l'ajout d'une salle
+  const [isAddingSalle, setIsAddingSalle] = useState(false);
+  const [newSalleName, setNewSalleName] = useState("");
+
   useEffect(() => {
     getLocations()
       .then((data) => setLocations(Array.isArray(data) ? data : []))
@@ -190,6 +207,27 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     });
   };
 
+  const handleCreateSalle = async () => {
+    if (!newSalleName.trim()) {
+      setError("Le nom de la salle est requis");
+      toast.error("Le nom de la salle est requis");
+      return;
+    }
+    try {
+      await createSalle(form.locationId, { nom: newSalleName });
+      setNewSalleName("");
+      setIsAddingSalle(false);
+      const updatedSalles = await getSallesByLocation(form.locationId);
+      setSalles(updatedSalles);
+      toast.success("Salle créée avec succès !");
+      setError(null);
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Erreur lors de la création de la salle";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    }
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
 
@@ -199,16 +237,19 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
 
     if (dateDebut < now) {
       setError("La date de début doit être aujourd'hui ou dans le futur.");
+      toast.error("La date de début doit être aujourd'hui ou dans le futur.");
       return;
     }
 
     if (dateFin < now) {
       setError("La date de fin doit être aujourd'hui ou dans le futur.");
+      toast.error("La date de fin doit être aujourd'hui ou dans le futur.");
       return;
     }
 
     if (dateDebut >= dateFin) {
       setError("La date de fin doit être après la date de début.");
+      toast.error("La date de fin doit être après la date de début.");
       return;
     }
 
@@ -242,6 +283,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         error?.response?.data?.message ||
         "Erreur lors de la création de l'événement.";
       setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -261,14 +303,145 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     }
   };
 
-  const handleConfirmLieu = () => {
-    if (selectedLieu) {
-      setForm({ ...form, locationId: selectedLieu.id, salleId: "" });
-      setModalLieuOpen(false);
-      setSelectedLieu(null);
-      setSearchLieu("");
+  const handleGeocode = async () => {
+    if (!geocodeAddress.trim()) {
+      setGeocodeResultText("Veuillez entrer une adresse valide.");
+      toast.error("Veuillez entrer une adresse valide.");
+      return;
+    }
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(geocodeAddress)}`);
+      const data = await response.json();
+      if (data.length > 0 && data[0].lat != null && data[0].lon != null) {
+        const { lat, lon, display_name } = data[0];
+        const latitude = parseFloat(lat);
+        const longitude = parseFloat(lon);
+        setGeocodeResult({ nom: display_name, latitude, longitude });
+        setGeocodeResultText(`Nom: ${display_name}, Latitude: ${lat}, Longitude: ${lon}`);
+        setNewLocation({ ...newLocation, nom: display_name, latitude, longitude });
+        setCustomMarker({ lat: latitude, lng: longitude });
+        if (mapRef.current && !isNaN(latitude) && !isNaN(longitude)) {
+          mapRef.current.setView([latitude, longitude], 13);
+        }
+      } else {
+        setGeocodeResult(null);
+        setGeocodeResultText("Aucun résultat trouvé pour cette adresse.");
+        toast.error("Aucun résultat trouvé pour cette adresse.");
+      }
+    } catch (err) {
+      setGeocodeResultText("Erreur lors du géocodage. Veuillez réessayer.");
+      toast.error("Erreur lors du géocodage. Veuillez réessayer.");
+      console.error("Geocode error:", err);
     }
   };
+
+  const handleConfirmLieu = () => {
+    if (activeTab === 'default') {
+      if (selectedLieu) {
+        setForm({ ...form, locationId: selectedLieu.id, salleId: "" });
+        setModalLieuOpen(false);
+        setSelectedLieu(null);
+        setSearchLieu("");
+      }
+    } else {
+      if (newLocation.nom && newLocation.latitude && newLocation.longitude) {
+        const query = newLocation.nom;
+        const createurId = isAuthenticated && (user.id || user.sub);
+        saveLocation(query, createurId)
+          .then((createdLoc) => {
+            setLocations([...locations, createdLoc]);
+            setForm({ ...form, locationId: createdLoc.id, salleId: "" });
+            setModalLieuOpen(false);
+            setCustomMarker(null);
+            setNewLocation({ nom: '', latitude: '', longitude: '', createurId: user?.id || user.sub });
+            setGeocodeAddress("");
+            setGeocodeResult(null);
+            setGeocodeResultText("");
+            toast.success("Nouveau lieu créé avec succès !");
+          })
+          .catch((error) => {
+            const errorMessage = error || "Erreur lors de la création du lieu.";
+            setError(errorMessage);
+            toast.error(errorMessage);
+          });
+      } else {
+        setError("Veuillez remplir le nom et sélectionner un point sur la carte.");
+        toast.error("Veuillez remplir le nom et sélectionner un point sur la carte.");
+      }
+    }
+  };
+
+  const MapClickHandler = () => {
+    const map = useMap();
+
+    useEffect(() => {
+      const handleClick = async (e) => {
+        const { lat, lng } = e.latlng;
+
+        if (markerRef.current) {
+          map.removeLayer(markerRef.current);
+        }
+
+        const marker = L.marker([lat, lng], { icon: blueIcon }).addTo(map)
+          .bindPopup(`Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)}`)
+          .openPopup();
+        markerRef.current = marker;
+
+        setCustomMarker({ lat, lng });
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`
+          );
+          const data = await response.json();
+
+          if (data.display_name) {
+            setGeocodeResult({
+              nom: data.display_name,
+              latitude: lat,
+              longitude: lng
+            });
+            setGeocodeResultText(`Lieu cliqué : ${data.display_name} (Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)})`);
+            setNewLocation({ ...newLocation, nom: data.display_name, latitude: lat, longitude: lng });
+          } else {
+            setGeocodeResult({ nom: `Lat: ${lat}, Lon: ${lng}`, latitude: lat, longitude: lng });
+            setGeocodeResultText(`Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)} (Adresse non trouvée)`);
+            setNewLocation({ ...newLocation, nom: `Lat: ${lat}, Lon: ${lng}`, latitude: lat, longitude: lng });
+          }
+        } catch (err) {
+          console.error("Erreur reverse geocoding:", err);
+          setGeocodeResult({ nom: `Lat: ${lat}, Lon: ${lng}`, latitude: lat, longitude: lng });
+          setGeocodeResultText(`Erreur lors du géocodage inversé (Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)})`);
+          setNewLocation({ ...newLocation, nom: `Lat: ${lat}, Lon: ${lng}`, latitude: lat, longitude: lng });
+        }
+      };
+
+      if (activeTab === 'specify') {
+        map.on("click", handleClick);
+      }
+
+      return () => {
+        map.off("click", handleClick);
+        if (markerRef.current) {
+          map.removeLayer(markerRef.current);
+          markerRef.current = null;
+        }
+      };
+    }, [map]);
+
+    return null;
+  };
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (activeTab === 'specify') {
+      // Handled by MapClickHandler
+    } else {
+      map.off('click');
+    }
+  }, [activeTab]);
 
   return (
     <div className="w-full max-w-3xl mx-auto mt-12 px-6">
@@ -359,7 +532,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label he="text-sm font-semibold text-gray-700 mb-1">
+            <label className="text-sm font-semibold text-gray-700 mb-1">
               Date de début
             </label>
             <input
@@ -368,7 +541,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               value={form.date}
               onChange={handleChange}
               required
-              min={new Date().toISOString().slice(0,16)}
+              min={new Date().toISOString().slice(0, 16)}
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
             />
           </div>
@@ -383,7 +556,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               value={form.date_fin}
               onChange={handleChange}
               required
-              min={new Date().toISOString().slice(0,16)}
+              min={new Date().toISOString().slice(0, 16)}
               className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
             />
           </div>
@@ -414,10 +587,11 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               disabled={!form.locationId}
               onClick={() => form.locationId && setModalSalleOpen(true)}
               placeholder="Sélectionnez une salle"
-              className={`border border-gray-300 rounded-xl px-5 py-3 text-gray-900 placeholder-gray-400 transition ${form.locationId
-                ? "cursor-pointer bg-gray-50 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
-                : "bg-gray-200 cursor-not-allowed"
-                }`}
+              className={`border border-gray-300 rounded-xl px-5 py-3 text-gray-900 placeholder-gray-400 transition ${
+                form.locationId
+                  ? "cursor-pointer bg-gray-50 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+                  : "bg-gray-200 cursor-not-allowed"
+              }`}
             />
           </div>
 
@@ -446,27 +620,74 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
           <div className="relative w-full max-w-lg bg-white shadow-2xl rounded-2xl p-8">
             <button
               className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"
-              onClick={() => setModalSalleOpen(false)}
+              onClick={() => {
+                setModalSalleOpen(false);
+                setIsAddingSalle(false);
+                setNewSalleName("");
+                setError(null);
+              }}
             >
               ×
             </button>
             <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">
               Choisissez une salle
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {salles.map((salle) => (
+            {isAddingSalle ? (
+              <div className="flex flex-col gap-4">
+                <input
+                  type="text"
+                  value={newSalleName}
+                  onChange={(e) => setNewSalleName(e.target.value)}
+                  placeholder="Nom de la nouvelle salle"
+                  className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+                />
+                <div className="flex gap-4">
+                  <button
+                    onClick={handleCreateSalle}
+                    className="flex-1 bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition"
+                  >
+                    Sauvegarder
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsAddingSalle(false);
+                      setNewSalleName("");
+                      setError(null);
+                    }}
+                    className="flex-1 bg-gray-300 text-gray-700 font-bold py-3 rounded-xl shadow hover:bg-gray-400 transition"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {salles.length > 0 ? (
+                  salles.map((salle) => (
+                    <div
+                      key={salle.id}
+                      onClick={() => {
+                        setForm({ ...form, salleId: salle.id });
+                        setModalSalleOpen(false);
+                      }}
+                      className="border-2 border-indigo-100 rounded-xl px-4 py-3 text-center bg-indigo-50 text-indigo-800 cursor-pointer hover:bg-indigo-100 hover:border-indigo-400 font-semibold transition"
+                    >
+                      {salle.nom}
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-2 md:col-span-3 text-center text-gray-500">
+                    Aucune salle disponible pour ce lieu
+                  </div>
+                )}
                 <div
-                  key={salle.id}
-                  onClick={() => {
-                    setForm({ ...form, salleId: salle.id });
-                    setModalSalleOpen(false);
-                  }}
+                  onClick={() => setIsAddingSalle(true)}
                   className="border-2 border-indigo-100 rounded-xl px-4 py-3 text-center bg-indigo-50 text-indigo-800 cursor-pointer hover:bg-indigo-100 hover:border-indigo-400 font-semibold transition"
                 >
-                  {salle.nom}
+                  Ajouter une salle
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -481,6 +702,12 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                 setModalLieuOpen(false);
                 setSearchLieu("");
                 setSelectedLieu(null);
+                setCustomMarker(null);
+                setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
+                setActiveTab('default');
+                setGeocodeAddress("");
+                setGeocodeResult(null);
+                setGeocodeResultText("");
               }}
             >
               ×
@@ -489,25 +716,117 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               Choisissez un lieu
             </h3>
             <div className="flex flex-col md:flex-row gap-4">
-              {/* Liste des lieux */}
               <div className="w-full md:w-1/2 flex flex-col gap-4">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchLieu}
-                    onChange={(e) => setSearchLieu(e.target.value)}
-                    placeholder="Rechercher un lieu..."
-                    className="w-full border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
-                  />
+                <div className="flex gap-2 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('default');
+                      setCustomMarker(null);
+                      setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
+                      setGeocodeAddress("");
+                      setGeocodeResult(null);
+                      setGeocodeResultText("");
+                    }}
+                    className={`flex-1 py-2 rounded-xl font-semibold transition ${
+                      activeTab === 'default'
+                        ? 'bg-indigo-700 text-white hover:bg-indigo-800'
+                        : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                    }`}
+                  >
+                    Par défaut
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('specify');
+                      setSelectedLieu(null);
+                      setSearchLieu('');
+                    }}
+                    className={`flex-1 py-2 rounded-xl font-semibold transition ${
+                      activeTab === 'specify'
+                        ? 'bg-indigo-700 text-white hover:bg-indigo-800'
+                        : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                    }`}
+                  >
+                    Spécifier le lieu
+                  </button>
                 </div>
-                <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-xl">
+                {activeTab === 'default' ? (
+                  <>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={searchLieu}
+                        onChange={(e) => setSearchLieu(e.target.value)}
+                        placeholder="Rechercher un lieu..."
+                        className="w-full border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+                      />
+                    </div>
+                    <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-xl">
+                      {filteredLocations.length > 0 ? (
+                        filteredLocations.map((loc) => (
+                          <div
+                            key={loc.id}
+                            onClick={() => handleSelectLieu(loc)}
+                            className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${
+                              selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
+                            }`}
+                          >
+                            {loc.nom}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-3 text-gray-500 text-center">
+                          Aucun lieu trouvé
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                  <div className="flex flex-col gap-4">
+                    <input
+                      type="text"
+                      value={geocodeAddress}
+                      onChange={(e) => setGeocodeAddress(e.target.value)}
+                      placeholder="Entrez une adresse à rechercher"
+                      className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleGeocode}
+                        className="flex-1 bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Rechercher
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSearchLieu("");
+                          setSelectedLieu(null);
+                          setCustomMarker(null);
+                          setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
+                          setGeocodeAddress("");
+                          setGeocodeResult(null);
+                          setGeocodeResultText("");
+                          setActiveTab('specify');
+                        }}
+                        disabled={activeTab === 'default' ? !selectedLieu : !newLocation.nom || !newLocation.latitude}
+                        className="flex-1 bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Réinitialiser
+                      </button>
+                    </div>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-xl">
                   {filteredLocations.length > 0 ? (
                     filteredLocations.map((loc) => (
                       <div
                         key={loc.id}
                         onClick={() => handleSelectLieu(loc)}
-                        className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
-                          }`}
+                        className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${
+                          selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
+                        }`}
                       >
                         {loc.nom}
                       </div>
@@ -518,19 +837,27 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                     </div>
                   )}
                 </div>
+                </>
+                )}
                 <div className="flex gap-2">
                   <button
                     onClick={handleConfirmLieu}
-                    disabled={!selectedLieu}
+                    disabled={activeTab === 'default' ? !selectedLieu : !newLocation.nom || !newLocation.latitude}
                     className="flex-1 bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Confirmer
+                    Sauvegarder
                   </button>
                   <button
                     onClick={() => {
                       setModalLieuOpen(false);
                       setSearchLieu("");
                       setSelectedLieu(null);
+                      setCustomMarker(null);
+                      setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
+                      setActiveTab('default');
+                      setGeocodeAddress("");
+                      setGeocodeResult(null);
+                      setGeocodeResultText("");
                     }}
                     className="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-xl shadow hover:bg-gray-300 transition"
                   >
@@ -538,8 +865,6 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                   </button>
                 </div>
               </div>
-
-              {/* Carte */}
               <div className="w-full md:w-1/2 h-96 rounded-lg overflow-hidden">
                 <MapContainer
                   center={[48.8566, 2.3522]} // Paris par défaut
@@ -554,19 +879,23 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                   />
-                  {selectedLieu &&
-                    selectedLieu.latitude &&
-                    selectedLieu.longitude && (
-                      <Marker
-                        position={[
-                          parseFloat(selectedLieu.latitude),
-                          parseFloat(selectedLieu.longitude),
-                        ]}
-                        icon={blueIcon}
-                      >
-                        <Popup>{selectedLieu.nom}</Popup>
-                      </Marker>
-                    )}
+                  <MapClickHandler />
+                  {activeTab === 'default' && selectedLieu && selectedLieu.latitude && selectedLieu.longitude && (
+                    <Marker
+                      position={[parseFloat(selectedLieu.latitude), parseFloat(selectedLieu.longitude)]}
+                      icon={blueIcon}
+                    >
+                      <Popup>{selectedLieu.nom}</Popup>
+                    </Marker>
+                  )}
+                  {activeTab === 'specify' && customMarker && (
+                    <Marker
+                      position={[customMarker.lat, customMarker.lng]}
+                      icon={blueIcon}
+                    >
+                      <Popup>Nouveau lieu</Popup>
+                    </Marker>
+                  )}
                 </MapContainer>
               </div>
             </div>
