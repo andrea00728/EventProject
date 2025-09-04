@@ -4,18 +4,35 @@ import { Query } from '@nestjs/common';
 
 @Controller('locations')
 export class LocationController {
-  constructor(private readonly locationService: LocationService) { }
+  constructor(private readonly locationService: LocationService) {}
 
-  @Get()
-  findLocations(@Query('search') search?: string) {
-    if (search) {
-      return this.locationService.findLocationsBySearch(search);
+  @Post()
+  async createLocation(
+    @Body('nom') nom: string,
+    @Body('latitude') latitude: number,
+    @Body('longitude') longitude: number,
+    @Body('createur') createur: 'organisateur' | 'admin' = 'organisateur'
+  ) {
+    if (!nom || nom.trim().length === 0) {
+      throw new BadRequestException('Le nom du lieu est requis et ne peut pas être vide');
     }
-    return this.locationService.findAllLocations();
+    if (latitude !== undefined && (isNaN(latitude) || latitude < -90 || latitude > 90)) {
+      throw new BadRequestException('La latitude doit être un nombre valide entre -90 et 90');
+    }
+    if (longitude !== undefined && (isNaN(longitude) || longitude < -180 || longitude > 180)) {
+      throw new BadRequestException('La longitude doit être un nombre valide entre -180 et 180');
+    }
+    if (createur && !['organisateur', 'admin'].includes(createur)) {
+      throw new BadRequestException('Le créateur doit être soit "organisateur" soit "admin"');
+    }
+    return this.locationService.createLocation({ nom, latitude, longitude, createurId: createur === 'admin' ? 0 : undefined });
   }
 
   @Get()
-  findAllLocations() {
+  findLocations(@Query('search') search?: string) {
+    if (search?.trim()) {
+      return this.locationService.findLocationsBySearch(search.trim());
+    }
     return this.locationService.findAllLocations();
   }
 
@@ -30,14 +47,14 @@ export class LocationController {
 
   @Post(':locationId/salles')
   async createSalle(@Param('locationId') locationId: string, @Body('nom') nom: string) {
-    if (!nom) {
-      throw new BadRequestException('Le nom de la salle est requis');
+    if (!nom?.trim()) {
+      throw new BadRequestException('Le nom de la salle est requis et ne peut pas être vide');
     }
     const idNum = parseInt(locationId, 10);
     if (isNaN(idNum) || idNum <= 0) {
       throw new BadRequestException('L\'ID du lieu doit être un entier positif valide');
     }
-    return this.locationService.createSalle(nom, idNum);
+    return this.locationService.createSalle(nom.trim(), idNum);
   }
 
   @Get(':locationId/salles')
@@ -59,12 +76,30 @@ export class LocationController {
   }
 
   @Put(':id')
-  async updateLocation(@Param('id') id: string, @Body('nom') nom: string) {
+  async updateLocation(
+    @Param('id') id: string,
+    @Body('nom') nom: string,
+    @Body('latitude') latitude: number,
+    @Body('longitude') longitude: number,
+    @Body('createur') createur: 'organisateur' | 'admin'
+  ) {
     const idNum = parseInt(id, 10);
     if (isNaN(idNum) || idNum <= 0) {
       throw new BadRequestException('L\'ID doit être un entier positif valide');
     }
-    return this.locationService.updateLocation(idNum, nom);
+    if (!nom?.trim()) {
+      throw new BadRequestException('Le nom du lieu est requis et ne peut pas être vide');
+    }
+    if (latitude !== undefined && (isNaN(latitude) || latitude < -90 || latitude > 90)) {
+      throw new BadRequestException('La latitude doit être un nombre valide entre -90 et 90');
+    }
+    if (longitude !== undefined && (isNaN(longitude) || longitude < -180 || longitude > 180)) {
+      throw new BadRequestException('La longitude doit être un nombre valide entre -180 et 180');
+    }
+    if (createur && !['organisateur', 'admin'].includes(createur)) {
+      throw new BadRequestException('Le créateur doit être soit "organisateur" soit "admin"');
+    }
+    return this.locationService.updateLocation(idNum, { nom: nom.trim(), latitude, longitude, createur });
   }
 
   @Delete(':id')
@@ -82,7 +117,10 @@ export class LocationController {
     if (isNaN(idNum) || idNum <= 0) {
       throw new BadRequestException('L\'ID de la salle doit être un entier positif valide');
     }
-    return this.locationService.updateSalle(idNum, nom);
+    if (!nom?.trim()) {
+      throw new BadRequestException('Le nom de la salle est requis et ne peut pas être vide');
+    }
+    return this.locationService.updateSalle(idNum, nom.trim());
   }
 
   @Delete('salles/:id')
@@ -101,31 +139,30 @@ export class LocationController {
 
   @Get('geocode/search')
   async geocode(@Query('q') query: string) {
-    if (!query) {
+    if (!query?.trim()) {
       throw new BadRequestException('Un terme de recherche est requis');
     }
-    return this.locationService.geocodeLocation(query);
+    return this.locationService.geocodeLocation(query.trim());
   }
 
   @Post('save')
-  async saveLocation(@Body('query') query: string) {
-    if (!query) {
+  async saveLocation(@Body() body: { query: string, createurId?: number }) {
+    const { query, createurId } = body;
+    if (!query?.trim()) {
       throw new BadRequestException('Un terme de recherche est requis');
     }
-    return this.locationService.saveSelectedLocation(query);
+    return this.locationService.saveSelectedLocation(query.trim(), createurId ?? 0);
   }
 
-
-  // mise à jour avec géocodage
   @Put('geocode/:id')
-  async updateLocationWithGeocode(
-    @Param('id') id: string,
-    @Body('query') query: string
-  ) {
+  async updateLocationWithGeocode(@Param('id') id: string, @Body('query') query: string) {
     const idNum = parseInt(id, 10);
     if (isNaN(idNum) || idNum <= 0) {
       throw new BadRequestException('L\'ID doit être un entier positif valide');
     }
-    return this.locationService.updateLocationWithGeocode(idNum, query);
+    if (!query?.trim()) {
+      throw new BadRequestException('Un terme de recherche est requis');
+    }
+    return this.locationService.updateLocationWithGeocode(idNum, query.trim());
   }
 }
