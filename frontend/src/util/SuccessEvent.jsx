@@ -172,7 +172,7 @@ const SuccessEvent = () => {
                         />
                       ) : (
                         <img
-                          src="/public/defaultImage.png"
+                          src="/public/vecteezy_beautiful-vintage-group-silhouette-sharing-ideas-meeting_60786770.png"
                           alt="Image par défaut"
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ease-in-out"
                         />
