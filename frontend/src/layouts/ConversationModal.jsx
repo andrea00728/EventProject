@@ -17,45 +17,64 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
     setEmailData({ ...emailData, [e.target.name]: e.target.value });
   };
 
+  const [attachedFile, setAttachedFile] = useState(null); // ✅ ajouté
+
+
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    if (e.target.files.length > 0) {
+      setAttachedFile(e.target.files[0]);
+    }
+  };
+
+  const removeFile = () => {
+    setAttachedFile(null);
   };
 
   const handleSendEmail = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!emailData.message) {
-      toast.warning("⚠️ Veuillez écrire un message avant d'envoyer.");
-      return;
-    }
+  if (!emailData.message) {
+    toast.warning("⚠️ Veuillez écrire un message avant d'envoyer.");
+    return;
+  }
 
-    try {
-      const formData = new FormData();
-      formData.append("to", conversation?.content?.email);
-      formData.append("subject", emailData.subject || "Réponse à votre message");
-      formData.append("message", emailData.message);
-      if (file) formData.append("file", file);
-
-      const res = await fetch("http://localhost:3000/send-email", {
-        method: "POST",
-        body: formData, // 👈 envoi multipart pour gérer l'upload
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        toast.success(`✅ Email envoyé avec succès à ${conversation.content.email}`);
-        setEmailData({ subject: "", message: "" });
-        setFile(null);
-        onClose();
-      } else {
-        toast.error(`❌ Erreur : ${data.message || JSON.stringify(data)}`);
-      }
-    } catch (err) {
-      console.error("Erreur envoi email:", err);
-      toast.error("❌ Impossible d’envoyer l’email (erreur réseau ou serveur).");
-    }
+  // Définir body **avant** de l'utiliser
+  const body = {
+    to: conversation?.content?.email,
+    subject: emailData.subject || "Réponse à votre message",
+    message: emailData.message,
   };
+
+  console.log("Body envoyé au backend:", body); // debug
+
+  try {
+    const res = await fetch("http://localhost:3000/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      toast.success(`✅ Email envoyé avec succès à ${conversation.content.email}`);
+      setEmailData({ subject: "", message: "" });
+      onClose();
+    } else if (res.status === 400) {
+      toast.error("❌ Erreur : Email destinataire invalide ou message vide");
+    } else if (res.status === 403) {
+      toast.error(
+        "❌ Envoi interdit par SendGrid (403). Vérifie la clé API et l'adresse expéditeur."
+      );
+    } else {
+      toast.error(`❌ Erreur inattendue : ${data.message || JSON.stringify(data)}`);
+    }
+  } catch (err) {
+    console.error("Erreur envoi email:", err);
+    toast.error("❌ Impossible d’envoyer l’email (erreur réseau ou serveur).");
+  }
+};
+
 
   if (!show) return null;
 
@@ -64,8 +83,8 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
       <div
         className={`rounded-t-lg shadow-[0_1px_8px_rgba(0,0,0,0.2)] transition-all duration-300
         ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"}
-        ${maximized ? "w-[90vw] h-[90vh]" : "w-full max-w-[640px]"}
-        ${minimized ? "h-[40px] overflow-hidden" : "h-auto"} 
+        ${maximized ? "w-[75vw] h-[75vh]" : "w-full max-w-[1000px]"}
+        ${minimized ? "h-[100px] overflow-hidden" : "h-auto"} 
         flex flex-col font-sans text-sm`}
       >
         {/* Header */}
@@ -74,28 +93,31 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
             darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-gray-100"
           }`}
         >
-          <h2 className="font-normal text-sm text-gray-700 dark:text-gray-300">Nouveau message</h2>
+          <h2 className={`font-normal text-sm ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+            Nouveau message
+          </h2>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setMinimized(!minimized)}
               className={`p-1 rounded-full ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"}`}
             >
-              <Minus className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <Minus className={darkMode ? "w-4 h-4 text-gray-200" : "w-4 h-4 text-gray-600"} />
             </button>
             <button
               onClick={() => setMaximized(!maximized)}
               className={`p-1 rounded-full ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"}`}
             >
-              <Maximize className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <Maximize className={darkMode ? "w-4 h-4 text-gray-200" : "w-4 h-4 text-gray-600"} />
             </button>
             <button
               onClick={onClose}
               className={`p-1 rounded-full ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"}`}
             >
-              <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <X className={darkMode ? "w-4 h-4 text-gray-200" : "w-4 h-4 text-gray-600"} />
             </button>
           </div>
         </div>
+
 
         {/* Previous Message Info */}
         {!minimized && conversation?.content && (
@@ -208,21 +230,32 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
                 className="flex items-center gap-2 px-5 py-1.5 bg-blue-600 text-white rounded font-medium text-sm hover:bg-blue-700 transition-colors"
               >
                 <FaPaperPlane className="w-3.5 h-3.5" />
-                Envoyer
+                Send
               </button>
+
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className={`text-xs ${darkMode ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-900"}`}
-                >
-                  Formatting options
-                </button>
                 <label
-                  className={`cursor-pointer text-xs ${darkMode ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-900"}`}
+                  className={`cursor-pointer text-xs ${
+                    darkMode ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-900"
+                  }`}
                 >
                   Attach files
                   <input type="file" onChange={handleFileChange} className="hidden" />
-                </label>  
+                </label>
+
+                {/* Affichage si un fichier est choisi */}
+                {attachedFile && (
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className="truncate max-w-[120px]">{attachedFile.name}</span>
+                    <button
+                      type="button"
+                      onClick={removeFile}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </form>

@@ -171,11 +171,11 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
             <div>
               <h3 className={`text-2xl sm:text-3xl font-bold flex items-center ${gradientTitle}`}>
                 <MdOutlineCalendarToday className="mr-2 sm:mr-3 text-blue-700" />
-                {data.nom}
+                {data?.nom}
               </h3>
               <p className="text-sm mt-1">
                 Organisé par{" "}
-                <span className="font-medium">{data.user.name}</span>
+                <span className="font-medium">{data?.user.name}</span>
               </p>
             </div>
             <button
@@ -190,49 +190,49 @@ const ModalEvenement = ({ isOpen, onClose, data }) => {
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 my-6">
             <StatsCard
               title="Type d'événement"
-              value={data.type}
+              value={data?.type}
               icon={MdEvent}
               color="blue"
             />
             <StatsCard
               title="Thème"
-              value={data.theme}
+              value={data?.theme}
               icon={MdStars}
               color="purple"
             />
             <StatsCard
               title="Date de début"
-              value={formatDate(data.date)}
+              value={formatDate(data?.date)}
               icon={MdCalendarToday}
               color="green"
             />
             <StatsCard
               title="Date de fin"
-              value={formatDate(data.date_fin)}
+              value={formatDate(data?.date_fin)}
               icon={MdOutlineCalendarMonth}
               color="green"
             />
             <StatsCard
               title="Localisation"
-              value={data.location.nom}
+              value={data?.location?.nom}
               icon={MdLocationOn}
               color="orange"
             />
             <StatsCard
               title="Salle"
-              value={data.salle.nom}
+              value={data?.salle?.nom}
               icon={MdLocationCity}
               color="orange"
             />
             <StatsCard
               title="Nombre d'invités"
-              value={data.invites.length}
+              value={data?.invites.length}
               icon={MdPeople}
               color="purple"
             />
             <StatsCard
               title="Type d'abonnement"
-              value={data.user.forfait.nom}
+              value={data?.user.forfait?.nom}
               icon={MdVerifiedUser}
               color="blue"
             />
@@ -280,15 +280,15 @@ function Invites({ data, darkMode, isMobile }) {
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const handleExportExcel = () => {
-    const exportData = data.invites.map((p) => ({
-      Nom: p.nom,
+    const exportData = data?.invites.map((p) => ({
+      Nom: p?.nom,
       Prénom: p.prenom,
       Email: p.email,
       Sexe: p.sex,
       Place: p.place, // Assuming 'place' exists in invite data
       QrCode: "https://example.com/qrcode",
     }));
-    handleDownloadXLSX(exportData, `invites_${data.nom}`);
+    handleDownloadXLSX(exportData, `invites_${data?.nom}`);
   };
 
   const columns = [
@@ -309,7 +309,7 @@ function Invites({ data, darkMode, isMobile }) {
     },
   ];
 
-  const rows = data.invites.map((invite, index) => ({
+  const rows = data?.invites.map((invite, index) => ({
     id: index,
     ...invite,
   }));
@@ -391,14 +391,14 @@ function Invites({ data, darkMode, isMobile }) {
         </div>
       </div>
 
-      {data.invites.length === 0 ? (
+      {data?.invites.length === 0 ? (
         <NotFound403 message="Aucun invité trouvé" />
       ) : isMobile ? (
         <div className="grid grid-cols-1 gap-4">
           {filteredRows.map((invite) => (
             <ListCard
               key={invite.id}
-              title={`${invite.nom} ${invite.prenom}`}
+              title={`${invite?.nom} ${invite.prenom}`}
               icon={FaUsers}
               darkMode={darkMode}
               details={[
@@ -429,7 +429,7 @@ function Invites({ data, darkMode, isMobile }) {
               .map((invite, index) => (
                 <div key={invite.id} className="grid grid-cols-12 px-4 py-3 items-center text-sm">
                   <div className="col-span-3 truncate font-medium">
-                    {invite.nom} {invite.prenom}
+                    {invite?.nom} {invite.prenom}
                   </div>
                   <div className="col-span-2 truncate">{invite.email}</div>
                   <div className="col-span-2">{invite.sex}</div>
@@ -447,7 +447,7 @@ function Invites({ data, darkMode, isMobile }) {
                     </button> */}
                     <img
                       src={"data:png/image;base64,"+invite.qrCode}
-                      alt={`QR Code pour l'invité ${invite.nom}`}
+                      alt={`QR Code pour l'invité ${invite?.nom}`}
                       className="w-16 h-16 object-contain rounded-md border border-gray-200 group-hover:border-indigo-300 transition-colors"
                     />
                   </div>
@@ -524,9 +524,9 @@ function TablePlace({ data, darkMode }) {
   const [tables, setTables] = useState([]);
 
   useEffect(() => {
-    if (!data.id) return;
-    getTablesByEventId(data.id).then(setTables).catch(console.error);
-  }, [data.id]);
+    if (!data?.id) return;
+    getTablesByEventId(data?.id).then(setTables).catch(console.error);
+  }, [data?.id]);
 
   return (
     <div className="p-4">
@@ -539,7 +539,7 @@ function TablePlace({ data, darkMode }) {
       </h3>
       <div className="overflow-y-auto flex justify-center py-4">
         <PlanSalle
-          event={{ id: data.id }}
+          event={{ id: data?.id }}
           tables={tables}
           setTables={setTables}
           darkMode={darkMode}
@@ -560,23 +560,23 @@ function Personnels({ data, darkMode, isMobile }) {
   useEffect(() => {
     const fetchPersonnel = async () => {
       try {
-        const response = await getPersonnelListByEventId(data.id);
+        const response = await getPersonnelListByEventId(data?.id);
         setPersonnelList(response);
       } catch (error) {
         console.error("Erreur lors de la récupération des personnels : ", error);
       }
     };
     fetchPersonnel();
-  }, [data.id]);
+  }, [data?.id]);
 
   const handleExportExcel = () => {
     const exportData = personnelList.map((p) => ({
-      Nom: p.nom,
+      Nom: p?.nom,
       Email: p.email,
       Status: p.status,
       Role: p.role,
     }));
-    handleDownloadXLSX(exportData, `personnels_${data.nom}`);
+    handleDownloadXLSX(exportData, `personnels_${data?.nom}`);
   };
 
   const columns = [
@@ -674,7 +674,7 @@ function Personnels({ data, darkMode, isMobile }) {
           {filteredRows.map((personnel) => (
             <ListCard
               key={personnel.id}
-              title={personnel.nom}
+              title={personnel?.nom}
               icon={FaUser}
               darkMode={darkMode}
               details={[
@@ -709,7 +709,7 @@ function Personnels({ data, darkMode, isMobile }) {
                     ${darkMode ? "hover:bg-gray-800" : "hover:bg-gray-50"}`}
                   >
                     <div className="col-span-3 font-medium truncate">
-                      {personnel.nom}
+                      {personnel?.nom}
                     </div>
                     <div className="col-span-3 truncate">
                       {personnel.email}
