@@ -98,7 +98,7 @@ export class EvenementService {
   }
 
   async findAll(): Promise<Evenement[]> {
-    return this.evenementRepository.find({ relations: ['location', 'salle', 'tables', 'invites', 'user'] });
+    return this.evenementRepository.find({ relations: ['location', 'salle', 'tables', 'invites', 'user', 'user.forfait'] });
   }
 
   async findOne(id: number): Promise<Evenement> {

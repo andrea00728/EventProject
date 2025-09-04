@@ -3,14 +3,15 @@ import { getMyEvents } from '../../services/evenementServ';
 import { useStateContext } from '../../context/ContextProvider';
 import Modal from '../../components/Modal/EventModal';
 import DeleteEventButton from '../../util/DeleteEvenement';
+import UpdateEventModal from '../../components/Modal/UpdateEventModal';
 
 const EventAccept = () => {
   const { isAuthenticated } = useStateContext();
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  3
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -47,6 +48,20 @@ const EventAccept = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedEvent(null);
+  };
+
+  const openUpdateModal = (event) => {
+    setSelectedEvent(event);
+    setIsUpdateModalOpen(true);
+  };
+
+  const closeUpdateModal = () => {
+    setIsUpdateModalOpen(false);
+    setSelectedEvent(null);
+  };
+
+  const handleEventUpdated = (updatedEvent) => {
+    setEvents(events.map((e) => (e.id === updatedEvent.id ? updatedEvent : e)));
   };
 
   return (
@@ -125,7 +140,7 @@ const EventAccept = () => {
                               'from-amber-500 to-blue-500'
                       }`}></div>
 
-                    <div className="p-6 relative ">
+                    <div className="p-6 relative">
                       {/* Event Title */}
                       <div className="flex items-start justify-between mb-6">
                         <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide leading-tight">
@@ -194,8 +209,7 @@ const EventAccept = () => {
                           </div>
                           <div>
                             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Lieu</p>
-                            <p className="text-slate-800 font-semibold">{event.location?.nom.split(",").slice(0, 2).join(", ") || "Non précisé"}
-                            </p>
+                            <p className="text-slate-800 font-semibold">{event.location?.nom.split(",").slice(0, 2).join(", ") || "Non précisé"}</p>
                           </div>
                         </div>
 
@@ -230,12 +244,24 @@ const EventAccept = () => {
                           </svg>
                           Voir les tables
                         </button>
-                        <DeleteEventButton
-                          eventId={event.id}
-                          onDeleted={(deletedId) =>
-                            setEvents(events.filter((e) => e.id !== deletedId))
-                          }
-                        />
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => openUpdateModal(event)}
+                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 transition-all duration-200 transform hover:scale-105 shadow-lg`}
+                            aria-label={`Modifier l'événement ${event.nom}`}
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            Modifier
+                          </button>
+                          <DeleteEventButton
+                            eventId={event.id}
+                            onDeleted={(deletedId) =>
+                              setEvents(events.filter((e) => e.id !== deletedId))
+                            }
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -245,9 +271,19 @@ const EventAccept = () => {
           </>
         )}
 
-        {/* Modal */}
+        {/* Modal pour voir les tables */}
         {selectedEvent && (
           <Modal isOpen={isModalOpen} onClose={closeModal} event={selectedEvent} />
+        )}
+
+        {/* Modal pour modifier l'événement */}
+        {selectedEvent && (
+          <UpdateEventModal
+            isOpen={isUpdateModalOpen}
+            onClose={closeUpdateModal}
+            event={selectedEvent}
+            onUpdated={handleEventUpdated}
+          />
         )}
       </div>
     </div>

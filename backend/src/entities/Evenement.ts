@@ -94,5 +94,6 @@
     @OneToMany(() => Favorite, (favorite) => favorite.evenement, { onDelete: 'CASCADE' })
     favorites: Favorite[];
     maxGuest: number;
+    imageUrl: any;
   }
 

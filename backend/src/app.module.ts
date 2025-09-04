@@ -131,7 +131,8 @@ import { ProfileController } from './controllers/profile/profile.controller';
     ContactModule,
     AdminModule,
     TasksModule,
-    EmailModule, // <-- notre nouveau module SendGrid
+    EmailModule,
+    
   ],
   controllers: [ProfileController],
   providers: [],
