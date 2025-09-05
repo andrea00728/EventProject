@@ -113,7 +113,7 @@ const DashboardGlobal = () => {
     };
 
     return (
-        <div className="min-h-full bg-gray-100 p-8 font-sans overflow-auto">
+        <div className="min-h-[86vh] bg-gray-100 p-8 font-sans overflow-auto">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <header className="mb-8 text-gray-900">

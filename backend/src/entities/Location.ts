@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { LocationController } from 'src/controllers/localisation/localisation.controller';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
 import { Salle } from './salle';
-
+import { User } from 'src/Authentication/entities/auth.entity';
 @Entity()
 export class Localisation {
   @PrimaryGeneratedColumn()
@@ -17,4 +18,7 @@ export class Localisation {
 
   @OneToMany(() => Salle, (salle) => salle.location)
   salles: Salle[];
+
+  @ManyToOne(() => User, (user) => user.localisations, { nullable: true })
+  createur: User;
 }
