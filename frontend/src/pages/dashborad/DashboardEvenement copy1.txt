@@ -122,70 +122,39 @@ export default function DashboardEvenement() {
 
     // Récupération des invités et génération dynamique des tables
     useEffect(() => {
-        // 1. Vérification initiale pour éviter les requêtes inutiles.
-        // La requête ne se lance que si un événement est sélectionné et si l'utilisateur est authentifié.
-        if (!selectedEvent?.id || !isAuthenticated) {
-            setTables([]);
-            setGuests([]);
-            setError(null);
-            setIsLoading(false);
-            return;
-        }
+        if (!selectedEvent?.id || !isAuthenticated) return;
 
-        const fetchData = async () => {
-            setIsLoading(true);
-            setError(null);
+        setIsLoading(true);
 
-            try {
-            // 2. Exécution des deux requêtes API en parallèle pour une meilleure performance.
-            const [guestsData, tablesResponse] = await Promise.all([
-                getGuestsByEventId(selectedEvent.id),
-                axiosClient.get(`/tables/event/${selectedEvent.id}`)
-            ]);
+        getGuestsByEventId(selectedEvent.id)
+            .then((guestsData) => {
+                setGuests(guestsData);
 
-            // 3. Traitement des données des invités.
-            setGuests(guestsData);
+                const tablesDyn = [];
+                const tableCapacity = 8;
+                const numTables = Math.ceil(guestsData.length / tableCapacity);
 
-            // 4. Traitement des données des tables.
-            if (Array.isArray(tablesResponse.data)) {
-                // Pour chaque table, on calcule le nombre d'invités et le statut en fonction des données d'invités récupérées.
-                const updatedTables = tablesResponse.data.map(table => {
-                const guestsAtThisTable = guestsData.filter(guest => guest.table_id === table.id);
-                const invitesCount = guestsAtThisTable.length;
-                const status = invitesCount === table.capacite ? "Complète" : "Disponible";
+                for (let i = 0; i < numTables; i++) {
+                    const start = i * tableCapacity;
+                    const end = start + tableCapacity;
+                    const invitesAtTable = guestsData.slice(start, end);
+                    tablesDyn.push({
+                        id: i + 1,
+                        numero: i + 1,
+                        capacite: tableCapacity,
+                        invites: invitesAtTable.length,
+                        statut: invitesAtTable.length === tableCapacity ? "Complète" : "Disponible"
+                    });
+                }
 
-                return {
-                    ...table,
-                    invites: invitesCount,
-                    statut: status
-                };
-                });
-
-                setTables(updatedTables);
-            } else {
-                // En cas de format de données incorrect, on gère l'erreur et vide les tables.
-                console.error("API response for tables is not an array:", tablesResponse.data);
-                setTables([]);
-                setError("Les données de tables reçues ne sont pas au format attendu.");
-            }
-
-            } catch (err) {
-            // 5. Gestion centralisée des erreurs.
-            console.error("Erreur lors du chargement des données:", err);
-            if (err.response?.status === 401) {
-                setError("Non autorisé. Veuillez vérifier votre connexion.");
-            } else {
-                setError("Impossible de charger les données. Veuillez réessayer.");
-            }
-            setTables([]);
-            setGuests([]);
-            } finally {
-            // 6. Fin du chargement, quel que soit le résultat.
-            setIsLoading(false);
-            }
-        };
-
-        fetchData();
+                setTables(tablesDyn);
+                setIsLoading(false);
+            })
+            .catch((err) => {
+                console.error("Erreur chargement invités:", err);
+                setError("Erreur lors du chargement des invités.");
+                setIsLoading(false);
+            });
     }, [selectedEvent, isAuthenticated]);
 
     // Récupération du personnel dynamique
@@ -479,6 +448,7 @@ export default function DashboardEvenement() {
                                         <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Lieu</th>
                                         <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Invités</th>
                                         <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Personnel</th>
+                                        <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Capacité Tables</th>
                                         <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Statut</th>
                                         <th className="px-8 py-6 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">Actions</th>
                                     </tr>
@@ -531,7 +501,16 @@ export default function DashboardEvenement() {
                                                         <span className="text-emerald-700 font-bold text-lg">{personnelData.total}</span>
                                                     </div>
                                                 </td>
-                                                
+                                                <td className="px-8 py-6">
+                                                    <div className="flex items-center space-x-3">
+                                                        <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                                                            <Grid3X3 className="w-5 h-5 text-purple-600" />
+                                                        </div>
+                                                        <span className="text-purple-700 font-bold text-lg">
+                                                            {isTableCapacitiesLoading ? "Chargement..." : tableCapacities[event.id] || 0}
+                                                        </span>
+                                                    </div>
+                                                </td>
                                                 <td className="px-8 py-6">
                                                     <span className={`inline-flex items-center px-4 py-2 rounded-2xl text-sm font-bold shadow-lg ${getEventStatutColor(event.statut)}`}>
                                                         {event.statut}
@@ -595,7 +574,12 @@ export default function DashboardEvenement() {
                                                 <div className="text-3xl font-bold text-purple-600 mb-2">{personnelData.total}</div>
                                                 <div className="text-sm font-semibold text-purple-500 uppercase tracking-wider">Personnel</div>
                                             </div>
-                                            
+                                            <div className="text-center p-6 bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl border-2 border-emerald-100 shadow-lg">
+                                                <div className="text-3xl font-bold text-emerald-600 mb-2">
+                                                    {isTableCapacitiesLoading ? "Chargement..." : tableCapacities[event.id] || 0}
+                                                </div>
+                                                <div className="text-sm font-semibold text-emerald-500 uppercase tracking-wider">Capacité Tables</div>
+                                            </div>
                                         </div>
 
                                         <button
@@ -775,7 +759,7 @@ export default function DashboardEvenement() {
                                 )}
 
                                 {/* Onglet Tables */}
-                                {activeTab === "tables" && !isLoading && tables.length > 0 && (
+                                {activeTab === "tables" && !isLoading && (
                                     <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100/50 overflow-hidden">
                                         <div className="overflow-x-auto">
                                             <table className="min-w-full">
@@ -785,7 +769,6 @@ export default function DashboardEvenement() {
                                                         <th className="px-8 py-5 text-left text-xs font-bold text-emerald-600 uppercase tracking-widest border-b border-emerald-100">Capacité</th>
                                                         <th className="px-8 py-5 text-left text-xs font-bold text-emerald-600 uppercase tracking-widest border-b border-emerald-100">Invités</th>
                                                         <th className="px-8 py-5 text-left text-xs font-bold text-emerald-600 uppercase tracking-widest border-b border-emerald-100">Places</th>
-                                                        <th className="px-8 py-5 text-left text-xs font-bold text-emerald-600 uppercase tracking-widest border-b border-emerald-100">Statut</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -794,19 +777,14 @@ export default function DashboardEvenement() {
                                                             <td className="px-8 py-5 font-semibold text-gray-900 group-hover:text-emerald-900 transition-colors">
                                                                 <div className="flex items-center space-x-3">
                                                                     <div className="w-2 h-2 bg-emerald-400 rounded-full group-hover:bg-emerald-600 transition-colors"></div>
-                                                                    <span>{t.nom}</span>
+                                                                    <span>Table {t.numero}</span>
                                                                 </div>
                                                             </td>
                                                             <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors font-medium">{t.capacite}</td>
-                                                            <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors font-medium">{t.placeReserve}</td>
+                                                            <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors font-medium">{t.invites}</td>
                                                             <td className="px-8 py-5">
                                                                 <span className="inline-flex items-center px-4 py-2 rounded-2xl text-xs font-bold bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200 shadow-sm">
-                                                                    {t.capacite - t.placeReserve} place{t.capacite - t.placeReserve > 1 ? "s" : ""} disponible{t.capacite - t.placeReserve > 1 ? "s" : ""}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-8 py-5">
-                                                                <span className={`inline-flex items-center px-4 py-2 rounded-2xl text-xs font-bold shadow-sm ${t.capacite - t.placeReserve  === 0 ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-green-100 text-green-800 border border-green-200'}`}>
-                                                                    {t.capacite - t.placeReserve === 0 ? 'Non disponible' : 'Disponible' }
+                                                                    {t.capacite - t.invites} place{t.capacite - t.invites > 1 ? "s" : ""} disponible{t.capacite - t.invites > 1 ? "s" : ""}
                                                                 </span>
                                                             </td>
                                                         </tr>
@@ -814,25 +792,6 @@ export default function DashboardEvenement() {
                                                 </tbody>
                                             </table>
                                         </div>
-                                    </div>
-                                )}
-
-                                {/* Gestion des états de chargement, d'erreur et de données vides */}
-                                {activeTab === "tables" && isLoading && (
-                                    <div className="text-center py-10 text-gray-500">
-                                        Chargement des tables...
-                                    </div>
-                                )}
-
-                                {activeTab === "tables" && !isLoading && tables.length === 0 && (
-                                    <div className="text-center py-10 text-gray-500">
-                                        Aucune table disponible pour cet événement.
-                                    </div>
-                                )}
-
-                                {activeTab === "tables" && error && (
-                                    <div className="text-center py-10 text-red-500 font-medium">
-                                        {error}
                                     </div>
                                 )}
 

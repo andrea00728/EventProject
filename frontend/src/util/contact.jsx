@@ -99,6 +99,13 @@ export default function Contact() {
                                 <p className="text-gray-500">Nous vous répondrons dans les 24h</p>
                             </div>
 
+                            {/* Petit message d’information */}
+                            <div className="bg-blue-100 dark:bg-blue-800 dark:text-blue-100 text-blue-800 p-3 rounded mb-6 text-sm">
+                                ⚠️ Vérifiez votre spam pour les réponses. 
+                            </div>
+
+
+
                             {/* Message de statut */}
                             {messageStatus === 'success' && (
                                 <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md mb-6" role="alert">

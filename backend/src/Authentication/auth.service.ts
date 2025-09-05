@@ -177,6 +177,18 @@ export class AuthService {
 
     await this.userRepository.save(newUser);
 
+    const notification = this.notificationRepository.create({
+      title: 'Nouvel organisateur inscrit',
+      message: `L'organisateur ${name || email} s'est inscrit.`,
+      type: 'info',
+      date: new Date(),
+    });
+    await this.notificationRepository.save(notification);
+    this.notificationGateway.emitNotifRegisterToAdmin({
+      ...notification,
+      date: notification.date.toISOString(),
+    });
+
     return {
       message: 'Utilisateur créé avec succès',
       userId: newUser.id,
