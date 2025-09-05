@@ -59,12 +59,15 @@ const DashboardGlobal = () => {
     }, [user]);
 
     useEffect(() => {
-        console.log("Données récupérés : ", data);
-        setDashboardData(prevData => ({
-            ...prevData,
-            eventsCreated: data.length, // Exemple de mise à jour dynamique
-            upcomingEvents: data.filter(event => new Date(event.date) > new Date()).length,
-        }));
+        const fetchData = async () => {
+            const data = await getAllManagerEvents(user.id || user.sub);
+            console.log("Données récupérés : ", data);
+            setDashboardData(prevData => ({
+                ...prevData,
+                eventsCreated: data.length, // Exemple de mise à jour dynamique
+                upcomingEvents: data.filter(event => new Date(event.date) > new Date()).length,
+            }));
+        };
         if (user && (user.id || user.sub)) {
             fetchData();
         }
