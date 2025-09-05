@@ -1,4 +1,3 @@
-import { LocationController } from 'src/controllers/localisation/localisation.controller';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
 import { Salle } from './salle';
 import { User } from 'src/Authentication/entities/auth.entity';
@@ -16,7 +15,7 @@ export class Localisation {
   @Column({ type: 'float', nullable: true })
   longitude: number; // Coordonnée de longitude
 
-  @OneToMany(() => Salle, (salle) => salle.location)
+  @OneToMany(() => Salle, (salle) => salle.location, { cascade: true })
   salles: Salle[];
 
   @ManyToOne(() => User, (user) => user.localisations, { nullable: true })

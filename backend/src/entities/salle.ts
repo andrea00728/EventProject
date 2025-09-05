@@ -1,7 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Localisation } from './Location';
 
-
 @Entity()
 export class Salle {
   @PrimaryGeneratedColumn()
@@ -10,6 +9,9 @@ export class Salle {
   @Column()
   nom: string;
 
-  @ManyToOne(() => Localisation, (localisation) => localisation.salles)
+  @ManyToOne(() => Localisation, (localisation) => localisation.salles, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   location: Localisation;
 }
