@@ -18,6 +18,7 @@ export const createEvent = async (eventData) => {
   }
 };
 
+
 /**
  * Récupère tous les lieux.
  */
@@ -146,5 +147,53 @@ export const saveLocation = async (query, createurId) => {
     return response.data;
   } catch (error) {
     throw error.response?.data?.message || 'Erreur lors de la sauvegarde du lieu';
+  }
+};
+
+
+/**
+ * Récupère les lieux créés par un utilisateur spécifique ou par l'admin.
+ * @param {string} createurId - L'ID du créateur (utilisateur ou 0 pour admin)
+ * @returns {Promise<Array>} - Liste des lieux associés au créateur et à l'admin
+ */
+export const getLocationsByCreator = async (createurId) => {
+  const response = await axiosClient.get(`/locations/by-creator/${createurId}`);
+  return response.data;
+};
+/**
+ * Récupère les lieux créés par un utilisateur spécifique ou par l'admin.
+ * @param {string} createurId - L'ID du créateur (utilisateur ou 0 pour admin)
+ * @returns {Promise<Array>} - Liste des lieux associés au créateur et à l'admin
+ */
+export const getLocationsByCreatorAndAdmin = async (createurId) => {
+  const response = await axiosClient.get(`/locations/byadminandcreator/${createurId}`);
+  return response.data;
+};
+
+/**
+ * Met à jour un événement
+ * @param {number} eventId - ID de l'événement
+ * @param {Object} eventData - Données de l'événement à mettre à jour
+ * @returns {Promise<Object>} - L'événement mis à jour
+ */
+export const updateEvent = async (eventId, eventData) => {
+  try {
+    const formData = new FormData();
+    Object.keys(eventData).forEach(key => {
+      if (key === 'image' && eventData[key]) {
+        formData.append('image', eventData[key]);
+      } else if (eventData[key] !== undefined && eventData[key] !== null) {
+        formData.append(key, eventData[key].toString());
+      }
+    });
+
+    const response = await axiosClient.patch(`/evenements/${eventId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || error.message;
   }
 };

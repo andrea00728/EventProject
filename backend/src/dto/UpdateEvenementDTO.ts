@@ -18,46 +18,47 @@ export enum EventType {
 }
 
 export class UpdateEventDto {
-  @IsUUID()
-  utilisateur_id: string;
-
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  nom: string;
+  nom?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsEnum(EventType)
-  type: EventType;
+  type?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  theme: string;
+  theme?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsDateString()
-  date: string;
+  date?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsDateString()
-  date_fin: string;
+  date_fin?: string;
 
-  @IsNotEmpty()
-  @IsNumber()
-  locationId: number;
+  @IsOptional()
+  @IsUUID()
+  locationId?: string | number;
 
-  @IsNotEmpty()
-  @IsNumber()
-  salleId: number;
+  @IsOptional()
+  @IsUUID()
+  salleId?: string | number;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsBoolean()
-  isPublic: boolean;
+  isPublic?: boolean;
 
   @IsOptional()
   @IsNumber()
-  montanttransaction?: number;
+  latitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  longitude?: number;
 
   @IsOptional()
   @IsString()
-  imageUrl?: string;
+  nomLieu?: string;
 }
