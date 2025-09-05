@@ -61,7 +61,7 @@ export default function CreationPersonnel() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
-    
+
     // Si l'utilisateur sélectionne "custom", afficher le champ personnalisé
     if (name === "role") {
       if (value === "custom") {
@@ -126,8 +126,10 @@ export default function CreationPersonnel() {
       // Gestion des erreurs spécifiques du backend
       const errorMessage = error.response?.data?.message;
       console.log("voici l'erreur", errorMessage);
-      
-      if (errorMessage === "Cet utilisateur a déjà un rôle dans cet événement.") {
+
+      if (errorMessage === "c'est un email de l'administrateur") {
+        setError("Impossible d'ajouter cet utilisateur : c'est un administrateur.");
+      }else if(errorMessage === "Cet utilisateur a déjà un rôle dans cet événement.") {
         setError("Cet utilisateur a déjà un rôle dans cet événement.");
       } else if (
         errorMessage ===

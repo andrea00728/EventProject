@@ -27,29 +27,60 @@ export default function RoleSelector() {
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 mt-20 bg-gray-100 rounded-lg w-[50%] mx-auto p-10">
-      <h2 className="text-2xl font-bold text-gray-700">
-        Choisissez votre rôle
-      </h2>
-      <div className="flex gap-6">
-        <button
-          onClick={() => choisirRole(user?.role)}
-          className="middle none center mr-3 rounded-lg bg-pink-500 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-pink-500/20 transition-all hover:shadow-lg hover:shadow-pink-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
-          data-ripple-light="true"
-          aria-label={`Continuer comme ${user?.role || "rôle actuel"}`}
-          disabled={!user?.role}
-        >
-          Continuer comme {user?.role || "rôle actuel"}
-        </button>
-        <button
-          onClick={() => choisirRole("organisateur")}
-          className="middle none center rounded-lg py-3 px-6 font-sans text-xs font-bold uppercase text-pink-500 transition-all hover:bg-pink-500/10 active:bg-pink-500/30 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
-          data-ripple-dark="true"
-          aria-label="Créer un événement en tant qu'organisateur"
-        >
-          Créer mon propre événement
-        </button>
+  <div className="flex w-full h-full items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="w-full max-w-md mx-auto">
+      <div className="bg-white shadow-2xl rounded-2xl overflow-hidden border border-gray-100">
+        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 px-6 py-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl mb-4">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+            Choisissez votre rôle
+          </h2>
+          <p className="text-white/90 text-base font-medium">
+            Sélectionnez comment vous souhaitez utiliser la plateforme
+          </p>
+        </div>
+        
+        <div className="px-6 py-8 space-y-4">
+          <div className="grid grid-cols-1 gap-3">
+            <button
+              onClick={() => choisirRole(user?.role)}
+              className="group relative overflow-hidden bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 px-5 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              aria-label={`Continuer en tant que ${user?.role || "rôle actuel"}`}
+              disabled={!user?.role}
+            >
+              <div className="absolute inset-0 bg-white/10 transform -skew-y-6 group-hover:skew-y-0 transition-transform duration-300"></div>
+              <div className="relative flex items-center justify-center space-x-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className="text-sm font-bold uppercase tracking-wider">
+                  Continuer en tant que {user?.role || "rôle actuel"}
+                </span>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => choisirRole("organisateur")}
+              className="group relative overflow-hidden bg-white border-2 border-gray-200 hover:border-indigo-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 text-gray-700 hover:text-indigo-700 font-semibold py-3 px-5 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300"
+              aria-label="Créer ou gérer un événement en tant qu'organisateur"
+            >
+              <div className="relative flex items-center justify-center space-x-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span className="text-sm font-bold uppercase tracking-wider text-center">
+                  Créer ou gérer mon propre événement
+                </span>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  );
+  </div>
+);
 }
