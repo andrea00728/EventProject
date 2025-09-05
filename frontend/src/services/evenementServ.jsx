@@ -148,3 +148,23 @@ export const saveLocation = async (query, createurId) => {
     throw error.response?.data?.message || 'Erreur lors de la sauvegarde du lieu';
   }
 };
+
+
+/**
+ * Récupère les lieux créés par un utilisateur spécifique ou par l'admin.
+ * @param {string} createurId - L'ID du créateur (utilisateur ou 0 pour admin)
+ * @returns {Promise<Array>} - Liste des lieux associés au créateur et à l'admin
+ */
+export const getLocationsByCreator = async (createurId) => {
+  const response = await axiosClient.get(`/locations/by-creator/${createurId}`);
+  return response.data;
+};
+/**
+ * Récupère les lieux créés par un utilisateur spécifique ou par l'admin.
+ * @param {string} createurId - L'ID du créateur (utilisateur ou 0 pour admin)
+ * @returns {Promise<Array>} - Liste des lieux associés au créateur et à l'admin
+ */
+export const getLocationsByCreatorAndAdmin = async (createurId) => {
+  const response = await axiosClient.get(`/locations/byadminandcreator/${createurId}`);
+  return response.data;
+};

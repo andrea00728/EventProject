@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useDarkMode } from "../context/DarkModeContext";
 import {
   createEvent,
-  getLocations,
   getSallesByLocation,
   saveLocation,
   createSalle,
+  getLocationsByCreator,
+  getLocationsByCreatorAndAdmin,
 } from "../services/evenementServ";
 import { textControll } from "../services/controll_champs/controll_champs";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
@@ -15,22 +15,34 @@ import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import Select from "react-select";
 import { useStateContext } from "../context/ContextProvider";
+import axios from "axios";
+import {
+  MdLocationCity,
+  MdRoom,
+  MdAdd,
+  MdEdit,
+  MdDelete,
+  MdSave,
+  MdClose,
+  MdCheckCircle,
+  MdFullscreen,
+  MdFullscreenExit,
+} from "react-icons/md";
+import { TbAlertTriangle } from "react-icons/tb";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Fix Leaflet marker icon
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
 
 // Custom blue marker icon
 const blueIcon = new L.Icon({
-  iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
-  iconRetinaUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+  iconRetinaUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -65,14 +77,8 @@ const EVENT_TYPES = [
   { value: "tournoi", label: "Tournoi" },
   { value: "remise_diplome", label: "Remise de diplôme" },
   { value: "soiree", label: "Soirée privée" },
-  {
-    value: "enterrement_vie_garcon",
-    label: "EVG (Enterrement de vie de garçon)",
-  },
-  {
-    value: "enterrement_vie_fille",
-    label: "EVJF (Enterrement de vie de jeune fille)",
-  },
+  { value: "enterrement_vie_garcon", label: "EVG (Enterrement de vie de garçon)" },
+  { value: "enterrement_vie_fille", label: "EVJF (Enterrement de vie de jeune fille)" },
   { value: "baby_shower", label: "Baby Shower" },
   { value: "gender_reveal", label: "Gender Reveal" },
   { value: "funerailles", label: "Funérailles / Commémoration" },
@@ -83,7 +89,6 @@ const EVENT_TYPES = [
   { value: "autre", label: "Autre" },
 ];
 
-// Liste des thèmes
 const EVENT_THEMES = [
   { value: "chic", label: "Chic" },
   { value: "boheme", label: "Bohème" },
@@ -96,12 +101,11 @@ const EVENT_THEMES = [
   { value: "minimaliste", label: "Minimaliste" },
   { value: "industriel", label: "Industriel" },
   { value: "romantique", label: "Romantique" },
-  { value: "nature", label: "Nature" },
+  { value: "nature", tie: "Nature" },
   { value: "festif", label: "Festif" },
   { value: "autre", label: "Autre" },
 ];
 
-// Styles personnalisés pour react-select
 const customStyles = {
   control: (provided) => ({
     ...provided,
@@ -110,13 +114,8 @@ const customStyles = {
     backgroundColor: "#f9fafb",
     padding: "0.5rem",
     boxShadow: "none",
-    "&:hover": {
-      borderColor: "#a5b4fc",
-    },
-    "&:focus-within": {
-      borderColor: "#a5b4fc",
-      boxShadow: "0 0 0 2px rgba(165, 180, 252, 0.5)",
-    },
+    "&:hover": { borderColor: "#aIssb4fc" },
+    "&:focus-within": { borderColor: "#a5b4fc", boxShadow: "0 0 0 2px rgba(165, 180, 252, 0.5)" },
   }),
   menu: (provided) => ({
     ...provided,
@@ -130,22 +129,27 @@ const customStyles = {
     backgroundColor: state.isSelected ? "#e0e7ff" : state.isFocused ? "#f3f4f6" : "white",
     color: "#1f2937",
     padding: "0.75rem 1rem",
-    "&:hover": {
-      backgroundColor: "#f3f4f6",
-    },
+    "&:hover": { backgroundColor: "#f3f4f6" },
   }),
-  placeholder: (provided) => ({
-    ...provided,
-    color: "#9ca3af",
-  }),
-  singleValue: (provided) => ({
-    ...provided,
-    color: "#1f2937",
-  }),
+  placeholder: (provided) => ({ ...provided, color: "#9ca3af" }),
+  singleValue: (provided) => ({ ...provided, color: "#1f2937" }),
 };
 
+// Animation variants for modals
+const backdropVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.3 } },
+};
+
+const modalVariants = {
+  hidden: { opacity: 0, y: 50 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+};
+
+const gradientButton = `bg-gradient-to-r from-indigo-500 to-blue-500 text-white hover:from-indigo-600 hover:to-blue-600`;
+const gradientTitle = `bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent`;
+
 export default function Evenementform({ onNext, isPublic, isExit }) {
-  const { darkMode } = useDarkMode();
   const [form, setForm] = useState({
     nom: "",
     type: "",
@@ -160,6 +164,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   const [customType, setCustomType] = useState("");
   const [customTheme, setCustomTheme] = useState("");
   const [locations, setLocations] = useState([]);
+  const [userLocations, setUserLocations] = useState([]);
   const [salles, setSalles] = useState([]);
   const [modalSalleOpen, setModalSalleOpen] = useState(false);
   const [modalLieuOpen, setModalLieuOpen] = useState(false);
@@ -167,7 +172,6 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   const [selectedLieu, setSelectedLieu] = useState(null);
   const [error, setError] = useState(null);
   const mapRef = useRef(null);
-
   const [activeTab, setActiveTab] = useState('default');
   const [newLocation, setNewLocation] = useState({ nom: '', latitude: '', longitude: '', createurId: 0 });
   const [customMarker, setCustomMarker] = useState(null);
@@ -175,18 +179,50 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   const [geocodeResult, setGeocodeResult] = useState(null);
   const [geocodeResultText, setGeocodeResultText] = useState("");
   const markerRef = useRef(null);
-
   const { isAuthenticated, user } = useStateContext();
-
-  // États pour gérer l'ajout d'une salle
   const [isAddingSalle, setIsAddingSalle] = useState(false);
   const [newSalleName, setNewSalleName] = useState("");
+  const [editingLocation, setEditingLocation] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteItem, setDeleteItem] = useState(null);
+  const [showEditConfirmationModal, setShowEditConfirmationModal] = useState(false);
+  const [showEditSuccessModal, setShowEditSuccessModal] = useState(false);
+  const [isModalFullScreen, setIsModalFullScreen] = useState(false);
+  const [selectedLocationSalles, setSelectedLocationSalles] = useState([]);
+  const [selectedLocationForSalles, setSelectedLocationForSalles] = useState(null);
+
+  const API_URL = `${import.meta.env.VITE_API_BASE_URL}/locations`;
 
   useEffect(() => {
-    getLocations()
-      .then((data) => setLocations(Array.isArray(data) ? data : []))
-      .catch(() => setLocations([]));
-  }, []);
+    const fetchLocations = async () => {
+      try {
+        const createurId = isAuthenticated && user?.sub ? user.sub : '0';
+        const data = await getLocationsByCreatorAndAdmin(createurId);
+        setLocations(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Erreur lors du chargement des lieux:', error);
+        setLocations([]);
+      }
+    };
+    fetchLocations();
+  }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    const fetchUserLocations = async () => {
+      try {
+        if (isAuthenticated && user?.sub) {
+          const data = await getLocationsByCreator(user.sub);
+          setUserLocations(Array.isArray(data) ? data : []);
+        } else {
+          setUserLocations([]);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des lieux utilisateur:', error);
+        setUserLocations([]);
+      }
+    };
+    fetchUserLocations();
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     if (form.locationId) {
@@ -199,11 +235,27 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     }
   }, [form.locationId]);
 
+  useEffect(() => {
+    if (editingLocation && editingLocation.latitude && editingLocation.longitude && mapRef.current) {
+      const lat = parseFloat(editingLocation.latitude);
+      const lng = parseFloat(editingLocation.longitude);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        mapRef.current.setView([lat, lng], 13);
+      }
+      setGeocodeAddress(editingLocation.nom);
+      setGeocodeResult({
+        nom: editingLocation.nom,
+        latitude: lat,
+        longitude: lng,
+      });
+      setGeocodeResultText(`Lieu actuel : ${editingLocation.nom} (Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)})`);
+    }
+  }, [editingLocation]);
+
   const handleChange = (e) => {
     setForm({
       ...form,
-      [e.target.name]:
-        e.target.type === "checkbox" ? e.target.checked : e.target.value,
+      [e.target.name]: e.target.type === "checkbox" ? e.target.checked : e.target.value,
     });
   };
 
@@ -230,7 +282,6 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-
     const now = new Date();
     const dateDebut = new Date(form.date);
     const dateFin = new Date(form.date_fin);
@@ -276,30 +327,37 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       });
       setCustomType("");
       setCustomTheme("");
-
       onNext && onNext({ eventId: event.id });
     } catch (error) {
-      const errorMessage =
-        error?.response?.data?.message ||
-        "Erreur lors de la création de l'événement.";
+      const errorMessage = error?.response?.data?.message || "Erreur lors de la création de l'événement.";
       setError(errorMessage);
       toast.error(errorMessage);
     }
   };
 
-  const selectedSalleName = () =>
-    salles.find((s) => s.id === form.salleId)?.nom || "";
-  const selectedLocationName = () =>
-    locations.find((l) => l.id === form.locationId)?.nom || "";
+  const selectedSalleName = () => salles.find((s) => s.id === form.salleId)?.nom || "";
+  const selectedLocationName = () => locations.find((l) => l.id === form.locationId)?.nom || "";
 
   const filteredLocations = locations.filter((loc) =>
     loc.nom.toLowerCase().includes(searchLieu.toLowerCase())
   );
+  const filteredUserLocations = userLocations.filter((loc) =>
+    loc.nom.toLowerCase().includes(searchLieu.toLowerCase())
+  );
 
-  const handleSelectLieu = (loc) => {
+  const handleSelectLieu = async (loc) => {
     setSelectedLieu(loc);
+    setSelectedLocationForSalles(loc.id);
     if (mapRef.current && loc.latitude && loc.longitude) {
       mapRef.current.setView([parseFloat(loc.latitude), parseFloat(loc.longitude)], 13);
+    }
+    try {
+      const salles = await getSallesByLocation(loc.id);
+      setSelectedLocationSalles(salles || []);
+    } catch (error) {
+      console.error("Erreur lors du chargement des salles:", error);
+      setSelectedLocationSalles([]);
+      toast.error("Erreur lors du chargement des salles");
     }
   };
 
@@ -335,6 +393,20 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     }
   };
 
+  const handleResetGeocode = () => {
+    setGeocodeAddress("");
+    setGeocodeResult(null);
+    setGeocodeResultText("");
+    setCustomMarker(null);
+    setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
+    setEditingLocation(null);
+    setSelectedLocationSalles([]);
+    setSelectedLocationForSalles(null);
+    if (mapRef.current) {
+      mapRef.current.setView([48.8566, 2.3522], 13);
+    }
+  };
+
   const handleConfirmLieu = () => {
     if (activeTab === 'default') {
       if (selectedLieu) {
@@ -346,21 +418,24 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     } else {
       if (newLocation.nom && newLocation.latitude && newLocation.longitude) {
         const query = newLocation.nom;
-        const createurId = isAuthenticated && (user.id || user.sub);
+        const createurId = isAuthenticated && user.sub;
         saveLocation(query, createurId)
           .then((createdLoc) => {
             setLocations([...locations, createdLoc]);
+            setUserLocations([...userLocations, createdLoc]);
             setForm({ ...form, locationId: createdLoc.id, salleId: "" });
             setModalLieuOpen(false);
             setCustomMarker(null);
-            setNewLocation({ nom: '', latitude: '', longitude: '', createurId: user?.id || user.sub });
+            setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
             setGeocodeAddress("");
             setGeocodeResult(null);
             setGeocodeResultText("");
+            setSelectedLocationSalles([]);
+            setSelectedLocationForSalles(null);
             toast.success("Nouveau lieu créé avec succès !");
           })
           .catch((error) => {
-            const errorMessage = error || "Erreur lors de la création du lieu.";
+            const errorMessage = error.response?.data?.message || "Erreur lors de la création du lieu.";
             setError(errorMessage);
             toast.error(errorMessage);
           });
@@ -371,36 +446,80 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     }
   };
 
+  const handleEditLocation = (loc) => {
+    setEditingLocation(loc);
+    setModalLieuOpen(true);
+    setActiveTab('specify');
+    setSearchLieu('');
+    setSelectedLocationSalles([]);
+    setSelectedLocationForSalles(null);
+  };
+
+  const handleConfirmEdit = async () => {
+    if (!geocodeResult || !editingLocation) return;
+    try {
+      await axios.put(`${API_URL}/${editingLocation.id}`, {
+        nom: geocodeResult.nom,
+        latitude: geocodeResult.latitude,
+        longitude: geocodeResult.longitude,
+      });
+      setShowEditConfirmationModal(false);
+      setShowEditSuccessModal(true);
+      setEditingLocation(null);
+      const userData = await getLocationsByCreator(user.sub);
+      setUserLocations(Array.isArray(userData) ? userData : []);
+      const adminData = await getLocationsByCreatorAndAdmin(user.sub || '0');
+      setLocations(Array.isArray(adminData) ? adminData : []);
+      setSelectedLocationSalles([]);
+      setSelectedLocationForSalles(null);
+    } catch (err) {
+      setError(err.response?.data?.message || "Erreur lors de la modification du lieu");
+      toast.error(err.response?.data?.message || "Erreur lors de la modification du lieu");
+    }
+  };
+
+  const openDeleteLocationModal = (loc) => {
+    setDeleteItem({ type: "location", id: loc.id, nom: loc.nom });
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteItem) return;
+    try {
+      await axios.delete(`${API_URL}/${deleteItem.id}`);
+      setUserLocations(userLocations.filter((loc) => loc.id !== deleteItem.id));
+      setLocations(locations.filter((loc) => loc.id !== deleteItem.id));
+      setShowDeleteModal(false);
+      setDeleteItem(null);
+      setSelectedLocationSalles([]);
+      setSelectedLocationForSalles(null);
+      toast.success("Lieu supprimé avec succès !");
+    } catch (err) {
+      setError(err.response?.data?.message || "Erreur lors de la suppression du lieu");
+      toast.error(err.response?.data?.message || "Erreur lors de la suppression du lieu");
+    }
+  };
+
   const MapClickHandler = () => {
     const map = useMap();
-
     useEffect(() => {
       const handleClick = async (e) => {
         const { lat, lng } = e.latlng;
-
         if (markerRef.current) {
           map.removeLayer(markerRef.current);
         }
-
         const marker = L.marker([lat, lng], { icon: blueIcon }).addTo(map)
           .bindPopup(`Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)}`)
           .openPopup();
         markerRef.current = marker;
-
         setCustomMarker({ lat, lng });
-
         try {
           const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`
           );
           const data = await response.json();
-
           if (data.display_name) {
-            setGeocodeResult({
-              nom: data.display_name,
-              latitude: lat,
-              longitude: lng
-            });
+            setGeocodeResult({ nom: data.display_name, latitude: lat, longitude: lng });
             setGeocodeResultText(`Lieu cliqué : ${data.display_name} (Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)})`);
             setNewLocation({ ...newLocation, nom: data.display_name, latitude: lat, longitude: lng });
           } else {
@@ -415,11 +534,9 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
           setNewLocation({ ...newLocation, nom: `Lat: ${lat}, Lon: ${lng}`, latitude: lat, longitude: lng });
         }
       };
-
       if (activeTab === 'specify') {
         map.on("click", handleClick);
       }
-
       return () => {
         map.off("click", handleClick);
         if (markerRef.current) {
@@ -428,65 +545,37 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         }
       };
     }, [map]);
-
     return null;
   };
 
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-
-    if (activeTab === 'specify') {
-      // Handled by MapClickHandler
-    } else {
-      map.off('click');
-    }
-  }, [activeTab]);
-
   return (
-    <div className="w-full max-w-3xl mx-auto mt-12 px-6">
-      <div className="bg-white rounded-3xl shadow-2xl p-10 border border-gray-100">
-        <h2 className="text-4xl font-extrabold text-center mb-2 text-indigo-800 tracking-tight">
+    <div className="w-full max-w-4xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
+      <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-8 border border-gray-100">
+        <h2 className="text-3xl sm:text-4xl font-extrabold text-center mb-2 text-indigo-800 tracking-tight">
           Créer un événement
         </h2>
-        <p className="text-center text-gray-500 mb-8">
+        <p className="text-center text-gray-500 mb-6 sm:mb-8">
           Décrivez votre événement pour commencer l'organisation.
         </p>
-
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-
-        <form
-          onSubmit={onSubmit}
-          className="grid grid-cols-1 md:grid-cols-2 gap-7"
-        >
+        <form onSubmit={onSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">
-              Nom de l'événement
-            </label>
+            <label className="text-sm font-semibold text-gray-700">Nom de l'événement</label>
             <input
               name="nom"
               value={form.nom}
-              onChange={(e) => {
-                setForm({ ...form, nom: textControll(e.target.value) });
-              }}
+              onChange={(e) => setForm({ ...form, nom: textControll(e.target.value) })}
               placeholder="Ex: Mariage de Sarah & Paul"
               required
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+              className="border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
             />
           </div>
-
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">
-              Type d'événement
-            </label>
+            <label className="text-sm font-semibold text-gray-700">Type d'événement</label>
             <Select
               options={EVENT_TYPES}
               value={EVENT_TYPES.find((t) => t.value === form.type) || null}
-              onChange={(selected) =>
-                handleChange({
-                  target: { name: "type", value: selected?.value || "" },
-                })
-              }
+              onChange={(selected) => handleChange({ target: { name: "type", value: selected?.value || "" } })}
               placeholder="Sélectionnez un type"
               styles={customStyles}
               isSearchable
@@ -498,23 +587,16 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                 onChange={(e) => setCustomType(e.target.value)}
                 placeholder="Entrez votre type d'événement"
                 required
-                className="mt-2 border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+                className="mt-2 border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
               />
             )}
           </div>
-
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">
-              Thème
-            </label>
+            <label className="text-sm font-semibold text-gray-700">Thème</label>
             <Select
               options={EVENT_THEMES}
               value={EVENT_THEMES.find((t) => t.value === form.theme) || null}
-              onChange={(selected) =>
-                handleChange({
-                  target: { name: "theme", value: selected?.value || "" },
-                })
-              }
+              onChange={(selected) => handleChange({ target: { name: "theme", value: selected?.value || "" } })}
               placeholder="Sélectionnez un thème"
               styles={customStyles}
               isSearchable
@@ -526,15 +608,12 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                 onChange={(e) => setCustomTheme(e.target.value)}
                 placeholder="Entrez votre thème"
                 required
-                className="mt-2 border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+                className="mt-2 border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
               />
             )}
           </div>
-
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">
-              Date de début
-            </label>
+            <label className="text-sm font-semibold text-gray-700">Date de début</label>
             <input
               type="datetime-local"
               name="date"
@@ -542,14 +621,11 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               onChange={handleChange}
               required
               min={new Date().toISOString().slice(0, 16)}
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+              className="border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
             />
           </div>
-
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">
-              Date de fin
-            </label>
+            <label className="text-sm font-semibold text-gray-700">Date de fin</label>
             <input
               type="datetime-local"
               name="date_fin"
@@ -557,14 +633,11 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               onChange={handleChange}
               required
               min={new Date().toISOString().slice(0, 16)}
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+              className="border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
             />
           </div>
-
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">
-              Lieu
-            </label>
+            <label className="text-sm font-semibold text-gray-700">Lieu</label>
             <input
               type="text"
               value={selectedLocationName()}
@@ -572,14 +645,11 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               onClick={() => setModalLieuOpen(true)}
               placeholder="Sélectionnez un lieu"
               required
-              className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 cursor-pointer focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+              className="border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 bg-gray-50 text-gray-900 placeholder-gray-400 cursor-pointer focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
             />
           </div>
-
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700 mb-1">
-              Salle
-            </label>
+            <label className="text-sm font-semibold text-gray-700">Salle</label>
             <input
               type="text"
               value={selectedSalleName()}
@@ -587,22 +657,17 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               disabled={!form.locationId}
               onClick={() => form.locationId && setModalSalleOpen(true)}
               placeholder="Sélectionnez une salle"
-              className={`border border-gray-300 rounded-xl px-5 py-3 text-gray-900 placeholder-gray-400 transition ${
-                form.locationId
-                  ? "cursor-pointer bg-gray-50 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
-                  : "bg-gray-200 cursor-not-allowed"
-              }`}
+              className={`border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 text-gray-900 placeholder-gray-400 transition ${form.locationId ? "cursor-pointer bg-gray-50 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" : "bg-gray-200 cursor-not-allowed"
+                }`}
             />
           </div>
-
-          <div className="col-span-1 md:col-span-2 mt-4 flex flex-col md:flex-row gap-4">
+          <div className="col-span-1 sm:col-span-2 mt-4 flex flex-col sm:flex-row gap-4">
             <button
               type="submit"
               className="w-full bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition"
             >
               Créer l'événement
             </button>
-
             <button
               type="button"
               onClick={() => isExit()}
@@ -614,12 +679,11 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         </form>
       </div>
 
-      {/* Modal salles */}
       {modalSalleOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg bg-white shadow-2xl rounded-2xl p-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-md bg-white shadow-2xl rounded-2xl p-6 sm:p-8">
             <button
-              className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"
+              className="absolute top-4 right-4 text-2xl font-bold text-gray-400 hover:text-red-600"
               onClick={() => {
                 setModalSalleOpen(false);
                 setIsAddingSalle(false);
@@ -629,7 +693,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
             >
               ×
             </button>
-            <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">
+            <h3 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6 text-indigo-700">
               Choisissez une salle
             </h3>
             {isAddingSalle ? (
@@ -639,7 +703,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                   value={newSalleName}
                   onChange={(e) => setNewSalleName(e.target.value)}
                   placeholder="Nom de la nouvelle salle"
-                  className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+                  className="border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
                 />
                 <div className="flex gap-4">
                   <button
@@ -661,7 +725,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 {salles.length > 0 ? (
                   salles.map((salle) => (
                     <div
@@ -676,7 +740,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                     </div>
                   ))
                 ) : (
-                  <div className="col-span-2 md:col-span-3 text-center text-gray-500">
+                  <div className="col-span-2 text-center text-gray-500">
                     Aucune salle disponible pour ce lieu
                   </div>
                 )}
@@ -692,32 +756,52 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         </div>
       )}
 
-      {/* Modal lieu avec carte */}
       {modalLieuOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-7xl bg-white shadow-2xl rounded-2xl p-8">
-            <button
-              className="absolute top-4 right-6 text-3xl font-bold text-gray-400 hover:text-red-600"
-              onClick={() => {
-                setModalLieuOpen(false);
-                setSearchLieu("");
-                setSelectedLieu(null);
-                setCustomMarker(null);
-                setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
-                setActiveTab('default');
-                setGeocodeAddress("");
-                setGeocodeResult(null);
-                setGeocodeResultText("");
-              }}
-            >
-              ×
-            </button>
-            <h3 className="text-xl font-bold text-center mb-6 text-indigo-700">
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          initial="hidden"
+          animate="visible"
+          exit="hidden"
+          variants={backdropVariants}
+        >
+          <motion.div
+            className={`rounded-2xl shadow-2xl p-4 sm:p-6 relative border border-gray-200 bg-gray-50 ${isModalFullScreen ? 'fixed inset-0 rounded-none overflow-y-auto' : 'w-full max-w-5xl max-h-[90vh] overflow-y-auto'
+              }`}
+            variants={modalVariants}
+          >
+            <div className="absolute top-4 right-4 flex space-x-2">
+              <button
+                onClick={() => setIsModalFullScreen(!isModalFullScreen)}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                {isModalFullScreen ? <MdFullscreenExit size={24} /> : <MdFullscreen size={24} />}
+              </button>
+              <button
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+                onClick={() => {
+                  setModalLieuOpen(false);
+                  setSearchLieu("");
+                  setSelectedLieu(null);
+                  setCustomMarker(null);
+                  setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
+                  setActiveTab('default');
+                  setGeocodeAddress("");
+                  setGeocodeResult(null);
+                  setGeocodeResultText("");
+                  setEditingLocation(null);
+                  setSelectedLocationSalles([]);
+                  setSelectedLocationForSalles(null);
+                }}
+              >
+                <MdClose size={24} />
+              </button>
+            </div>
+            <h3 className={`text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6 ${gradientTitle}`}>
               Choisissez un lieu
             </h3>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="w-full md:w-1/2 flex flex-col gap-4">
-                <div className="flex gap-2 mb-2">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="w-full lg:w-1/2 flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     type="button"
                     onClick={() => {
@@ -727,12 +811,12 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                       setGeocodeAddress("");
                       setGeocodeResult(null);
                       setGeocodeResultText("");
+                      setEditingLocation(null);
+                      setSelectedLocationSalles([]);
+                      setSelectedLocationForSalles(null);
                     }}
-                    className={`flex-1 py-2 rounded-xl font-semibold transition ${
-                      activeTab === 'default'
-                        ? 'bg-indigo-700 text-white hover:bg-indigo-800'
-                        : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                    }`}
+                    className={`flex-1 py-2 rounded-xl font-semibold transition ${activeTab === 'default' ? 'bg-indigo-700 text-white hover:bg-indigo-800' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                      }`}
                   >
                     Par défaut
                   </button>
@@ -742,12 +826,12 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                       setActiveTab('specify');
                       setSelectedLieu(null);
                       setSearchLieu('');
+                      setEditingLocation(null);
+                      setSelectedLocationSalles([]);
+                      setSelectedLocationForSalles(null);
                     }}
-                    className={`flex-1 py-2 rounded-xl font-semibold transition ${
-                      activeTab === 'specify'
-                        ? 'bg-indigo-700 text-white hover:bg-indigo-800'
-                        : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                    }`}
+                    className={`flex-1 py-2 rounded-xl font-semibold transition ${activeTab === 'specify' ? 'bg-indigo-700 text-white hover:bg-indigo-800' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                      }`}
                   >
                     Spécifier le lieu
                   </button>
@@ -760,18 +844,17 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                         value={searchLieu}
                         onChange={(e) => setSearchLieu(e.target.value)}
                         placeholder="Rechercher un lieu..."
-                        className="w-full border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
                       />
                     </div>
-                    <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-xl">
+                    <div className="max-h-60 sm:max-h-80 overflow-y-auto border border-gray-200 rounded-xl">
                       {filteredLocations.length > 0 ? (
                         filteredLocations.map((loc) => (
                           <div
                             key={loc.id}
                             onClick={() => handleSelectLieu(loc)}
-                            className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${
-                              selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
-                            }`}
+                            className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
+                              }`}
                           >
                             {loc.nom}
                           </div>
@@ -782,92 +865,130 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                         </div>
                       )}
                     </div>
-                  </>
-                ) : (
-                  <>
-                  <div className="flex flex-col gap-4">
-                    <input
-                      type="text"
-                      value={geocodeAddress}
-                      onChange={(e) => setGeocodeAddress(e.target.value)}
-                      placeholder="Entrez une adresse à rechercher"
-                      className="border border-gray-300 rounded-xl px-5 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
-                    />
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <button
-                        onClick={handleGeocode}
-                        className="flex-1 bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={handleConfirmLieu}
+                        disabled={!selectedLieu}
+                        className="flex-1 bg-indigo-700 text-white font-bold py-2 sm:py-3 rounded-xl shadow hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Rechercher
+                        Sauvegarder
                       </button>
                       <button
                         onClick={() => {
+                          setModalLieuOpen(false);
                           setSearchLieu("");
                           setSelectedLieu(null);
                           setCustomMarker(null);
                           setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
+                          setActiveTab('default');
                           setGeocodeAddress("");
                           setGeocodeResult(null);
                           setGeocodeResultText("");
-                          setActiveTab('specify');
+                          setEditingLocation(null);
                         }}
-                        disabled={activeTab === 'default' ? !selectedLieu : !newLocation.nom || !newLocation.latitude}
-                        className="flex-1 bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 bg-gray-200 text-gray-700 font-bold py-2 sm:py-3 rounded-xl shadow hover:bg-gray-300 transition"
                       >
-                        Réinitialiser
+                        Annuler
                       </button>
                     </div>
-                  </div>
-                  <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-xl">
-                  {filteredLocations.length > 0 ? (
-                    filteredLocations.map((loc) => (
-                      <div
-                        key={loc.id}
-                        onClick={() => handleSelectLieu(loc)}
-                        className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${
-                          selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
-                        }`}
-                      >
-                        {loc.nom}
+                  </>
+                ) : (
+                  <>
+                    <div className="flex flex-col gap-4">
+                      <input
+                        type="text"
+                        value={geocodeAddress}
+                        onChange={(e) => setGeocodeAddress(e.target.value)}
+                        placeholder="Entrez une adresse à rechercher"
+                        className="w-full border border-gray-300 rounded-lg px-4 py-2 sm:px-5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                      />
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <button
+                          onClick={handleGeocode}
+                          className={`flex-1 p-2 sm:p-3 rounded-lg ${gradientButton}`}
+                        >
+                          Rechercher
+                        </button>
+                        <button
+                          onClick={editingLocation ? () => setShowEditConfirmationModal(true) : handleConfirmLieu}
+                          disabled={editingLocation ? !geocodeResult : (!newLocation.nom || !newLocation.latitude)}
+                          className={`flex-1 p-2 sm:p-3 rounded-lg disabled:opacity-50 ${gradientButton}`}
+                        >
+                          {editingLocation ? 'Modifier' : 'Sauvegarder'}
+                        </button>
+                        <button
+                          onClick={handleResetGeocode}
+                          className={`flex-1 p-2 sm:p-3 rounded-lg ${gradientButton}`}
+                        >
+                          Réinitialiser
+                        </button>
                       </div>
-                    ))
-                  ) : (
-                    <div className="px-4 py-3 text-gray-500 text-center">
-                      Aucun lieu trouvé
+                      <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 text-gray-800">
+                        Résultat : {geocodeResultText || 'Aucun résultat pour le moment.'}
+                      </div>
+                      <div className="max-h-60 sm:max-h-80 overflow-y-auto border border-gray-200 rounded-xl">
+                        {filteredUserLocations.length > 0 ? (
+                          filteredUserLocations.map((loc) => (
+                            <div
+                              key={loc.id}
+                              className={`px-4 py-3 border-b border-gray-200 flex items-center justify-between ${selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
+                                }`}
+                            >
+                              <div
+                                onClick={() => handleSelectLieu(loc)}
+                                className="cursor-pointer flex-1 hover:bg-indigo-100"
+                              >
+                                {loc.nom}
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEditLocation(loc)}
+                                  className="p-1 text-blue-500 hover:text-blue-700"
+                                  title="Modifier"
+                                >
+                                  <MdEdit size={20} />
+                                </button>
+                                <button
+                                  onClick={() => openDeleteLocationModal(loc)}
+                                  className="p-1 text-red-500 hover:text-red-700"
+                                  title="Supprimer"
+                                >
+                                  <MdDelete size={20} />
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-gray-500 text-center">
+                            Aucun lieu créé par vous
+                          </div>
+                        )}
+                        {selectedLocationForSalles && (
+                          <div className="px-4 py-3 border-t border-gray-200 bg-indigo-50">
+                            <h4 className="text-sm font-semibold text-indigo-700 mb-2">
+                              Salles associées à {userLocations.find((loc) => loc.id === selectedLocationForSalles)?.nom || "ce lieu"}
+                            </h4>
+                            {selectedLocationSalles.length > 0 ? (
+                              <ul className="space-y-2">
+                                {selectedLocationSalles.map((salle) => (
+                                  <li key={salle.id} className="px-3 py-2 bg-white rounded-lg border border-gray-200 text-gray-800">
+                                    {salle.nom}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-gray-500 text-sm">Aucune salle associée à ce lieu.</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-                </>
+                  </>
                 )}
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleConfirmLieu}
-                    disabled={activeTab === 'default' ? !selectedLieu : !newLocation.nom || !newLocation.latitude}
-                    className="flex-1 bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Sauvegarder
-                  </button>
-                  <button
-                    onClick={() => {
-                      setModalLieuOpen(false);
-                      setSearchLieu("");
-                      setSelectedLieu(null);
-                      setCustomMarker(null);
-                      setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
-                      setActiveTab('default');
-                      setGeocodeAddress("");
-                      setGeocodeResult(null);
-                      setGeocodeResultText("");
-                    }}
-                    className="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-xl shadow hover:bg-gray-300 transition"
-                  >
-                    Annuler
-                  </button>
-                </div>
               </div>
-              <div className="w-full md:w-1/2 h-96 rounded-lg overflow-hidden">
+              <div className="w-full lg:w-1/2 h-64 sm:h-80 lg:h-96 rounded-lg overflow-hidden">
                 <MapContainer
-                  center={[48.8566, 2.3522]} // Paris par défaut
+                  center={[48.8566, 2.3522]}
                   zoom={13}
                   style={{ height: "100%", width: "100%" }}
                   ref={mapRef}
@@ -881,27 +1002,175 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                   />
                   <MapClickHandler />
                   {activeTab === 'default' && selectedLieu && selectedLieu.latitude && selectedLieu.longitude && (
-                    <Marker
-                      position={[parseFloat(selectedLieu.latitude), parseFloat(selectedLieu.longitude)]}
-                      icon={blueIcon}
-                    >
+                    <Marker position={[parseFloat(selectedLieu.latitude), parseFloat(selectedLieu.longitude)]} icon={blueIcon}>
                       <Popup>{selectedLieu.nom}</Popup>
                     </Marker>
                   )}
                   {activeTab === 'specify' && customMarker && (
-                    <Marker
-                      position={[customMarker.lat, customMarker.lng]}
-                      icon={blueIcon}
-                    >
-                      <Popup>Nouveau lieu</Popup>
+                    <Marker position={[customMarker.lat, customMarker.lng]} icon={blueIcon}>
+                      <Popup>{editingLocation ? editingLocation.nom : "Nouveau lieu"}</Popup>
                     </Marker>
                   )}
                 </MapContainer>
+                {activeTab === 'specify' && (
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      value={searchLieu}
+                      onChange={(e) => setSearchLieu(e.target.value)}
+                      placeholder="Filtrer les lieux..."
+                      className="w-full border border-indigo-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 bg-indigo-50 text-gray-900 placeholder-indigo-400 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-500 transition"
+                    />
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+
+      <AnimatePresence>
+        {showDeleteModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={backdropVariants}
+          >
+            <motion.div
+              className="rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md w-full border border-gray-200 bg-white"
+              variants={modalVariants}
+            >
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+              >
+                <MdClose size={24} />
+              </button>
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4 p-3 rounded-full bg-blue-100">
+                  <TbAlertTriangle className="text-blue-500 text-5xl" />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold mb-2 text-gray-900">
+                  Confirmer la suppression
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Êtes-vous sûr de vouloir supprimer le lieu <span className="font-extrabold text-gray-800">"{deleteItem?.nom}"</span> ?
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center w-full gap-4">
+                  <button
+                    onClick={() => setShowDeleteModal(false)}
+                    className="flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold bg-gray-200 hover:bg-gray-300 text-gray-800 transition"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleConfirmDelete}
+                    className={`flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl flex items-center justify-center font-semibold ${gradientButton}`}
+                  >
+                    <MdDelete className="mr-2 text-xl" />
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showEditConfirmationModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={backdropVariants}
+          >
+            <motion.div
+              className="rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md w-full border border-gray-200 bg-white"
+              variants={modalVariants}
+            >
+              <button
+                onClick={() => setShowEditConfirmationModal(false)}
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+              >
+                <MdClose size={24} />
+              </button>
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4 p-3 rounded-full bg-blue-100">
+                  <TbAlertTriangle className="text-blue-500 text-5xl" />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold mb-2 text-gray-900">
+                  Confirmer la modification
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Êtes-vous sûr de vouloir modifier le lieu <span className="font-extrabold text-gray-800">"{editingLocation?.nom}"</span> ?
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center w-full gap-4">
+                  <button
+                    onClick={() => setShowEditConfirmationModal(false)}
+                    className="flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold bg-gray-200 hover:bg-gray-300 text-gray-800 transition"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleConfirmEdit}
+                    className={`flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl flex items-center justify-center font-semibold ${gradientButton}`}
+                  >
+                    <MdSave className="mr-2 text-xl" />
+                    Confirmer
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showEditSuccessModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={backdropVariants}
+          >
+            <motion.div
+              className="rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md w-full border border-gray-200 bg-white"
+              variants={modalVariants}
+            >
+              <button
+                onClick={() => setShowEditSuccessModal(false)}
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+              >
+                <MdClose size={24} />
+              </button>
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4 p-3 rounded-full bg-green-100">
+                  <MdCheckCircle className="text-green-500 text-5xl" />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold mb-2 text-gray-900">
+                  Lieu modifié
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Le lieu a été modifié avec succès !
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center w-full gap-4">
+                  <button
+                    onClick={() => setShowEditSuccessModal(false)}
+                    className="flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold bg-gray-200 hover:bg-gray-300 text-gray-800 transition"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
