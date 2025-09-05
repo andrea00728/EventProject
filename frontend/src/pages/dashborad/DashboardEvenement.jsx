@@ -809,19 +809,19 @@ export default function DashboardEvenement() {
                                                             <td className="px-8 py-5 font-semibold text-gray-900 group-hover:text-emerald-900 transition-colors">
                                                                 <div className="flex items-center space-x-3">
                                                                     <div className="w-2 h-2 bg-emerald-400 rounded-full group-hover:bg-emerald-600 transition-colors"></div>
-                                                                    <span>Table {t.numero}</span>
+                                                                    <span>{t.nom}</span>
                                                                 </div>
                                                             </td>
                                                             <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors font-medium">{t.capacite}</td>
-                                                            <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors font-medium">{t.invites}</td>
+                                                            <td className="px-8 py-5 text-gray-600 group-hover:text-gray-700 transition-colors font-medium">{t.placeReserve}</td>
                                                             <td className="px-8 py-5">
                                                                 <span className="inline-flex items-center px-4 py-2 rounded-2xl text-xs font-bold bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200 shadow-sm">
-                                                                    {t.capacite - t.invites} place{t.capacite - t.invites > 1 ? "s" : ""} disponible{t.capacite - t.invites > 1 ? "s" : ""}
+                                                                    {t.capacite - t.placeReserve} place{t.capacite - t.placeReserve > 1 ? "s" : ""} disponible{t.capacite - t.placeReserve > 1 ? "s" : ""}
                                                                 </span>
                                                             </td>
                                                             <td className="px-8 py-5">
-                                                                <span className={`inline-flex items-center px-4 py-2 rounded-2xl text-xs font-bold shadow-sm ${t.statut === 'Complète' ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-green-100 text-green-800 border border-green-200'}`}>
-                                                                    {t.statut}
+                                                                <span className={`inline-flex items-center px-4 py-2 rounded-2xl text-xs font-bold shadow-sm ${t.capacite - t.placeReserve  === 0 ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-green-100 text-green-800 border border-green-200'}`}>
+                                                                    {t.capacite - t.placeReserve === 0 ? 'Non disponible' : 'Disponible' }
                                                                 </span>
                                                             </td>
                                                         </tr>
