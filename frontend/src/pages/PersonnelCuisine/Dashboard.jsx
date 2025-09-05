@@ -66,8 +66,8 @@ export default function DashboardpersCuisine() {
       setShowLogoutModal(false);
       setShowToast(true);
       setTimeout(() => {
-        setShowToast(false);
-        navigate("/", { replace: true });
+      setShowToast(false);
+      navigate("/", { replace: true });
       }, 2000);
     }
   };

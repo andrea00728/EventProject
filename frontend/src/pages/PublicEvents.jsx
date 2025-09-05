@@ -401,11 +401,8 @@ const PublicEvents = () => {
                           </p>
                         </div>
 
-                       
-
                         {/* Boutons d'action conditionnels */}
                         <div className="flex gap-3 justify-end">
-                          {/* Bouton Détails - toujours présent */}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -415,9 +412,43 @@ const PublicEvents = () => {
                           >
                             Détails
                           </button>
+                          {event.isPublic && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openRegistrationModal(event);
+                              }}
+                              className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all duration-200 transform hover:scale-105 ${event.id % 5 === 0
+                                  ? "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+                                  : event.id % 5 === 1
+                                    ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                                    : event.id % 5 === 2
+                                      ? "bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600"
+                                      : event.id % 5 === 3
+                                        ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                                        : "bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600"
+                                }`}
+                            >
+                              S'inscrire
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Boutons d'action conditionnels */}
+                        {/* <div className="flex gap-3 justify-end"> */}
+                          {/* Bouton Détails - toujours présent */}
+                          {/* <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEventModal(event);
+                            }}
+                            className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors duration-200"
+                          >
+                            Détails
+                          </button> */}
 
                           {/* Bouton S'inscrire - seulement pour les événements publics */}
-                          {event.isPublic && (
+                          {/* {event.isPublic && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -433,7 +464,7 @@ const PublicEvents = () => {
                               S'inscrire
                             </button>
                           )}
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                   ))}
@@ -705,61 +736,66 @@ const PublicEvents = () => {
           </AnimatePresence>
         )}
 
-       {/* Registration Modal */}
+        {/* Registration Modal */}
         {isRegistrationModalOpen && (
           <AnimatePresence>
             <div
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+              className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50"
               onClick={closeRegistrationModal}
             >
               <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden max-h-[95vh] overflow-y-auto"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-xl shadow-2xl w-1/2 mx-4 overflow-hidden max-h-[90vh] overflow-y-auto p-6"
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Header avec gradient */}
-                <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-6 text-white relative overflow-hidden">
-                  <div className="absolute inset-0 bg-black/10"></div>
-                  <div className="relative z-10 flex items-start justify-between">
-                    <div>
-                      <h2 className="text-xl sm:text-2xl font-bold leading-tight">
-                        Inscription à {selectedEventName || "l'événement"} 
-                      </h2>
-                    </div>
-                    <button
-                      onClick={closeRegistrationModal}
-                      className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all duration-200"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+                <div className="flex flex-col lg:flex-row">
+                  {/* Section image - cachée sur mobile */}
+                  {/* <div className="hidden lg:block lg:w-1/2 bg-gray-100">
+                    <img
+                      src="/images/IMG1.jpg"
+                      alt="Événement"
+                      className="w-full h-full object-cover max-h-[65vh]"
+                    />
+                  </div> */}
 
-                {/* Contenu du formulaire */}
-                <div className="p-6">
-                  <form onSubmit={handleSubmit}>
-                    <div className="space-y-5 mb-6">
-                      {/* Champ Nom */}
-                      <div className="group">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Nom <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
+                  {/* Section formulaire */}
+                  <div className="w-full p-4 sm:p-6">
+                    {/* En-tête du formulaire */}
+                    <div className="flex items-start justify-between mb-6">
+                      <h2 className="text-xl sm:text-2xl font-bold text-slate-800 uppercase tracking-wide leading-tight">
+                        Inscription à {selectedEventName || "l'événement"}
+                      </h2>
+                      <button
+                        onClick={closeRegistrationModal}
+                        className="text-slate-400 hover:text-slate-600 ml-4"
+                      >
+                        <svg
+                          className="w-6 h-6"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Formulaire d'inscription */}
+                    <form onSubmit={handleSubmit}>
+                      <div className="space-y-4 mb-6">
+                        {/* Champ Nom */}
+                        <div className="flex flex-col gap-2">
+                          <label className="text-sm font-semibold text-gray-700 mb-1">
+                            Nom <span className="text-red-500">*</span>
+                          </label>
                           <input
                             type="text"
                             name="nom"
@@ -767,39 +803,37 @@ const PublicEvents = () => {
                             onChange={handleChange}
                             required
                             placeholder="Votre nom"
-                            className={`w-full border-2 ${validationErrors.nom
-                                ? "border-red-300 focus:border-red-500"
-                                : "border-gray-200 focus:border-indigo-500"
-                              } rounded-xl px-4 py-3 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 placeholder-gray-400`}
+                            className={`border ${validationErrors.nom
+                                ? "border-red-500"
+                                : "border-gray-300"
+                              } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
                             aria-invalid={validationErrors.nom ? "true" : "false"}
                           />
+                          {validationErrors.nom && (
+                            <p className="text-red-500 text-sm mt-1 flex items-center">
+                              <svg
+                                className="h-4 w-4 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                              {validationErrors.nom}
+                            </p>
+                          )}
                         </div>
-                        {validationErrors.nom && (
-                          <p className="text-red-500 text-sm mt-2 flex items-center animate-fade-in">
-                            <svg
-                              className="h-4 w-4 mr-2 flex-shrink-0"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            {validationErrors.nom}
-                          </p>
-                        )}
-                      </div>
 
-                      {/* Champ Prénom */}
-                      <div className="group">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Prénom <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
+                        {/* Champ Prénom */}
+                        <div className="flex flex-col gap-2">
+                          <label className="text-sm font-semibold text-gray-700 mb-1">
+                            Prénom <span className="text-red-500">*</span>
+                          </label>
                           <input
                             type="text"
                             name="prenom"
@@ -807,39 +841,37 @@ const PublicEvents = () => {
                             onChange={handleChange}
                             required
                             placeholder="Votre prénom"
-                            className={`w-full border-2 ${validationErrors.prenom
-                                ? "border-red-300 focus:border-red-500"
-                                : "border-gray-200 focus:border-indigo-500"
-                              } rounded-xl px-4 py-3 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 placeholder-gray-400`}
+                            className={`border ${validationErrors.prenom
+                                ? "border-red-500"
+                                : "border-gray-300"
+                              } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
                             aria-invalid={validationErrors.prenom ? "true" : "false"}
                           />
+                          {validationErrors.prenom && (
+                            <p className="text-red-500 text-sm mt-1 flex items-center">
+                              <svg
+                                className="h-4 w-4 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                              {validationErrors.prenom}
+                            </p>
+                          )}
                         </div>
-                        {validationErrors.prenom && (
-                          <p className="text-red-500 text-sm mt-2 flex items-center animate-fade-in">
-                            <svg
-                              className="h-4 w-4 mr-2 flex-shrink-0"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            {validationErrors.prenom}
-                          </p>
-                        )}
-                      </div>
 
-                      {/* Champ Email */}
-                      <div className="group">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Email <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
+                        {/* Champ Email */}
+                        <div className="flex flex-col gap-2">
+                          <label className="text-sm font-semibold text-gray-700 mb-1">
+                            Email <span className="text-red-500">*</span>
+                          </label>
                           <input
                             type="email"
                             name="email"
@@ -847,115 +879,96 @@ const PublicEvents = () => {
                             onChange={handleChange}
                             required
                             placeholder="Votre email"
-                            className={`w-full border-2 ${validationErrors.email
-                                ? "border-red-300 focus:border-red-500"
-                                : "border-gray-200 focus:border-indigo-500"
-                              } rounded-xl px-4 py-3 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 placeholder-gray-400`}
+                            className={`border ${validationErrors.email
+                                ? "border-red-500"
+                                : "border-gray-300"
+                              } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
                             aria-invalid={validationErrors.email ? "true" : "false"}
                           />
-                          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                            </svg>
-                          </div>
+                          {validationErrors.email && (
+                            <p className="text-red-500 text-sm mt-1 flex items-center">
+                              <svg
+                                className="h-4 w-4 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                              {validationErrors.email}
+                            </p>
+                          )}
                         </div>
-                        {validationErrors.email && (
-                          <p className="text-red-500 text-sm mt-2 flex items-center animate-fade-in">
-                            <svg
-                              className="h-4 w-4 mr-2 flex-shrink-0"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            {validationErrors.email}
-                          </p>
-                        )}
-                      </div>
 
-                      {/* Champ Sexe */}
-                      <div className="group">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Sexe <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
+                        {/* Champ Sexe */}
+                        <div className="flex flex-col gap-2">
+                          <label className="text-sm font-semibold text-gray-700 mb-1">
+                            Sexe <span className="text-red-500">*</span>
+                          </label>
                           <select
                             name="sex"
                             value={form.sex}
                             onChange={handleChange}
                             required
-                            className={`w-full border-2 ${validationErrors.sex
-                                ? "border-red-300 focus:border-red-500"
-                                : "border-gray-200 focus:border-indigo-500"
-                              } rounded-xl px-4 py-3 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-white appearance-none cursor-pointer`}
+                            className={`border ${validationErrors.sex
+                                ? "border-red-500"
+                                : "border-gray-300"
+                              } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
                             aria-invalid={validationErrors.sex ? "true" : "false"}
                           >
-                            <option value="" className="text-gray-400">Sélectionnez votre sexe</option>
+                            <option value="">-- Sélectionnez --</option>
                             <option value="M">Masculin</option>
                             <option value="F">Féminin</option>
                           </select>
-                          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </div>
+                          {validationErrors.sex && (
+                            <p className="text-red-500 text-sm mt-1 flex items-center">
+                              <svg
+                                className="h-4 w-4 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                              {validationErrors.sex}
+                            </p>
+                          )}
                         </div>
-                        {validationErrors.sex && (
-                          <p className="text-red-500 text-sm mt-2 flex items-center animate-fade-in">
-                            <svg
-                              className="h-4 w-4 mr-2 flex-shrink-0"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            {validationErrors.sex}
-                          </p>
-                        )}
-                      </div>
 
-                      {/* Champ Événement Associé */}
-                      <div className="group">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Événement
-                        </label>
-                        <div className="relative">
+                        {/* Champ Événement Associé */}
+                        <div
+                          className={`flex items-center border border-gray-300 bg-gray-100 rounded-lg px-4 py-3 opacity-70 cursor-not-allowed`}
+                          role="button"
+                          tabIndex={-1}
+                          aria-disabled="true"
+                        >
                           <input
                             type="text"
                             name="event"
                             value={selectedEventName}
                             readOnly
                             disabled
-                            placeholder="Événement sélectionné"
-                            className="w-full border-2 border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-gray-600 cursor-not-allowed"
+                            placeholder="Sélection désactivée"
+                            className="flex-grow bg-transparent outline-none cursor-not-allowed text-gray-500 placeholder-gray-400"
                           />
-                          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                          </div>
                         </div>
-                      </div>
-                    </div>
 
-                    {/* Message d'erreur */}
-                    {error && (
-                      <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-                        <div className="flex items-center">
+                      </div>
+
+                      {error && (
+                        <p className="text-red-500 mt-6 text-center bg-red-50 py-3 rounded-xl flex items-center justify-center transition-all duration-200">
                           <svg
-                            className="h-5 w-5 text-red-400 mr-3 flex-shrink-0"
+                            className="h-5 w-5 mr-2"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -967,62 +980,56 @@ const PublicEvents = () => {
                               d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                             />
                           </svg>
-                          <p className="text-red-700 text-sm">{error}</p>
-                        </div>
-                      </div>
-                    )}
+                          {error}
+                        </p>
+                      )}
 
-                    {/* Bouton de soumission */}
-                    <div className="pt-4 border-t border-gray-100">
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className={`w-full inline-flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-semibold text-white transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl ${isSubmitting ? "opacity-70 cursor-not-allowed scale-100" : ""
-                          } ${selectedEvent?.id % 5 === 0
-                            ? "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-                            : selectedEvent?.id % 5 === 1
-                              ? "bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
-                              : selectedEvent?.id % 5 === 2
-                                ? "bg-gradient-to-r from-pink-500 to-orange-600 hover:from-pink-600 hover:to-orange-700"
-                                : selectedEvent?.id % 5 === 3
-                                  ? "bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700"
-                                  : "bg-gradient-to-r from-amber-500 to-blue-600 hover:from-amber-600 hover:to-blue-700"
-                          }`}
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <svg
-                              className="animate-spin h-5 w-5 text-white"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              />
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                              />
-                            </svg>
-                            Enregistrement en cours...
-                          </>
-                        ) : (
-                          <>
-                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Confirmer l'inscription
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </form>
+                      <div className="relative flex flex-col sm:flex-row items-center gap-4 pt-6 my-6 border-t border-slate-100">
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className={`absolute top-5 right-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg sm:rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                            } ${selectedEvent?.id % 5 === 0
+                              ? "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+                              : selectedEvent?.id % 5 === 1
+                                ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                                : selectedEvent?.id % 5 === 2
+                                  ? "bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600"
+                                  : selectedEvent?.id % 5 === 3
+                                    ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                                    : "bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600"
+                            }`}
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <svg
+                                className="animate-spin h-5 w-5 mr-2 text-white"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                />
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                />
+                              </svg>
+                              Enregistrement...
+                            </>
+                          ) : (
+                            "Confirmer l'inscription"
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
               </motion.div>
             </div>

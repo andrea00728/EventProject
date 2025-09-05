@@ -11,16 +11,12 @@ import 'leaflet/dist/leaflet.css'
 import "react-toastify/dist/ReactToastify.css"; // 👈 styles toastify
 import { ToastContainer } from "react-toastify"; // 👈 importer le container
 // import 'antd/dist/reset.css';
+
+
 import L from "leaflet";
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
-
-if (process.env.NODE_ENV === "production") {
-  console.log = () => {}
-  console.error = () => {}
-  console.warn = () => {}
-}
 
 let DefaultIcon = L.icon({
   iconUrl: icon,

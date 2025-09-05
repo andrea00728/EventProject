@@ -3,8 +3,7 @@ import axios from "axios";
 
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "https://api.mastertable.site",
-  withCredentials: true, 
- 
+  withCredentials: true, // ⬅️ IMPORTANT pour envoyer les cookies
 });
 
 // Intercepteur de requête : ne fait plus rien avec le token
@@ -26,7 +25,6 @@ axiosClient.interceptors.response.use(
   }
 );
 
-
 axiosClient.interceptors.response.use(
   response => response,
   async error => {
@@ -41,7 +39,7 @@ axiosClient.interceptors.response.use(
         console.error('Échec du rafraîchissement:', refreshError);
         setUser(null);
         setIsAuthenticated(false);
-        window.location.href = '/'; // Redirigez vers la page de connexion
+        window.location.href = '/login'; // Redirigez vers la page de connexion
         return Promise.reject(refreshError);
       }
     }

@@ -30,25 +30,19 @@ export const getSuccessForfait = async (subscriptionId) => {
     throw new Error('Erreur lors de la confirmation du forfait', { cause: error });
   }
 };
-//
-export async function getUserForfait() {
+
+export const getUserForfait = async () => {
   try {
-    const res = await axiosClient.get("/forfait/user/forfait");
-    return res.data;
+    const response = await axiosClient.get('/forfait/user/forfait');
+    return response.data;
   } catch (error) {
-    // Si l’utilisateur n’est pas connecté → on ignore (pas de log, pas de throw)
-    if (error.response?.status === 401) {
-      return null;
-    }
-//
-    // Autres erreurs → on log et throw
-    console.error("Erreur lors de la récupération du forfait actif", error);
-    throw new Error("Erreur lors de la récupération du forfait actif");
+    console.error('Erreur lors de la récupération du forfait actif', error);
+    throw new Error('Erreur lors de la récupération du forfait actif', { cause: error });
   }
-}
+};
 
 export const getSumForUsersForfait = async (/*token*/) => {
-
+  // if (!token) throw new Error('Utilisateur non authentifié');
   try {
     const response = await axiosClient.get('/forfait/sumAllUsers', /*{
       headers: {
@@ -61,7 +55,7 @@ export const getSumForUsersForfait = async (/*token*/) => {
     throw new Error('Erreur lors de la récupération de la somme des forfaits', { cause: error });
   }
 }
-/**ito ann */
+
 export const getLastTransactions = async (/*token*/) => {
   // if (!token) throw new Error('Utilisateur non authentifié');
   try {

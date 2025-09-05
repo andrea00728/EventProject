@@ -7,6 +7,7 @@ import { CreatePersonnelDto } from 'src/dto/PersonnelDto';
 import { JwtService } from '@nestjs/jwt';
 import * as nodemailer from 'nodemailer';
 import { NotificationService } from '../notification/notification.service';
+import { Admin } from 'src/entities/Admin';
 @Injectable()
 export class PersonnelService {
   constructor(
@@ -15,6 +16,9 @@ export class PersonnelService {
 
     @InjectRepository(Evenement)
     private evenementRepository: Repository<Evenement>,
+
+    @InjectRepository(Admin)
+    private adminRepository: Repository<Admin>,
 
     private jwtService:JwtService,
     private readonly notificationService:NotificationService,
@@ -131,6 +135,15 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
 
   if (!evenement) {
     throw new BadRequestException("Événement non trouvé pour cet utilisateur.");
+  }
+
+  //verification Admin
+  const isExistAdmin = await this.adminRepository.findOne({
+    where :  {email : dto.email}
+  })
+
+  if (isExistAdmin) {
+    throw new BadRequestException("c'est un email de l'administrateur")
   }
 
 

@@ -18,7 +18,6 @@ const resolvePhotoSrc = (photo, email, previewImage) => {
     if (isDataUrl(photo)) return photo;
     if (isLikelyBase64(photo)) return `data:image/jpeg;base64,${photo}`;
     if (isHttpUrl(photo)) return photo;
-    // const base = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "https://api.mastertable.site";
     const base = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "https://api.mastertable.site";
     const path = photo.startsWith("/") ? photo : `/${photo}`;
     return `${base}${path}`;
@@ -66,7 +65,6 @@ export default function Profil() {
   useEffect(() => {
     if (!user) return;
     const photoUrl = resolvePhotoSrc(user.photo, user.email);
-    console.log("Sary : ",photoUrl)
     setUserName(user.name || "");
     setUserEmail(user.email || "");
     setUserPhoto(photoUrl);

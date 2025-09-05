@@ -1,15 +1,22 @@
-
+// import React from "react";
+// import DefaultLayout from "../layouts/DefaultLayout";
 import { createBrowserRouter, Navigate, Router } from "react-router-dom";
 import GuestLayout from "../layouts/GuestLayout";
+// import Accueil from "../pages/Accueil";
+// import Evenement from "../pages/Evenement";
 import Notfound from "../pages/Notofoundpage";
+// import Pagepublic from "../pages/";
 import Connexionorganisateur from "../pages/Connexionorganisateur";
 import Inscription from "../pages/Inscription";
 import Connnexiongoogle from "../services/connexiongoogl.jsx";
 import Evenemenpage from "../pages/Evenementpage.jsx"; 
 import Apropos from "../pages/apropos";
 import PublicEvents from "../pages/PublicEvents"; // adapte le chemin si besoin
+// import PagePublic from "../pages/";
 import PageEvenementDetail from "../pages/PageEvenementDetail";
+// import Table3DScene from "../components/table3D";
 import ChoixModeInvite from "../layouts/ChoixModeInvite";
+// import Inviteform from "../pages/choixModInvite/inviteForm";
 import ImportGuestsCSV from "../pages/choixModInvite/importation";
 import AffichageInvite from "../pages/choixModInvite/affichageInvite";
 import InviteformWithId from "../pages/choixModInvite/InviteFormparId";
@@ -23,6 +30,7 @@ import PaypalSuccess from "../pages/choixModInvite/PaypalSucces.jsx";
 import PersonnelAccueil from "../layouts/personnel/PersonnelAccueil.jsx";
 import DashboardpersAccueil from "../pages/PersonnelAccueil/Dashboard.jsx";
 import PersonnelCaisse from "../layouts/personnel/Personnelcaissie.jsx";
+// import DashboardpersCaisse from "../pages/PersonnelCaisse/Dashboard.jsx";
 import PersonnelCuisine from "../layouts/personnel/Personnalcuisine.jsx";
 import DashboardpersCuisine from "../pages/PersonnelCuisine/Dashboard.jsx";
 import ProtectedRoute from "./ProtectedRouter.jsx";
@@ -36,7 +44,9 @@ import EvenementAd from "../pages/Admin/Evenement.jsx";
 import Organisateur from "../pages/Admin/Organisateur.jsx";
 import Parametre from "../pages/Admin/Parametre.jsx";
 import LocationSalle from "../pages/Admin/LocationSalle.jsx";
+// import MyComponent from "../pages/PersonnelCuisine/OrderGateway.jsx";
 import MenuListWithCart from "../pages/Menu/MenuListWithCart.jsx";
+// import SystemPromptManager from "../pages/Admin/SystemPromptManager.jsx";
 import MenuForm from "../pages/menu.jsx";
 import MenuItemForm from "../pages/menuItem.jsx";
 import InvitePage from "../layouts/InvitePage.jsx";
@@ -44,11 +54,13 @@ import ForfaitSuccess from "../pages/forfaitpage/forfaitSucces.jsx";
 import ForfaitActive from "../pages/forfaitpage/forfaitActive.jsx";
 import QrScannerComponent from "../util/QrCode_personnel_Accueil/QrCodeValidation.jsx";
 import Envoy from "../pages/PersonnelAccueil/EvoyerVerRout.jsx";
+// import OrganisationChart from "../pages/oranisation_personnel/OrganisationChart.jsx";
 import PersonnelOrganigrammeDashboard from "../pages/oranisation_personnel/Organigramme.jsx";
 import InvitationLayout from "../layouts/InvitationLayout.jsx";
 import RestaurationPage from "../pages/restauration/RestaurationPage.jsx";
 import MenuRestauration from "../pages/restauration/MenuRestauration.jsx";
 import RoleSelector from "../pages/RoleSelector.jsx";
+// import Public_Accueil from "../pages/public_Accueil.jsx";
 import Caisse from "../pages/DashbordCaisse/DashboardCaisse.jsx";
 import GestionCommandesPage from "../pages/DashbordCaisse/GestionCommandes.jsx";
 import PaiementPage from "../pages/DashbordCaisse/PaiementPage.jsx";
@@ -69,17 +81,29 @@ import AdminManagementPage from "../pages/Admin/AdminManagmentTable.jsx";
 import DashboardPage from "../pages/dashborad/dashboard.jsx";
 import DashboardGlobal from "../pages/dashborad/Global.jsx";
 import DashboardEvenement from "../pages/dashborad/DashboardEvenement.jsx";
+import { PersonnelAutre } from "../layouts/personnel/PersonnelAutre.jsx";
+import { InfoEventForPersonnal } from "../pages/infoEventForPersonnel/InfoEventForPersonnal.jsx";
+import GuestList from "../pages/infoEventForPersonnel/guest_list.jsx";
+import PersonnelList from "../pages/infoEventForPersonnel/personnel_list.jsx";
+
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <PublicLayout />,
     children: [
+      // {
+      //   path: "/",
+      //   element: <Navigate to="/" />,
+      // },
       {
         path: "/",
         element: <Publicacc />,
       },
-
+      // {
+      //   path: "/accueil",
+      //   element: <Accueil />,
+      // },
       {
         path: "/apropos",
         element: <Apropos />,
@@ -113,6 +137,16 @@ const router = createBrowserRouter([
           {
             path: "restauration",
             element: <MenuForm />,
+            // children: [
+            //   {
+            //     path: "createPersonnel",
+            //     element: <CreationPersonnel />,
+            //   },
+            //   {
+            //     path: "",
+            //     element: <DashboardPersonnel />,
+            //   },
+            // ],
           },
           {
             path: "tables",
@@ -243,10 +277,6 @@ const router = createBrowserRouter([
         element: <ForfaitSuccess />,
       },
        {
-        path: "/forfait/cancel",
-        element: <Navigate to="/" />,
-      },
-      {
         path: "/forfait/cancel",
         element: <Navigate to="/" />,
       },
@@ -387,6 +417,31 @@ const router = createBrowserRouter([
       },
     ],
   },
+
+
+  {
+    path: "/",
+    element:  <PersonnelAutre />,
+    children : [
+      {
+        path: "/",
+        element: <Navigate to="/infoEventForPersonnal" />,
+      },
+      {
+        path:"infoEventForPersonnal",
+        element : <InfoEventForPersonnal />,
+      },
+      {
+        path:"personnel_list",
+        element : <PersonnelList />,
+      },
+      {
+        path:"guests_list",
+        element : <GuestList />,
+      }
+    ]
+  },
+  
 
   /***
    *

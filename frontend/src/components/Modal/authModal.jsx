@@ -105,7 +105,7 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
 
       setUser(result.user);
       setIsAuthenticated(true);
-      toast.success("Connexion réussie ✅");
+      toast.success("Connexion réussie ");
       onClose();
 
       // 🔥 REDIRECTION VERS PAGEPUBLIC APRÈS SUCCÈS
@@ -113,7 +113,7 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
     }
 
   } catch (err) {
-    console.error("❌ Auth error :", err);
+    console.error("Auth error :", err);
     
     let errorMessage = "Une erreur est survenue.";
     if (err.response?.data?.message) {

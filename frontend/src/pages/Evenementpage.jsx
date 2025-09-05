@@ -123,7 +123,7 @@ export default function Evenemenpage() {
           ></div>
         </div>
 
-        <style>{`
+        <style >{`
           @keyframes fade-in {
             from {
               opacity: 0;
