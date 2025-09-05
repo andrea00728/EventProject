@@ -47,30 +47,38 @@ const DashboardGlobal = () => {
 
     // Récupération des données utilisateur
     useEffect(() => {
-        const fetchUserData = async () => {
-            if (user) {
-                let userForfait = {};
-                try {
-                    const forfaitData = await getUserForfait();
-                    if (forfaitData?.forfait) {
-                        userForfait = forfaitData.forfait;
-                    }
-                } catch (err) {
-                    console.error("Erreur récupération forfait :", err);
-                }
+      const fetchUserData = async () => {
+          if (user) {
+              let userForfait = {};
+              try {
+                  const forfaitData = await getUserForfait();
+                  if (forfaitData?.forfait) {
+                      userForfait = forfaitData.forfait;
+                  }
+              } catch (err) {
+                  console.error("Erreur récupération forfait :", err);
+              }
 
-                setDashboardData(prevData => ({
-                    ...prevData,
-                    plan: userForfait.nom || 'Aucun forfait',
-                    eventPoints: user.eventPoints || 0,
-                    eventsCreated: user.eventsCreated || 0,
-                    upcomingEvents: user.upcomingEvents || 0,
-                }));
-            }
-        };
+              const events = userForfait.maxEvents ?? "Illimité"; // récupère le nombre max d'événements
+              const eventsCreated = user.eventsCreated || 0;
 
-        fetchUserData();
-    }, [user]);
+              const remainingEvents =
+                  events !== "Illimité" ? Number(events) - eventsCreated : "Illimité";
+
+              setDashboardData(prevData => ({
+                  ...prevData,
+                  plan: userForfait.nom || 'Aucun forfait',
+                  events, // ✅ affichage du nombre total d'événements selon le forfait
+                  eventsCreated, 
+                  remainingEvents, // ✅ nombre d'événements restants
+                  upcomingEvents: user.upcomingEvents || 0,
+              }));
+          }
+      };
+
+      fetchUserData();
+  }, [user]);
+
 
     // Récupération des événements
     useEffect(() => {
