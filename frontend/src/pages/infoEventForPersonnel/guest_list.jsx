@@ -96,7 +96,7 @@ const GuestList = () => {
   }, []);
 
   return (
-    <div className="p-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
