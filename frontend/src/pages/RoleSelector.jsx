@@ -21,6 +21,8 @@ export default function RoleSelector() {
       navigate("/personnelCaisse");
     } else if (role === "cuisinier") {
       navigate("/personnelCuisine");
+    } else {
+      navigate("/infoEventForPersonnal")
     }
   };
 

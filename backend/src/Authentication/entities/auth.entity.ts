@@ -3,7 +3,7 @@ import { Favorite } from 'src/entities/Favorite';
 import { Forfait } from 'src/entities/Forfait';
 import { Entity, Column, PrimaryColumn, ManyToMany, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
-export type UserRole = 'organisateur' | 'accueil' | 'caissier' | 'cuisinier'| 'admin';
+// export type UserRole = 'organisateur' | 'accueil' | 'caissier' | 'cuisinier'| 'admin';
 
 @Entity('users')
 export class User {
@@ -22,12 +22,14 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   photo: string | null;
 
-  @Column({
-    type: 'enum',
-    enum: ['organisateur', 'accueil', 'caissier', 'cuisinier','admin'],
-    default: 'organisateur',
-  })
-  role: UserRole;
+  // @Column({
+  //   type: 'enum',
+  //   enum: ['organisateur', 'accueil', 'caissier', 'cuisinier','admin'],
+  //   default: 'organisateur',
+  // })
+  // role: UserRole;
+  @Column({default : 'organisateur'})
+  role : string
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
