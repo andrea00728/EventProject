@@ -73,7 +73,6 @@ export class AuthService {
       if (!freemium) {
         throw new Error('Forfait freemium non trouvé');
       }
-
       user = this.userRepository.create({
         id: uuidv4(),
         email,

@@ -81,6 +81,11 @@ import AdminManagementPage from "../pages/Admin/AdminManagmentTable.jsx";
 import DashboardPage from "../pages/dashborad/dashboard.jsx";
 import DashboardGlobal from "../pages/dashborad/Global.jsx";
 import DashboardEvenement from "../pages/dashborad/DashboardEvenement.jsx";
+import { PersonnelAutre } from "../layouts/personnel/PersonnelAutre.jsx";
+import { InfoEventForPersonnal } from "../pages/infoEventForPersonnel/InfoEventForPersonnal.jsx";
+import GuestList from "../pages/infoEventForPersonnel/guest_list.jsx";
+import PersonnelList from "../pages/infoEventForPersonnel/personnel_list.jsx";
+
 
 const router = createBrowserRouter([
   {
@@ -412,6 +417,31 @@ const router = createBrowserRouter([
       },
     ],
   },
+
+
+  {
+    path: "/",
+    element:  <PersonnelAutre />,
+    children : [
+      {
+        path: "/",
+        element: <Navigate to="/infoEventForPersonnal" />,
+      },
+      {
+        path:"infoEventForPersonnal",
+        element : <InfoEventForPersonnal />,
+      },
+      {
+        path:"personnel_list",
+        element : <PersonnelList />,
+      },
+      {
+        path:"guests_list",
+        element : <GuestList />,
+      }
+    ]
+  },
+  
 
   /***
    *
