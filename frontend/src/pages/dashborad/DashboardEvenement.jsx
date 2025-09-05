@@ -479,7 +479,6 @@ export default function DashboardEvenement() {
                                         <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Lieu</th>
                                         <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Invités</th>
                                         <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Personnel</th>
-                                        <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Capacité Tables</th>
                                         <th className="px-8 py-6 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Statut</th>
                                         <th className="px-8 py-6 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">Actions</th>
                                     </tr>
@@ -532,16 +531,7 @@ export default function DashboardEvenement() {
                                                         <span className="text-emerald-700 font-bold text-lg">{personnelData.total}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-8 py-6">
-                                                    <div className="flex items-center space-x-3">
-                                                        <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                                                            <Grid3X3 className="w-5 h-5 text-purple-600" />
-                                                        </div>
-                                                        <span className="text-purple-700 font-bold text-lg">
-                                                            {isTableCapacitiesLoading ? "Chargement..." : tableCapacities[event.id] || 0}
-                                                        </span>
-                                                    </div>
-                                                </td>
+                                                
                                                 <td className="px-8 py-6">
                                                     <span className={`inline-flex items-center px-4 py-2 rounded-2xl text-sm font-bold shadow-lg ${getEventStatutColor(event.statut)}`}>
                                                         {event.statut}
@@ -605,12 +595,7 @@ export default function DashboardEvenement() {
                                                 <div className="text-3xl font-bold text-purple-600 mb-2">{personnelData.total}</div>
                                                 <div className="text-sm font-semibold text-purple-500 uppercase tracking-wider">Personnel</div>
                                             </div>
-                                            <div className="text-center p-6 bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl border-2 border-emerald-100 shadow-lg">
-                                                <div className="text-3xl font-bold text-emerald-600 mb-2">
-                                                    {isTableCapacitiesLoading ? "Chargement..." : tableCapacities[event.id] || 0}
-                                                </div>
-                                                <div className="text-sm font-semibold text-emerald-500 uppercase tracking-wider">Capacité Tables</div>
-                                            </div>
+                                            
                                         </div>
 
                                         <button
