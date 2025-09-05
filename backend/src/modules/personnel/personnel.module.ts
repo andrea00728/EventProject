@@ -9,11 +9,12 @@ import { PersonnelController } from 'src/controllers/personnel/personnel.control
 import { User } from 'src/Authentication/entities/auth.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { NotificationModule } from '../notification/notification.module';
+import { Admin } from 'src/entities/Admin';
 
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Personnel, Evenement, User]), 
+    TypeOrmModule.forFeature([Personnel, Evenement, User , Admin]), 
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'defaultSecretKey',
       signOptions: { expiresIn: '1h' },
