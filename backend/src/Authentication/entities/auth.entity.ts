@@ -1,6 +1,7 @@
 import { Evenement } from 'src/entities/Evenement';
 import { Favorite } from 'src/entities/Favorite';
 import { Forfait } from 'src/entities/Forfait';
+import { Goal } from 'src/entities/Goal';
 import { Entity, Column, PrimaryColumn, ManyToMany, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
 export type UserRole = 'organisateur' | 'accueil' | 'caissier' | 'cuisinier'| 'admin';
@@ -63,6 +64,11 @@ export class User {
 
   @OneToMany(() => Favorite, (favorite) => favorite.user, { onDelete: 'CASCADE' })
   favorites: Favorite[];
+
+  // dans User (auth.entity.ts)
+  @OneToMany(() => Goal, (goal) => goal.user)
+  goals: Goal[];
+
 
 }
 
