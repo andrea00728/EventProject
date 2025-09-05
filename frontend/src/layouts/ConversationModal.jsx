@@ -1,133 +1,265 @@
-import { X } from "lucide-react";
+import { X, Minus, Maximize, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { FaPaperPlane } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
   const [emailData, setEmailData] = useState({
-    to: "",
     subject: "",
     message: "",
   });
+  const [showDetails, setShowDetails] = useState(false);
+  const [minimized, setMinimized] = useState(false);
+  const [maximized, setMaximized] = useState(false);
+  const [file, setFile] = useState(null);
 
   const handleChange = (e) => {
     setEmailData({ ...emailData, [e.target.name]: e.target.value });
   };
 
-  const handleSendEmail = (e) => {
-    e.preventDefault();
-    if (!emailData.to || !emailData.message) {
-      alert("Veuillez remplir tous les champs.");
-      return;
+  const [attachedFile, setAttachedFile] = useState(null); // ✅ ajouté
+
+
+  const handleFileChange = (e) => {
+    if (e.target.files.length > 0) {
+      setAttachedFile(e.target.files[0]);
     }
-
-    console.log("Email envoyé :", emailData);
-
-    // 🔹 Ici tu peux connecter ton backend (NestJS, Laravel, Nodemailer, etc.)
-    setEmailData({ to: "", subject: "", message: "" });
-    onClose();
   };
+
+  const removeFile = () => {
+    setAttachedFile(null);
+  };
+
+  const handleSendEmail = async (e) => {
+  e.preventDefault();
+
+  if (!emailData.message) {
+    toast.warning("⚠️ Veuillez écrire un message avant d'envoyer.");
+    return;
+  }
+
+  // Définir body **avant** de l'utiliser
+  const body = {
+    to: conversation?.content?.email,
+    subject: emailData.subject || "Réponse à votre message",
+    message: emailData.message,
+  };
+
+  console.log("Body envoyé au backend:", body); // debug
+
+  try {
+    const res = await fetch("http://localhost:3000/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      toast.success(`✅ Email envoyé avec succès à ${conversation.content.email}`);
+      setEmailData({ subject: "", message: "" });
+      onClose();
+    } else if (res.status === 400) {
+      toast.error("❌ Erreur : Email destinataire invalide ou message vide");
+    } else if (res.status === 403) {
+      toast.error(
+        "❌ Envoi interdit par SendGrid (403). Vérifie la clé API et l'adresse expéditeur."
+      );
+    } else {
+      toast.error(`❌ Erreur inattendue : ${data.message || JSON.stringify(data)}`);
+    }
+  } catch (err) {
+    console.error("Erreur envoi email:", err);
+    toast.error("❌ Impossible d’envoyer l’email (erreur réseau ou serveur).");
+  }
+};
+
 
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-30 z-[101] flex items-center justify-center p-4">
+    <div className="fixed bottom-0 right-4 z-[101] flex items-end justify-end p-4">
       <div
-        className={`w-full max-w-2xl rounded-lg shadow-xl ${
-          darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-        } flex flex-col`}
+        className={`rounded-t-lg shadow-[0_1px_8px_rgba(0,0,0,0.2)] transition-all duration-300
+        ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"}
+        ${maximized ? "w-[75vw] h-[75vh]" : "w-full max-w-[1000px]"}
+        ${minimized ? "h-[100px] overflow-hidden" : "h-auto"} 
+        flex flex-col font-sans text-sm`}
       >
         {/* Header */}
         <div
-          className={`p-4 border-b flex items-center justify-between ${
-            darkMode ? "border-gray-700" : "border-gray-200"
+          className={`flex items-center justify-between px-4 py-2 border-b ${
+            darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-gray-100"
           }`}
         >
-          <h3 className="font-semibold text-lg">Nouveau message</h3>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <h2 className={`font-normal text-sm ${darkMode ? "text-gray-200" : "text-gray-700"}`}>
+            Nouveau message
+          </h2>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setMinimized(!minimized)}
+              className={`p-1 rounded-full ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"}`}
+            >
+              <Minus className={darkMode ? "w-4 h-4 text-gray-200" : "w-4 h-4 text-gray-600"} />
+            </button>
+            <button
+              onClick={() => setMaximized(!maximized)}
+              className={`p-1 rounded-full ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"}`}
+            >
+              <Maximize className={darkMode ? "w-4 h-4 text-gray-200" : "w-4 h-4 text-gray-600"} />
+            </button>
+            <button
+              onClick={onClose}
+              className={`p-1 rounded-full ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"}`}
+            >
+              <X className={darkMode ? "w-4 h-4 text-gray-200" : "w-4 h-4 text-gray-600"} />
+            </button>
+          </div>
         </div>
 
-        {/* Ancien message + infos expéditeur */}
-        {conversation?.content && (
+
+        {/* Previous Message Info */}
+        {!minimized && conversation?.content && (
           <div
-            className={`px-4 py-3 border-b space-y-2 ${
+            className={`px-4 py-2 border-b ${
               darkMode
                 ? "border-gray-700 bg-gray-700 text-gray-300"
-                : "border-gray-100 bg-gray-50 text-gray-700"
-            } text-sm`}
+                : "border-gray-200 bg-gray-50 text-gray-600"
+            } text-xs`}
           >
-            <p className="font-medium">Message précédent :</p>
-            <p className="italic">{conversation.content.text}</p>
-            <div className="mt-2">
-              <p>
-                <span className="font-medium">Nom :</span>{" "}
-                {conversation.content.firstName} {conversation.content.lastName}
-              </p>
-              <p>
-                <span className="font-medium">Email :</span>{" "}
-                {conversation.content.email}
-              </p>
+            <div
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => setShowDetails((prev) => !prev)}
+            >
+              <p className="font-medium">Previous Message</p>
+              {showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </div>
+
+            {showDetails && (
+              <div className="mt-2 space-y-1">
+                <p className="italic">{conversation.content.text}</p>
+                <p>
+                  <span className="font-medium">From:</span>{" "}
+                  {conversation.content.firstName} {conversation.content.lastName}
+                </p>
+                <p>
+                  <span className="font-medium">Email:</span> {conversation.content.email}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Formulaire Email */}
-        <form onSubmit={handleSendEmail} className="flex-1 flex flex-col">
-          <div className="p-4 space-y-4 flex-1 overflow-y-auto">
-            <div>
-              <label className="block text-sm font-medium mb-1">À :</label>
-              <input
-                disabled
-                type="email"
-                name="to"
-                value={conversation?.content?.email || ""}
-                onChange={handleChange}
-                placeholder="exemple@entreprise.com"
-                className={`w-full px-3 py-2 rounded-lg border ${
-                  darkMode
-                    ? "bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400"
-                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Message :</label>
-              <textarea
-                name="message"
-                rows="8"
-                value={emailData.message}
-                onChange={handleChange}
-                placeholder="Rédigez votre message ici..."
-                className={`w-full px-3 py-2 rounded-lg border resize-none ${
-                  darkMode
-                    ? "bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400"
-                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                required
-              />
-            </div>
-          </div>
+        {/* Email Form */}
+        {!minimized && (
+          <form onSubmit={handleSendEmail} className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col px-4 py-2 space-y-2">
+              <div>
+                <input
+                  disabled
+                  type="email"
+                  value={conversation?.content?.email || ""}
+                  className={`w-full px-2 py-1 border-b ${
+                    darkMode
+                      ? "bg-gray-800 border-gray-600 text-gray-200 placeholder-gray-400"
+                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+                  } focus:outline-none text-sm`}
+                  placeholder="To"
+                />
+              </div>
 
-          {/* Footer */}
-          <div
-            className={`p-4 border-t flex justify-end ${
-              darkMode ? "border-gray-700" : "border-gray-200"
-            }`}
-          >
-            <button
-              type="submit"
-              className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              <div>
+                <input
+                  type="text"
+                  name="subject"
+                  value={emailData.subject}
+                  onChange={handleChange}
+                  className={`w-full px-2 py-1 border-b ${
+                    darkMode
+                      ? "bg-gray-800 border-gray-600 text-gray-200 placeholder-gray-400"
+                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+                  } focus:outline-none text-sm`}
+                  placeholder="Subject"
+                />
+              </div>
+
+              <div className="flex-1">
+                <textarea
+                  name="message"
+                  rows="8"
+                  value={emailData.message}
+                  onChange={handleChange}
+                  className={`w-full h-full px-2 py-2 border-none resize-none ${
+                    darkMode
+                      ? "bg-gray-800 text-gray-200 placeholder-gray-400"
+                      : "bg-white text-gray-900 placeholder-gray-500"
+                  } focus:outline-none text-sm font-sans leading-relaxed`}
+                  placeholder="Compose email"
+                  required
+                />
+              </div>
+
+              {/* Warning Info */}
+              <div
+                className={`mx-4 my-2 p-2 rounded text-xs ${
+                  darkMode
+                    ? "bg-yellow-800 text-yellow-100"
+                    : "bg-yellow-100 text-yellow-800"
+                }`}
+              >
+                ⚠️ Vérifiez votre dossier spam ! Les emails envoyés depuis ce serveur local peuvent arriver dans le spam.
+              </div>
+
+              {/* File Upload */}
+              {file && (
+                <div className="text-xs text-green-600 dark:text-green-400">
+                  📎 Fichier sélectionné : {file.name}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div
+              className={`flex items-center justify-between px-4 py-3 border-t ${
+                darkMode ? "border-gray-700" : "border-gray-200"
+              }`}
             >
-              <FaPaperPlane className="w-4 h-4" />
-              Envoyer
-            </button>
-          </div>
-        </form>
+              <button
+                type="submit"
+                className="flex items-center gap-2 px-5 py-1.5 bg-blue-600 text-white rounded font-medium text-sm hover:bg-blue-700 transition-colors"
+              >
+                <FaPaperPlane className="w-3.5 h-3.5" />
+                Send
+              </button>
+
+              <div className="flex items-center gap-2">
+                <label
+                  className={`cursor-pointer text-xs ${
+                    darkMode ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Attach files
+                  <input type="file" onChange={handleFileChange} className="hidden" />
+                </label>
+
+                {/* Affichage si un fichier est choisi */}
+                {attachedFile && (
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className="truncate max-w-[120px]">{attachedFile.name}</span>
+                    <button
+                      type="button"
+                      onClick={removeFile}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

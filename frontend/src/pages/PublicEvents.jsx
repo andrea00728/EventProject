@@ -61,7 +61,7 @@ const PublicEvents = () => {
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  
   // États pour les modals
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -433,6 +433,38 @@ const PublicEvents = () => {
                             </button>
                           )}
                         </div>
+
+                        {/* Boutons d'action conditionnels */}
+                        {/* <div className="flex gap-3 justify-end"> */}
+                          {/* Bouton Détails - toujours présent */}
+                          {/* <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEventModal(event);
+                            }}
+                            className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors duration-200"
+                          >
+                            Détails
+                          </button> */}
+
+                          {/* Bouton S'inscrire - seulement pour les événements publics */}
+                          {/* {event.isPublic && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openRegistrationModal(event);
+                              }}
+                              className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all duration-200 transform hover:scale-105 ${event.id % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
+                                event.id % 5 === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' :
+                                  event.id % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
+                                    event.id % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :
+                                      'bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600'
+                                }`}
+                            >
+                              S'inscrire
+                            </button>
+                          )}
+                        </div> */}
                       </div>
                     </div>
                   ))}

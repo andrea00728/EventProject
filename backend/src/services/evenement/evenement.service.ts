@@ -21,7 +21,7 @@ export class EvenementService {
     @InjectRepository(NotificationEntity)
     private readonly notificationRepository: Repository<NotificationEntity>,
     private readonly notificationGateway: NotificationGateway
-  ) { }
+  ) {}
 
   async create(dto: CreateEventDto): Promise<Evenement> {
     const location = await this.locationService.findLocationById(dto.locationId);
@@ -98,7 +98,7 @@ export class EvenementService {
   }
 
   async findAll(): Promise<Evenement[]> {
-    return this.evenementRepository.find({ relations: ['location', 'salle', 'tables', 'invites', 'user'] });
+    return this.evenementRepository.find({ relations: ['location', 'salle', 'tables', 'invites', 'user', 'user.forfait'] });
   }
 
   async findOne(id: number): Promise<Evenement> {
@@ -166,7 +166,7 @@ export class EvenementService {
   async findManagerEvents(utilisateur_id: string): Promise<Evenement[]> {
     return this.evenementRepository.find({
       where: { user: { id: utilisateur_id } },
-      relations: ['user', 'location', 'salle', 'tables', 'invites'],
+      relations: ['user', 'location', 'salle', 'tables', 'invites', 'user.forfait'],
     });
   }
 

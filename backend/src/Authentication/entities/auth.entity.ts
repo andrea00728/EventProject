@@ -2,9 +2,10 @@ import { Evenement } from 'src/entities/Evenement';
 import { Favorite } from 'src/entities/Favorite';
 import { Forfait } from 'src/entities/Forfait';
 import { Localisation } from 'src/entities/Location';
+import { Goal } from 'src/entities/Goal';
 import { Entity, Column, PrimaryColumn, ManyToMany, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
-export type UserRole = 'organisateur' | 'accueil' | 'caissier' | 'cuisinier'| 'admin';
+// export type UserRole = 'organisateur' | 'accueil' | 'caissier' | 'cuisinier'| 'admin';
 
 @Entity('users')
 export class User {
@@ -23,12 +24,14 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   photo: string | null;
 
-  @Column({
-    type: 'enum',
-    enum: ['organisateur', 'accueil', 'caissier', 'cuisinier','admin'],
-    default: 'organisateur',
-  })
-  role: UserRole;
+  // @Column({
+  //   type: 'enum',
+  //   enum: ['organisateur', 'accueil', 'caissier', 'cuisinier','admin'],
+  //   default: 'organisateur',
+  // })
+  // role: UserRole;
+  @Column({default : 'organisateur'})
+  role : string
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
@@ -65,8 +68,12 @@ export class User {
   @OneToMany(() => Favorite, (favorite) => favorite.user, { onDelete: 'CASCADE' })
   favorites: Favorite[];
 
-  @OneToMany(() => Localisation, (localisation) => localisation.createur)
+  @OneToMany(() => Localisation, (localisation) => localisation.createur, { onDelete: 'CASCADE' })
   localisations: Localisation[];
+  // dans User (auth.entity.ts)
+  @OneToMany(() => Goal, (goal) => goal.user, { onDelete: 'CASCADE' })
+  goals: Goal[];
+
 
 }
 

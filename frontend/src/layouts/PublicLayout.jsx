@@ -17,6 +17,7 @@ import { getConditionalSubMenus } from "../util/menuUtils";
 import { useSocket } from "../socket";
 import { io } from "socket.io-client";
 import { url } from "../api/url";
+import { replace } from "lodash";
 
 export default function PublicLayout() {
   const { isAuthenticated, role, user } = useStateContext();
@@ -96,17 +97,18 @@ export default function PublicLayout() {
     }
   }, [forfait, isAuthenticated]);
 
-  const roles = ["caissier", "cuisinier", "accueil"];
+  
+  const rolesAdd = ["admin","super_admin"]
 
 
   useEffect(() => {
     if (isAuthenticated) {
       // console.log("Token:", isAuthenticated, "User:", user, "Role:", role); // Debug log
-      if (roles.includes(user?.role)) {
-        navigate("/choix-role", { replace: true });
-      } else if (!roles.includes(user?.role) && user?.role !== "organisateur") {
+      if (rolesAdd.includes(user?.role) && user?.role !== "organisateur") {
         navigate("/AdminAccueil", { replace: true });
-      } else {
+      }else if(user?.role != "organisateur"){
+        navigate("/choix-role",{replace : true})
+      }else {
         navigate("/pagepublic", { replace: true });
       }
     }

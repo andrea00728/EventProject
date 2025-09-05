@@ -79,6 +79,13 @@ import PublicLayout from "../layouts/PublicLayout.jsx";
 import EventProtectLayout from "../layouts/eventProtectLayout.jsx";
 import AdminManagementPage from "../pages/Admin/AdminManagmentTable.jsx";
 import DashboardPage from "../pages/dashborad/dashboard.jsx";
+import DashboardGlobal from "../pages/dashborad/Global.jsx";
+import DashboardEvenement from "../pages/dashborad/DashboardEvenement.jsx";
+import { PersonnelAutre } from "../layouts/personnel/PersonnelAutre.jsx";
+import { InfoEventForPersonnal } from "../pages/infoEventForPersonnel/InfoEventForPersonnal.jsx";
+import GuestList from "../pages/infoEventForPersonnel/guest_list.jsx";
+import PersonnelList from "../pages/infoEventForPersonnel/personnel_list.jsx";
+
 
 const router = createBrowserRouter([
   {
@@ -252,16 +259,16 @@ const router = createBrowserRouter([
           {
             path: "dashboard",
             element: <DashboardPage />,
-            // children: [
-            //   {
-            //     path: "",
-            //     element: <MenuRestauration />,
-            //   },
-            //   {
-            //     path: "menuItem",
-            //     element: <MenuItemForm />,
-            //   },
-            // ],
+            children: [
+              {
+                path: "",
+                element: <DashboardGlobal />,
+              },
+              {
+                path: "eventsDash",
+                element: <DashboardEvenement />,
+              },
+            ],
           },
         ],
       },
@@ -410,6 +417,31 @@ const router = createBrowserRouter([
       },
     ],
   },
+
+
+  {
+    path: "/",
+    element:  <PersonnelAutre />,
+    children : [
+      {
+        path: "/",
+        element: <Navigate to="/infoEventForPersonnal" />,
+      },
+      {
+        path:"infoEventForPersonnal",
+        element : <InfoEventForPersonnal />,
+      },
+      {
+        path:"personnel_list",
+        element : <PersonnelList />,
+      },
+      {
+        path:"guests_list",
+        element : <GuestList />,
+      }
+    ]
+  },
+  
 
   /***
    *
