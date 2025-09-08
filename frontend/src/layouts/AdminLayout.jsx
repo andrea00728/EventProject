@@ -48,7 +48,6 @@ import { PasswordSetupModal } from "../pages/Admin/PasswordSetupModal";
 import md5 from "blueimp-md5"; // npm i blueimp-md5 si pas déjà fait
 import ConversationModal from "./ConversationModal";
 
-
 export default function AdminLayout() {
   const { isAuthenticated, role, isLoading, setUser, user, handleLogout } =
     useStateContext();
@@ -143,54 +142,53 @@ export default function AdminLayout() {
     setShowLogoutModal(false);
   };
 
-const menuItems = [
-  {
-    path: "/AdminAccueil",
-    name: "Tableau de bord",
-    icon: <FiLayout className="text-lg" />,
-  },
-  {
-    path: "/AdminEvenement",
-    name: "Événements",
-    icon: <MdCalendarToday className="text-lg" />,
-  },
-  {
-    path: "/AdminOrganisateur",
-    name: "Organisateurs",
-    icon: <FaUsers className="text-lg" />,
-  },
-  {
-    path: "/LocationSalle",
-    name: "Salles & Localisation",
-    icon: <MdRoom className="text-lg" />,
-  },
-  // {
-  //   path: "/AdminHistorique",
-  //   name: "Historique d'activité",
-  //   icon: <MdHistory className="text-lg" />,
-  // },
-  {
-    path: "/AdminStats",
-    name: "Statistique",
-    icon: <MdQueryStats className="text-lg" />,
-  },
-  // On ajoute la condition proprement
-  ...(user?.role !== "admin"
-    ? [
-        {
-          path: "/AdminManagement",
-          name: "Gestion Admin",
-          icon: <MdAdminPanelSettings className="text-lg" />,
-        },
-      ]
-    : []),
-  {
-    path: "/AdminParametre",
-    name: "Paramètres",
-    icon: <FaCogs className="text-lg" />,
-  },
-];
-
+  const menuItems = [
+    {
+      path: "/AdminAccueil",
+      name: "Tableau de bord",
+      icon: <FiLayout className="text-lg" />,
+    },
+    {
+      path: "/AdminEvenement",
+      name: "Événements",
+      icon: <MdCalendarToday className="text-lg" />,
+    },
+    {
+      path: "/AdminOrganisateur",
+      name: "Organisateurs",
+      icon: <FaUsers className="text-lg" />,
+    },
+    {
+      path: "/LocationSalle",
+      name: "Salles & Localisation",
+      icon: <MdRoom className="text-lg" />,
+    },
+    // {
+    //   path: "/AdminHistorique",
+    //   name: "Historique d'activité",
+    //   icon: <MdHistory className="text-lg" />,
+    // },
+    {
+      path: "/AdminStats",
+      name: "Statistique",
+      icon: <MdQueryStats className="text-lg" />,
+    },
+    // On ajoute la condition proprement
+    ...(user?.role !== "admin"
+      ? [
+          {
+            path: "/AdminManagement",
+            name: "Gestion Admin",
+            icon: <MdAdminPanelSettings className="text-lg" />,
+          },
+        ]
+      : []),
+    {
+      path: "/AdminParametre",
+      name: "Paramètres",
+      icon: <FaCogs className="text-lg" />,
+    },
+  ];
 
   const gradientTitle =
     "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";
@@ -227,8 +225,6 @@ const menuItems = [
     const hash = md5(email.trim().toLowerCase());
     return `https://www.gravatar.com/avatar/${hash}?d=${encodeURIComponent(d)}&s=${size}`;
   };
-
-  
 
   const NotificationModal = ({ show, onClose, notification, darkMode }) => {
     // Si on n'a pas de notification ou si le modal est fermé, ne rien afficher
@@ -380,19 +376,23 @@ const menuItems = [
           const response = await fetch(
             `${import.meta.env.VITE_API_BASE_URL}/auth/messages`
           );
-          if (!response.ok) throw new Error("Erreur lors de la récupération des messages");
+          if (!response.ok)
+            throw new Error("Erreur lors de la récupération des messages");
           const data = await response.json();
 
           const formatted = data.map((msg) => ({
             ...msg,
             from: `${msg.firstName} ${msg.lastName}`,
             text: msg.message,
-            read: !!msg.read,            // valeur serveur si dispo
+            read: !!msg.read, // valeur serveur si dispo
           }));
 
           // ✅ merge + dédupe + applique localStorage
           setMessages((prev) =>
-            applyLocalRead(dedupeById([...prev, ...formatted]), READ_MESSAGES_KEY)
+            applyLocalRead(
+              dedupeById([...prev, ...formatted]),
+              READ_MESSAGES_KEY
+            )
           );
         } catch (error) {
           console.error("Erreur lors de la récupération des messages :", error);
@@ -400,33 +400,32 @@ const menuItems = [
         }
       };
 
-     const fetchNotifications = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`
-        );
-        if (!response.ok)
-          throw new Error("Erreur lors de la récupération des notifications");
+      const fetchNotifications = async () => {
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/auth/notifications`
+          );
+          if (!response.ok)
+            throw new Error("Erreur lors de la récupération des notifications");
 
-        const data = await response.json();
+          const data = await response.json();
 
-        // 🔹 Récupérer IDs lus depuis localStorage
-        const readIds =
-          JSON.parse(localStorage.getItem("readNotifications")) || [];
+          // 🔹 Récupérer IDs lus depuis localStorage
+          const readIds =
+            JSON.parse(localStorage.getItem("readNotifications")) || [];
 
-        // 🔹 Harmonisation : backend => `isRead`, frontend => `read`
-        const formatted = data.map((notif) => ({
-          ...notif,
-          read: readIds.includes(notif.id) ? true : notif.isRead || false,
-        }));
+          // 🔹 Harmonisation : backend => `isRead`, frontend => `read`
+          const formatted = data.map((notif) => ({
+            ...notif,
+            read: readIds.includes(notif.id) ? true : notif.isRead || false,
+          }));
 
-        setNotifications(formatted);
-      } catch (error) {
-        console.error("Erreur fetchNotifications:", error);
-        setNotifications([]);
-      }
-    };
-
+          setNotifications(formatted);
+        } catch (error) {
+          console.error("Erreur fetchNotifications:", error);
+          setNotifications([]);
+        }
+      };
 
       async function connectSocket() {
         const userId = await getUserIdForToken();
@@ -473,7 +472,6 @@ const menuItems = [
               ];
             });
           });
-
 
           //notification pour un nouveau evenement
           socket.on("notifNewEventForAdmin", (notif) => {
@@ -542,7 +540,7 @@ const menuItems = [
             }));
             const formatted2 = value.data.map((msg) => ({
               ...msg,
-              from: `${msg.firstName} ${msg.lastName}`, 
+              from: `${msg.firstName} ${msg.lastName}`,
               text: msg.message,
               read: msg.isRead || false, // ou msg.read si tu ajoutes ce champ dans la DB
             }));
@@ -888,13 +886,15 @@ const menuItems = [
                 {/* Avatar = photo basée sur l'email (Gravatar) */}
                 <div className="relative">
                   <img
-                    //src={getGravatarUrl(user?.email, { size: 96 })}
-                    src={`${user?.photo}`}
+                    src={
+                      user?.photo || getGravatarUrl(user?.email, { size: 96 })
+                    }
                     alt="User avatar"
                     className="w-10 h-10 rounded-full object-cover"
                     onError={(e) => {
-                      // Sécurité: fallback si jamais l’URL échoue
-                      e.currentTarget.src = getGravatarUrl(null, { size: 96 });
+                      e.currentTarget.src = getGravatarUrl(user?.email, {
+                        size: 96,
+                      });
                     }}
                   />
                 </div>
@@ -914,7 +914,9 @@ const menuItems = [
               {showProfile && (
                 <div
                   className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-48 rounded-lg shadow-lg border ${
-                    darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+                    darkMode
+                      ? "bg-gray-800 border-gray-700"
+                      : "bg-white border-gray-200"
                   } z-50 transition-all duration-200 ${
                     window.innerWidth < 640 ? "left-4 right-4" : "right-0"
                   }`}
@@ -972,12 +974,16 @@ const menuItems = [
                       Paramètres
                     </button>
 
-                    <div className={`border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`} />
+                    <div
+                      className={`border-t ${darkMode ? "border-gray-700" : "border-gray-200"}`}
+                    />
 
                     <button
                       onClick={handleShowLogout}
                       className={`w-full text-left px-3 py-2 text-sm ${
-                        darkMode ? "hover:bg-gray-700 text-red-400" : "hover:bg-gray-100 text-red-600"
+                        darkMode
+                          ? "hover:bg-gray-700 text-red-400"
+                          : "hover:bg-gray-100 text-red-600"
                       } transition-colors duration-150`}
                     >
                       Déconnexion
@@ -986,8 +992,6 @@ const menuItems = [
                 </div>
               )}
             </div>
-
-
 
             <button
               onClick={toggleDarkMode}
