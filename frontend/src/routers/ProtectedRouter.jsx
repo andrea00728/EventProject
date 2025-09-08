@@ -5,10 +5,10 @@
 //   const { token, role, isLoading } = useStateContext();
 
 //   if (isLoading) return <div>Chargement ...</div>;
-//   if (!token) return <Navigate to="/pagepublic" replace />;
+//   if (!token) return <Navigate to="/" replace />;
 
 //   if (!allowedRoles.includes(role)) {
-//     return <Navigate to="/pagepublic" replace />;
+//     return <Navigate to="/" replace />;
 //   }
 
 //   return children;
@@ -28,7 +28,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
 
     if (!isAuthenticated || !allowedRoles.includes(user?.role)) {
         // Si non authentifié ou rôle non autorisé, redirige
-        return <Navigate to="/pagepublic" replace />;
+        return <Navigate to="/" replace />;
     }
 
     return children;

@@ -12,7 +12,7 @@ export class Goal {
   @Column({ default: 50 })
   attendeesTarget: number;
 
-  @ManyToOne(() => User, user => user.goals , {onDelete : 'CASCADE'})
+  @ManyToOne(() => User, user => user.goals, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 }

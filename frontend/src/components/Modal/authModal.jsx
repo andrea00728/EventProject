@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import ButtonConnexion from "../../util/buttonconnexion";
 import { useStateContext } from "../../context/ContextProvider";
 
-export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
+export const AuthModal = ({ isOpen, onClose, isSignIn = false, onError="" }) => {
   const [isSignUp, setIsSignUp] = useState(!isSignIn);
   const [showPassword, setShowPassword] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -22,6 +22,10 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
   const { setUser, setIsAuthenticated } = useStateContext();
 
   if (!isOpen) return null;
+
+  if(onError && !error){
+    setError(onError);
+  }
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -92,7 +96,7 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
       onClose();
 
       // 🔥 REDIRECTION VERS PAGEPUBLIC APRÈS SUCCÈS
-      navigate("/pagepublic", { replace: true });
+      navigate("/", { replace: true });
       
     } else {
       // 🔹 Connexion
@@ -109,7 +113,7 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false }) => {
       onClose();
 
       // 🔥 REDIRECTION VERS PAGEPUBLIC APRÈS SUCCÈS
-      navigate("/pagepublic", { replace: true });
+      navigate("/", { replace: true });
     }
 
   } catch (err) {

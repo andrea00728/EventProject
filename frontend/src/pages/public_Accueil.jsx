@@ -123,7 +123,7 @@ const Public_Accueil = () => {
     <>
 
       <AuthModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
-      <section id="pagepublic" ref={accueilRef}>
+      <section id="accueil" ref={accueilRef}>
         <div
           className="relative w-full h-screen overflow-hidden"
           onMouseEnter={stopAutoPlay}

@@ -14,13 +14,11 @@ import { EvenementModule } from '../evenement/evenement.module';
 import { EmailModule } from '../email/email.module';
 
 
-
 @Module({
     imports:[TypeOrmModule.forFeature([User,Forfait,Evenement]),
     PaypalModule,NotificationModule,
-    forwardRef(() => EvenementModule),
-    EmailModule, // <-- important pour injecter EmailService
-
+     forwardRef(() => EvenementModule),
+     EmailModule,
 ],
     providers:[ForfaitCronService,ForfaitService],
     exports:[ForfaitCronService,ForfaitService] ,
