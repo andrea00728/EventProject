@@ -303,7 +303,4 @@ export class TableService {
     await this.tableRepository.delete(tableId);
   }
 
-  //BY 
-
-
 }
