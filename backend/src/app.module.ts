@@ -28,6 +28,8 @@ import { Favorite } from './entities/Favorite';
 import { ContactMessage } from './entities/ContactMessage';
 import { NotificationEntity } from './entities/notification.entity';
 import { Admin } from './entities/Admin';
+import { Goal } from './entities/Goal'; // ⬅️ ajoute ceci
+
 
 // Modules fonctionnels
 import { AuthModule } from './Authentication/auth.module';
@@ -54,12 +56,16 @@ import { SatisfactionModule } from './modules/satisfaction/satisfaction.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { TasksModule } from './modules/tasks/tasks.module';
+import { GoalModule } from './modules/goal/goal.module'; // ⬅️ import du module Goal
+
 
 // Email
 import { EmailModule } from './modules/email/email.module';
 
 // Contrôleurs globaux
 import { ProfileController } from './controllers/profile/profile.controller';
+import { ElementModule } from './modules/element/element.module';
+import { Element } from './entities/Element';
 
 @Module({
   imports: [
@@ -99,7 +105,9 @@ import { ProfileController } from './controllers/profile/profile.controller';
           NotificationEntity,
           Favorite,
           Admin,
+          Goal,
           ContactMessage,
+          Element
         ],
         synchronize: true,
       }),
@@ -112,6 +120,7 @@ import { ProfileController } from './controllers/profile/profile.controller';
     EvenementModule,
     ForfaitModule,
     NotificationModule,
+    GoalModule, 
     TableModule,
     InviteModule,
     InvitationModule,
@@ -132,6 +141,7 @@ import { ProfileController } from './controllers/profile/profile.controller';
     AdminModule,
     TasksModule,
     EmailModule,
+    ElementModule
     
   ],
   controllers: [ProfileController],

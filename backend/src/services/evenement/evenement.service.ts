@@ -2,14 +2,14 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual, MoreThanOrEqual, Not } from 'typeorm';
 import { Evenement } from 'src/entities/Evenement';
-import { UpdateEventDto } from 'src/dto/UpdateEvenementDTO';
 import { LocationService } from '../localisation-service/localisation-service.service';
 import { User } from 'src/Authentication/entities/auth.entity';
 import { NotificationService } from '../notification/notification.service';
 import { NotificationEntity } from 'src/entities/notification.entity';
 import { NotificationGateway } from 'src/gateway/notification.gateway';
-import { CreateEventDto } from 'src/dto/CreateEvenementDTO';
+import { CreateEventDto, UpdateEventDto } from 'src/dto/CreateEvenementDTO';
 import * as fs from 'fs/promises';
+import { Localisation } from 'src/entities/Location';
 
 @Injectable()
 export class EvenementService {
@@ -72,7 +72,6 @@ export class EvenementService {
       const event = await this.evenementRepository.save(evenement);
       console.log('Événement créé:', event);
 
-      // Notification pour tous
       await this.notificationService.notifyAll(
         'Nouvel Événement',
         `Le nouvel Événement ${event.nom} a bien été créé`
@@ -106,69 +105,48 @@ export class EvenementService {
     return event;
   }
 
-  async update(id: number, dto: UpdateEventDto & { image?: Express.Multer.File }, userId: string): Promise<Evenement> {
-    try {
-      const evenement = await this.findOneById(id);
-      const user = await this.userRepo.findOne({ where: { id: userId } });
-      if (!user) throw new NotFoundException('Utilisateur non trouvé');
+async updateEvent(eventId: number, dto: UpdateEventDto, imageFile?: Express.Multer.File): Promise<Evenement> {
+    const event = await this.evenementRepository.findOne({
+      where: { id: eventId },
+      relations: ['location', 'salle'],
+    });
 
-      const date = dto.date ? new Date(dto.date) : evenement.date;
-      const date_fin = dto.date_fin ? new Date(dto.date_fin) : evenement.date_fin;
-      if (isNaN(date.getTime()) || isNaN(date_fin.getTime())) {
-        throw new BadRequestException('Dates invalides');
-      }
+    if (!event) throw new NotFoundException(`Événement avec ID ${eventId} non trouvé`);
 
-      let location = evenement.location;
-      let salle = evenement.salle;
+    // Champs simples
+    if (dto.nom) event.nom = dto.nom;
+    if (dto.type) event.type = dto.type;
+    if (dto.theme) event.theme = dto.theme;
+    if (dto.date) event.date = new Date(dto.date);
+    if (dto.date_fin) event.date_fin = new Date(dto.date_fin);
+    if (dto.isPublic !== undefined) event.isPublic = dto.isPublic;
 
-      if (dto.locationId || dto.latitude !== undefined || dto.longitude !== undefined || dto.nomLieu) {
-        location = await this.locationService.updateOrCreateLocation({
-          id: dto.locationId ? Number(dto.locationId) : evenement.location?.id,
-          nom: dto.nomLieu || evenement.location?.nom,
-          latitude: dto.latitude !== undefined ? Number(dto.latitude) : evenement.location?.latitude ?? undefined,
-          longitude: dto.longitude !== undefined ? Number(dto.longitude) : evenement.location?.longitude ?? undefined,
-          createurId: userId,
-        });
-      }
-
-      if (dto.salleId) {
-        salle = await this.locationService.findSalleById(Number(dto.salleId));
-        if (!salle || !location || salle.location.id !== location.id) {
-          throw new BadRequestException('La salle ne correspond pas au lieu');
-        }
-      }
-
-      const conflict = await this.evenementRepository.findOne({
-        where: {
-          salle: { id: salle?.id },
-          date: LessThanOrEqual(date_fin),
-          date_fin: MoreThanOrEqual(date),
-          id: Not(id),
-        },
-      });
-      if (conflict) throw new BadRequestException('Conflit de réservation pour cette salle');
-
-      Object.assign(evenement, {
-        nom: dto.nom ?? evenement.nom,
-        type: dto.type ?? evenement.type,
-        theme: dto.theme ?? evenement.theme,
-        date,
-        date_fin,
-        location,
-        salle,
-        user,
-        isPublic: dto.isPublic ?? evenement.isPublic,
-        imageUrl: dto.image ? await this.handleImageUpload(dto.image) : evenement.imageUrl,
-      });
-
-      const updatedEvent = await this.evenementRepository.save(evenement);
-      console.log('Événement mis à jour:', updatedEvent);
-      return updatedEvent;
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour de l\'événement:', error);
-      throw error;
+    // Gestion du lieu
+    let location;
+    if (dto.locationId) {
+      location = await this.locationService.findLocationById(Number(dto.locationId));
+      event.location = location;
     }
+
+    // Gestion de la salle
+    if (dto.salleId) {
+      const salle = await this.locationService.findSalleById(Number(dto.salleId));
+
+      // Vérifier que la salle appartient bien au lieu choisi
+      if (location && salle.location.id !== location.id) {
+        throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
+      }
+      event.salle = salle;
+    }
+
+    // Gestion de l'image
+    if (imageFile) {
+      event.imageUrl = `/uploads/${imageFile.filename}`;
+    }
+
+    return this.evenementRepository.save(event);
   }
+
 
   private async handleImageUpload(file: Express.Multer.File): Promise<string | null> {
     if (!file) return null;
@@ -205,6 +183,7 @@ export class EvenementService {
     return this.evenementRepository.findOne({
       where: { user: { id: userId } },
       order: { id: 'DESC' },
+      relations: ['location', 'salle', 'user'],
     });
   }
 

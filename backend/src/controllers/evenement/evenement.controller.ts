@@ -11,17 +11,20 @@ import {
   Delete,
   UploadedFile,
   UseInterceptors,
-  Patch,
+  Put,
+  NotFoundException,
+  ForbiddenException,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { CreateEventDto } from 'src/dto/CreateEvenementDTO';
-import { UpdateEventDto } from 'src/dto/UpdateEvenementDTO';
+import { CreateEventDto, UpdateEventDto } from 'src/dto/CreateEvenementDTO';
 import { Evenement } from 'src/entities/Evenement';
 import { EvenementService } from 'src/services/evenement/evenement.service';
 import { ForfaitService } from 'src/services/forfait/forfait.service';
 import * as path from 'path';
 import * as fs from 'fs';
+import { diskStorage } from 'multer';
 
 @Controller('evenements')
 export class EvenementController {
@@ -36,8 +39,9 @@ export class EvenementController {
   async create(
     @UploadedFile() file: Express.Multer.File,
     @Body() dto: CreateEventDto,
-    @Req() req: any
+    @Req() req: any,
   ): Promise<Evenement> {
+    console.log('Requête POST reçue:', { dto, file, user: req.user });
     const userIdFromToken = req.user?.sub;
     if (!userIdFromToken) {
       throw new UnauthorizedException('Utilisateur non authentifié');
@@ -59,12 +63,13 @@ export class EvenementController {
       const filePath = path.join(uploadDir, fileName);
       fs.writeFileSync(filePath, file.buffer);
 
-      dto.imageUrl = `/uploads/events/${fileName}`;
+      dto.imageUrl = `/Uploads/events/${fileName}`;
     }
 
     try {
       return await this.evenementService.create(dto);
     } catch (error) {
+      console.error('Erreur lors de la création:', error);
       if (error.code === '23505') {
         throw new BadRequestException("Vous avez déjà créé un événement avec ce nom.");
       }
@@ -72,34 +77,34 @@ export class EvenementController {
     }
   }
 
-@Patch(':id')
+@Put(':id')
 @UseGuards(AuthGuard('jwt'))
-@UseInterceptors(FileInterceptor('image'))
-async update(
-  @Param('id') id: string,
+@UseInterceptors(
+  FileInterceptor('image', {
+    storage: diskStorage({
+      destination: './Uploads/events',
+      filename: (req, file, cb) => {
+        const randomName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        return cb(null, `${randomName}${path.extname(file.originalname)}`);
+      },
+    }),
+    fileFilter: (req, file, cb) => {
+      if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+        return cb(new BadRequestException('Seules les images sont autorisées'), false);
+      }
+      cb(null, true);
+    },
+    limits: { fileSize: 5 * 1024 * 1024 },
+  }),
+)
+async updateEvent(
+  @Param('id', ParseIntPipe) id: number,
   @Body() dto: UpdateEventDto,
-  @Req() req: any,
-  @UploadedFile() file?: Express.Multer.File,
-): Promise<Evenement> {
-  const userId = req.user?.sub;
-  if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');
-
-  await this.forfaitService.checkForfaitExpiration(userId);
-
-  const event = await this.evenementService.findOneById(+id);
-  if (!event || event.user.id !== userId) {
-    throw new UnauthorizedException("Vous n'êtes pas autorisé à modifier cet événement");
-  }
-
-  try {
-    const updatedEvent = await this.evenementService.update(+id, { ...dto, image: file }, userId);
-    console.log('Réponse de update:', updatedEvent);
-    return updatedEvent;
-  } catch (error) {
-    console.error('Erreur dans update:', error);
-    throw new BadRequestException(error.message || "Erreur lors de la mise à jour de l'événement");
-  }
+  @UploadedFile() imageFile?: Express.Multer.File,
+){
+  return this.evenementService.updateEvent(id, dto, imageFile);
 }
+
 
   @Get('/me')
   @UseGuards(AuthGuard('jwt'))
@@ -143,11 +148,11 @@ async update(
 
   @Get(':id/managerEvents')
   async findManagerEvents(@Param('id') id: string) {
-    return this.evenementService.findManagerEvents(id);   
+    return this.evenementService.findManagerEvents(id);
   }
 
   @Get('/events/statistics')
   async findCountForAllEventStats(): Promise<any> {
-    return this.evenementService.findCountForAllEventStats();   
+    return this.evenementService.findCountForAllEventStats();
   }
 }

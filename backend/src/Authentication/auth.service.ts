@@ -13,16 +13,17 @@ import { NotificationEntity } from 'src/entities/notification.entity';
 import { ContactMessage } from 'src/entities/ContactMessage';
 import * as bcrypt from 'bcrypt'
 import axios from 'axios';
-import {Request, Response } from 'express';
-import { Redis  } from 'ioredis';
+import { Request, Response } from 'express';
+import { Redis } from 'ioredis';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { NotificationGateway } from 'src/gateway/notification.gateway';
+import { Admin } from 'src/entities/Admin';
 
 
 @Injectable()
 export class AuthService {
   emailVerificationService: any;
-  
+
 
   constructor(
     private readonly jwtService: JwtService,
@@ -38,8 +39,10 @@ export class AuthService {
     private readonly notificationRepository: Repository<NotificationEntity>,
     @InjectRepository(ContactMessage)
     private readonly contact_messages: Repository<ContactMessage>,
+    @InjectRepository(Admin)
+    private adminRepository: Repository<Admin>,
     @InjectRedis()
-    private readonly redis:Redis ,
+    private readonly redis: Redis,
     private readonly notificationGateway: NotificationGateway,
   ) { }
 
@@ -51,10 +54,18 @@ export class AuthService {
     }
     // TODO: envoyer le message par email (nodemailer, etc.)
   }
-  
+
   async validateUser(profile: any): Promise<any> {
     const { emails, displayName, photos } = profile;
     const email = emails[0].value;
+
+    //verification admin
+    const adminIsExist = await this.adminRepository.findOne({
+      where: { email: email }
+    })
+    if (adminIsExist) {
+      throw new BadRequestException("c'est un email d'un administrateur")
+    }
 
     // Vérification dans Personnel
     const personnel = await this.personnelRepository.findOne({
@@ -73,7 +84,6 @@ export class AuthService {
       if (!freemium) {
         throw new Error('Forfait freemium non trouvé');
       }
-
       user = this.userRepository.create({
         id: uuidv4(),
         email,
@@ -85,7 +95,7 @@ export class AuthService {
 
       await this.userRepository.save(user);
       console.log('Nouvel utilisateur créé:', { id: user.id, email, role: user.role });
-      
+
       const notification = this.notificationRepository.create({
         title: 'Nouvel organisateur inscrit',
         message: `L'organisateur ${displayName || email} s'est inscrit.`,
@@ -122,6 +132,23 @@ export class AuthService {
   async registerUser(data: { name: string; email: string; password: string; photo?: string }) {
     const { name, email, password, photo } = data;
 
+    //verification admin
+    const adminIsExist = await this.adminRepository.findOne({
+      where: { email: email }
+    })
+    if (adminIsExist) {
+      throw new BadRequestException("c'est un email d'un administrateur")
+    }
+
+    // Vérification dans Personnel
+    const personnel = await this.personnelRepository.findOne({
+      where: { email },
+      relations: ['evenement'],
+    });
+
+    const isInPersonnel = !!personnel;
+    const isdetectedRole = isInPersonnel ? personnel.role : 'organisateur';
+
     // Vérifier si email existe déjà
     const existing = await this.userRepository.findOne({ where: { email } });
     if (existing) {
@@ -144,11 +171,23 @@ export class AuthService {
       email,
       password: hashedPassword,
       photo: photo || null, // nom du fichier
-      role: 'organisateur',
+      role: isdetectedRole,
       forfait: freemium,
     });
 
     await this.userRepository.save(newUser);
+
+    const notification = this.notificationRepository.create({
+      title: 'Nouvel organisateur inscrit',
+      message: `L'organisateur ${name || email} s'est inscrit.`,
+      type: 'info',
+      date: new Date(),
+    });
+    await this.notificationRepository.save(notification);
+    this.notificationGateway.emitNotifRegisterToAdmin({
+      ...notification,
+      date: notification.date.toISOString(),
+    });
 
     return {
       message: 'Utilisateur créé avec succès',
@@ -169,7 +208,7 @@ export class AuthService {
    * amelioration pour login pout utilise cookies
    */
 
-    async login(user: any,res: Response) {
+  async login(user: any, res: Response) {
     const payload = {
       email: user.email,
       sub: user.id,
@@ -177,27 +216,27 @@ export class AuthService {
       name: user.name,
       photo: user.photo,
     };
-    const access_token= this.jwtService.sign(payload,{expiresIn:'1h'});
-    const refresh_token= this.jwtService.sign(payload,{expiresIn:'7d'});
-    res.cookie('jwt',access_token,{
+    const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
+    res.cookie('jwt', access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge:60*60*60*1000,
+      maxAge: 60 * 60 * 60 * 1000,
     });
     console.log('JWT Payload:', payload);
 
     //utilise pour actualise le token
 
-    res.cookie('refresh_token',refresh_token,{
+    res.cookie('refresh_token', refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge:7*24*60*60*1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     })
 
     return {
-      access_token,refresh_token
+      access_token, refresh_token
     };
   }
 
@@ -212,90 +251,90 @@ export class AuthService {
    * 
    */
   @Post('refresh')
-async refreshToken(@Req() req: Request, @Res() res: Response) {
-  const refreshToken = req.cookies['refresh_token'];
+  async refreshToken(@Req() req: Request, @Res() res: Response) {
+    const refreshToken = req.cookies['refresh_token'];
 
-  if (!refreshToken || await this.isTokenBlacklisted(refreshToken)) {
-    throw new UnauthorizedException('Refresh token invalide');
-  }
-
-  const payload = await this.jwtService.verifyAsync(refreshToken);
-
-  const newAccessToken = this.jwtService.sign(
-    {
-      email: payload.email,
-      sub: payload.sub,
-      role: payload.role,
-      name: payload.name,
-      photo: payload.photo,
-    },
-    { expiresIn: '1h' },
-  );
-
-  res.cookie('jwt', newAccessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 60 * 60 * 1000,
-  });
-
-  return { access_token: newAccessToken };
-}
-
-
-/**
- * 
- * @param token 
- * @param res 
- * @returns 
- * 
- * deconnexion
- */
-async logout(req: Request, res: Response): Promise<{ message: string }> {
-  try {
-    const jwtCookie = req.cookies['jwt']; // Récupérer le jeton directement du cookie
-    if (!jwtCookie) {
-      throw new Error('Aucun jeton fourni');
+    if (!refreshToken || await this.isTokenBlacklisted(refreshToken)) {
+      throw new UnauthorizedException('Refresh token invalide');
     }
 
-    await this.jwtService.verifyAsync(jwtCookie, {
-      secret: process.env.JWT_SECRET || 'your-secret-key',
+    const payload = await this.jwtService.verifyAsync(refreshToken);
+
+    const newAccessToken = this.jwtService.sign(
+      {
+        email: payload.email,
+        sub: payload.sub,
+        role: payload.role,
+        name: payload.name,
+        photo: payload.photo,
+      },
+      { expiresIn: '1h' },
+    );
+
+    res.cookie('jwt', newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 1000,
     });
 
-    await this.redis.set(`blacklist:${jwtCookie}`, 'true', 'EX', 24 * 60 * 60);
-
-    // ... Le reste de votre code pour effacer les cookies
-    res.clearCookie('jwt', { /* options */ });
-    res.clearCookie('refresh_token', { /* options */ });
-
-    return { message: 'Déconnexion réussie' };
-  } catch (error) {
-    throw new Error('Token invalide ou erreur lors de la déconnexion');
+    return { access_token: newAccessToken };
   }
-}
 
-// async logout(token: string, res: Response): Promise<{ message: string }> {
-//     try {
-//       // Verify token (optional, for additional security)
-//       await this.jwtService.verifyAsync(token, {
-//         secret: process.env.JWT_SECRET || 'your-secret-key',
-//       });
 
-//       // Add token to blacklist
-//       this.tokenBlacklist.add(token);
+  /**
+   * 
+   * @param token 
+   * @param res 
+   * @returns 
+   * 
+   * deconnexion
+   */
+  async logout(req: Request, res: Response): Promise<{ message: string }> {
+    try {
+      const jwtCookie = req.cookies['jwt']; // Récupérer le jeton directement du cookie
+      if (!jwtCookie) {
+        throw new Error('Aucun jeton fourni');
+      }
 
-//       // Clear the JWT cookie
-//       res.clearCookie('jwt', {
-//         httpOnly: true,
-//         secure: process.env.NODE_ENV === 'production',
-//         sameSite: 'strict',
-//       });
+      await this.jwtService.verifyAsync(jwtCookie, {
+        secret: process.env.JWT_SECRET || 'your-secret-key',
+      });
 
-//       return { message: 'Déconnexion réussie' };
-//     } catch (error) {
-//       throw new Error('Token invalide ou erreur lors de la déconnexion');
-//     }
-//   }
+      await this.redis.set(`blacklist:${jwtCookie}`, 'true', 'EX', 24 * 60 * 60);
+
+      // ... Le reste de votre code pour effacer les cookies
+      res.clearCookie('jwt', { /* options */ });
+      res.clearCookie('refresh_token', { /* options */ });
+
+      return { message: 'Déconnexion réussie' };
+    } catch (error) {
+      throw new Error('Token invalide ou erreur lors de la déconnexion');
+    }
+  }
+
+  // async logout(token: string, res: Response): Promise<{ message: string }> {
+  //     try {
+  //       // Verify token (optional, for additional security)
+  //       await this.jwtService.verifyAsync(token, {
+  //         secret: process.env.JWT_SECRET || 'your-secret-key',
+  //       });
+
+  //       // Add token to blacklist
+  //       this.tokenBlacklist.add(token);
+
+  //       // Clear the JWT cookie
+  //       res.clearCookie('jwt', {
+  //         httpOnly: true,
+  //         secure: process.env.NODE_ENV === 'production',
+  //         sameSite: 'strict',
+  //       });
+
+  //       return { message: 'Déconnexion réussie' };
+  //     } catch (error) {
+  //       throw new Error('Token invalide ou erreur lors de la déconnexion');
+  //     }
+  //   }
 
   // Method to check if a token is blacklisted (for use in auth guard)
   // isTokenBlacklisted(token: string): boolean {
@@ -312,9 +351,9 @@ async logout(req: Request, res: Response): Promise<{ message: string }> {
    */
 
   async isTokenBlacklisted(token: string): Promise<boolean> {
-  const isBlacklisted = await this.redis.get(`blacklist:${token}`);
-  return !!isBlacklisted;
-}
+    const isBlacklisted = await this.redis.get(`blacklist:${token}`);
+    return !!isBlacklisted;
+  }
 
 
 
@@ -582,46 +621,46 @@ async logout(req: Request, res: Response): Promise<{ message: string }> {
   //   return user;
   // }
 
-async loginUser(email: string, password: string, res: Response) {
-  const user = await this.userRepository.findOne({ where: { email } });
-  if (!user) throw new BadRequestException('Email ou mot de passe incorrect');
+  async loginUser(email: string, password: string, res: Response) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) throw new BadRequestException('Email ou mot de passe incorrect');
 
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new BadRequestException('Email ou mot de passe incorrect');
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) throw new BadRequestException('Email ou mot de passe incorrect');
 
-  // Payload JWT
-  const payload = { sub: user.id, email: user.email, role: user.role, name: user.name, photo: user.photo };
-  const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
-  const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
+    // Payload JWT
+    const payload = { sub: user.id, email: user.email, role: user.role, name: user.name, photo: user.photo };
+    const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-  // Envoyer le JWT dans un cookie HttpOnly
-  res.cookie('jwt', access_token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 1000, // 1h
-  });
+    // Envoyer le JWT dans un cookie HttpOnly
+    res.cookie('jwt', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 1000, // 1h
+    });
 
-  res.cookie('refresh_token', refresh_token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
-  });
+    res.cookie('refresh_token', refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+    });
 
-  return {
-    message: 'Connexion réussie',
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      photo: user.photo ? `http://localhost:3000${user.photo}` : null,
-    },
-  };
-}
+    return {
+      message: 'Connexion réussie',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        photo: user.photo ? `http://localhost:3000${user.photo}` : null,
+      },
+    };
+  }
 
-async updateProfile(
+  async updateProfile(
     userId: string,
     data: {
       name: string;

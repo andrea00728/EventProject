@@ -7,6 +7,7 @@ import { CreatePersonnelDto } from 'src/dto/PersonnelDto';
 import { JwtService } from '@nestjs/jwt';
 import * as nodemailer from 'nodemailer';
 import { NotificationService } from '../notification/notification.service';
+import { Admin } from 'src/entities/Admin';
 @Injectable()
 export class PersonnelService {
   constructor(
@@ -15,6 +16,9 @@ export class PersonnelService {
 
     @InjectRepository(Evenement)
     private evenementRepository: Repository<Evenement>,
+
+    @InjectRepository(Admin)
+    private adminRepository: Repository<Admin>,
 
     private jwtService:JwtService,
     private readonly notificationService:NotificationService,
@@ -133,6 +137,15 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
     throw new BadRequestException("Événement non trouvé pour cet utilisateur.");
   }
 
+  //verification Admin
+  const isExistAdmin = await this.adminRepository.findOne({
+    where :  {email : dto.email}
+  })
+
+  if (isExistAdmin) {
+    throw new BadRequestException("c'est un email de l'administrateur")
+  }
+
 
   // Vérification si l'utilisateur a déjà un rôle dans cet événement
   const existingPersonnel = await this.personnelRepository.findOne({
@@ -187,8 +200,8 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
     { expiresIn: '2d' }
   );
 
-  const confirmationLink = `https://mastertable.site/personnel/response?token=${token}&action=confirm`;
-  const refuseLink = `https://mastertable.site/personnel/response?token=${token}&action=refuse`;
+  const confirmationLink = `http://localhost:5173/personnel/response?token=${token}&action=confirm`;
+  const refuseLink = `http://localhost:5173/personnel/response?token=${token}&action=refuse`;
 
 
   const transporter = nodemailer.createTransport({

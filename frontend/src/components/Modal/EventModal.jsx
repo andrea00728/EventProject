@@ -1,297 +1,620 @@
-import { motion } from 'framer-motion';
-import { X, Pencil } from 'lucide-react';
-import React, { useState, useEffect, useRef } from 'react';
-import { updateEvent, getSallesByLocation } from '../../services/evenementServ';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import { toast } from 'react-toastify';
+import React, { useState, useEffect } from 'react';
+import { getLocations, getSallesByLocation, createSalle, saveLocation, updateEvent } from '../../services/evenementServ';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
-// Icône personnalisée pour marqueur
-const customIcon = L.icon({
-  iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+// Configuration de l'icône personnalisée pour le marqueur de la carte
+const blueIcon = new L.Icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
   iconSize: [25, 41],
-  iconAnchor: [12.5, 41],
-  popupAnchor: [0, -41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
 });
 
-const EventModal = ({ isOpen, onClose, event, onEventUpdated, isEditMode = false }) => {
-  const [editForm, setEditForm] = useState({
+// Composant pour gérer les clics sur la carte
+function MapClickHandler({ onLocationSelect }) {
+  useMapEvents({
+    click(e) {
+      onLocationSelect(e.latlng); // Appelle la fonction lorsqu'on clique sur la carte
+    },
+  });
+  return null;
+}
+
+const EventModal = ({ isOpen, onClose, event, onSave }) => {
+  // État initial du formulaire avec les données de l'événement ou des valeurs par défaut
+  const [form, setForm] = useState({
     nom: event?.nom || '',
-    type: event?.type || '',
+    type: event?.type || 'autre',
     theme: event?.theme || '',
     date: event?.date ? new Date(event.date).toISOString().slice(0, 16) : '',
     date_fin: event?.date_fin ? new Date(event.date_fin).toISOString().slice(0, 16) : '',
-    locationId: event?.location?.id || '',
-    salleId: event?.salle?.id || '',
+    locationId: event?.location?.id || null,
+    salleId: event?.salleId || null,
     isPublic: event?.isPublic || false,
-    image: null,
   });
 
+  // États pour gérer l'image, les lieux, les salles et les modales
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(event?.imageUrl || '');
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [isSalleModalOpen, setIsSalleModalOpen] = useState(false);
+  const [searchLieu, setSearchLieu] = useState('');
+  const [filteredLocations, setFilteredLocations] = useState([]);
   const [salles, setSalles] = useState([]);
-  const [isEditing, setIsEditing] = useState(isEditMode);
-  const [geocodeAddress, setGeocodeAddress] = useState(event?.location?.nom || '');
-  const [geocodeResult, setGeocodeResult] = useState({
-    nom: event?.location?.nom || '',
-    latitude: event?.location?.latitude || null,
-    longitude: event?.location?.longitude || null,
+  const [newSalleName, setNewSalleName] = useState('');
+  const [isAddingSalle, setIsAddingSalle] = useState(false);
+  const [selectedLieu, setSelectedLieu] = useState(event?.location || null);
+  const [newLocation, setNewLocation] = useState({
+    query: '',
+    latitude: null,
+    longitude: null,
   });
-  const [geocodeResultText, setGeocodeResultText] = useState('');
-  const mapRef = useRef(null);
-  const markerRef = useRef(null);
+  const [geocodedResults, setGeocodedResults] = useState([]);
+  const [activeTab, setActiveTab] = useState('default');
+  const [isSubmitting, setIsSubmitting] = useState(false); // Nouvel état pour empêcher les soumissions multiples
 
-  // Charger les salles selon le lieu sélectionné
+  // Charger les lieux et les salles au montage du composant
   useEffect(() => {
-    if (editForm.locationId) {
-      getSallesByLocation(editForm.locationId)
-        .then(setSalles)
-        .catch(() => toast.error('Erreur lors du chargement des salles.'));
-    } else {
+    fetchLocations();
+    if (form.locationId) {
+      fetchSallesByLocation(form.locationId);
+    }
+  }, [form.locationId]);
+
+  // Fonction pour récupérer la liste des lieux
+  const fetchLocations = async () => {
+    try {
+      const data = await getLocations();
+      setFilteredLocations(data);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des lieux:', error);
+      alert('Erreur lors de la récupération des lieux');
+    }
+  };
+
+  // Fonction pour récupérer les salles associées à un lieu
+  const fetchSallesByLocation = async (locationId) => {
+    try {
+      const data = await getSallesByLocation(locationId);
+      setSalles(data);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des salles:', error);
       setSalles([]);
     }
-  }, [editForm.locationId]);
+  };
 
-  // Centrer la carte sur le lieu
-  useEffect(() => {
-    if (isOpen && geocodeResult.latitude && geocodeResult.longitude && mapRef.current) {
-      const lat = parseFloat(geocodeResult.latitude);
-      const lng = parseFloat(geocodeResult.longitude);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        mapRef.current.setView([lat, lng], 13);
-        if (markerRef.current) mapRef.current.removeLayer(markerRef.current);
-        markerRef.current = L.marker([lat, lng], { icon: customIcon }).addTo(mapRef.current);
+  // Fonction pour rechercher une adresse via l'API Nominatim
+  const handleGeocode = async () => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchLieu)}`
+      );
+      const data = await response.json();
+      setGeocodedResults(data);
+    } catch (error) {
+      console.error('Erreur de géocodage:', error);
+      alert('Erreur de géocodage');
+    }
+  };
+
+  // Sélectionner un résultat de géocodage
+  const handleSelectGeocodedLocation = (result) => {
+    setNewLocation({
+      query: result.display_name,
+      latitude: parseFloat(result.lat),
+      longitude: parseFloat(result.lon),
+    });
+    setGeocodedResults([]);
+  };
+
+  // Gérer le clic sur la carte pour définir une localisation
+  const handleMapClick = async (latlng) => {
+    setNewLocation({
+      ...newLocation,
+      latitude: latlng.lat,
+      longitude: latlng.lng,
+    });
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}`
+      );
+      const data = await response.json();
+      setNewLocation((prev) => ({
+        ...prev,
+        query: data.display_name,
+      }));
+    } catch (error) {
+      console.error('Erreur de géocodage inverse:', error);
+    }
+  };
+
+  // Sauvegarder un nouveau lieu
+  const handleSaveLocation = async () => {
+    try {
+      const response = await saveLocation(newLocation.query, event?.user?.id || '0');
+      setForm({ ...form, locationId: response.id });
+      setSelectedLieu(response);
+      fetchLocations();
+      fetchSallesByLocation(response.id);
+      setIsLocationModalOpen(false);
+      setNewLocation({ query: '', latitude: null, longitude: null });
+      setActiveTab('default');
+    } catch (error) {
+      console.error('Erreur lors de la création du lieu:', error);
+      alert(error.message || 'Erreur lors de la création du lieu');
+    }
+  };
+
+  // Créer une nouvelle salle
+  const handleCreateSalle = async () => {
+    if (!newSalleName.trim()) {
+      alert('Le nom de la salle ne peut pas être vide');
+      return;
+    }
+    try {
+      const response = await createSalle(form.locationId, { nom: newSalleName });
+      setSalles([...salles, response]);
+      setNewSalleName('');
+      setIsAddingSalle(false);
+      setForm({ ...form, salleId: response.id });
+    } catch (error) {
+      console.error('Erreur lors de la création de la salle:', error);
+      alert(error.message || 'Erreur lors de la création de la salle');
+    }
+  };
+
+  // Gérer les changements dans les champs du formulaire
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
+  };
+
+  // Gérer le changement d'image
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Le fichier est trop volumineux (max 5MB).');
+        return;
+      }
+      if (!['image/jpeg', 'image/png'].includes(file.type)) {
+        alert('Veuillez sélectionner une image au format JPEG ou PNG.');
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Soumettre le formulaire pour mettre à jour l'événement
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return; // Empêcher les soumissions multiples
+    setIsSubmitting(true); // Verrouiller le formulaire
+
+    if (salles.length > 0 && form.salleId) {
+      const selectedSalle = salles.find((s) => s.id === Number(form.salleId));
+      if (!selectedSalle) {
+        alert('La salle ne correspond pas au lieu sélectionné');
+        setIsSubmitting(false);
+        return;
       }
     }
-  }, [isOpen, geocodeResult]);
-
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    setEditForm((prev) => ({
-      ...prev,
-      [name]: files ? files[0] : value,
-    }));
-  };
-
-  const handleUpdate = async () => {
-    const data = new FormData();
-    Object.entries(editForm).forEach(([key, value]) => {
-      data.append(key, value);
-    });
-
     try {
-      const updatedEvent = await updateEvent(event.id, data);
-      onEventUpdated(updatedEvent);
-      setIsEditing(false);
-      toast.success('Événement mis à jour avec succès !');
-    } catch {
-      toast.error("Erreur lors de la mise à jour de l'événement");
+      if (!event || !event.id || isNaN(Number(event.id))) {
+        alert("L'identifiant de l'événement est manquant ou invalide.");
+        setIsSubmitting(false);
+        return;
+      }
+      const formData = new FormData();
+      formData.append('nom', form.nom);
+      formData.append('type', form.type);
+      formData.append('theme', form.theme);
+      formData.append('date', form.date);
+      formData.append('date_fin', form.date_fin);
+      formData.append('locationId', Number(form.locationId)); // Convertir en nombre
+      formData.append('salleId', form.salleId ? Number(form.salleId) : ''); // Convertir en nombre ou chaîne vide
+      formData.append('isPublic', form.isPublic.toString()); // Convertir en chaîne
+      if (imageFile) formData.append('image', imageFile);
+
+      console.log('Envoi de la requête pour eventId:', event.id); // Débogage
+      const updatedEvent = await updateEvent({
+        eventId: event.id,
+        eventData: formData,
+      });
+
+      console.log('Événement mis à jour:', updatedEvent);
+      if (onSave) onSave(updatedEvent);
+      onClose();
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour de l’événement:', err);
+      const errorMessage = err.response?.status === 400
+        ? "Requête invalide. Vérifiez les données envoyées."
+        : err.response?.status === 404
+        ? "L'événement n'a pas été trouvé sur le serveur. Vérifiez l'identifiant."
+        : err.response?.data?.message || 'Erreur lors de la mise à jour de l’événement';
+      alert(errorMessage);
+    } finally {
+      setIsSubmitting(false); // Déverrouiller le formulaire
     }
   };
 
-  const handleGeocode = async () => {
-    if (!geocodeAddress.trim()) return toast.error('Veuillez entrer une adresse valide.');
-    try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(geocodeAddress)}`);
-      const data = await response.json();
-      if (data.length > 0) {
-        const { lat, lon, display_name } = data[0];
-        const latitude = parseFloat(lat);
-        const longitude = parseFloat(lon);
-        setGeocodeResult({ nom: display_name, latitude, longitude });
-        setGeocodeResultText(`Nom: ${display_name}, Lat: ${lat}, Lon: ${lon}`);
-        if (mapRef.current) mapRef.current.setView([latitude, longitude], 13);
-      } else toast.error('Aucun résultat trouvé.');
-    } catch {
-      toast.error('Erreur lors du géocodage.');
-    }
+  // Sélectionner un lieu existant
+  const handleSelectLieu = (lieu) => {
+    setForm({ ...form, locationId: lieu.id, salleId: null });
+    setSelectedLieu(lieu);
+    fetchSallesByLocation(lieu.id);
+    setIsLocationModalOpen(false);
   };
 
-  const MapClickHandler = () => {
-    const map = useMap();
-    useEffect(() => {
-      const handleClick = async (e) => {
-        const { lat, lng } = e.latlng;
-        if (markerRef.current) map.removeLayer(markerRef.current);
-        markerRef.current = L.marker([lat, lng], { icon: customIcon }).addTo(map)
-          .bindPopup(`Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)}`)
-          .openPopup();
-        try {
-          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`);
-          const data = await response.json();
-          const displayName = data.display_name || `Lat: ${lat.toFixed(5)}, Lon: ${lng.toFixed(5)}`;
-          setGeocodeResult({ nom: displayName, latitude: lat, longitude: lng });
-          setGeocodeResultText(displayName);
-          setGeocodeAddress(displayName);
-        } catch {
-          toast.error('Erreur lors du reverse geocoding.');
-        }
-      };
-      map.on('click', handleClick);
-      return () => {
-        map.off('click', handleClick);
-        if (markerRef.current) {
-          map.removeLayer(markerRef.current);
-          markerRef.current = null;
-        }
-      };
-    }, [map]);
-    return null;
+  // Sélectionner une salle existante
+  const handleSelectSalle = (salle) => {
+    setForm({ ...form, salleId: salle.id });
+    setIsSalleModalOpen(false);
   };
 
-  if (!isOpen || !event) return null;
+  // Si la modale n'est pas ouverte, ne rien afficher
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 backdrop-blur-sm p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 20 }}
-        transition={{ duration: 0.3 }}
-        className="w-full max-w-4xl"
-      >
-        <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
-          <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-6 relative">
-            <h2 className="text-2xl font-bold text-white">
-              {isEditing ? `Modifier l'événement: ${event.nom}` : `Détails de l'événement: ${event.nom}`}
-            </h2>
-            <button onClick={onClose} className="absolute top-4 right-4 text-white hover:text-gray-200 p-1 rounded-full" aria-label="Fermer">
-              <X size={24} />
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
+        {/* Mode visualisation */}
+        {event?.mode === 'view' ? (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800">{event.nom}</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <p><span className="font-semibold">Type :</span> {event.type}</p>
+              <p><span className="font-semibold">Thème :</span> {event.theme}</p>
+              <p><span className="font-semibold">Date de début :</span> {new Date(event.date).toLocaleString('fr-FR')}</p>
+              <p><span className="font-semibold">Date de fin :</span> {event.date_fin ? new Date(event.date_fin).toLocaleString('fr-FR') : 'Non spécifiée'}</p>
+              <p><span className="font-semibold">Lieu :</span> {event.location?.nom || 'Non précisé'}</p>
+              <p><span className="font-semibold">Salle :</span> {event.salle?.nom || 'Non précisé'}</p>
+              <p><span className="font-semibold">Public :</span> {event.isPublic ? 'Oui' : 'Non'}</p>
+              {event.imageUrl && <img src={event.imageUrl} alt="Événement" className="mt-2 max-w-xs rounded-lg col-span-2" />}
+            </div>
+            <button
+              onClick={onClose}
+              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+            >
+              Fermer
             </button>
-            {!isEditing && (
-              <button onClick={() => setIsEditing(true)} className="absolute top-4 right-12 text-white hover:text-gray-200 p-1 rounded-full" aria-label="Modifier">
-                <Pencil size={24} />
-              </button>
-            )}
           </div>
+        ) : (
+          /* Mode édition */
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800">Modifier l'événement</h2>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Champ Nom */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Nom</label>
+                <input
+                  type="text"
+                  name="nom"
+                  value={form.nom}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              {/* Champ Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Type</label>
+                <select
+                  name="type"
+                  value={form.type}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="mariage">Mariage</option>
+                  <option value="reunion">Réunion</option>
+                  <option value="anniversaire">Anniversaire</option>
+                  <option value="engagement">Engagement</option>
+                  <option value="fiançailles">Fiançailles</option>
+                  <option value="autre">Autre</option>
+                </select>
+              </div>
+              {/* Champ Thème */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Thème</label>
+                <input
+                  type="text"
+                  name="theme"
+                  value={form.theme}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              {/* Champ Date de début */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Date de début</label>
+                <input
+                  type="datetime-local"
+                  name="date"
+                  value={form.date}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              {/* Champ Date de fin */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Date de fin</label>
+                <input
+                  type="datetime-local"
+                  name="date_fin"
+                  value={form.date_fin}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              {/* Champ Lieu */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Lieu</label>
+                <input
+                  type="text"
+                  value={selectedLieu?.nom || 'Sélectionner un lieu'}
+                  onClick={() => setIsLocationModalOpen(true)}
+                  readOnly
+                  className="mt-1 w-full p-3 border rounded-lg bg-gray-100 cursor-pointer"
+                />
+              </div>
+              {/* Champ Salle */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Salle</label>
+                <input
+                  type="text"
+                  value={salles.find((s) => s.id === form.salleId)?.nom || 'Sélectionner une salle'}
+                  onClick={() => setIsSalleModalOpen(true)}
+                  readOnly
+                  className="mt-1 w-full p-3 border rounded-lg bg-gray-100 cursor-pointer"
+                />
+              </div>
+              {/* Champ Événement public */}
+              <div className="flex items-center col-span-2">
+                <input
+                  type="checkbox"
+                  name="isPublic"
+                  checked={form.isPublic}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 text-sm font-medium text-gray-700">Événement public</label>
+              </div>
+              {/* Champ Image */}
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Image</label>
+                {imagePreview && (
+                  <img src={imagePreview} alt="Prévisualisation" className="mt-2 max-w-xs rounded-lg" />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="mt-1 w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+            {/* Boutons du formulaire */}
+            <div className="flex justify-end gap-4">
+              <button
+                type="submit"
+                className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Enregistrement en cours...' : 'Enregistrer'}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+              >
+                Annuler
+              </button>
+            </div>
+          </form>
+        )}
 
-          <div className="max-h-[70vh] overflow-y-auto p-6">
-            {isEditing ? (
-              <form onSubmit={(e) => { e.preventDefault(); handleUpdate(); }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
+        {/* Modale pour sélectionner ou créer un lieu */}
+        {isLocationModalOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">Sélectionner ou créer un lieu</h3>
+              {/* Onglets pour choisir entre sélection par défaut ou spécification */}
+              <div className="flex gap-4 mb-4">
+                <button
+                  className={`px-4 py-2 rounded-lg ${activeTab === 'default' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}
+                  onClick={() => setActiveTab('default')}
+                >
+                  Par défaut
+                </button>
+                <button
+                  className={`px-4 py-2 rounded-lg ${activeTab === 'specify' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}
+                  onClick={() => setActiveTab('specify')}
+                >
+                  Spécifier le lieu
+                </button>
+              </div>
+              {activeTab === 'default' ? (
                 <div>
-                  <label>Nom</label>
-                  <input name="nom" value={editForm.nom} onChange={handleChange} className="w-full p-2 border rounded" required />
-                </div>
-
-                <div>
-                  <label>Type</label>
-                  <input name="type" value={editForm.type} onChange={handleChange} className="w-full p-2 border rounded" required />
-                </div>
-
-                <div>
-                  <label>Thème</label>
-                  <input name="theme" value={editForm.theme} onChange={handleChange} className="w-full p-2 border rounded" required />
-                </div>
-
-                <div>
-                  <label>Date début</label>
-                  <input type="datetime-local" name="date" value={editForm.date} onChange={handleChange} className="w-full p-2 border rounded" required />
-                </div>
-
-                <div>
-                  <label>Date fin</label>
-                  <input type="datetime-local" name="date_fin" value={editForm.date_fin} onChange={handleChange} className="w-full p-2 border rounded" required />
-                </div>
-
-                <div>
-                  <label>Lieu</label>
-                  <select
-                    name="locationId"
-                    value={editForm.locationId}
-                    onChange={(e) => {
-                      handleChange(e);
-                      const selectedLocation = event?.locations?.find(loc => loc.id === e.target.value);
-                      if (selectedLocation?.latitude && selectedLocation?.longitude) {
-                        getSallesByLocation(selectedLocation.id)
-                          .then(setSalles)
-                          .catch(() => toast.error('Erreur lors du chargement des salles.'));
-                      } else {
-                        setSalles([]);
-                      }
-                    }}
-                    className="w-full p-2 border rounded"
-                    required
-                  >
-                    <option value="">-- Sélectionner un lieu --</option>
-                    {event?.locations
-                      ?.filter((loc, index) => index !== 0 && loc.latitude && loc.longitude)
-                      .map(loc => (
-                        <option key={loc.id} value={loc.id}>{loc.nom}</option>
-                      ))
-                    }
-                  </select>
-                </div>
-
-                <div>
-                  <label>Salle</label>
-                  {salles.length > 0 ? (
-                    <select
-                      name="salleId"
-                      value={editForm.salleId}
-                      onChange={handleChange}
-                      className="w-full p-2 border rounded"
-                      required
-                    >
-                      <option value="">-- Sélectionner une salle --</option>
-                      {salles.map(salle => (
-                        <option key={salle.id} value={salle.id}>{salle.nom}</option>
+                  <input
+                    type="text"
+                    placeholder="Rechercher un lieu"
+                    value={searchLieu}
+                    onChange={(e) => setSearchLieu(e.target.value)}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-4"
+                  />
+                  <ul className="max-h-48 overflow-y-auto border rounded-lg">
+                    {filteredLocations
+                      .filter((lieu) => lieu.nom.toLowerCase().includes(searchLieu.toLowerCase()))
+                      .map((lieu) => (
+                        <li
+                          key={lieu.id}
+                          onClick={() => handleSelectLieu(lieu)}
+                          className="p-3 cursor-pointer hover:bg-gray-100"
+                        >
+                          {lieu.nom}
+                        </li>
                       ))}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      name="salleId"
-                      value={editForm.salleId}
-                      onChange={handleChange}
-                      placeholder="Saisir manuellement le nom de la salle"
-                      className="w-full p-2 border rounded"
-                      required
-                    />
+                  </ul>
+                  {selectedLieu && selectedLieu.latitude && selectedLieu.longitude && (
+                    <MapContainer
+                      center={[selectedLieu.latitude, selectedLieu.longitude]}
+                      zoom={13}
+                      style={{ height: '300px', width: '100%' }}
+                      className="mt-4 rounded-lg"
+                    >
+                      <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      />
+                      <Marker position={[selectedLieu.latitude, selectedLieu.longitude]} icon={blueIcon}>
+                        <Popup>{selectedLieu.nom}</Popup>
+                      </Marker>
+                    </MapContainer>
                   )}
                 </div>
-
+              ) : (
                 <div>
-                  <label>Image</label>
-                  <input type="file" name="image" onChange={handleChange} className="w-full p-2 border rounded" />
-                </div>
-
-                <div className="col-span-2">
-                  <label>Public</label>
-                  <input
-                    type="checkbox"
-                    name="isPublic"
-                    checked={editForm.isPublic}
-                    onChange={(e) => setEditForm({ ...editForm, isPublic: e.target.checked })}
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label>Lieu (sélection via carte)</label>
-                  <input value={geocodeAddress} onChange={(e) => setGeocodeAddress(e.target.value)} placeholder="Adresse du lieu" className="w-full p-2 border rounded" />
-                  <button type="button" onClick={handleGeocode} className="mt-2 bg-blue-500 text-white p-2 rounded">Rechercher</button>
-                  <p className="mt-2">{geocodeResultText}</p>
-                  <MapContainer center={[48.8566, 2.3522]} zoom={13} style={{ height: '300px', width: '100%' }} ref={mapRef} scrollWheelZoom={false}>
-                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    <MapClickHandler />
-                    {geocodeResult && geocodeResult.latitude && geocodeResult.longitude && (
-                      <Marker position={[geocodeResult.latitude, geocodeResult.longitude]} icon={customIcon} />
+                  <div className="flex gap-2 mb-4">
+                    <input
+                      type="text"
+                      placeholder="Rechercher une adresse"
+                      value={searchLieu}
+                      onChange={(e) => setSearchLieu(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleGeocode()}
+                      className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <button
+                      onClick={handleGeocode}
+                      className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                    >
+                      Rechercher
+                    </button>
+                  </div>
+                  <ul className="max-h-48 overflow-y-auto border rounded-lg">
+                    {geocodedResults.map((result) => (
+                      <li
+                        key={result.place_id}
+                        onClick={() => handleSelectGeocodedLocation(result)}
+                        className="p-3 cursor-pointer hover:bg-gray-100"
+                      >
+                        {result.display_name}
+                      </li>
+                    ))}
+                  </ul>
+                  <MapContainer
+                    center={[48.8566, 2.3522]} // Centre par défaut (Paris)
+                    zoom={13}
+                    style={{ height: '300px', width: '100%' }}
+                    className="mt-4 rounded-lg"
+                  >
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    />
+                    {newLocation.latitude && newLocation.longitude && (
+                      <Marker position={[newLocation.latitude, newLocation.longitude]} icon={blueIcon}>
+                        <Popup>{newLocation.query}</Popup>
+                      </Marker>
                     )}
+                    <MapClickHandler onLocationSelect={handleMapClick} />
                   </MapContainer>
+                  {newLocation.query && (
+                    <div className="mt-4 space-y-2">
+                      <p><span className="font-semibold">Nom :</span> {newLocation.query}</p>
+                      <p><span className="font-semibold">Latitude :</span> {newLocation.latitude}</p>
+                      <p><span className="font-semibold">Longitude :</span> {newLocation.longitude}</p>
+                      <button
+                        onClick={handleSaveLocation}
+                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                      >
+                        Sauvegarder
+                      </button>
+                    </div>
+                  )}
                 </div>
-
-                <div className="col-span-2 flex gap-4">
-                  <button type="submit" className="bg-green-500 text-white p-2 rounded flex-1">Sauvegarder</button>
-                  <button type="button" onClick={() => setIsEditing(false)} className="bg-red-500 text-white p-2 rounded flex-1">Annuler</button>
-                </div>
-              </form>
-            ) : (
-              <>
-                {/* Affichage des détails, tables et invités si besoin */}
-              </>
-            )}
+              )}
+              <button
+                onClick={() => setIsLocationModalOpen(false)}
+                className="mt-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+              >
+                Fermer
+              </button>
+            </div>
           </div>
-        </div>
-      </motion.div>
+        )}
+
+        {/* Modale pour sélectionner ou ajouter une salle */}
+        {isSalleModalOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">Sélectionner ou ajouter une salle</h3>
+              {salles.length > 0 ? (
+                <ul className="max-h-48 overflow-y-auto border rounded-lg">
+                  {salles.map((salle) => (
+                    <li
+                      key={salle.id}
+                      onClick={() => handleSelectSalle(salle)}
+                      className="p-3 cursor-pointer hover:bg-gray-100"
+                    >
+                      {salle.nom}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500">Aucune salle disponible pour ce lieu.</p>
+              )}
+              <button
+                onClick={() => setIsAddingSalle(true)}
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+              >
+                Ajouter une salle
+              </button>
+              {isAddingSalle && (
+                <div className="mt-4 space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Nom de la salle"
+                    value={newSalleName}
+                    onChange={(e) => setNewSalleName(e.target.value)}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <div className="flex gap-4">
+                    <button
+                      onClick={handleCreateSalle}
+                      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                    >
+                      Sauvegarder
+                    </button>
+                    <button
+                      onClick={() => setIsAddingSalle(false)}
+                      className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={() => setIsSalleModalOpen(false)}
+                className="mt-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

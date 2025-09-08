@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getMyEvents } from '../../services/evenementServ';
+import { getMyEvents, updateEvent } from '../../services/evenementServ';
 import { useStateContext } from '../../context/ContextProvider';
-import EventModal from '../../components/Modal/EventModal'; // Mis à jour
+import Modal from '../../components/Modal/EventModal';
 import DeleteEventButton from '../../util/DeleteEvenement';
 
 const EventAccept = () => {
@@ -9,7 +9,6 @@ const EventAccept = () => {
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false); // Nouveau pour mode édition
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -37,21 +36,32 @@ const EventAccept = () => {
     fetchEvents();
   }, [isAuthenticated]);
 
-  const openModal = (event, edit = false) => {
-    setSelectedEvent(event);
-    setIsEditMode(edit);
+  const openModal = (event, mode = 'view') => {
+    console.log('Ouverture de la modale pour l\'événement:', event); // Débogage
+    setSelectedEvent({ ...event, mode });
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedEvent(null);
-    setIsEditMode(false);
   };
 
-  const handleEventUpdated = (updatedEvent) => {
-    setEvents(events.map((e) => e.id === updatedEvent.id ? updatedEvent : e));
-    closeModal();
+  const handleUpdateEvent = (updatedEvent) => {
+    if (!updatedEvent || !updatedEvent.id) {
+      alert("L'événement mis à jour ou son identifiant est manquant.");
+      return;
+    }
+    try {
+      console.log('Mise à jour de l\'événement:', updatedEvent);
+      // Mettre à jour la liste des événements
+      setEvents(events.map((e) => (e.id === updatedEvent.id ? updatedEvent : e)));
+      setIsModalOpen(false); // Fermer la modale
+      setSelectedEvent(null); // Réinitialiser l'événement sélectionné
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour de l'événement:", error);
+      alert(error.response?.data?.message || "Erreur lors de la mise à jour de l'événement");
+    }
   };
 
   return (
@@ -124,28 +134,28 @@ const EventAccept = () => {
                   >
                     {/* Card Header */}
                     <div className={`h-2 bg-gradient-to-r ${index % 5 === 0 ? 'from-blue-500 to-purple-500' :
-                        index % 5 === 1 ? 'from-purple-500 to-pink-500' :
-                          index % 5 === 2 ? 'from-pink-500 to-orange-500' :
-                            index % 5 === 3 ? 'from-orange-500 to-amber-500' :
-                              'from-amber-500 to-blue-500'
-                      }`}></div>
+                      index % 5 === 1 ? 'from-purple-500 to-pink-500' :
+                      index % 5 === 2 ? 'from-pink-500 to-orange-500' :
+                      index % 5 === 3 ? 'from-orange-500 to-amber-500' :
+                      'from-amber-500 to-blue-500'
+                    }`}></div>
 
-                    <div className="p-6 relative ">
+                    <div className="p-6 relative flex flex-col flex-grow">
                       {/* Event Title */}
                       <div className="flex items-start justify-between mb-6">
                         <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide leading-tight">
                           {event.nom}
                         </h2>
                         <div className={`w-3 h-3 rounded-full ${index % 5 === 0 ? 'bg-blue-500' :
-                            index % 5 === 1 ? 'bg-purple-500' :
-                              index % 5 === 2 ? 'bg-pink-500' :
-                                index % 5 === 3 ? 'bg-orange-500' :
-                                  'bg-amber-500'
-                          }`}></div>
+                          index % 5 === 1 ? 'bg-purple-500' :
+                          index % 5 === 2 ? 'bg-pink-500' :
+                          index % 5 === 3 ? 'bg-orange-500' :
+                          'bg-amber-500'
+                        }`}></div>
                       </div>
 
                       {/* Event Details */}
-                      <div className="space-y-4">
+                      <div className="space-y-4 flex-grow">
                         <div className="flex items-center gap-3">
                           <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                             <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,8 +209,7 @@ const EventAccept = () => {
                           </div>
                           <div>
                             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Lieu</p>
-                            <p className="text-slate-800 font-semibold">{event.location?.nom.split(",").slice(0, 2).join(", ") || "Non précisé"}
-                            </p>
+                            <p className="text-slate-800 font-semibold">{event.location?.nom.split(",").slice(0, 2).join(", ") || "Non précisé"}</p>
                           </div>
                         </div>
 
@@ -212,29 +221,41 @@ const EventAccept = () => {
                           </div>
                           <div>
                             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Salle</p>
-                            <p className="text-slate-800 font-semibold">{event.salle.nom}</p>
+                            <p className="text-slate-800 font-semibold">{event.salle?.nom || 'Non précisé'}</p>
                           </div>
                         </div>
                       </div>
 
                       {/* Action Buttons */}
                       <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
-                        <button
-                          onClick={() => openModal(event)}
-                          className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${index % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => openModal(event, 'view')}
+                            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${index % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
                               index % 5 === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' :
-                                index % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
-                                  index % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :
-                                    'bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600'
+                              index % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
+                              index % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :
+                              'bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600'
                             }`}
-                          aria-label={`Voir les tables pour l'événement ${event.nom}`}
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                          Voir les tables
-                        </button>
+                            aria-label={`Voir les tables pour l'événement ${event.nom}`}
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Voir les tables
+                          </button>
+                          <button
+                            onClick={() => openModal(event, 'edit')}
+                            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600`}
+                            aria-label={`Modifier l'événement ${event.nom}`}
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Modifier
+                          </button>
+                        </div>
                         <DeleteEventButton
                           eventId={event.id}
                           onDeleted={(deletedId) =>
@@ -252,12 +273,11 @@ const EventAccept = () => {
 
         {/* Modal */}
         {selectedEvent && (
-          <EventModal
+          <Modal
             isOpen={isModalOpen}
             onClose={closeModal}
             event={selectedEvent}
-            onEventUpdated={handleEventUpdated}
-            isEditMode={isEditMode}
+            onSave={selectedEvent?.mode === 'edit' ? handleUpdateEvent : undefined}
           />
         )}
       </div>

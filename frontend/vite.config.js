@@ -13,11 +13,11 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
-      },
-      '/auth': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-        secure: false,
+        bypass: (req) => {
+          if (req.url.includes('/forfait/success') || req.url.includes('/forfait/cancel')) {
+            return req.url; // laisse passer directement au frontend
+          }
+        }
       },
     },
   },

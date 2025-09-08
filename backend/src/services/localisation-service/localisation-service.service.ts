@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Evenement } from 'src/entities/Evenement';
 import { Localisation } from 'src/entities/Location';
@@ -127,16 +127,6 @@ export class LocationService {
     return this.locationRepository.find({ relations: ['salles'] });
   }
 
-  async findLocationById(id: number): Promise<Localisation> {
-    const location = await this.locationRepository.findOne({
-      where: { id },
-      relations: ['salles'],
-    });
-    if (!location) {
-      throw new BadRequestException('Lieu non trouvé');
-    }
-    return location;
-  }
 
   async createSalle(nom: string, locationId: number): Promise<Salle> {
     const location = await this.findLocationById(locationId);
@@ -150,16 +140,7 @@ export class LocationService {
     });
   }
 
-  async findSalleById(id: number): Promise<Salle> {
-    const salle = await this.salleRepository.findOne({
-      where: { id },
-      relations: ['location'],
-    });
-    if (!salle) {
-      throw new BadRequestException('Salle non trouvée');
-    }
-    return salle;
-  }
+ 
 
   async updateLocation(id: number, data: {
     nom: string;
@@ -335,4 +316,40 @@ export class LocationService {
       order: { nom: 'ASC' },
     });
   }
+
+  // Dans localisation-service.service.ts
+async findLocationById(id: number): Promise<Localisation> {
+  console.log('Recherche du lieu avec ID:', id);
+  try {
+    const location = await this.locationRepository.findOne({ where: { id } });
+    if (!location) {
+      console.log('Lieu non trouvé pour ID:', id);
+      throw new NotFoundException(`Lieu avec l'ID ${id} non trouvé`);
+    }
+    console.log('Lieu trouvé:', location);
+    return location;
+  } catch (error) {
+    console.error('Erreur lors de la recherche du lieu:', error);
+    throw error;
+  }
+}
+
+async findSalleById(id: number): Promise<Salle> {
+  console.log('Recherche de la salle avec ID:', id);
+  try {
+    const salle = await this.salleRepository.findOne({
+      where: { id },
+      relations: ['location'],
+    });
+    if (!salle) {
+      console.log('Salle non trouvée pour ID:', id);
+      throw new NotFoundException(`Salle avec l'ID ${id} non trouvée`);
+    }
+    console.log('Salle trouvée:', salle);
+    return salle;
+  } catch (error) {
+    console.error('Erreur lors de la recherche de la salle:', error);
+    throw error;
+  }
+}
 }

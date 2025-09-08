@@ -170,30 +170,32 @@ export const getLocationsByCreatorAndAdmin = async (createurId) => {
   return response.data;
 };
 
-/**
- * Met à jour un événement
- * @param {number} eventId - ID de l'événement
- * @param {Object} eventData - Données de l'événement à mettre à jour
- * @returns {Promise<Object>} - L'événement mis à jour
- */
-export const updateEvent = async (eventId, eventData) => {
+export const updateEvent = async ({ eventId, eventData }) => {
   try {
-    const formData = new FormData();
-    Object.keys(eventData).forEach(key => {
-      if (key === 'image' && eventData[key]) {
-        formData.append('image', eventData[key]);
-      } else if (eventData[key] !== undefined && eventData[key] !== null) {
-        formData.append(key, eventData[key].toString());
-      }
-    });
-
-    const response = await axiosClient.patch(`/evenements/${eventId}`, formData, {
+    console.log('Mise à jour de l\'événement avec ID:', eventId); // Débogage
+    const response = await axiosClient.put(`/evenements/${eventId}`, eventData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
     return response.data;
   } catch (error) {
-    throw error.response?.data?.message || error.message;
+    console.error("Erreur backend:", error);
+    throw error.response?.data?.message || 'Erreur lors de la mise à jour de l\'événement';
   }
 };
+
+
+
+export const getEvent = async (eventId) => {
+  console.log('Récupération de l\'événement avec ID:', eventId);
+  try {
+    const response = await axiosClient.get(`/evenements/${eventId}`);
+    console.log('Événement récupéré:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération de l\'événement:', error.response?.data);
+    throw error.response?.data?.message || 'Erreur lors de la récupération de l\'événement';
+  }
+};
+

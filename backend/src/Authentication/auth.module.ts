@@ -16,12 +16,12 @@ import { NotificationEntity } from 'src/entities/notification.entity';
 import { ContactMessage } from 'src/entities/ContactMessage';
 import { NotificationGateway } from 'src/gateway/notification.gateway';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
+import { Admin } from 'src/entities/Admin';
 
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User,Personnel, Evenement,Forfait,NotificationEntity,ContactMessage]),
-    TypeOrmModule.forFeature([User,Personnel, Evenement,Forfait]),
+    TypeOrmModule.forFeature([User,Personnel, Evenement,Forfait,NotificationEntity,ContactMessage , Admin]),
     RedisModule.forRoot({
       config:{
         host:'localhost',
