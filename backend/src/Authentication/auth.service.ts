@@ -669,17 +669,18 @@ export class AuthService {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
     });
 
-    return {
-      message: 'Connexion réussie',
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        photo: user.photo ? `http://localhost:3000${user.photo}` : null,
-      },
-    };
-  }
+  return {
+    message: 'Connexion réussie',
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      // photo: user.photo ? `http://localhost:3000${user.photo}` : null,
+      photo: user.photo ? `http://localhost:3000${user.photo}` : null,
+    },
+  };
+}
 
   async updateProfile(
     userId: string,
@@ -733,6 +734,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       name: user.name,
+      // photo: user.photo ? `http://localhost:3000${user.photo}` : null,
       photo: user.photo ? `http://localhost:3000${user.photo}` : null,
     };
     const newToken = this.jwtService.sign(payload);
@@ -742,12 +744,14 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
+      // photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
       photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
     });
 
     return {
       user: {
         ...user,
+        // photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
         photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
       } as User,
       token: newToken, // Retourner le nouveau token
@@ -765,10 +769,12 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
+      // photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
       photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
     });
     return {
       ...user,
+      // photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
       photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
     } as User;
   }

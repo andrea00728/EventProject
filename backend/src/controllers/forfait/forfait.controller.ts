@@ -95,7 +95,7 @@ async redirectToFrontend(
   }
 
   @Get('all')
-  @UseGuards(AuthGuard('jwt'))
+  // @UseGuards(AuthGuard('jwt'))
   async getAllForfaits() {
     return this.forfaitRepository.find();
   }

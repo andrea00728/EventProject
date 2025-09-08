@@ -96,7 +96,7 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false, onError="" }) => 
       onClose();
 
       // 🔥 REDIRECTION VERS PAGEPUBLIC APRÈS SUCCÈS
-      navigate("/pagepublic", { replace: true });
+      navigate("/", { replace: true });
       
     } else {
       // 🔹 Connexion
@@ -113,7 +113,7 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false, onError="" }) => 
       onClose();
 
       // 🔥 REDIRECTION VERS PAGEPUBLIC APRÈS SUCCÈS
-      navigate("/pagepublic", { replace: true });
+      navigate("/", { replace: true });
     }
 
   } catch (err) {

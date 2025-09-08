@@ -30,14 +30,16 @@ export default function PublicLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [errorMessage, setErrorMessage] = useState(null);
+  const [openSubMenus, setOpenSubMenus] = useState({}); // { [item.name]: true/false }
+
   const isPublicEventsPage = location.pathname === "/evenements-publics";
 
   const defaultNavItems = [
-    { path: "/pagepublic#pagepublic", name: "Accueil" },
-    { path: "/pagepublic#service", name: "Service" },
-    { path: "/pagepublic#testimony", name: "Témoignages" },
-    { path: "/pagepublic#forfaits", name: "Forfaits" },
-    { path: "/pagepublic#contact", name: "Contact" },
+    { path: "/#accueil", name: "Accueil" },
+    { path: "/#service", name: "Service" },
+    { path: "/#testimony", name: "Témoignages" },
+    { path: "/#forfaits", name: "Forfaits" },
+    { path: "/#contact", name: "Contact" },
   ];
 
   const [navItems, setNavItems] = useState(defaultNavItems);
@@ -95,15 +97,15 @@ export default function PublicLayout() {
   useEffect(() => {
     if (isAuthenticated && forfait) {
       setNavItems([
-        { path: "/pagepublic#pagepublic", name: "Accueil" },
+        { path: "/#accueil", name: "Accueil" },
         {
           path: "#",
           name: "Evenement",
           subMenus: getConditionalSubMenus(forfait.nom || "Default"),
         },
-        { path: "/pagepublic#service", name: "Service" },
-        { path: "/pagepublic#testimony", name: "Témoignages" },
-        { path: "/pagepublic#forfaits", name: "Forfaits" },
+        { path: "/#service", name: "Service" },
+        { path: "/#testimony", name: "Témoignages" },
+        { path: "/#forfaits", name: "Forfaits" },
       ]);
     }
   }, [forfait, isAuthenticated]);
@@ -118,7 +120,7 @@ export default function PublicLayout() {
       } else if (user?.role != "organisateur") {
         navigate("/choix-role", { replace: true });
       } else {
-        navigate("/pagepublic", { replace: true });
+        navigate("/", { replace: true });
       }
     }
   }, [isAuthenticated, user, role, navigate]);
@@ -147,11 +149,14 @@ export default function PublicLayout() {
 
   const handleDirection = (item) => {
     if (item.path.includes("#")) {
-      const id = item.path.split("#")[1];
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
+      const [basePath, id] = item.path.split("#");
+      if (basePath) navigate(basePath); // change de page d'abord
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100); // petit délai pour attendre le rendu
     } else {
       navigate(item.path);
     }
@@ -349,15 +354,18 @@ export default function PublicLayout() {
                   <div>
                     <button
                       onClick={() =>
-                        setIsSubMenuOpenMobile(!isSubMenuOpenMobile)
+                        setOpenSubMenus((prev) => ({
+                          ...prev,
+                          [item.name]: !prev[item.name],
+                        }))
                       }
                       className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-blue-50 rounded"
                     >
                       {item.name}
-                      <span>{isSubMenuOpenMobile ? "▲" : "▼"}</span>
+                      <span>{openSubMenus[item.name] ? "▲" : "▼"}</span>
                     </button>
                     <AnimatePresence>
-                      {isSubMenuOpenMobile && (
+                      {openSubMenus[item.name] && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
@@ -371,7 +379,10 @@ export default function PublicLayout() {
                               className="block px-4 py-2 text-gray-600 hover:text-blue-600 transition"
                               onClick={() => {
                                 setIsMenuOpen(false);
-                                setIsSubMenuOpenMobile(false);
+                                setOpenSubMenus((prev) => ({
+                                  ...prev,
+                                  [item.name]: false,
+                                }));
                               }}
                             >
                               {sub.name}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Calendar, MapPin, Clock, FileText } from 'lucide-react';
+import { Users, Calendar, MapPin, Clock, FileText, Star, Trophy, Target } from 'lucide-react';
 
 export const InfoEventForPersonnal = () => {
   const [eventData, setEventData] = useState({
@@ -19,94 +19,138 @@ export const InfoEventForPersonnal = () => {
   }, []);
 
   return (
-    <div className="p-6">
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        {/* Image de l'événement */}
-        {eventData.image && (
-          <div className="h-48 bg-gray-200 flex items-center justify-center">
-            <img 
-              src={eventData.image} 
-              alt="Événement" 
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-          </div>
-        )}
-        
-        <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            Informations de l'Événement
-          </h2>
-          
-          {/* Grid avec les informations principales */}
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
-            <div className="space-y-4">
-              <div className="flex items-center text-gray-600">
-                <Users className="mr-3 h-5 w-5 text-blue-500" />
-                <span className="font-medium">Organisateur:</span>
-                <span className="ml-2 text-gray-800">{eventData.organizer}</span>
-              </div>
-              
-              <div className="flex items-center text-gray-600">
-                <Calendar className="mr-3 h-5 w-5 text-green-500" />
-                <span className="font-medium">Nom de l'événement:</span>
-                <span className="ml-2 text-gray-800 font-semibold">{eventData.eventName}</span>
-              </div>
-              
-              <div className="flex items-center text-gray-600">
-                <Calendar className="mr-3 h-5 w-5 text-purple-500" />
-                <span className="font-medium">Date:</span>
-                <span className="ml-2 text-gray-800">{eventData.date}</span>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-center text-gray-600">
-                <Clock className="mr-3 h-5 w-5 text-orange-500" />
-                <span className="font-medium">Heure:</span>
-                <span className="ml-2 text-gray-800">{eventData.time}</span>
-              </div>
-              
-              <div className="flex items-center text-gray-600">
-                <MapPin className="mr-3 h-5 w-5 text-red-500" />
-                <span className="font-medium">Lieu:</span>
-                <span className="ml-2 text-gray-800">{eventData.location}</span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Section des détails */}
-          <div className="border-t pt-6">
-            <div className="flex items-start text-gray-600">
-              <FileText className="mr-3 h-5 w-5 mt-1 text-indigo-500" />
-              <div className="flex-1">
-                <span className="font-medium text-gray-800 block mb-3 text-lg">
-                  Détails de l'événement:
-                </span>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-gray-700 leading-relaxed">
-                    {eventData.details}
-                  </p>
+    <div className="p-8 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
+      <div className="max-w-6xl mx-auto">
+        {/* Header avec titre principal */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Informations de l'Événement</h1>
+          <div className="h-1 w-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden backdrop-blur-sm border border-white/20">
+          {/* Image de l'événement avec overlay */}
+          {eventData.image && (
+            <div className="relative h-64 bg-gradient-to-r from-blue-600 to-purple-600">
+              <img 
+                src={eventData.image} 
+                alt="Événement" 
+                className="w-full h-full object-cover opacity-90"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+              <div className="absolute bottom-6 left-6 text-white">
+                <h2 className="text-3xl font-bold mb-2">{eventData.eventName}</h2>
+                <div className="flex items-center space-x-4 text-white/90">
+                  <span className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    {eventData.date}
+                  </span>
+                  <span className="flex items-center">
+                    <Clock className="h-4 w-4 mr-2" />
+                    {eventData.time}
+                  </span>
                 </div>
               </div>
             </div>
-          </div>
+          )}
+          
+          <div className="p-8">
+            {/* Grid avec les informations principales */}
+            <div className="grid lg:grid-cols-2 gap-8 mb-8">
+              <div className="space-y-6">
+                <div className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border border-blue-200 hover:shadow-lg transition-all duration-300">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4">
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-blue-800 uppercase tracking-wide">Organisateur</span>
+                    <p className="text-lg font-semibold text-gray-900">{eventData.organizer}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl border border-purple-200 hover:shadow-lg transition-all duration-300">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mr-4">
+                    <Calendar className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-purple-800 uppercase tracking-wide">Date</span>
+                    <p className="text-lg font-semibold text-gray-900">{eventData.date}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="flex items-center p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-2xl border border-orange-200 hover:shadow-lg transition-all duration-300">
+                  <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+                    <Clock className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-orange-800 uppercase tracking-wide">Horaire</span>
+                    <p className="text-lg font-semibold text-gray-900">{eventData.time}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-2xl border border-red-200 hover:shadow-lg transition-all duration-300">
+                  <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center mr-4">
+                    <MapPin className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-red-800 uppercase tracking-wide">Lieu</span>
+                    <p className="text-lg font-semibold text-gray-900">{eventData.location}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Section des détails avec design amélioré */}
+            <div className="bg-gradient-to-r from-indigo-50 to-cyan-50 rounded-2xl p-6 border border-indigo-200 mb-8">
+              <div className="flex items-start">
+                <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                  <FileText className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">
+                    Détails de l'événement
+                  </h3>
+                  <div className="bg-white/70 backdrop-blur p-6 rounded-xl border border-white/50">
+                    <p className="text-gray-700 leading-relaxed text-lg">
+                      {eventData.details}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          {/* Informations supplémentaires */}
-          <div className="mt-6 grid md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600">150</div>
-              <div className="text-sm text-blue-800">Invités attendus</div>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-green-600">12</div>
-              <div className="text-sm text-green-800">Membres du personnel</div>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-purple-600">8</div>
-              <div className="text-sm text-purple-800">Tables disponibles</div>
+            {/* Statistiques avec design moderne */}
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
+                <div className="flex items-center justify-between mb-4">
+                  <Star className="h-8 w-8 text-blue-200" />
+                  <div className="w-2 h-2 bg-blue-300 rounded-full animate-pulse"></div>
+                </div>
+                <div className="text-3xl font-bold mb-1">150</div>
+                <div className="text-blue-100 text-sm font-medium uppercase tracking-wide">Invités attendus</div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
+                <div className="flex items-center justify-between mb-4">
+                  <Trophy className="h-8 w-8 text-emerald-200" />
+                  <div className="w-2 h-2 bg-emerald-300 rounded-full animate-pulse"></div>
+                </div>
+                <div className="text-3xl font-bold mb-1">12</div>
+                <div className="text-emerald-100 text-sm font-medium uppercase tracking-wide">Membres du personnel</div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
+                <div className="flex items-center justify-between mb-4">
+                  <Target className="h-8 w-8 text-purple-200" />
+                  <div className="w-2 h-2 bg-purple-300 rounded-full animate-pulse"></div>
+                </div>
+                <div className="text-3xl font-bold mb-1">8</div>
+                <div className="text-purple-100 text-sm font-medium uppercase tracking-wide">Tables disponibles</div>
+              </div>
             </div>
           </div>
         </div>

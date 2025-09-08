@@ -108,7 +108,7 @@ const Caisse = () => {
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
-        navigate("/pagepublic", { replace: true });
+        navigate("/", { replace: true });
       }, 2000);
     }
   };
