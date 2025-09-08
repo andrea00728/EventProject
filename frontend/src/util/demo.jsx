@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Edit, Plus, RefreshCcw, User, ArrowLeft, Clock, Minus, X, Move, RotateCcw } from "lucide-react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { Edit, Plus, RefreshCcw, User, Clock, Minus, X, Move, RotateCcw } from "lucide-react";
+import { AuthModal } from "../components/Modal/authModal";
 
 // Définition des types de tables avec leurs dimensions
 const TABLE_TYPES = [
@@ -26,94 +27,99 @@ const MODAL_TYPES = {
   LIMIT: 'limit',
   ADD_TABLE: 'add_table',
   ADD_GUEST: 'add_guest',
-  EDIT_TABLE: 'edit_table'
+  EDIT_TABLE: 'edit_table',
+  AUTH: 'auth',
+  DELETE_TABLE_CONFIRM: 'delete_table_confirm', // Nouveau type pour confirmation de suppression
+  RESET_CONFIRM: 'reset_confirm', // Nouveau type pour confirmation de réinitialisation
 };
 
-// Fonction pour aligner les positions sur une grille (snap to grid)
+// Fonction pour aligner les positions sur une grille
 function snapToGrid(value, gridSize = 40) {
   return Math.round(value / gridSize) * gridSize;
 }
 
-// Fonction pour aligner les angles de rotation sur une grille angulaire
+// Fonction pour aligner les angles de rotation
 function snapToAngle(value, angleStep = 15) {
   return Math.round(value / angleStep) * angleStep;
 }
 
-// Calcule les positions des chaises autour de la table en fonction de son type et de sa capacité
-function getChairPositions(type, capacity, tableWidth, tableHeight) {
-  const positions = [];
-  const chairSize = 30;
-  const minDistanceFromTable = 0;
+// Calcule les positions des chaises autour de la table
+const getChairPositions = (type, capacity, tableWidth, tableHeight) => {
+  return useMemo(() => {
+    const positions = [];
+    const chairSize = 30;
+    const minDistanceFromTable = 0;
 
-  if (type === "ronde" || type === "ovale") {
-    const centerX = tableWidth / 2;
-    const centerY = tableHeight / 2;
-    const tableRadius = type === "ronde"
-      ? Math.min(tableWidth, tableHeight) / 2
-      : Math.max(tableWidth, tableHeight) / 2;
-    const radius = tableRadius + minDistanceFromTable + chairSize / 2;
+    if (type === "ronde" || type === "ovale") {
+      const centerX = tableWidth / 2;
+      const centerY = tableHeight / 2;
+      const tableRadius = type === "ronde"
+        ? Math.min(tableWidth, tableHeight) / 2
+        : Math.max(tableWidth, tableHeight) / 2;
+      const radius = tableRadius + minDistanceFromTable + chairSize / 2;
 
-    for (let i = 0; i < capacity; i++) {
-      const angle = (2 * Math.PI * i) / capacity - Math.PI / 2;
-      const x = centerX + radius * Math.cos(angle) - chairSize / 2;
-      const y = centerY + radius * Math.sin(angle) - chairSize / 2;
-      positions.push({ left: `${x}px`, top: `${y}px` });
-    }
-  } else {
-    const perimetre = 2 * (tableWidth + tableHeight);
-    const spacingBetweenChairs = perimetre / capacity;
-    const topChairs = Math.round((tableWidth / spacingBetweenChairs));
-    const rightChairs = Math.round((tableHeight / spacingBetweenChairs));
-    const bottomChairs = Math.round((tableWidth / spacingBetweenChairs));
-    const leftChairs = capacity - topChairs - rightChairs - bottomChairs;
+      for (let i = 0; i < capacity; i++) {
+        const angle = (2 * Math.PI * i) / capacity - Math.PI / 2;
+        const x = centerX + radius * Math.cos(angle) - chairSize / 2;
+        const y = centerY + radius * Math.sin(angle) - chairSize / 2;
+        positions.push({ left: `${x}px`, top: `${y}px` });
+      }
+    } else {
+      const perimeter = 2 * (tableWidth + tableHeight);
+      const spacingBetweenChairs = perimeter / capacity;
+      const topChairs = Math.round(tableWidth / spacingBetweenChairs);
+      const rightChairs = Math.round(tableHeight / spacingBetweenChairs);
+      const bottomChairs = Math.round(tableWidth / spacingBetweenChairs);
+      const leftChairs = capacity - topChairs - rightChairs - bottomChairs;
 
-    let count = 0;
+      let count = 0;
 
-    if (topChairs > 0) {
-      const spacing = tableWidth / (topChairs + 1);
-      for (let i = 0; i < topChairs && count < capacity; i++, count++) {
-        positions.push({
-          left: `${(i + 1) * spacing - chairSize / 2}px`,
-          top: `${-minDistanceFromTable - chairSize}px`
-        });
+      if (topChairs > 0) {
+        const spacing = tableWidth / (topChairs + 1);
+        for (let i = 0; i < topChairs && count < capacity; i++, count++) {
+          positions.push({
+            left: `${(i + 1) * spacing - chairSize / 2}px`,
+            top: `${-minDistanceFromTable - chairSize}px`,
+          });
+        }
+      }
+
+      if (rightChairs > 0) {
+        const spacing = tableHeight / (rightChairs + 1);
+        for (let i = 0; i < rightChairs && count < capacity; i++, count++) {
+          positions.push({
+            left: `${tableWidth + minDistanceFromTable}px`,
+            top: `${(i + 1) * spacing - chairSize / 2}px`,
+          });
+        }
+      }
+
+      if (bottomChairs > 0) {
+        const spacing = tableWidth / (bottomChairs + 1);
+        for (let i = 0; i < bottomChairs && count < capacity; i++, count++) {
+          positions.push({
+            left: `${tableWidth - (i + 1) * spacing - chairSize / 2}px`,
+            top: `${tableHeight + minDistanceFromTable}px`,
+          });
+        }
+      }
+
+      if (leftChairs > 0) {
+        const spacing = tableHeight / (leftChairs + 1);
+        for (let i = 0; i < leftChairs && count < capacity; i++, count++) {
+          positions.push({
+            left: `${-minDistanceFromTable - chairSize}px`,
+            top: `${tableHeight - (i + 1) * spacing - chairSize / 2}px`,
+          });
+        }
       }
     }
 
-    if (rightChairs > 0) {
-      const spacing = tableHeight / (rightChairs + 1);
-      for (let i = 0; i < rightChairs && count < capacity; i++, count++) {
-        positions.push({
-          left: `${tableWidth + minDistanceFromTable}px`,
-          top: `${(i + 1) * spacing - chairSize / 2}px`,
-        });
-      }
-    }
+    return positions;
+  }, [type, capacity, tableWidth, tableHeight]);
+};
 
-    if (bottomChairs > 0) {
-      const spacing = tableWidth / (bottomChairs + 1);
-      for (let i = 0; i < bottomChairs && count < capacity; i++, count++) {
-        positions.push({
-          left: `${tableWidth - (i + 1) * spacing - chairSize / 2}px`,
-          top: `${tableHeight + minDistanceFromTable}px`,
-        });
-      }
-    }
-
-    if (leftChairs > 0) {
-      const spacing = tableHeight / (leftChairs + 1);
-      for (let i = 0; i < leftChairs && count < capacity; i++, count++) {
-        positions.push({
-          left: `${-minDistanceFromTable - chairSize}px`,
-          top: `${tableHeight - (i + 1) * spacing - chairSize / 2}px`,
-        });
-      }
-    }
-  }
-
-  return positions;
-}
-
-// Composant Chaise : représente une chaise autour d'une table
+// Composant Chaise
 function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMoving, zoomLevel }) {
   const adjustedStyle = {
     ...style,
@@ -121,7 +127,7 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
     top: `calc(${style.top} * ${zoomLevel})`,
     width: `${20 * zoomLevel}px`,
     height: `${20 * zoomLevel}px`,
-    fontSize: `${Math.max(8, 10 * zoomLevel)}px`
+    fontSize: `${Math.max(8, 10 * zoomLevel)}px`,
   };
 
   return (
@@ -130,9 +136,7 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
         isOccupied
           ? "bg-gradient-to-br from-rose-500 via-pink-500 to-red-500 border-rose-300 hover:from-rose-600 hover:via-pink-600 hover:to-red-600 shadow-rose-300/50"
           : "bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 border-emerald-300 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 shadow-emerald-300/50"
-      } ${
-        isSelected ? 'ring-4 ring-blue-400/60 ring-offset-2 ring-offset-white scale-125' : ''
-      } ${
+      } ${isSelected ? 'ring-4 ring-blue-400/60 ring-offset-2 ring-offset-white scale-125' : ''} ${
         isMoving ? 'ring-4 ring-amber-400/60 ring-offset-2 ring-offset-white animate-pulse scale-110' : ''
       }`}
       style={adjustedStyle}
@@ -144,7 +148,7 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
   );
 }
 
-// Composant Table : représente une table avec ses chaises
+// Composant Table
 function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace, onEdit, movingGuest, zoomLevel, isMobile }) {
   if (!table) return null;
 
@@ -187,11 +191,8 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     onMove(table.id, newPos);
   };
 
-  // Gestion tactile pour mobile
   const handleTouchStart = (e) => {
-    if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(e.target.tagName)) {
-      return;
-    }
+    if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(e.target.tagName)) return;
 
     e.preventDefault();
     const touch = e.touches[0];
@@ -207,17 +208,14 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       offsetX: touch.clientX - tableRect.left,
       offsetY: touch.clientY - tableRect.top,
       parentLeft: parentRect.left,
-      parentTop: parentRect.top
+      parentTop: parentRect.top,
     };
 
     setDragging(true);
   };
 
   const handleTouchMove = (e) => {
-    if (!touchDataRef.current) return;
-    if (["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) {
-      return;
-    }
+    if (!touchDataRef.current || ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
 
     e.preventDefault();
     const touch = e.touches[0];
@@ -255,11 +253,11 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   };
 
   const isChairOccupied = (chairIndex) => {
-    return table.guests?.some(g => g.place === chairIndex + 1);
+    return table.guests?.some(g => g.place === chairIndex + 1) || false;
   };
 
   const getGuestForChair = (chairIndex) => {
-    return table.guests?.find(g => g.place === chairIndex + 1);
+    return table.guests?.find(g => g.place === chairIndex + 1) || null;
   };
 
   const handleChairClick = (chairIndex) => {
@@ -277,7 +275,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
         height: tableHeight * zoomLevel,
         zIndex: dragging || rotating ? 50 : 10,
         touchAction: 'none',
-        transition: rotating ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        transition: rotating ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
       draggable={!isMobile}
       onDragStart={!isMobile ? handleDragStart : undefined}
@@ -288,7 +286,6 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Boutons de contrôle avec style amélioré */}
       <div className={`absolute -top-3 -right-3 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
         <button
           onClick={(e) => {
@@ -329,18 +326,15 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
         className={`border-4 shadow-xl flex items-center justify-center w-full h-full relative transition-all duration-300 ${
           table.type === "ronde" || table.type === "ovale" ? "rounded-full" : "rounded-2xl"
         } ${
-          dragging || rotating 
-            ? 'shadow-2xl scale-105 border-indigo-400 bg-gradient-to-br from-purple-100 via-pink-50 to-rose-100' 
+          dragging || rotating
+            ? 'shadow-2xl scale-105 border-indigo-400 bg-gradient-to-br from-purple-100 via-pink-50 to-rose-100'
             : 'shadow-lg border-indigo-300 bg-gradient-to-br from-pink-100 via-rose-50 to-purple-100'
-        } ${
-          rotating ? 'ring-4 ring-blue-300/60' : ''
-        } backdrop-blur-sm`}
+        } ${rotating ? 'ring-4 ring-blue-300/60' : ''} backdrop-blur-sm`}
         style={{
           transform: `rotate(${rotation}deg)`,
-          transition: rotating ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: rotating ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        {/* Indicateur de déplacement */}
         {dragging && (
           <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
             <div className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-2 shadow-lg animate-bounce">
@@ -350,19 +344,14 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
           </div>
         )}
 
-        <span 
-          className="font-bold text-indigo-800 select-none pointer-events-none text-center break-words px-2 drop-shadow-sm" 
+        <span
+          className="font-bold text-indigo-800 select-none pointer-events-none text-center break-words px-2 drop-shadow-sm"
           style={{ fontSize: `${Math.max(10, 14 * zoomLevel)}px` }}
         >
           {table.nom}
         </span>
 
-        {getChairPositions(
-          table.type,
-          table.capacite,
-          tableWidth,
-          tableHeight
-        ).map((chairPos, i) => {
+        {getChairPositions(table.type, table.capacite, tableWidth, tableHeight).map((chairPos, i) => {
           const isOccupied = isChairOccupied(i);
           const guest = getGuestForChair(i);
           const isSelected = selectedPlace?.tableId === table.id && selectedPlace?.placeNumber === i + 1;
@@ -374,7 +363,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
               number={i + 1}
               style={chairPos}
               isOccupied={isOccupied}
-              guestName={guest?.nom}
+              guestName={guest?.nom || ''}
               onClick={(e) => {
                 e.stopPropagation();
                 handleChairClick(i);
@@ -390,14 +379,12 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   );
 }
 
-// Composant Modal générique responsive avec style amélioré
+// Composant Modal générique
 function Modal({ isOpen, onClose, title, children, className = "" }) {
   if (!isOpen) return null;
 
   const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+    if (e.target === e.currentTarget) onClose();
   };
 
   return (
@@ -428,7 +415,7 @@ function Modal({ isOpen, onClose, title, children, className = "" }) {
   );
 }
 
-// Composant principal fusionné
+// Composant principal
 export default function DemoPlanSalle() {
   const [tables, setTables] = useState([]);
   const [guests, setGuests] = useState([]);
@@ -439,19 +426,21 @@ export default function DemoPlanSalle() {
   const [limitType, setLimitType] = useState('');
   const [canvasSize, setCanvasSize] = useState(CANVAS_SIZES[1]);
   const [zoomLevel, setZoomLevel] = useState(1);
-  
-  // Formulaires
+  const [error, setError] = useState('');
+  const [authForm, setAuthForm] = useState({ email: "", password: "" });
+  const [tableToDelete, setTableToDelete] = useState(null); // État pour stocker l'ID de la table à supprimer
+
   const [form, setForm] = useState({
     capacite: "",
     type: "ronde",
     nombre: "",
-    noms: []
+    noms: [],
   });
   const [guestForm, setGuestForm] = useState({
     nom: "",
     prenom: "",
     tableId: null,
-    place: null
+    place: null,
   });
 
   const canvasRef = useRef(null);
@@ -462,7 +451,7 @@ export default function DemoPlanSalle() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -470,39 +459,41 @@ export default function DemoPlanSalle() {
 
   // Ajuster la taille du canvas pour mobile
   useEffect(() => {
-    if (isMobile) {
-      setCanvasSize(CANVAS_SIZES[0]);
-    } else {
-      setCanvasSize(CANVAS_SIZES[1]);
-    }
+    setCanvasSize(isMobile ? CANVAS_SIZES[0] : CANVAS_SIZES[1]);
   }, [isMobile]);
 
-  // Fonction universelle pour fermer les modales
-  const closeAllModals = useCallback(() => {
+  // Gestionnaire pour fermer les modales
+  const closeModalType = useCallback((modalType) => {
     setCurrentModal(MODAL_TYPES.NONE);
     setEditingTable(null);
     setLimitType('');
+    setTableToDelete(null); // Réinitialiser la table à supprimer
+    if (modalType === MODAL_TYPES.AUTH) {
+      setAuthForm({ email: "", password: "" });
+    }
   }, []);
 
   // Gestionnaire d'événement pour la touche Escape
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Escape') {
-      if (movingGuest) {
-        setMovingGuest(null);
-        setSelectedPlace(null);
-      } else {
-        closeAllModals();
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === 'Escape') {
+        if (movingGuest) {
+          setMovingGuest(null);
+          setSelectedPlace(null);
+        } else {
+          closeModalType();
+        }
       }
-    }
-  }, [movingGuest, closeAllModals]);
+    },
+    [movingGuest, closeModalType]
+  );
 
-  // Hook pour écouter la touche Escape
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  // Gestion du zoom avec boutons
+  // Gestion du zoom
   const handleZoom = (direction) => {
     setZoomLevel((prev) => {
       const step = isMobile ? 0.1 : 0.05;
@@ -529,34 +520,50 @@ export default function DemoPlanSalle() {
     return true;
   };
 
+  const handleAddTableClick = () => {
+    if (!checkTableLimit(1)) return;
+    setCurrentModal(MODAL_TYPES.ADD_TABLE);
+  };
+
+  const handleAddGuestClick = () => {
+    if (!checkGuestLimit()) return;
+    setCurrentModal(MODAL_TYPES.ADD_GUEST);
+  };
+
   const handleAddTable = (e) => {
     e.preventDefault();
     const nombre = Number(form.nombre);
     if (!checkTableLimit(nombre)) return;
 
+    if (!form.capacite || form.capacite < 1 || form.capacite > 12) {
+      setError("La capacité doit être entre 1 et 12.");
+      return;
+    }
+
     const newTables = [];
     for (let i = 0; i < nombre; i++) {
       const typeInfo = TABLE_TYPES.find(t => t.value === form.type);
       const nom = form.noms[i] || `Table ${tables.length + i + 1}`;
-      
+
       newTables.push({
         id: Date.now() + i,
         nom,
         capacite: Number(form.capacite) || 4,
         type: form.type,
         position: {
-          left: 100 + (i * 120),
-          top: 100 + (i * 120)
+          left: snapToGrid(100 + i * 120),
+          top: snapToGrid(100 + i * 120),
         },
         width: typeInfo.width,
         height: typeInfo.height,
         rotation: 0,
-        guests: []
+        guests: [],
       });
     }
 
     setTables(prev => [...prev, ...newTables]);
     setForm({ capacite: "", type: "ronde", nombre: "", noms: [] });
+    setError('');
     setCurrentModal(MODAL_TYPES.NONE);
   };
 
@@ -565,41 +572,40 @@ export default function DemoPlanSalle() {
     if (!checkGuestLimit()) return;
 
     const table = tables.find(t => t.id === Number(guestForm.tableId));
-    if (!table) return;
+    if (!table) {
+      setError("Veuillez sélectionner une table valide.");
+      return;
+    }
 
     const occupiedPlaces = table.guests?.map(g => g.place) || [];
     const firstFreePlace = Array.from({ length: table.capacite }, (_, i) => i + 1)
       .find(place => !occupiedPlaces.includes(place));
 
     if (!firstFreePlace) {
-      alert("Aucune place libre sur cette table!");
+      setError("Aucune place libre sur cette table.");
       return;
     }
 
     const newGuest = {
       id: Date.now(),
-      nom: `${guestForm.nom} ${guestForm.prenom}`,
+      nom: `${guestForm.nom} ${guestForm.prenom}`.trim(),
       prenom: guestForm.prenom,
       tableId: Number(guestForm.tableId),
-      place: guestForm.place ? Number(guestForm.place) : firstFreePlace
+      place: guestForm.place ? Number(guestForm.place) : firstFreePlace,
     };
 
     setGuests(prev => [...prev, newGuest]);
-    
-    // Ajouter l'invité à la table correspondante
+
     setTables(prevTables =>
       prevTables.map(t => {
         if (t.id === newGuest.tableId) {
           return {
             ...t,
-            guests: [
-              ...(t.guests || []),
-              {
-                id: newGuest.id,
-                nom: newGuest.nom,
-                place: newGuest.place
-              }
-            ]
+            guests: [...(t.guests || []), {
+              id: newGuest.id,
+              nom: newGuest.nom,
+              place: newGuest.place,
+            }],
           };
         }
         return t;
@@ -607,40 +613,40 @@ export default function DemoPlanSalle() {
     );
 
     setGuestForm({ nom: "", prenom: "", tableId: null, place: null });
+    setError('');
     setCurrentModal(MODAL_TYPES.NONE);
   };
 
   const handlePlaceClick = (table, placeNumber) => {
-    const guestAtPlace = table.guests?.find((g) => g.place === placeNumber);
+    const guestAtPlace = table.guests?.find(g => g.place === placeNumber);
 
     if (movingGuest) {
       const targetGuest = table.guests?.find(g => g.place === placeNumber);
 
       if (targetGuest) {
-        alert("Cette chaise est déjà occupée !");
+        setError("Cette chaise est déjà occupée !");
         return;
       }
 
-      // Déplacer l'invité
-      setTables((prevTables) =>
-        prevTables.map((t) => {
+      setTables(prevTables =>
+        prevTables.map(t => {
           if (t.id === movingGuest.sourceTableId && t.id === table.id) {
             return {
               ...t,
-              guests: t.guests.map((g) =>
+              guests: t.guests.map(g =>
                 g.id === movingGuest.guestId ? { ...g, place: placeNumber } : g
               ),
             };
           } else if (t.id === movingGuest.sourceTableId) {
             return {
               ...t,
-              guests: t.guests.filter((g) => g.id !== movingGuest.guestId),
+              guests: t.guests.filter(g => g.id !== movingGuest.guestId),
             };
           } else if (t.id === table.id) {
             return {
               ...t,
               guests: [
-                ...t.guests.filter((g) => g.id !== movingGuest.guestId),
+                ...(t.guests || []),
                 { id: movingGuest.guestId, nom: movingGuest.guestName, place: placeNumber },
               ],
             };
@@ -649,7 +655,6 @@ export default function DemoPlanSalle() {
         })
       );
 
-      // Mettre à jour aussi la liste des invités
       setGuests(prevGuests =>
         prevGuests.map(g =>
           g.id === movingGuest.guestId
@@ -660,45 +665,43 @@ export default function DemoPlanSalle() {
 
       setMovingGuest(null);
       setSelectedPlace(null);
-    } else {
-      if (guestAtPlace) {
-        setMovingGuest({
-          guestId: guestAtPlace.id,
-          guestName: guestAtPlace.nom,
-          sourceTableId: table.id,
-          sourceChairIndex: placeNumber
-        });
-        setSelectedPlace({
-          tableId: table.id,
-          placeNumber,
-          guestId: guestAtPlace.id,
-          guestName: guestAtPlace.nom,
-        });
-      }
+      setError('');
+    } else if (guestAtPlace) {
+      setMovingGuest({
+        guestId: guestAtPlace.id,
+        guestName: guestAtPlace.nom,
+        sourceTableId: table.id,
+        sourceChairIndex: placeNumber,
+      });
+      setSelectedPlace({
+        tableId: table.id,
+        placeNumber,
+        guestId: guestAtPlace.id,
+        guestName: guestAtPlace.nom,
+      });
     }
   };
 
   const handleTableMove = (tableId, position) => {
-    setTables((prev) => prev.map((t) => (t.id === tableId ? { ...t, position } : t)));
+    setTables(prev => prev.map(t => (t.id === tableId ? { ...t, position } : t)));
   };
 
   const handleTableRotate = (tableId, rotation) => {
-    setTables((prev) => prev.map((t) => (t.id === tableId ? { ...t, rotation } : t)));
+    setTables(prev => prev.map(t => (t.id === tableId ? { ...t, rotation } : t)));
   };
 
   const handleTableChange = (id, field, value) => {
-    setTables((prev) =>
-      prev.map((t) => {
+    setTables(prev =>
+      prev.map(t => {
         if (t.id === id) {
           const updatedTable = { ...t, [field]: value };
           if (field === "type") {
-            const typeInfo = TABLE_TYPES.find((type) => type.value === value);
+            const typeInfo = TABLE_TYPES.find(type => type.value === value);
             updatedTable.width = typeInfo.width;
             updatedTable.height = typeInfo.height;
           }
           if (field === "capacite") {
             updatedTable.capacite = Number(value) || 1;
-            // Supprimer les invités dont les chaises n'existent plus
             setGuests(prev =>
               prev.filter(g => g.tableId !== id || g.place <= updatedTable.capacite)
             );
@@ -716,47 +719,51 @@ export default function DemoPlanSalle() {
   };
 
   const handleDeleteTable = (tableId) => {
-    const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cette table ? Tous les invités assignés seront également supprimés.");
-    if (!confirmed) return;
+    setTableToDelete(tableId); // Stocker l'ID de la table à supprimer
+    setCurrentModal(MODAL_TYPES.DELETE_TABLE_CONFIRM); // Ouvrir le modal de confirmation
+  };
 
-    setTables((prev) => prev.filter((t) => t.id !== tableId));
-    setGuests((prev) => prev.filter((g) => g.tableId !== tableId));
-    if (selectedPlace?.tableId === tableId) {
+  const confirmDeleteTable = () => {
+    if (!tableToDelete) return;
+
+    setTables(prev => prev.filter(t => t.id !== tableToDelete));
+    setGuests(prev => prev.filter(g => g.tableId !== tableToDelete));
+    if (selectedPlace?.tableId === tableToDelete) {
       setSelectedPlace(null);
       setMovingGuest(null);
     }
-    closeAllModals();
+    closeModalType();
   };
 
   const handleReset = () => {
-    const confirmed = window.confirm("Êtes-vous sûr de vouloir tout recommencer ?");
-    if (!confirmed) return;
-    
+    setCurrentModal(MODAL_TYPES.RESET_CONFIRM); // Ouvrir le modal de confirmation
+  };
+
+  const confirmReset = () => {
     setTables([]);
     setGuests([]);
     setMovingGuest(null);
     setSelectedPlace(null);
-    closeAllModals();
+    closeModalType();
   };
 
   const handleNombreChange = (e) => {
     const nb = Number(e.target.value);
-    setForm((prev) => ({
+    setForm(prev => ({
       ...prev,
       nombre: nb,
-      noms: Array(nb).fill("")
+      noms: Array(nb).fill(""),
     }));
   };
 
   const handleNomChange = (index, value) => {
     const updatedNoms = [...form.noms];
     updatedNoms[index] = value;
-    setForm((prev) => ({ ...prev, noms: updatedNoms }));
+    setForm(prev => ({ ...prev, noms: updatedNoms }));
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col overflow-auto bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-100/50">
-      {/* Header Mobile avec style amélioré */}
+    <div className="w-full min-h-screen flex flex-col  overflow-auto bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-100/50">
       <div className="md:hidden bg-white/80 backdrop-blur-xl p-4 shadow-lg border-b border-white/20">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
@@ -786,27 +793,22 @@ export default function DemoPlanSalle() {
         </div>
       </div>
 
-      {/* Container principal */}
       <div className="flex-1 flex flex-col md:flex-row p-4 gap-4">
-        {/* Boutons flottants avec style amélioré */}
-        <div className={`${isMobile 
-          ? 'fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-row gap-3' 
+        <div className={`${isMobile
+          ? 'fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-row gap-3'
           : 'fixed bottom-6 left-6 flex flex-col gap-3'
         } z-50`}>
-          
           <button
-            onClick={() => setCurrentModal(MODAL_TYPES.ADD_GUEST)}
-            className="bg-gradient-to-br from-emerald-500 to-green-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100 border border-white/20 backdrop-blur-sm"
-            disabled={guests.length >= MAX_GUESTS}
+            onClick={handleAddGuestClick}
+            className="bg-gradient-to-br from-emerald-500 to-green-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
           >
             <User className="w-5 h-5" />
             {!isMobile && <span className="text-sm font-medium">Invité</span>}
           </button>
 
           <button
-            onClick={() => setCurrentModal(MODAL_TYPES.ADD_TABLE)}
-            className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100 border border-white/20 backdrop-blur-sm"
-            disabled={tables.length >= MAX_TABLES}
+            onClick={handleAddTableClick}
+            className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
           >
             <Plus className="w-5 h-5" />
             {!isMobile && <span className="text-sm font-medium">Table</span>}
@@ -825,6 +827,7 @@ export default function DemoPlanSalle() {
               onClick={() => {
                 setMovingGuest(null);
                 setSelectedPlace(null);
+                setError('');
               }}
               className="bg-gradient-to-br from-amber-500 to-yellow-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl animate-pulse border border-white/20 backdrop-blur-sm"
             >
@@ -834,9 +837,7 @@ export default function DemoPlanSalle() {
           )}
         </div>
 
-        {/* Zone principale */}
         <div className="flex-1 flex items-center justify-center relative">
-          {/* Notification de déplacement améliorée */}
           {movingGuest && (
             <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-md px-4">
               <div className="bg-gradient-to-r from-amber-100 via-yellow-50 to-orange-100 border border-amber-300/50 rounded-2xl p-4 shadow-2xl backdrop-blur-xl">
@@ -853,34 +854,39 @@ export default function DemoPlanSalle() {
             </div>
           )}
 
-          {/* Canvas principal avec style amélioré */}
+          {error && (
+            <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-md px-4">
+              <div className="bg-red-100 border border-red-300 rounded-2xl p-4 shadow-lg">
+                <div className="text-red-700 text-sm font-medium">{error}</div>
+              </div>
+            </div>
+          )}
+
           <div
             ref={canvasRef}
             className="relative border-4 border-white/30 rounded-3xl shadow-2xl bg-gradient-to-br from-slate-50/90 via-blue-50/60 to-indigo-50/70 overflow-auto backdrop-blur-sm"
-            style={{ 
-              width: isMobile ? '100vw' : Math.min(canvasSize.width, window.innerWidth - 100), 
+            style={{
+              width: isMobile ? '100vw' : Math.min(canvasSize.width, window.innerWidth - 100),
               height: isMobile ? '60vh' : Math.min(canvasSize.height, window.innerHeight - 150),
-              maxWidth: '100%'
+              maxWidth: '100%',
+              touchAction: 'auto',
             }}
           >
-            {/* Titre avec style amélioré */}
             {!isMobile && (
               <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-30">
                 <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 px-8 py-4">
                   <h1 className="text-2xl font-black bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent drop-shadow-sm">
-                    Plan des Tables - Démo 
+                    Plan des Tables - Démo
                   </h1>
                 </div>
               </div>
             )}
 
-            {/* Grille de fond améliorée */}
             <div className="absolute inset-0">
               <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(99,102,241,0.06)_1px,transparent_1px),linear-gradient(180deg,rgba(99,102,241,0.06)_1px,transparent_1px)] bg-[size:40px_40px]" />
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(99,102,241,0.03),transparent_70%)]" />
             </div>
 
-            {/* Zone de contenu */}
             <div
               className="relative w-full h-full min-w-full min-h-full"
               style={{
@@ -890,7 +896,7 @@ export default function DemoPlanSalle() {
                 minHeight: `${canvasSize.height}px`,
               }}
             >
-              {tables.map((table) => (
+              {tables.map(table => (
                 <Table
                   key={table.id}
                   table={table}
@@ -899,17 +905,16 @@ export default function DemoPlanSalle() {
                   onDelete={handleDeleteTable}
                   onPlaceClick={handlePlaceClick}
                   selectedPlace={selectedPlace}
-                  onEdit={(table) => {
+                  onEdit={table => {
                     setEditingTable(table);
                     setCurrentModal(MODAL_TYPES.EDIT_TABLE);
                   }}
                   movingGuest={movingGuest}
-                  zoomLevel={1}
+                  zoomLevel={zoomLevel}
                   isMobile={isMobile}
                 />
               ))}
 
-              {/* Message d'accueil amélioré */}
               {tables.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center space-y-6 max-w-lg mx-auto px-6">
@@ -942,7 +947,6 @@ export default function DemoPlanSalle() {
               )}
             </div>
 
-            {/* Contrôles zoom Desktop améliorés */}
             {!isMobile && (
               <div className="absolute bottom-6 right-6 flex items-center gap-3 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl p-3 border border-white/30">
                 <button
@@ -967,7 +971,6 @@ export default function DemoPlanSalle() {
               </div>
             )}
 
-            {/* Compteurs améliorés */}
             <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl p-3 text-xs border border-white/30">
               <div className="text-indigo-700 font-bold mb-1 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
@@ -988,48 +991,54 @@ export default function DemoPlanSalle() {
         </div>
       </div>
 
-      {/* Modales avec styles améliorés */}
-      
       {/* Modal de limite atteinte */}
       <Modal
         isOpen={currentModal === MODAL_TYPES.LIMIT}
-        onClose={() => setCurrentModal(MODAL_TYPES.NONE)}
-        title=" Limite atteinte"
+        onClose={() => closeModalType(MODAL_TYPES.LIMIT)}
+        title="Limite atteinte"
       >
-        <div className="text-center space-y-6">
-          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
-            <span className="text-2xl">⚡</span>
-          </div>
-          <p className="text-gray-600 leading-relaxed">
+        <div className="text-center mb-6">
+          <p className="text-gray-600 mb-4">
             {limitType === 'tables'
               ? `Vous avez atteint la limite de ${MAX_TABLES} tables pour cette démonstration.`
               : `Vous avez atteint la limite de ${MAX_GUESTS} invités pour cette démonstration.`
             }
           </p>
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl border border-indigo-200/50">
-            <p className="text-indigo-600 font-bold text-lg mb-2">
-              Débloquez le potentiel complet !
-            </p>
-            <p className="text-indigo-700 text-sm">
-              Créez des événements illimités avec la version complète
-            </p>
-          </div>
+          <p className="text-indigo-600 font-semibold">
+            Connectez-vous pour débloquer toutes les fonctionnalités et créer des événements sans limites !
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
-            onClick={() => setCurrentModal(MODAL_TYPES.NONE)}
-            className="w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+            onClick={() => closeModalType(MODAL_TYPES.LIMIT)}
+            className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 cursor-pointer transition"
           >
             Continuer la démo
+          </button>
+          <button
+            onClick={() => {
+              closeModalType(MODAL_TYPES.LIMIT);
+              setCurrentModal(MODAL_TYPES.AUTH);
+            }}
+            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer transition"
+          >
+            Se connecter
           </button>
         </div>
       </Modal>
 
-      {/* Modal Ajouter Table */}
+      {/* Modal d'ajout de table */}
       <Modal
         isOpen={currentModal === MODAL_TYPES.ADD_TABLE}
-        onClose={() => setCurrentModal(MODAL_TYPES.NONE)}
+        onClose={() => closeModalType(MODAL_TYPES.ADD_TABLE)}
         title="Créer des Tables"
       >
         <form onSubmit={handleAddTable} className="space-y-6">
+          {error && (
+            <div className="bg-red-100 border border-red-300 rounded-xl p-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Capacité</label>
@@ -1037,7 +1046,7 @@ export default function DemoPlanSalle() {
                 name="capacite"
                 type="number"
                 value={form.capacite}
-                onChange={(e) => setForm({...form, capacite: e.target.value})}
+                onChange={(e) => setForm({ ...form, capacite: e.target.value })}
                 placeholder="Ex: 4, 6, 8"
                 required
                 min="1"
@@ -1066,11 +1075,11 @@ export default function DemoPlanSalle() {
               <select
                 name="type"
                 value={form.type}
-                onChange={(e) => setForm({...form, type: e.target.value})}
+                onChange={(e) => setForm({ ...form, type: e.target.value })}
                 required
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
               >
-                {TABLE_TYPES.map((t) => (
+                {TABLE_TYPES.map(t => (
                   <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
               </select>
@@ -1099,7 +1108,7 @@ export default function DemoPlanSalle() {
           <div className="flex gap-3 pt-6">
             <button
               type="button"
-              onClick={() => setCurrentModal(MODAL_TYPES.NONE)}
+              onClick={() => closeModalType(MODAL_TYPES.ADD_TABLE)}
               className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 font-medium"
             >
               Annuler
@@ -1121,13 +1130,18 @@ export default function DemoPlanSalle() {
         </form>
       </Modal>
 
-      {/* Modal Ajouter Invité */}
+      {/* Modal d'ajout d'invité */}
       <Modal
         isOpen={currentModal === MODAL_TYPES.ADD_GUEST}
-        onClose={() => setCurrentModal(MODAL_TYPES.NONE)}
+        onClose={() => closeModalType(MODAL_TYPES.ADD_GUEST)}
         title="Ajouter un Invité"
       >
         <form onSubmit={handleAddGuest} className="space-y-6">
+          {error && (
+            <div className="bg-red-100 border border-red-300 rounded-xl p-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Nom</label>
@@ -1135,7 +1149,7 @@ export default function DemoPlanSalle() {
                 name="nom"
                 type="text"
                 value={guestForm.nom}
-                onChange={(e) => setGuestForm({...guestForm, nom: e.target.value})}
+                onChange={(e) => setGuestForm({ ...guestForm, nom: e.target.value })}
                 placeholder="Nom"
                 required
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-200 bg-gray-50/50"
@@ -1148,7 +1162,7 @@ export default function DemoPlanSalle() {
                 name="prenom"
                 type="text"
                 value={guestForm.prenom}
-                onChange={(e) => setGuestForm({...guestForm, prenom: e.target.value})}
+                onChange={(e) => setGuestForm({ ...guestForm, prenom: e.target.value })}
                 placeholder="Prénom"
                 required
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-200 bg-gray-50/50"
@@ -1160,7 +1174,7 @@ export default function DemoPlanSalle() {
               <select
                 name="tableId"
                 value={guestForm.tableId || ""}
-                onChange={(e) => setGuestForm({...guestForm, tableId: e.target.value ? Number(e.target.value) : null, place: null})}
+                onChange={(e) => setGuestForm({ ...guestForm, tableId: e.target.value ? Number(e.target.value) : null, place: null })}
                 required
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-200 bg-gray-50/50"
               >
@@ -1170,7 +1184,7 @@ export default function DemoPlanSalle() {
                     const occupiedSeats = table.guests?.length || 0;
                     return occupiedSeats < table.capacite;
                   })
-                  .map((table) => {
+                  .map(table => {
                     const occupiedSeats = table.guests?.length || 0;
                     const freeSeats = table.capacite - occupiedSeats;
                     return (
@@ -1178,8 +1192,7 @@ export default function DemoPlanSalle() {
                         {table.nom} ({freeSeats} place{freeSeats !== 1 ? 's' : ''} libre{freeSeats !== 1 ? 's' : ''})
                       </option>
                     );
-                  })
-                }
+                  })}
               </select>
             </div>
 
@@ -1189,7 +1202,7 @@ export default function DemoPlanSalle() {
                 <select
                   name="place"
                   value={guestForm.place || ""}
-                  onChange={(e) => setGuestForm({...guestForm, place: e.target.value ? Number(e.target.value) : null})}
+                  onChange={(e) => setGuestForm({ ...guestForm, place: e.target.value ? Number(e.target.value) : null })}
                   className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-200 bg-gray-50/50"
                 >
                   <option value="">Attribution automatique</option>
@@ -1199,7 +1212,7 @@ export default function DemoPlanSalle() {
                     const occupiedPlaces = table.guests?.map(g => g.place) || [];
                     return Array.from({ length: table.capacite }, (_, i) => i + 1)
                       .filter(place => !occupiedPlaces.includes(place))
-                      .map((place) => (
+                      .map(place => (
                         <option key={place} value={place}>Place {place}</option>
                       ));
                   })()}
@@ -1211,7 +1224,7 @@ export default function DemoPlanSalle() {
           <div className="flex gap-3 pt-6">
             <button
               type="button"
-              onClick={() => setCurrentModal(MODAL_TYPES.NONE)}
+              onClick={() => closeModalType(MODAL_TYPES.ADD_GUEST)}
               className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 font-medium"
             >
               Annuler
@@ -1220,7 +1233,7 @@ export default function DemoPlanSalle() {
               type="submit"
               className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
             >
-               Ajouter
+              Ajouter
             </button>
           </div>
 
@@ -1233,10 +1246,10 @@ export default function DemoPlanSalle() {
         </form>
       </Modal>
 
-      {/* Modal Modification Table */}
+      {/* Modal de modification de table */}
       <Modal
         isOpen={currentModal === MODAL_TYPES.EDIT_TABLE && editingTable}
-        onClose={() => setCurrentModal(MODAL_TYPES.NONE)}
+        onClose={() => closeModalType(MODAL_TYPES.EDIT_TABLE)}
         title={`Modifier ${editingTable?.nom || 'la table'}`}
       >
         {editingTable && (
@@ -1270,7 +1283,7 @@ export default function DemoPlanSalle() {
                 onChange={(e) => handleTableChange(editingTable.id, "type", e.target.value)}
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
               >
-                {TABLE_TYPES.map((t) => (
+                {TABLE_TYPES.map(t => (
                   <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
               </select>
@@ -1278,7 +1291,7 @@ export default function DemoPlanSalle() {
 
             <div className="flex flex-col sm:flex-row gap-3 pt-6">
               <button
-                onClick={() => setCurrentModal(MODAL_TYPES.NONE)}
+                onClick={() => closeModalType(MODAL_TYPES.EDIT_TABLE)}
                 className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 font-medium"
               >
                 Fermer
@@ -1294,10 +1307,73 @@ export default function DemoPlanSalle() {
         )}
       </Modal>
 
-      {/* Instructions avec style amélioré */}
+      {/* Modal AuthModal pour la connexion */}
+      {currentModal === MODAL_TYPES.AUTH && (
+        <AuthModal
+          isOpen={true}
+          onClose={() => closeModalType(MODAL_TYPES.AUTH)}
+          isSignIn={true}
+        />
+      )}
+
+      {/* Modal de confirmation de suppression de table */}
+      <Modal
+        isOpen={currentModal === MODAL_TYPES.DELETE_TABLE_CONFIRM}
+        onClose={() => closeModalType(MODAL_TYPES.DELETE_TABLE_CONFIRM)}
+        title="Confirmer la suppression"
+      >
+        <div className="space-y-6">
+          <p className="text-gray-600 text-center">
+            Êtes-vous sûr de vouloir supprimer cette table ? Tous les invités assignés seront également supprimés.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => closeModalType(MODAL_TYPES.DELETE_TABLE_CONFIRM)}
+              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 font-medium"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={confirmDeleteTable}
+              className="px-6 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+            >
+              Supprimer
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de confirmation de réinitialisation */}
+      <Modal
+        isOpen={currentModal === MODAL_TYPES.RESET_CONFIRM}
+        onClose={() => closeModalType(MODAL_TYPES.RESET_CONFIRM)}
+        title="Confirmer la réinitialisation"
+      >
+        <div className="space-y-6">
+          <p className="text-gray-600 text-center">
+            Êtes-vous sûr de vouloir tout recommencer ? Toutes les tables et invités seront supprimés.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => closeModalType(MODAL_TYPES.RESET_CONFIRM)}
+              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 font-medium"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={confirmReset}
+              className="px-6 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+            >
+              Réinitialiser
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Instructions */}
       <div className="max-w-4xl w-full mx-auto p-6 bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 m-6">
         <h2 className="text-2xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6 flex items-center gap-3">
-           Guide d'utilisation
+          Guide d'utilisation
         </h2>
 
         <div className="grid md:grid-cols-2 gap-8">
@@ -1381,7 +1457,6 @@ export default function DemoPlanSalle() {
         </div>
       </div>
 
-      {/* Styles CSS pour les animations */}
       <style jsx>{`
         @keyframes fade-in {
           from { opacity: 0; }
