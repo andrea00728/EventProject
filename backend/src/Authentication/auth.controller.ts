@@ -41,7 +41,7 @@ export class AuthController {
     if (result?.error) {
       console.error('❌ Erreur Google Auth:', result.error);
       return res.redirect(
-        `http://localhost:5173/pagepublic?error=${encodeURIComponent(result.error)}`
+        `http://localhost:5173/?error=${encodeURIComponent(result.error)}`
       );
     }
 
