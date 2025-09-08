@@ -164,8 +164,8 @@ async redirectTofrontend(
 
 
 
-  @Get('user/forfait')
-  // @UseGuards(AuthGuard('jwt'))
+ @Get('user/forfait')
+  @UseGuards(AuthGuard('jwt'))
   async getUserForfait(@Req() req: any) {
     const userId = req.user?.sub;
     if (!userId) throw new UnauthorizedException('Utilisateur non authentifié');

@@ -31,15 +31,21 @@ export const getSuccessForfait = async (subscriptionId) => {
   }
 };
 
-export const getUserForfait = async () => {
+export async function getUserForfait() {
   try {
-    const response = await axiosClient.get('/forfait/user/forfait');
-    return response.data;
+    const res = await axiosClient.get("/forfait/user/forfait");
+    return res.data;
   } catch (error) {
-    console.error('Erreur lors de la récupération du forfait actif', error);
-    throw new Error('Erreur lors de la récupération du forfait actif', { cause: error });
+    // Si l’utilisateur n’est pas connecté → on ignore (pas de log, pas de throw)
+    if (error.response?.status === 401) {
+      return null;
+    }
+//
+    // Autres erreurs → on log et throw
+    console.error("Erreur lors de la récupération du forfait actif", error);
+    throw new Error("Erreur lors de la récupération du forfait actif");
   }
-};
+}
 
 export const getSumForUsersForfait = async (/*token*/) => {
   // if (!token) throw new Error('Utilisateur non authentifié');
