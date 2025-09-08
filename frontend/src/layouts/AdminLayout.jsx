@@ -80,7 +80,7 @@
     useEffect(() => {
       const fetchData = async () => {
         if (user) {
-          const res = await getIfAdminHasPassword(user.sub);
+          const res = await getIfAdminHasPassword(user?.sub);
           const hidden = localStorage.getItem("hidePasswordModal");
           if (res.hasPassword == false && hidden == "false") {
             setTimeout(() => {
@@ -175,7 +175,7 @@
       icon: <MdQueryStats className="text-lg" />,
     },
     // On ajoute la condition proprement
-    ...(user.role !== "admin"
+    ...(user?.role !== "admin"
       ? [
           {
             path: "/AdminManagement",
@@ -211,9 +211,9 @@
     };
 
     const getUserDisplayName = (user) => {
-      if (user?.name && user.name.trim()) return user.name.trim();
-      if (user?.email && typeof user.email === "string") {
-        const local = user.email.split("@")[0];
+      if (user?.name && user?.name.trim()) return user?.name.trim();
+      if (user?.email && typeof user?.email === "string") {
+        const local = user?.email.split("@")[0];
         return local || "Utilisateur";
       }
       return "Utilisateur";
@@ -592,9 +592,9 @@
 
       useEffect(() => {
         if (user) {
-          setUserName(user.name || "Utilisateur");
-          setUserEmail(user.email || "email@example.com");
-          setUserPhoto(user.photo || "/default-avatar.png");
+          setUserName(user?.name || "Utilisateur");
+          setUserEmail(user?.email || "email@example.com");
+          setUserPhoto(user?.photo || "/default-avatar.png");
         }
       }, [user]);
 
@@ -889,7 +889,7 @@
                   <div className="relative">
                     <img
                       //src={getGravatarUrl(user?.email, { size: 96 })}
-                      src={`${user.photo}`}
+                      src={`${user?.photo}`}
                       alt="User avatar"
                       className="w-10 h-10 rounded-full object-cover"
                       onError={(e) => {
@@ -927,7 +927,7 @@
                       >
                         <img
                           // src={getGravatarUrl(user?.email, { size: 80 })}
-                          src={`${user.photo}`}
+                          src={`${user?.photo}`}
                           alt="User avatar"
                           className="w-8 h-8 rounded-full object-cover"
                           onError={(e) => {
