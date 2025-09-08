@@ -29,6 +29,7 @@ export default function PublicLayout() {
   const [forfait, setForfait] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const [errorMessage, setErrorMessage] = useState(null);
   const isPublicEventsPage = location.pathname === "/evenements-publics";
 
   const defaultNavItems = [
@@ -40,6 +41,16 @@ export default function PublicLayout() {
   ];
 
   const [navItems, setNavItems] = useState(defaultNavItems);
+
+  useEffect(() => {
+    // Vérifie si un paramètre "error" est présent dans l'URL
+    const params = new URLSearchParams(location.search);
+    const error = params.get("error");
+    if (error) {
+      setErrorMessage(decodeURIComponent(error));
+      setModalOpen(true);
+    }
+  }, [location.search]);
 
   // Gérer le scroll vers une section de la page
   useEffect(() => {
@@ -66,10 +77,10 @@ export default function PublicLayout() {
     if (isAuthenticated) {
       fetchAndSetForfait();
       setConnected(true);
-      if(!user) return ; 
+      if (!user) return;
       const userId = user.sub || user.id;
       const socket = io(`${url}`, {
-        transports: ['websocket'],
+        transports: ["websocket"],
         auth: { userId },
       });
       if (!socket) return;
@@ -97,18 +108,16 @@ export default function PublicLayout() {
     }
   }, [forfait, isAuthenticated]);
 
-  
-  const rolesAdd = ["admin","super_admin"]
-
+  const rolesAdd = ["admin", "super_admin"];
 
   useEffect(() => {
     if (isAuthenticated) {
       // console.log("Token:", isAuthenticated, "User:", user, "Role:", role); // Debug log
       if (rolesAdd.includes(user?.role) && user?.role !== "organisateur") {
         navigate("/AdminAccueil", { replace: true });
-      }else if(user?.role != "organisateur"){
-        navigate("/choix-role",{replace : true})
-      }else {
+      } else if (user?.role != "organisateur") {
+        navigate("/choix-role", { replace: true });
+      } else {
         navigate("/pagepublic", { replace: true });
       }
     }
@@ -385,6 +394,7 @@ export default function PublicLayout() {
           isOpen={isModalOpen}
           onClose={() => setModalOpen(false)}
           isSignIn={true}
+          onError={errorMessage}
         />
       </main>
     </>
