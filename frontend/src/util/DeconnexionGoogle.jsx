@@ -16,7 +16,7 @@
 //       console.error("Erreur lors de la déconnexion:", error);
 //     } finally {
 //       handleLogout(); // Réinitialise l'état global
-//       navigate("/pagepublic", { replace: true }); // Redirige vers la page d'accueil publique
+//       navigate("/", { replace: true }); // Redirige vers la page d'accueil publique
 //     }
 //   };
 

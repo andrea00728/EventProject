@@ -11,6 +11,14 @@ import {
 import { createTable } from "../../services/tableService";
 import { createInviteForSpecificEvent } from "../../services/inviteService";
 import { getMyEvents } from "../../services/evenementServ";
+import {
+  createElement,
+  getElementsByEventId,
+  updateElementPosition,
+  updateElementRotation,
+  updateElement,
+  deleteElement,
+} from "../../services/elementService";
 import { textControll, getMaxCapacity } from "../../services/controll_champs/controll_champs";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -27,6 +35,19 @@ const CANVAS_SIZES = [
   { label: "Normal", width: 900, height: 650 },
   { label: "Grand", width: 1200, height: 800 },
   { label: "Très grand", width: 1600, height: 1000 },
+];
+
+// Nouveaux types d'éléments supplémentaires (portes, estrade, buffet, etc.)
+const ELEMENT_TYPES = [
+  { value: "porte_entree", label: "Porte d'entrée", width: 40, height: 80, color: "bg-green-300" },
+  { value: "porte_sortie", label: "Porte de sortie", width: 40, height: 80, color: "bg-red-300" },
+  { value: "estrade", label: "Estrade", width: 200, height: 100, color: "bg-purple-300" },
+  { value: "buffet", label: "Table de buffet", width: 150, height: 50, color: "bg-orange-300" },
+  { value: "piste_danse", label: "Piste de danse", width: 300, height: 300, color: "bg-pink-300" },
+  { value: "bar", label: "Bar", width: 200, height: 60, color: "bg-blue-300" },
+  { value: "ecran", label: "Tableau/Écran", width: 100, height: 60, color: "bg-gray-300" },
+  { value: "photobooth", label: "Photobooth", width: 100, height: 100, color: "bg-yellow-300" },
+  { value: "decoration", label: "Décoration", width: 80, height: 80, color: "bg-teal-300" },
 ];
 
 // Fonction pour aligner les positions sur une grille (snap to grid)
@@ -117,11 +138,13 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
 function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMoving }) {
   return (
     <div
-      className={`w-5 h-5 rounded-full absolute border border-white shadow-sm flex items-center justify-center text-[10px] font-bold text-white cursor-pointer transition-all duration-200 ${isOccupied
-        ? "bg-gradient-to-r from-red-400 to-rose-500 hover:from-red-500 hover:to-rose-600"
-        : "bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600"
-        } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''} ${isMoving ? 'ring-2 ring-yellow-400 ring-offset-1 animate-pulse' : ''
-        }`}
+      className={`w-5 h-5 rounded-full absolute border border-white shadow-sm flex items-center justify-center text-[10px] font-bold text-white cursor-pointer transition-all duration-200 ${
+        isOccupied
+          ? "bg-gradient-to-r from-red-400 to-rose-500 hover:from-red-500 hover:to-rose-600"
+          : "bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600"
+      } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''} ${
+        isMoving ? 'ring-2 ring-yellow-400 ring-offset-1 animate-pulse' : ''
+      }`}
       style={style}
       title={isOccupied ? `Place ${number} - ${guestName}` : `Place ${number} - Libre`}
       onClick={onClick}
@@ -157,8 +180,8 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     setDragging(true);
   };
 
-  const handleDragEnd = (e) => {
-    if (!ref.current) return;
+  const handleDrag = (e) => {
+    if (!ref.current || (e.clientX === 0 && e.clientY === 0)) return; // Ignore les événements de fin de drag
     const parentRect = ref.current.parentNode.getBoundingClientRect();
     const x = snapToGrid((e.clientX - parentRect.left - tableWidth / 2) / zoomLevel);
     const y = snapToGrid((e.clientY - parentRect.top - tableHeight / 2) / zoomLevel);
@@ -167,10 +190,12 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     const boundedX = Math.max(0, Math.min(x, maxX));
     const boundedY = Math.max(0, Math.min(y, maxY));
 
-    const newPos = { left: boundedX, top: boundedY };
-    setPos(newPos);
+    setPos({ left: boundedX, top: boundedY });
+  };
+
+  const handleDragEnd = () => {
     setDragging(false);
-    onMove(table.id, newPos);
+    onMove(table.id, pos);
   };
 
   const handleTouchStart = (e) => {
@@ -211,17 +236,15 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     const boundedX = Math.max(0, Math.min(snapToGrid(newX), maxX));
     const boundedY = Math.max(0, Math.min(snapToGrid(newY), maxY));
 
-    const newPos = { left: boundedX, top: boundedY };
-    setPos(newPos);
+    setPos({ left: boundedX, top: boundedY });
   };
 
   const handleTouchEnd = () => {
     if (!touchDataRef.current[table.id] || !ref.current) return;
 
-    const newPos = { left: pos.left, top: pos.top };
     delete touchDataRef.current[table.id];
     setDragging(false);
-    onMove(table.id, newPos);
+    onMove(table.id, pos);
   };
 
   const handleRotate = (direction) => {
@@ -251,7 +274,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   return (
     <div
       ref={ref}
-      className="absolute select-none"
+      className="absolute select-none group"
       style={{
         left: pos.left * zoomLevel,
         top: pos.top * zoomLevel,
@@ -259,10 +282,11 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
         height: tableHeight * zoomLevel,
         zIndex: dragging || rotating ? 50 : 10,
         touchAction: 'none',
-        transition: rotating ? 'none' : 'transform 0.3s ease'
+        transition: dragging ? 'none' : 'all 0.2s ease'
       }}
       draggable
       onDragStart={handleDragStart}
+      onDrag={handleDrag}
       onDragEnd={handleDragEnd}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -274,7 +298,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
           e.stopPropagation();
           onEdit(table);
         }}
-        className="absolute -top-2 -right-2 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-indigo-700 z-30"
+        className="absolute -top-2 -right-2 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-indigo-700 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
         title="Modifier la table"
       >
         <Edit className="w-3 h-3" />
@@ -284,7 +308,9 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
           e.stopPropagation();
           handleRotate("counterclockwise");
         }}
-        className={`absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all ${rotating ? 'ring-2 ring-blue-300 animate-pulse' : ''}`}
+        className={`absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${
+          rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''
+        } opacity-0 group-hover:opacity-100`}
         title="Pivoter à gauche"
       >
         <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(90deg)' }} />
@@ -294,33 +320,30 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
           e.stopPropagation();
           handleRotate("clockwise");
         }}
-        className={`absolute -top-2 left-6 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all ${rotating ? 'ring-2 ring-blue-300 animate-pulse' : ''}`}
+        className={`absolute -top-2 left-6 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${
+          rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''
+        } opacity-0 group-hover:opacity-100`}
         title="Pivoter à droite"
       >
         <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(-90deg)' }} />
       </button>
 
       <div
-        className={`border-4 border-indigo-400 shadow-md flex items-center justify-center ${table.type === "ronde" || table.type === "ovale"
-          ? "rounded-full"
-          : "rounded-md"
-          } w-full h-full bg-pink-200 relative transition-shadow duration-200 ${dragging || rotating ? 'shadow-2xl scale-105' : 'shadow-md'
-          } ${rotating ? 'ring-2 ring-blue-300' : ''}`}
+        className={`border-4 border-indigo-400 shadow-md flex items-center justify-center ${
+          table.type === "ronde" || table.type === "ovale" ? "rounded-full" : "rounded-md"
+        } w-full h-full bg-pink-200 relative transition-all duration-300 ${
+          dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-md'
+        }`}
         style={{
           transform: `rotate(${rotation}deg)`,
-          transition: rotating ? 'none' : 'transform 0.3s ease'
+          transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease'
         }}
       >
         <span className="font-bold text-indigo-700 select-none pointer-events-none">
           {table.nom}
         </span>
 
-        {getChairPositions(
-          table.type,
-          table.capacite,
-          tableWidth,
-          tableHeight
-        ).map((chairPos, i) => {
+        {getChairPositions(table.type, table.capacite, tableWidth, tableHeight).map((chairPos, i) => {
           const isOccupied = isChairOccupied(i);
           const guest = getGuestForChair(i);
           const isSelected = selectedPlace?.tableId === table.id && selectedPlace?.placeNumber === i + 1;
@@ -349,6 +372,185 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
             />
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+// Composant Element : représente un élément supplémentaire (porte, estrade, etc.)
+function Element({ element, onMove, onRotate, onDelete, onEdit, zoomLevel }) {
+  if (!element) return null;
+
+  const ref = useRef(null);
+  const touchDataRef = useRef({});
+  const [dragging, setDragging] = useState(false);
+  const [rotating, setRotating] = useState(false);
+  const [pos, setPos] = useState(element.position ?? { left: 100, top: 100 });
+  const [rotation, setRotation] = useState(element.rotation ?? 0);
+
+  useEffect(() => {
+    setPos(element.position ?? { left: 100, top: 100 });
+    setRotation(element.rotation ?? 0);
+  }, [element.position, element.rotation]);
+
+  const elementType = ELEMENT_TYPES.find(t => t.value === element.type) || ELEMENT_TYPES[0];
+  const { width: elementWidth, height: elementHeight, color } = elementType;
+
+  const handleDragStart = (e) => {
+    const img = new Image();
+    img.src = "";
+    e.dataTransfer.setDragImage(img, 0, 0);
+    setDragging(true);
+  };
+
+  const handleDrag = (e) => {
+    if (!ref.current || (e.clientX === 0 && e.clientY === 0)) return;
+    const parentRect = ref.current.parentNode.getBoundingClientRect();
+    const x = snapToGrid((e.clientX - parentRect.left - elementWidth / 2) / zoomLevel);
+    const y = snapToGrid((e.clientY - parentRect.top - elementHeight / 2) / zoomLevel);
+    const maxX = parentRect.width / zoomLevel - elementWidth;
+    const maxY = parentRect.height / zoomLevel - elementHeight;
+    const boundedX = Math.max(0, Math.min(x, maxX));
+    const boundedY = Math.max(0, Math.min(y, maxY));
+
+    setPos({ left: boundedX, top: boundedY });
+  };
+
+  const handleDragEnd = () => {
+    setDragging(false);
+    onMove(element.id, pos);
+  };
+
+  const handleTouchStart = (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (!ref.current) return;
+
+    const elementElement = ref.current;
+    const elementRect = elementElement.getBoundingClientRect();
+    const dragAreaRect = ref.current.parentNode.getBoundingClientRect();
+
+    touchDataRef.current[element.id] = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      initialLeft: pos.left,
+      initialTop: pos.top,
+      offsetX: touch.clientX - elementRect.left,
+      offsetY: touch.clientY - elementRect.top,
+      dragAreaLeft: dragAreaRect.left,
+      dragAreaTop: dragAreaRect.top
+    };
+
+    setDragging(true);
+  };
+
+  const handleTouchMove = (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const touchData = touchDataRef.current[element.id];
+
+    if (!touchData || !ref.current) return;
+
+    const newX = (touch.clientX - touchData.dragAreaLeft - touchData.offsetX) / zoomLevel;
+    const newY = (touch.clientY - touchData.dragAreaTop - touchData.offsetY) / zoomLevel;
+
+    const maxX = ref.current.parentNode.getBoundingClientRect().width / zoomLevel - elementWidth;
+    const maxY = ref.current.parentNode.getBoundingClientRect().height / zoomLevel - elementHeight;
+    const boundedX = Math.max(0, Math.min(snapToGrid(newX), maxX));
+    const boundedY = Math.max(0, Math.min(snapToGrid(newY), maxY));
+
+    setPos({ left: boundedX, top: boundedY });
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchDataRef.current[element.id] || !ref.current) return;
+
+    delete touchDataRef.current[element.id];
+    setDragging(false);
+    onMove(element.id, pos);
+  };
+
+  const handleRotate = (direction) => {
+    setRotating(true);
+    const angleStep = 15;
+    const newRotation = snapToAngle(
+      direction === "clockwise" ? rotation + angleStep : rotation - angleStep
+    );
+    setRotation(newRotation);
+    onRotate(element.id, newRotation);
+    setTimeout(() => setRotating(false), 300);
+    toast.success(`${element.nom} pivoté à ${newRotation}°`);
+  };
+
+  return (
+    <div
+      ref={ref}
+      className="absolute select-none group"
+      style={{
+        left: pos.left * zoomLevel,
+        top: pos.top * zoomLevel,
+        width: elementWidth * zoomLevel,
+        height: elementHeight * zoomLevel,
+        zIndex: dragging || rotating ? 50 : 10,
+        touchAction: 'none',
+        transition: dragging ? 'none' : 'all 0.2s ease'
+      }}
+      draggable
+      onDragStart={handleDragStart}
+      onDrag={handleDrag}
+      onDragEnd={handleDragEnd}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+    >
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit(element);
+        }}
+        className="absolute -top-2 -right-2 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-indigo-700 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+        title="Modifier l'élément"
+      >
+        <Edit className="w-3 h-3" />
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleRotate("counterclockwise");
+        }}
+        className={`absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${
+          rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''
+        } opacity-0 group-hover:opacity-100`}
+        title="Pivoter à gauche"
+      >
+        <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(90deg)' }} />
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleRotate("clockwise");
+        }}
+        className={`absolute -top-2 left-6 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${
+          rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''
+        } opacity-0 group-hover:opacity-100`}
+        title="Pivoter à droite"
+      >
+        <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(-90deg)' }} />
+      </button>
+
+      <div
+        className={`border-4 border-indigo-400 shadow-md flex items-center justify-center rounded-md w-full h-full ${color} relative transition-all duration-300 ${
+          dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-md'
+        }`}
+        style={{
+          transform: `rotate(${rotation}deg)`,
+          transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease'
+        }}
+      >
+        <span className="font-bold text-indigo-700 select-none pointer-events-none">
+          {element.nom}
+        </span>
       </div>
     </div>
   );
@@ -602,6 +804,211 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
   );
 }
 
+// Modal pour créer des éléments supplémentaires
+function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId }) {
+  const [form, setForm] = useState({
+    type: "porte_entree",
+    nombre: "",
+    noms: [],
+    eventId: eventId || 0
+  });
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleNombreChange = (e) => {
+    const nb = Number(e.target.value);
+    setForm((prev) => ({
+      ...prev,
+      nombre: nb,
+      noms: Array(nb).fill("")
+    }));
+  };
+
+  const handleNomChange = (index, value) => {
+    const updatedNoms = [...form.noms];
+    updatedNoms[index] = value;
+    setForm((prev) => ({ ...prev, noms: updatedNoms }));
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
+
+  const selectEvent = (event) => {
+    setSelectedEvent(event);
+    setForm((prev) => ({ ...prev, eventId: event.id }));
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!form.eventId) {
+      setError("Veuillez sélectionner un événement");
+      toast.error("Veuillez sélectionner un événement");
+      return;
+    }
+
+    try {
+      const nomsFinal = form.noms.map((nom, index) =>
+        nom && nom.trim() !== "" ? nom : `${ELEMENT_TYPES.find(t => t.value === form.type).label} ${index + 1}`
+      );
+
+      const formDataArray = nomsFinal.map((nom, index) => ({
+        nom,
+        type: form.type,
+        eventId: Number(form.eventId),
+        position: {
+          left: 100 + index * 20,
+          top: 100 + index * 20,
+        },
+        width: ELEMENT_TYPES.find(t => t.value === form.type).width,
+        height: ELEMENT_TYPES.find(t => t.value === form.type).height,
+        rotation: 0,
+        nombre: 1,
+      }));
+
+      const response = await Promise.all(formDataArray.map((data) => createElement(data)));
+      const newElements = response.flat();
+
+      const formattedElements = newElements.map((element) => ({
+        id: element.id,
+        nom: element.nom,
+        type: element.type,
+        eventId: Number(element.eventId),
+        position: element.position || { left: 100, top: 100 },
+        width: element.width || ELEMENT_TYPES.find(t => t.value === element.type).width,
+        height: element.height || ELEMENT_TYPES.find(t => t.value === element.type).height,
+        rotation: element.rotation || 0,
+      }));
+
+      setForm({ type: "porte_entree", nombre: "", noms: [], eventId: eventId || 0 });
+      setSelectedEvent(null);
+
+      onAddElements(formattedElements);
+      onClose();
+
+      toast.success(`${nomsFinal.length} élément${nomsFinal.length > 1 ? 's' : ''} créé${nomsFinal.length > 1 ? 's' : ''} avec succès !`);
+    } catch (err) {
+      console.error("Erreur création éléments:", err);
+      setError(err.response?.data?.message || "Erreur lors de la création des éléments");
+      toast.error(err.response?.data?.message || "Erreur lors de la création des éléments");
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Ajouter des Éléments</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        <form onSubmit={onSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col">
+              <label className="text-gray-700 font-medium mb-2 text-sm">Nombre d'éléments</label>
+              <input
+                name="nombre"
+                type="number"
+                value={form.nombre}
+                onChange={handleNombreChange}
+                placeholder="Ex: 2"
+                required
+                min="1"
+                className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3"
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-gray-700 font-medium mb-2 text-sm">Type d'Élément</label>
+              <select
+                name="type"
+                value={form.type}
+                onChange={handleChange}
+                required
+                className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3"
+              >
+                {ELEMENT_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-gray-700 font-medium mb-2 text-sm">Événement</label>
+              <select
+                value={form.eventId}
+                onChange={(e) => {
+                  const eventId = Number(e.target.value);
+                  const event = events.find(ev => ev.id === eventId);
+                  if (event) selectEvent(event);
+                }}
+                required
+                className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3"
+              >
+                <option value="">Sélectionner un événement</option>
+                {events.map((event) => (
+                  <option key={event.id} value={event.id}>
+                    {event.nom} ({new Date(event.date).toLocaleDateString("fr-FR")})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {form.noms.length > 0 && (
+            <div className="mt-6 space-y-4">
+              <h3 className="text-lg font-semibold">Noms des éléments</h3>
+              {form.noms.map((nom, index) => (
+                <div key={index} className="flex flex-col">
+                  <label className="text-gray-700 font-medium mb-2 text-sm">
+                    Nom Élément {index + 1}
+                  </label>
+                  <input
+                    value={nom}
+                    onChange={(e) => handleNomChange(index, e.target.value)}
+                    placeholder={`${ELEMENT_TYPES.find(t => t.value === form.type).label} ${index + 1}`}
+                    className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
+
+          <div className="flex justify-end gap-4 mt-8">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            >
+              Ajouter les Éléments
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // Modal pour ajouter un invité
 function GuestCreationModal({ isOpen, onClose, onAddGuest, tables, events }) {
   const [form, setForm] = useState({
@@ -823,8 +1230,9 @@ function GuestCreationModal({ isOpen, onClose, onAddGuest, tables, events }) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+              className={`px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 ${
+                isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
               {isSubmitting ? 'Création...' : 'Ajouter l\'Invité'}
             </button>
@@ -935,44 +1343,55 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
   const { isAuthenticated } = useStateContext();
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [editingTable, setEditingTable] = useState(null);
+  const [editingElement, setEditingElement] = useState(null);
   const [movingGuest, setMovingGuest] = useState(null);
   const [showTableModal, setShowTableModal] = useState(false);
+  const [showElementModal, setShowElementModal] = useState(false);
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [showCanvasSizeModal, setShowCanvasSizeModal] = useState(false);
   const [events, setEvents] = useState([]);
-  const [canvasSize, setCanvasSize] = useState(CANVAS_SIZES[0]); // Taille par défaut : Normal
-  const [zoomLevel, setZoomLevel] = useState(1); // Niveau de zoom initial (100%)
+  const [elements, setElements] = useState([]);
+  const [canvasSize, setCanvasSize] = useState(CANVAS_SIZES[0]);
+  const [zoomLevel, setZoomLevel] = useState(1);
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && event?.id) {
       getMyEvents()
         .then((response) => {
           console.log("Événements chargés:", response);
           setEvents(response);
         })
-        .catch(err => {
+        .catch((err) => {
           console.error("Erreur chargement événements:", err);
           toast.error("Erreur lors du chargement des événements");
         });
+
+      getElementsByEventId(event.id)
+        .then((response) => {
+          console.log("Éléments chargés:", response);
+          setElements(response);
+        })
+        .catch((err) => {
+          console.error("Erreur chargement éléments:", err);
+          toast.error("Erreur lors du chargement des éléments");
+        });
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, event?.id]);
 
   useEffect(() => {
     console.log("État tables mis à jour:", tables);
   }, [tables]);
 
-  // Gestion du zoom avec boutons (pas de 5%)
   const handleZoom = (direction) => {
     setZoomLevel((prev) => {
       const newZoom = direction === "in" ? prev + 0.05 : prev - 0.05;
-      const boundedZoom = Math.max(0.5, Math.min(newZoom, 2)); // Limiter entre 50% et 200%
+      const boundedZoom = Math.max(0.5, Math.min(newZoom, 2));
       toast.success(`Zoom : ${(boundedZoom * 100).toFixed(0)}%`);
       return boundedZoom;
     });
   };
 
-  // Application d'une taille personnalisée
   const handleApplyCanvasSize = (newSize) => {
     setCanvasSize(newSize);
   };
@@ -1051,6 +1470,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
     try {
       await updateTablePosition(tableId, position);
       setTables((prev) => prev.map((t) => (t.id === tableId ? { ...t, position } : t)));
+      toast.success("Position de la table mise à jour !");
     } catch (error) {
       console.error("Erreur mise à jour position:", error);
       toast.error("Erreur lors de la mise à jour de la position de la table");
@@ -1061,9 +1481,32 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
     try {
       await updateRotation(tableId, rotation);
       setTables((prev) => prev.map((t) => (t.id === tableId ? { ...t, rotation } : t)));
+      toast.success("Rotation de la table mise à jour !");
     } catch (error) {
       console.error("Erreur rotation:", error);
       toast.error("Erreur lors de la rotation de la table");
+    }
+  };
+
+  const handleElementMove = async (elementId, position) => {
+    try {
+      await updateElementPosition(elementId, position);
+      setElements((prev) => prev.map((el) => (el.id === elementId ? { ...el, position } : el)));
+      toast.success("Position de l'élément mise à jour !");
+    } catch (error) {
+      console.error("Erreur mise à jour position élément:", error);
+      toast.error("Erreur lors de la mise à jour de la position de l'élément");
+    }
+  };
+
+  const handleElementRotate = async (elementId, rotation) => {
+    try {
+      await updateElementRotation(elementId, rotation);
+      setElements((prev) => prev.map((el) => (el.id === elementId ? { ...el, rotation } : el)));
+      toast.success("Rotation de l'élément mise à jour !");
+    } catch (error) {
+      console.error("Erreur rotation élément:", error);
+      toast.error("Erreur lors de la rotation de l'élément");
     }
   };
 
@@ -1085,8 +1528,25 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
     }
   };
 
-  const handleOpenEdit = (table) => setEditingTable(table);
-  const handleCloseEdit = () => setEditingTable(null);
+  const handleElementDelete = async (elementId) => {
+    const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cet élément ?");
+    if (!confirmed) return;
+
+    try {
+      await deleteElement(elementId);
+      setElements((prev) => prev.filter((el) => el.id !== elementId));
+      toast.success("Élément supprimé avec succès !");
+    } catch (error) {
+      console.error("Erreur suppression élément:", error);
+      toast.error("Erreur lors de la suppression de l'élément");
+    }
+  };
+
+  const handleOpenTableEdit = (table) => setEditingTable(table);
+  const handleCloseTableEdit = () => setEditingTable(null);
+
+  const handleOpenElementEdit = (element) => setEditingElement(element);
+  const handleCloseElementEdit = () => setEditingElement(null);
 
   const handleTableChange = async (id, field, value) => {
     try {
@@ -1123,6 +1583,33 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
     }
   };
 
+  const handleElementChange = async (id, field, value) => {
+    try {
+      const updatedData = { [field]: value };
+
+      if (field === "type") {
+        const typeInfo = ELEMENT_TYPES.find((type) => type.value === value);
+        updatedData.width = typeInfo.width;
+        updatedData.height = typeInfo.height;
+      }
+
+      await updateElement(id, updatedData);
+      setElements((prev) =>
+        prev.map((el) => {
+          if (el.id === id) {
+            const updatedElement = { ...el, ...updatedData };
+            return updatedElement;
+          }
+          return el;
+        })
+      );
+      toast.success("Élément mis à jour avec succès !");
+    } catch (error) {
+      console.error("Erreur mise à jour élément:", error);
+      toast.error("Erreur lors de la modification de l'élément");
+    }
+  };
+
   const addNewTables = (newTables) => {
     console.log("Ajout de nouvelles tables dans addNewTables:", newTables);
     setTables(prev => {
@@ -1134,6 +1621,10 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
       console.log("Appel de onAddTable avec:", newTables);
       onAddTable(newTables);
     }
+  };
+
+  const addNewElements = (newElements) => {
+    setElements(prev => [...prev, ...newElements]);
   };
 
   const addNewGuest = (newGuest) => {
@@ -1188,10 +1679,19 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
         </button>
 
         <button
+          onClick={() => setShowElementModal(true)}
+          className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition hover:bg-purple-700"
+        >
+          <Plus className="w-5 h-5" />
+          <span className="hidden sm:inline">Ajouter des éléments</span>
+        </button>
+
+        <button
           onClick={() => {
-            const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer toutes les tables ?");
+            const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer toutes les tables et éléments ?");
             if (confirmed) {
               setTables([]);
+              setElements([]);
               setMovingGuest(null);
               setSelectedPlace(null);
               toast.success("Plan réinitialisé avec succès !");
@@ -1213,7 +1713,6 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           </button>
         )}
 
-        {/* Contrôle de la taille du canvas */}
         <div className="flex items-center gap-2">
           <select
             value={canvasSize.label}
@@ -1236,7 +1735,6 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           </select>
         </div>
 
-        {/* Contrôle du zoom */}
         <div className="flex items-center gap-2 bg-white rounded-lg shadow p-2">
           <button
             onClick={() => handleZoom("out")}
@@ -1273,7 +1771,6 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-indigo-100/20 to-transparent rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-purple-100/15 to-transparent rounded-full blur-2xl"></div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-50/10 to-indigo-50/10 rounded-full blur-3xl"></div>
-
           {movingGuest && (
             <div className="absolute top-4 left-4 right-4 z-40 animate-slide-down">
               <div className="relative bg-gradient-to-r from-amber-50 to-yellow-50/80 border border-amber-200/60 rounded-2xl p-4 shadow-xl overflow-hidden backdrop-blur-sm">
@@ -1335,14 +1832,25 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                 onDelete={handleTableDelete}
                 onPlaceClick={handlePlaceClick}
                 selectedPlace={selectedPlace}
-                onEdit={handleOpenEdit}
+                onEdit={handleOpenTableEdit}
                 movingGuest={movingGuest}
+                zoomLevel={zoomLevel}
+              />
+            ))}
+            {elements.map((element) => (
+              <Element
+                key={element.id}
+                element={element}
+                onMove={handleElementMove}
+                onRotate={handleElementRotate}
+                onDelete={handleElementDelete}
+                onEdit={handleOpenElementEdit}
                 zoomLevel={zoomLevel}
               />
             ))}
           </div>
 
-          {tables.length === 0 && (
+          {tables.length === 0 && elements.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <div className="text-center space-y-6 max-w-md mx-auto px-6">
                 <div className="relative mx-auto w-24 h-24">
@@ -1361,10 +1869,10 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                   </h3>
                   <div className="space-y-2">
                     <p className="text-gray-600 leading-relaxed">
-                      Aucune table créée pour le moment
+                      Aucune table ou élément créé pour le moment
                     </p>
                     <p className="text-sm text-gray-500 bg-gray-50/80 px-4 py-2 rounded-xl border border-gray-200/50">
-                      💡 Astuce : Ajoutez des tables depuis le bouton en bas à gauche pour commencer l'organisation de votre événement
+                      💡 Astuce : Ajoutez des tables ou éléments depuis les boutons en bas à gauche pour commencer l'organisation de votre événement
                     </p>
                   </div>
                 </div>
@@ -1390,7 +1898,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           <div className="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-indigo-200/50 rounded-br-lg"></div>
         </div>
 
-        <style jsx>{`
+        <style >{`
           @keyframes slide-down {
             from { 
               opacity: 0; 
@@ -1413,6 +1921,14 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
         onAddTables={addNewTables}
         events={events}
         tables={tables}
+        eventId={event?.id}
+      />
+
+      <ElementCreationModal
+        isOpen={showElementModal}
+        onClose={() => setShowElementModal(false)}
+        onAddElements={addNewElements}
+        events={events}
         eventId={event?.id}
       />
 
@@ -1479,7 +1995,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
             <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
               <button
                 className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 cursor-pointer"
-                onClick={handleCloseEdit}
+                onClick={handleCloseTableEdit}
               >
                 Annuler
               </button>
@@ -1487,7 +2003,59 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cursor-pointer"
                 onClick={() => {
                   handleTableDelete(editingTable.id);
-                  handleCloseEdit();
+                  handleCloseTableEdit();
+                }}
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingElement && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
+            <h2 className="text-xl font-semibold mb-4">
+              Modification de {editingElement.nom}
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="text-gray-700 font-medium mb-2 text-sm">Nom</label>
+                <input
+                  value={editingElement.nom}
+                  onChange={(e) => handleElementChange(editingElement.id, "nom", e.target.value)}
+                  placeholder="Nom de l'élément"
+                  className="w-full border rounded-lg px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="text-gray-700 font-medium mb-2 text-sm">Type</label>
+                <select
+                  value={editingElement.type}
+                  onChange={(e) => handleElementChange(editingElement.id, "type", e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2"
+                >
+                  {ELEMENT_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
+              <button
+                className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 cursor-pointer"
+                onClick={handleCloseElementEdit}
+              >
+                Annuler
+              </button>
+              <button
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cursor-pointer"
+                onClick={() => {
+                  handleElementDelete(editingElement.id);
+                  handleCloseElementEdit();
                 }}
               >
                 Supprimer

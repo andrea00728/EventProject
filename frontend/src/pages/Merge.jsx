@@ -161,7 +161,7 @@ const Publicacc = () => {
         <Confidentialite />
       </Modal>
 
-      <section id="pagepublic" ref={accueilRef}>
+      <section id="accueil" ref={accueilRef}>
         <div
           className="relative w-full h-screen overflow-hidden"
           onMouseEnter={() => clearInterval()} // stop autoplay (simplifié)
