@@ -95,9 +95,6 @@ async redirectTofrontend(
   const url = `http://localhost:5173/forfait/cancel?subscription_id=${subscriptionId}&token=${token}&ba_token=${baToken}`;
   return res.redirect(url);
 }
-
-
-
   @Get('cancel')
   async handleCancel() {
     return {
@@ -106,7 +103,7 @@ async redirectTofrontend(
   }
 
   @Get('all')
-  @UseGuards(AuthGuard('jwt'))
+  // @UseGuards(AuthGuard('jwt'))
   async getAllForfaits() {
     return this.forfaitRepository.find();
   }

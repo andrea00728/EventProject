@@ -32,11 +32,11 @@ export default function PublicLayout() {
   const isPublicEventsPage = location.pathname === "/evenements-publics";
 
   const defaultNavItems = [
-    { path: "/pagepublic#pagepublic", name: "Accueil" },
-    { path: "/pagepublic#service", name: "Service" },
-    { path: "/pagepublic#testimony", name: "Témoignages" },
-    { path: "/pagepublic#forfaits", name: "Forfaits" },
-    { path: "/pagepublic#contact", name: "Contact" },
+    { path: "/#accueil", name: "Accueil" },
+    { path: "/#service", name: "Service" },
+    { path: "/#testimony", name: "Témoignages" },
+    { path: "/#forfaits", name: "Forfaits" },
+    { path: "/#contact", name: "Contact" },
   ];
 
   const [navItems, setNavItems] = useState(defaultNavItems);
@@ -84,15 +84,15 @@ export default function PublicLayout() {
   useEffect(() => {
     if (isAuthenticated && forfait) {
       setNavItems([
-        { path: "/pagepublic#pagepublic", name: "Accueil" },
+        { path: "/#accueil", name: "Accueil" },
         {
           path: "#",
           name: "Evenement",
           subMenus: getConditionalSubMenus(forfait.nom || "Default"),
         },
-        { path: "/pagepublic#service", name: "Service" },
-        { path: "/pagepublic#testimony", name: "Témoignages" },
-        { path: "/pagepublic#forfaits", name: "Forfaits" },
+        { path: "/#service", name: "Service" },
+        { path: "/#testimony", name: "Témoignages" },
+        { path: "/#forfaits", name: "Forfaits" },
       ]);
     }
   }, [forfait, isAuthenticated]);
@@ -109,7 +109,7 @@ export default function PublicLayout() {
       }else if(user?.role != "organisateur"){
         navigate("/choix-role",{replace : true})
       }else {
-        navigate("/pagepublic", { replace: true });
+        navigate("/", { replace: true });
       }
     }
   }, [isAuthenticated, user, role, navigate]);

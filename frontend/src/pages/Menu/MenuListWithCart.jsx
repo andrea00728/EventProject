@@ -73,7 +73,7 @@ const MenuListWithCart = () => {
       if (!slug) {
         setMessage('Aucun lien court fourni.');
         setTimeout(() => setMessage(''), 3000);
-        navigate('/pagepublic');
+        navigate('/');
         return;
       }
 
@@ -86,7 +86,7 @@ const MenuListWithCart = () => {
         console.error('Erreur lors de la récupération des infos du lien:', error);
         setMessage('Impossible de récupérer les informations du lien.');
         setTimeout(() => setMessage(''), 3000);
-        navigate('/pagepublic');
+        navigate('/');
       }
     };
 

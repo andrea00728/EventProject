@@ -467,7 +467,7 @@ async importGuests(file: Express.Multer.File, eventId: number,userId:string): Pr
   });
 }
 
-
+                                                                                                                        
 async deleteById(id: number, userId: string): Promise<{ message: string }> {
   const invite = await this.guestRepository.findOne({
     where: { id },

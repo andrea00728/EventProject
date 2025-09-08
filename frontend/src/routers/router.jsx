@@ -5,14 +5,14 @@ import GuestLayout from "../layouts/GuestLayout";
 // import Accueil from "../pages/Accueil";
 // import Evenement from "../pages/Evenement";
 import Notfound from "../pages/Notofoundpage";
-// import Pagepublic from "../pages/Pagepublic";
+// import Pagepublic from "../pages/";
 import Connexionorganisateur from "../pages/Connexionorganisateur";
 import Inscription from "../pages/Inscription";
 import Connnexiongoogle from "../services/connexiongoogl.jsx";
 import Evenemenpage from "../pages/Evenementpage.jsx"; 
 import Apropos from "../pages/apropos";
 import PublicEvents from "../pages/PublicEvents"; // adapte le chemin si besoin
-// import PagePublic from "../pages/PagePublic";
+// import PagePublic from "../pages/";
 import PageEvenementDetail from "../pages/PageEvenementDetail";
 // import Table3DScene from "../components/table3D";
 import ChoixModeInvite from "../layouts/ChoixModeInvite";
@@ -92,12 +92,12 @@ const router = createBrowserRouter([
     path: "/",
     element: <PublicLayout />,
     children: [
+      // {
+      //   path: "/",
+      //   element: <Navigate to="/" />,
+      // },
       {
         path: "/",
-        element: <Navigate to="/pagepublic" />,
-      },
-      {
-        path: "/pagepublic",
         element: <Publicacc />,
       },
       // {
@@ -278,7 +278,7 @@ const router = createBrowserRouter([
       },
        {
         path: "/forfait/cancel",
-        element: <Navigate to="/pagepublic" />,
+        element: <Navigate to="/" />,
       },
       {
         path: "/forfaits",

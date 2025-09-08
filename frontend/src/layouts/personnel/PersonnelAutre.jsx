@@ -16,11 +16,26 @@ export const PersonnelAutre = () => {
     await handleLogout();
     setUser(null);
     setShowLogoutModal(false);
-    navigate("/pagepublic");
+    navigate("/");
   };
-  const cancelLogout = () => setShowLogoutModal(false);
 
-  if (!isAuthenticated) return <Navigate to="/pagepublic" replace />;
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
+  };
+
+  console.log(user);
+
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     if (!user) {
+  //       return <Navigate to={"/"}/>
+
+  //     }
+  //   }
+  // }, [isAuthenticated, user]);
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
 
   switch (role) {
     case "cuisinier": return <Navigate to="/personnelCuisine" replace />;

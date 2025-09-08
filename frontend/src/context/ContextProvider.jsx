@@ -22,10 +22,9 @@ export const ContextProvider = ({ children }) => {
       setUserState(JSON.parse(storedUser));
       setIsAuthenticated(true);
       setIsLoading(false);
-      return; // pas besoin d'appeler /auth/status si localStorage existe
+      return; 
     }
 
-    // Sinon, vérifie le serveur
     const checkAuthStatus = async () => {
       try {
         const response = await axiosClient.get("/auth/status", { withCredentials: true });
