@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { Edit, Plus, RefreshCcw, User, Clock, Minus, X, Move, RotateCcw } from "lucide-react";
 import { AuthModal } from "../components/Modal/authModal";
 
-
 // Définition des types de tables avec leurs dimensions
 const TABLE_TYPES = [
   { value: "ronde", label: "Table ronde", width: 80, height: 80 },
@@ -13,10 +12,15 @@ const TABLE_TYPES = [
 
 // Définition des types d'éléments avec leurs dimensions
 const ELEMENT_TYPES = [
-  { value: "bar", label: "Bar", width: 120, height: 40 },
-  { value: "porte", label: "Porte", width: 60, height: 20 },
-  { value: "piste", label: "Piste de danse", width: 100, height: 100 },
-  { value: "buffet", label: "Buffet", width: 100, height: 40 },
+  { value: "carre", label: "Carré", width: 80, height: 80 },
+  { value: "rond", label: "Rond", width: 80, height: 80 },
+  { value: "petit_carre", label: "Petit Carré", width: 40, height: 40 },
+  { value: "rectangle", label: "Rectangle", width: 100, height: 50 },
+  { value: "petit_rectangle", label: "Petit Rectangle", width: 60, height: 30 },
+  { value: "ovale", label: "Ovale", width: 100, height: 50 },
+  { value: "petit_rond", label: "Petit Rond", width: 40, height: 40 },
+  { value: "petit_ovale", label: "Petit Ovale", width: 60, height: 30 },
+  { value: "triangle", label: "Triangle", width: 80, height: 80 },
 ];
 
 // Définir les tailles prédéfinies pour le canvas
@@ -29,7 +33,7 @@ const CANVAS_SIZES = [
 // Limites pour la démo
 const MAX_TABLES = 3;
 const MAX_GUESTS = 5;
-const MAX_ELEMENTS = 5; // Nouvelle limite pour les éléments
+const MAX_ELEMENTS = 5;
 
 // Types de modales pour une meilleure gestion
 const MODAL_TYPES = {
@@ -41,7 +45,7 @@ const MODAL_TYPES = {
   AUTH: 'auth',
   DELETE_TABLE_CONFIRM: 'delete_table_confirm',
   RESET_CONFIRM: 'reset_confirm',
-  ADD_ELEMENT: 'add_element', // Nouveau type pour ajouter des éléments
+  ADD_ELEMENT: 'add_element',
 };
 
 // Fonction pour aligner les positions sur une grille
@@ -60,7 +64,6 @@ const getChairPositions = (type, capacity, tableWidth, tableHeight) => {
     const positions = [];
     const chairSize = 30;
     const minDistanceFromTable = 0;
-
     if (type === "ronde" || type === "ovale") {
       const centerX = tableWidth / 2;
       const centerY = tableHeight / 2;
@@ -68,7 +71,6 @@ const getChairPositions = (type, capacity, tableWidth, tableHeight) => {
         ? Math.min(tableWidth, tableHeight) / 2
         : Math.max(tableWidth, tableHeight) / 2;
       const radius = tableRadius + minDistanceFromTable + chairSize / 2;
-
       for (let i = 0; i < capacity; i++) {
         const angle = (2 * Math.PI * i) / capacity - Math.PI / 2;
         const x = centerX + radius * Math.cos(angle) - chairSize / 2;
@@ -82,9 +84,7 @@ const getChairPositions = (type, capacity, tableWidth, tableHeight) => {
       const rightChairs = Math.round(tableHeight / spacingBetweenChairs);
       const bottomChairs = Math.round(tableWidth / spacingBetweenChairs);
       const leftChairs = capacity - topChairs - rightChairs - bottomChairs;
-
       let count = 0;
-
       if (topChairs > 0) {
         const spacing = tableWidth / (topChairs + 1);
         for (let i = 0; i < topChairs && count < capacity; i++, count++) {
@@ -94,7 +94,6 @@ const getChairPositions = (type, capacity, tableWidth, tableHeight) => {
           });
         }
       }
-
       if (rightChairs > 0) {
         const spacing = tableHeight / (rightChairs + 1);
         for (let i = 0; i < rightChairs && count < capacity; i++, count++) {
@@ -104,7 +103,6 @@ const getChairPositions = (type, capacity, tableWidth, tableHeight) => {
           });
         }
       }
-
       if (bottomChairs > 0) {
         const spacing = tableWidth / (bottomChairs + 1);
         for (let i = 0; i < bottomChairs && count < capacity; i++, count++) {
@@ -114,7 +112,6 @@ const getChairPositions = (type, capacity, tableWidth, tableHeight) => {
           });
         }
       }
-
       if (leftChairs > 0) {
         const spacing = tableHeight / (leftChairs + 1);
         for (let i = 0; i < leftChairs && count < capacity; i++, count++) {
@@ -125,7 +122,6 @@ const getChairPositions = (type, capacity, tableWidth, tableHeight) => {
         }
       }
     }
-
     return positions;
   }, [type, capacity, tableWidth, tableHeight]);
 };
@@ -140,7 +136,6 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
     height: `${20 * zoomLevel}px`,
     fontSize: `${Math.max(8, 10 * zoomLevel)}px`,
   };
-
   return (
     <div
       className={`rounded-full absolute border-2 shadow-lg flex items-center justify-center font-bold text-white cursor-pointer transition-all duration-300 transform hover:scale-110 ${
@@ -162,7 +157,6 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
 // Composant Table
 function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace, onEdit, movingGuest, zoomLevel, isMobile }) {
   if (!table) return null;
-
   const ref = useRef(null);
   const touchDataRef = useRef({});
   const [dragging, setDragging] = useState(false);
@@ -170,22 +164,18 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   const [pos, setPos] = useState(table.position ?? { left: 100, top: 100 });
   const [rotation, setRotation] = useState(table.rotation ?? 0);
   const [isHovered, setIsHovered] = useState(false);
-
   useEffect(() => {
     setPos(table.position ?? { left: 100, top: 100 });
     setRotation(table.rotation ?? 0);
   }, [table.position, table.rotation]);
-
   const tableType = TABLE_TYPES.find(t => t.value === table.type) || TABLE_TYPES[0];
   const { width: tableWidth, height: tableHeight } = tableType;
-
   const handleDragStart = (e) => {
     const img = new Image();
     img.src = "";
     e.dataTransfer.setDragImage(img, 0, 0);
     setDragging(true);
   };
-
   const handleDragEnd = (e) => {
     if (!ref.current) return;
     const parentRect = ref.current.parentNode.getBoundingClientRect();
@@ -195,22 +185,18 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     const maxY = parentRect.height / zoomLevel - tableHeight;
     const boundedX = Math.max(0, Math.min(x, maxX));
     const boundedY = Math.max(0, Math.min(y, maxY));
-
     const newPos = { left: boundedX, top: boundedY };
     setPos(newPos);
     setDragging(false);
     onMove(table.id, newPos);
   };
-
   const handleTouchStart = (e) => {
     if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(e.target.tagName)) return;
-
     e.preventDefault();
     const touch = e.touches[0];
     const tableElement = e.currentTarget;
     const tableRect = tableElement.getBoundingClientRect();
     const parentRect = ref.current.parentNode.getBoundingClientRect();
-
     touchDataRef.current = {
       startX: touch.clientX,
       startY: touch.clientY,
@@ -221,29 +207,22 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       parentLeft: parentRect.left,
       parentTop: parentRect.top,
     };
-
     setDragging(true);
   };
-
   const handleTouchMove = (e) => {
     if (!touchDataRef.current || ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
-
     e.preventDefault();
     const touch = e.touches[0];
     const parent = ref.current.parentNode;
     if (!parent) return;
-
     const newX = (touch.clientX - touchDataRef.current.parentLeft - touchDataRef.current.offsetX + parent.scrollLeft) / zoomLevel;
     const newY = (touch.clientY - touchDataRef.current.parentTop - touchDataRef.current.offsetY + parent.scrollTop) / zoomLevel;
-
     const maxX = parent.clientWidth / zoomLevel - tableWidth;
     const maxY = parent.clientHeight / zoomLevel - tableHeight;
     const boundedX = Math.max(0, Math.min(snapToGrid(newX), maxX));
     const boundedY = Math.max(0, Math.min(snapToGrid(newY), maxY));
-
     setPos({ left: boundedX, top: boundedY });
   };
-
   const handleTouchEnd = () => {
     if (touchDataRef.current) {
       onMove(table.id, pos);
@@ -251,7 +230,6 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       setDragging(false);
     }
   };
-
   const handleRotate = (direction) => {
     setRotating(true);
     const angleStep = 15;
@@ -262,19 +240,15 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     onRotate(table.id, newRotation);
     setTimeout(() => setRotating(false), 300);
   };
-
   const isChairOccupied = (chairIndex) => {
     return table.guests?.some(g => g.place === chairIndex + 1) || false;
   };
-
   const getGuestForChair = (chairIndex) => {
     return table.guests?.find(g => g.place === chairIndex + 1) || null;
   };
-
   const handleChairClick = (chairIndex) => {
     onPlaceClick(table, chairIndex + 1);
   };
-
   return (
     <div
       ref={ref}
@@ -309,7 +283,6 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
           <Edit className="w-3.5 h-3.5" />
         </button>
       </div>
-
       <div className={`absolute -top-3 -left-3 flex gap-1 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
         <button
           onClick={(e) => {
@@ -332,7 +305,6 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
           <RefreshCcw className="w-3.5 h-3.5" />
         </button>
       </div>
-
       <div
         className={`border-4 shadow-xl flex items-center justify-center w-full h-full relative transition-all duration-300 ${
           table.type === "ronde" || table.type === "ovale" ? "rounded-full" : "rounded-2xl"
@@ -354,20 +326,17 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
             </div>
           </div>
         )}
-
         <span
           className="font-bold text-indigo-800 select-none pointer-events-none text-center break-words px-2 drop-shadow-sm"
           style={{ fontSize: `${Math.max(10, 14 * zoomLevel)}px` }}
         >
           {table.nom}
         </span>
-
         {getChairPositions(table.type, table.capacite, tableWidth, tableHeight).map((chairPos, i) => {
           const isOccupied = isChairOccupied(i);
           const guest = getGuestForChair(i);
           const isSelected = selectedPlace?.tableId === table.id && selectedPlace?.placeNumber === i + 1;
           const isMovingTarget = movingGuest && movingGuest.guestId !== guest?.id;
-
           return (
             <Chair
               key={i}
@@ -393,7 +362,6 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
 // Composant Element
 function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
   if (!element) return null;
-
   const ref = useRef(null);
   const touchDataRef = useRef({});
   const [dragging, setDragging] = useState(false);
@@ -401,14 +369,20 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
   const [pos, setPos] = useState(element.position ?? { left: 100, top: 100 });
   const [rotation, setRotation] = useState(element.rotation ?? 0);
   const [isHovered, setIsHovered] = useState(false);
-
   useEffect(() => {
     setPos(element.position ?? { left: 100, top: 100 });
     setRotation(element.rotation ?? 0);
   }, [element.position, element.rotation]);
-
   const elementType = ELEMENT_TYPES.find(t => t.value === element.type) || ELEMENT_TYPES[0];
   const { width: elementWidth, height: elementHeight } = elementType;
+
+  // Déterminer la classe CSS pour la forme
+  let shapeClass = "rounded-2xl";
+  if (element.type === "rond" || element.type === "petit_rond" || element.type === "ovale" || element.type === "petit_ovale") {
+    shapeClass = "rounded-full";
+  } else if (element.type === "triangle") {
+    shapeClass = "";
+  }
 
   const handleDragStart = (e) => {
     const img = new Image();
@@ -416,7 +390,6 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
     e.dataTransfer.setDragImage(img, 0, 0);
     setDragging(true);
   };
-
   const handleDragEnd = (e) => {
     if (!ref.current) return;
     const parentRect = ref.current.parentNode.getBoundingClientRect();
@@ -426,22 +399,18 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
     const maxY = parentRect.height / zoomLevel - elementHeight;
     const boundedX = Math.max(0, Math.min(x, maxX));
     const boundedY = Math.max(0, Math.min(y, maxY));
-
     const newPos = { left: boundedX, top: boundedY };
     setPos(newPos);
     setDragging(false);
     onMove(element.id, newPos);
   };
-
   const handleTouchStart = (e) => {
     if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(e.target.tagName)) return;
-
     e.preventDefault();
     const touch = e.touches[0];
     const elementElement = e.currentTarget;
     const elementRect = elementElement.getBoundingClientRect();
     const parentRect = ref.current.parentNode.getBoundingClientRect();
-
     touchDataRef.current = {
       startX: touch.clientX,
       startY: touch.clientY,
@@ -452,29 +421,22 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
       parentLeft: parentRect.left,
       parentTop: parentRect.top,
     };
-
     setDragging(true);
   };
-
   const handleTouchMove = (e) => {
     if (!touchDataRef.current || ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
-
     e.preventDefault();
     const touch = e.touches[0];
     const parent = ref.current.parentNode;
     if (!parent) return;
-
     const newX = (touch.clientX - touchDataRef.current.parentLeft - touchDataRef.current.offsetX + parent.scrollLeft) / zoomLevel;
     const newY = (touch.clientY - touchDataRef.current.parentTop - touchDataRef.current.offsetY + parent.scrollTop) / zoomLevel;
-
     const maxX = parent.clientWidth / zoomLevel - elementWidth;
     const maxY = parent.clientHeight / zoomLevel - elementHeight;
     const boundedX = Math.max(0, Math.min(snapToGrid(newX), maxX));
     const boundedY = Math.max(0, Math.min(snapToGrid(newY), maxY));
-
     setPos({ left: boundedX, top: boundedY });
   };
-
   const handleTouchEnd = () => {
     if (touchDataRef.current) {
       onMove(element.id, pos);
@@ -482,7 +444,6 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
       setDragging(false);
     }
   };
-
   const handleRotate = (direction) => {
     setRotating(true);
     const angleStep = 15;
@@ -493,7 +454,6 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
     onRotate(element.id, newRotation);
     setTimeout(() => setRotating(false), 300);
   };
-
   return (
     <div
       ref={ref}
@@ -528,7 +488,6 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
-
       <div className={`absolute -top-3 -left-3 flex gap-1 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
         <button
           onClick={(e) => {
@@ -551,16 +510,20 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
           <RefreshCcw className="w-3.5 h-3.5" />
         </button>
       </div>
-
       <div
-        className={`border-4 shadow-xl flex items-center justify-center w-full h-full relative transition-all duration-300 rounded-2xl ${
+        className={`border-4 shadow-xl flex items-center justify-center w-full h-full relative transition-all duration-300 ${shapeClass} ${
           dragging || rotating
             ? 'shadow-2xl scale-105 border-teal-400 bg-gradient-to-br from-teal-100 via-cyan-50 to-blue-100'
             : 'shadow-lg border-teal-300 bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100'
-        } ${rotating ? 'ring-4 ring-blue-300/60' : ''} backdrop-blur-sm`}
+        } ${rotating ? 'ring-4 ring-blue-300/60' : ''} backdrop-blur-sm ${
+          element.type === "triangle" ? 'triangle-shape' : ''
+        }`}
         style={{
           transform: `rotate(${rotation}deg)`,
           transition: rotating ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          ...(element.type === "triangle" ? {
+            clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+          } : {}),
         }}
       >
         {dragging && (
@@ -571,7 +534,6 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
             </div>
           </div>
         )}
-
         <span
           className="font-bold text-teal-800 select-none pointer-events-none text-center break-words px-2 drop-shadow-sm"
           style={{ fontSize: `${Math.max(10, 14 * zoomLevel)}px` }}
@@ -586,11 +548,9 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
 // Composant Modal générique
 function Modal({ isOpen, onClose, title, children, className = "" }) {
   if (!isOpen) return null;
-
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) onClose();
   };
-
   return (
     <div
       className="fixed inset-0 bg-gradient-to-br from-black/60 via-gray-900/50 to-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in"
@@ -623,7 +583,7 @@ function Modal({ isOpen, onClose, title, children, className = "" }) {
 export default function DemoPlanSalle() {
   const [tables, setTables] = useState([]);
   const [guests, setGuests] = useState([]);
-  const [elements, setElements] = useState([]); // Nouvel état pour les éléments
+  const [elements, setElements] = useState([]);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [editingTable, setEditingTable] = useState(null);
   const [movingGuest, setMovingGuest] = useState(null);
@@ -634,12 +594,11 @@ export default function DemoPlanSalle() {
   const [error, setError] = useState('');
   const [authForm, setAuthForm] = useState({ email: "", password: "" });
   const [tableToDelete, setTableToDelete] = useState(null);
-  const [elementForm, setElementForm] = useState({ // État pour le formulaire des éléments
-    type: "bar",
+  const [elementForm, setElementForm] = useState({
+    type: "carre",
     nombre: "",
-    noms: [],
+    nom: "", // Remplacement de 'noms' par 'nom' pour un seul nom par élément
   });
-
   const [form, setForm] = useState({
     capacite: "",
     type: "ronde",
@@ -652,7 +611,6 @@ export default function DemoPlanSalle() {
     tableId: null,
     place: null,
   });
-
   const canvasRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -661,7 +619,6 @@ export default function DemoPlanSalle() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -678,7 +635,7 @@ export default function DemoPlanSalle() {
     setEditingTable(null);
     setLimitType('');
     setTableToDelete(null);
-    setElementForm({ type: "bar", nombre: "", noms: [] }); // Réinitialiser le formulaire des éléments
+    setElementForm({ type: "carre", nombre: "", nom: "" });
     if (modalType === MODAL_TYPES.AUTH) {
       setAuthForm({ email: "", password: "" });
     }
@@ -759,17 +716,14 @@ export default function DemoPlanSalle() {
     e.preventDefault();
     const nombre = Number(form.nombre);
     if (!checkTableLimit(nombre)) return;
-
     if (!form.capacite || form.capacite < 1 || form.capacite > 12) {
       setError("La capacité doit être entre 1 et 12.");
       return;
     }
-
     const newTables = [];
     for (let i = 0; i < nombre; i++) {
       const typeInfo = TABLE_TYPES.find(t => t.value === form.type);
       const nom = form.noms[i] || `Table ${tables.length + i + 1}`;
-
       newTables.push({
         id: Date.now() + i,
         nom,
@@ -785,7 +739,6 @@ export default function DemoPlanSalle() {
         guests: [],
       });
     }
-
     setTables(prev => [...prev, ...newTables]);
     setForm({ capacite: "", type: "ronde", nombre: "", noms: [] });
     setError('');
@@ -795,22 +748,18 @@ export default function DemoPlanSalle() {
   const handleAddGuest = (e) => {
     e.preventDefault();
     if (!checkGuestLimit()) return;
-
     const table = tables.find(t => t.id === Number(guestForm.tableId));
     if (!table) {
       setError("Veuillez sélectionner une table valide.");
       return;
     }
-
     const occupiedPlaces = table.guests?.map(g => g.place) || [];
     const firstFreePlace = Array.from({ length: table.capacite }, (_, i) => i + 1)
       .find(place => !occupiedPlaces.includes(place));
-
     if (!firstFreePlace) {
       setError("Aucune place libre sur cette table.");
       return;
     }
-
     const newGuest = {
       id: Date.now(),
       nom: `${guestForm.nom} ${guestForm.prenom}`.trim(),
@@ -818,9 +767,7 @@ export default function DemoPlanSalle() {
       tableId: Number(guestForm.tableId),
       place: guestForm.place ? Number(guestForm.place) : firstFreePlace,
     };
-
     setGuests(prev => [...prev, newGuest]);
-
     setTables(prevTables =>
       prevTables.map(t => {
         if (t.id === newGuest.tableId) {
@@ -836,7 +783,6 @@ export default function DemoPlanSalle() {
         return t;
       })
     );
-
     setGuestForm({ nom: "", prenom: "", tableId: null, place: null });
     setError('');
     setCurrentModal(MODAL_TYPES.NONE);
@@ -846,12 +792,10 @@ export default function DemoPlanSalle() {
     e.preventDefault();
     const nombre = Number(elementForm.nombre);
     if (!checkElementLimit(nombre)) return;
-
     const newElements = [];
     for (let i = 0; i < nombre; i++) {
       const typeInfo = ELEMENT_TYPES.find(t => t.value === elementForm.type);
-      const nom = elementForm.noms[i] || `${typeInfo.label} ${elements.length + i + 1}`;
-
+      const nom = elementForm.nom || `${typeInfo.label} ${elements.length + i + 1}`;
       newElements.push({
         id: Date.now() + i,
         nom,
@@ -865,24 +809,20 @@ export default function DemoPlanSalle() {
         rotation: 0,
       });
     }
-
     setElements(prev => [...prev, ...newElements]);
-    setElementForm({ type: "bar", nombre: "", noms: [] });
+    setElementForm({ type: "carre", nombre: "", nom: "" });
     setError('');
     setCurrentModal(MODAL_TYPES.NONE);
   };
 
   const handlePlaceClick = (table, placeNumber) => {
     const guestAtPlace = table.guests?.find(g => g.place === placeNumber);
-
     if (movingGuest) {
       const targetGuest = table.guests?.find(g => g.place === placeNumber);
-
       if (targetGuest) {
         setError("Cette chaise est déjà occupée !");
         return;
       }
-
       setTables(prevTables =>
         prevTables.map(t => {
           if (t.id === movingGuest.sourceTableId && t.id === table.id) {
@@ -909,7 +849,6 @@ export default function DemoPlanSalle() {
           return t;
         })
       );
-
       setGuests(prevGuests =>
         prevGuests.map(g =>
           g.id === movingGuest.guestId
@@ -917,7 +856,6 @@ export default function DemoPlanSalle() {
             : g
         )
       );
-
       setMovingGuest(null);
       setSelectedPlace(null);
       setError('');
@@ -975,7 +913,6 @@ export default function DemoPlanSalle() {
         return t;
       })
     );
-
     if (editingTable && editingTable.id === id) {
       setEditingTable(prev => ({ ...prev, [field]: value }));
     }
@@ -988,7 +925,6 @@ export default function DemoPlanSalle() {
 
   const confirmDeleteTable = () => {
     if (!tableToDelete) return;
-
     setTables(prev => prev.filter(t => t.id !== tableToDelete));
     setGuests(prev => prev.filter(g => g.tableId !== tableToDelete));
     if (selectedPlace?.tableId === tableToDelete) {
@@ -1027,7 +963,7 @@ export default function DemoPlanSalle() {
       setElementForm(prev => ({
         ...prev,
         nombre: nb,
-        noms: Array(nb).fill(""),
+        nom: "", // Un seul nom pour tous les éléments
       }));
     }
   };
@@ -1038,9 +974,7 @@ export default function DemoPlanSalle() {
       updatedNoms[index] = value;
       setForm(prev => ({ ...prev, noms: updatedNoms }));
     } else if (formType === 'element') {
-      const updatedNoms = [...elementForm.noms];
-      updatedNoms[index] = value;
-      setElementForm(prev => ({ ...prev, noms: updatedNoms }));
+      setElementForm(prev => ({ ...prev, nom: value }));
     }
   };
 
@@ -1074,7 +1008,6 @@ export default function DemoPlanSalle() {
           </div>
         </div>
       </div>
-
       <div className="flex-1 flex flex-col md:flex-row p-4 gap-4">
         <div className={`${isMobile
           ? 'fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-row gap-3'
@@ -1087,7 +1020,6 @@ export default function DemoPlanSalle() {
             <User className="w-5 h-5" />
             {!isMobile && <span className="text-sm font-medium">Invité</span>}
           </button>
-
           <button
             onClick={handleAddTableClick}
             className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
@@ -1095,7 +1027,6 @@ export default function DemoPlanSalle() {
             <Plus className="w-5 h-5" />
             {!isMobile && <span className="text-sm font-medium">Table</span>}
           </button>
-
           <button
             onClick={handleAddElementClick}
             className="bg-gradient-to-br from-teal-500 to-cyan-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
@@ -1103,7 +1034,6 @@ export default function DemoPlanSalle() {
             <Plus className="w-5 h-5" />
             {!isMobile && <span className="text-sm font-medium">Élément</span>}
           </button>
-
           <button
             onClick={handleReset}
             className="bg-gradient-to-br from-red-500 to-rose-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
@@ -1111,7 +1041,6 @@ export default function DemoPlanSalle() {
             <RefreshCcw className="w-5 h-5" />
             {!isMobile && <span className="text-sm font-medium">Reset</span>}
           </button>
-
           {movingGuest && (
             <button
               onClick={() => {
@@ -1126,7 +1055,6 @@ export default function DemoPlanSalle() {
             </button>
           )}
         </div>
-
         <div className="flex-1 flex items-center justify-center relative">
           {movingGuest && (
             <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-md px-4">
@@ -1143,7 +1071,6 @@ export default function DemoPlanSalle() {
               </div>
             </div>
           )}
-
           {error && (
             <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-md px-4">
               <div className="bg-red-100 border border-red-300 rounded-2xl p-4 shadow-lg">
@@ -1151,7 +1078,6 @@ export default function DemoPlanSalle() {
               </div>
             </div>
           )}
-
           <div
             ref={canvasRef}
             className="relative border-4 border-white/30 rounded-3xl shadow-2xl bg-gradient-to-br from-slate-50/90 via-blue-50/60 to-indigo-50/70 overflow-auto backdrop-blur-sm"
@@ -1171,12 +1097,10 @@ export default function DemoPlanSalle() {
                 </div>
               </div>
             )}
-
             <div className="absolute inset-0">
               <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(99,102,241,0.06)_1px,transparent_1px),linear-gradient(180deg,rgba(99,102,241,0.06)_1px,transparent_1px)] bg-[size:40px_40px]" />
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(99,102,241,0.03),transparent_70%)]" />
             </div>
-
             <div
               className="relative w-full h-full min-w-full min-h-full"
               style={{
@@ -1204,7 +1128,6 @@ export default function DemoPlanSalle() {
                   isMobile={isMobile}
                 />
               ))}
-
               {elements.map(element => (
                 <Element
                   key={element.id}
@@ -1216,7 +1139,6 @@ export default function DemoPlanSalle() {
                   isMobile={isMobile}
                 />
               ))}
-
               {tables.length === 0 && elements.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center space-y-6 max-w-lg mx-auto px-6">
@@ -1248,7 +1170,6 @@ export default function DemoPlanSalle() {
                 </div>
               )}
             </div>
-
             {!isMobile && (
               <div className="absolute bottom-6 right-6 flex items-center gap-3 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl p-3 border border-white/30">
                 <button
@@ -1272,7 +1193,6 @@ export default function DemoPlanSalle() {
                 </button>
               </div>
             )}
-
             <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl p-3 text-xs border border-white/30">
               <div className="text-indigo-700 font-bold mb-1 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
@@ -1296,7 +1216,6 @@ export default function DemoPlanSalle() {
           </div>
         </div>
       </div>
-
       {/* Modal de limite atteinte */}
       <Modal
         isOpen={currentModal === MODAL_TYPES.LIMIT}
@@ -1333,7 +1252,6 @@ export default function DemoPlanSalle() {
           </button>
         </div>
       </Modal>
-
       {/* Modal d'ajout de table */}
       <Modal
         isOpen={currentModal === MODAL_TYPES.ADD_TABLE}
@@ -1361,7 +1279,6 @@ export default function DemoPlanSalle() {
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
               />
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre de tables</label>
               <input
@@ -1376,7 +1293,6 @@ export default function DemoPlanSalle() {
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
               />
             </div>
-
             <div className="sm:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Type de Table</label>
               <select
@@ -1392,7 +1308,6 @@ export default function DemoPlanSalle() {
               </select>
             </div>
           </div>
-
           {form.noms.length > 0 && (
             <div className="space-y-4">
               <h4 className="font-bold text-gray-800 flex items-center gap-2">
@@ -1411,7 +1326,6 @@ export default function DemoPlanSalle() {
               </div>
             </div>
           )}
-
           <div className="flex gap-3 pt-6">
             <button
               type="button"
@@ -1427,7 +1341,6 @@ export default function DemoPlanSalle() {
               Créer
             </button>
           </div>
-
           <div className="text-center">
             <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-2 rounded-lg text-xs font-medium">
               <Clock className="w-3 h-3" />
@@ -1436,7 +1349,6 @@ export default function DemoPlanSalle() {
           </div>
         </form>
       </Modal>
-
       {/* Modal d'ajout d'invité */}
       <Modal
         isOpen={currentModal === MODAL_TYPES.ADD_GUEST}
@@ -1462,7 +1374,6 @@ export default function DemoPlanSalle() {
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-200 bg-gray-50/50"
               />
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Prénom</label>
               <input
@@ -1475,7 +1386,6 @@ export default function DemoPlanSalle() {
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-200 bg-gray-50/50"
               />
             </div>
-
             <div className="sm:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Table</label>
               <select
@@ -1502,7 +1412,6 @@ export default function DemoPlanSalle() {
                   })}
               </select>
             </div>
-
             {guestForm.tableId && (
               <div className="sm:col-span-2">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Place (Optionnel)</label>
@@ -1527,7 +1436,6 @@ export default function DemoPlanSalle() {
               </div>
             )}
           </div>
-
           <div className="flex gap-3 pt-6">
             <button
               type="button"
@@ -1543,7 +1451,6 @@ export default function DemoPlanSalle() {
               Ajouter
             </button>
           </div>
-
           <div className="text-center">
             <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-2 rounded-lg text-xs font-medium">
               <User className="w-3 h-3" />
@@ -1552,7 +1459,6 @@ export default function DemoPlanSalle() {
           </div>
         </form>
       </Modal>
-
       {/* Modal de modification de table */}
       <Modal
         isOpen={currentModal === MODAL_TYPES.EDIT_TABLE && editingTable}
@@ -1570,7 +1476,6 @@ export default function DemoPlanSalle() {
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
               />
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Capacité</label>
               <input
@@ -1582,7 +1487,6 @@ export default function DemoPlanSalle() {
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
               />
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
               <select
@@ -1595,7 +1499,6 @@ export default function DemoPlanSalle() {
                 ))}
               </select>
             </div>
-
             <div className="flex flex-col sm:flex-row gap-3 pt-6">
               <button
                 onClick={() => closeModalType(MODAL_TYPES.EDIT_TABLE)}
@@ -1613,7 +1516,6 @@ export default function DemoPlanSalle() {
           </div>
         )}
       </Modal>
-
       {/* Modal d'ajout d'élément */}
       <Modal
         isOpen={currentModal === MODAL_TYPES.ADD_ELEMENT}
@@ -1628,7 +1530,21 @@ export default function DemoPlanSalle() {
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre d'éléments</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Type d'Élément</label>
+              <select
+                name="type"
+                value={elementForm.type}
+                onChange={(e) => setElementForm({ ...elementForm, type: e.target.value })}
+                required
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
+              >
+                {ELEMENT_TYPES.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre d'Éléments</label>
               <input
                 name="nombre"
                 type="number"
@@ -1638,47 +1554,21 @@ export default function DemoPlanSalle() {
                 required
                 min="1"
                 max={MAX_ELEMENTS - elements.length}
-                              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
               />
             </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Type d'Élément</label>
-              <select
-                name="type"
-                value={elementForm.type}
-                onChange={(e) => setElementForm({ ...elementForm, type: e.target.value })}
-                required
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Nom de l'Élément</label>
+              <input
+                name="nom"
+                type="text"
+                value={elementForm.nom}
+                onChange={(e) => handleNomChange(0, e.target.value, 'element')}
+                placeholder="Nom de l'élément (optionnel)"
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
-              >
-                {ELEMENT_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
           </div>
-
-          {elementForm.noms.length > 0 && (
-            <div className="space-y-4">
-              <h4 className="font-bold text-gray-800 flex items-center gap-2">
-                Noms des éléments
-              </h4>
-              <div className="space-y-3">
-                {elementForm.noms.map((nom, index) => (
-                  <input
-                    key={index}
-                    value={nom}
-                    onChange={(e) => handleNomChange(index, e.target.value, 'element')}
-                    placeholder={`${ELEMENT_TYPES.find(t => t.value === elementForm.type).label} ${index + 1}`}
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
           <div className="flex gap-3 pt-6">
             <button
               type="button"
@@ -1691,10 +1581,9 @@ export default function DemoPlanSalle() {
               type="submit"
               className="flex-1 px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
             >
-              Ajouter les Éléments
+              Ajouter
             </button>
           </div>
-
           <div className="text-center">
             <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-3 py-2 rounded-lg text-xs font-medium">
               <Plus className="w-3 h-3" />
@@ -1703,39 +1592,37 @@ export default function DemoPlanSalle() {
           </div>
         </form>
       </Modal>
-
       {/* Modal de confirmation de suppression de table */}
       <Modal
         isOpen={currentModal === MODAL_TYPES.DELETE_TABLE_CONFIRM}
         onClose={() => closeModalType(MODAL_TYPES.DELETE_TABLE_CONFIRM)}
-        title="Confirmer la suppression"
+        title="Confirmer la Suppression"
       >
         <div className="text-center mb-6">
           <p className="text-gray-600 mb-4">
-            Êtes-vous sûr de vouloir supprimer cette table ? Tous les invités assignés seront également supprimés.
+            Êtes-vous sûr de vouloir supprimer cette table ? Tous les invités associés seront également supprimés.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => closeModalType(MODAL_TYPES.DELETE_TABLE_CONFIRM)}
-            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 font-medium"
+            className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 cursor-pointer transition"
           >
             Annuler
           </button>
           <button
             onClick={confirmDeleteTable}
-            className="px-6 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cursor-pointer transition"
           >
             Supprimer
           </button>
         </div>
       </Modal>
-
       {/* Modal de confirmation de réinitialisation */}
       <Modal
         isOpen={currentModal === MODAL_TYPES.RESET_CONFIRM}
         onClose={() => closeModalType(MODAL_TYPES.RESET_CONFIRM)}
-        title="Confirmer la réinitialisation"
+        title="Réinitialiser le Plan"
       >
         <div className="text-center mb-6">
           <p className="text-gray-600 mb-4">
@@ -1745,27 +1632,25 @@ export default function DemoPlanSalle() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => closeModalType(MODAL_TYPES.RESET_CONFIRM)}
-            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 font-medium"
+            className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 cursor-pointer transition"
           >
             Annuler
           </button>
           <button
             onClick={confirmReset}
-            className="px-6 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cursor-pointer transition"
           >
             Réinitialiser
           </button>
         </div>
       </Modal>
-
-      {/* Modal AuthModal pour la connexion */}
-      {currentModal === MODAL_TYPES.AUTH && (
-        <AuthModal
-          isOpen={true}
-          onClose={() => closeModalType(MODAL_TYPES.AUTH)}
-          isSignIn={true}
-        />
-      )}
+      {/* Modal d'authentification */}
+      <AuthModal
+        isOpen={currentModal === MODAL_TYPES.AUTH}
+        onClose={() => closeModalType(MODAL_TYPES.AUTH)}
+        authForm={authForm}
+        setAuthForm={setAuthForm}
+      />
     </div>
   );
 }
