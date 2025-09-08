@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import QrScanner from "qr-scanner";
-QrScanner.WORKER_PATH = "/qr-scanner-worker.min.js";
+// QrScanner.WORKER_PATH = "/qr-scanner-worker.min.js";
 import Swal from "sweetalert2";
 import { useStateContext } from "../../context/ContextProvider";
 import { QrCodeValidation } from "../../services/invitationService";

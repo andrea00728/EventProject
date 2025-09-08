@@ -15,9 +15,9 @@ export class Localisation {
   @Column({ type: 'float', nullable: true })
   longitude: number; // Coordonnée de longitude
 
-  @OneToMany(() => Salle, (salle) => salle.location, { cascade: true })
+  @OneToMany(() => Salle, (salle) => salle.location)
   salles: Salle[];
-
+  
   @ManyToOne(() => User, (user) => user.localisations, { nullable: true })
   createur: User;
 }

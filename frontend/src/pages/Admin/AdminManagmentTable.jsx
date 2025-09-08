@@ -19,7 +19,7 @@ const glows = [
   "0 0 15px rgba(59, 130, 246, 0.6)",
   "0 0 15px rgba(168, 85, 247, 0.6)",
 ];
-const MotionLink = motion(Link);
+const MotionLink = motion.create(Link);
 
 export default function AdminManagementPage() {
   const { darkMode } = useDarkMode();

@@ -9,7 +9,7 @@ import Notfound from "../pages/Notofoundpage";
 import Connexionorganisateur from "../pages/Connexionorganisateur";
 import Inscription from "../pages/Inscription";
 import Connnexiongoogle from "../services/connexiongoogl.jsx";
-import Evenemenpage from "../pages/Evenementpage.jsx"; 
+import Evenemenpage from "../pages/Evenementpage.jsx";
 import Apropos from "../pages/apropos";
 import PublicEvents from "../pages/PublicEvents"; // adapte le chemin si besoin
 // import PagePublic from "../pages/PagePublic";
@@ -276,7 +276,7 @@ const router = createBrowserRouter([
         path: "/forfait/success",
         element: <ForfaitSuccess />,
       },
-       {
+      {
         path: "/forfait/cancel",
         element: <Navigate to="/pagepublic" />,
       },
@@ -342,7 +342,7 @@ const router = createBrowserRouter([
         path: "/paypal-success",
         element: <PaypalSuccess />,
       },
-      
+
       {
         path: "/forfait/success",
         element: <ForfaitSuccess />,
@@ -421,27 +421,27 @@ const router = createBrowserRouter([
 
   {
     path: "/",
-    element:  <PersonnelAutre />,
-    children : [
+    element: <PersonnelAutre />,
+    children: [
       {
         path: "/",
         element: <Navigate to="/infoEventForPersonnal" />,
       },
       {
-        path:"infoEventForPersonnal",
-        element : <InfoEventForPersonnal />,
+        path: "infoEventForPersonnal",
+        element: <InfoEventForPersonnal />,
       },
       {
-        path:"personnel_list",
-        element : <PersonnelList />,
+        path: "personnel_list",
+        element: <PersonnelList />,
       },
       {
-        path:"guests_list",
-        element : <GuestList />,
+        path: "guests_list",
+        element: <GuestList />,
       }
     ]
   },
-  
+
 
   /***
    *

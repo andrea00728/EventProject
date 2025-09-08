@@ -9,9 +9,7 @@ export class Salle {
   @Column()
   nom: string;
 
-  @ManyToOne(() => Localisation, (localisation) => localisation.salles, {
-    cascade: true,
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(() => Localisation, (localisation) => localisation.salles, {onDelete: 'CASCADE'})
   location: Localisation;
+  
 }
