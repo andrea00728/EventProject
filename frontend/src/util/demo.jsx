@@ -815,7 +815,7 @@ export default function DemoTable({ closeModal }) {
               )}
 
               {/* Indicateurs de zone de scroll */}
-              <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded-lg text-xs text-gray-600 shadow-sm z-40 backdrop-blur-sm">
+              <div className="absolute top-2 left-2 bg-white/90 px-2 py-1 rounded-lg text-xs text-gray-600 shadow-sm z-40 backdrop-blur-sm">
                 Zone scrollable: {tables.length} table{tables.length !== 1 ? 's' : ''}
               </div>
 

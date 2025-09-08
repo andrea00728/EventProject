@@ -32,11 +32,10 @@ export default function DashboardPage() {
   ];
 
   const linkClass = (path) =>
-    `flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
-      pathname === `/evenement/dashboard/${path}` ||
+    `flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${pathname === `/evenement/dashboard/${path}` ||
       (path === "" && pathname === "/evenement/dashboard")
-        ? "bg-[#6b48ff] font-bold text-white shadow-md"
-        : "hover:bg-[#e6ebfc] text-gray-700"
+      ? "bg-[#6b48ff] font-bold text-white shadow-md"
+      : "hover:bg-[#e6ebfc] text-gray-700"
     }`;
 
   const handleLinkClick = () => {
@@ -104,7 +103,7 @@ export default function DashboardPage() {
       {/* Contenu principal */}
       <Box
         component="main"
-       
+
         className="flex-1 flex flex-col p-4 overflow-hidden lg:ml-64"
       >
         <Box sx={{ bgcolor: "white", borderRadius: 1, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", border: "1px solid #e0e0e0" }}>
