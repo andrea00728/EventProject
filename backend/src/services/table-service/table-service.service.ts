@@ -303,21 +303,7 @@ export class TableService {
     await this.tableRepository.delete(tableId);
   }
 
-  //BY LIOKA
-  // À ajouter dans votre TableService
-
-  // async findOne(id: number): Promise<TableEvent> {
-  //   const table = await this.tableRepository.findOne({
-  //     where: { id },
-  //     relations: ['guests', 'event', 'event.user'],
-  //   });
-
-  //   if (!table) {
-  //     throw new NotFoundException(`Table avec ID ${id} non trouvée`);
-  //   }
-
-  //   return table;
-  // }
+  //BY 
 
 
 }
