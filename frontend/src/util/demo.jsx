@@ -335,14 +335,14 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
           transition: rotating ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        {dragging && (
+        {/* {dragging && (
           <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
             <div className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-2 shadow-lg animate-bounce">
               <Move className="w-3 h-3" />
               Déplacement...
             </div>
           </div>
-        )}
+        )} */}
 
         <span
           className="font-bold text-indigo-800 select-none pointer-events-none text-center break-words px-2 drop-shadow-sm"
