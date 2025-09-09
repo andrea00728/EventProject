@@ -179,9 +179,13 @@ export class LocationService {
 
     try {
       const evenementCount = await this.evenementRepository.count({ where: { salleId: id } });
+      const salle = await this.salleRepository.findOne({ where: { id } });
+      if (!salle) {
+        throw new BadRequestException(`Salle avec l'ID ${id} non trouvée.`);
+      }
       if (evenementCount > 0) {
         throw new BadRequestException(
-          `Impossible de supprimer la salle avec l'ID ${id}, car elle est référencée par ${evenementCount} événement(s).`,
+          `Impossible de supprimer la salle avec l'ID ${salle.nom}, car elle est référencée par ${evenementCount} événement(s).`,
         );
       }
       await queryRunner.manager.delete(Salle, { id });

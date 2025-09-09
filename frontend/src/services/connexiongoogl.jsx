@@ -54,14 +54,14 @@
 //       //     navigate("/personnelAccueil", { replace: true });
 //       //     break;
 //       //   default:
-//       //     navigate("/pagepublic", { replace: true });
+//       //     navigate("/", { replace: true });
 //       //     break;
 //       // }
 //       navigate("/accuei")
 //     }
 //     } else {
 //       console.warn(" Token ou rôle manquant");
-//       navigate("/pagepublic", { replace: true });
+//       navigate("/", { replace: true });
 //     }
 
 //     setLoading(false);
@@ -95,11 +95,11 @@ function ConnexionGoogle() {
         if (user.isInPersonnel) {
             navigate("/choix-role", { replace: true });
         } else {
-            navigate("/pagepublic", { replace: true });
+            navigate("/", { replace: true });
         }
     } else {
         // Sinon, redirige vers la page publique
-        navigate("/pagepublic", { replace: true });
+        navigate("/", { replace: true });
     }
   }, [isLoading, isAuthenticated, user, navigate]);
 

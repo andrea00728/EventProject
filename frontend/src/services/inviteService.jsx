@@ -125,7 +125,7 @@ export const deleteGuest = async (guestId) => {
 
 
 // export async function getTablesByEventId(eventId, token) {
-//   const response = await fetch(`https://api.mastertable.site/guests/tables/${eventId}`, {
+//   const response = await fetch(`http://localhost:3000/guests/tables/${eventId}`, {
 //     method: 'GET',
 //     headers: {
 //       'Content-Type': 'application/json',

@@ -56,77 +56,84 @@ export class AuthService {
   }
 
   async validateUser(profile: any): Promise<any> {
-    const { emails, displayName, photos } = profile;
-    const email = emails[0].value;
+    try {
+      const { emails, displayName, photos } = profile;
+      const email = emails[0].value;
 
-    //verification admin
-    const adminIsExist = await this.adminRepository.findOne({
-      where: { email: email }
-    })
-    if (adminIsExist) {
-      throw new BadRequestException("c'est un email d'un administrateur")
-    }
-
-    // Vérification dans Personnel
-    const personnel = await this.personnelRepository.findOne({
-      where: { email },
-      relations: ['evenement'],
-    });
-
-    const isInPersonnel = !!personnel;
-    const isdetectedRole = isInPersonnel ? personnel.role : 'organisateur';
-
-    let user = await this.userRepository.findOne({ where: { email } });
-
-    if (!user) {
-      const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
-
-      if (!freemium) {
-        throw new Error('Forfait freemium non trouvé');
+      // Vérification admin
+      const adminIsExist = await this.adminRepository.findOne({
+        where: { email: email }
+      });
+      
+      if (adminIsExist) {
+        console.log("C'est un email d'un administrateur:", email);
+        return { error: "c'est un email d'un administrateur" }; 
+        
       }
-      user = this.userRepository.create({
-        id: uuidv4(),
-        email,
-        name: displayName || null,
-        photo: photos?.[0]?.value || null,
+
+      // Vérification dans Personnel
+      const personnel = await this.personnelRepository.findOne({
+        where: { email },
+        relations: ['evenement'],
+      });
+
+      const isInPersonnel = !!personnel;
+      const isdetectedRole = isInPersonnel ? personnel.role : 'organisateur';
+
+      let user = await this.userRepository.findOne({ where: { email } });
+
+      if (!user) {
+        const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
+
+        if (!freemium) {
+          throw new Error('Forfait freemium non trouvé');
+        }
+        user = this.userRepository.create({
+          id: uuidv4(),
+          email,
+          name: displayName || null,
+          photo: photos?.[0]?.value || null,
+          role: isdetectedRole,
+          forfait: { id: 11 } as Forfait,
+        });
+
+        await this.userRepository.save(user);
+        console.log('Nouvel utilisateur créé:', { id: user.id, email, role: user.role });
+
+        const notification = this.notificationRepository.create({
+          title: 'Nouvel organisateur inscrit',
+          message: `L'organisateur ${displayName || email} s'est inscrit.`,
+          type: 'info',
+          date: new Date(),
+        });
+        await this.notificationRepository.save(notification);
+        this.notificationGateway.emitNotifRegisterToAdmin({
+          ...notification,
+          date: notification.date.toISOString(),
+        });
+      } else {
+        // Mettre à jour name, photo et role
+        user.name = displayName || null;
+        user.photo = photos?.[0]?.value || null;
+        user.role = isdetectedRole;
+        await this.userRepository.save(user);
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        photo: user.photo,
         role: isdetectedRole,
-        forfait: { id: 11 } as Forfait,
-      });
+        isInPersonnel,
+      };
 
-      await this.userRepository.save(user);
-      console.log('Nouvel utilisateur créé:', { id: user.id, email, role: user.role });
-
-      const notification = this.notificationRepository.create({
-        title: 'Nouvel organisateur inscrit',
-        message: `L'organisateur ${displayName || email} s'est inscrit.`,
-        type: 'info',
-        date: new Date(),
-      });
-      await this.notificationRepository.save(notification);
-      this.notificationGateway.emitNotifRegisterToAdmin({
-        ...notification,
-        date: notification.date.toISOString(),
-      });
+    } catch (error) {
+      console.error('Erreur dans validateUser:', error);
+      throw error; // On relance pour que Nest gère avec BadRequestException ou autre
     }
-
-
-    else {
-      // Mettre à jour name, photo et role
-      user.name = displayName || null;
-      user.photo = photos?.[0]?.value || null;
-      user.role = isdetectedRole;
-      await this.userRepository.save(user);
-    }
-
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      photo: user.photo,
-      role: isdetectedRole,
-      isInPersonnel,
-    };
   }
+
 
   //REGISTRE MANUEL BY LIOKA
   async registerUser(data: { name: string; email: string; password: string; photo?: string }) {
@@ -209,36 +216,50 @@ export class AuthService {
    */
 
   async login(user: any, res: Response) {
-    const payload = {
-      email: user.email,
-      sub: user.id,
-      role: user.role,
-      name: user.name,
-      photo: user.photo,
-    };
-    const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
-    const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
-    res.cookie('jwt', access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 60 * 1000,
-    });
-    console.log('JWT Payload:', payload);
+    try {
+      const adminIsExist = await this.adminRepository.findOne({
+        where: { email: user?.email },
+      });
 
-    //utilise pour actualise le token
+      if (adminIsExist) {
+        return { error: "c'est un email d'un administrateur" };
+      }
 
-    res.cookie('refresh_token', refresh_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    })
+      const payload = {
+        email: user.email,
+        sub: user.id,
+        role: user.role,
+        name: user.name,
+        photo: user.photo,
+      };
 
-    return {
-      access_token, refresh_token
-    };
+      const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
+      const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+      res.cookie('jwt', access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 1000,
+      });
+
+      res.cookie('refresh_token', refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      console.log('✅ JWT Payload:', payload);
+
+      return { access_token, refresh_token };
+    } catch (error) {
+      console.error('❌ Erreur login():', error.message);
+      return { error: error.message };
+    }
   }
+
+
 
 
   /**
@@ -648,17 +669,18 @@ export class AuthService {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
     });
 
-    return {
-      message: 'Connexion réussie',
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        photo: user.photo ? `http://localhost:3000${user.photo}` : null,
-      },
-    };
-  }
+  return {
+    message: 'Connexion réussie',
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      // photo: user.photo ? `http://localhost:3000${user.photo}` : null,
+      photo: user.photo ? `http://localhost:3000${user.photo}` : null,
+    },
+  };
+}
 
   async updateProfile(
     userId: string,
@@ -712,6 +734,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       name: user.name,
+      // photo: user.photo ? `http://localhost:3000${user.photo}` : null,
       photo: user.photo ? `http://localhost:3000${user.photo}` : null,
     };
     const newToken = this.jwtService.sign(payload);
@@ -721,12 +744,14 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
+      // photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
       photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
     });
 
     return {
       user: {
         ...user,
+        // photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
         photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
       } as User,
       token: newToken, // Retourner le nouveau token
@@ -744,10 +769,12 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
+      // photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
       photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
     });
     return {
       ...user,
+      // photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
       photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
     } as User;
   }

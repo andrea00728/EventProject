@@ -2,7 +2,7 @@ import axiosClient from "../api/axios-client";
 
 /**
  * Crée un ou plusieurs éléments liés à un événement.
- * @param {Object} data - Les données de l'élément (eventId, nom, type, position, rotation, width, height, nombre)
+ * @param {Object} data - Les données de l'élément (eventId, nom, type, position, rotation, width, height, color, nombre)
  * @returns {Promise<Array<Object>>} - Les éléments créés
  */
 export const createElement = async (data) => {
@@ -45,7 +45,7 @@ export const updateElementRotation = async (elementId, rotation) => {
 /**
  * Met à jour les données d'un élément.
  * @param {number} elementId - L'ID de l'élément.
- * @param {Object} data - Les nouvelles données de l'élément.
+ * @param {Object} data - Les nouvelles données de l'élément (nom, type, color, etc.).
  * @returns {Promise<Object>} - L'élément mis à jour.
  */
 export const updateElement = async (elementId, data) => {

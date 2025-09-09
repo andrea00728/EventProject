@@ -27,6 +27,8 @@ import {
   MdCheckCircle,
   MdFullscreen,
   MdFullscreenExit,
+  MdExpandMore,
+  MdExpandLess,
 } from "react-icons/md";
 import { TbAlertTriangle } from "react-icons/tb";
 import { motion, AnimatePresence } from "framer-motion";
@@ -101,7 +103,7 @@ const EVENT_THEMES = [
   { value: "minimaliste", label: "Minimaliste" },
   { value: "industriel", label: "Industriel" },
   { value: "romantique", label: "Romantique" },
-  { value: "nature", tie: "Nature" },
+  { value: "nature", label: "Nature" },
   { value: "festif", label: "Festif" },
   { value: "autre", label: "Autre" },
 ];
@@ -114,7 +116,7 @@ const customStyles = {
     backgroundColor: "#f9fafb",
     padding: "0.5rem",
     boxShadow: "none",
-    "&:hover": { borderColor: "#aIssb4fc" },
+    "&:hover": { borderColor: "#a5b4fc" },
     "&:focus-within": { borderColor: "#a5b4fc", boxShadow: "0 0 0 2px rgba(165, 180, 252, 0.5)" },
   }),
   menu: (provided) => ({
@@ -183,20 +185,24 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   const [isAddingSalle, setIsAddingSalle] = useState(false);
   const [newSalleName, setNewSalleName] = useState("");
   const [editingLocation, setEditingLocation] = useState(null);
+  const [editingSalle, setEditingSalle] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteItem, setDeleteItem] = useState(null);
   const [showEditConfirmationModal, setShowEditConfirmationModal] = useState(false);
   const [showEditSuccessModal, setShowEditSuccessModal] = useState(false);
+  const [showEditSalleConfirmationModal, setShowEditSalleConfirmationModal] = useState(false);
+  const [showEditSalleSuccessModal, setShowEditSalleSuccessModal] = useState(false);
   const [isModalFullScreen, setIsModalFullScreen] = useState(false);
   const [selectedLocationSalles, setSelectedLocationSalles] = useState([]);
   const [selectedLocationForSalles, setSelectedLocationForSalles] = useState(null);
+  const [expandedLocationId, setExpandedLocationId] = useState(null);
 
   const API_URL = `${import.meta.env.VITE_API_BASE_URL}/locations`;
 
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const createurId = isAuthenticated && user?.sub ? user.sub : '0';
+        const createurId = isAuthenticated && (user?.id || user?.sub) ? (user.id || user.sub) : '0';
         const data = await getLocationsByCreatorAndAdmin(createurId);
         setLocations(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -210,8 +216,8 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   useEffect(() => {
     const fetchUserLocations = async () => {
       try {
-        if (isAuthenticated && user?.sub) {
-          const data = await getLocationsByCreator(user.sub);
+        if (isAuthenticated && (user?.id || user?.sub)) {
+          const data = await getLocationsByCreator(user.id || user.sub);
           setUserLocations(Array.isArray(data) ? data : []);
         } else {
           setUserLocations([]);
@@ -275,6 +281,29 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       setError(null);
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Erreur lors de la création de la salle";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleEditSalle = async () => {
+    if (!newSalleName.trim()) {
+      setError("Le nom de la salle est requis");
+      toast.error("Le nom de la salle est requis");
+      return;
+    }
+    try {
+      await axios.put(`${API_URL}/salles/${editingSalle.id}`, { nom: newSalleName });
+      setNewSalleName("");
+      setEditingSalle(null);
+      setShowEditSalleConfirmationModal(false);
+      setShowEditSalleSuccessModal(true);
+      const updatedSalles = await getSallesByLocation(selectedLocationForSalles);
+      setSelectedLocationSalles(updatedSalles || []);
+      toast.success("Salle modifiée avec succès !");
+      setError(null);
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Erreur lors de la modification de la salle";
       setError(errorMessage);
       toast.error(errorMessage);
     }
@@ -400,8 +429,10 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     setCustomMarker(null);
     setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
     setEditingLocation(null);
+    setEditingSalle(null);
     setSelectedLocationSalles([]);
     setSelectedLocationForSalles(null);
+    setExpandedLocationId(null);
     if (mapRef.current) {
       mapRef.current.setView([48.8566, 2.3522], 13);
     }
@@ -418,7 +449,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     } else {
       if (newLocation.nom && newLocation.latitude && newLocation.longitude) {
         const query = newLocation.nom;
-        const createurId = isAuthenticated && user.sub;
+        const createurId = isAuthenticated && (user.id || user.sub);
         saveLocation(query, createurId)
           .then((createdLoc) => {
             setLocations([...locations, createdLoc]);
@@ -453,6 +484,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     setSearchLieu('');
     setSelectedLocationSalles([]);
     setSelectedLocationForSalles(null);
+    setExpandedLocationId(null);
   };
 
   const handleConfirmEdit = async () => {
@@ -466,12 +498,13 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       setShowEditConfirmationModal(false);
       setShowEditSuccessModal(true);
       setEditingLocation(null);
-      const userData = await getLocationsByCreator(user.sub);
+      const userData = await getLocationsByCreator(user.id || user.sub);
       setUserLocations(Array.isArray(userData) ? userData : []);
-      const adminData = await getLocationsByCreatorAndAdmin(user.sub || '0');
+      const adminData = await getLocationsByCreatorAndAdmin(user.id || user.sub);
       setLocations(Array.isArray(adminData) ? adminData : []);
       setSelectedLocationSalles([]);
       setSelectedLocationForSalles(null);
+      setExpandedLocationId(null);
     } catch (err) {
       setError(err.response?.data?.message || "Erreur lors de la modification du lieu");
       toast.error(err.response?.data?.message || "Erreur lors de la modification du lieu");
@@ -486,19 +519,74 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   const handleConfirmDelete = async () => {
     if (!deleteItem) return;
     try {
-      await axios.delete(`${API_URL}/${deleteItem.id}`);
-      setUserLocations(userLocations.filter((loc) => loc.id !== deleteItem.id));
-      setLocations(locations.filter((loc) => loc.id !== deleteItem.id));
+      if (deleteItem.type === "location") {
+        await axios.delete(`${API_URL}/${deleteItem.id}`);
+        setUserLocations(userLocations.filter((loc) => loc.id !== deleteItem.id));
+        setLocations(locations.filter((loc) => loc.id !== deleteItem.id));
+        setSelectedLocationSalles([]);
+        setSelectedLocationForSalles(null);
+        toast.success("Lieu supprimé avec succès !");
+      } else if (deleteItem.type === "salle") {
+        await axios.delete(`${API_URL}/salles/${deleteItem.id}`);
+        const updatedSalles = await getSallesByLocation(selectedLocationForSalles);
+        setSelectedLocationSalles(updatedSalles || []);
+        toast.success("Salle supprimée avec succès !");
+      }
       setShowDeleteModal(false);
       setDeleteItem(null);
-      setSelectedLocationSalles([]);
-      setSelectedLocationForSalles(null);
-      toast.success("Lieu supprimé avec succès !");
     } catch (err) {
-      setError(err.response?.data?.message || "Erreur lors de la suppression du lieu");
-      toast.error(err.response?.data?.message || "Erreur lors de la suppression du lieu");
+      setError(err.response?.data?.message || "Erreur lors de la suppression");
+      toast.error(err.response?.data?.message || "Erreur lors de la suppression");
     }
   };
+
+  const toggleLocationDropdown = async (locId) => {
+    if (expandedLocationId === locId) {
+      setExpandedLocationId(null);
+      setSelectedLocationSalles([]);
+      setSelectedLocationForSalles(null);
+      setEditingSalle(null);
+      setIsAddingSalle(false);
+      setNewSalleName("");
+    } else {
+      setExpandedLocationId(locId);
+      setSelectedLocationForSalles(locId);
+      try {
+        const salles = await getSallesByLocation(locId);
+        setSelectedLocationSalles(salles || []);
+      } catch (error) {
+        console.error("Erreur lors du chargement des salles:", error);
+        setSelectedLocationSalles([]);
+        toast.error("Erreur lors du chargement des salles");
+      }
+    }
+  };
+
+  const handleAddSalleClick = (locId) => {
+    setSelectedLocationForSalles(locId);
+    setIsAddingSalle(true);
+    setEditingSalle(null);
+    setNewSalleName("");
+  };
+
+  const handleEditSalleClick = (salle) => {
+    setEditingSalle(salle);
+    setNewSalleName(salle.nom);
+    setIsAddingSalle(false);
+  };
+
+  const isAdminLocation = (loc) => {
+    if (!loc.createur || loc.createur.id == null) {
+      console.log("Lieu admin détecté :", loc);
+      return true;
+    }
+  
+    console.log("Lieu utilisateur détecté :", loc);
+    return false;
+  };
+  
+  
+  
 
   const MapClickHandler = () => {
     const map = useMap();
@@ -657,8 +745,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               disabled={!form.locationId}
               onClick={() => form.locationId && setModalSalleOpen(true)}
               placeholder="Sélectionnez une salle"
-              className={`border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 text-gray-900 placeholder-gray-400 transition ${form.locationId ? "cursor-pointer bg-gray-50 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" : "bg-gray-200 cursor-not-allowed"
-                }`}
+              className={`border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 text-gray-900 placeholder-gray-400 transition ${form.locationId ? "cursor-pointer bg-gray-50 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" : "bg-gray-200 cursor-not-allowed"}`}
             />
           </div>
           <div className="col-span-1 sm:col-span-2 mt-4 flex flex-col sm:flex-row gap-4">
@@ -744,12 +831,15 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                     Aucune salle disponible pour ce lieu
                   </div>
                 )}
-                <div
-                  onClick={() => setIsAddingSalle(true)}
-                  className="border-2 border-indigo-100 rounded-xl px-4 py-3 text-center bg-indigo-50 text-indigo-800 cursor-pointer hover:bg-indigo-100 hover:border-indigo-400 font-semibold transition"
-                >
-                  Ajouter une salle
-                </div>
+                {form.locationId && !isAdminLocation(locations.find((loc) => loc.id === form.locationId)) && (
+                  <div
+                    onClick={() => setIsAddingSalle(true)}
+                    className="border-2 border-indigo-100 rounded-xl px-4 py-3 text-center bg-indigo-50 text-indigo-800 cursor-pointer hover:bg-indigo-100 hover:border-indigo-400 font-semibold transition"
+                  >
+                    Ajouter une salle
+                  </div>
+                )}
+
               </div>
             )}
           </div>
@@ -765,8 +855,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
           variants={backdropVariants}
         >
           <motion.div
-            className={`rounded-2xl shadow-2xl p-4 sm:p-6 relative border border-gray-200 bg-gray-50 ${isModalFullScreen ? 'fixed inset-0 rounded-none overflow-y-auto' : 'w-full max-w-5xl max-h-[90vh] overflow-y-auto'
-              }`}
+            className={`rounded-2xl shadow-2xl p-4 sm:p-6 relative border border-gray-200 bg-gray-50 ${isModalFullScreen ? 'fixed inset-0 rounded-none overflow-y-auto' : 'w-full max-w-5xl max-h-[90vh] overflow-y-auto'}`}
             variants={modalVariants}
           >
             <div className="absolute top-4 right-4 flex space-x-2">
@@ -789,8 +878,10 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                   setGeocodeResult(null);
                   setGeocodeResultText("");
                   setEditingLocation(null);
+                  setEditingSalle(null);
                   setSelectedLocationSalles([]);
                   setSelectedLocationForSalles(null);
+                  setExpandedLocationId(null);
                 }}
               >
                 <MdClose size={24} />
@@ -812,11 +903,12 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                       setGeocodeResult(null);
                       setGeocodeResultText("");
                       setEditingLocation(null);
+                      setEditingSalle(null);
                       setSelectedLocationSalles([]);
                       setSelectedLocationForSalles(null);
+                      setExpandedLocationId(null);
                     }}
-                    className={`flex-1 py-2 rounded-xl font-semibold transition ${activeTab === 'default' ? 'bg-indigo-700 text-white hover:bg-indigo-800' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                      }`}
+                    className={`flex-1 py-2 rounded-xl font-semibold transition ${activeTab === 'default' ? 'bg-indigo-700 text-white hover:bg-indigo-800' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'}`}
                   >
                     Par défaut
                   </button>
@@ -827,11 +919,12 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                       setSelectedLieu(null);
                       setSearchLieu('');
                       setEditingLocation(null);
+                      setEditingSalle(null);
                       setSelectedLocationSalles([]);
                       setSelectedLocationForSalles(null);
+                      setExpandedLocationId(null);
                     }}
-                    className={`flex-1 py-2 rounded-xl font-semibold transition ${activeTab === 'specify' ? 'bg-indigo-700 text-white hover:bg-indigo-800' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                      }`}
+                    className={`flex-1 py-2 rounded-xl font-semibold transition ${activeTab === 'specify' ? 'bg-indigo-700 text-white hover:bg-indigo-800' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'}`}
                   >
                     Spécifier le lieu
                   </button>
@@ -853,10 +946,9 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                           <div
                             key={loc.id}
                             onClick={() => handleSelectLieu(loc)}
-                            className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
-                              }`}
+                            className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${selectedLieu?.id === loc.id ? "bg-indigo-50" : ""}`}
                           >
-                            {loc.nom}
+                            {loc.nom.split(",").slice(0, 2).join(", ") || "Non précisé"}
                           </div>
                         ))
                       ) : (
@@ -885,6 +977,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                           setGeocodeResult(null);
                           setGeocodeResultText("");
                           setEditingLocation(null);
+                          setEditingSalle(null);
                         }}
                         className="flex-1 bg-gray-200 text-gray-700 font-bold py-2 sm:py-3 rounded-xl shadow hover:bg-gray-300 transition"
                       >
@@ -929,56 +1022,178 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                       <div className="max-h-60 sm:max-h-80 overflow-y-auto border border-gray-200 rounded-xl">
                         {filteredUserLocations.length > 0 ? (
                           filteredUserLocations.map((loc) => (
-                            <div
-                              key={loc.id}
-                              className={`px-4 py-3 border-b border-gray-200 flex items-center justify-between ${selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
-                                }`}
-                            >
+                            <div key={loc.id} className="border-b border-gray-200">
                               <div
-                                onClick={() => handleSelectLieu(loc)}
-                                className="cursor-pointer flex-1 hover:bg-indigo-100"
+                                className={`px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-indigo-100 ${expandedLocationId === loc.id ? "bg-indigo-50" : ""}`}
+                                onClick={() => toggleLocationDropdown(loc.id)}
                               >
-                                {loc.nom}
+                                <div className="flex-1">
+                                  {loc.nom.split(",").slice(0, 2).join(", ") || "Non précisé"}
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEditLocation(loc);
+                                    }}
+                                    className="p-1 text-blue-500 hover:text-blue-700"
+                                    title="Modifier"
+                                  >
+                                    <MdEdit size={20} />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openDeleteLocationModal(loc);
+                                    }}
+                                    className="p-1 text-red-500 hover:text-red-700"
+                                    title="Supprimer"
+                                  >
+                                    <MdDelete size={20} />
+                                  </button>
+                                  {expandedLocationId === loc.id ? (
+                                    <MdExpandLess size={20} />
+                                  ) : (
+                                    <MdExpandMore size={20} />
+                                  )}
+                                </div>
                               </div>
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => handleEditLocation(loc)}
-                                  className="p-1 text-blue-500 hover:text-blue-700"
-                                  title="Modifier"
-                                >
-                                  <MdEdit size={20} />
-                                </button>
-                                <button
-                                  onClick={() => openDeleteLocationModal(loc)}
-                                  className="p-1 text-red-500 hover:text-red-700"
-                                  title="Supprimer"
-                                >
-                                  <MdDelete size={20} />
-                                </button>
-                              </div>
+                              {expandedLocationId === loc.id && (
+                                <div className="px-4 py-3 bg-indigo-50">
+                                  <h4 className="text-sm font-semibold text-indigo-700 mb-2">
+                                    Salles associées à {loc.nom.split(",").slice(0, 2).join(", ") || "ce lieu"}
+                                  </h4>
+                                  {selectedLocationSalles.length > 0 ? (
+                                    <ul className="space-y-2 max-h-40 overflow-y-auto">
+                                      {selectedLocationSalles.map((salle) => (
+                                        <li
+                                          key={salle.id}
+                                          className="px-3 py-2 bg-white rounded-lg border border-gray-200 text-gray-800 flex justify-between items-center"
+                                        >
+                                          {editingSalle && editingSalle.id === salle.id ? (
+                                            <div className="w-full flex flex-col gap-2">
+                                              <input
+                                                type="text"
+                                                value={newSalleName}
+                                                onChange={(e) => setNewSalleName(e.target.value)}
+                                                placeholder="Nouveau nom de la salle"
+                                                className="border border-gray-300 rounded-lg px-4 py-2 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+                                              />
+                                              <div className="flex gap-2">
+                                                <button
+                                                  onClick={() => setShowEditSalleConfirmationModal(true)}
+                                                  className="flex-1 bg-indigo-700 text-white font-bold py-2 rounded-lg hover:bg-indigo-800 transition"
+                                                >
+                                                  Sauvegarder
+                                                </button>
+                                                <button
+                                                  onClick={() => {
+                                                    setEditingSalle(null);
+                                                    setNewSalleName("");
+                                                    setError(null);
+                                                  }}
+                                                  className="flex-1 bg-gray-300 text-gray-700 font-bold py-2 rounded-lg hover:bg-gray-400 transition"
+                                                >
+                                                  Annuler
+                                                </button>
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            <>
+                                              {salle.nom}
+                                              {!isAdminLocation(loc) && (
+                                                <div className="flex gap-2">
+                                                  <button
+                                                    onClick={() => handleEditSalleClick(salle)}
+                                                    className="p-1 text-blue-500 hover:text-blue-700"
+                                                    title="Modifier"
+                                                  >
+                                                    <MdEdit size={20} />
+                                                  </button>
+                                                  <button
+                                                    onClick={() => {
+                                                      setDeleteItem({ type: "salle", id: salle.id, nom: salle.nom });
+                                                      setShowDeleteModal(true);
+                                                    }}
+                                                    className="p-1 text-red-500 hover:text-red-700"
+                                                    title="Supprimer"
+                                                  >
+                                                    <MdDelete size={20} />
+                                                  </button>
+                                                </div>
+                                              )}
+                                            </>
+                                          )}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : (
+                                    <p className="text-gray-500 text-sm">Aucune salle associée à ce lieu.</p>
+                                  )}
+                                  {!isAdminLocation(loc) && (
+                                    <button
+                                      onClick={() => handleAddSalleClick(loc.id)}
+                                      className="mt-2 flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                                    >
+                                      <MdAdd size={20} />
+                                      Ajouter une salle
+                                    </button>
+                                  )}
+                                  {isAddingSalle && selectedLocationForSalles === loc.id && (
+                                    <div className="mt-4 flex flex-col gap-2">
+                                      <input
+                                        type="text"
+                                        value={newSalleName}
+                                        onChange={(e) => setNewSalleName(e.target.value)}
+                                        placeholder="Nom de la nouvelle salle"
+                                        className="border border-gray-300 rounded-lg px-4 py-2 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+                                      />
+                                      <div className="flex gap-2">
+                                        <button
+                                          onClick={async () => {
+                                            if (!newSalleName.trim()) {
+                                              setError("Le nom de la salle est requis");
+                                              toast.error("Le nom de la salle est requis");
+                                              return;
+                                            }
+                                            try {
+                                              await createSalle(loc.id, { nom: newSalleName });
+                                              setNewSalleName("");
+                                              setIsAddingSalle(false);
+                                              const updatedSalles = await getSallesByLocation(loc.id);
+                                              setSelectedLocationSalles(updatedSalles || []);
+                                              toast.success("Salle créée avec succès !");
+                                              setError(null);
+                                            } catch (err) {
+                                              const errorMessage = err.response?.data?.message || "Erreur lors de la création de la salle";
+                                              setError(errorMessage);
+                                              toast.error(errorMessage);
+                                            }
+                                          }}
+                                          className="flex-1 bg-indigo-700 text-white font-bold py-2 rounded-lg hover:bg-indigo-800 transition"
+                                        >
+                                          Sauvegarder
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            setIsAddingSalle(false);
+                                            setNewSalleName("");
+                                            setError(null);
+                                          }}
+                                          className="flex-1 bg-gray-300 text-gray-700 font-bold py-2 rounded-lg hover:bg-gray-400 transition"
+                                        >
+                                          Annuler
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           ))
                         ) : (
                           <div className="px-4 py-3 text-gray-500 text-center">
                             Aucun lieu créé par vous
-                          </div>
-                        )}
-                        {selectedLocationForSalles && (
-                          <div className="px-4 py-3 border-t border-gray-200 bg-indigo-50">
-                            <h4 className="text-sm font-semibold text-indigo-700 mb-2">
-                              Salles associées à {userLocations.find((loc) => loc.id === selectedLocationForSalles)?.nom || "ce lieu"}
-                            </h4>
-                            {selectedLocationSalles.length > 0 ? (
-                              <ul className="space-y-2">
-                                {selectedLocationSalles.map((salle) => (
-                                  <li key={salle.id} className="px-3 py-2 bg-white rounded-lg border border-gray-200 text-gray-800">
-                                    {salle.nom}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="text-gray-500 text-sm">Aucune salle associée à ce lieu.</p>
-                            )}
                           </div>
                         )}
                       </div>
@@ -1056,7 +1271,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                   Confirmer la suppression
                 </h2>
                 <p className="text-gray-600 mb-6">
-                  Êtes-vous sûr de vouloir supprimer le lieu <span className="font-extrabold text-gray-800">"{deleteItem?.nom}"</span> ?
+                  Êtes-vous sûr de vouloir supprimer {deleteItem?.type === "location" ? "le lieu" : "la salle"} <span className="font-extrabold text-gray-800">"{deleteItem?.nom}"</span> ?
                 </p>
                 <div className="flex flex-col sm:flex-row justify-center w-full gap-4">
                   <button
@@ -1161,6 +1376,99 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                 <div className="flex flex-col sm:flex-row justify-center w-full gap-4">
                   <button
                     onClick={() => setShowEditSuccessModal(false)}
+                    className="flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold bg-gray-200 hover:bg-gray-300 text-gray-800 transition"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showEditSalleConfirmationModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={backdropVariants}
+          >
+            <motion.div
+              className="rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md w-full border border-gray-200 bg-white"
+              variants={modalVariants}
+            >
+              <button
+                onClick={() => setShowEditSalleConfirmationModal(false)}
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+              >
+                <MdClose size={24} />
+              </button>
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4 p-3 rounded-full bg-blue-100">
+                  <TbAlertTriangle className="text-blue-500 text-5xl" />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold mb-2 text-gray-900">
+                  Confirmer la modification
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Êtes-vous sûr de vouloir modifier la salle <span className="font-extrabold text-gray-800">"{editingSalle?.nom}"</span> ?
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center w-full gap-4">
+                  <button
+                    onClick={() => setShowEditSalleConfirmationModal(false)}
+                    className="flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold bg-gray-200 hover:bg-gray-300 text-gray-800 transition"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleEditSalle}
+                    className={`flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl flex items-center justify-center font-semibold ${gradientButton}`}
+                  >
+                    <MdSave className="mr-2 text-xl" />
+                    Confirmer
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showEditSalleSuccessModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={backdropVariants}
+          >
+            <motion.div
+              className="rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md w-full border border-gray-200 bg-white"
+              variants={modalVariants}
+            >
+              <button
+                onClick={() => setShowEditSalleSuccessModal(false)}
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+              >
+                <MdClose size={24} />
+              </button>
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4 p-3 rounded-full bg-green-100">
+                  <MdCheckCircle className="text-green-500 text-5xl" />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold mb-2 text-gray-900">
+                  Salle modifiée
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  La salle a été modifiée avec succès !
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center w-full gap-4">
+                  <button
+                    onClick={() => setShowEditSalleSuccessModal(false)}
                     className="flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold bg-gray-200 hover:bg-gray-300 text-gray-800 transition"
                   >
                     Fermer
