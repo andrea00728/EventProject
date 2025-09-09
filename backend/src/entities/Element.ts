@@ -1,7 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { Evenement } from './Evenement';
 
-@Entity('elements')
+@Entity()
 export class Element {
   @PrimaryGeneratedColumn()
   id: number;
@@ -12,7 +12,7 @@ export class Element {
   @Column()
   type: string;
 
-  @Column({ type: 'json', nullable: true })
+  @Column('jsonb', { nullable: true })
   position: { left: number; top: number };
 
   @Column({ default: 0 })
@@ -24,6 +24,9 @@ export class Element {
   @Column({ nullable: true })
   height: number;
 
-  @ManyToOne(() => Evenement, (event) => event.elements, { onDelete: 'CASCADE' })
+  @Column({ nullable: true })
+  color: string; // Ajout du champ color
+
+  @ManyToOne(() => Evenement, (event) => event.elements)
   event: Evenement;
 }
