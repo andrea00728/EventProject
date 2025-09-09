@@ -1732,17 +1732,6 @@ export default function DemoPlanSalle() {
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Nom</label>
-              <input
-                name="nom"
-                type="text"
-                value={elementForm.nom}
-                onChange={(e) => handleNomChange(0, e.target.value, 'element')}
-                placeholder="Nom de l'élément"
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
-              />
-            </div>
-            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre d'éléments</label>
               <input
                 name="nombre"
@@ -1756,6 +1745,18 @@ export default function DemoPlanSalle() {
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
               />
             </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Nom</label>
+              <input
+                name="nom"
+                type="text"
+                value={elementForm.nom}
+                onChange={(e) => handleNomChange(0, e.target.value, 'element')}
+                placeholder="Nom de l'élément"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
+              />
+            </div>
+            
             <div className="sm:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Type d'élément</label>
               <select
