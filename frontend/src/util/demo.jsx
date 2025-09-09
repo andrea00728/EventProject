@@ -271,7 +271,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className={`absolute -top-3 -right-3 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
+      <div className={`absolute -top-8 -right-5 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -283,7 +283,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
           <Edit className="w-3.5 h-3.5" />
         </button>
       </div>
-      <div className={`absolute -top-3 -left-3 flex gap-1 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
+      <div className={`absolute -top-8 -left-5 flex gap-1 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -1145,9 +1145,6 @@ export default function DemoPlanSalle() {
                     <div className="relative">
                       <div className="w-24 h-24 mx-auto bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 rounded-full flex items-center justify-center shadow-2xl border-4 border-white/50">
                         <Plus className="w-12 h-12 text-indigo-500" />
-                      </div>
-                      <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
-                        <span className="text-white text-sm"></span>
                       </div>
                     </div>
                     <div>
