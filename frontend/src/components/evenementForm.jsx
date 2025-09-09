@@ -1,3 +1,4 @@
+// src/components/Evenementform.jsx
 import React, { useEffect, useState, useRef } from "react";
 import {
   createEvent,
@@ -29,11 +30,12 @@ import {
   MdFullscreenExit,
   MdExpandMore,
   MdExpandLess,
+  MdImage,
 } from "react-icons/md";
 import { TbAlertTriangle } from "react-icons/tb";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Fix Leaflet marker icon
+// Configuration des icônes Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
@@ -41,7 +43,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
 
-// Custom blue marker icon
 const blueIcon = new L.Icon({
   iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
   iconRetinaUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
@@ -52,58 +53,71 @@ const blueIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
+// Liste des types et thèmes d'événements
 const EVENT_TYPES = [
   { value: "mariage", label: "Mariage" },
-  { value: "fiançailles", label: "Fiançailles" },
+  { value: "reunion", label: "Réunion" },
   { value: "anniversaire", label: "Anniversaire" },
+  { value: "engagement", label: "Engagement" },
+  { value: "fiançailles", label: "Fiançailles" },
   { value: "bapteme", label: "Baptême" },
-  { value: "communion", label: "Première Communion" },
+  { value: "communion", label: "Communion" },
   { value: "confirmation", label: "Confirmation" },
-  { value: "bar_mitsva", label: "Bar Mitsva / Bat Mitsva" },
+  { value: "bar_mitsva", label: "Bar Mitsva" },
   { value: "reunion_famille", label: "Réunion de famille" },
-  { value: "reunion", label: "Réunion professionnelle" },
   { value: "conference", label: "Conférence" },
   { value: "seminaire", label: "Séminaire" },
-  { value: "formation", label: "Formation / Workshop" },
+  { value: "formation", label: "Formation" },
   { value: "team_building", label: "Team Building" },
   { value: "concert", label: "Concert" },
   { value: "festival", label: "Festival" },
-  { value: "gala", label: "Soirée de gala" },
+  { value: "gala", label: "Gala" },
   { value: "banquet", label: "Banquet" },
-  { value: "degustation", label: "Dégustation / Wine tasting" },
+  { value: "degustation", label: "Dégustation" },
   { value: "inauguration", label: "Inauguration" },
   { value: "exposition", label: "Exposition" },
-  { value: "foire", label: "Foire / Salon" },
-  { value: "competition", label: "Compétition sportive" },
-  { value: "match", label: "Match sportif" },
+  { value: "foire", label: "Foire" },
+  { value: "competition", label: "Compétition" },
+  { value: "match", label: "Match" },
   { value: "tournoi", label: "Tournoi" },
   { value: "remise_diplome", label: "Remise de diplôme" },
-  { value: "soiree", label: "Soirée privée" },
-  { value: "enterrement_vie_garcon", label: "EVG (Enterrement de vie de garçon)" },
-  { value: "enterrement_vie_fille", label: "EVJF (Enterrement de vie de jeune fille)" },
+  { value: "soiree", label: "Soirée" },
+  { value: "enterrement_vie_garcon", label: "Enterrement de vie de garçon" },
+  { value: "enterrement_vie_fille", label: "Enterrement de vie de jeune fille" },
   { value: "baby_shower", label: "Baby Shower" },
   { value: "gender_reveal", label: "Gender Reveal" },
-  { value: "funerailles", label: "Funérailles / Commémoration" },
-  { value: "religieux", label: "Événement religieux" },
-  { value: "culturel", label: "Événement culturel" },
-  { value: "caritatif", label: "Événement caritatif" },
-  { value: "politique", label: "Événement politique" },
+  { value: "funerailles", label: "Funérailles" },
+  { value: "religieux", label: "Religieux" },
+  { value: "culturel", label: "Culturel" },
+  { value: "caritatif", label: "Caritatif" },
+  { value: "politique", label: "Politique" },
   { value: "autre", label: "Autre" },
 ];
 
 const EVENT_THEMES = [
-  { value: "chic", label: "Chic" },
-  { value: "boheme", label: "Bohème" },
   { value: "classique", label: "Classique" },
-  { value: "rustique", label: "Rustique" },
-  { value: "moderne", label: "Moderne" },
   { value: "vintage", label: "Vintage" },
-  { value: "tropical", label: "Tropical" },
+  { value: "boheme", label: "Bohème" },
+  { value: "moderne", label: "Moderne" },
+  { value: "rustique", label: "Rustique" },
   { value: "glamour", label: "Glamour" },
-  { value: "minimaliste", label: "Minimaliste" },
-  { value: "industriel", label: "Industriel" },
-  { value: "romantique", label: "Romantique" },
   { value: "nature", label: "Nature" },
+  { value: "plage", label: "Plage" },
+  { value: "urbain", label: "Urbain" },
+  { value: "retro", label: "Rétro" },
+  { value: "futuriste", label: "Futuriste" },
+  { value: "minimaliste", label: "Minimaliste" },
+  { value: "luxueux", label: "Luxueux" },
+  { value: "romantique", label: "Romantique" },
+  { value: "fantaisie", label: "Fantaisie" },
+  { value: "culturel", label: "Culturel" },
+  { value: "sportif", label: "Sportif" },
+  { value: "cinema", label: "Cinéma" },
+  { value: "musique", label: "Musique" },
+  { value: "histoire", label: "Histoire" },
+  { value: "technologie", label: "Technologie" },
+  { value: "gastronomique", label: "Gastronomique" },
+  { value: "ecologique", label: "Écologique" },
   { value: "festif", label: "Festif" },
   { value: "autre", label: "Autre" },
 ];
@@ -112,32 +126,38 @@ const customStyles = {
   control: (provided) => ({
     ...provided,
     borderRadius: "0.75rem",
-    border: "1px solid #d1d5db",
+    border: "1px solid #e5e7eb",
     backgroundColor: "#f9fafb",
-    padding: "0.5rem",
+    padding: "0.25rem",
+    fontSize: "0.875rem",
+    lineHeight: "1.25rem",
     boxShadow: "none",
-    "&:hover": { borderColor: "#a5b4fc" },
-    "&:focus-within": { borderColor: "#a5b4fc", boxShadow: "0 0 0 2px rgba(165, 180, 252, 0.5)" },
+    "&:hover": {
+      borderColor: "#818cf8",
+    },
   }),
   menu: (provided) => ({
     ...provided,
-    maxHeight: 200,
-    overflowY: "auto",
     borderRadius: "0.75rem",
-    border: "1px solid #e5e7eb",
+    marginTop: "0.25rem",
+    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
   }),
   option: (provided, state) => ({
     ...provided,
-    backgroundColor: state.isSelected ? "#e0e7ff" : state.isFocused ? "#f3f4f6" : "white",
-    color: "#1f2937",
-    padding: "0.75rem 1rem",
-    "&:hover": { backgroundColor: "#f3f4f6" },
+    backgroundColor: state.isSelected ? "#818cf8" : state.isFocused ? "#e0e7ff" : "white",
+    color: state.isSelected ? "white" : "#1f2937",
+    padding: "0.5rem 1rem",
+    cursor: "pointer",
+    "&:hover": {
+      backgroundColor: "#e0e7ff",
+    },
   }),
-  placeholder: (provided) => ({ ...provided, color: "#9ca3af" }),
-  singleValue: (provided) => ({ ...provided, color: "#1f2937" }),
+  placeholder: (provided) => ({
+    ...provided,
+    color: "#9ca3af",
+  }),
 };
 
-// Animation variants for modals
 const backdropVariants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { duration: 0.3 } },
@@ -161,6 +181,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     locationId: "",
     salleId: "",
     isPublic: isPublic || false,
+    image: null, // Champ pour l'image
   });
 
   const [customType, setCustomType] = useState("");
@@ -173,6 +194,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   const [searchLieu, setSearchLieu] = useState("");
   const [selectedLieu, setSelectedLieu] = useState(null);
   const [error, setError] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null); // Aperçu de l'image
   const mapRef = useRef(null);
   const [activeTab, setActiveTab] = useState('default');
   const [newLocation, setNewLocation] = useState({ nom: '', latitude: '', longitude: '', createurId: 0 });
@@ -199,6 +221,36 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
 
   const API_URL = `${import.meta.env.VITE_API_BASE_URL}/locations`;
 
+  // Gestion du changement d'image
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Vérification du type de fichier
+      if (!file.type.match(/image\/(jpg|jpeg|png|gif)/)) {
+        setError("Seules les images (JPG, PNG, GIF) sont autorisées.");
+        toast.error("Seules les images (JPG, PNG, GIF) sont autorisées.");
+        return;
+      }
+      // Vérification de la taille du fichier (5 Mo maximum)
+      if (file.size > 5 * 1024 * 1024) {
+        setError("La taille de l'image ne doit pas dépasser 5 Mo.");
+        toast.error("La taille de l'image ne doit pas dépasser 5 Mo.");
+        return;
+      }
+      setForm({ ...form, image: file });
+      // Générer un aperçu de l'image
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setForm({ ...form, image: null });
+      setImagePreview(null);
+    }
+  };
+
+  // Effets secondaires
   useEffect(() => {
     const fetchLocations = async () => {
       try {
@@ -211,6 +263,9 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       }
     };
     fetchLocations();
+    return () => {
+      setImagePreview(null); // Nettoyage de l'aperçu
+    };
   }, [isAuthenticated, user]);
 
   useEffect(() => {
@@ -315,34 +370,79 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     const dateDebut = new Date(form.date);
     const dateFin = new Date(form.date_fin);
 
+    // Validations
+    if (!form.nom.trim()) {
+      setError("Le nom de l'événement est requis.");
+      toast.error("Le nom de l'événement est requis.");
+      return;
+    }
+    if (!form.type) {
+      setError("Le type d'événement est requis.");
+      toast.error("Le type d'événement est requis.");
+      return;
+    }
+    if (form.type === "autre" && !customType.trim()) {
+      setError("Veuillez spécifier un type d'événement personnalisé.");
+      toast.error("Veuillez spécifier un type d'événement personnalisé.");
+      return;
+    }
+    if (!form.theme) {
+      setError("Le thème de l'événement est requis.");
+      toast.error("Le thème de l'événement est requis.");
+      return;
+    }
+    if (form.theme === "autre" && !customTheme.trim()) {
+      setError("Veuillez spécifier un thème personnalisé.");
+      toast.error("Veuillez spécifier un thème personnalisé.");
+      return;
+    }
+    if (!form.date) {
+      setError("La date de début est requise.");
+      toast.error("La date de début est requise.");
+      return;
+    }
+    if (!form.date_fin) {
+      setError("La date de fin est requise.");
+      toast.error("La date de fin est requise.");
+      return;
+    }
     if (dateDebut < now) {
       setError("La date de début doit être aujourd'hui ou dans le futur.");
       toast.error("La date de début doit être aujourd'hui ou dans le futur.");
       return;
     }
-
     if (dateFin < now) {
       setError("La date de fin doit être aujourd'hui ou dans le futur.");
       toast.error("La date de fin doit être aujourd'hui ou dans le futur.");
       return;
     }
-
     if (dateDebut >= dateFin) {
       setError("La date de fin doit être après la date de début.");
       toast.error("La date de fin doit être après la date de début.");
       return;
     }
-
-    const finalType = form.type === "autre" ? customType : form.type;
-    const finalTheme = form.theme === "autre" ? customTheme : form.theme;
+    if (!form.locationId) {
+      setError("Le lieu est requis.");
+      toast.error("Le lieu est requis.");
+      return;
+    }
 
     try {
-      const event = await createEvent({
-        ...form,
-        type: finalType,
-        theme: finalTheme,
-        isPublic: form.isPublic,
-      });
+      const formData = new FormData();
+      formData.append("utilisateur_id", user.id || user.sub);
+      formData.append("nom", form.nom);
+      formData.append("type", form.type === "autre" ? customType : form.type);
+      formData.append("theme", form.theme === "autre" ? customTheme : form.theme);
+      formData.append("date", form.date);
+      formData.append("date_fin", form.date_fin);
+      formData.append("locationId", form.locationId);
+      formData.append("salleId", form.salleId || "");
+      formData.append("isPublic", form.isPublic.toString());
+      if (form.image) {
+        formData.append("image", form.image);
+      }
+
+      const event = await createEvent(formData);
       toast.success("Événement créé avec succès !");
       setForm({
         nom: "",
@@ -353,9 +453,11 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         locationId: "",
         salleId: "",
         isPublic: false,
+        image: null,
       });
       setCustomType("");
       setCustomTheme("");
+      setImagePreview(null);
       onNext && onNext({ eventId: event.id });
     } catch (error) {
       const errorMessage = error?.response?.data?.message || "Erreur lors de la création de l'événement.";
@@ -397,7 +499,9 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       return;
     }
     try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(geocodeAddress)}`);
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(geocodeAddress)}`
+      );
       const data = await response.json();
       if (data.length > 0 && data[0].lat != null && data[0].lon != null) {
         const { lat, lon, display_name } = data[0];
@@ -577,16 +681,10 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
 
   const isAdminLocation = (loc) => {
     if (!loc.createur || loc.createur.id == null) {
-      console.log("Lieu admin détecté :", loc);
       return true;
     }
-  
-    console.log("Lieu utilisateur détecté :", loc);
     return false;
   };
-  
-  
-  
 
   const MapClickHandler = () => {
     const map = useMap();
@@ -628,7 +726,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       return () => {
         map.off("click", handleClick);
         if (markerRef.current) {
-          map.removeLayer(markerRef.current);
+          map.off("click", handleClick);
           markerRef.current = null;
         }
       };
@@ -645,7 +743,12 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         <p className="text-center text-gray-500 mb-6 sm:mb-8">
           Décrivez votre événement pour commencer l'organisation.
         </p>
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        {error && (
+          <div className="flex items-center justify-center mb-4 text-red-500">
+            <TbAlertTriangle className="mr-2" />
+            {error}
+          </div>
+        )}
         <form onSubmit={onSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700">Nom de l'événement</label>
@@ -745,8 +848,29 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
               disabled={!form.locationId}
               onClick={() => form.locationId && setModalSalleOpen(true)}
               placeholder="Sélectionnez une salle"
-              className={`border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 text-gray-900 placeholder-gray-400 transition ${form.locationId ? "cursor-pointer bg-gray-50 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" : "bg-gray-200 cursor-not-allowed"}`}
+              className={`border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 text-gray-900 placeholder-gray-400 transition ${
+                form.locationId ? "cursor-pointer bg-gray-50 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" : "bg-gray-200 cursor-not-allowed"
+              }`}
             />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">Image de l'événement</label>
+            <div className="flex items-center gap-4">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+              />
+              {imagePreview && (
+                <img
+                  src={imagePreview}
+                  alt="Aperçu de l'image"
+                  className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                />
+              )}
+            </div>
+            <p className="text-xs text-gray-500">Formats acceptés : JPG, PNG, GIF (max 5 Mo)</p>
           </div>
           <div className="col-span-1 sm:col-span-2 mt-4 flex flex-col sm:flex-row gap-4">
             <button
@@ -766,6 +890,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         </form>
       </div>
 
+      {/* Modal Salle */}
       {modalSalleOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="relative w-full max-w-md bg-white shadow-2xl rounded-2xl p-6 sm:p-8">
@@ -839,13 +964,13 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                     Ajouter une salle
                   </div>
                 )}
-
               </div>
             )}
           </div>
         </div>
       )}
 
+      {/* Modal Lieu */}
       {modalLieuOpen && (
         <motion.div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
@@ -855,7 +980,9 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
           variants={backdropVariants}
         >
           <motion.div
-            className={`rounded-2xl shadow-2xl p-4 sm:p-6 relative border border-gray-200 bg-gray-50 ${isModalFullScreen ? 'fixed inset-0 rounded-none overflow-y-auto' : 'w-full max-w-5xl max-h-[90vh] overflow-y-auto'}`}
+            className={`rounded-2xl shadow-2xl p-4 sm:p-6 relative border border-gray-200 bg-gray-50 ${
+              isModalFullScreen ? 'fixed inset-0 rounded-none overflow-y-auto' : 'w-full max-w-5xl max-h-[90vh] overflow-y-auto'
+            }`}
             variants={modalVariants}
           >
             <div className="absolute top-4 right-4 flex space-x-2">
@@ -908,7 +1035,9 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                       setSelectedLocationForSalles(null);
                       setExpandedLocationId(null);
                     }}
-                    className={`flex-1 py-2 rounded-xl font-semibold transition ${activeTab === 'default' ? 'bg-indigo-700 text-white hover:bg-indigo-800' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'}`}
+                    className={`flex-1 py-2 rounded-xl font-semibold transition ${
+                      activeTab === 'default' ? 'bg-indigo-700 text-white hover:bg-indigo-800' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                    }`}
                   >
                     Par défaut
                   </button>
@@ -924,7 +1053,9 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                       setSelectedLocationForSalles(null);
                       setExpandedLocationId(null);
                     }}
-                    className={`flex-1 py-2 rounded-xl font-semibold transition ${activeTab === 'specify' ? 'bg-indigo-700 text-white hover:bg-indigo-800' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'}`}
+                    className={`flex-1 py-2 rounded-xl font-semibold transition ${
+                      activeTab === 'specify' ? 'bg-indigo-700 text-white hover:bg-indigo-800' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                    }`}
                   >
                     Spécifier le lieu
                   </button>
@@ -946,7 +1077,9 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                           <div
                             key={loc.id}
                             onClick={() => handleSelectLieu(loc)}
-                            className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${selectedLieu?.id === loc.id ? "bg-indigo-50" : ""}`}
+                            className={`px-4 py-3 cursor-pointer border-b border-gray-200 hover:bg-indigo-100 ${
+                              selectedLieu?.id === loc.id ? "bg-indigo-50" : ""
+                            }`}
                           >
                             {loc.nom.split(",").slice(0, 2).join(", ") || "Non précisé"}
                           </div>
@@ -1024,7 +1157,9 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                           filteredUserLocations.map((loc) => (
                             <div key={loc.id} className="border-b border-gray-200">
                               <div
-                                className={`px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-indigo-100 ${expandedLocationId === loc.id ? "bg-indigo-50" : ""}`}
+                                className={`px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-indigo-100 ${
+                                  expandedLocationId === loc.id ? "bg-indigo-50" : ""
+                                }`}
                                 onClick={() => toggleLocationDropdown(loc.id)}
                               >
                                 <div className="flex-1">
@@ -1244,6 +1379,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         </motion.div>
       )}
 
+      {/* Modal Suppression */}
       <AnimatePresence>
         {showDeleteModal && (
           <motion.div
@@ -1294,6 +1430,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         )}
       </AnimatePresence>
 
+      {/* Modal Confirmation Modification Lieu */}
       <AnimatePresence>
         {showEditConfirmationModal && (
           <motion.div
@@ -1344,6 +1481,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         )}
       </AnimatePresence>
 
+      {/* Modal Succès Modification Lieu */}
       <AnimatePresence>
         {showEditSuccessModal && (
           <motion.div
@@ -1387,6 +1525,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         )}
       </AnimatePresence>
 
+      {/* Modal Confirmation Modification Salle */}
       <AnimatePresence>
         {showEditSalleConfirmationModal && (
           <motion.div
@@ -1437,6 +1576,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
         )}
       </AnimatePresence>
 
+      {/* Modal Succès Modification Salle */}
       <AnimatePresence>
         {showEditSalleSuccessModal && (
           <motion.div

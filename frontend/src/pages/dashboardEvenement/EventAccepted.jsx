@@ -1,3 +1,4 @@
+// src/components/EventAccept.jsx
 import React, { useState, useEffect } from 'react';
 import { getMyEvents, updateEvent } from '../../services/evenementServ';
 import { useStateContext } from '../../context/ContextProvider';
@@ -12,6 +13,8 @@ const EventAccept = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
   useEffect(() => {
     if (!isAuthenticated) {
       setError("Authentification requise pour voir les événements.");
@@ -23,6 +26,7 @@ const EventAccept = () => {
       setIsLoading(true);
       try {
         const data = await getMyEvents();
+        console.log('Événements récupérés:', data); // Débogage : vérifier les données renvoyées
         setEvents(data);
         setError(null);
       } catch (error) {
@@ -47,20 +51,29 @@ const EventAccept = () => {
     setSelectedEvent(null);
   };
 
-  const handleUpdateEvent = (updatedEvent) => {
+  const handleUpdateEvent = async (updatedEvent) => {
     if (!updatedEvent || !updatedEvent.id) {
       alert("L'événement mis à jour ou son identifiant est manquant.");
       return;
     }
     try {
-      console.log('Mise à jour de l\'événement:', updatedEvent);
-      // Mettre à jour la liste des événements
-      setEvents(events.map((e) => (e.id === updatedEvent.id ? updatedEvent : e)));
-      setIsModalOpen(false); // Fermer la modale
-      setSelectedEvent(null); // Réinitialiser l'événement sélectionné
+      console.log('Mise à jour de l\'événement:', updatedEvent); // Débogage
+      const formData = new FormData();
+      Object.keys(updatedEvent).forEach((key) => {
+        if (key === 'image' && updatedEvent[key] instanceof File) {
+          formData.append(key, updatedEvent[key]);
+        } else if (key !== 'image' && updatedEvent[key] != null) {
+          formData.append(key, updatedEvent[key]);
+        }
+      });
+      const response = await updateEvent({ eventId: updatedEvent.id, eventData: formData });
+      console.log('Événement mis à jour:', response); // Débogage
+      setEvents(events.map((e) => (e.id === updatedEvent.id ? response : e)));
+      setIsModalOpen(false);
+      setSelectedEvent(null);
     } catch (error) {
       console.error("Erreur lors de la mise à jour de l'événement:", error);
-      alert(error.response?.data?.message || "Erreur lors de la mise à jour de l'événement");
+      alert(error || "Erreur lors de la mise à jour de l'événement");
     }
   };
 
@@ -127,145 +140,163 @@ const EventAccept = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-stretch">
-                {events.map((event, index) => (
-                  <div
-                    key={event.id}
-                    className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1 h-full flex flex-col"
-                  >
-                    {/* Card Header */}
-                    <div className={`h-2 bg-gradient-to-r ${index % 5 === 0 ? 'from-blue-500 to-purple-500' :
-                      index % 5 === 1 ? 'from-purple-500 to-pink-500' :
-                      index % 5 === 2 ? 'from-pink-500 to-orange-500' :
-                      index % 5 === 3 ? 'from-orange-500 to-amber-500' :
-                      'from-amber-500 to-blue-500'
-                    }`}></div>
+                {events.map((event, index) => {
+                  console.log(`Image pour l'événement ${event.nom}:`, event.imageUrl); // Débogage
+                  const imageUrl = event.imageUrl && !event.imageUrl.startsWith('http') ? `${API_BASE_URL}${event.imageUrl}` : event.imageUrl;
+                  return (
+                    <div
+                      key={event.id}
+                      className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1 h-full flex flex-col"
+                    >
+                      {/* Card Header */}
+                      <div className={`h-2 bg-gradient-to-r ${index % 5 === 0 ? 'from-blue-500 to-purple-500' :
+                        index % 5 === 1 ? 'from-purple-500 to-pink-500' :
+                        index % 5 === 2 ? 'from-pink-500 to-orange-500' :
+                        index % 5 === 3 ? 'from-orange-500 to-amber-500' :
+                        'from-amber-500 to-blue-500'
+                      }`}></div>
 
-                    <div className="p-6 relative flex flex-col flex-grow">
-                      {/* Event Title */}
-                      <div className="flex items-start justify-between mb-6">
-                        <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide leading-tight">
-                          {event.nom}
-                        </h2>
-                        <div className={`w-3 h-3 rounded-full ${index % 5 === 0 ? 'bg-blue-500' :
-                          index % 5 === 1 ? 'bg-purple-500' :
-                          index % 5 === 2 ? 'bg-pink-500' :
-                          index % 5 === 3 ? 'bg-orange-500' :
-                          'bg-amber-500'
-                        }`}></div>
-                      </div>
+                      <div className="p-6 relative flex flex-col flex-grow">
+                        {/* Event Image */}
+                        <div className="mb-6">
+                          <img
+                            src={imageUrl || 'https://placehold.co/300x150?text=Aucune+image'}
+                            alt={`Image de l'événement ${event.nom}`}
+                            className="w-full h-40 object-cover rounded-lg border border-slate-200"
+                            loading="lazy"
+                            onError={(e) => {
+                              console.error(`Erreur de chargement de l'image pour l'événement ${event.nom}:`, imageUrl);
+                              e.target.src = 'https://placehold.co/300x150?text=Image+non+disponible';
+                            }}
+                          />
+                        </div>
 
-                      {/* Event Details */}
-                      <div className="space-y-4 flex-grow">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                        {/* Event Title */}
+                        <div className="flex items-start justify-between mb-6">
+                          <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide leading-tight">
+                            {event.nom}
+                          </h2>
+                          <div className={`w-3 h-3 rounded-full ${index % 5 === 0 ? 'bg-blue-500' :
+                            index % 5 === 1 ? 'bg-purple-500' :
+                            index % 5 === 2 ? 'bg-pink-500' :
+                            index % 5 === 3 ? 'bg-orange-500' :
+                            'bg-amber-500'
+                          }`}></div>
+                        </div>
+
+                        {/* Event Details */}
+                        <div className="space-y-4 flex-grow">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Type</p>
+                              <p className="text-slate-800 font-semibold">{event.type}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Type</p>
-                            <p className="text-slate-800 font-semibold">{event.type}</p>
+
+                          <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                              <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Thème</p>
+                              <p className="text-slate-800 font-semibold">{event.theme}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0 w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
+                              <svg className="w-4 h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Date</p>
+                              <p className="text-slate-800 font-semibold">
+                                {new Date(event.date).toLocaleDateString('fr-FR', {
+                                  day: '2-digit',
+                                  month: 'long',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                              <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Lieu</p>
+                              <p className="text-slate-800 font-semibold">{event.location?.nom.split(",").slice(0, 2).join(", ") || "Non précisé"}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                              <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Salle</p>
+                              <p className="text-slate-800 font-semibold">{event.salle?.nom || 'Non précisé'}</p>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                            </svg>
+                        {/* Action Buttons */}
+                        <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => openModal(event, 'view')}
+                              className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${index % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
+                                index % 5 === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' :
+                                index % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
+                                index % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :
+                                'bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600'
+                              }`}
+                              aria-label={`Voir les tables pour l'événement ${event.nom}`}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              Voir les tables
+                            </button>
+                            <button
+                              onClick={() => openModal(event, 'edit')}
+                              className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600`}
+                              aria-label={`Modifier l'événement ${event.nom}`}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Modifier
+                            </button>
                           </div>
-                          <div>
-                            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Thème</p>
-                            <p className="text-slate-800 font-semibold">{event.theme}</p>
-                          </div>
+                          <DeleteEventButton
+                            eventId={event.id}
+                            onDeleted={(deletedId) =>
+                              setEvents(events.filter((e) => e.id !== deletedId))
+                            }
+                          />
                         </div>
-
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
-                            <svg className="w-4 h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Date</p>
-                            <p className="text-slate-800 font-semibold">
-                              {new Date(event.date).toLocaleDateString('fr-FR', {
-                                day: '2-digit',
-                                month: 'long',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                            <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Lieu</p>
-                            <p className="text-slate-800 font-semibold">{event.location?.nom.split(",").slice(0, 2).join(", ") || "Non précisé"}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
-                            <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Salle</p>
-                            <p className="text-slate-800 font-semibold">{event.salle?.nom || 'Non précisé'}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => openModal(event, 'view')}
-                            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${index % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
-                              index % 5 === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' :
-                              index % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
-                              index % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :
-                              'bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600'
-                            }`}
-                            aria-label={`Voir les tables pour l'événement ${event.nom}`}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                            Voir les tables
-                          </button>
-                          <button
-                            onClick={() => openModal(event, 'edit')}
-                            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600`}
-                            aria-label={`Modifier l'événement ${event.nom}`}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Modifier
-                          </button>
-                        </div>
-                        <DeleteEventButton
-                          eventId={event.id}
-                          onDeleted={(deletedId) =>
-                            setEvents(events.filter((e) => e.id !== deletedId))
-                          }
-                        />
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
