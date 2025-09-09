@@ -3,6 +3,8 @@ export class CreateTableDto {
   capacite: number;
   eventId: number;
   type: 'ronde' | 'carree' | 'rectangle' | 'ovale';
+  // type: 'ronde' | 'carree' | 'rectangle' | 'ovale' | 'triangle';
+
   position?: { left: number; top: number };
   nombre?: number;
 }
