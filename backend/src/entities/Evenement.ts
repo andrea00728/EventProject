@@ -99,5 +99,7 @@ export class Evenement {
 
   @OneToMany(() => Element, (element) => element.event, { onDelete: 'CASCADE' }) // Added relationship
   elements: Element[];
+  imageUrl: string| null | undefined;
+
 }
 

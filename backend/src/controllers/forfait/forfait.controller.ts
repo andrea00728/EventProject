@@ -84,6 +84,9 @@ async redirectToFrontend(
   const url = `https://mastertable.site/forfait/success?subscription_id=${subscriptionId}&token=${token}`;
   return res.redirect(url);
 }
+
+
+
   @Get('cancel')
   async handleCancel() {
     return {

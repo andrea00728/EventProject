@@ -94,49 +94,42 @@ const MenuListWithCart = () => {
   }, [slug, navigate]);
 
   // Fetch menus
-  useEffect(() => {
-    const fetchMenus = async () => {
-      if (!selectedEvent) return;
+  const fetchMenus = useCallback(async () => {
+    if (!selectedEvent) return;
 
-      try {
-        setIsLoading(true);
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`);
+    try {
+      setIsLoading(true);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`);
 
-        const formattedMenus = res.data.map((menu) => ({
-          ...menu,
-          items: menu.items.map((item) => ({
-            ...item,
-            category: menu.category || 'Autres',
-            price: parseFloat(item.price),
-          })),
-        }));
+      const formattedMenus = res.data.map((menu) => ({
+        ...menu,
+        items: menu.items.map((item) => ({
+          ...item,
+          category: menu.category || 'Autres',
+          price: parseFloat(item.price),
+        })),
+      }));
 
-        setMenus(formattedMenus);
-      } catch (error) {
-        console.error('Erreur lors du chargement des menus:', error);
-        setMessage('Oups, impossible de charger les menus.');
-        setTimeout(() => setMessage(''), 3000);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchMenus();
+      setMenus(formattedMenus);
+    } catch (error) {
+      console.error('Erreur lors du chargement des menus:', error);
+      setMessage('Oups, impossible de charger les menus.');
+      setTimeout(() => setMessage(''), 3000);
+    } finally {
+      setIsLoading(false);
+    }
   }, [selectedEvent]);
+
+  useEffect(() => {
+    fetchMenus();
+  }, [fetchMenus]);
 
   // Cart management
   const clearCart = useCallback(() => {
-    const updatedMenus = menus.map((menu) => ({
-      ...menu,
-      items: menu.items.map((item) => {
-        const cartItem = cart.find((ci) => ci.id === item.id);
-        return cartItem ? { ...item, stock: item.stock + cartItem.quantity } : item;
-      }),
-    }));
-    setMenus(updatedMenus);
     setCart([]);
-    toast.success('Commande validée et panier vidé !', { autoClose: 2000 });
-  }, [cart, menus]);
+    fetchMenus(); // Recharger les menus pour mettre à jour les stocks
+    toast.success('Commande validée avec succès !', { autoClose: 2000 });
+  }, [fetchMenus]);
 
   const addToCart = useCallback(
     (item) => {

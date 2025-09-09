@@ -2,8 +2,7 @@ import { Injectable, BadRequestException, UnauthorizedException, NotFoundExcepti
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Evenement } from 'src/entities/Evenement';
-import { CreateElementDto } from 'src/dto/CreateElementDto'; // À créer
-// import { NotificationService } from './notification/notification.service';
+import { CreateElementDto } from 'src/dto/CreateElementDto';
 import { Element } from 'src/entities/Element';
 import { NotificationService } from './notification/notification.service';
 
@@ -56,6 +55,7 @@ export class ElementService {
         rotation: dto.rotation || 0,
         width: dto.width,
         height: dto.height,
+        color: dto.color || '#d1d5db', // Ajout de la couleur avec une valeur par défaut
         event,
       });
 

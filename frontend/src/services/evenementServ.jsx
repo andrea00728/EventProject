@@ -18,6 +18,7 @@ export const createEvent = async (eventData) => {
   }
 };
 
+
 /**
  * Récupère tous les lieux.
  */
@@ -168,3 +169,33 @@ export const getLocationsByCreatorAndAdmin = async (createurId) => {
   const response = await axiosClient.get(`/locations/byadminandcreator/${createurId}`);
   return response.data;
 };
+
+export const updateEvent = async ({ eventId, eventData }) => {
+  try {
+    console.log('Mise à jour de l\'événement avec ID:', eventId); // Débogage
+    const response = await axiosClient.put(`/evenements/${eventId}`, eventData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Erreur backend:", error);
+    throw error.response?.data?.message || 'Erreur lors de la mise à jour de l\'événement';
+  }
+};
+
+
+
+export const getEvent = async (eventId) => {
+  console.log('Récupération de l\'événement avec ID:', eventId);
+  try {
+    const response = await axiosClient.get(`/evenements/${eventId}`);
+    console.log('Événement récupéré:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération de l\'événement:', error.response?.data);
+    throw error.response?.data?.message || 'Erreur lors de la récupération de l\'événement';
+  }
+};
+

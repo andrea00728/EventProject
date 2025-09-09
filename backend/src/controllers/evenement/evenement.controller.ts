@@ -10,16 +10,21 @@ import {
   UnauthorizedException,
   Delete,
   UploadedFile,
-  UseInterceptors
+  UseInterceptors,
+  Put,
+  NotFoundException,
+  ForbiddenException,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { CreateEventDto } from 'src/dto/CreateEvenementDTO';
+import { CreateEventDto, UpdateEventDto } from 'src/dto/CreateEvenementDTO';
 import { Evenement } from 'src/entities/Evenement';
 import { EvenementService } from 'src/services/evenement/evenement.service';
 import { ForfaitService } from 'src/services/forfait/forfait.service';
 import * as path from 'path';
 import * as fs from 'fs';
+import { diskStorage } from 'multer';
 
 @Controller('evenements')
 export class EvenementController {
@@ -30,12 +35,13 @@ export class EvenementController {
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
-  @UseInterceptors(FileInterceptor('image')) // <-- accepte un fichier nommé "image"
+  @UseInterceptors(FileInterceptor('image'))
   async create(
     @UploadedFile() file: Express.Multer.File,
     @Body() dto: CreateEventDto,
-    @Req() req: any
+    @Req() req: any,
   ): Promise<Evenement> {
+    console.log('Requête POST reçue:', { dto, file, user: req.user });
     const userIdFromToken = req.user?.sub;
     if (!userIdFromToken) {
       throw new UnauthorizedException('Utilisateur non authentifié');
@@ -49,29 +55,57 @@ export class EvenementController {
     }
     dto.utilisateur_id = userIdFromToken;
 
-    // Si un fichier image est présent, on le sauvegarde
     if (file) {
-      const uploadDir = path.join(__dirname, '../../../uploads/events');
+      const uploadDir = path.join(__dirname, '../../../Uploads/events');
       if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
       const fileName = `${Date.now()}-${file.originalname}`;
       const filePath = path.join(uploadDir, fileName);
       fs.writeFileSync(filePath, file.buffer);
 
-      dto.imageUrl = `/uploads/events/${fileName}`; // chemin relatif pour l’URL
+      dto.imageUrl = `/Uploads/events/${fileName}`;
     }
 
     try {
       return await this.evenementService.create(dto);
     } catch (error) {
+      console.error('Erreur lors de la création:', error);
       if (error.code === '23505') {
         throw new BadRequestException("Vous avez déjà créé un événement avec ce nom.");
       }
-      throw error;
+      throw new BadRequestException(error.message || "Erreur lors de la création de l'événement");
     }
   }
 
-  // Les autres routes restent inchangées
+@Put(':id')
+@UseGuards(AuthGuard('jwt'))
+@UseInterceptors(
+  FileInterceptor('image', {
+    storage: diskStorage({
+      destination: './Uploads/events',
+      filename: (req, file, cb) => {
+        const randomName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        return cb(null, `${randomName}${path.extname(file.originalname)}`);
+      },
+    }),
+    fileFilter: (req, file, cb) => {
+      if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+        return cb(new BadRequestException('Seules les images sont autorisées'), false);
+      }
+      cb(null, true);
+    },
+    limits: { fileSize: 5 * 1024 * 1024 },
+  }),
+)
+async updateEvent(
+  @Param('id', ParseIntPipe) id: number,
+  @Body() dto: UpdateEventDto,
+  @UploadedFile() imageFile?: Express.Multer.File,
+){
+  return this.evenementService.updateEvent(id, dto, imageFile);
+}
+
+
   @Get('/me')
   @UseGuards(AuthGuard('jwt'))
   async findUserEvenement(@Req() req: any): Promise<Evenement[]> {
@@ -114,11 +148,11 @@ export class EvenementController {
 
   @Get(':id/managerEvents')
   async findManagerEvents(@Param('id') id: string) {
-    return this.evenementService.findManagerEvents(id);   
+    return this.evenementService.findManagerEvents(id);
   }
 
   @Get('/events/statistics')
   async findCountForAllEventStats(): Promise<any> {
-    return this.evenementService.findCountForAllEventStats();   
+    return this.evenementService.findCountForAllEventStats();
   }
 }

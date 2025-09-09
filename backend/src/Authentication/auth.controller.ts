@@ -32,14 +32,23 @@ export class AuthController {
     return this.authService.createUser(dto);
   }
 
-  
-
+    
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res) {
-    await this.authService.login(req.user, res);
+    const result = await this.authService.login(req.user, res);
+
+    if (result?.error) {
+      console.error('❌ Erreur Google Auth:', result.error);
+      return res.redirect(
+        `http://localhost:5173/?error=${encodeURIComponent(result.error)}`
+      );
+    }
+
     return res.redirect(`http://localhost:5173/callback`);
   }
+
+
 
   @Post('logout')
   async logout(@Req() req: Request, @Res() res: Response) {

@@ -78,6 +78,26 @@ const revenuService = {
       delete axiosClient.defaults.headers.common["Authorization"];
     }
   },
+
+  /**
+ * Récupère toutes les commandes remboursées pour un événement donné.
+ * @param {string} eventId - L'ID de l'événement.
+ * @returns {Promise<object>} Les données des commandes remboursées.
+ */
+async getRefundedOrders(eventId) {
+  try {
+    console.log(`Fetching refunded orders for eventId: ${eventId}`);
+    const response = await axiosClient.get(`/orders/event/${eventId}/refunded`, {
+      params: { include: "table,items,items.menuItem,refundedBy" },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching refunded orders:", error.response?.data);
+    throw new Error(
+      error.response?.data?.message || "Erreur lors de la récupération des commandes remboursées"
+    );
+  }
+},
 };
 
 export default revenuService;
