@@ -13,7 +13,6 @@ import { MenuItem } from './menu-item.entity';
 import { Favorite } from './Favorite';
 import { Element } from './Element';
 
-
 @Unique(['nom', 'user'])
 @Entity()
 export class Evenement {
@@ -34,9 +33,9 @@ export class Evenement {
 
   @Column({ nullable: true })
   date_fin: Date;
+
   @OneToMany(() => Menu, (menu) => menu.evenement)
   menus: Menu[];
-
 
   @ManyToOne(() => Localisation, (localisation) => localisation.salles)
   location: Localisation;
@@ -59,23 +58,16 @@ export class Evenement {
   @OneToMany(() => Payment, (payment) => payment.event)
   payments: Payment[];
 
-  /**
-   * natoko anio ko lony
-   */
-  // @ManyToOne(()=>User,(user)=>user.id,{nullable:false})
-  // @JoinColumn({name:'utilisateur_id'})
-  // user:User
-
   @ManyToOne(() => User, (user) => user.evenement, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'utilisateur_id' })
   user: User;
-
 
   @Column({ type: 'float', nullable: true })
   montanttransaction?: number;
 
   @OneToMany(() => Personnel, (personnel) => personnel.evenement, { onDelete: 'CASCADE' })
   personnels: Personnel[];
+
   @Column({ nullable: true })
   createdAt: Date;
 
@@ -85,21 +77,17 @@ export class Evenement {
   @OneToMany(() => Invitation, (inv) => inv.event)
   invitation: Invitation[];
 
-
-  /**
-   * utilise pour la desactivation de l'evenement apres sont expiration
-   */
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
   @OneToMany(() => Favorite, (favorite) => favorite.evenement, { onDelete: 'CASCADE' })
   favorites: Favorite[];
+
   maxGuest: number;
 
-
-  @OneToMany(() => Element, (element) => element.event, { onDelete: 'CASCADE' }) // Added relationship
+  @OneToMany(() => Element, (element) => element.event, { onDelete: 'CASCADE' })
   elements: Element[];
-  imageUrl: string| null | undefined;
 
+  @Column({ type: 'varchar', nullable: true }) // Définition explicite du type varchar
+  imageUrl: string | null;
 }
-

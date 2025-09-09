@@ -63,6 +63,7 @@ async function bootstrap() {
   // Servir les fichiers statiques
   app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
 
+
   // Gestion globale des exceptions
   app.useGlobalFilters(new HttpExceptionFilter());
 
