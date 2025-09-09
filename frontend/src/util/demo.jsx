@@ -329,7 +329,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Bouton d'édition */}
-        <div className={`absolute -top-8 -right-5 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
+        <div className={`absolute -top-12 -right-5 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -342,7 +342,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
           </button>
         </div>
         {/* Boutons de rotation */}
-        <div className={`absolute -top-8 -left-5 flex gap-1 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
+        <div className={`absolute -top-12 -left-5 flex gap-1 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -412,7 +412,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
         ) : (
           <div
             className={`border-4 shadow-xl flex items-center justify-center w-full h-full relative transition-all duration-300 ${
-              table.type === "ronde" || table.type === "ovale" ? "rounded-full" : "rounded-2xl"
+              table.type === "ronde" || table.type === "ovale" ? "rounded-full" : ""
             } ${
               dragging || rotating
                 ? 'shadow-2xl scale-105 border-indigo-400 bg-gradient-to-br from-purple-100 via-pink-50 to-rose-100'
@@ -483,7 +483,7 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
   const elementType = ELEMENT_TYPES.find(t => t.value === element.type) || ELEMENT_TYPES[0];
   const { width: elementWidth, height: elementHeight } = elementType;
 
-  let shapeClass = "rounded-2xl";
+  let shapeClass = "";
   if (element.type === "rond" || element.type === "petit_rond" || element.type === "ovale" || element.type === "petit_ovale") {
     shapeClass = "rounded-full";
   }
@@ -586,7 +586,7 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className={`absolute -top-3 -right-3 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
+      <div className={`absolute -top-12 -right-3 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -598,7 +598,7 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
-      <div className={`absolute -top-3 -left-3 flex gap-1 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
+      <div className={`absolute -top-12 -left-3 flex gap-1 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
         <button
           onClick={(e) => {
             e.stopPropagation();
