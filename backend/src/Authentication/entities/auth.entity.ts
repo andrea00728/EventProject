@@ -68,10 +68,10 @@ export class User {
   @OneToMany(() => Favorite, (favorite) => favorite.user, { onDelete: 'CASCADE' })
   favorites: Favorite[];
 
-  @OneToMany(() => Localisation, (localisation) => localisation.createur)
+  @OneToMany(() => Localisation, (localisation) => localisation.createur, { onDelete: 'CASCADE' })
   localisations: Localisation[];
   // dans User (auth.entity.ts)
-  @OneToMany(() => Goal, (goal) => goal.user)
+  @OneToMany(() => Goal, (goal) => goal.user, { onDelete: 'CASCADE' })
   goals: Goal[];
 
 

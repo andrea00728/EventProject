@@ -1,13 +1,12 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Evenement } from 'src/entities/Evenement';
 import { Localisation } from 'src/entities/Location';
-import { Salle } from 'src/entities/salle';
-import { DataSource, FindOptionsWhere, IsNull, Repository } from 'typeorm';
-import { ILike } from 'typeorm';
+import { Salle } from 'src/entities/salle'; 
+import { DataSource, FindOptionsWhere, IsNull, Repository, ILike } from 'typeorm';
 import { HttpService } from '@nestjs/axios';
 import { User } from 'src/Authentication/entities/auth.entity';
-
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class LocationService {
@@ -24,6 +23,67 @@ export class LocationService {
     private readonly userRepository: Repository<User>,
   ) {}
 
+  async updateOrCreateLocation(data: {
+    id?: number;
+    nom?: string;
+    latitude?: number;
+    longitude?: number;
+    createurId?: string;
+  }): Promise<Localisation> {
+    const { id, nom, latitude, longitude, createurId = '0' } = data;
+
+    // Vérifier l'existence du lieu
+    let location: Localisation | null = null;
+    if (id) {
+      location = await this.locationRepository.findOne({ where: { id }, relations: ['createur'] });
+      if (!location) throw new BadRequestException(`Lieu avec ID ${id} non trouvé`);
+    } else if (latitude && longitude) {
+      location = await this.locationRepository.findOne({
+        where: [{ latitude, longitude }, { nom: nom || ILike(`%${nom}%`) }],
+        relations: ['createur'],
+      });
+    }
+
+    // Reverse geocoding si latitude/longitude fournis sans nom
+    let finalNom = nom;
+    if (!finalNom && latitude && longitude) {
+      try {
+        const response = await firstValueFrom(
+          this.httpService.get(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=fr`
+          )
+        );
+        finalNom = response.data.display_name || `Lat: ${latitude}, Lon: ${longitude}`;
+      } catch (error) {
+        throw new BadRequestException('Erreur lors du reverse geocoding');
+      }
+    }
+
+    // Valider le créateur
+    let user: User | null = null;
+    if (createurId !== '0') {
+      user = await this.userRepository.findOne({ where: { id: createurId } }); // Assumer que User.id est string
+      if (!user) throw new BadRequestException("L'ID de l'organisateur est invalide");
+    }
+
+    // Créer ou mettre à jour
+    if (location) {
+      location.nom = finalNom || location.nom;
+      location.latitude = latitude ?? location.latitude;
+      location.longitude = longitude ?? location.longitude;
+      if (user && !location.createur) location.createur = user;
+    } else {
+      if (!finalNom) throw new BadRequestException('Nom du lieu requis pour création');
+      location = this.locationRepository.create({
+        nom: finalNom,
+        latitude,
+        longitude,
+        createur: user || undefined,
+      });
+    }
+
+    return this.locationRepository.save(location);
+  }
 
   async createLocation(data: {
     nom: string;
@@ -31,29 +91,27 @@ export class LocationService {
     longitude?: number;
     createurId?: number;
   }): Promise<Localisation> {
-    const { nom, latitude, longitude, createurId = 0 } = data; // Default to 0 for admin/system-created
+    const { nom, latitude, longitude, createurId = 0 } = data;
     const existing = await this.locationRepository.findOne({ where: { nom } });
     if (existing) {
       throw new BadRequestException('Un lieu avec ce nom existe déjà');
     }
-  
-    // Validate creator if provided
-    let user: User | undefined;
+
+    let user: User | null = null;
     if (createurId !== 0) {
-      const foundUser = await this.userRepository.findOne({ where: { id: createurId.toString() } });
-      user = foundUser || undefined;
+      user = await this.userRepository.findOne({ where: { id: createurId.toString() } });
       if (!user) {
         throw new BadRequestException("L'ID de l'organisateur est invalide");
       }
     }
-  
+
     const location = this.locationRepository.create({
       nom,
       latitude,
       longitude,
-      createur: user || undefined, // Set to undefined for admin/system-created locations
+      createur: user || undefined,
     });
-  
+
     return this.locationRepository.save(location);
   }
 
@@ -69,16 +127,6 @@ export class LocationService {
     return this.locationRepository.find({ relations: ['salles'] });
   }
 
-  async findLocationById(id: number): Promise<Localisation> {
-    const location = await this.locationRepository.findOne({
-      where: { id },
-      relations: ['salles'],
-    });
-    if (!location) {
-      throw new BadRequestException('Lieu non trouvé');
-    }
-    return location;
-  }
 
   async createSalle(nom: string, locationId: number): Promise<Salle> {
     const location = await this.findLocationById(locationId);
@@ -92,16 +140,7 @@ export class LocationService {
     });
   }
 
-  async findSalleById(id: number): Promise<Salle> {
-    const salle = await this.salleRepository.findOne({
-      where: { id },
-      relations: ['location'],
-    });
-    if (!salle) {
-      throw new BadRequestException('Salle non trouvée');
-    }
-    return salle;
-  }
+ 
 
   async updateLocation(id: number, data: {
     nom: string;
@@ -110,12 +149,12 @@ export class LocationService {
     createur?: 'organisateur' | 'admin';
   }): Promise<Localisation> {
     const location = await this.findLocationById(id);
-    const { nom, latitude, longitude, createur } = data;
-    
+    const { nom, latitude, longitude } = data;
+
     if (nom) location.nom = nom;
     if (latitude !== undefined) location.latitude = latitude;
     if (longitude !== undefined) location.longitude = longitude;
-    
+
     return this.locationRepository.save(location);
   }
 
@@ -140,9 +179,13 @@ export class LocationService {
 
     try {
       const evenementCount = await this.evenementRepository.count({ where: { salleId: id } });
+      const salle = await this.salleRepository.findOne({ where: { id } });
+      if (!salle) {
+        throw new BadRequestException(`Salle avec l'ID ${id} non trouvée.`);
+      }
       if (evenementCount > 0) {
         throw new BadRequestException(
-          `Impossible de supprimer la salle avec l'ID ${id}, car elle est référencée par ${evenementCount} événement(s).`,
+          `Impossible de supprimer la salle avec l'ID ${salle.nom}, car elle est référencée par ${evenementCount} événement(s).`,
         );
       }
       await queryRunner.manager.delete(Salle, { id });
@@ -165,19 +208,16 @@ export class LocationService {
   async geocodeLocation(query: string): Promise<any> {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=1`;
     try {
-      const response = await this.httpService.get(url).toPromise();
-      if (!response) {
-        throw new BadRequestException('Erreur lors de la géocodage : Réponse indéfinie');
+      const response = await firstValueFrom(this.httpService.get(url));
+      if (!response || !response.data || response.data.length === 0) {
+        throw new BadRequestException('Aucun résultat trouvé pour cette recherche');
       }
-      if (response.data && response.data.length > 0) {
-        const result = response.data[0];
-        return {
-          lat: parseFloat(result.lat),
-          lon: parseFloat(result.lon),
-          displayName: result.display_name,
-        };
-      }
-      throw new BadRequestException('Aucun résultat trouvé pour cette recherche');
+      const result = response.data[0];
+      return {
+        lat: parseFloat(result.lat),
+        lon: parseFloat(result.lon),
+        displayName: result.display_name,
+      };
     } catch (error) {
       throw new BadRequestException('Erreur lors de la géocodage : ' + (error.message || 'Erreur inconnue'));
     }
@@ -186,20 +226,15 @@ export class LocationService {
   async saveSelectedLocation(query: string, createurId: string): Promise<Localisation> {
     const geocodeResult = await this.geocodeLocation(query);
 
-    // Vérifier si une localisation existe avec le même nom ou les mêmes coordonnées
     const existingLocation = await this.locationRepository.findOne({
       where: [
         { nom: geocodeResult.displayName },
-        {
-          latitude: geocodeResult.lat,
-          longitude: geocodeResult.lon,
-        },
+        { latitude: geocodeResult.lat, longitude: geocodeResult.lon },
       ],
       relations: ['createur'],
     });
 
     if (existingLocation) {
-      // Si le lieu existe mais n'a pas de créateur, essayer de mettre à jour avec l'utilisateur actuel
       if (!existingLocation.createur && createurId && createurId !== '0') {
         const user = await this.userRepository.findOne({ where: { id: createurId } });
         if (user) {
@@ -210,22 +245,19 @@ export class LocationService {
       return existingLocation;
     }
 
-    // Valider le créateur
-    let user: User | undefined;
+    let user: User | null = null;
     if (createurId && createurId !== '0') {
-      const foundUser = await this.userRepository.findOne({ where: { id: createurId } });
-      if (!foundUser) {
+      user = await this.userRepository.findOne({ where: { id: createurId } });
+      if (!user) {
         throw new BadRequestException("L'ID de l'organisateur est invalide");
       }
-      user = foundUser;
     }
 
-    // Créer une nouvelle localisation
     const newLocation = this.locationRepository.create({
       nom: geocodeResult.displayName,
       latitude: geocodeResult.lat,
       longitude: geocodeResult.lon,
-      createur: user, // Sera undefined pour admin (createurId = 0)
+      createur: user,
     });
 
     return this.locationRepository.save(newLocation);
@@ -241,15 +273,12 @@ export class LocationService {
 
     return this.locationRepository.save(location);
   }
-  
 
-  //recuperer les lieux par createur
   async findLocationsByCreator(createurId: string): Promise<Localisation[]> {
     if (!createurId) {
       throw new BadRequestException("L'ID du créateur est requis");
     }
 
-    // Cas où createurId = '0' (admin, createur_id est NULL en base)
     if (createurId === '0') {
       return this.locationRepository.find({
         where: { createur: IsNull() },
@@ -258,13 +287,11 @@ export class LocationService {
       });
     }
 
-    // Vérifier si l'utilisateur existe
     const user = await this.userRepository.findOne({ where: { id: createurId } });
     if (!user) {
       throw new BadRequestException("L'ID de l'organisateur est invalide");
     }
 
-    // Rechercher les lieux pour l'utilisateur donné
     return this.locationRepository.find({
       where: { createur: { id: createurId } },
       relations: ['salles', 'createur'],
@@ -272,20 +299,13 @@ export class LocationService {
     });
   }
 
-
-  //lieux crée par utilisateur + celle de l'admin
   async findLocationsByCreatorAndAdmin(createurId: string): Promise<Localisation[]> {
     if (!createurId) {
       throw new BadRequestException("L'ID du créateur est requis");
     }
 
-    // Préparer les conditions de recherche
-    const whereConditions: FindOptionsWhere<Localisation>[] = [];
+    const whereConditions: FindOptionsWhere<Localisation>[] = [{ createur: IsNull() }];
 
-    // Inclure les lieux créés par l'admin (createur_id = NULL)
-    whereConditions.push({ createur: IsNull() });
-
-    // Si createurId n'est pas '0', inclure les lieux de l'utilisateur connecté
     if (createurId !== '0') {
       const user = await this.userRepository.findOne({ where: { id: createurId } });
       if (!user) {
@@ -294,12 +314,46 @@ export class LocationService {
       whereConditions.push({ createur: { id: createurId } });
     }
 
-    // Rechercher les lieux pour l'admin et l'utilisateur connecté
     return this.locationRepository.find({
       where: whereConditions,
       relations: ['salles', 'createur'],
       order: { nom: 'ASC' },
     });
   }
-  
+
+  // Dans localisation-service.service.ts
+async findLocationById(id: number): Promise<Localisation> {
+  console.log('Recherche du lieu avec ID:', id);
+  try {
+    const location = await this.locationRepository.findOne({ where: { id } });
+    if (!location) {
+      console.log('Lieu non trouvé pour ID:', id);
+      throw new NotFoundException(`Lieu avec l'ID ${id} non trouvé`);
+    }
+    console.log('Lieu trouvé:', location);
+    return location;
+  } catch (error) {
+    console.error('Erreur lors de la recherche du lieu:', error);
+    throw error;
+  }
+}
+
+async findSalleById(id: number): Promise<Salle> {
+  console.log('Recherche de la salle avec ID:', id);
+  try {
+    const salle = await this.salleRepository.findOne({
+      where: { id },
+      relations: ['location'],
+    });
+    if (!salle) {
+      console.log('Salle non trouvée pour ID:', id);
+      throw new NotFoundException(`Salle avec l'ID ${id} non trouvée`);
+    }
+    console.log('Salle trouvée:', salle);
+    return salle;
+  } catch (error) {
+    console.error('Erreur lors de la recherche de la salle:', error);
+    throw error;
+  }
+}
 }

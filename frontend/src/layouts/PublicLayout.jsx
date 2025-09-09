@@ -29,6 +29,9 @@ export default function PublicLayout() {
   const [forfait, setForfait] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [openSubMenus, setOpenSubMenus] = useState({}); // { [item.name]: true/false }
+
   const isPublicEventsPage = location.pathname === "/evenements-publics";
 
   const defaultNavItems = [
@@ -40,6 +43,16 @@ export default function PublicLayout() {
   ];
 
   const [navItems, setNavItems] = useState(defaultNavItems);
+
+  useEffect(() => {
+    // Vérifie si un paramètre "error" est présent dans l'URL
+    const params = new URLSearchParams(location.search);
+    const error = params.get("error");
+    if (error) {
+      setErrorMessage(decodeURIComponent(error));
+      setModalOpen(true);
+    }
+  }, [location.search]);
 
   // Gérer le scroll vers une section de la page
   useEffect(() => {
@@ -66,10 +79,10 @@ export default function PublicLayout() {
     if (isAuthenticated) {
       fetchAndSetForfait();
       setConnected(true);
-      if(!user) return ; 
+      if (!user) return;
       const userId = user.sub || user.id;
       const socket = io(`${url}`, {
-        transports: ['websocket'],
+        transports: ["websocket"],
         auth: { userId },
       });
       if (!socket) return;
@@ -97,18 +110,16 @@ export default function PublicLayout() {
     }
   }, [forfait, isAuthenticated]);
 
-  
-  const rolesAdd = ["admin","super_admin"]
-
+  const rolesAdd = ["admin", "super_admin"];
 
   useEffect(() => {
     if (isAuthenticated) {
       // console.log("Token:", isAuthenticated, "User:", user, "Role:", role); // Debug log
       if (rolesAdd.includes(user?.role) && user?.role !== "organisateur") {
         navigate("/AdminAccueil", { replace: true });
-      }else if(user?.role != "organisateur"){
-        navigate("/choix-role",{replace : true})
-      }else {
+      } else if (user?.role != "organisateur") {
+        navigate("/choix-role", { replace: true });
+      } else {
         navigate("/", { replace: true });
       }
     }
@@ -138,11 +149,14 @@ export default function PublicLayout() {
 
   const handleDirection = (item) => {
     if (item.path.includes("#")) {
-      const id = item.path.split("#")[1];
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
+      const [basePath, id] = item.path.split("#");
+      if (basePath) navigate(basePath); // change de page d'abord
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100); // petit délai pour attendre le rendu
     } else {
       navigate(item.path);
     }
@@ -340,15 +354,18 @@ export default function PublicLayout() {
                   <div>
                     <button
                       onClick={() =>
-                        setIsSubMenuOpenMobile(!isSubMenuOpenMobile)
+                        setOpenSubMenus((prev) => ({
+                          ...prev,
+                          [item.name]: !prev[item.name],
+                        }))
                       }
                       className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-blue-50 rounded"
                     >
                       {item.name}
-                      <span>{isSubMenuOpenMobile ? "▲" : "▼"}</span>
+                      <span>{openSubMenus[item.name] ? "▲" : "▼"}</span>
                     </button>
                     <AnimatePresence>
-                      {isSubMenuOpenMobile && (
+                      {openSubMenus[item.name] && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
@@ -362,7 +379,10 @@ export default function PublicLayout() {
                               className="block px-4 py-2 text-gray-600 hover:text-blue-600 transition"
                               onClick={() => {
                                 setIsMenuOpen(false);
-                                setIsSubMenuOpenMobile(false);
+                                setOpenSubMenus((prev) => ({
+                                  ...prev,
+                                  [item.name]: false,
+                                }));
                               }}
                             >
                               {sub.name}
@@ -385,6 +405,7 @@ export default function PublicLayout() {
           isOpen={isModalOpen}
           onClose={() => setModalOpen(false)}
           isSignIn={true}
+          onError={errorMessage}
         />
       </main>
     </>

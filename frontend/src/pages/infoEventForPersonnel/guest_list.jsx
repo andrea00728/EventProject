@@ -256,7 +256,7 @@ const GuestList = () => {
                       </td>
                       <td className="px-8 py-6">
                         {guest.table ? (
-                          <div className="flex items-center bg-blue-50 px-3 py-2 rounded-lg text-blue-700 font-medium text-sm inline-flex">
+                          <div className="flex items-center bg-blue-50 px-3 py-2 rounded-lg text-blue-700 font-medium text-sm">
                             <MapPin className="h-4 w-4 mr-2" />
                             Table {guest.table}
                           </div>

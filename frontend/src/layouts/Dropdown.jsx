@@ -82,7 +82,7 @@ const Dropdown = forwardRef(
               noScroll ? "" : "overflow-y-auto"
             } rounded-xl shadow-xl border ${
               darkMode ? "bg-gray-800 border-gray-700 text-gray-200" : "bg-white border-gray-200 text-gray-900"
-            } z-50 transition-all duration-200 ${isMobile ? "left-4 right-4 top-16" : "right-0"}`}
+            } z-50 transition-all duration-200 ${isMobile ? "left-4 right-4 top-35" : "right-0"}`}
           >
             {/* Header & Filters */}
             <div className={`p-4 border-b ${darkMode ? "border-gray-700" : "border-gray-200"}`}>

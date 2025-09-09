@@ -35,7 +35,7 @@ const InvoiceModal = ({
       setIsEmailChecked(false);
       setError(null);
       setSuccess(null);
-      setIsLoading(false); // Assure que isLoading est réinitialisé à false
+      setIsLoading(false);
     }
   }, [isOpen]);
 
@@ -93,7 +93,7 @@ const InvoiceModal = ({
       return;
     }
     if (!isEmailChecked) {
-      setError('Veuillez vérifier l’email avant de valider.');
+      setError('Veuillez vérifier l\'email avant de valider.');
       return;
     }
 
@@ -118,7 +118,12 @@ const InvoiceModal = ({
       );
 
       setSuccess('Commande validée avec succès !');
-      if (onValidateSuccess) onValidateSuccess();
+      
+      // Appeler onValidateSuccess pour vider le panier et recharger les menus
+      if (onValidateSuccess) {
+        onValidateSuccess();
+      }
+      
       onClose();
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Erreur lors de la validation de la commande.';
@@ -216,7 +221,7 @@ const InvoiceModal = ({
               onClick={handleEmailCheck}
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
               disabled={!validateEmail(email) || isLoading}
-              aria-label={isLoading ? 'Vérification en cours' : 'Vérifier l’email'}
+              aria-label={isLoading ? 'Vérification en cours' : 'Vérifier l\'email'}
             >
               {isLoading ? '...' : 'Vérifier'}
             </button>
