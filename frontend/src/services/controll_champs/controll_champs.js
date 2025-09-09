@@ -73,34 +73,6 @@ export const chiffreControll = (chiffre) => {
  *                     Defaults to 20 if the type is not recognized.
  */
 
-<<<<<<< HEAD
-    //   export const getMaxCapacity=(type)=>{
-    //      switch (type) {
-    //         case "carree":
-    //         return 8;
-    //         case "rectangle":
-    //         return 10;
-    //         default:
-    //         return 20; 
-    //     }
-    //   }
-    export const getMaxCapacity = (type) => {
-  switch (type) {
-    case "ronde":
-      return 12;
-    case "carree":
-      return 8;
-    case "rectangle":
-      return 10;
-    case "ovale":
-      return 10;
-    case "triangle":
-      return 6; // Capacité maximale pour triangle
-    default:
-      return 8;
-  }
-};
-=======
 //   export const getMaxCapacity=(type)=>{
 //      switch (type) {
 //         case "carree":
@@ -127,4 +99,3 @@ export const getMaxCapacity = (type) => {
             return 8;
     }
 }
->>>>>>> origin/lioka

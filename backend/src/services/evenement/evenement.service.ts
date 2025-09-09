@@ -10,6 +10,7 @@ import { NotificationGateway } from 'src/gateway/notification.gateway';
 import { CreateEventDto, UpdateEventDto } from 'src/dto/CreateEvenementDTO';
 import * as fs from 'fs/promises';
 import { Localisation } from 'src/entities/Location';
+import { file } from 'googleapis/build/src/apis/file';
 
 @Injectable()
 export class EvenementService {
@@ -105,11 +106,15 @@ export class EvenementService {
     return event;
   }
 
-async updateEvent(eventId: number, dto: UpdateEventDto, imageFile?: Express.Multer.File): Promise<Evenement> {
+async updateEvent(eventId: number, dto: UpdateEventDto, data: any, file?: Express.Multer.File): Promise<Evenement> {
     const event = await this.evenementRepository.findOne({
       where: { id: eventId },
       relations: ['location', 'salle'],
     });
+
+    if (file) {
+      data.imageUrl = `/uploads/${file.filename}`;
+    }
 
     if (!event) throw new NotFoundException(`Événement avec ID ${eventId} non trouvé`);
 
@@ -137,11 +142,6 @@ async updateEvent(eventId: number, dto: UpdateEventDto, imageFile?: Express.Mult
         throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
       }
       event.salle = salle;
-    }
-
-    // Gestion de l'image
-    if (imageFile) {
-      event.imageUrl = `/uploads/${imageFile.filename}`;
     }
 
     return this.evenementRepository.save(event);
