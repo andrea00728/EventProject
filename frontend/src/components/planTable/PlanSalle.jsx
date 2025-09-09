@@ -28,6 +28,7 @@ const TABLE_TYPES = [
   { value: "rectangle", label: "Table rectangulaire", width: 112, height: 64 },
   { value: "ovale", label: "Table ovale", width: 112, height: 64 },
   { value: "carree", label: "Table carrée", width: 80, height: 80 },
+  { value: "triangle", label: "Table triangulaire", width: 90, height: 78 }
 ];
 
 // Définir les tailles prédéfinies pour le canvas
@@ -63,8 +64,8 @@ function snapToAngle(value, angleStep = 15) {
 // Calcule les positions des chaises autour de la table en fonction de son type et de sa capacité
 function getChairPositions(type, capacity, tableWidth, tableHeight) {
   const positions = [];
-  const chairSize = 30; // Taille de la chaise (en pixels)
-  const minDistanceFromTable = 0; // Distance minimale entre la chaise et la table
+  const chairSize = 30;
+  const minDistanceFromTable = 0;
 
   if (type === "ronde" || type === "ovale") {
     const centerX = tableWidth / 2;
@@ -80,7 +81,55 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
       const y = centerY + radius * Math.sin(angle) - chairSize / 2;
       positions.push({ left: `${x}px`, top: `${y}px` });
     }
+  } else if (type === "triangle") {
+    // Logique spécifique pour les tables triangulaires
+    const centerX = tableWidth / 2;
+    const centerY = tableHeight / 2;
+
+    // Points du triangle (triangle équilatéral orienté vers le haut)
+    const trianglePoints = [
+      { x: centerX, y: centerY - tableHeight * 0.3 }, // Sommet du haut
+      { x: centerX - tableWidth * 0.4, y: centerY + tableHeight * 0.2 }, // Coin bas gauche
+      { x: centerX + tableWidth * 0.4, y: centerY + tableHeight * 0.2 }  // Coin bas droit
+    ];
+
+    // Répartir les chaises sur les 3 côtés du triangle
+    const chairsPerSide = Math.ceil(capacity / 3);
+    let chairIndex = 0;
+
+    // Distribuer les chaises sur chaque côté
+    for (let side = 0; side < 3 && chairIndex < capacity; side++) {
+      const point1 = trianglePoints[side];
+      const point2 = trianglePoints[(side + 1) % 3];
+
+      const chairsOnThisSide = Math.min(chairsPerSide, capacity - chairIndex);
+
+      for (let i = 0; i < chairsOnThisSide; i++) {
+        const ratio = (i + 1) / (chairsOnThisSide + 1);
+        const x = point1.x + (point2.x - point1.x) * ratio;
+        const y = point1.y + (point2.y - point1.y) * ratio;
+
+        // Calculer la normale vers l'extérieur pour positionner la chaise
+        const dx = point2.x - point1.x;
+        const dy = point2.y - point1.y;
+        const normalX = -dy;
+        const normalY = dx;
+        const normalLength = Math.sqrt(normalX * normalX + normalY * normalY);
+
+        const offsetDistance = chairSize / 2 + minDistanceFromTable + 10;
+        const offsetX = (normalX / normalLength) * offsetDistance;
+        const offsetY = (normalY / normalLength) * offsetDistance;
+
+        positions.push({
+          left: `${x + offsetX - chairSize / 2}px`,
+          top: `${y + offsetY - chairSize / 2}px`
+        });
+
+        chairIndex++;
+      }
+    }
   } else {
+    // Logique existante pour rectangle et carré
     const perimetre = 2 * (tableWidth + tableHeight);
     const spacingBetweenChairs = perimetre / capacity;
     const topChairs = Math.round((tableWidth / spacingBetweenChairs));
@@ -330,7 +379,12 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
           }`}
         style={{
           transform: `rotate(${rotation}deg)`,
-          transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease'
+          transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease',
+          // Ajouter le clipPath pour le triangle
+          ...(table.type === "triangle" && {
+            clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+            borderRadius: '0'
+          })
         }}
       >
         <span className="font-bold text-indigo-700 select-none pointer-events-none">
@@ -476,21 +530,21 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
   };
 
   // Fonction pour obtenir l'icône selon le type
-const getElementIcon = (type, props = {}) => {
-  const iconMap = {
-    porte_entree: <DoorClosed {...props} />, // porte d'entrée
-    porte_sortie: <LogOut {...props} />, // porte de sortie
-    estrade: <Monitor {...props} />, // estrade / scène
-    buffet: <Coffee {...props} />, // buffet / restauration
-    piste_danse: <Music {...props} />, // piste de danse
-    bar: <GlassWater {...props} />, // bar
-    ecran: <Monitor {...props} />, // écran / projection
-    photobooth: <Camera {...props} />, // photobooth
-    decoration: <Flower {...props} />, // décoration
-  };
+  const getElementIcon = (type, props = {}) => {
+    const iconMap = {
+      porte_entree: <DoorClosed {...props} />, // porte d'entrée
+      porte_sortie: <LogOut {...props} />, // porte de sortie
+      estrade: <Monitor {...props} />, // estrade / scène
+      buffet: <Coffee {...props} />, // buffet / restauration
+      piste_danse: <Music {...props} />, // piste de danse
+      bar: <GlassWater {...props} />, // bar
+      ecran: <Monitor {...props} />, // écran / projection
+      photobooth: <Camera {...props} />, // photobooth
+      decoration: <Flower {...props} />, // décoration
+    };
 
-  return iconMap[type] || <Package {...props} />;
-};
+    return iconMap[type] || <Package {...props} />;
+  };
 
 
   // Fonction pour obtenir la couleur de bordure selon le type
@@ -576,15 +630,15 @@ const getElementIcon = (type, props = {}) => {
         }}
       >
         {/* Gradient overlay */}
-        <div 
+        <div
           className="absolute inset-0 opacity-10 rounded-[9px]"
           style={{
             background: `linear-gradient(135deg, ${getBorderColor(type)}, transparent 60%)`
           }}
         />
-        
+
         {/* Pattern de fond subtil */}
-        <div 
+        <div
           className="absolute inset-0 opacity-5 rounded-[9px]"
           style={{
             backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, ${getBorderColor(type)} 10px, ${getBorderColor(type)} 11px)`
@@ -597,20 +651,20 @@ const getElementIcon = (type, props = {}) => {
           <div className="text-2xl mb-1 filter drop-shadow-sm">
             {getElementIcon(type)}
           </div>
-          
+
           {/* Nom */}
-          <span 
+          <span
             className="font-bold text-gray-800 leading-tight break-words max-w-full"
-            style={{ 
+            style={{
               fontSize: `${Math.max(10, Math.min(14, width / 8))}px`,
               textShadow: '0 1px 2px rgba(255,255,255,0.8)'
             }}
           >
             {nom}
           </span>
-          
+
           {/* Type en petite taille */}
-          <span 
+          <span
             className="text-gray-600 text-xs mt-1 opacity-75 capitalize"
             style={{ fontSize: `${Math.max(8, Math.min(10, width / 12))}px` }}
           >
@@ -700,6 +754,7 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
     setForm((prev) => ({ ...prev, eventId: event.id }));
   };
 
+  // Fonction onSubmit corrigée pour TableCreationModal (ligne ~759)
   const onSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -716,14 +771,12 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
       );
 
       const formDataArray = nomsFinal.map((nom, index) => {
-        const isCustom = form.type === "custom";
-        const typeInfo = isCustom
-          ? { width: Number(form.customWidth), height: Number(form.customHeight) }
-          : ELEMENT_TYPES.find((t) => t.value === form.type) || ELEMENT_TYPES[0];
+        const typeInfo = TABLE_TYPES.find((t) => t.value === form.type) || TABLE_TYPES[0];
 
         return {
           nom,
-          type: isCustom ? form.customTypeName : form.type,
+          type: form.type,
+          capacite: Number(form.capacite),
           eventId: Number(form.eventId),
           position: {
             left: 100 + index * 20,
@@ -732,23 +785,9 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
           width: typeInfo.width,
           height: typeInfo.height,
           rotation: 0,
-          color: form.color,
         };
       });
 
-      const formattedElements = newElements.map((element) => ({
-        id: element.id || element.elementId,
-        nom: element.nom || element.name,
-        type: element.type,
-        eventId: Number(element.eventId),
-        position: element.position || { left: 100, top: 100 },
-        width: element.width || (form.type === "custom" ? Number(form.customWidth) : ELEMENT_TYPES.find((t) => t.value === element.type)?.width || 100),
-        height: element.height || (form.type === "custom" ? Number(form.customHeight) : ELEMENT_TYPES.find((t) => t.value === element.type)?.height || 100),
-        rotation: element.rotation || 0,
-        color: element.color || "#d1d5db",
-      }));
-
-      
       const response = await Promise.all(formDataArray.map((t) => createTable(t)));
       const newTables = response.flat();
 
@@ -837,6 +876,7 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
                 <option value="carree">Carrée</option>
                 <option value="rectangle">Rectangle</option>
                 <option value="ovale">Ovale</option>
+                <option value="triangle">Triangulaire</option>
               </select>
             </div>
 
@@ -2098,7 +2138,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           <div className="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-indigo-200/50 rounded-br-lg"></div>
         </div>
 
-        <style jsx>{`
+        <style>{`
           @keyframes slide-down {
             from { 
               opacity: 0; 
@@ -2111,6 +2151,9 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           }
           .animate-slide-down {
             animation: slide-down 0.5s ease-out;
+          }
+          .triangle {
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
           }
         `}</style>
       </div>
