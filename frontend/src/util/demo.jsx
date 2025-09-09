@@ -515,7 +515,7 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
           dragging || rotating
             ? 'shadow-2xl scale-105 border-teal-400 bg-gradient-to-br from-teal-100 via-cyan-50 to-blue-100'
             : 'shadow-lg border-teal-300 bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100'
-        } ${rotating ? 'ring-4 ring-blue-300/60' : ''} backdrop-blur-sm ${
+        } ${rotating ? 'ring-4 ring-blue-300/60' : ''}  ${
           element.type === "triangle" ? 'triangle-shape' : ''
         }`}
         style={{
