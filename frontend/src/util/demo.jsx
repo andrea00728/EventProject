@@ -13,6 +13,8 @@ const TABLE_TYPES = [
 // Définition des types d'éléments avec leurs dimensions
 const ELEMENT_TYPES = [
   { value: "carre", label: "Carré", width: 80, height: 80 },
+  { value: "rond", label: "Rond", width: 80, height: 80 },
+  { value: "petit_carre", label: "Petit Carré", width: 40, height: 40 },
   { value: "rectangle", label: "Rectangle", width: 100, height: 50 },
   { value: "petit_rectangle", label: "Petit Rectangle", width: 60, height: 30 },
   { value: "ovale", label: "Ovale", width: 100, height: 50 },
@@ -25,6 +27,7 @@ const ELEMENT_TYPES = [
 const CANVAS_SIZES = [
   { label: "Petit", width: 600, height: 400 },
   { label: "Normal", width: 900, height: 650 },
+  { label: "Grand", width: 1200, height: 800 },
 ];
 
 // Limites pour la démo
@@ -268,7 +271,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className={`absolute -top-3 -right-3 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
+      <div className={`absolute -top-8 -right-5 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -280,7 +283,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
           <Edit className="w-3.5 h-3.5" />
         </button>
       </div>
-      <div className={`absolute -top-3 -left-3 flex gap-1 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
+      <div className={`absolute -top-8 -left-5 flex gap-1 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -512,7 +515,7 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
           dragging || rotating
             ? 'shadow-2xl scale-105 border-teal-400 bg-gradient-to-br from-teal-100 via-cyan-50 to-blue-100'
             : 'shadow-lg border-teal-300 bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100'
-        } ${rotating ? 'ring-4 ring-blue-300/60' : ''} backdrop-blur-sm ${
+        } ${rotating ? 'ring-4 ring-blue-300/60' : ''}  ${
           element.type === "triangle" ? 'triangle-shape' : ''
         }`}
         style={{
@@ -853,7 +856,6 @@ export default function DemoPlanSalle() {
             : g
         )
       );
-
       setMovingGuest(null);
       setSelectedPlace(null);
       setError('');
@@ -1144,9 +1146,6 @@ export default function DemoPlanSalle() {
                       <div className="w-24 h-24 mx-auto bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 rounded-full flex items-center justify-center shadow-2xl border-4 border-white/50">
                         <Plus className="w-12 h-12 text-indigo-500" />
                       </div>
-                      <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
-                        <span className="text-white text-sm"></span>
-                      </div>
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-gray-800 mb-3">
@@ -1217,8 +1216,8 @@ export default function DemoPlanSalle() {
       {/* Modal de limite atteinte */}
       <Modal
         isOpen={currentModal === MODAL_TYPES.LIMIT}
-        onClose={() => setCurrentModal(MODAL_TYPES.NONE)}
-        title=" Limite atteinte"
+        onClose={() => closeModalType(MODAL_TYPES.LIMIT)}
+        title="Limite atteinte"
       >
         <div className="text-center mb-6">
           <p className="text-gray-600 mb-4">
@@ -1228,19 +1227,25 @@ export default function DemoPlanSalle() {
               ? `Vous avez atteint la limite de ${MAX_GUESTS} invités pour cette démonstration.`
               : `Vous avez atteint la limite de ${MAX_ELEMENTS} éléments pour cette démonstration.`}
           </p>
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl border border-indigo-200/50">
-            <p className="text-indigo-600 font-bold text-lg mb-2">
-              Débloquez le potentiel complet !
-            </p>
-            <p className="text-indigo-700 text-sm">
-              Créez des événements illimités avec la version complète
-            </p>
-          </div>
+          <p className="text-indigo-600 font-semibold">
+            Connectez-vous pour débloquer toutes les fonctionnalités et créer des événements sans limites !
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
-            onClick={() => setCurrentModal(MODAL_TYPES.NONE)}
-            className="w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+            onClick={() => closeModalType(MODAL_TYPES.LIMIT)}
+            className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 cursor-pointer transition"
           >
             Continuer la démo
+          </button>
+          <button
+            onClick={() => {
+              closeModalType(MODAL_TYPES.LIMIT);
+              setCurrentModal(MODAL_TYPES.AUTH);
+            }}
+            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer transition"
+          >
+            Se connecter
           </button>
         </div>
       </Modal>
@@ -1440,7 +1445,7 @@ export default function DemoPlanSalle() {
               type="submit"
               className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
             >
-              Créer
+              Ajouter
             </button>
           </div>
           <div className="text-center">
@@ -1454,7 +1459,7 @@ export default function DemoPlanSalle() {
       {/* Modal de modification de table */}
       <Modal
         isOpen={currentModal === MODAL_TYPES.EDIT_TABLE && editingTable}
-        onClose={() => setCurrentModal(MODAL_TYPES.NONE)}
+        onClose={() => closeModalType(MODAL_TYPES.EDIT_TABLE)}
         title={`Modifier ${editingTable?.nom || 'la table'}`}
       >
         {editingTable && (
