@@ -28,6 +28,7 @@ const TABLE_TYPES = [
   { value: "rectangle", label: "Table rectangulaire", width: 112, height: 64 },
   { value: "ovale", label: "Table ovale", width: 112, height: 64 },
   { value: "carree", label: "Table carrée", width: 80, height: 80 },
+  { value: "triangle", label: "Table triangulaire", width: 80, height: 80 },
 ];
 
 // Définir les tailles prédéfinies pour le canvas
@@ -79,6 +80,46 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
       const x = centerX + radius * Math.cos(angle) - chairSize / 2;
       const y = centerY + radius * Math.sin(angle) - chairSize / 2;
       positions.push({ left: `${x}px`, top: `${y}px` });
+    }
+  } else if (type === "triangle") {
+    // Logique pour table triangulaire
+    const centerX = tableWidth / 2;
+    const centerY = tableHeight / 2;
+    const sideLength = tableWidth; // Longueur d'un côté du triangle équilatéral
+    const height = (Math.sqrt(3) / 2) * sideLength; // Hauteur du triangle équilatéral
+    const radius = height / 2 + minDistanceFromTable + chairSize / 2;
+
+    const chairsPerSide = Math.floor(capacity / 3) + (capacity % 3 > 0 ? 1 : 0);
+    let remainingChairs = capacity;
+
+    // Positionnement sur les trois côtés du triangle
+    for (let side = 0; side < 3; side++) {
+      const chairsOnThisSide = Math.min(chairsPerSide, remainingChairs);
+      remainingChairs -= chairsOnThisSide;
+
+      for (let i = 0; i < chairsOnThisSide; i++) {
+        const t = (i + 1) / (chairsOnThisSide + 1); // Position relative le long du côté
+        let x, y;
+
+        if (side === 0) {
+          // Côté inférieur (base)
+          x = centerX - sideLength / 2 + t * sideLength;
+          y = centerY + height / 2 + minDistanceFromTable;
+        } else if (side === 1) {
+          // Côté gauche
+          x = centerX - sideLength / 2 + t * (sideLength / 2);
+          y = centerY + height / 2 - t * height;
+        } else {
+          // Côté droit
+          x = centerX + t * (sideLength / 2);
+          y = centerY + height / 2 - t * height;
+        }
+
+        positions.push({
+          left: `${x - chairSize / 2}px`,
+          top: `${y - chairSize / 2}px`,
+        });
+      }
     }
   } else {
     const perimetre = 2 * (tableWidth + tableHeight);
@@ -325,9 +366,11 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       </button>
 
       <div
-        className={`border-4 border-indigo-400 shadow-md flex items-center justify-center ${table.type === "ronde" || table.type === "ovale" ? "rounded-full" : "rounded-md"
-          } w-full h-full bg-pink-200 relative transition-all duration-300 ${dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-md'
-          }`}
+        className={`border-4 border-indigo-400 shadow-md flex items-center justify-center 
+          ${table.type === "ronde" || table.type === "ovale" ? "rounded-full" :
+                  table.type === "triangle" ? "triangle" : "rounded-md"} 
+          w-full h-full bg-pink-200 relative transition-all duration-300 
+          ${dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-md'}`}
         style={{
           transform: `rotate(${rotation}deg)`,
           transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease'
@@ -476,21 +519,21 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
   };
 
   // Fonction pour obtenir l'icône selon le type
-const getElementIcon = (type, props = {}) => {
-  const iconMap = {
-    porte_entree: <DoorClosed {...props} />, // porte d'entrée
-    porte_sortie: <LogOut {...props} />, // porte de sortie
-    estrade: <Monitor {...props} />, // estrade / scène
-    buffet: <Coffee {...props} />, // buffet / restauration
-    piste_danse: <Music {...props} />, // piste de danse
-    bar: <GlassWater {...props} />, // bar
-    ecran: <Monitor {...props} />, // écran / projection
-    photobooth: <Camera {...props} />, // photobooth
-    decoration: <Flower {...props} />, // décoration
-  };
+  const getElementIcon = (type, props = {}) => {
+    const iconMap = {
+      porte_entree: <DoorClosed {...props} />, // porte d'entrée
+      porte_sortie: <LogOut {...props} />, // porte de sortie
+      estrade: <Monitor {...props} />, // estrade / scène
+      buffet: <Coffee {...props} />, // buffet / restauration
+      piste_danse: <Music {...props} />, // piste de danse
+      bar: <GlassWater {...props} />, // bar
+      ecran: <Monitor {...props} />, // écran / projection
+      photobooth: <Camera {...props} />, // photobooth
+      decoration: <Flower {...props} />, // décoration
+    };
 
-  return iconMap[type] || <Package {...props} />;
-};
+    return iconMap[type] || <Package {...props} />;
+  };
 
 
   // Fonction pour obtenir la couleur de bordure selon le type
@@ -576,15 +619,15 @@ const getElementIcon = (type, props = {}) => {
         }}
       >
         {/* Gradient overlay */}
-        <div 
+        <div
           className="absolute inset-0 opacity-10 rounded-[9px]"
           style={{
             background: `linear-gradient(135deg, ${getBorderColor(type)}, transparent 60%)`
           }}
         />
-        
+
         {/* Pattern de fond subtil */}
-        <div 
+        <div
           className="absolute inset-0 opacity-5 rounded-[9px]"
           style={{
             backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, ${getBorderColor(type)} 10px, ${getBorderColor(type)} 11px)`
@@ -597,20 +640,20 @@ const getElementIcon = (type, props = {}) => {
           <div className="text-2xl mb-1 filter drop-shadow-sm">
             {getElementIcon(type)}
           </div>
-          
+
           {/* Nom */}
-          <span 
+          <span
             className="font-bold text-gray-800 leading-tight break-words max-w-full"
-            style={{ 
+            style={{
               fontSize: `${Math.max(10, Math.min(14, width / 8))}px`,
               textShadow: '0 1px 2px rgba(255,255,255,0.8)'
             }}
           >
             {nom}
           </span>
-          
+
           {/* Type en petite taille */}
-          <span 
+          <span
             className="text-gray-600 text-xs mt-1 opacity-75 capitalize"
             style={{ fontSize: `${Math.max(8, Math.min(10, width / 12))}px` }}
           >
@@ -700,84 +743,72 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
     setForm((prev) => ({ ...prev, eventId: event.id }));
   };
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
+ const onSubmit = async (e) => {
+  e.preventDefault();
+  setError(null);
 
-    if (!form.eventId) {
-      setError("Veuillez sélectionner un événement");
-      toast.error("Veuillez sélectionner un événement");
-      return;
-    }
+  if (!form.eventId) {
+    setError("Veuillez sélectionner un événement");
+    toast.error("Veuillez sélectionner un événement");
+    return;
+  }
 
-    try {
-      const nomsFinal = form.noms.map((nom, index) =>
-        nom && nom.trim() !== "" ? nom : `Table ${index + 1}`
-      );
+  try {
+    const nomsFinal = form.noms.map((nom, index) =>
+      nom && nom.trim() !== "" ? nom : `Table ${index + 1}`
+    );
 
-      const formDataArray = nomsFinal.map((nom, index) => {
-        const isCustom = form.type === "custom";
-        const typeInfo = isCustom
-          ? { width: Number(form.customWidth), height: Number(form.customHeight) }
-          : ELEMENT_TYPES.find((t) => t.value === form.type) || ELEMENT_TYPES[0];
+    const formDataArray = nomsFinal.map((nom, index) => {
+      const isCustom = form.type === "custom";
+      const typeInfo = isCustom
+        ? { width: Number(form.customWidth), height: Number(form.customHeight) }
+        : TABLE_TYPES.find((t) => t.value === form.type) || TABLE_TYPES[0];
 
-        return {
-          nom,
-          type: isCustom ? form.customTypeName : form.type,
-          eventId: Number(form.eventId),
-          position: {
-            left: 100 + index * 20,
-            top: 100 + index * 20,
-          },
-          width: typeInfo.width,
-          height: typeInfo.height,
-          rotation: 0,
-          color: form.color,
-        };
-      });
+      return {
+        nom,
+        type: isCustom ? form.customTypeName : form.type,
+        eventId: Number(form.eventId),
+        capacite: Number(form.capacite),
+        position: {
+          left: 100 + index * 20,
+          top: 100 + index * 20,
+        },
+        width: typeInfo.width,
+        height: typeInfo.height,
+        rotation: 0,
+        color: form.color,
+      };
+    });
 
-      const formattedElements = newElements.map((element) => ({
-        id: element.id || element.elementId,
-        nom: element.nom || element.name,
-        type: element.type,
-        eventId: Number(element.eventId),
-        position: element.position || { left: 100, top: 100 },
-        width: element.width || (form.type === "custom" ? Number(form.customWidth) : ELEMENT_TYPES.find((t) => t.value === element.type)?.width || 100),
-        height: element.height || (form.type === "custom" ? Number(form.customHeight) : ELEMENT_TYPES.find((t) => t.value === element.type)?.height || 100),
-        rotation: element.rotation || 0,
-        color: element.color || "#d1d5db",
-      }));
+    const response = await Promise.all(formDataArray.map((t) => createTable(t)));
+    const newTables = response.flat();
 
-      
-      const response = await Promise.all(formDataArray.map((t) => createTable(t)));
-      const newTables = response.flat();
+    const formattedTables = newTables.map((table) => ({
+      id: table.id || table.tableId,
+      nom: table.nom || table.name,
+      capacite: table.capacite || table.capacity,
+      type: table.type,
+      eventId: Number(table.eventId),
+      position: table.position || { left: 100, top: 100 },
+      width: table.width || TABLE_TYPES.find((t) => t.value === table.type)?.width || 80,
+      height: table.height || TABLE_TYPES.find((t) => t.value === table.type)?.height || 80,
+      rotation: table.rotation || 0,
+      guests: table.guests || [],
+    }));
 
-      const formattedTables = newTables.map(table => ({
-        id: table.id || table.tableId,
-        nom: table.nom || table.name,
-        capacite: table.capacite || table.capacity,
-        type: table.type,
-        eventId: Number(table.eventId),
-        position: table.position || { left: 100, top: 100 },
-        width: table.width || TABLE_TYPES.find(t => t.value === table.type).width,
-        height: table.height || TABLE_TYPES.find(t => t.value === table.type).height,
-        rotation: table.rotation || 0,
-        guests: table.guests || []
-      }));
+    setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: form.eventId || 0 });
+    setSelectedEvent(null);
 
-      setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: eventId || 0 });
-      setSelectedEvent(null);
+    onAddTables(formattedTables);
+    onClose();
 
-      onAddTables(formattedTables);
-      onClose();
-
-      toast.success(`${nomsFinal.length} table${nomsFinal.length > 1 ? 's' : ''} créée${nomsFinal.length > 1 ? 's' : ''} avec succès !`);
-    } catch (err) {
-      console.error("Erreur création tables:", err);
-      setError(err.response?.data?.message || "Erreur lors de la création des tables");
-      toast.error(err.response?.data?.message || "Erreur lors de la création des tables");
-    }
-  };
+    toast.success(`${nomsFinal.length} table${nomsFinal.length > 1 ? 's' : ''} créée${nomsFinal.length > 1 ? 's' : ''} avec succès !`);
+  } catch (err) {
+    console.error("Erreur création tables:", err);
+    setError(err.response?.data?.message || "Erreur lors de la création des tables");
+    toast.error(err.response?.data?.message || "Erreur lors de la création des tables");
+  }
+};
 
   if (!isOpen) return null;
 
@@ -837,6 +868,7 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
                 <option value="carree">Carrée</option>
                 <option value="rectangle">Rectangle</option>
                 <option value="ovale">Ovale</option>
+                <option value="triangle">Triangle</option>
               </select>
             </div>
 
@@ -2098,7 +2130,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           <div className="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-indigo-200/50 rounded-br-lg"></div>
         </div>
 
-        <style >{`
+        <style>{`
           @keyframes slide-down {
             from { 
               opacity: 0; 
@@ -2111,6 +2143,9 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           }
           .animate-slide-down {
             animation: slide-down 0.5s ease-out;
+          }
+          .triangle {
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
           }
         `}</style>
       </div>
