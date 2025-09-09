@@ -227,8 +227,8 @@ const EventAccept = () => {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
-                        <div className="flex gap-2">
+                      <div className="w-full flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
+                        <div className=" flex gap-2">
                           <button
                             onClick={() => openModal(event, 'view')}
                             className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${index % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
@@ -243,7 +243,7 @@ const EventAccept = () => {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
-                            Voir les tables
+                            Detail
                           </button>
                           <button
                             onClick={() => openModal(event, 'edit')}
