@@ -1,54 +1,58 @@
 import React, { useState, useEffect } from 'react';
 import { UserCheck, Search, Filter, Mail, Phone, MapPin, TrendingUp, Clock, X, Users } from 'lucide-react';
+import { useStateContext } from '../../context/ContextProvider';
 
 const GuestList = () => {
+  const { user } = useStateContext();
+  const personnelEmail = user?.email;
+  console.log("===============email: ", personnelEmail);
   const [guests, setGuests] = useState([
-    { 
-      id: 1, 
-      name: "Jean Martin", 
-      email: "jean.martin@email.com", 
+    {
+      id: 1,
+      name: "Jean Martin",
+      email: "jean.martin@email.com",
       phone: "+33 6 12 34 56 78",
-      status: "Confirmé", 
+      status: "Confirmé",
       table: 1,
       company: "Tech Corp",
       dietary: "Végétarien"
     },
-    { 
-      id: 2, 
-      name: "Sophie Laurent", 
-      email: "sophie.laurent@email.com", 
+    {
+      id: 2,
+      name: "Sophie Laurent",
+      email: "sophie.laurent@email.com",
       phone: "+33 6 23 45 67 89",
-      status: "En attente", 
+      status: "En attente",
       table: 2,
       company: "Innovation Ltd",
       dietary: "Aucune"
     },
-    { 
-      id: 3, 
-      name: "Pierre Durand", 
-      email: "pierre.durand@email.com", 
+    {
+      id: 3,
+      name: "Pierre Durand",
+      email: "pierre.durand@email.com",
       phone: "+33 6 34 56 78 90",
-      status: "Confirmé", 
+      status: "Confirmé",
       table: 1,
       company: "Start-up Hub",
       dietary: "Sans gluten"
     },
-    { 
-      id: 4, 
-      name: "Emma Bernard", 
-      email: "emma.bernard@email.com", 
+    {
+      id: 4,
+      name: "Emma Bernard",
+      email: "emma.bernard@email.com",
       phone: "+33 6 45 67 89 01",
-      status: "Confirmé", 
+      status: "Confirmé",
       table: 3,
       company: "Digital Agency",
       dietary: "Aucune"
     },
-    { 
-      id: 5, 
-      name: "Lucas Garcia", 
-      email: "lucas.garcia@email.com", 
+    {
+      id: 5,
+      name: "Lucas Garcia",
+      email: "lucas.garcia@email.com",
       phone: "+33 6 56 78 90 12",
-      status: "Annulé", 
+      status: "Annulé",
       table: null,
       company: "Web Solutions",
       dietary: "Végétalien"
@@ -61,11 +65,11 @@ const GuestList = () => {
   // Filtrage des invités
   const filteredGuests = guests.filter(guest => {
     const matchesSearch = guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         guest.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         guest.company.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      guest.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      guest.company.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesStatus = statusFilter === 'Tous' || guest.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -78,7 +82,7 @@ const GuestList = () => {
   };
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case 'Confirmé': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
       case 'En attente': return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'Annulé': return 'bg-red-100 text-red-800 border-red-200';
@@ -114,7 +118,7 @@ const GuestList = () => {
             <div className="text-3xl font-bold mb-1">{stats.total}</div>
             <div className="text-blue-100 text-sm font-medium uppercase tracking-wide">Total Invités</div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <UserCheck className="h-8 w-8 text-emerald-200" />
@@ -123,7 +127,7 @@ const GuestList = () => {
             <div className="text-3xl font-bold mb-1">{stats.confirmed}</div>
             <div className="text-emerald-100 text-sm font-medium uppercase tracking-wide">Confirmés</div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <Clock className="h-8 w-8 text-amber-200" />
@@ -132,7 +136,7 @@ const GuestList = () => {
             <div className="text-3xl font-bold mb-1">{stats.pending}</div>
             <div className="text-amber-100 text-sm font-medium uppercase tracking-wide">En Attente</div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <X className="h-8 w-8 text-red-200" />
@@ -158,7 +162,7 @@ const GuestList = () => {
                   <p className="text-gray-600">{filteredGuests.length} invités affichés</p>
                 </div>
               </div>
-              
+
               {/* Filtres et recherche améliorés */}
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative group">
@@ -171,7 +175,7 @@ const GuestList = () => {
                     className="pl-12 pr-4 py-3 w-80 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200 placeholder-gray-400"
                   />
                 </div>
-                
+
                 <div className="relative group">
                   <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
                   <select
@@ -188,7 +192,7 @@ const GuestList = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Tableau des invités avec design moderne */}
           <div className="overflow-hidden">
             <div className="overflow-x-auto">

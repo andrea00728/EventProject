@@ -122,4 +122,17 @@ async response(@Query('token') token: string,@Query('action') action: string) {
     return this.personnelService.findEventsByPersonnelId(Number(personnelId));
   }
 
+
+// trouver invite par personnel
+@Get('/invite/:personnelId')
+  async findInviteByEmail(@Param('personnelId') personnelId: string) {
+    return this.personnelService.findInviteByPersonnelId(Number(personnelId));
+  }
+
+  //trouver personnel par email
+  @Get('/by-email/:email')
+  async findPersonnelByEmail(@Param('email') email: string) {
+    return this.personnelService.findOneByUserEmail(email);
+  }
+
 }
