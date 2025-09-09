@@ -28,7 +28,7 @@ const TABLE_TYPES = [
   { value: "rectangle", label: "Table rectangulaire", width: 112, height: 64 },
   { value: "ovale", label: "Table ovale", width: 112, height: 64 },
   { value: "carree", label: "Table carrée", width: 80, height: 80 },
-  { value: "triangle", label: "Table triangulaire", width: 80, height: 80 },
+  { value: "triangle", label: "Table triangulaire", width: 90, height: 78 }
 ];
 
 // Définir les tailles prédéfinies pour le canvas
@@ -64,8 +64,8 @@ function snapToAngle(value, angleStep = 15) {
 // Calcule les positions des chaises autour de la table en fonction de son type et de sa capacité
 function getChairPositions(type, capacity, tableWidth, tableHeight) {
   const positions = [];
-  const chairSize = 30; // Taille de la chaise (en pixels)
-  const minDistanceFromTable = 0; // Distance minimale entre la chaise et la table
+  const chairSize = 30;
+  const minDistanceFromTable = 0;
 
   if (type === "ronde" || type === "ovale") {
     const centerX = tableWidth / 2;
@@ -82,46 +82,54 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
       positions.push({ left: `${x}px`, top: `${y}px` });
     }
   } else if (type === "triangle") {
-    // Logique pour table triangulaire
+    // Logique spécifique pour les tables triangulaires
     const centerX = tableWidth / 2;
     const centerY = tableHeight / 2;
-    const sideLength = tableWidth; // Longueur d'un côté du triangle équilatéral
-    const height = (Math.sqrt(3) / 2) * sideLength; // Hauteur du triangle équilatéral
-    const radius = height / 2 + minDistanceFromTable + chairSize / 2;
 
-    const chairsPerSide = Math.floor(capacity / 3) + (capacity % 3 > 0 ? 1 : 0);
-    let remainingChairs = capacity;
+    // Points du triangle (triangle équilatéral orienté vers le haut)
+    const trianglePoints = [
+      { x: centerX, y: centerY - tableHeight * 0.3 }, // Sommet du haut
+      { x: centerX - tableWidth * 0.4, y: centerY + tableHeight * 0.2 }, // Coin bas gauche
+      { x: centerX + tableWidth * 0.4, y: centerY + tableHeight * 0.2 }  // Coin bas droit
+    ];
 
-    // Positionnement sur les trois côtés du triangle
-    for (let side = 0; side < 3; side++) {
-      const chairsOnThisSide = Math.min(chairsPerSide, remainingChairs);
-      remainingChairs -= chairsOnThisSide;
+    // Répartir les chaises sur les 3 côtés du triangle
+    const chairsPerSide = Math.ceil(capacity / 3);
+    let chairIndex = 0;
+
+    // Distribuer les chaises sur chaque côté
+    for (let side = 0; side < 3 && chairIndex < capacity; side++) {
+      const point1 = trianglePoints[side];
+      const point2 = trianglePoints[(side + 1) % 3];
+
+      const chairsOnThisSide = Math.min(chairsPerSide, capacity - chairIndex);
 
       for (let i = 0; i < chairsOnThisSide; i++) {
-        const t = (i + 1) / (chairsOnThisSide + 1); // Position relative le long du côté
-        let x, y;
+        const ratio = (i + 1) / (chairsOnThisSide + 1);
+        const x = point1.x + (point2.x - point1.x) * ratio;
+        const y = point1.y + (point2.y - point1.y) * ratio;
 
-        if (side === 0) {
-          // Côté inférieur (base)
-          x = centerX - sideLength / 2 + t * sideLength;
-          y = centerY + height / 2 + minDistanceFromTable;
-        } else if (side === 1) {
-          // Côté gauche
-          x = centerX - sideLength / 2 + t * (sideLength / 2);
-          y = centerY + height / 2 - t * height;
-        } else {
-          // Côté droit
-          x = centerX + t * (sideLength / 2);
-          y = centerY + height / 2 - t * height;
-        }
+        // Calculer la normale vers l'extérieur pour positionner la chaise
+        const dx = point2.x - point1.x;
+        const dy = point2.y - point1.y;
+        const normalX = -dy;
+        const normalY = dx;
+        const normalLength = Math.sqrt(normalX * normalX + normalY * normalY);
+
+        const offsetDistance = chairSize / 2 + minDistanceFromTable + 10;
+        const offsetX = (normalX / normalLength) * offsetDistance;
+        const offsetY = (normalY / normalLength) * offsetDistance;
 
         positions.push({
-          left: `${x - chairSize / 2}px`,
-          top: `${y - chairSize / 2}px`,
+          left: `${x + offsetX - chairSize / 2}px`,
+          top: `${y + offsetY - chairSize / 2}px`
         });
+
+        chairIndex++;
       }
     }
   } else {
+    // Logique existante pour rectangle et carré
     const perimetre = 2 * (tableWidth + tableHeight);
     const spacingBetweenChairs = perimetre / capacity;
     const topChairs = Math.round((tableWidth / spacingBetweenChairs));
@@ -373,7 +381,12 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
           ${dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-md'}`}
         style={{
           transform: `rotate(${rotation}deg)`,
-          transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease'
+          transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease',
+          // Ajouter le clipPath pour le triangle
+          ...(table.type === "triangle" && {
+            clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+            borderRadius: '0'
+          })
         }}
       >
         <span className="font-bold text-indigo-700 select-none pointer-events-none">
@@ -743,9 +756,10 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
     setForm((prev) => ({ ...prev, eventId: event.id }));
   };
 
- const onSubmit = async (e) => {
-  e.preventDefault();
-  setError(null);
+  // Fonction onSubmit corrigée pour TableCreationModal (ligne ~759)
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
 
   if (!form.eventId) {
     setError("Veuillez sélectionner un événement");
@@ -758,43 +772,26 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
       nom && nom.trim() !== "" ? nom : `Table ${index + 1}`
     );
 
-    const formDataArray = nomsFinal.map((nom, index) => {
-      const isCustom = form.type === "custom";
-      const typeInfo = isCustom
-        ? { width: Number(form.customWidth), height: Number(form.customHeight) }
-        : TABLE_TYPES.find((t) => t.value === form.type) || TABLE_TYPES[0];
+      const formDataArray = nomsFinal.map((nom, index) => {
+        const typeInfo = TABLE_TYPES.find((t) => t.value === form.type) || TABLE_TYPES[0];
 
-      return {
-        nom,
-        type: isCustom ? form.customTypeName : form.type,
-        eventId: Number(form.eventId),
-        capacite: Number(form.capacite),
-        position: {
-          left: 100 + index * 20,
-          top: 100 + index * 20,
-        },
-        width: typeInfo.width,
-        height: typeInfo.height,
-        rotation: 0,
-        color: form.color,
-      };
-    });
+        return {
+          nom,
+          type: form.type,
+          capacite: Number(form.capacite),
+          eventId: Number(form.eventId),
+          position: {
+            left: 100 + index * 20,
+            top: 100 + index * 20,
+          },
+          width: typeInfo.width,
+          height: typeInfo.height,
+          rotation: 0,
+        };
+      });
 
-    const response = await Promise.all(formDataArray.map((t) => createTable(t)));
-    const newTables = response.flat();
-
-    const formattedTables = newTables.map((table) => ({
-      id: table.id || table.tableId,
-      nom: table.nom || table.name,
-      capacite: table.capacite || table.capacity,
-      type: table.type,
-      eventId: Number(table.eventId),
-      position: table.position || { left: 100, top: 100 },
-      width: table.width || TABLE_TYPES.find((t) => t.value === table.type)?.width || 80,
-      height: table.height || TABLE_TYPES.find((t) => t.value === table.type)?.height || 80,
-      rotation: table.rotation || 0,
-      guests: table.guests || [],
-    }));
+      const response = await Promise.all(formDataArray.map((t) => createTable(t)));
+      const newTables = response.flat();
 
     setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: form.eventId || 0 });
     setSelectedEvent(null);
@@ -868,7 +865,7 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
                 <option value="carree">Carrée</option>
                 <option value="rectangle">Rectangle</option>
                 <option value="ovale">Ovale</option>
-                <option value="triangle">Triangle</option>
+                <option value="triangle">Triangulaire</option>
               </select>
             </div>
 
