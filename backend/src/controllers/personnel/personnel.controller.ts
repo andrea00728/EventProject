@@ -117,5 +117,9 @@ async response(@Query('token') token: string,@Query('action') action: string) {
  * @returns A promise resolving to an object containing the count of unique departments.
  */
 
+@Get('/event/:personnelId')
+  async findEventByPersonnel(@Param('personnelId') personnelId: string) {
+    return this.personnelService.findEventsByPersonnelId(Number(personnelId));
+  }
 
 }

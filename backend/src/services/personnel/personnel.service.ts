@@ -280,5 +280,19 @@ async findCountPersonnelByEvenement(evenementId: number): Promise<number> {
   });
 }
 
+// trouver evenement par id de personnel
+async findEventsByPersonnelId(personnelId: number): Promise<Evenement[]> {
+    const personnel = await this.personnelRepository.findOne({
+      where: { id: personnelId },
+      relations: ['evenement'],
+    });
+
+    if (!personnel) {
+      throw new NotFoundException('Personnel not found');
+    }
+
+    return [personnel.evenement];
+  }
+
 
 }
