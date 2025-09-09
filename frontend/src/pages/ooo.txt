@@ -35,7 +35,7 @@ const ClientMenu = () => {
     }
 
     axios
-      .get(`http://localhost:3000/menus/event/${eventId}`)
+      .get(`https://api.mastertable.site/menus/event/${eventId}`)
       .then((response) => {
         setMenu(response.data);
         setLoading(false);
@@ -90,7 +90,7 @@ const ClientMenu = () => {
 
     try {
       await axios.post(
-        'http://localhost:3000/orders',
+        'https://api.mastertable.site/orders',
         {
           tableId,
           items,
@@ -127,7 +127,7 @@ const ClientMenu = () => {
           {menu?.items?.map((item) => (
             <div key={item.id} className="flex items-center border p-4 rounded-md">
               <img
-                src={`http://localhost:3000${item.photoPath}`}
+                src={`https://api.mastertable.site${item.photoPath}`}
                 alt={item.name}
                 className="w-16 h-16 object-cover mr-4"
                 onError={(e) => (e.target.src = '/placeholder-image.jpg')}

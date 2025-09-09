@@ -41,11 +41,11 @@ export class AuthController {
     if (result?.error) {
       console.error('❌ Erreur Google Auth:', result.error);
       return res.redirect(
-        `http://localhost:5173/?error=${encodeURIComponent(result.error)}`
+        `https://mastertable.site/?error=${encodeURIComponent(result.error)}`
       );
     }
 
-    return res.redirect(`http://localhost:5173/callback`);
+    return res.redirect(`https://mastertable.site/callback`);
   }
 
 
