@@ -312,6 +312,7 @@ async findEventsByPersonnelId(personnelId: number): Promise<Evenement[]> {
 
     const invites = await this.inviteRepository.find({
       where: { event: { id: personnel.evenement.id } },
+      relations: ['table']
     });
 
     return invites;
