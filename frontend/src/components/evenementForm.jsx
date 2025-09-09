@@ -855,23 +855,45 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
           </div>
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-700">Image de l'événement</label>
-            <div className="flex items-center gap-4">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="border border-gray-300 rounded-xl px-4 py-2 sm:px-5 sm:py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
-              />
-              {imagePreview && (
-                <img
-                  src={imagePreview}
-                  alt="Aperçu de l'image"
-                  className="w-16 h-16 object-cover rounded-lg border border-gray-200"
-                />
-              )}
-            </div>
-            <p className="text-xs text-gray-500">Formats acceptés : JPG, PNG, GIF (max 5 Mo)</p>
-          </div>
+            <div className="relative w-full h-48 sm:h-64 border border-gray-300 rounded-xl bg-gray-50 flex items-center justify-center overflow-hidden">
+              {imagePreview ? (
+                <>
+                  <img
+                    src={imagePreview}
+                    alt="Aperçu de l'image"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    className="absolute top-2 right-2 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition"
+                    onClick={() => document.getElementById("image-upload").click()}
+                  >
+                    <MdEdit size={20} />
+                  </button>
+                </>
+              ) : (
+      <div className="flex flex-col items-center justify-center text-gray-400">
+        <MdImage size={40} />
+        <p className="mt-2 text-sm">Aucune image sélectionnée</p>
+        <button
+          type="button"
+          className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+          onClick={() => document.getElementById("image-upload").click()}
+        >
+          Ajouter une image
+        </button>
+      </div>
+    )}
+    <input
+      id="image-upload"
+      type="file"
+      accept="image/*"
+      onChange={handleImageChange}
+      className="hidden"
+    />
+  </div>
+  <p className="text-xs text-gray-500">Formats acceptés : JPG, PNG, GIF (max 5 Mo)</p>
+</div>
           <div className="col-span-1 sm:col-span-2 mt-4 flex flex-col sm:flex-row gap-4">
             <button
               type="submit"
