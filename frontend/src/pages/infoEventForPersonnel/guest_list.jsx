@@ -12,11 +12,13 @@ const GuestList = () => {
 
   // Filtrage des invités
   const filteredGuests = guests.filter(guest => {
-    const matchesSearch = guest.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      guest.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      guest.company.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = guest.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      guest.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      guest.company?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'Tous' || guest.status === statusFilter;
+    const matchesStatus = statusFilter === 'Tous' ||
+      (statusFilter === 'Confirmé' && guest.checkedIn) ||
+      (statusFilter === 'En attente' && !guest.checkedIn);
 
     return matchesSearch && matchesStatus;
   });
@@ -155,7 +157,6 @@ const GuestList = () => {
                     <option value="Tous">Tous les statuts</option>
                     <option value="Confirmé">Confirmés</option>
                     <option value="En attente">En attente</option>
-                    <option value="Annulé">Annulés</option>
                   </select>
                 </div>
               </div>
