@@ -655,8 +655,8 @@ export class AuthService {
       name: user.name,
       email: user.email,
       role: user.role,
-      // photo: user.photo ? `https://api.mastertable.site${user.photo}` : null,
-      photo: user.photo ? `https://api.mastertable.site${user.photo}` : null,
+      // photo: user.photo ? `http://localhost:3000${user.photo}` : null,
+      photo: user.photo ? `http://localhost:3000${user.photo}` : null,
     },
   };
 }
@@ -713,8 +713,8 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       name: user.name,
-      // photo: user.photo ? `https://api.mastertable.site${user.photo}` : null,
-      photo: user.photo ? `https://api.mastertable.site${user.photo}` : null,
+      // photo: user.photo ? `http://localhost:3000${user.photo}` : null,
+      photo: user.photo ? `http://localhost:3000${user.photo}` : null,
     };
     const newToken = this.jwtService.sign(payload);
 
@@ -723,15 +723,15 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
-      // photo: user.photo ? `https://api.mastertable.site${user.photo}?t=${Date.now()}` : null,
-      photo: user.photo ? `https://api.mastertable.site${user.photo}?t=${Date.now()}` : null,
+      // photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
+      photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
     });
 
     return {
       user: {
         ...user,
-        // photo: user.photo ? `https://api.mastertable.site${user.photo}?t=${Date.now()}` : null,
-        photo: user.photo ? `https://api.mastertable.site${user.photo}?t=${Date.now()}` : null,
+        // photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
+        photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
       } as User,
       token: newToken, // Retourner le nouveau token
     };
@@ -748,13 +748,13 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
-      // photo: user.photo ? `https://api.mastertable.site${user.photo}?t=${Date.now()}` : null,
-      photo: user.photo ? `https://api.mastertable.site${user.photo}?t=${Date.now()}` : null,
+      // photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
+      photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
     });
     return {
       ...user,
-      // photo: user.photo ? `https://api.mastertable.site${user.photo}?t=${Date.now()}` : null,
-      photo: user.photo ? `https://api.mastertable.site${user.photo}?t=${Date.now()}` : null,
+      // photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
+      photo: user.photo ? `http://localhost:3000${user.photo}?t=${Date.now()}` : null,
     } as User;
   }
 }

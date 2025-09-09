@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "https://api.mastertable.site",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000",
   withCredentials: true, // ⬅️ IMPORTANT pour envoyer les cookies
 });
 
