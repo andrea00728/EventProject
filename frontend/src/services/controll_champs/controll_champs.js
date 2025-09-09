@@ -73,13 +73,29 @@
  *                     Defaults to 20 if the type is not recognized.
  */
 
-      export const getMaxCapacity=(type)=>{
-         switch (type) {
-            case "carree":
-            return 8;
-            case "rectangle":
-            return 10;
-            default:
-            return 20; 
-        }
-      }
+    //   export const getMaxCapacity=(type)=>{
+    //      switch (type) {
+    //         case "carree":
+    //         return 8;
+    //         case "rectangle":
+    //         return 10;
+    //         default:
+    //         return 20; 
+    //     }
+    //   }
+    export const getMaxCapacity = (type) => {
+  switch (type) {
+    case "ronde":
+      return 12;
+    case "carree":
+      return 8;
+    case "rectangle":
+      return 10;
+    case "ovale":
+      return 10;
+    case "triangle":
+      return 6; // Capacité maximale pour triangle
+    default:
+      return 8;
+  }
+};

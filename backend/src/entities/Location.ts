@@ -1,23 +1,25 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
-import { Salle } from './salle';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToOne } from 'typeorm';
+
 import { User } from 'src/Authentication/entities/auth.entity';
+import { Salle } from './salle';
+
 @Entity()
 export class Localisation {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
-  nom: string; // Ex: Ivato, Anosy
+  nom: string;
 
   @Column({ type: 'float', nullable: true })
-  latitude: number; // Coordonnée de latitude
+  latitude: number | null;
 
   @Column({ type: 'float', nullable: true })
-  longitude: number; // Coordonnée de longitude
+  longitude: number | null;
+
+  @ManyToOne(() => User, { nullable: true })
+  createur: User | null;
 
   @OneToMany(() => Salle, (salle) => salle.location)
   salles: Salle[];
-  
-  @ManyToOne(() => User, (user) => user.localisations, { nullable: true })
-  createur: User;
 }

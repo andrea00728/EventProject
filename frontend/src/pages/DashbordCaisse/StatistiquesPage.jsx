@@ -15,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { getEventIdByEmail } from "../../services/invitationService";
 import { motion } from "framer-motion";
 import axiosClient from "../../api/axios-client";
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from "lucide-react";
 
 // Enregistrement des éléments nécessaires pour Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, LineElement, PointElement);
@@ -50,7 +50,7 @@ const StatistiquesPage = () => {
   const [eventDetails, setEventDetails] = useState(null);
   const [error, setError] = useState(null);
   const [events, setEvents] = useState([]);
-  const [selectedEvent, setSelectedEvent] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState("");
   const [assignedEventId, setAssignedEventId] = useState(null);
   const { isAuthenticated } = useStateContext();
   const navigate = useNavigate();
@@ -234,11 +234,11 @@ const StatistiquesPage = () => {
         </svg>
       ),
       trend: stats.orders.served > 0 ? "up" : "down",
-      change: `${Math.round((stats.orders.served / totals.orders) * 100)}% servies`,
+      change: totals.orders ? `${Math.round((stats.orders.served / totals.orders) * 100)}% servies` : "0% servies",
     },
     {
       title: "Taux de paiement",
-      value: `${Math.round((stats.payments.paid / totals.payments) * 100)}%`,
+      value: totals.payments ? `${Math.round((stats.payments.paid / totals.payments) * 100)}%` : "0%",
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H4a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -260,7 +260,7 @@ const StatistiquesPage = () => {
     },
     {
       title: "Taux d'annulation",
-      value: `${Math.round((stats.orders.canceled / totals.orders) * 100)}%`,
+      value: totals.orders ? `${Math.round((stats.orders.canceled / totals.orders) * 100)}%` : "0%",
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -278,23 +278,38 @@ const StatistiquesPage = () => {
       if (resp?.eventId) {
         setAssignedEventId(resp.eventId);
         setSelectedEvent(resp.eventId);
+      } else {
+        setAssignedEventId(null);
       }
     } catch (e) {
-      console.error("Erreur récupération événement assigné :", e);
-      setError("Erreur lors de la récupération de l'événement assigné.");
+      console.warn("Aucun événement assigné trouvé :", e);
+      setAssignedEventId(null);
     }
   }, []);
 
-  // Récupération des événements
-  const fetchEvents = useCallback(async () => {
-    try {
-      const res = await axiosClient.get(`/events`);
-      setEvents(res.data);
-    } catch (error) {
-      console.error('Erreur de chargement des événements :', error);
-      setError("Erreur lors de la récupération des événements.");
+  // Récupération des événements avec réessai
+  const fetchEvents = useCallback(async (retries = 3, delay = 1000) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const res = await axiosClient.get(`/evenements`);
+        setEvents(res.data);
+        if (!assignedEventId && res.data.length > 0) {
+          setSelectedEvent(res.data[0].id);
+        }
+        return;
+      } catch (error) {
+        if (i === retries - 1) {
+          console.error("Erreur de chargement des événements :", error);
+          if (error.response?.status === 404) {
+            setError("L'endpoint des événements n'est pas disponible. Vérifiez la configuration de l'API.");
+          } else {
+            setError("Erreur lors de la récupération des événements. Veuillez réessayer.");
+          }
+        }
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
-  }, []);
+  }, [assignedEventId]);
 
   // Récupération des détails de l'événement
   const fetchEventDetails = async (eventId) => {
@@ -303,22 +318,20 @@ const StatistiquesPage = () => {
       setEventDetails(response.data);
     } catch (error) {
       console.error("Erreur lors de la récupération des détails de l'événement :", error);
-      if (error.response?.status === 404) {
-        setError("Événement non trouvé. Vérifiez l'ID de l'événement.");
-      } else {
-        setError("Erreur lors de la récupération des détails de l'événement.");
-      }
+      setError("Erreur lors de la récupération des détails de l'événement.");
     }
   };
 
   // Logique de récupération des statistiques
   const fetchStatistics = useCallback(async () => {
+    if (!selectedEvent && !assignedEventId) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const eventToUse = assignedEventId || selectedEvent;
-      if (!eventToUse) {
-        throw new Error("Aucun événement sélectionné ou assigné.");
-      }
       setEventId(eventToUse);
       await fetchEventDetails(eventToUse);
 
@@ -344,10 +357,7 @@ const StatistiquesPage = () => {
           ? stockRes.data.flatMap((menu) => (Array.isArray(menu.items) ? menu.items : []))
           : [];
       } catch (error) {
-        console.error("Erreur lors de la récupération des menus :", error);
-        if (error.response?.status === 404) {
-          console.warn("API /menus/event non trouvée, utilisation d'un tableau vide.");
-        }
+        console.warn("Erreur lors de la récupération des menus :", error);
         stockItems = [];
       }
 
@@ -381,10 +391,65 @@ const StatistiquesPage = () => {
   useEffect(() => {
     if (isAuthenticated && (assignedEventId || selectedEvent)) {
       fetchStatistics();
+    } else if (isAuthenticated && !assignedEventId && !events.length) {
+      setLoading(false);
     }
-  }, [isAuthenticated, assignedEventId, selectedEvent, fetchStatistics]);
+  }, [isAuthenticated, assignedEventId, selectedEvent, fetchStatistics, events]);
 
-  // États de chargement et d'erreur
+  // États de chargement, d'erreur et absence d'événements
+  if (!selectedEvent && !assignedEventId && !loading && events.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-screen bg-gray-50 flex items-center justify-center p-8"
+      >
+        <div className="bg-white rounded-xl shadow-xl p-8 max-w-lg w-full text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Aucun événement disponible</h2>
+          <p className="text-gray-600 mb-6">Créez un événement pour afficher les statistiques.</p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate("/evenements/create")}
+            className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 focus:ring-4 focus:ring-indigo-300"
+            aria-label="Créer un nouvel événement"
+          >
+            Créer un événement
+          </motion.button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (!selectedEvent && !assignedEventId && !loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-screen bg-gray-50 flex items-center justify-center p-8"
+      >
+        <div className="bg-white rounded-xl shadow-xl p-8 max-w-lg w-full text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Aucun événement sélectionné</h2>
+          <p className="text-gray-600 mb-6">Veuillez sélectionner un événement pour afficher les statistiques.</p>
+          <select
+            id="event-select"
+            value={selectedEvent}
+            onChange={(e) => setSelectedEvent(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
+            aria-label="Sélectionner un événement"
+          >
+            <option value="">Sélectionner un événement</option>
+            {events.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {ev.nom}
+              </option>
+            ))}
+          </select>
+        </div>
+      </motion.div>
+    );
+  }
+
   if (error) {
     return (
       <motion.div
@@ -408,6 +473,7 @@ const StatistiquesPage = () => {
               fetchStatistics();
             }}
             className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 focus:ring-4 focus:ring-indigo-300"
+            aria-label="Réessayer de charger les statistiques"
           >
             Réessayer
           </motion.button>
@@ -466,10 +532,13 @@ const StatistiquesPage = () => {
                   value={selectedEvent}
                   onChange={(e) => setSelectedEvent(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base transition-colors duration-200"
+                  aria-label="Sélectionner un événement"
                 >
                   <option value="">Tous les événements</option>
-                  {events.map(ev => (
-                    <option key={ev.id} value={ev.id}>{ev.name}</option>
+                  {events.map((ev) => (
+                    <option key={ev.id} value={ev.id}>
+                      {ev.nom}
+                    </option>
                   ))}
                 </select>
               </div>
