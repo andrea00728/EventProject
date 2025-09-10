@@ -134,5 +134,10 @@ async response(@Query('token') token: string,@Query('action') action: string) {
   async findPersonnelByEmail(@Param('email') email: string) {
     return this.personnelService.findOneByUserEmail(email);
   }
+  //trouver personnel par email
+  @Get('/event/:eventId/personnel')
+  async findPersonnelByEventId(@Param('eventId') eventId: string) {
+    return this.personnelService.findPersonnelByEventId(Number(eventId));
+  }
 
 }
