@@ -96,10 +96,14 @@ async create(
 @UseInterceptors(
   FileInterceptor('image', {
     storage: diskStorage({
-      destination: '../../../Uploads/events',
+      destination: (req, file, cb) => {
+        const uploadDir = path.join(process.cwd(), 'uploads');
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        cb(null, uploadDir);
+      },
       filename: (req, file, cb) => {
         const randomName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-        return cb(null, `${randomName}${path.extname(file.originalname)}`);
+        cb(null, `${randomName}${path.extname(file.originalname)}`);
       },
     }),
     fileFilter: (req, file, cb) => {
@@ -116,8 +120,12 @@ async updateEvent(
   @Body() dto: UpdateEventDto,
   @UploadedFile() imageFile?: Express.Multer.File,
 ){
+  if (imageFile) {
+    dto.imageUrl = `/uploads/${imageFile.filename}`;
+  }
   return this.evenementService.updateEvent(id, dto, imageFile);
 }
+
 
 
   @Get('/me')

@@ -8,9 +8,10 @@ import { NotificationService } from '../notification/notification.service';
 import { NotificationEntity } from 'src/entities/notification.entity';
 import { NotificationGateway } from 'src/gateway/notification.gateway';
 import { CreateEventDto, UpdateEventDto } from 'src/dto/CreateEvenementDTO';
-import * as fs from 'fs/promises';
+import * as fs from 'fs';
 import { Localisation } from 'src/entities/Location';
 import { file } from 'googleapis/build/src/apis/file';
+import * as path from 'path';
 
 @Injectable()
 export class EvenementService {
@@ -106,55 +107,71 @@ export class EvenementService {
     return event;
   }
 
-async updateEvent(eventId: number, dto: UpdateEventDto, data: any, file?: Express.Multer.File): Promise<Evenement> {
-    const event = await this.evenementRepository.findOne({
-      where: { id: eventId },
-      relations: ['location', 'salle'],
-    });
+async updateEvent(eventId: number, dto: UpdateEventDto, file?: Express.Multer.File): Promise<Evenement> {
+  const event = await this.evenementRepository.findOne({
+    where: { id: eventId },
+    relations: ['location', 'salle'],
+  });
 
-    if (file) {
-      data.imageUrl = `/uploads/${file.filename}`;
-    }
+  if (!event) throw new NotFoundException(`Événement avec ID ${eventId} non trouvé`);
 
-    if (!event) throw new NotFoundException(`Événement avec ID ${eventId} non trouvé`);
+  // Mise à jour des champs simples
+  if (dto.nom) event.nom = dto.nom;
+  if (dto.type) event.type = dto.type;
+  if (dto.theme) event.theme = dto.theme;
+  if (dto.date && !isNaN(Date.parse(dto.date))) event.date = new Date(dto.date);
+  if (dto.date_fin && !isNaN(Date.parse(dto.date_fin))) event.date_fin = new Date(dto.date_fin);
+  if (dto.isPublic !== undefined) event.isPublic = dto.isPublic;
 
-    // Champs simples
-    if (dto.nom) event.nom = dto.nom;
-    if (dto.type) event.type = dto.type;
-    if (dto.theme) event.theme = dto.theme;
-    if (dto.date) event.date = new Date(dto.date);
-    if (dto.date_fin) event.date_fin = new Date(dto.date_fin);
-    if (dto.isPublic !== undefined) event.isPublic = dto.isPublic;
-
-    // Gestion du lieu
-    let location;
-    if (dto.locationId) {
-      location = await this.locationService.findLocationById(Number(dto.locationId));
-      event.location = location;
-    }
-
-    // Gestion de la salle
-    if (dto.salleId) {
-      const salle = await this.locationService.findSalleById(Number(dto.salleId));
-
-      // Vérifier que la salle appartient bien au lieu choisi
-      if (location && salle.location.id !== location.id) {
-        throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
+  // Gestion de l'image
+  if (file) {
+    // Supprimer l'ancienne photo si elle existe
+    if (event.imageUrl) {
+      const oldImagePath = path.join(__dirname, '../../../../uploads', path.basename(event.imageUrl));
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
       }
-      event.salle = salle;
     }
 
-    return this.evenementRepository.save(event);
+    // Mettre à jour avec la nouvelle photo
+    event.imageUrl = `/uploads/${file.filename}`;
   }
 
+  // Gestion du lieu
+  let location;
+  if (dto.locationId) {
+    location = await this.locationService.findLocationById(Number(dto.locationId));
+    event.location = location;
+  } else {
+    location = event.location;
+  }
 
-  private async handleImageUpload(file: Express.Multer.File): Promise<string | null> {
-  if (!file) return null;
-  const fileName = `${Date.now()}-${file.originalname}`;
-  const uploadPath = `../../../Uploads/events/${fileName}`; // Corriger le chemin
-  await fs.writeFile(uploadPath, file.buffer);
-  return `/Uploads/events/${fileName}`; // Retourner le chemin relatif
+  // Gestion de la salle
+  if (dto.salleId) {
+    const salle = await this.locationService.findSalleById(Number(dto.salleId));
+    if (location && salle.location.id !== location.id) {
+      throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
+    }
+    event.salle = salle;
+  }
+
+  await this.evenementRepository.save(event);
+
+  return this.evenementRepository.findOneOrFail({
+    where: { id: event.id },
+    relations: ['location', 'salle'],
+  });
 }
+
+
+
+// private async handleImageUpload(file: Express.Multer.File): Promise<string | null> {
+//   if (!file) return null;
+//   const fileName = `${Date.now()}-${file.originalname}`;
+//   const uploadPath = `../../../Uploads/events/${fileName}`; // Corriger le chemin
+//   await fs.writeFile(uploadPath, file.buffer);
+//   return `/Uploads/events/${fileName}`; // Retourner le chemin relatif
+// }
 
   async findAll(): Promise<Evenement[]> {
     return this.evenementRepository.find({
