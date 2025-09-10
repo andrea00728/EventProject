@@ -1,22 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Calendar, MapPin, Clock, FileText, Star, Trophy, Target } from 'lucide-react';
+import { useStateContext } from '../../context/ContextProvider';
+
 
 export const InfoEventForPersonnal = () => {
-  const [eventData, setEventData] = useState({
-    organizer: "Marie Dubois",
-    eventName: "Conférence Tech 2024", 
-    date: "15 Décembre 2024",
-    time: "14:00 - 18:00",
-    location: "Centre de Conférences Paris",
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=200&fit=crop",
-    details: "Une conférence sur les dernières innovations technologiques avec des speakers internationaux. Nous aborderons l'IA, le développement durable et les nouvelles tendances du marché."
-  });
+  const [eventData, setEvenement] = useState({});
+
+    const { user } = useStateContext();
+    const personnelEmail = user?.email;
+  
 
   // Simulation d'un appel API pour récupérer les données de l'événement
   useEffect(() => {
-    // Ici vous pourrez faire votre appel API
-    // fetchEventData();
-  }, []);
+      // recuperer le personnel depuis le backend avec son email
+      async function fetchEvenement() {
+        try {
+          const response = await fetch(`${API_URL}/by-email/${personnelEmail}`);
+          const personnelData = await response.json();
+          console.log("Personnel Data: ", personnelData.id);
+          const personnelId = personnelData.id;
+  
+          // recuperer les invites associes a l'evenement du personnel
+          const eventResponse = await fetch(`${API_URL}/event/${personnelId}`);
+          const eventData = await eventResponse.json();
+          console.log("Event Data: ", eventData);
+  
+          // mettre a jour l'etat des invites
+          setEvenement(eventData);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des données :", error);
+        }
+      }
+  
+      if (personnelEmail) {
+        fetchEvenement();
+      }
+  
+    }, []);
 
   return (
     <div className="p-8 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
@@ -29,10 +49,10 @@ export const InfoEventForPersonnal = () => {
 
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden backdrop-blur-sm border border-white/20">
           {/* Image de l'événement avec overlay */}
-          {eventData.image && (
+          {eventData.imageUrl && (
             <div className="relative h-64 bg-gradient-to-r from-blue-600 to-purple-600">
               <img 
-                src={eventData.image} 
+                src={eventData.imageUrl} 
                 alt="Événement" 
                 className="w-full h-full object-cover opacity-90"
                 onError={(e) => {
@@ -41,7 +61,7 @@ export const InfoEventForPersonnal = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
               <div className="absolute bottom-6 left-6 text-white">
-                <h2 className="text-3xl font-bold mb-2">{eventData.eventName}</h2>
+                <h2 className="text-3xl font-bold mb-2">{eventData.Nom}</h2>
                 <div className="flex items-center space-x-4 text-white/90">
                   <span className="flex items-center">
                     <Calendar className="h-4 w-4 mr-2" />
@@ -49,7 +69,7 @@ export const InfoEventForPersonnal = () => {
                   </span>
                   <span className="flex items-center">
                     <Clock className="h-4 w-4 mr-2" />
-                    {eventData.time}
+                    {eventData.date}
                   </span>
                 </div>
               </div>
