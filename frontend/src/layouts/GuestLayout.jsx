@@ -14,7 +14,7 @@ export default function GuestLayout() {
 
   // Items de nav avec scroll smooth
   const navItems = [
-    { path: "#pagepublic", name: "Accueil" },
+    { path: "#accueil", name: "Accueil" },
     { path: "#service", name: "Service" },
     { path: "#testimony", name: "Témoignages" },
     { path: "#contact", name: "Contact" },
@@ -66,7 +66,7 @@ export default function GuestLayout() {
             {/* Bouton dynamique */}
             <button
               onClick={() => {
-                navigate(isPublicEventsPage ? "/pagepublic" : "/evenements-publics");
+                navigate(isPublicEventsPage ? "/" : "/evenements-publics");
                 setIsMenuOpen(false);
               }}
               className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg transition"
@@ -130,7 +130,7 @@ export default function GuestLayout() {
             {/* Bouton mobile dynamique */}
             <button
               onClick={() => {
-                navigate(isPublicEventsPage ? "/pagepublic" : "/evenements-publics");
+                navigate(isPublicEventsPage ? "/" : "/evenements-publics");
                 setIsMenuOpen(false);
               }}
               className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl"
