@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useStateContext } from "../../context/ContextProvider";
 import { Users, Calendar, MapPin, Clock, FileText, Star, Trophy, Target } from "lucide-react";
 import { url } from "../../api/url";
+import defaultImage from "../../assets/images/bouquet.jpg";
 
 export const InfoEventForPersonnal = () => {
   const { user } = useStateContext();
@@ -45,8 +46,7 @@ export const InfoEventForPersonnal = () => {
   if (error) return <p className="p-8 text-red-600">{error}</p>;
   if (!eventData) return <p className="p-8 text-gray-500">Aucune donnée disponible</p>;
 
-  // Utilise le créateur de l'événement comme organisateur
-  const organizer = eventData.creator || "N/A";
+  const organizer = eventData.organizer || "N/A";
 
   return (
     <div className="p-8 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
@@ -58,38 +58,37 @@ export const InfoEventForPersonnal = () => {
         </div>
 
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden backdrop-blur-sm border border-white/20">
-          {eventData.image && (
-            <div className="relative h-64 bg-gradient-to-r from-blue-600 to-purple-600">
-              <img 
-                src={eventData.image ? url + eventData.image : "/images/marketers-with-magnifier-research-marketing-opportunities-chart-marketing-research-marketing-analysis-market-opportunities-and-problems-concept-flat-modern-illustration-vector.jpg"} 
-                alt="Événement" 
-                className="w-full h-full object-cover opacity-90"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-              <div className="absolute bottom-6 left-6 text-white">
-                <h2 className="text-3xl font-bold mb-2">{eventData.eventName}</h2>
-                <div className="flex items-center space-x-4 text-white/90">
-                  <span className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    {new Date(eventData.date).toLocaleDateString()}
-                  </span>
-                  <span className="flex items-center">
-                    <Clock className="h-4 w-4 mr-2" />
-                    {new Date(eventData.date).toLocaleTimeString()} -{" "}
-                    {eventData.date_fin
-                      ? new Date(eventData.date_fin).toLocaleTimeString()
-                      : "N/A"}
-                  </span>
-                </div>
+          {/* Image en background */}
+          <div
+            className="relative h-64 bg-cover bg-center"
+            style={{
+              backgroundImage: `url(${eventData.image ? url + eventData.image : defaultImage})`,
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+            <div className="absolute bottom-6 left-6 text-white">
+              <h2 className="text-3xl font-bold mb-2">{eventData.eventName}</h2>
+              <div className="flex items-center space-x-4 text-white/90">
+                <span className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  {new Date(eventData.date).toLocaleDateString()}
+                </span>
+                <span className="flex items-center">
+                  <Clock className="h-4 w-4 mr-2" />
+                  {new Date(eventData.date).toLocaleTimeString()} -{" "}
+                  {eventData.date_fin
+                    ? new Date(eventData.date_fin).toLocaleTimeString()
+                    : "N/A"}
+                </span>
               </div>
             </div>
-          )}
+          </div>
 
           <div className="p-8">
             {/* Grid infos principales */}
             <div className="grid lg:grid-cols-2 gap-8 mb-8">
               <div className="space-y-6">
-                <InfoCard title="Organisateur" value={eventData.organizer} icon={<Users className="h-6 w-6 text-white" />} color="blue" />
+                <InfoCard title="Organisateur" value={organizer} icon={<Users className="h-6 w-6 text-white" />} color="blue" />
                 <InfoCard title="Date" value={new Date(eventData.date).toLocaleDateString()} icon={<Calendar className="h-6 w-6 text-white" />} color="purple" />
               </div>
 
