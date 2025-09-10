@@ -1,70 +1,102 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Search, Filter, Mail, Phone, Clock, UserCheck, UserX } from 'lucide-react';
+import { useStateContext } from '../../context/ContextProvider';
 
 const PersonnelList = () => {
-  const [personnel, setPersonnel] = useState([
-    { id: 1, name: "Alice Moreau", role: "Coordinateur Général", email: "alice.moreau@staff.com", phone: "+33 6 11 22 33 44", status: "Actif", speciality: "Coordination événementielle" },
-    { id: 2, name: "Thomas Leroy", role: "Technicien Audio/Vidéo", email: "thomas.leroy@staff.com", phone: "+33 6 22 33 44 55", status: "Actif", speciality: "Équipements techniques" },
-    { id: 3, name: "Camille Petit", role: "Responsable Accueil", email: "camille.petit@staff.com", phone: "+33 6 33 44 55 66", status: "inactif", speciality: "Relations publiques" },
-    { id: 4, name: "Lucas Garcia", role: "Agent de Sécurité", email: "lucas.garcia@staff.com", phone: "+33 6 44 55 66 77", status: "Actif", speciality: "Sécurité événementielle" },
-    { id: 5, name: "Marie Dupuis", role: "Responsable Restauration", email: "marie.dupuis@staff.com", phone: "+33 6 55 66 77 88", status: "Actif", speciality: "Gestion traiteur" },
-    { id: 6, name: "Paul Martin", role: "Assistant Logistique", email: "paul.martin@staff.com", phone: "+33 6 66 77 88 99", status: "inactif", speciality: "Transport et manutention" }
-  ]);
+  const { user } = useStateContext();
+  const personnelEmail = user?.email;
+
+  const [dataPers, setDataPers] = useState([]);
+  const [eventData, setEventData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Tous');
   const [roleFilter, setRoleFilter] = useState('Tous');
 
-  const filteredPersonnel = personnel.filter(person => {
-    const matchesSearch = person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         person.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         person.speciality.toLowerCase().includes(searchTerm.toLowerCase());
+  // --- Fonctions Utilitaires et Logique de Filtrage ---
+  const filteredPersonnel = dataPers.filter(person => {
+    const matchesSearch = 
+      person.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      person.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      person.speciality?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === 'Tous' || person.status === statusFilter;
-    const matchesRole = roleFilter === 'Tous' || person.role.includes(roleFilter);
+    const matchesStatus = statusFilter === 'Tous' || (statusFilter === 'Actif' ? person.checkedIn : !person.checkedIn);
+    const matchesRole = roleFilter === 'Tous' || person.role?.includes(roleFilter);
     
     return matchesSearch && matchesStatus && matchesRole;
   });
 
   const stats = {
-    total: personnel.length,
-    active: personnel.filter(p => p.status === 'Actif').length,
-    onBreak: personnel.filter(p => p.status === 'En pause').length,
-    unavailable: personnel.filter(p => p.status === 'Indisponible').length
+    total: dataPers.length,
+    active: dataPers.filter(p => p.checkedIn).length,
+    unavailable: dataPers.filter(p => !p.checkedIn).length,
+    onBreak: 0 // Assumant que ce statut n'existe pas dans vos données actuelles
   };
-
+  
   const getStatusColor = (status) => {
-    switch(status) {
-      case 'Actif': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'En pause': return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'Indisponible': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
+    return status ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-red-100 text-red-800 border-red-200';
   };
 
   const getStatusIcon = (status) => {
-    switch(status) {
-      case 'Actif': return <UserCheck className="h-4 w-4" />;
-      case 'En pause': return <Clock className="h-4 w-4" />;
-      case 'Indisponible': return <UserX className="h-4 w-4" />;
-      default: return null;
-    }
+    return status ? <UserCheck className="h-4 w-4" /> : <UserX className="h-4 w-4" />;
   };
 
   const getInitials = (name) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name?.split(' ').map(n => n[0])?.join('').toUpperCase() || '';
   };
 
+  // --- Récupération des données depuis l'API ---
   useEffect(() => {
-    // fetchPersonnel();
-  }, []);
+    const fetchPersonnel = async () => {
+      if (!personnelEmail) {
+        setIsLoading(false);
+        return;
+      }
 
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // ÉTAPE 1: Récupérer l'ID de l'événement via l'email du personnel
+        const personnelResponse = await fetch(`http://localhost:3000/personnel/by-email/${personnelEmail}`);
+        if (!personnelResponse.ok) throw new Error("Personnel non trouvé.");
+        const personnelData = await personnelResponse.json();
+        const evenementId = personnelData.evenement?.id;
+        if (!evenementId) throw new Error("ID d'événement manquant.");
+
+        // ÉTAPE 2: Récupérer les données de l'événement pour l'affichage
+        const eventResponse = await fetch(`http://localhost:3000/evenements/${evenementId}`);
+        const event = await eventResponse.json();
+        setEventData(event);
+
+        // ÉTAPE 3: Récupérer la liste complète du personnel de cet événement
+        const personnelListResponse = await fetch(`http://localhost:3000/personnel/event/${evenementId}/personnel`);
+        if (!personnelListResponse.ok) throw new Error("Erreur lors de la récupération de la liste.");
+        const data = await personnelListResponse.json();
+        setDataPers(data);
+
+      } catch (err) {
+        console.error("Erreur lors de la récupération des données :", err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchPersonnel();
+  }, [personnelEmail]);
+
+  // --- Rendu du composant (JSX) ---
   return (
-    <div className=" min-h-screen">
+    <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Liste du Personnel</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            {eventData ? `Personnel de l'événement : ${eventData.nom}` : 'Liste du Personnel'}
+          </h1>
           <div className="h-1 w-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
         </div>
 
@@ -78,7 +110,6 @@ const PersonnelList = () => {
             <div className="text-3xl font-bold mb-1">{stats.total}</div>
             <div className="text-blue-100 text-sm font-medium uppercase tracking-wide">Total Personnel</div>
           </div>
-
           <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <UserCheck className="h-8 w-8 text-emerald-200" />
@@ -87,7 +118,6 @@ const PersonnelList = () => {
             <div className="text-3xl font-bold mb-1">{stats.active}</div>
             <div className="text-emerald-100 text-sm font-medium uppercase tracking-wide">Actifs</div>
           </div>
-
           <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <Clock className="h-8 w-8 text-amber-200" />
@@ -96,7 +126,6 @@ const PersonnelList = () => {
             <div className="text-3xl font-bold mb-1">{stats.onBreak}</div>
             <div className="text-amber-100 text-sm font-medium uppercase tracking-wide">En Pause</div>
           </div>
-
           <div className="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <UserX className="h-8 w-8 text-red-200" />
@@ -107,7 +136,7 @@ const PersonnelList = () => {
           </div>
         </div>
 
-        {/* Tableau */}
+        {/* Tableau de la liste */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20">
           <div className="p-8 border-b border-gray-100">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
@@ -123,6 +152,7 @@ const PersonnelList = () => {
                 </div>
               </div>
 
+              {/* Barre de recherche et filtres */}
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative group">
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
@@ -134,7 +164,6 @@ const PersonnelList = () => {
                     className="pl-12 pr-4 py-3 w-80 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200 placeholder-gray-400"
                   />
                 </div>
-
                 <div className="relative group">
                   <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
                   <select
@@ -144,11 +173,9 @@ const PersonnelList = () => {
                   >
                     <option value="Tous">Tous les statuts</option>
                     <option value="Actif">Actifs</option>
-                    <option value="En pause">En pause</option>
                     <option value="Indisponible">Indisponibles</option>
                   </select>
                 </div>
-
                 <div className="relative group">
                   <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
                   <select
@@ -168,66 +195,75 @@ const PersonnelList = () => {
             </div>
           </div>
 
-          <div className="overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gradient-to-r from-gray-50 to-blue-50">
-                  <tr>
-                    <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Personnel</th>
-                    <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contact</th>
-                    <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Spécialité</th>
-                    <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Statut</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredPersonnel.map(person => (
-                    <tr key={person.id} className="hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 transition-all duration-200 group">
-                      <td className="px-8 py-6">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                            {getInitials(person.name)}
-                          </div>
-                          <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                            {person.name}
-                            <div className="text-xs text-gray-500">{person.role}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="space-y-2">
-                          <div className="text-sm text-gray-600 flex items-center">
-                            <Mail className="h-4 w-4 mr-2" />
-                            {person.email}
-                          </div>
-                          <div className="text-sm text-gray-600 flex items-center">
-                            <Phone className="h-4 w-4 mr-2" />
-                            {person.phone}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg inline-block">{person.speciality}</div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-2xl text-xs font-bold shadow-lg border ${getStatusColor(person.status)}`}>
-                          {getStatusIcon(person.status)}
-                          <span className="ml-1">{person.status}</span>
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {isLoading ? (
+            <div className="text-center py-16">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-4 text-lg text-gray-600">Chargement des données...</p>
             </div>
-
-            {filteredPersonnel.length === 0 && (
-              <div className="text-center py-16">
-                <Users className="w-24 h-24 mx-auto text-gray-400" />
-                <h3 className="text-xl font-semibold text-gray-900 mt-4">Aucun personnel trouvé</h3>
-                <p className="text-gray-500 max-w-md mx-auto mt-2">Essayez de modifier vos critères de recherche ou vos filtres pour voir plus de membres.</p>
+          ) : error ? (
+            <div className="text-center py-16 text-red-500">
+              <p className="text-lg font-semibold">Erreur: {error}</p>
+            </div>
+          ) : filteredPersonnel.length === 0 ? (
+            <div className="text-center py-16">
+              <Users className="w-24 h-24 mx-auto text-gray-400" />
+              <h3 className="text-xl font-semibold text-gray-900 mt-4">Aucun personnel trouvé</h3>
+              <p className="text-gray-500 max-w-md mx-auto mt-2">Essayez de modifier vos critères de recherche ou vos filtres pour voir plus de membres.</p>
+            </div>
+          ) : (
+            <div className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gradient-to-r from-gray-50 to-blue-50">
+                    <tr>
+                      <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Personnel</th>
+                      <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contact</th>
+                      {/* <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Spécialité</th> */}
+                      <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Statut</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredPersonnel.map(person => (
+                      <tr key={person.id} className="hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 transition-all duration-200 group">
+                        <td className="px-8 py-6">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                              {getInitials(person.nom)}
+                            </div>
+                            <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                              {person.nom}
+                              <div className="text-xs text-gray-500">{person.role}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="space-y-2">
+                            <div className="text-sm text-gray-600 flex items-center">
+                              <Mail className="h-4 w-4 mr-2" />
+                              {person.email}
+                            </div>
+                            {/* <div className="text-sm text-gray-600 flex items-center">
+                              <Phone className="h-4 w-4 mr-2" />
+                              {person.phone || 'N/A'}
+                            </div> */}
+                          </div>
+                        </td>
+                        {/* <td className="px-8 py-6">
+                          <div className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg inline-block">{person.speciality || 'N/A'}</div>
+                        </td> */}
+                        <td className="px-8 py-6">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-2xl text-xs font-bold shadow-lg border ${getStatusColor(person.status)}`}>
+                            {getStatusIcon(person.status)}
+                            <span className="ml-1">{person.status}</span>
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
