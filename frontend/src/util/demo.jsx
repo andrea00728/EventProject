@@ -72,104 +72,107 @@ function snapToAngle(value, angleStep = 15) {
 
 // Calcule les positions des chaises autour de la table
 const getChairPositions = (type, capacity, tableWidth, tableHeight) => {
-  return useMemo(() => {
-    const positions = [];
-    const chairSize = 30;
-    const minDistanceFromTable = 0;
-    if (type === "ronde" || type === "ovale") {
-      const centerX = tableWidth / 2;
-      const centerY = tableHeight / 2;
-      const tableRadius = type === "ronde"
-        ? Math.min(tableWidth, tableHeight) / 2
-        : Math.max(tableWidth, tableHeight) / 2;
-      const radius = tableRadius + minDistanceFromTable + chairSize / 2;
-      for (let i = 0; i < capacity; i++) {
-        const angle = (2 * Math.PI * i) / capacity - Math.PI / 2;
-        const x = centerX + radius * Math.cos(angle) - chairSize / 2;
-        const y = centerY + radius * Math.sin(angle) - chairSize / 2;
-        positions.push({ left: `${x}px`, top: `${y}px` });
-      }
-    } else if (type === "triangle") {
-      const centerX = tableWidth / 2;
-      const centerY = tableHeight / 2;
-      const sideLength = Math.min(tableWidth, tableHeight);
-      const height = (Math.sqrt(3) / 2) * sideLength;
-      const chairsPerSide = Math.ceil(capacity / 3);
-      const vertices = [
-        { x: centerX, y: centerY - height / 2 },
-        { x: centerX - sideLength / 2, y: centerY + height / 2 },
-        { x: centerX + sideLength / 2, y: centerY + height / 2 },
-      ];
-      let chairCount = 0;
-      for (let side = 0; side < 3 && chairCount < capacity; side++) {
-        const startVertex = vertices[side];
-        const endVertex = vertices[(side + 1) % 3];
-        const chairsOnThisSide = Math.min(chairsPerSide, capacity - chairCount);
-        for (let i = 0; i < chairsOnThisSide; i++) {
-          const t = (i + 1) / (chairsOnThisSide + 1);
-          const x = startVertex.x + t * (endVertex.x - startVertex.x);
-          const y = startVertex.y + t * (endVertex.y - startVertex.y);
-          const dx = endVertex.x - startVertex.x;
-          const dy = endVertex.y - startVertex.y;
-          const length = Math.sqrt(dx * dx + dy * dy);
-          const normalX = -dy / length;
-          const normalY = dx / length;
-          const chairX = x + normalX * (minDistanceFromTable + chairSize / 2);
-          const chairY = y + normalY * (minDistanceFromTable + chairSize / 2);
-          positions.push({
-            left: `${chairX - chairSize / 2}px`,
-            top: `${chairY - chairSize / 2}px`,
-          });
-          chairCount++;
-        }
-      }
-    } else {
-      const perimeter = 2 * (tableWidth + tableHeight);
-      const spacingBetweenChairs = perimeter / capacity;
-      const topChairs = Math.round(tableWidth / spacingBetweenChairs);
-      const rightChairs = Math.round(tableHeight / spacingBetweenChairs);
-      const bottomChairs = Math.round(tableWidth / spacingBetweenChairs);
-      const leftChairs = capacity - topChairs - rightChairs - bottomChairs;
-      let count = 0;
-      if (topChairs > 0) {
-        const spacing = tableWidth / (topChairs + 1);
-        for (let i = 0; i < topChairs && count < capacity; i++, count++) {
-          positions.push({
-            left: `${(i + 1) * spacing - chairSize / 2}px`,
-            top: `${-minDistanceFromTable - chairSize}px`,
-          });
-        }
-      }
-      if (rightChairs > 0) {
-        const spacing = tableHeight / (rightChairs + 1);
-        for (let i = 0; i < rightChairs && count < capacity; i++, count++) {
-          positions.push({
-            left: `${tableWidth + minDistanceFromTable}px`,
-            top: `${(i + 1) * spacing - chairSize / 2}px`,
-          });
-        }
-      }
-      if (bottomChairs > 0) {
-        const spacing = tableWidth / (bottomChairs + 1);
-        for (let i = 0; i < bottomChairs && count < capacity; i++, count++) {
-          positions.push({
-            left: `${tableWidth - (i + 1) * spacing - chairSize / 2}px`,
-            top: `${tableHeight + minDistanceFromTable}px`,
-          });
-        }
-      }
-      if (leftChairs > 0) {
-        const spacing = tableHeight / (leftChairs + 1);
-        for (let i = 0; i < leftChairs && count < capacity; i++, count++) {
-          positions.push({
-            left: `${-minDistanceFromTable - chairSize}px`,
-            top: `${tableHeight - (i + 1) * spacing - chairSize / 2}px`,
-          });
-        }
+  const positions = [];
+  const chairSize = 20; // Taille réduite pour un meilleur ajustement
+  const minDistanceFromTable = 10; // Distance minimale entre table et chaise
+
+  if (type === "ronde" || type === "ovale") {
+    const centerX = tableWidth / 2;
+    const centerY = tableHeight / 2;
+    const tableRadius = type === "ronde"
+      ? Math.min(tableWidth, tableHeight) / 2
+      : Math.max(tableWidth, tableHeight) / 2;
+    const radius = tableRadius + minDistanceFromTable + chairSize / 2;
+
+    for (let i = 0; i < capacity; i++) {
+      const angle = (2 * Math.PI * i) / capacity;
+      const x = centerX + radius * Math.cos(angle) - chairSize / 2;
+      const y = centerY + radius * Math.sin(angle) - chairSize / 2;
+      positions.push({ left: `${x}px`, top: `${y}px` });
+    }
+  } else if (type === "triangle") {
+    const centerX = tableWidth / 2;
+    const centerY = tableHeight / 2;
+    const sideLength = Math.min(tableWidth, tableHeight);
+    const height = (Math.sqrt(3) / 2) * sideLength;
+    const chairsPerSide = Math.ceil(capacity / 3);
+    const vertices = [
+      { x: centerX, y: centerY - height / 2 },
+      { x: centerX - sideLength / 2, y: centerY + height / 2 },
+      { x: centerX + sideLength / 2, y: centerY + height / 2 },
+    ];
+    let chairCount = 0;
+
+    for (let side = 0; side < 3 && chairCount < capacity; side++) {
+      const startVertex = vertices[side];
+      const endVertex = vertices[(side + 1) % 3];
+      const chairsOnThisSide = Math.min(chairsPerSide, capacity - chairCount);
+
+      for (let i = 0; i < chairsOnThisSide; i++) {
+        const t = (i + 1) / (chairsOnThisSide + 1);
+        const x = startVertex.x + t * (endVertex.x - startVertex.x);
+        const y = startVertex.y + t * (endVertex.y - startVertex.y);
+        const dx = endVertex.x - startVertex.x;
+        const dy = endVertex.y - startVertex.y;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const normalX = -dy / length;
+        const normalY = dx / length;
+        const chairX = x + normalX * (minDistanceFromTable + chairSize / 2);
+        const chairY = y + normalY * (minDistanceFromTable + chairSize / 2);
+        positions.push({
+          left: `${chairX - chairSize / 2}px`,
+          top: `${chairY - chairSize / 2}px`,
+        });
+        chairCount++;
       }
     }
-    return positions;
-  }, [type, capacity, tableWidth, tableHeight]);
+  } else {
+    // Pour carrées et rectangulaires
+    const chairsPerSide = Math.ceil(capacity / 4);
+    let chairCount = 0;
+
+    // Côté supérieur
+    const topChairs = Math.min(chairsPerSide, capacity - chairCount);
+    const topSpacing = tableWidth / (topChairs + 1);
+    for (let i = 0; i < topChairs && chairCount < capacity; i++, chairCount++) {
+      positions.push({
+        left: `${(i + 1) * topSpacing - chairSize / 2}px`,
+        top: `${-minDistanceFromTable - chairSize}px`,
+      });
+    }
+
+    // Côté droit
+    const rightChairs = Math.min(chairsPerSide, capacity - chairCount);
+    const rightSpacing = tableHeight / (rightChairs + 1);
+    for (let i = 0; i < rightChairs && chairCount < capacity; i++, chairCount++) {
+      positions.push({
+        left: `${tableWidth + minDistanceFromTable}px`,
+        top: `${(i + 1) * rightSpacing - chairSize / 2}px`,
+      });
+    }
+
+    // Côté inférieur
+    const bottomChairs = Math.min(chairsPerSide, capacity - chairCount);
+    const bottomSpacing = tableWidth / (bottomChairs + 1);
+    for (let i = 0; i < bottomChairs && chairCount < capacity; i++, chairCount++) {
+      positions.push({
+        left: `${tableWidth - (i + 1) * bottomSpacing - chairSize / 2}px`,
+        top: `${tableHeight + minDistanceFromTable}px`,
+      });
+    }
+
+    // Côté gauche
+    const leftChairs = Math.min(chairsPerSide, capacity - chairCount);
+    const leftSpacing = tableHeight / (leftChairs + 1);
+    for (let i = 0; i < leftChairs && chairCount < capacity; i++, chairCount++) {
+      positions.push({
+        left: `${-minDistanceFromTable - chairSize}px`,
+        top: `${tableHeight - (i + 1) * leftSpacing - chairSize / 2}px`,
+      });
+    }
+  }
+
+  return positions;
 };
 
 // Composant Chaise
@@ -185,8 +188,8 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
   return (
     <div
       className={`rounded-full absolute border-2 shadow-lg flex items-center justify-center font-bold text-white cursor-pointer transition-all duration-300 transform hover:scale-110 ${isOccupied
-        ? "bg-gradient-to-br from-rose-500 via-pink-500 to-red-500 border-rose-300 hover:from-rose-600 hover:via-pink-600 hover:to-red-600 shadow-rose-300/50"
-        : "bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 border-emerald-300 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 shadow-emerald-300/50"
+          ? "bg-gradient-to-br from-rose-500 via-pink-500 to-red-500 border-rose-300 hover:from-rose-600 hover:via-pink-600 hover:to-red-600 shadow-rose-300/50"
+          : "bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 border-emerald-300 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 shadow-emerald-300/50"
         } ${isSelected ? 'ring-4 ring-blue-400/60 ring-offset-2 ring-offset-white scale-125' : ''} ${isMoving ? 'ring-4 ring-amber-400/60 ring-offset-2 ring-offset-white animate-pulse scale-110' : ''
         }`}
       style={adjustedStyle}
@@ -469,7 +472,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   );
 }
 
-// Composant Element (mis à jour pour gérer les formes personnalisées)
+// Composant Element
 function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
   if (!element) return null;
   const ref = useRef(null);
@@ -590,19 +593,7 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className={`absolute -top-12 -right-3 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(element.id);
-          }}
-          className="w-7 h-7 bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 border-2 border-white/20"
-          title="Supprimer l'élément"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-      <div className={`absolute -top-12 -left-3 flex gap-1 transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}`}>
+      <div className={`absolute transition-all duration-300 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'} ${elementWidth * zoomLevel < 60 || isMobile ? 'top-0 -left-8 flex flex-col gap-1' : '-top-12 left-0 flex flex-row gap-1'}`}>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -622,6 +613,16 @@ function Element({ element, onMove, onRotate, onDelete, zoomLevel, isMobile }) {
           title="Pivoter à droite"
         >
           <RefreshCcw className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(element.id);
+          }}
+          className="w-7 h-7 bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 border-2 border-white/20"
+          title="Supprimer l'élément"
+        >
+          <X className="w-3.5 h-3.5" />
         </button>
       </div>
       {(element.type === "triangle" || (element.type === "personnalise" && element.shape === "triangle")) ? (
@@ -747,7 +748,7 @@ export default function DemoPlanSalle() {
     nom: "",
     width: 80,
     height: 80,
-    shape: "carre", // Ajout du champ shape pour l'option personnalisée
+    shape: "carre",
   });
   const [form, setForm] = useState({
     capacite: "",
@@ -954,12 +955,11 @@ export default function DemoPlanSalle() {
     }
   };
 
-  // Ajout d'élément (mis à jour pour gérer la forme personnalisée)
+  // Ajout d'élément
   const handleAddElement = (e) => {
     e.preventDefault();
     const nombre = Number(elementForm.nombre);
     if (!checkElementLimit(nombre)) return;
-
     const newElements = [];
     for (let i = 0; i < nombre; i++) {
       const typeInfo = ELEMENT_TYPES.find(t => t.value === elementForm.type) || ELEMENT_TYPES[0];
@@ -967,12 +967,11 @@ export default function DemoPlanSalle() {
       const width = elementForm.type === "personnalise" ? elementForm.width : typeInfo.width;
       const height = elementForm.type === "personnalise" ? elementForm.height : typeInfo.height;
       const shape = elementForm.type === "personnalise" ? elementForm.shape : elementForm.type;
-
       newElements.push({
         id: Date.now() + i,
         nom,
         type: elementForm.type,
-        shape, // Ajout de la propriété shape
+        shape,
         position: {
           left: snapToGrid(150 + i * 80),
           top: snapToGrid(150 + i * 80),
