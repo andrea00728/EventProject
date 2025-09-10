@@ -38,7 +38,7 @@ const EventModal = ({ isOpen, onClose, event, onSave }) => {
 
   // États pour gérer l'image, les lieux, les salles et les modales
   const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(event?.imageUrl || '');
+  const [imagePreview, setImagePreview] = useState(url+event?.imageUrl || '');
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isSalleModalOpen, setIsSalleModalOpen] = useState(false);
   const [searchLieu, setSearchLieu] = useState('');
