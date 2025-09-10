@@ -16,8 +16,8 @@ async function bootstrap() {
 
   // CORS HTTP + WebSocket
   app.enableCors({
-    //  origin: 'https://mastertable.site',
-     origin: 'https://mastertable.site',
+    //  origin: 'http://localhost:5173',
+     origin: 'http://localhost:5173',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
     credentials: true,
@@ -29,8 +29,8 @@ async function bootstrap() {
       const server = super.createIOServer(port, {
         ...options,
         cors: {
-          // origin: 'https://mastertable.site',
-          origin: 'https://mastertable.site',
+          // origin: 'http://localhost:5173',
+          origin: 'http://localhost:5173',
           methods: ['GET', 'POST'],
           credentials: true,
         },
