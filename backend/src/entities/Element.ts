@@ -27,6 +27,9 @@ export class Element {
   @Column({ nullable: true })
   color: string; // Ajout du champ color
 
+  @Column({ type: 'varchar', nullable: true }) // Ajout du champ shape
+  shape: 'rond' | 'carre' | 'rectangle' | 'triangle' | null;
+
   @ManyToOne(() => Evenement, (event) => event.elements)
   event: Evenement;
 }

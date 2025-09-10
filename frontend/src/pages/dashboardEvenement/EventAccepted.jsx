@@ -276,42 +276,55 @@ const EventAccept = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-100">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => openModal(event, 'view')}
-                              className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${index % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
-                                index % 5 === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' :
-                                index % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
-                                index % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :
-                                'bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600'
-                              }`}
-                              aria-label={`Voir les tables pour l'événement ${event.nom}`}
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                              Voir les tables
-                            </button>
-                            <button
-                              onClick={() => openModal(event, 'edit')}
-                              className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600`}
-                              aria-label={`Modifier l'événement ${event.nom}`}
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                              Modifier
-                            </button>
-                          </div>
-                          <DeleteEventButton
-                            eventId={event.id}
-                            onDeleted={(deletedId) =>
-                              setEvents(events.filter((e) => e.id !== deletedId))
-                            }
-                          />
-                        </div>
+<div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-200">
+  <div className="flex items-center gap-3">
+    {/* Bouton Détail */}
+    <button
+      onClick={() => openModal(event, 'view')}
+      className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white transition-all duration-200 transform hover:scale-105 shadow-md whitespace-nowrap ${
+        index % 5 === 0
+          ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600'
+          : index % 5 === 1
+          ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'
+          : index % 5 === 2
+          ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600'
+          : index % 5 === 3
+          ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600'
+          : 'bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600'
+      }`}
+      aria-label={`Voir les tables pour l'événement ${event.nom}`}
+    >
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      </svg>
+      <span className="hidden sm:inline">Détail</span>
+    </button>
+
+    {/* Bouton Modifier */}
+    <button
+      onClick={() => openModal(event, 'edit')}
+      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white transition-all duration-200 transform hover:scale-105 shadow-md whitespace-nowrap bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600"
+      aria-label={`Modifier l'événement ${event.nom}`}
+    >
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      </svg>
+      <span className="hidden sm:inline">Modifier</span>
+    </button>
+
+    {/* Bouton Supprimer */}
+    <DeleteEventButton
+      eventId={event.id}
+      onDeleted={(deletedId) =>
+        setEvents(events.filter((e) => e.id !== deletedId))
+      }
+      className="whitespace-nowrap"
+      showLabel={false} // ⚡️ tu peux gérer ça dans ton composant DeleteEventButton
+    />
+  </div>
+</div>
+
                       </div>
                     </div>
                   );

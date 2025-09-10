@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { BarChart, Camera, Coffee, DoorClosed, Edit, Flower, GlassWater, LogOut, Monitor, Music, Package, Plus, RefreshCcw, User } from "lucide-react";
+import { BarChart, Camera, Coffee, DoorClosed, Edit, Flower, GlassWater, LogOut, Monitor, Music, Package, Plus, RefreshCcw, User, Trash } from "lucide-react";
 import { useStateContext } from "../../context/ContextProvider";
 import {
   updateTablePosition,
@@ -371,10 +371,10 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   );
 }
 
-// dbegve Composant Element : représente un élément supplémentaire (porte, estrade, etc.)
-// Composant Element amélioré avec déplacement et design
-function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, isSelected, zoomLevel }) {
-  const { id, nom, type, position, width, height, rotation, color } = element;
+// Composant Element : représente un élément supplémentaire (porte, estrade, etc.)
+// Composant Element amélioré avec design moderne et réaliste
+function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, isSelected, zoomLevel, onDelete }) {
+  const { id, nom, type, position, width, height, rotation, color, shape } = element;
   const [dragging, setDragging] = useState(false);
   const [rotating, setRotating] = useState(false);
   const [pos, setPos] = useState(position || { left: 100, top: 100 });
@@ -387,7 +387,7 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
     setCurrentRotation(rotation || 0);
   }, [position, rotation]);
 
-  // Gestion du drag avec la souris
+  // Gestion du drag avec la souris (logique inchangée)
   const handleMouseDown = (e) => {
     e.stopPropagation();
     if (onSelect) onSelect(id);
@@ -412,7 +412,7 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
     if (onMove) onMove(id, pos);
   };
 
-  // Gestion du touch pour mobile
+  // Gestion du touch pour mobile (logique inchangée)
   const handleTouchStart = (e) => {
     e.preventDefault();
     const touch = e.touches[0];
@@ -462,7 +462,7 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
     if (onMove) onMove(id, pos);
   };
 
-  // Gestion de la rotation
+  // Gestion de la rotation (logique inchangée)
   const handleRotate = (direction) => {
     setRotating(true);
     const angleStep = 15;
@@ -475,39 +475,128 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
     toast.success(`Élément ${nom} pivoté à ${newRotation}°`);
   };
 
-  // Fonction pour obtenir l'icône selon le type
-const getElementIcon = (type, props = {}) => {
-  const iconMap = {
-    porte_entree: <DoorClosed {...props} />, // porte d'entrée
-    porte_sortie: <LogOut {...props} />, // porte de sortie
-    estrade: <Monitor {...props} />, // estrade / scène
-    buffet: <Coffee {...props} />, // buffet / restauration
-    piste_danse: <Music {...props} />, // piste de danse
-    bar: <GlassWater {...props} />, // bar
-    ecran: <Monitor {...props} />, // écran / projection
-    photobooth: <Camera {...props} />, // photobooth
-    decoration: <Flower {...props} />, // décoration
-  };
-
-  return iconMap[type] || <Package {...props} />;
-};
-
-
-  // Fonction pour obtenir la couleur de bordure selon le type
-  const getBorderColor = (type) => {
-    const colorMap = {
-      porte_entree: "#10b981", // emerald-500
-      porte_sortie: "#f59e0b", // amber-500
-      estrade: "#8b5cf6", // violet-500
-      buffet: "#f97316", // orange-500
-      piste_danse: "#ec4899", // pink-500
-      bar: "#06b6d4", // cyan-500
-      ecran: "#6366f1", // indigo-500
-      photobooth: "#84cc16", // lime-500
-      decoration: "#d946ef", // fuchsia-500
+  // Fonction pour obtenir l'icône selon le type (améliorée)
+  const getElementIcon = (type, props = {}) => {
+    const iconMap = {
+      porte_entree: <DoorClosed {...props} />,
+      porte_sortie: <LogOut {...props} />,
+      estrade: <Monitor {...props} />,
+      buffet: <Coffee {...props} />,
+      piste_danse: <Music {...props} />,
+      bar: <GlassWater {...props} />,
+      ecran: <Monitor {...props} />,
+      photobooth: <Camera {...props} />,
+      decoration: <Flower {...props} />,
     };
-    return colorMap[type] || "#6b7280";
+
+    return iconMap[type] || <Package {...props} />;
   };
+
+  // Fonction pour obtenir les couleurs thématiques selon le type
+  const getElementTheme = (type) => {
+    const themes = {
+      porte_entree: {
+        primary: "#059669", // emerald-600
+        secondary: "#10b981", // emerald-500
+        accent: "#d1fae5", // emerald-100
+        shadow: "rgba(16, 185, 129, 0.3)",
+        gradient: "from-emerald-500 to-green-600"
+      },
+      porte_sortie: {
+        primary: "#dc2626", // red-600
+        secondary: "#ef4444", // red-500
+        accent: "#fecaca", // red-200
+        shadow: "rgba(239, 68, 68, 0.3)",
+        gradient: "from-red-500 to-rose-600"
+      },
+      estrade: {
+        primary: "#7c3aed", // violet-600
+        secondary: "#8b5cf6", // violet-500
+        accent: "#ddd6fe", // violet-200
+        shadow: "rgba(139, 92, 246, 0.3)",
+        gradient: "from-violet-500 to-purple-600"
+      },
+      buffet: {
+        primary: "#ea580c", // orange-600
+        secondary: "#f97316", // orange-500
+        accent: "#fed7aa", // orange-200
+        shadow: "rgba(249, 115, 22, 0.3)",
+        gradient: "from-orange-500 to-amber-600"
+      },
+      piste_danse: {
+        primary: "#db2777", // pink-600
+        secondary: "#ec4899", // pink-500
+        accent: "#fce7f3", // pink-100
+        shadow: "rgba(236, 72, 153, 0.3)",
+        gradient: "from-pink-500 to-rose-500"
+      },
+      bar: {
+        primary: "#0891b2", // cyan-600
+        secondary: "#06b6d4", // cyan-500
+        accent: "#cffafe", // cyan-100
+        shadow: "rgba(6, 182, 212, 0.3)",
+        gradient: "from-cyan-500 to-blue-500"
+      },
+      ecran: {
+        primary: "#4f46e5", // indigo-600
+        secondary: "#6366f1", // indigo-500
+        accent: "#e0e7ff", // indigo-200
+        shadow: "rgba(99, 102, 241, 0.3)",
+        gradient: "from-indigo-500 to-blue-600"
+      },
+      photobooth: {
+        primary: "#65a30d", // lime-600
+        secondary: "#84cc16", // lime-500
+        accent: "#ecfccb", // lime-100
+        shadow: "rgba(132, 204, 22, 0.3)",
+        gradient: "from-lime-500 to-green-500"
+      },
+      decoration: {
+        primary: "#c026d3", // fuchsia-600
+        secondary: "#d946ef", // fuchsia-500
+        accent: "#f5d0fe", // fuchsia-200
+        shadow: "rgba(217, 70, 239, 0.3)",
+        gradient: "from-fuchsia-500 to-pink-500"
+      }
+    };
+
+    return themes[type] || {
+      primary: "#6b7280",
+      secondary: "#9ca3af",
+      accent: "#f3f4f6",
+      shadow: "rgba(107, 114, 128, 0.3)",
+      gradient: "from-gray-500 to-slate-600"
+    };
+  };
+
+  const theme = getElementTheme(type);
+
+  // Détermination dynamique de la forme
+  // let elementBorderRadius = (shape === "rond" || type === "piste_danse") ? "50%" : "16px";
+  // let elementClipPath = "";
+
+  // if (shape === "triangle") {
+  //   elementClipPath = "polygon(50% 8%, 92% 92%, 8% 92%)";
+  //   elementBorderRadius = "0";
+  // }
+const effectiveShape = shape || (type === "piste_danse" ? "rond" : "rectangle"); // Par défaut rectangle si shape est null
+let elementBorderRadius = effectiveShape === "rond" ? "50%" : effectiveShape === "carre" ? "0" : effectiveShape === "rectangle" ? "16px" : "0";
+let elementClipPath = effectiveShape === "triangle" ? "polygon(50% 8%, 92% 92%, 8% 92%)" : "";
+
+  // Styles 3D et réalistes
+  const element3DStyle = {
+  background: `linear-gradient(135deg, ${theme.accent} 0%, ${color || theme.secondary} 50%, ${theme.primary} 100%)`,
+  borderRadius: elementBorderRadius,
+  clipPath: elementClipPath,
+  boxShadow: `
+    0 8px 32px ${theme.shadow},
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1)
+  `,
+  border: `2px solid ${theme.primary}`,
+  position: 'relative',
+  overflow: 'hidden'
+};
 
   return (
     <div
@@ -520,7 +609,8 @@ const getElementIcon = (type, props = {}) => {
         height: height * zoomLevel,
         zIndex: dragging || rotating ? 50 : 15,
         touchAction: 'none',
-        transition: dragging ? 'none' : 'all 0.2s ease'
+        transition: dragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        filter: dragging ? 'brightness(1.1) saturate(1.2)' : 'none'
       }}
       draggable
       onDragStart={(e) => {
@@ -538,14 +628,13 @@ const getElementIcon = (type, props = {}) => {
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
     >
-      {/* Boutons de contrôle */}
+      {/* Boutons de contrôle avec nouveau design */}
       <button
         onClick={(e) => {
           e.stopPropagation();
           handleRotate("counterclockwise");
         }}
-        className={`absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''
-          } opacity-0 group-hover:opacity-100`}
+        className={`absolute -top-3 -left-3 w-7 h-7 bg-gradient-to-r ${theme.gradient} text-white rounded-full flex items-center justify-center text-xs hover:scale-110 z-30 transition-all duration-200 shadow-lg ${rotating ? 'ring-2 ring-white ring-offset-2 animate-spin-slow' : ''} opacity-0 group-hover:opacity-100`}
         title="Pivoter à gauche"
       >
         <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(90deg)' }} />
@@ -556,87 +645,139 @@ const getElementIcon = (type, props = {}) => {
           e.stopPropagation();
           handleRotate("clockwise");
         }}
-        className={`absolute -top-2 left-6 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''
-          } opacity-0 group-hover:opacity-100`}
+        className={`absolute -top-3 left-6 w-7 h-7 bg-gradient-to-r ${theme.gradient} text-white rounded-full flex items-center justify-center text-xs hover:scale-110 z-30 transition-all duration-200 shadow-lg ${rotating ? 'ring-2 ring-white ring-offset-2 animate-spin-slow' : ''} opacity-0 group-hover:opacity-100`}
         title="Pivoter à droite"
       >
         <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(-90deg)' }} />
       </button>
 
-      {/* Corps de l'élément avec design amélioré */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(id);
+        }}
+        className="absolute -top-3 -right-3 w-7 h-7 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full flex items-center justify-center text-xs hover:scale-110 z-30 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:from-red-600 hover:to-red-700"
+        title="Supprimer l'élément"
+      >
+        <Trash className="w-3 h-3" />
+      </button>
+
+      {/* Corps de l'élément avec design 3D réaliste */}
       <div
-        className={`w-full h-full relative overflow-hidden transition-all duration-300 ${dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-lg'
-          } ${isSelected ? 'ring-2 ring-indigo-400 ring-offset-1' : ''}`}
+        className={`w-full h-full relative overflow-hidden transition-all duration-300 ${dragging ? 'scale-105' : rotating ? 'scale-102' : 'scale-100'
+          } ${isSelected ? 'ring-4 ring-white ring-offset-2' : ''}`}
         style={{
-          backgroundColor: color || "#f3f4f6",
-          border: `3px solid ${getBorderColor(type)}`,
-          borderRadius: type === "piste_danse" ? "50%" : "12px",
-          transform: `rotate(${currentRotation}deg)`,
-          transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease'
+          ...element3DStyle,
+          transform: `rotate(${currentRotation}deg) ${dragging ? 'translateZ(8px)' : rotating ? 'translateZ(4px)' : 'translateZ(0)'}`,
+          transition: rotating || dragging ? 'none' : 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, scale 0.3s ease'
         }}
       >
-        {/* Gradient overlay */}
-        <div 
-          className="absolute inset-0 opacity-10 rounded-[9px]"
+        {/* Reflet lumineux sur le dessus */}
+        <div
+          className="absolute inset-0 opacity-30"
           style={{
-            background: `linear-gradient(135deg, ${getBorderColor(type)}, transparent 60%)`
-          }}
-        />
-        
-        {/* Pattern de fond subtil */}
-        <div 
-          className="absolute inset-0 opacity-5 rounded-[9px]"
-          style={{
-            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, ${getBorderColor(type)} 10px, ${getBorderColor(type)} 11px)`
+            background: `linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%)`,
+            borderRadius: elementBorderRadius === "50%" ? "50%" : "14px",
+            clipPath: elementClipPath
           }}
         />
 
-        {/* Contenu de l'élément */}
-        <div className="relative w-full h-full flex flex-col items-center justify-center p-2 text-center">
-          {/* Icône */}
-          <div className="text-2xl mb-1 filter drop-shadow-sm">
-            {getElementIcon(type)}
+        {/* Pattern de texture subtile */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `radial-gradient(circle at 20% 20%, ${theme.primary} 1px, transparent 1px),
+                             radial-gradient(circle at 80% 80%, ${theme.primary} 1px, transparent 1px)`,
+            backgroundSize: '20px 20px',
+            borderRadius: elementBorderRadius === "50%" ? "50%" : "14px",
+            clipPath: elementClipPath
+          }}
+        />
+
+        {/* Contenu principal de l'élément */}
+        <div className="relative w-full h-full flex flex-col items-center justify-center p-3 text-center">
+          {/* Icône avec effet 3D */}
+          <div
+            className="mb-2 filter drop-shadow-lg transform transition-transform duration-200"
+            style={{
+              color: theme.primary,
+              textShadow: `0 2px 4px ${theme.shadow}`,
+              fontSize: `${Math.max(16, Math.min(32, width / 4))}px`
+            }}
+          >
+            {getElementIcon(type, {
+              size: Math.max(16, Math.min(32, width / 4)),
+              strokeWidth: 2.5
+            })}
           </div>
-          
-          {/* Nom */}
-          <span 
-            className="font-bold text-gray-800 leading-tight break-words max-w-full"
-            style={{ 
-              fontSize: `${Math.max(10, Math.min(14, width / 8))}px`,
-              textShadow: '0 1px 2px rgba(255,255,255,0.8)'
+
+          {/* Nom avec typographie améliorée */}
+          <div
+            className="font-bold text-gray-800 leading-tight break-words max-w-full bg-white/20 backdrop-blur-sm rounded-lg px-2 py-1"
+            style={{
+              fontSize: `${Math.max(10, Math.min(16, width / 6))}px`,
+              textShadow: '0 1px 2px rgba(255,255,255,0.8)',
+              border: `1px solid rgba(255,255,255,0.3)`
             }}
           >
             {nom}
-          </span>
-          
-          {/* Type en petite taille */}
-          <span 
-            className="text-gray-600 text-xs mt-1 opacity-75 capitalize"
-            style={{ fontSize: `${Math.max(8, Math.min(10, width / 12))}px` }}
+          </div>
+
+          {/* Badge de type stylé */}
+          <div
+            className="mt-1 px-2 py-0.5 rounded-full text-white font-medium opacity-90"
+            style={{
+              fontSize: `${Math.max(8, Math.min(11, width / 10))}px`,
+              background: `linear-gradient(90deg, ${theme.primary}, ${theme.secondary})`,
+              boxShadow: `0 2px 8px ${theme.shadow}`
+            }}
           >
-            {ELEMENT_TYPES.find(t => t.value === type)?.label.replace(/^./, str => str.toLowerCase()) || type}
-          </span>
+            {ELEMENT_TYPES.find(t => t.value === type)?.label.toLowerCase() || type}
+          </div>
         </div>
 
-        {/* Indicateur de glissement */}
+        {/* Indicateur de glissement amélioré */}
         {dragging && (
-          <div className="absolute inset-0 bg-blue-500/20 rounded-[9px] flex items-center justify-center">
-            <div className="text-blue-700 font-bold text-xs bg-blue-100/80 px-2 py-1 rounded-full">
+          <div
+            className="absolute inset-0 flex items-center justify-center backdrop-blur-md"
+            style={{
+              borderRadius: elementBorderRadius,
+              clipPath: elementClipPath,
+              background: `linear-gradient(135deg, ${theme.primary}40, ${theme.secondary}60)`
+            }}
+          >
+            <div className="text-white font-bold text-xs bg-black/30 px-3 py-1 rounded-full border border-white/20 backdrop-blur-sm">
               Déplacement...
             </div>
           </div>
         )}
 
-        {/* Points de coin pour le style */}
-        <div className="absolute top-1 left-1 w-1 h-1 bg-white/50 rounded-full"></div>
-        <div className="absolute top-1 right-1 w-1 h-1 bg-white/50 rounded-full"></div>
-        <div className="absolute bottom-1 left-1 w-1 h-1 bg-white/50 rounded-full"></div>
-        <div className="absolute bottom-1 right-1 w-1 h-1 bg-white/50 rounded-full"></div>
+        {/* Points de coin décoratifs pour formes non-triangulaires */}
+        {shape !== "triangle" && elementBorderRadius !== "50%" && (
+          <>
+            <div className="absolute top-2 left-2 w-1.5 h-1.5 bg-white/60 rounded-full shadow-sm"></div>
+            <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-white/60 rounded-full shadow-sm"></div>
+            <div className="absolute bottom-2 left-2 w-1.5 h-1.5 bg-white/60 rounded-full shadow-sm"></div>
+            <div className="absolute bottom-2 right-2 w-1.5 h-1.5 bg-white/60 rounded-full shadow-sm"></div>
+          </>
+        )}
+
+        {/* Effet de bordure lumineuse pour les éléments sélectionnés */}
+        {isSelected && (
+          <div
+            className="absolute -inset-0.5 opacity-60 animate-pulse"
+            style={{
+              background: `linear-gradient(45deg, ${theme.primary}, ${theme.secondary}, ${theme.primary})`,
+              borderRadius: elementBorderRadius === "50%" ? "50%" : "18px",
+              clipPath: elementClipPath,
+              zIndex: -1
+            }}
+          />
+        )}
       </div>
     </div>
   );
 }
-
 // Modal pour créer des tables
 function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, eventId }) {
   const [form, setForm] = useState({
@@ -716,14 +857,12 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
       );
 
       const formDataArray = nomsFinal.map((nom, index) => {
-        const isCustom = form.type === "custom";
-        const typeInfo = isCustom
-          ? { width: Number(form.customWidth), height: Number(form.customHeight) }
-          : ELEMENT_TYPES.find((t) => t.value === form.type) || ELEMENT_TYPES[0];
+        const typeInfo = TABLE_TYPES.find((t) => t.value === form.type) || TABLE_TYPES[0];
 
         return {
           nom,
-          type: isCustom ? form.customTypeName : form.type,
+          type: form.type,
+          capacite: Number(form.capacite),
           eventId: Number(form.eventId),
           position: {
             left: 100 + index * 20,
@@ -732,37 +871,23 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
           width: typeInfo.width,
           height: typeInfo.height,
           rotation: 0,
-          color: form.color,
         };
       });
 
-      const formattedElements = newElements.map((element) => ({
-        id: element.id || element.elementId,
-        nom: element.nom || element.name,
-        type: element.type,
-        eventId: Number(element.eventId),
-        position: element.position || { left: 100, top: 100 },
-        width: element.width || (form.type === "custom" ? Number(form.customWidth) : ELEMENT_TYPES.find((t) => t.value === element.type)?.width || 100),
-        height: element.height || (form.type === "custom" ? Number(form.customHeight) : ELEMENT_TYPES.find((t) => t.value === element.type)?.height || 100),
-        rotation: element.rotation || 0,
-        color: element.color || "#d1d5db",
-      }));
-
-      
       const response = await Promise.all(formDataArray.map((t) => createTable(t)));
       const newTables = response.flat();
 
-      const formattedTables = newTables.map(table => ({
+      const formattedTables = newTables.map((table) => ({
         id: table.id || table.tableId,
         nom: table.nom || table.name,
         capacite: table.capacite || table.capacity,
         type: table.type,
         eventId: Number(table.eventId),
         position: table.position || { left: 100, top: 100 },
-        width: table.width || TABLE_TYPES.find(t => t.value === table.type).width,
-        height: table.height || TABLE_TYPES.find(t => t.value === table.type).height,
+        width: table.width || TABLE_TYPES.find((t) => t.value === table.type).width,
+        height: table.height || TABLE_TYPES.find((t) => t.value === table.type).height,
         rotation: table.rotation || 0,
-        guests: table.guests || []
+        guests: table.guests || [],
       }));
 
       setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: eventId || 0 });
@@ -771,7 +896,7 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
       onAddTables(formattedTables);
       onClose();
 
-      toast.success(`${nomsFinal.length} table${nomsFinal.length > 1 ? 's' : ''} créée${nomsFinal.length > 1 ? 's' : ''} avec succès !`);
+      toast.success(`${nomsFinal.length} table${nomsFinal.length > 1 ? "s" : ""} créée${nomsFinal.length > 1 ? "s" : ""} avec succès !`);
     } catch (err) {
       console.error("Erreur création tables:", err);
       setError(err.response?.data?.message || "Erreur lors de la création des tables");
@@ -1234,17 +1359,19 @@ function CanvasSizeModal({ isOpen, onClose, onApplySize }) {
   );
 }
 
+// Modal pour créer des éléments (modifié pour ajouter la forme personnalisée)
 // Modal pour créer des éléments
 function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId }) {
   const [form, setForm] = useState({
     type: "porte_entree",
     customTypeName: "",
-    customWidth: "", // Chaîne vide pour permettre la saisie libre
-    customHeight: "", // Chaîne vide pour permettre la saisie libre
+    customWidth: "",
+    customHeight: "",
     nombre: "",
     noms: [],
     eventId: eventId || 0,
-    color: "#d1d5db", // Couleur par défaut
+    color: "#d1d5db",
+    shape: "rectangle", // Nouvelle propriété pour la forme (défaut: rectangle)
   });
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [error, setError] = useState(null);
@@ -1266,8 +1393,17 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    setError(null); // Réinitialiser l'erreur à chaque changement
+    let newForm = { ...form, [name]: value };
+    setError(null);
+
+    // Logique pour "carre" et "rond" : forcer height = width
+    if (name === "shape" && (value === "carre" || value === "rond")) {
+      newForm.customHeight = newForm.customWidth || "100"; // Si width vide, default à 100
+    } else if (name === "customWidth" && (form.shape === "carre" || form.shape === "rond")) {
+      newForm.customHeight = value; // Synchroniser height avec width
+    }
+
+    setForm(newForm);
   };
 
   const selectEvent = (event) => {
@@ -1279,7 +1415,6 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
     e.preventDefault();
     setError(null);
 
-    // Validation des champs requis
     if (!form.eventId) {
       setError("Veuillez sélectionner un événement");
       toast.error("Veuillez sélectionner un événement");
@@ -1304,6 +1439,17 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
         toast.error("La hauteur doit être un nombre d'au moins 20px.");
         return;
       }
+      if (!form.shape) {
+        setError("Veuillez sélectionner une forme pour l'élément personnalisé.");
+        toast.error("Veuillez sélectionner une forme pour l'élément personnalisé.");
+        return;
+      }
+      // Forcer height = width pour "rond" si pas déjà fait
+      if (form.shape === "rond" && form.customWidth !== form.customHeight) {
+        setError("Pour un élément rond, la largeur et la hauteur doivent être égales.");
+        toast.error("Pour un élément rond, la largeur et la hauteur doivent être égales.");
+        return;
+      }
     }
 
     try {
@@ -1319,7 +1465,9 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
 
         return {
           nom,
-          type: isCustom ? form.customTypeName : form.type,
+          // type: isCustom ? form.customTypeName : form.type,
+          type: isCustom ? "custom" : form.type,
+          customTypeName: isCustom ? form.customTypeName : undefined,
           eventId: Number(form.eventId),
           position: {
             left: 100 + index * 20,
@@ -1329,23 +1477,27 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
           height: typeInfo.height,
           rotation: 0,
           color: form.color,
+          shape: isCustom ? form.shape : null, // Ajout de shape seulement pour custom
         };
       });
 
       const response = await Promise.all(formDataArray.map((el) => createElement(el)));
+      console.log("Réponse de createElement:", response);
       const newElements = response.flat();
 
       const formattedElements = newElements.map((element) => ({
         id: element.id || element.elementId,
         nom: element.nom || element.name,
         type: element.type,
-        eventId: Number(element.eventId),
+        eventId: Number(element.event?.id || form.eventId), // Utiliser form.eventId comme fallback
         position: element.position || { left: 100, top: 100 },
         width: element.width || (form.type === "custom" ? Number(form.customWidth) : ELEMENT_TYPES.find((t) => t.value === element.type)?.width || 100),
         height: element.height || (form.type === "custom" ? Number(form.customHeight) : ELEMENT_TYPES.find((t) => t.value === element.type)?.height || 100),
         rotation: element.rotation || 0,
         color: element.color || "#d1d5db",
+        shape: element.shape || (form.type === "custom" ? form.shape : null), // Propagation correcte de shape
       }));
+      console.log("Éléments formatés:", formattedElements);
 
       setForm({
         type: "porte_entree",
@@ -1356,6 +1508,7 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
         noms: [],
         eventId: eventId || 0,
         color: "#d1d5db",
+        shape: "rectangle", // Réinitialisation
       });
       setSelectedEvent(null);
 
@@ -1444,7 +1597,23 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
                     min="20"
                     required
                     className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3"
+                    disabled={form.shape === "carre" || form.shape === "rond"} // Désactivé pour carré et rond
                   />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-gray-700 font-medium mb-2 text-sm">Forme</label>
+                  <select
+                    name="shape"
+                    value={form.shape}
+                    onChange={handleChange}
+                    required
+                    className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3"
+                  >
+                    <option value="rond">Rond</option>
+                    <option value="carre">Carré</option>
+                    <option value="rectangle">Rectangle</option>
+                    <option value="triangle">Triangle</option>
+                  </select>
                 </div>
               </>
             )}
@@ -1555,29 +1724,29 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
   const [zoomLevel, setZoomLevel] = useState(1);
   const canvasRef = useRef(null);
 
-  useEffect(() => {
-    if (isAuthenticated && event?.id) {
-      getMyEvents()
-        .then((response) => {
-          console.log("Événements chargés:", response);
-          setEvents(response);
-        })
-        .catch((err) => {
-          console.error("Erreur chargement événements:", err);
-          toast.error("Erreur lors du chargement des événements");
-        });
+ useEffect(() => {
+  if (isAuthenticated && event?.id) {
+    getMyEvents()
+      .then((response) => {
+        console.log("Événements chargés:", response);
+        setEvents(response);
+      })
+      .catch((err) => {
+        console.error("Erreur chargement événements:", err);
+        toast.error("Erreur lors du chargement des événements");
+      });
 
-      getElementsByEventId(event.id)
-        .then((response) => {
-          console.log("Éléments chargés:", response);
-          setElements(response);
-        })
-        .catch((err) => {
-          console.error("Erreur chargement éléments:", err);
-          toast.error("Erreur lors du chargement des éléments");
-        });
-    }
-  }, [isAuthenticated, event?.id]);
+    getElementsByEventId(event.id)
+      .then((response) => {
+        console.log("Éléments chargés avec shapes:", response); // Vérifiez que shape est inclus
+        setElements(response);
+      })
+      .catch((err) => {
+        console.error("Erreur chargement éléments:", err);
+        toast.error("Erreur lors du chargement des éléments");
+      });
+  }
+}, [isAuthenticated, event?.id]);
 
   useEffect(() => {
     console.log("État tables mis à jour:", tables);

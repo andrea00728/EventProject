@@ -84,26 +84,48 @@ export class ElementController {
   }
 
   @Patch(':elementId')
-  @UseGuards(AuthGuard('jwt'))
-  async updateElement(
-    @Param('elementId', ParseIntPipe) elementId: number,
-    @Body() updateData: Partial<Element>,
-    @Req() req,
-  ): Promise<Element> {
-    const userId = req.user?.sub;
-    if (!userId) {
-      throw new UnauthorizedException('Utilisateur non authentifié');
-    }
-    return this.elementService.updateElement(elementId, updateData);
+@UseGuards(AuthGuard('jwt'))
+async updateElement(
+  @Param('elementId', ParseIntPipe) elementId: number,
+  @Body() updateData: Partial<Element>,
+  @Req() req,
+): Promise<Element> {
+  const userId = req.user?.sub;
+  if (!userId) {
+    throw new UnauthorizedException('Utilisateur non authentifié');
   }
 
-  @Delete(':elementId')
-  @UseGuards(AuthGuard('jwt'))
-  async deleteElement(@Param('elementId', ParseIntPipe) elementId: number, @Req() req): Promise<void> {
-    const userId = req.user?.sub;
-    if (!userId) {
-      throw new UnauthorizedException('Utilisateur non authentifié');
-    }
-    return this.elementService.deleteElement(elementId);
+  // Vérifier que l'élément existe et appartient à l'utilisateur
+  const element = await this.elementService.findOneById(elementId);
+  if (!element) {
+    throw new NotFoundException(`Élément avec ID ${elementId} non trouvé`);
   }
+  if (element.event.user.id !== userId) {
+    throw new UnauthorizedException("Cet élément n'appartient pas à l'utilisateur connecté");
+  }
+
+  // Si un eventId est fourni dans updateData, vérifier qu'il est valide
+  if (updateData.event?.id) {
+    const event = await this.evenementService.findOneById(updateData.event.id);
+    if (!event) {
+      throw new NotFoundException("Événement non trouvé");
+    }
+    if (event.user.id !== userId) {
+      throw new UnauthorizedException("L'événement fourni n'appartient pas à l'utilisateur connecté");
+    }
+  }
+
+  return this.elementService.updateElement(elementId, updateData);
+}
+
+  @Delete(':elementId')
+  @Delete(':elementId')
+@UseGuards(AuthGuard('jwt'))
+async deleteElement(@Param('elementId', ParseIntPipe) elementId: number, @Req() req): Promise<void> {
+  const userId = req.user?.sub;
+  if (!userId) {
+    throw new UnauthorizedException('Utilisateur non authentifié');
+  }
+  return this.elementService.deleteElement(elementId, userId); // Passer userId
+}
 }
