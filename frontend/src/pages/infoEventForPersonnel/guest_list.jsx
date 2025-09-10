@@ -43,17 +43,19 @@ const GuestList = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
+  const API_URL = `${import.meta.env.VITE_API_BASE_URL}/personnel`;
+
   useEffect(() => {
     // recuperer le personnel depuis le backend avec son email
     async function fetchPersonnel() {
       try {
-        const response = await fetch(`http://localhost:3000/personnel/by-email/${personnelEmail}`);
+        const response = await fetch(`${API_URL}/by-email/${personnelEmail}`);
         const personnelData = await response.json();
         console.log("Personnel Data: ", personnelData.id);
         const personnelId = personnelData.id;
 
         // recuperer les invites associes a l'evenement du personnel
-        const invitesResponse = await fetch(`http://localhost:3000/personnel/invite/${personnelId}`);
+        const invitesResponse = await fetch(`${API_URL}/invite/${personnelId}`);
         const invitesData = await invitesResponse.json();
         console.log("Invites Data: ", invitesData);
 
