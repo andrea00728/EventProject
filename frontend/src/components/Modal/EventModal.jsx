@@ -3,6 +3,7 @@ import { getLocations, getSallesByLocation, createSalle, saveLocation, updateEve
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { url } from '../../api/url';
 
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
@@ -39,7 +40,7 @@ const EventModal = ({ isOpen, onClose, event, onSave }) => {
 
   // États pour gérer l'image, les lieux, les salles et les modales
   const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(event?.imageUrl || '');
+  const [imagePreview, setImagePreview] = useState(url+event?.imageUrl || '');
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isSalleModalOpen, setIsSalleModalOpen] = useState(false);
   const [searchLieu, setSearchLieu] = useState('');
@@ -325,7 +326,7 @@ const EventModal = ({ isOpen, onClose, event, onSave }) => {
                 
                 {event.imageUrl && (
                   <div className="bg-gradient-to-r from-gray-50/50 to-gray-100/50 p-6 rounded-2xl border border-gray-100/50">
-                    <img src={event.imageUrl} alt="Événement" className="max-w-sm mx-auto rounded-xl shadow-lg" />
+                    <img src={url+event.imageUrl} alt="Événement" className="max-w-sm mx-auto rounded-xl shadow-lg" />
                   </div>
                 )}
                 
