@@ -16,60 +16,73 @@ export class ElementService {
     private readonly notificationService: NotificationService,
   ) {}
 
-  async createElement(dto: CreateElementDto, utilisateurId: string): Promise<Element[]> {
-    if (!dto || dto.nom === undefined || !dto.eventId || !dto.type) {
-      throw new BadRequestException('Données de création d\'élément incomplètes');
-    }
+  async findOneById(elementId: number): Promise<Element | null> {
+    return this.elementRepository.findOne({
+      where: { id: elementId },
+      relations: ['event', 'event.user'],
+    });
+  }
 
-    const event = await this.eventRepository.findOne({
+async createElement(dto: CreateElementDto, utilisateurId: string): Promise<Element[]> {
+  if (!dto || dto.nom === undefined || !dto.eventId || !dto.type) {
+    throw new BadRequestException('Données de création d\'élément incomplètes');
+  }
+
+  // Validation supplémentaire pour shape si type est "custom"
+  if (dto.type === 'custom' && !dto.shape) {
+    throw new BadRequestException('Le champ shape est requis pour un élément personnalisé');
+  }
+
+  const event = await this.eventRepository.findOne({
+    where: {
+      id: dto.eventId,
+      user: { id: utilisateurId },
+    },
+    relations: ['user'],
+  });
+
+  if (!event) {
+    throw new UnauthorizedException("Cet événement n'appartient pas à l'utilisateur connecté");
+  }
+
+  const elements: Element[] = [];
+  const nombre = dto.nombre || 1;
+
+  for (let i = 1; i <= nombre; i++) {
+    const nomElement = `${dto.nom}-${i}`;
+
+    const existing = await this.elementRepository.findOne({
       where: {
-        id: dto.eventId,
-        user: { id: utilisateurId },
+        nom: nomElement,
+        event: { id: dto.eventId },
       },
-      relations: ['user'],
     });
 
-    if (!event) {
-      throw new UnauthorizedException("Cet événement n'appartient pas à l'utilisateur connecté");
-    }
+    if (existing) continue;
 
-    const elements: Element[] = [];
-    const nombre = dto.nombre || 1;
+    const element = this.elementRepository.create({
+      nom: nomElement,
+      type: dto.type,
+      position: dto.position || { left: 0, top: 0 },
+      rotation: dto.rotation || 0,
+      width: dto.width,
+      height: dto.height,
+      color: dto.color || '#d1d5db',
+      shape: dto.type === 'custom' ? dto.shape : null, // Assurer que shape est défini
+      event,
+    });
 
-    for (let i = 1; i <= nombre; i++) {
-      const nomElement = `${dto.nom}-${i}`;
-
-      const existing = await this.elementRepository.findOne({
-        where: {
-          nom: nomElement,
-          event: { id: dto.eventId },
-        },
-      });
-
-      if (existing) continue;
-
-      const element = this.elementRepository.create({
-        nom: nomElement,
-        type: dto.type,
-        position: dto.position || { left: 0, top: 0 },
-        rotation: dto.rotation || 0,
-        width: dto.width,
-        height: dto.height,
-        color: dto.color || '#d1d5db', // Ajout de la couleur avec une valeur par défaut
-        event,
-      });
-
-      const saved = await this.elementRepository.save(element);
-      elements.push(saved);
-    }
-
-    await this.notificationService.notifyAll(
-      'Éléments ajoutés',
-      `${elements.length} nouveaux éléments ont été ajoutés à l’événement ${event.nom}.`,
-    );
-
-    return elements;
+    const saved = await this.elementRepository.save(element);
+    elements.push(saved);
   }
+
+  await this.notificationService.notifyAll(
+    'Éléments ajoutés',
+    `${elements.length} nouveaux éléments ont été ajoutés à l’événement ${event.nom}.`,
+  );
+
+  return elements; // Vérifie que `shape` est inclus dans chaque élément retourné
+}
 
   async findByEvent(eventId: number): Promise<Element[]> {
     return this.elementRepository.find({
@@ -107,7 +120,16 @@ export class ElementService {
   }
 
   async updateElement(id: number, data: Partial<Element>): Promise<Element> {
-    await this.elementRepository.update(id, data);
+    // Validation pour shape si type est "custom"
+    if (data.type === 'custom' && data.shape && !['rond', 'carre', 'rectangle', 'triangle'].includes(data.shape)) {
+      throw new BadRequestException('Forme invalide pour un élément personnalisé');
+    }
+
+    await this.elementRepository.update(id, {
+      ...data,
+      shape: data.type === 'custom' ? data.shape : null, // Assurer que shape est null pour non-custom
+    });
+
     const element = await this.elementRepository.findOne({
       where: { id },
       relations: ['event'],
@@ -120,7 +142,17 @@ export class ElementService {
     return element;
   }
 
-  async deleteElement(elementId: number): Promise<void> {
+  async deleteElement(elementId: number, userId: string): Promise<void> {
+    const element = await this.elementRepository.findOne({
+      where: { id: elementId },
+      relations: ['event', 'event.user'],
+    });
+    if (!element) {
+      throw new NotFoundException(`Élément avec ID ${elementId} non trouvé`);
+    }
+    if (element.event.user.id !== userId) {
+      throw new UnauthorizedException("Cet élément n'appartient pas à l'utilisateur connecté");
+    }
     await this.elementRepository.delete(elementId);
   }
 }

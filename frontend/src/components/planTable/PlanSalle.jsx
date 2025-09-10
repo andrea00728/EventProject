@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { BarChart, Camera, Coffee, DoorClosed, Edit, Flower, GlassWater, LogOut, Monitor, Music, Package, Plus, RefreshCcw, User } from "lucide-react";
+import { BarChart, Camera, Coffee, DoorClosed, Edit, Flower, GlassWater, LogOut, Monitor, Music, Package, Plus, RefreshCcw, User, Trash, Box, Shapes } from "lucide-react";
 import { useStateContext } from "../../context/ContextProvider";
 import {
   updateTablePosition,
@@ -21,6 +21,7 @@ import {
 } from "../../services/elementService";
 import { textControll, getMaxCapacity } from "../../services/controll_champs/controll_champs";
 import toast, { Toaster } from "react-hot-toast";
+import { MdTableBar } from "react-icons/md";
 
 // Définition des types de tables avec leurs dimensions
 const TABLE_TYPES = [
@@ -427,10 +428,9 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   );
 }
 
-// dbegve Composant Element : représente un élément supplémentaire (porte, estrade, etc.)
-// Composant Element amélioré avec déplacement et design
-function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, isSelected, zoomLevel }) {
-  const { id, nom, type, position, width, height, rotation, color } = element;
+// Composant Element : représente un élément supplémentaire (porte, estrade, etc.)
+function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, isSelected, zoomLevel, onDelete }) { // Ajout de onDelete en prop
+  const { id, nom, type, position, width, height, rotation, color, shape } = element;
   const [dragging, setDragging] = useState(false);
   const [rotating, setRotating] = useState(false);
   const [pos, setPos] = useState(position || { left: 100, top: 100 });
@@ -565,6 +565,18 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
     return colorMap[type] || "#6b7280";
   };
 
+  // Détermination dynamique de la forme (borderRadius et clipPath)
+  let elementBorderRadius = (shape === "rond" || type === "piste_danse") ? "50%" : "12px";
+  let elementClipPath = "";
+  if (shape === "triangle") {
+    elementClipPath = "polygon(50% 0%, 0% 100%, 100% 100%)"; // Triangle basique (pointé vers le haut)
+    elementBorderRadius = "0"; // Pas de radius pour triangle
+  }
+
+  // Pour les overlays, on applique le même borderRadius et clipPath
+  let overlayBorderRadius = elementBorderRadius === "50%" ? "9999px" : "9px"; // Adapté pour overlays
+
+  // Dans le composant Element
   return (
     <div
       ref={elementRef}
@@ -600,8 +612,7 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
           e.stopPropagation();
           handleRotate("counterclockwise");
         }}
-        className={`absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''
-          } opacity-0 group-hover:opacity-100`}
+        className={`absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''} opacity-0 group-hover:opacity-100`}
         title="Pivoter à gauche"
       >
         <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(90deg)' }} />
@@ -612,38 +623,52 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
           e.stopPropagation();
           handleRotate("clockwise");
         }}
-        className={`absolute -top-2 left-6 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''
-          } opacity-0 group-hover:opacity-100`}
+        className={`absolute -top-2 left-6 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''} opacity-0 group-hover:opacity-100`}
         title="Pivoter à droite"
       >
         <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(-90deg)' }} />
       </button>
 
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(id); // Appeler onDelete avec l'ID de l'élément
+        }}
+        className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-700 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+        title="Supprimer l'élément"
+      >
+        <Trash className="w-3 h-3" />
+      </button>
+
       {/* Corps de l'élément avec design amélioré */}
       <div
-        className={`w-full h-full relative overflow-hidden transition-all duration-300 ${dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-lg'
-          } ${isSelected ? 'ring-2 ring-indigo-400 ring-offset-1' : ''}`}
+        className={`w-full h-full relative overflow-hidden transition-all duration-300 ${dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-lg'} ${isSelected ? 'ring-2 ring-indigo-400 ring-offset-1' : ''}`}
         style={{
           backgroundColor: color || "#f3f4f6",
           border: `3px solid ${getBorderColor(type)}`,
-          borderRadius: type === "piste_danse" ? "50%" : "12px",
+          borderRadius: elementBorderRadius,
+          clipPath: elementClipPath,
           transform: `rotate(${currentRotation}deg)`,
           transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease'
         }}
       >
         {/* Gradient overlay */}
         <div
-          className="absolute inset-0 opacity-10 rounded-[9px]"
+          className="absolute inset-0 opacity-10"
           style={{
-            background: `linear-gradient(135deg, ${getBorderColor(type)}, transparent 60%)`
+            background: `linear-gradient(135deg, ${getBorderColor(type)}, transparent 60%)`,
+            borderRadius: overlayBorderRadius,
+            clipPath: elementClipPath
           }}
         />
 
         {/* Pattern de fond subtil */}
         <div
-          className="absolute inset-0 opacity-5 rounded-[9px]"
+          className="absolute inset-0 opacity-5"
           style={{
-            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, ${getBorderColor(type)} 10px, ${getBorderColor(type)} 11px)`
+            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, ${getBorderColor(type)} 10px, ${getBorderColor(type)} 11px)`,
+            borderRadius: overlayBorderRadius,
+            clipPath: elementClipPath
           }}
         />
 
@@ -676,18 +701,22 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
 
         {/* Indicateur de glissement */}
         {dragging && (
-          <div className="absolute inset-0 bg-blue-500/20 rounded-[9px] flex items-center justify-center">
+          <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center" style={{ borderRadius: overlayBorderRadius, clipPath: elementClipPath }}>
             <div className="text-blue-700 font-bold text-xs bg-blue-100/80 px-2 py-1 rounded-full">
               Déplacement...
             </div>
           </div>
         )}
 
-        {/* Points de coin pour le style */}
-        <div className="absolute top-1 left-1 w-1 h-1 bg-white/50 rounded-full"></div>
-        <div className="absolute top-1 right-1 w-1 h-1 bg-white/50 rounded-full"></div>
-        <div className="absolute bottom-1 left-1 w-1 h-1 bg-white/50 rounded-full"></div>
-        <div className="absolute bottom-1 right-1 w-1 h-1 bg-white/50 rounded-full"></div>
+        {/* Points de coin pour le style (désactivés pour triangle car clip-path les coupe) */}
+        {shape !== "triangle" && (
+          <>
+            <div className="absolute top-1 left-1 w-1 h-1 bg-white/50 rounded-full"></div>
+            <div className="absolute top-1 right-1 w-1 h-1 bg-white/50 rounded-full"></div>
+            <div className="absolute bottom-1 left-1 w-1 h-1 bg-white/50 rounded-full"></div>
+            <div className="absolute bottom-1 right-1 w-1 h-1 bg-white/50 rounded-full"></div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -793,19 +822,32 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
       const response = await Promise.all(formDataArray.map((t) => createTable(t)));
       const newTables = response.flat();
 
-    setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: form.eventId || 0 });
-    setSelectedEvent(null);
+      const formattedTables = newTables.map((table) => ({
+        id: table.id || table.tableId,
+        nom: table.nom || table.name,
+        capacite: table.capacite || table.capacity,
+        type: table.type,
+        eventId: Number(table.eventId),
+        position: table.position || { left: 100, top: 100 },
+        width: table.width || TABLE_TYPES.find((t) => t.value === table.type).width,
+        height: table.height || TABLE_TYPES.find((t) => t.value === table.type).height,
+        rotation: table.rotation || 0,
+        guests: table.guests || [],
+      }));
 
     onAddTables(formattedTables);
     onClose();
 
-    toast.success(`${nomsFinal.length} table${nomsFinal.length > 1 ? 's' : ''} créée${nomsFinal.length > 1 ? 's' : ''} avec succès !`);
-  } catch (err) {
-    console.error("Erreur création tables:", err);
-    setError(err.response?.data?.message || "Erreur lors de la création des tables");
-    toast.error(err.response?.data?.message || "Erreur lors de la création des tables");
-  }
-};
+      onAddTables(formattedTables);
+      onClose();
+
+      toast.success(`${nomsFinal.length} table${nomsFinal.length > 1 ? "s" : ""} créée${nomsFinal.length > 1 ? "s" : ""} avec succès !`);
+    } catch (err) {
+      console.error("Erreur création tables:", err);
+      setError(err.response?.data?.message || "Erreur lors de la création des tables");
+      toast.error(err.response?.data?.message || "Erreur lors de la création des tables");
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -1263,17 +1305,19 @@ function CanvasSizeModal({ isOpen, onClose, onApplySize }) {
   );
 }
 
+// Modal pour créer des éléments (modifié pour ajouter la forme personnalisée)
 // Modal pour créer des éléments
 function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId }) {
   const [form, setForm] = useState({
     type: "porte_entree",
     customTypeName: "",
-    customWidth: "", // Chaîne vide pour permettre la saisie libre
-    customHeight: "", // Chaîne vide pour permettre la saisie libre
+    customWidth: "",
+    customHeight: "",
     nombre: "",
     noms: [],
     eventId: eventId || 0,
-    color: "#d1d5db", // Couleur par défaut
+    color: "#d1d5db",
+    shape: "rectangle", // Nouvelle propriété pour la forme (défaut: rectangle)
   });
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [error, setError] = useState(null);
@@ -1295,8 +1339,17 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    setError(null); // Réinitialiser l'erreur à chaque changement
+    let newForm = { ...form, [name]: value };
+    setError(null);
+
+    // Logique pour "carre" et "rond" : forcer height = width
+    if (name === "shape" && (value === "carre" || value === "rond")) {
+      newForm.customHeight = newForm.customWidth || "100"; // Si width vide, default à 100
+    } else if (name === "customWidth" && (form.shape === "carre" || form.shape === "rond")) {
+      newForm.customHeight = value; // Synchroniser height avec width
+    }
+
+    setForm(newForm);
   };
 
   const selectEvent = (event) => {
@@ -1308,7 +1361,6 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
     e.preventDefault();
     setError(null);
 
-    // Validation des champs requis
     if (!form.eventId) {
       setError("Veuillez sélectionner un événement");
       toast.error("Veuillez sélectionner un événement");
@@ -1331,6 +1383,17 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
       if (form.customHeight === "" || isNaN(height) || height < 20) {
         setError("La hauteur doit être un nombre d'au moins 20px.");
         toast.error("La hauteur doit être un nombre d'au moins 20px.");
+        return;
+      }
+      if (!form.shape) {
+        setError("Veuillez sélectionner une forme pour l'élément personnalisé.");
+        toast.error("Veuillez sélectionner une forme pour l'élément personnalisé.");
+        return;
+      }
+      // Forcer height = width pour "rond" si pas déjà fait
+      if (form.shape === "rond" && form.customWidth !== form.customHeight) {
+        setError("Pour un élément rond, la largeur et la hauteur doivent être égales.");
+        toast.error("Pour un élément rond, la largeur et la hauteur doivent être égales.");
         return;
       }
     }
@@ -1358,10 +1421,12 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
           height: typeInfo.height,
           rotation: 0,
           color: form.color,
+          shape: isCustom ? form.shape : null, // Ajout de shape seulement pour custom
         };
       });
 
       const response = await Promise.all(formDataArray.map((el) => createElement(el)));
+      console.log("Réponse de createElement:", response);
       const newElements = response.flat();
 
       const formattedElements = newElements.map((element) => ({
@@ -1374,6 +1439,7 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
         height: element.height || (form.type === "custom" ? Number(form.customHeight) : ELEMENT_TYPES.find((t) => t.value === element.type)?.height || 100),
         rotation: element.rotation || 0,
         color: element.color || "#d1d5db",
+        shape: element.shape || (form.type === "custom" ? form.shape : null), // Propagation de shape
       }));
 
       setForm({
@@ -1385,6 +1451,7 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
         noms: [],
         eventId: eventId || 0,
         color: "#d1d5db",
+        shape: "rectangle", // Réinitialisation
       });
       setSelectedEvent(null);
 
@@ -1473,7 +1540,23 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
                     min="20"
                     required
                     className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3"
+                    disabled={form.shape === "carre" || form.shape === "rond"} // Désactivé pour carré et rond
                   />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-gray-700 font-medium mb-2 text-sm">Forme</label>
+                  <select
+                    name="shape"
+                    value={form.shape}
+                    onChange={handleChange}
+                    required
+                    className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3"
+                  >
+                    <option value="rond">Rond</option>
+                    <option value="carre">Carré</option>
+                    <option value="rectangle">Rectangle</option>
+                    <option value="triangle">Triangle</option>
+                  </select>
                 </div>
               </>
             )}
@@ -1903,7 +1986,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           onClick={() => setShowTableModal(true)}
           className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition hover:bg-indigo-700"
         >
-          <Plus className="w-5 h-5" />
+          <MdTableBar className="w-5 h-5" />
           <span className="hidden sm:inline">Ajouter des tables</span>
         </button>
 
@@ -1911,7 +1994,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           onClick={() => setShowElementModal(true)}
           className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition hover:bg-purple-700"
         >
-          <Plus className="w-5 h-5" />
+          <Box className="w-5 h-5" />
           <span className="hidden sm:inline">Ajouter des éléments</span>
         </button>
 

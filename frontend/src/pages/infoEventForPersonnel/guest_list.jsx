@@ -1,84 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { UserCheck, Search, Filter, Mail, Phone, MapPin, TrendingUp, Clock, X, Users } from 'lucide-react';
+import { useStateContext } from '../../context/ContextProvider';
 
 const GuestList = () => {
-  const [guests, setGuests] = useState([
-    { 
-      id: 1, 
-      name: "Jean Martin", 
-      email: "jean.martin@email.com", 
-      phone: "+33 6 12 34 56 78",
-      status: "Confirmé", 
-      table: 1,
-      company: "Tech Corp",
-      dietary: "Végétarien"
-    },
-    { 
-      id: 2, 
-      name: "Sophie Laurent", 
-      email: "sophie.laurent@email.com", 
-      phone: "+33 6 23 45 67 89",
-      status: "En attente", 
-      table: 2,
-      company: "Innovation Ltd",
-      dietary: "Aucune"
-    },
-    { 
-      id: 3, 
-      name: "Pierre Durand", 
-      email: "pierre.durand@email.com", 
-      phone: "+33 6 34 56 78 90",
-      status: "Confirmé", 
-      table: 1,
-      company: "Start-up Hub",
-      dietary: "Sans gluten"
-    },
-    { 
-      id: 4, 
-      name: "Emma Bernard", 
-      email: "emma.bernard@email.com", 
-      phone: "+33 6 45 67 89 01",
-      status: "Confirmé", 
-      table: 3,
-      company: "Digital Agency",
-      dietary: "Aucune"
-    },
-    { 
-      id: 5, 
-      name: "Lucas Garcia", 
-      email: "lucas.garcia@email.com", 
-      phone: "+33 6 56 78 90 12",
-      status: "Annulé", 
-      table: null,
-      company: "Web Solutions",
-      dietary: "Végétalien"
-    }
-  ]);
+  const { user } = useStateContext();
+  const personnelEmail = user?.email;
+  const [guests, setGuests] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Tous');
 
   // Filtrage des invités
   const filteredGuests = guests.filter(guest => {
-    const matchesSearch = guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         guest.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         guest.company.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'Tous' || guest.status === statusFilter;
-    
+    const matchesSearch = guest.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      guest.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      guest.company?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = statusFilter === 'Tous' ||
+      (statusFilter === 'Confirmé' && guest.checkedIn) ||
+      (statusFilter === 'En attente' && !guest.checkedIn);
+
     return matchesSearch && matchesStatus;
   });
 
   // Statistiques
   const stats = {
     total: guests.length,
-    confirmed: guests.filter(g => g.status === 'Confirmé').length,
-    pending: guests.filter(g => g.status === 'En attente').length,
-    cancelled: guests.filter(g => g.status === 'Annulé').length
+    confirmed: guests.filter(g => g.checkedIn).length,
+    pending: guests.filter(g => !g.checkedIn).length,
   };
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case 'Confirmé': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
       case 'En attente': return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'Annulé': return 'bg-red-100 text-red-800 border-red-200';
@@ -91,8 +44,30 @@ const GuestList = () => {
   };
 
   useEffect(() => {
-    // Ici vous pouvez faire un appel API pour récupérer la liste des invités
-    // fetchGuests();
+    // recuperer le personnel depuis le backend avec son email
+    async function fetchPersonnel() {
+      try {
+        const response = await fetch(`http://localhost:3000/personnel/by-email/${personnelEmail}`);
+        const personnelData = await response.json();
+        console.log("Personnel Data: ", personnelData.id);
+        const personnelId = personnelData.id;
+
+        // recuperer les invites associes a l'evenement du personnel
+        const invitesResponse = await fetch(`http://localhost:3000/personnel/invite/${personnelId}`);
+        const invitesData = await invitesResponse.json();
+        console.log("Invites Data: ", invitesData);
+
+        // mettre a jour l'etat des invites
+        setGuests(invitesData);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des données :", error);
+      }
+    }
+
+    if (personnelEmail) {
+      fetchPersonnel();
+    }
+
   }, []);
 
   return (
@@ -114,7 +89,7 @@ const GuestList = () => {
             <div className="text-3xl font-bold mb-1">{stats.total}</div>
             <div className="text-blue-100 text-sm font-medium uppercase tracking-wide">Total Invités</div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <UserCheck className="h-8 w-8 text-emerald-200" />
@@ -123,7 +98,7 @@ const GuestList = () => {
             <div className="text-3xl font-bold mb-1">{stats.confirmed}</div>
             <div className="text-emerald-100 text-sm font-medium uppercase tracking-wide">Confirmés</div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <Clock className="h-8 w-8 text-amber-200" />
@@ -132,13 +107,13 @@ const GuestList = () => {
             <div className="text-3xl font-bold mb-1">{stats.pending}</div>
             <div className="text-amber-100 text-sm font-medium uppercase tracking-wide">En Attente</div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <X className="h-8 w-8 text-red-200" />
               <div className="w-2 h-2 bg-red-300 rounded-full animate-pulse"></div>
             </div>
-            <div className="text-3xl font-bold mb-1">{stats.cancelled}</div>
+            {/* <div className="text-3xl font-bold mb-1">{stats.cancelled}</div> */}
             <div className="text-red-100 text-sm font-medium uppercase tracking-wide">Annulés</div>
           </div>
         </div>
@@ -155,10 +130,10 @@ const GuestList = () => {
                   <h2 className="text-2xl font-bold text-gray-900">
                     Gestion des Invités
                   </h2>
-                  <p className="text-gray-600">{filteredGuests.length} invités affichés</p>
+                  <p className="text-gray-600">filteredGuests.length invités affichés</p>
                 </div>
               </div>
-              
+
               {/* Filtres et recherche améliorés */}
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative group">
@@ -171,7 +146,7 @@ const GuestList = () => {
                     className="pl-12 pr-4 py-3 w-80 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200 placeholder-gray-400"
                   />
                 </div>
-                
+
                 <div className="relative group">
                   <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
                   <select
@@ -182,13 +157,12 @@ const GuestList = () => {
                     <option value="Tous">Tous les statuts</option>
                     <option value="Confirmé">Confirmés</option>
                     <option value="En attente">En attente</option>
-                    <option value="Annulé">Annulés</option>
                   </select>
                 </div>
               </div>
             </div>
           </div>
-          
+
           {/* Tableau des invités avec design moderne */}
           <div className="overflow-hidden">
             <div className="overflow-x-auto">
@@ -199,10 +173,10 @@ const GuestList = () => {
                       Invité
                     </th>
                     <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Contact
+                      Email
                     </th>
                     <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Entreprise
+                      Sexe
                     </th>
                     <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Statut
@@ -211,7 +185,7 @@ const GuestList = () => {
                       Table
                     </th>
                     <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Régime
+                      Place
                     </th>
                   </tr>
                 </thead>
@@ -221,10 +195,10 @@ const GuestList = () => {
                       <td className="px-8 py-6">
                         <div className="flex items-center space-x-4">
                           <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                            {getInitials(guest.name)}
+                            {getInitials(guest.nom)}
                           </div>
                           <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                            {guest.name}
+                            {guest.nom} {guest.prenom}
                           </div>
                         </div>
                       </td>
@@ -236,29 +210,29 @@ const GuestList = () => {
                             </div>
                             <span className="truncate max-w-48">{guest.email}</span>
                           </div>
-                          <div className="text-sm text-gray-600 flex items-center">
+                          {/* <div className="text-sm text-gray-600 flex items-center">
                             <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
                               <Phone className="h-4 w-4 text-gray-500" />
                             </div>
-                            {guest.phone}
-                          </div>
+                            {guest.sex}
+                          </div> */}
                         </div>
                       </td>
                       <td className="px-8 py-6">
                         <div className="text-sm font-medium text-gray-700 bg-gray-50 px-3 py-2 rounded-lg inline-block">
-                          {guest.company}
+                          {guest.sex}
                         </div>
                       </td>
                       <td className="px-8 py-6">
                         <span className={`px-3 py-2 text-xs rounded-full font-semibold border ${getStatusColor(guest.status)}`}>
-                          {guest.status}
+                          {guest.checkedIn ? 'Confirmé' : 'En attente'}
                         </span>
                       </td>
                       <td className="px-8 py-6">
                         {guest.table ? (
                           <div className="flex items-center bg-blue-50 px-3 py-2 rounded-lg text-blue-700 font-medium text-sm">
                             <MapPin className="h-4 w-4 mr-2" />
-                            Table {guest.table}
+                            Table {guest.table.nom}
                           </div>
                         ) : (
                           <span className="text-gray-400 text-sm italic">Non assigné</span>
@@ -266,7 +240,7 @@ const GuestList = () => {
                       </td>
                       <td className="px-8 py-6">
                         <div className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg inline-block">
-                          {guest.dietary}
+                          {guest.place || 'N/A'}
                         </div>
                       </td>
                     </tr>

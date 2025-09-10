@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Edit, Plus, RefreshCcw, User, Clock, Minus, X, Move, RotateCcw } from "lucide-react";
+import { Edit, Plus, RefreshCcw, User, Clock, Minus, X, Move, RotateCcw, Box, Shapes } from "lucide-react";
 import { AuthModal } from "../components/Modal/authModal";
+import { MdTableBar } from "react-icons/md";
 
 // Définition des types de tables avec leurs dimensions
 const TABLE_TYPES = [
@@ -1188,14 +1189,14 @@ export default function DemoPlanSalle() {
             onClick={handleAddTableClick}
             className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
           >
-            <Plus className="w-5 h-5" />
+            <MdTableBar className="w-5 h-5" />
             {!isMobile && <span className="text-sm font-medium">Table</span>}
           </button>
           <button
             onClick={handleAddElementClick}
             className="bg-gradient-to-br from-teal-500 to-cyan-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
           >
-            <Plus className="w-5 h-5" />
+            <Shapes className="w-5 h-5" />
             {!isMobile && <span className="text-sm font-medium">Élément</span>}
           </button>
           <button
@@ -1827,6 +1828,7 @@ export default function DemoPlanSalle() {
           <p className="text-xs text-amber-700 mt-1">
             • Maximum {MAX_TABLES} tables<br/>
             • Maximum {MAX_GUESTS} invités<br/>
+            • Maximum {MAX_ELEMENTS} éléments<br/>
             • Connectez-vous pour des événements illimités
           </p>
         </div>
