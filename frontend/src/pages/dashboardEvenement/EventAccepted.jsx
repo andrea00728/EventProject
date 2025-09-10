@@ -142,7 +142,17 @@ const EventAccept = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-stretch">
                 {events.map((event, index) => {
                   console.log(`Image pour l'événement ${event.nom}:`, event.imageUrl); // Débogage
-                  const imageUrl = event.imageUrl && !event.imageUrl.startsWith('http') ? `${API_BASE_URL}${event.imageUrl}` : event.imageUrl;
+                  const getImageUrl = (imagePath) => {
+                        if (!imagePath) return null;
+                        if (imagePath.startsWith('http')) return imagePath;
+                        
+                        // Normaliser le chemin pour qu'il commence par un slash
+                        const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+                        return `${API_BASE_URL}${normalizedPath}`;
+                      };
+
+                      // Dans votre composant
+                      const imageUrl = getImageUrl(event.imageUrl);
                   return (
                     <div
                       key={event.id}

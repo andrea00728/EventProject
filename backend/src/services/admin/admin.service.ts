@@ -339,7 +339,7 @@ async loginWithEmailAndPass(user: { email: string; password: string }, res: Resp
     // Gestion photo
     if (photoFilename) {
       if (admin.photo) {
-        const oldPath = path.join(__dirname, '../../../uploads', admin.photo);
+        const oldPath = path.join(process.cwd(), 'uploads', admin.photo);
         if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
       }
       admin.photo = photoFilename;

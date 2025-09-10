@@ -318,5 +318,19 @@ async findEventsByPersonnelId(personnelId: number): Promise<Evenement[]> {
     return invites;
   }
 
+  // trouver personnel dans evenement
+  async findPersonnelByEventId (eventId: number): Promise<Personnel[]> {
+    const personnel = await this.personnelRepository.find({
+           where: {
+        evenement: {
+          id: eventId,
+        },
+      },
+
+    });
+
+    return personnel;
+  }
+
 
 }
