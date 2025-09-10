@@ -572,28 +572,31 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
   const theme = getElementTheme(type);
 
   // Détermination dynamique de la forme
-  let elementBorderRadius = (shape === "rond" || type === "piste_danse") ? "50%" : "16px";
-  let elementClipPath = "";
-  
-  if (shape === "triangle") {
-    elementClipPath = "polygon(50% 8%, 92% 92%, 8% 92%)";
-    elementBorderRadius = "0";
-  }
+  // let elementBorderRadius = (shape === "rond" || type === "piste_danse") ? "50%" : "16px";
+  // let elementClipPath = "";
+
+  // if (shape === "triangle") {
+  //   elementClipPath = "polygon(50% 8%, 92% 92%, 8% 92%)";
+  //   elementBorderRadius = "0";
+  // }
+const effectiveShape = shape || (type === "piste_danse" ? "rond" : "rectangle"); // Par défaut rectangle si shape est null
+let elementBorderRadius = effectiveShape === "rond" ? "50%" : effectiveShape === "carre" ? "0" : effectiveShape === "rectangle" ? "16px" : "0";
+let elementClipPath = effectiveShape === "triangle" ? "polygon(50% 8%, 92% 92%, 8% 92%)" : "";
 
   // Styles 3D et réalistes
   const element3DStyle = {
-    background: `linear-gradient(135deg, ${theme.accent} 0%, ${color || theme.secondary} 50%, ${theme.primary} 100%)`,
-    borderRadius: elementBorderRadius,
-    clipPath: elementClipPath,
-    boxShadow: `
-      0 8px 32px ${theme.shadow},
-      inset 0 1px 0 rgba(255, 255, 255, 0.2),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.1)
-    `,
-    border: `2px solid ${theme.primary}`,
-    position: 'relative',
-    overflow: 'hidden'
-  };
+  background: `linear-gradient(135deg, ${theme.accent} 0%, ${color || theme.secondary} 50%, ${theme.primary} 100%)`,
+  borderRadius: elementBorderRadius,
+  clipPath: elementClipPath,
+  boxShadow: `
+    0 8px 32px ${theme.shadow},
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1)
+  `,
+  border: `2px solid ${theme.primary}`,
+  position: 'relative',
+  overflow: 'hidden'
+};
 
   return (
     <div
@@ -661,9 +664,8 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
 
       {/* Corps de l'élément avec design 3D réaliste */}
       <div
-        className={`w-full h-full relative overflow-hidden transition-all duration-300 ${
-          dragging ? 'scale-105' : rotating ? 'scale-102' : 'scale-100'
-        } ${isSelected ? 'ring-4 ring-white ring-offset-2' : ''}`}
+        className={`w-full h-full relative overflow-hidden transition-all duration-300 ${dragging ? 'scale-105' : rotating ? 'scale-102' : 'scale-100'
+          } ${isSelected ? 'ring-4 ring-white ring-offset-2' : ''}`}
         style={{
           ...element3DStyle,
           transform: `rotate(${currentRotation}deg) ${dragging ? 'translateZ(8px)' : rotating ? 'translateZ(4px)' : 'translateZ(0)'}`,
@@ -695,15 +697,15 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
         {/* Contenu principal de l'élément */}
         <div className="relative w-full h-full flex flex-col items-center justify-center p-3 text-center">
           {/* Icône avec effet 3D */}
-          <div 
+          <div
             className="mb-2 filter drop-shadow-lg transform transition-transform duration-200"
-            style={{ 
+            style={{
               color: theme.primary,
               textShadow: `0 2px 4px ${theme.shadow}`,
               fontSize: `${Math.max(16, Math.min(32, width / 4))}px`
             }}
           >
-            {getElementIcon(type, { 
+            {getElementIcon(type, {
               size: Math.max(16, Math.min(32, width / 4)),
               strokeWidth: 2.5
             })}
@@ -736,9 +738,9 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
 
         {/* Indicateur de glissement amélioré */}
         {dragging && (
-          <div 
+          <div
             className="absolute inset-0 flex items-center justify-center backdrop-blur-md"
-            style={{ 
+            style={{
               borderRadius: elementBorderRadius,
               clipPath: elementClipPath,
               background: `linear-gradient(135deg, ${theme.primary}40, ${theme.secondary}60)`
@@ -1463,7 +1465,9 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
 
         return {
           nom,
-          type: isCustom ? form.customTypeName : form.type,
+          // type: isCustom ? form.customTypeName : form.type,
+          type: isCustom ? "custom" : form.type,
+          customTypeName: isCustom ? form.customTypeName : undefined,
           eventId: Number(form.eventId),
           position: {
             left: 100 + index * 20,
@@ -1485,14 +1489,15 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
         id: element.id || element.elementId,
         nom: element.nom || element.name,
         type: element.type,
-        eventId: Number(element.eventId),
+        eventId: Number(element.event?.id || form.eventId), // Utiliser form.eventId comme fallback
         position: element.position || { left: 100, top: 100 },
         width: element.width || (form.type === "custom" ? Number(form.customWidth) : ELEMENT_TYPES.find((t) => t.value === element.type)?.width || 100),
         height: element.height || (form.type === "custom" ? Number(form.customHeight) : ELEMENT_TYPES.find((t) => t.value === element.type)?.height || 100),
         rotation: element.rotation || 0,
         color: element.color || "#d1d5db",
-        shape: element.shape || (form.type === "custom" ? form.shape : null), // Propagation de shape
+        shape: element.shape || (form.type === "custom" ? form.shape : null), // Propagation correcte de shape
       }));
+      console.log("Éléments formatés:", formattedElements);
 
       setForm({
         type: "porte_entree",
@@ -1719,29 +1724,29 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
   const [zoomLevel, setZoomLevel] = useState(1);
   const canvasRef = useRef(null);
 
-  useEffect(() => {
-    if (isAuthenticated && event?.id) {
-      getMyEvents()
-        .then((response) => {
-          console.log("Événements chargés:", response);
-          setEvents(response);
-        })
-        .catch((err) => {
-          console.error("Erreur chargement événements:", err);
-          toast.error("Erreur lors du chargement des événements");
-        });
+ useEffect(() => {
+  if (isAuthenticated && event?.id) {
+    getMyEvents()
+      .then((response) => {
+        console.log("Événements chargés:", response);
+        setEvents(response);
+      })
+      .catch((err) => {
+        console.error("Erreur chargement événements:", err);
+        toast.error("Erreur lors du chargement des événements");
+      });
 
-      getElementsByEventId(event.id)
-        .then((response) => {
-          console.log("Éléments chargés:", response);
-          setElements(response);
-        })
-        .catch((err) => {
-          console.error("Erreur chargement éléments:", err);
-          toast.error("Erreur lors du chargement des éléments");
-        });
-    }
-  }, [isAuthenticated, event?.id]);
+    getElementsByEventId(event.id)
+      .then((response) => {
+        console.log("Éléments chargés avec shapes:", response); // Vérifiez que shape est inclus
+        setElements(response);
+      })
+      .catch((err) => {
+        console.error("Erreur chargement éléments:", err);
+        toast.error("Erreur lors du chargement des éléments");
+      });
+  }
+}, [isAuthenticated, event?.id]);
 
   useEffect(() => {
     console.log("État tables mis à jour:", tables);
