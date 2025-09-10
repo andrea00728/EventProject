@@ -7,6 +7,8 @@ import { FirebaseAuthGuard } from 'src/guards/firebase-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, resolve } from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Controller('admin')
 export class AdminController {
@@ -97,12 +99,14 @@ async googleAuthRedirect(@Req() req, @Res() res: Response) {
   @UseInterceptors(
     FileInterceptor('photo', {
       storage: diskStorage({
-        destination: resolve(__dirname, '../../../../uploads'),
-        filename: (req, file, callback) => {
-          const uniqueName =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          callback(null, `${uniqueName}${ext}`);
+        destination: (req, file, cb) => {
+          const uploadDir = path.join(process.cwd(), 'uploads');
+          if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+          cb(null, uploadDir);
+        },
+        filename: (req, file, cb) => {
+          const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`;
+          cb(null, uniqueName);
         },
       }),
     }),
@@ -112,9 +116,10 @@ async googleAuthRedirect(@Req() req, @Res() res: Response) {
     @Body() body: any,
     @UploadedFile() photo?: Express.Multer.File,
   ) {
-    console.log('photo rec : ', photo)
+    console.log('photo reçue :', photo);
     return this.adminService.updateAdmin(id, body, photo?.filename);
   }
+
 
 
   @UseGuards(AuthGuard('jwt'))

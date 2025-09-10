@@ -204,42 +204,54 @@ async updateEvent(eventId: number, dto: UpdateEventDto, file?: Express.Multer.Fi
     });
   }
 
-  async deleteEvent(id: number, userId: string): Promise<{ message: string }> {
-    try {
-      const event = await this.evenementRepository.findOne({
-        where: { id, user: { id: userId } },
-        relations: ['user', 'tables', 'invites'],
-      });
-      if (!event) {
-        throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de le supprimer`);
-      }
-
-      const user = await this.userRepo.findOneBy({ id: userId });
-      if (!user) throw new NotFoundException('Utilisateur introuvable');
-
-      const notification = this.notificationRepository.create({
-        title: "Suppression d'un évènement",
-        message: `${user.name} a supprimé l'événement ${event.nom}.`,
-        type: 'warning',
-        date: new Date(),
-      });
-      await this.notificationRepository.save(notification);
-      this.notificationGateway.emitDeleteEventForAdmin({
-        ...notification,
-        date: notification.date.toISOString(),
-      });
-
-      await this.evenementRepository.manager.delete('Invite', { event: { id } });
-      await this.evenementRepository.manager.delete('TableEvent', { event: { id } });
-      await this.evenementRepository.remove(event);
-
-      console.log(`Événement ID ${id} supprimé`);
-      return { message: 'Événement supprimé avec succès' };
-    } catch (error) {
-      console.error('Erreur lors de la suppression de l\'événement:', error);
-      throw error;
+async deleteEvent(id: number, userId: string): Promise<{ message: string }> {
+  try {
+    const event = await this.evenementRepository.findOne({
+      where: { id, user: { id: userId } },
+      relations: ['user', 'tables', 'invites'],
+    });
+    if (!event) {
+      throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de le supprimer`);
     }
+
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    // --- Supprimer l'image associée ---
+    if (event.imageUrl) {
+      const imagePath = path.join(process.cwd(), event.imageUrl.replace('/','\\'));
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
+    // Création de la notification
+    const notification = this.notificationRepository.create({
+      title: "Suppression d'un évènement",
+      message: `${user.name} a supprimé l'événement ${event.nom}.`,
+      type: 'warning',
+      date: new Date(),
+    });
+    await this.notificationRepository.save(notification);
+    this.notificationGateway.emitDeleteEventForAdmin({
+      ...notification,
+      date: notification.date.toISOString(),
+    });
+
+    // Suppression des relations
+    await this.evenementRepository.manager.delete('Invite', { event: { id } });
+    await this.evenementRepository.manager.delete('TableEvent', { event: { id } });
+
+    // Suppression de l'événement
+    await this.evenementRepository.remove(event);
+
+    console.log(`Événement ID ${id} supprimé`);
+    return { message: 'Événement supprimé avec succès' };
+  } catch (error) {
+    console.error('Erreur lors de la suppression de l\'événement:', error);
+    throw error;
   }
+}
 
   async findManagerEvents(utilisateur_id: string): Promise<Evenement[]> {
     return this.evenementRepository.find({
