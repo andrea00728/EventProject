@@ -31,4 +31,7 @@ export class Payment {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
+
+  @Column({ default: 'paid' })
+  status: string;
 }

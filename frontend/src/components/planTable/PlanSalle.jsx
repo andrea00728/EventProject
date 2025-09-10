@@ -2098,7 +2098,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           <div className="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-indigo-200/50 rounded-br-lg"></div>
         </div>
 
-        <style >{`
+        <style jsx>{`
           @keyframes slide-down {
             from { 
               opacity: 0; 

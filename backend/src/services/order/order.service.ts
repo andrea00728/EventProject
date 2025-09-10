@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DeepPartial, Like } from 'typeorm';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
+import { Repository, DeepPartial, Like, DataSource } from 'typeorm';
 import { Order } from '../../entities/order.entity';
 import { OrderItem } from '../../entities/order-item.entity';
 import { TableEvent } from '../../entities/Table';
@@ -34,68 +34,70 @@ export class OrderService {
     private paymentRepository: Repository<Payment>,
     @InjectRepository(Personnel)
     private personnelRepository: Repository<Personnel>,
-    
-    
+    @InjectDataSource()
+    private dataSource: DataSource
   ) {}
 
   async createOrder(tableId: number, items: { menuItemId: number; quantity: number }[], nom?: string, email?: string): Promise<Order> {
-    console.log(`Création d'une commande pour tableId: ${tableId}`);
-    const table = await this.tableEventRepository.findOne({ where: { id: tableId }, relations: ['event'] });
-    if (!table) {
-      console.error(`Tableau non trouvé pour tableId: ${tableId}`);
-      throw new NotFoundException('Tableau non trouvé');
-    }
-
-    for (const item of items) {
-      const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
-      if (!menuItem) {
-        console.error(`Article de menu non trouvé pour menuItemId: ${item.menuItemId}`);
-        throw new NotFoundException(`Article de menu ${item.menuItemId} non trouvé`);
+    return await this.dataSource.transaction(async (manager) => {
+      console.log(`Création d'une commande pour tableId: ${tableId}`);
+      const table = await manager.getRepository(TableEvent).findOne({ where: { id: tableId }, relations: ['event'] });
+      if (!table) {
+        console.error(`Tableau non trouvé pour tableId: ${tableId}`);
+        throw new NotFoundException('Tableau non trouvé');
       }
-      if (menuItem.stock < item.quantity) {
-        console.error(`Stock insuffisant pour ${menuItem.name}. Disponible: ${menuItem.stock}, Demandé: ${item.quantity}`);
-        throw new BadRequestException(`Stock insuffisant pour ${menuItem.name}. Disponible: ${menuItem.stock}, Demandé: ${item.quantity}`);
-      }
-    }
 
-    const order = this.orderRepository.create({
-      table,
-      nom: nom,
-      email: email,
-      orderDate: new Date(),
-      status: 'pending',
-      paymentStatus: 'unpaid',
-      total: 0,
+      for (const item of items) {
+        const menuItem = await manager.getRepository(MenuItem).findOne({ where: { id: item.menuItemId } });
+        if (!menuItem) {
+          console.error(`Article de menu non trouvé pour menuItemId: ${item.menuItemId}`);
+          throw new NotFoundException(`Article de menu ${item.menuItemId} non trouvé`);
+        }
+        if (menuItem.stock < item.quantity) {
+          console.error(`Stock insuffisant pour ${menuItem.name}. Disponible: ${menuItem.stock}, Demandé: ${item.quantity}`);
+          throw new BadRequestException(`Stock insuffisant pour ${menuItem.name}. Disponible: ${menuItem.stock}, Demandé: ${item.quantity}`);
+        }
+      }
+
+      const order = manager.getRepository(Order).create({
+        table,
+        nom: nom,
+        email: email,
+        orderDate: new Date(),
+        status: 'pending',
+        paymentStatus: 'unpaid',
+        total: 0,
+      });
+      const savedOrder = await manager.getRepository(Order).save(order);
+      console.log(`Commande créée avec ID: ${savedOrder.id}`);
+
+      const orderItems = await Promise.all(
+        items.map(async (item) => {
+          const menuItem = await manager.getRepository(MenuItem).findOne({ where: { id: item.menuItemId } });
+          if (!menuItem) throw new NotFoundException(`Article de menu ${item.menuItemId} non trouvé`);
+          const subtotal = menuItem.price * item.quantity;
+
+          menuItem.stock -= item.quantity;
+          await manager.getRepository(MenuItem).save(menuItem);
+          console.log(`Stock mis à jour pour menuItemId: ${menuItem.id}, nouveau stock: ${menuItem.stock}`);
+
+          return manager.getRepository(OrderItem).create({
+            order: savedOrder,
+            menuItem: menuItem as MenuItem,
+            quantity: item.quantity,
+            subtotal,
+          } as DeepPartial<OrderItem>);
+        }),
+      );
+
+      const total = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+      savedOrder.total = total;
+
+      savedOrder.items = await manager.getRepository(OrderItem).save(orderItems);
+      const finalOrder = await manager.getRepository(Order).save(savedOrder);
+      this.ordersGateway.notifyNewOrder(finalOrder);
+      return finalOrder;
     });
-    const savedOrder = await this.orderRepository.save(order);
-    console.log(`Commande créée avec ID: ${savedOrder.id}`);
-
-    const orderItems = await Promise.all(
-      items.map(async (item) => {
-        const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
-        if (!menuItem) throw new NotFoundException(`Article de menu ${item.menuItemId} non trouvé`);
-        const subtotal = menuItem.price * item.quantity;
-
-        menuItem.stock -= item.quantity;
-        await this.menuItemRepository.save(menuItem);
-        console.log(`Stock mis à jour pour menuItemId: ${menuItem.id}, nouveau stock: ${menuItem.stock}`);
-
-        return this.orderItemRepository.create({
-          order: savedOrder,
-          menuItem: menuItem as MenuItem,
-          quantity: item.quantity,
-          subtotal,
-        } as DeepPartial<OrderItem>);
-      }),
-    );
-
-    const total = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
-    savedOrder.total = total;
-
-    savedOrder.items = await this.orderItemRepository.save(orderItems);
-    const finalOrder = await this.orderRepository.save(savedOrder);
-    this.ordersGateway.notifyNewOrder(finalOrder);
-    return finalOrder;
   }
 
   async findOrdersByTable(tableId: number): Promise<(Order & { total: number })[]> {
@@ -110,15 +112,15 @@ export class OrderService {
   }
 
   async cancelOrder(orderId: number, userId: string): Promise<{ message: string }> {
-    try {
+    return await this.dataSource.transaction(async (manager) => {
       console.log(`Début de cancelOrder pour orderId: ${orderId}, userId: ${userId}`);
-      const user = await this.userRepository.findOne({ where: { id: userId } });
+      const user = await manager.getRepository(User).findOne({ where: { id: userId } });
       if (!user || user.role !== 'caissier') {
         console.error(`Accès non autorisé pour userId: ${userId}`);
         throw new UnauthorizedException('Seul un caissier peut annuler une commande');
       }
 
-      const order = await this.orderRepository.findOne({
+      const order = await manager.getRepository(Order).findOne({
         where: { id: orderId },
         relations: ['items', 'items.menuItem', 'payments', 'table', 'table.event'],
       });
@@ -128,11 +130,13 @@ export class OrderService {
       }
       console.log(`Commande trouvée: ${JSON.stringify(order, null, 2)}`);
 
-      // Supprimer les paiements associés
+      // Marquer les paiements comme remboursés
       if (order.payments && order.payments.length > 0) {
-        console.log(`Suppression des paiements pour orderId: ${orderId}`);
-        await this.paymentRepository.delete({ orderId });
-        console.log(`Paiements supprimés pour orderId: ${orderId}`);
+        console.log(`Marquage des paiements comme remboursés pour orderId: ${orderId}`);
+        for (const payment of order.payments) {
+          payment.status = 'refunded';
+          await manager.getRepository(Payment).save(payment);
+        }
       }
 
       // Restaurer le stock des articles
@@ -142,14 +146,14 @@ export class OrderService {
             console.error(`MenuItem manquant pour orderItem: ${orderItem.id}`);
             throw new NotFoundException(`Article de menu non trouvé pour orderItem ${orderItem.id}`);
           }
-          const menuItem = await this.menuItemRepository.findOne({ where: { id: orderItem.menuItem.id } });
+          const menuItem = await manager.getRepository(MenuItem).findOne({ where: { id: orderItem.menuItem.id } });
           if (!menuItem) {
             console.error(`MenuItem non trouvé pour menuItemId: ${orderItem.menuItem.id}`);
             throw new NotFoundException(`Article de menu non trouvé pour menuItemId ${orderItem.menuItem.id}`);
           }
           menuItem.stock += orderItem.quantity;
           console.log(`Mise à jour du stock pour menuItem: ${menuItem.id}, nouveau stock: ${menuItem.stock}`);
-          await this.menuItemRepository.save(menuItem);
+          await manager.getRepository(MenuItem).save(menuItem);
         }
       } else {
         console.warn(`Aucun article trouvé pour orderId: ${orderId}`);
@@ -157,8 +161,14 @@ export class OrderService {
 
       // Mettre à jour le solde si la commande était payée
       if (order.paymentStatus === 'paid' && order.table?.event) {
+        order.paymentStatus = 'refunded';
+        order.refundDate = new Date();
+        order.refundReason = 'Commande annulée';
+        order.refundedBy = user;
+        await manager.getRepository(Order).save(order);
+
         const eventId = order.table.event.id;
-        const paidOrders = await this.orderRepository.find({
+        const paidOrders = await manager.getRepository(Order).find({
           where: {
             paymentStatus: 'paid',
             table: { event: { id: eventId } },
@@ -169,34 +179,85 @@ export class OrderService {
           .filter((ord) => ord.id !== orderId)
           .reduce((sum, ord) => sum + ord.total, 0);
 
-        let balance = await this.balanceRepository.findOne({ where: { eventId } });
+        let balance = await manager.getRepository(Balance).findOne({ where: { eventId } });
         if (balance) {
           balance.total = updatedTotal;
           balance.updatedAt = new Date();
-          await this.balanceRepository.save(balance);
+          await manager.getRepository(Balance).save(balance);
           console.log(`Solde mis à jour pour eventId: ${eventId}, total: ${updatedTotal}`);
         }
       }
 
-      // Supprimer la commande
-      console.log(`Suppression de la commande: ${orderId}`);
-      await this.orderRepository.delete(orderId);
-      console.log(`Commande supprimée avec succès: ${orderId}`);
-
       // Émettre l'événement Socket.IO
       this.ordersGateway.handleOrderDeleted({ id: orderId });
 
-      return { message: 'Commande annulée et supprimée avec succès' };
-    } catch (error) {
-      console.error(`Erreur dans cancelOrder pour orderId: ${orderId}`, {
-        message: error.message,
-        stack: error.stack,
-      });
-      if (error instanceof NotFoundException || error instanceof UnauthorizedException) {
-        throw error;
+      return { message: 'Commande annulée avec succès' };
+    });
+  }
+
+  async refundOrder(orderId: number, userId: string, refundReason: string): Promise<{ message: string }> {
+    return await this.dataSource.transaction(async (manager) => {
+      console.log(`Début de refundOrder pour orderId: ${orderId}, userId: ${userId}`);
+      const user = await manager.getRepository(User).findOne({ where: { id: userId } });
+      if (!user || user.role !== 'caissier') {
+        console.error(`Accès non autorisé pour userId: ${userId}`);
+        throw new UnauthorizedException('Seul un caissier peut rembourser une commande');
       }
-      throw new BadRequestException(`Échec de l'annulation de la commande: ${error.message}`);
-    }
+
+      const order = await manager.getRepository(Order).findOne({
+        where: { id: orderId },
+        relations: ['items', 'items.menuItem', 'payments', 'table', 'table.event'],
+      });
+      if (!order) {
+        console.log(`Commande non trouvée pour orderId: ${orderId}`);
+        throw new NotFoundException('Commande non trouvée');
+      }
+
+      if (order.paymentStatus === 'refunded') {
+        throw new BadRequestException('La commande est déjà remboursée');
+      }
+      if (order.paymentStatus !== 'paid') {
+        throw new BadRequestException('Seules les commandes payées peuvent être remboursées');
+      }
+
+      // Mettre à jour le statut de la commande
+      order.paymentStatus = 'refunded';
+      order.refundDate = new Date();
+      order.refundReason = refundReason;
+      order.refundedBy = user;
+      await manager.getRepository(Order).save(order);
+
+      // Restaurer le stock
+      for (const orderItem of order.items || []) {
+        const menuItem = await manager.getRepository(MenuItem).findOne({ where: { id: orderItem.menuItem.id } });
+        if (!menuItem) {
+          throw new NotFoundException(`Article de menu non trouvé pour menuItemId ${orderItem.menuItem.id}`);
+        }
+        menuItem.stock += orderItem.quantity;
+        await manager.getRepository(MenuItem).save(menuItem);
+      }
+
+      // Mettre à jour les paiements
+      if (order.payments && order.payments.length > 0) {
+        for (const payment of order.payments) {
+          payment.status = 'refunded';
+          await manager.getRepository(Payment).save(payment);
+        }
+      }
+
+      // Mettre à jour le solde
+      const eventId = order.table.event.id;
+      let balance = await manager.getRepository(Balance).findOne({ where: { eventId } });
+      if (balance) {
+        balance.total -= order.total;
+        balance.updatedAt = new Date();
+        await manager.getRepository(Balance).save(balance);
+      }
+
+      this.ordersGateway.handleOrderRefunded({ id: orderId, paymentStatus: 'refunded' });
+
+      return { message: 'Commande remboursée avec succès' };
+    });
   }
 
   async findAllOrders(): Promise<(Order)[]> {
@@ -210,77 +271,79 @@ export class OrderService {
   }
 
   async updateOrder(orderId: number, tableId: number, items: { menuItemId: number; quantity: number }[]): Promise<Order> {
-    console.log(`Mise à jour de la commande orderId: ${orderId}`);
-    const order = await this.orderRepository.findOne({
-      where: { id: orderId },
-      relations: ['items', 'items.menuItem', 'table'],
+    return await this.dataSource.transaction(async (manager) => {
+      console.log(`Mise à jour de la commande orderId: ${orderId}`);
+      const order = await manager.getRepository(Order).findOne({
+        where: { id: orderId },
+        relations: ['items', 'items.menuItem', 'table'],
+      });
+      if (!order) {
+        console.error(`Commande non trouvée pour orderId: ${orderId}`);
+        throw new NotFoundException('Commande non trouvée');
+      }
+
+      for (const orderItem of order.items) {
+        const menuItem = orderItem.menuItem;
+        if (menuItem) {
+          menuItem.stock += orderItem.quantity;
+          await manager.getRepository(MenuItem).save(menuItem);
+          console.log(`Stock restauré pour menuItemId: ${menuItem.id}, nouveau stock: ${menuItem.stock}`);
+        }
+      }
+
+      await manager.getRepository(OrderItem).delete({ order: { id: orderId } });
+
+      for (const item of items) {
+        const menuItem = await manager.getRepository(MenuItem).findOne({ where: { id: item.menuItemId } });
+        if (!menuItem) {
+          console.error(`Article de menu non trouvé pour menuItemId: ${item.menuItemId}`);
+          throw new NotFoundException(`Article de menu ${item.menuItemId} non trouvé`);
+        }
+        if (menuItem.stock < item.quantity) {
+          console.error(`Stock insuffisant pour ${menuItem.name}. Disponible: ${menuItem.stock}, Demandé: ${item.quantity}`);
+          throw new BadRequestException(
+            `Stock insuffisant pour ${menuItem.name}. Disponible: ${menuItem.stock}, Demandé: ${item.quantity}`,
+          );
+        }
+      }
+
+      const newOrderItems = await Promise.all(
+        items.map(async (item) => {
+          const menuItem = await manager.getRepository(MenuItem).findOne({ where: { id: item.menuItemId } });
+          if (!menuItem) throw new NotFoundException(`Article de menu ${item.menuItemId} non trouvé`);
+
+          menuItem.stock -= item.quantity;
+          await manager.getRepository(MenuItem).save(menuItem);
+          console.log(`Stock mis à jour pour menuItemId: ${menuItem.id}, nouveau stock: ${menuItem.stock}`);
+
+          const subtotal = menuItem.price * item.quantity;
+
+          return manager.getRepository(OrderItem).create({
+            order,
+            menuItem,
+            quantity: item.quantity,
+            subtotal,
+          });
+        }),
+      );
+
+      order.items = await manager.getRepository(OrderItem).save(newOrderItems);
+
+      if (order.table.id !== tableId) {
+        const newTable = await manager.getRepository(TableEvent).findOne({ where: { id: tableId } });
+        if (!newTable) {
+          console.error(`Tableau non trouvé pour tableId: ${tableId}`);
+          throw new NotFoundException('Tableau non trouvé');
+        }
+        order.table = newTable;
+      }
+
+      const total = newOrderItems.reduce((sum, item) => sum + item.subtotal, 0);
+      order.total = total;
+
+      console.log(`Commande mise à jour pour orderId: ${orderId}`);
+      return manager.getRepository(Order).save(order);
     });
-    if (!order) {
-      console.error(`Commande non trouvée pour orderId: ${orderId}`);
-      throw new NotFoundException('Commande non trouvée');
-    }
-
-    for (const orderItem of order.items) {
-      const menuItem = orderItem.menuItem;
-      if (menuItem) {
-        menuItem.stock += orderItem.quantity;
-        await this.menuItemRepository.save(menuItem);
-        console.log(`Stock restauré pour menuItemId: ${menuItem.id}, nouveau stock: ${menuItem.stock}`);
-      }
-    }
-
-    await this.orderItemRepository.delete({ order: { id: orderId } });
-
-    for (const item of items) {
-      const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
-      if (!menuItem) {
-        console.error(`Article de menu non trouvé pour menuItemId: ${item.menuItemId}`);
-        throw new NotFoundException(`Article de menu ${item.menuItemId} non trouvé`);
-      }
-      if (menuItem.stock < item.quantity) {
-        console.error(`Stock insuffisant pour ${menuItem.name}. Disponible: ${menuItem.stock}, Demandé: ${item.quantity}`);
-        throw new BadRequestException(
-          `Stock insuffisant pour ${menuItem.name}. Disponible: ${menuItem.stock}, Demandé: ${item.quantity}`,
-        );
-      }
-    }
-
-    const newOrderItems = await Promise.all(
-      items.map(async (item) => {
-        const menuItem = await this.menuItemRepository.findOne({ where: { id: item.menuItemId } });
-        if (!menuItem) throw new NotFoundException(`Article de menu ${item.menuItemId} non trouvé`);
-
-        menuItem.stock -= item.quantity;
-        await this.menuItemRepository.save(menuItem);
-        console.log(`Stock mis à jour pour menuItemId: ${menuItem.id}, nouveau stock: ${menuItem.stock}`);
-
-        const subtotal = menuItem.price * item.quantity;
-
-        return this.orderItemRepository.create({
-          order,
-          menuItem,
-          quantity: item.quantity,
-          subtotal,
-        });
-      }),
-    );
-
-    order.items = await this.orderItemRepository.save(newOrderItems);
-
-    if (order.table.id !== tableId) {
-      const newTable = await this.tableEventRepository.findOne({ where: { id: tableId } });
-      if (!newTable) {
-        console.error(`Tableau non trouvé pour tableId: ${tableId}`);
-        throw new NotFoundException('Tableau non trouvé');
-      }
-      order.table = newTable;
-    }
-
-    const total = newOrderItems.reduce((sum, item) => sum + item.subtotal, 0);
-    order.total = total;
-
-    console.log(`Commande mise à jour pour orderId: ${orderId}`);
-    return this.orderRepository.save(order);
   }
 
   async updateOrderStatus(orderId: number, status: 'pending' | 'preparing' | 'served' | 'canceled', email: string): Promise<Order> {
@@ -302,90 +365,92 @@ export class OrderService {
     order.status = status;
     console.log(`Statut mis à jour pour orderId: ${orderId}, nouveau statut: ${status}`);
     
-    // Émettre un événement WebSocket pour notifier les clients
     this.ordersGateway.handleStatusUpdate({ id: orderId, status });
     
     return this.orderRepository.save(order);
   }
 
   async validatePayment(orderId: number, email: string): Promise<Order> {
-    console.log(`Validation du paiement pour orderId: ${orderId}, email: ${email}`);
-    const personnel = await this.personnelRepository.findOne({ where: { email: email } });
-    if (!personnel || personnel.role !== 'caissier') {
-      console.error(`Accès non autorisé pour email: ${email}`);
-      throw new UnauthorizedException('Seul un caissier peut valider un paiement');
-    }
+    return await this.dataSource.transaction(async (manager) => {
+      console.log(`Validation du paiement pour orderId: ${orderId}, email: ${email}`);
+      const personnel = await manager.getRepository(Personnel).findOne({ where: { email: email } });
+      if (!personnel || personnel.role !== 'caissier') {
+        console.error(`Accès non autorisé pour email: ${email}`);
+        throw new UnauthorizedException('Seul un caissier peut valider un paiement');
+      }
 
-    const order = await this.orderRepository.findOne({
-      where: { id: orderId },
-      relations: ['items', 'table', 'table.event'],
-    });
-    if (!order) {
-      console.error(`Commande non trouvée pour orderId: ${orderId}`);
-      throw new NotFoundException('Commande non trouvée');
-    }
-    if (order.paymentStatus === 'paid') {
-      console.error(`Commande déjà payée pour orderId: ${orderId}`);
-      throw new BadRequestException('La commande est déjà payée');
-    }
+      const order = await manager.getRepository(Order).findOne({
+        where: { id: orderId },
+        relations: ['items', 'table', 'table.event'],
+      });
+      if (!order) {
+        console.error(`Commande non trouvée pour orderId: ${orderId}`);
+        throw new NotFoundException('Commande non trouvée');
+      }
+      if (order.paymentStatus === 'paid') {
+        console.error(`Commande déjà payée pour orderId: ${orderId}`);
+        throw new BadRequestException('La commande est déjà payée');
+      }
 
-    const total = order.total;
-    const eventId = order.table.event.id;
+      const total = order.total;
+      const eventId = order.table.event.id;
 
-    const payment = this.paymentRepository.create({
-      order,
-      orderId,
-      personnel,
-      amount: total,
-      event: order.table.event,
-      eventId,
-      paymentDate: Date(),
-    });
-    await this.paymentRepository.save(payment);
-    console.log(`Paiement enregistré pour orderId: ${orderId}`);
-
-    order.paymentStatus = 'paid';
-    const savedOrder = await this.orderRepository.save(order);
-    console.log(`Statut de paiement mis à jour pour orderId: ${orderId}, statut: paid`);
-
-    const paidOrders = await this.orderRepository.find({
-      where: {
-        paymentStatus: 'paid',
-        table: {
-          event: { id: eventId }
-        }
-      },
-      relations: ['table']
-    });
-
-    const updatedTotal = paidOrders.reduce((sum, ord) => sum + ord.total, 0);
-
-    let balance = await this.balanceRepository.findOne({ where: { eventId } });
-
-    if (!balance) {
-      balance = this.balanceRepository.create({
-        total: updatedTotal,
-        updatedAt: new Date(),
+      const payment = manager.getRepository(Payment).create({
+        order,
+        orderId,
+        personnel,
+        amount: total,
         event: order.table.event,
         eventId,
+        paymentDate: new Date(),
+        status: 'paid',
       });
-    } else {
-      balance.total = updatedTotal;
-      balance.updatedAt = new Date();
-    }
+      await manager.getRepository(Payment).save(payment);
+      console.log(`Paiement enregistré pour orderId: ${orderId}`);
 
-    await this.balanceRepository.save(balance);
-    console.log(`Solde mis à jour pour eventId: ${eventId}, total: ${updatedTotal}`);
+      order.paymentStatus = 'paid';
+      const savedOrder = await manager.getRepository(Order).save(order);
+      console.log(`Statut de paiement mis à jour pour orderId: ${orderId}, statut: paid`);
 
-    const existingOrder = await this.orderRepository.findOne({
-      where: { id: orderId },
-      relations: ['items', 'items.menuItem', 'table', 'table.event', 'payments'],
+      const paidOrders = await manager.getRepository(Order).find({
+        where: {
+          paymentStatus: 'paid',
+          table: {
+            event: { id: eventId }
+          }
+        },
+        relations: ['table']
+      });
+
+      const updatedTotal = paidOrders.reduce((sum, ord) => sum + ord.total, 0);
+
+      let balance = await manager.getRepository(Balance).findOne({ where: { eventId } });
+
+      if (!balance) {
+        balance = manager.getRepository(Balance).create({
+          total: updatedTotal,
+          updatedAt: new Date(),
+          event: order.table.event,
+          eventId,
+        });
+      } else {
+        balance.total = updatedTotal;
+        balance.updatedAt = new Date();
+      }
+
+      await manager.getRepository(Balance).save(balance);
+      console.log(`Solde mis à jour pour eventId: ${eventId}, total: ${updatedTotal}`);
+
+      const existingOrder = await manager.getRepository(Order).findOne({
+        where: { id: orderId },
+        relations: ['items', 'items.menuItem', 'table', 'table.event', 'payments'],
+      });
+      if (!existingOrder) {
+        console.error(`Commande non trouvée après mise à jour pour orderId: ${orderId}`);
+        throw new NotFoundException('Commande non trouvée');
+      }
+      return existingOrder;
     });
-    if (!existingOrder) {
-      console.error(`Commande non trouvée après mise à jour pour orderId: ${orderId}`);
-      throw new NotFoundException('Commande non trouvée');
-    }
-    return existingOrder;
   }
 
   async getBalance(eventId: number, userId: string): Promise<number> {
@@ -465,7 +530,7 @@ export class OrderService {
     }
     const orders = await this.orderRepository.find({
       where: { table: { event: { id: eventId } }, paymentStatus: 'refunded' },
-      relations: ['items', 'items.menuItem', 'table', 'table.event'],
+      relations: ['items', 'items.menuItem', 'table', 'table.event', 'refundedBy'],
     });
     if (!orders || orders.length === 0) {
       throw new NotFoundException(`Aucune commande remboursée trouvée pour l'événement avec l'id ${eventId}`);

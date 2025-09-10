@@ -9,8 +9,6 @@ import { TableEvent } from 'src/entities/Table';
 import { EvenementService } from 'src/services/evenement/evenement.service';
 import { ForfaitModule } from '../forfait/forfait.module';
 import { NotificationModule } from '../notification/notification.module';
-
-// IMPORT du LocationModule pour utiliser LocationService
 import { LocationModule } from '../localisation/localisation.module';
 import { NotificationEntity } from 'src/entities/notification.entity';
 
@@ -25,7 +23,7 @@ import { NotificationEntity } from 'src/entities/notification.entity';
   providers: [EvenementService],
   exports: [
     EvenementService,
-    TypeOrmModule, // <-- AJOUTER ÇA POUR EXPORTER LES REPOSITORIES
+    TypeOrmModule,
   ],
 })
 export class EvenementModule {}
