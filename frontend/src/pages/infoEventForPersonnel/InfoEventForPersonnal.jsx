@@ -28,6 +28,8 @@ export const InfoEventForPersonnal = () => {
 
         const data = await res.json();
         setEventData(data);
+        console.log("Données de l'événement récupérées :", data);
+      
       } catch (err) {
         setError(err.message);
       } finally {
@@ -51,7 +53,7 @@ export const InfoEventForPersonnal = () => {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Informations de l'Événement</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Informations de l'Événement : {eventData.eventName}</h1>
           <div className="h-1 w-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
         </div>
 
