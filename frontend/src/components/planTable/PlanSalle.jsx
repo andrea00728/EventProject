@@ -2035,7 +2035,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
         )}
 
         {/* Sélecteur taille canvas */}
-        <div className="flex items-center gap-2 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl p-2 border border-white/30 snap-center flex-shrink-0">
+        <div className="flex items-center gap-2 bg-gradient-to-br from-blue-500 to-indigo-600 backdrop-blur-xl rounded-2xl shadow-xl p-2 border border-white/30 snap-center flex-shrink-0 transition-all duration-300 hover:scale-105">
           <select
             value={canvasSize.label}
             onChange={(e) => {
@@ -2047,7 +2047,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                 toast.success(`Taille du canvas : ${selectedSize.label}`);
               }
             }}
-            className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white px-3 py-2 lg:px-4 lg:py-2 rounded-2xl shadow-xl cursor-pointer transition hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm text-sm"
+            className=" text-white px-3 py-2 lg:px-4 lg:py-2 rounded-2xl cursor-pointer transition hover:scale-105 hover:shadow-2xl backdrop-blur-sm text-sm"
             title="Sélectionner la taille du canvas"
           >
             {[...CANVAS_SIZES, { label: "Personnalisé", width: 0, height: 0 }].map(size => (
