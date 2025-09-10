@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { BarChart, Camera, Coffee, DoorClosed, Edit, Flower, GlassWater, LogOut, Monitor, Music, Package, Plus, RefreshCcw, User, Trash } from "lucide-react";
+import { BarChart, Camera, Coffee, DoorClosed, Edit, Flower, GlassWater, LogOut, Monitor, Music, Package, Plus, RefreshCcw, User, Trash, Box, Shapes } from "lucide-react";
 import { useStateContext } from "../../context/ContextProvider";
 import {
   updateTablePosition,
@@ -21,6 +21,7 @@ import {
 } from "../../services/elementService";
 import { textControll, getMaxCapacity } from "../../services/controll_champs/controll_champs";
 import toast, { Toaster } from "react-hot-toast";
+import { MdTableBar } from "react-icons/md";
 
 // Définition des types de tables avec leurs dimensions
 const TABLE_TYPES = [
@@ -1985,7 +1986,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           onClick={() => setShowTableModal(true)}
           className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition hover:bg-indigo-700"
         >
-          <Plus className="w-5 h-5" />
+          <MdTableBar className="w-5 h-5" />
           <span className="hidden sm:inline">Ajouter des tables</span>
         </button>
 
@@ -1993,7 +1994,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           onClick={() => setShowElementModal(true)}
           className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition hover:bg-purple-700"
         >
-          <Plus className="w-5 h-5" />
+          <Box className="w-5 h-5" />
           <span className="hidden sm:inline">Ajouter des éléments</span>
         </button>
 
