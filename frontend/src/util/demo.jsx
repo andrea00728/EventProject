@@ -1675,13 +1675,13 @@ export default function DemoPlanSalle() {
               >
                 Sauvegarder
               </button>
-                <button
+              <button
                 type="button"
                 onClick={() => handleDeleteTable(editingTable.id)}
                 className="flex-1 px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
               >
-                Supprimer 
-                </button>
+                Supprimer
+              </button>
             </div>
           </div>
         )}
@@ -1872,6 +1872,68 @@ export default function DemoPlanSalle() {
         authForm={authForm}
         setAuthForm={setAuthForm}
       />
+      {/* Instructions */}
+      <div className="max-w-full sm:max-w-4xl w-full mx-auto p-3 sm:p-6 animate-fade-in animate-slide-up">
+        <h2 className="text-base sm:text-2xl font-extrabold text-indigo-700 mb-3 sm:mb-4 tracking-wide drop-shadow-sm">
+          Instructions
+        </h2>
+        <ul className="list-disc list-inside space-y-2 text-gray-700 prose prose-sm sm:prose">
+          <li>
+            Ajoutez une table avec le bouton
+            <span className="inline-block px-3 py-1 rounded-xl font-semibold text-indigo-600 bg-indigo-100">
+              Table
+            </span>. Déplacez-la librement dans la zone.
+          </li>
+
+          <li>
+            Modifiez une table : sur desktop, double-cliquez dessus ; sur mobile, utilisez le bouton
+            <span className="inline-block px-3 py-1 rounded-xl font-semibold text-indigo-600 bg-indigo-100">
+              Edit
+            </span>
+            pour ajuster nom, capacité ou forme.
+          </li>
+
+          <li>Les chaises s'organisent automatiquement selon la forme et la capacité de la table.</li>
+          <li>Tables rondes/ovales : chaises en cercle. Tables carrées/rectangulaires : chaises sur les côtés.</li>
+
+          <li>
+            Ajoutez des invités à une table via le bouton
+            <span className="inline-flex items-center gap-1 px-3 py-1 ml-1 rounded-xl font-semibold text-emerald-600 bg-emerald-100 hover:bg-emerald-200 transition-colors">
+              <User className="w-5 h-5" />
+              Invité
+            </span>.
+          </li>
+
+          <li>Ajoutez plusieurs tables en répétant l'opération.</li>
+          <li>Glissez-déposez pour réorganiser les tables et optimiser l'espace.</li>
+
+          <li>
+            Ajoutez des éléments décoratifs pour personnaliser votre plan avec le bouton
+            <span className="inline-flex items-center gap-1 px-3 py-1 ml-1 rounded-xl font-semibold text-teal-600 bg-teal-100 hover:bg-teal-200 transition-colors">
+              <MdTableBar className="w-5 h-5" />
+              Élément
+            </span>.
+          </li>
+        </ul>
+
+        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-800 font-medium flex items-center">
+            <Clock className="w-4 h-4 mr-1" /> Version démo limitée :
+          </p>
+          <p className="text-xs text-amber-700 mt-1">
+            • Maximum {MAX_TABLES} tables<br />
+            • Maximum {MAX_GUESTS} invités<br />
+            • Maximum 5 éléments<br />
+            • Connectez-vous pour des fonctionnalités illimitées
+          </p>
+        </div>
+        <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-500 italic">
+          <strong>Astuces :</strong><br />
+          • Glissez-déposez pour déplacer tables et éléments<br />
+          • Cliquez sur une chaise occupée pour sélectionner l'invité, puis sur une chaise libre pour le déplacer<br />
+          • Utilisez les boutons de zoom pour ajuster la vue
+        </p>
+      </div>
     </div>
   );
 }
