@@ -61,7 +61,7 @@ export const InfoEventForPersonnal = () => {
           {eventData.image && (
             <div className="relative h-64 bg-gradient-to-r from-blue-600 to-purple-600">
               <img 
-                src={url+eventData.image} 
+                src={eventData.image ? url + eventData.image : "/images/marketers-with-magnifier-research-marketing-opportunities-chart-marketing-research-marketing-analysis-market-opportunities-and-problems-concept-flat-modern-illustration-vector.jpg"} 
                 alt="Événement" 
                 className="w-full h-full object-cover opacity-90"
               />
