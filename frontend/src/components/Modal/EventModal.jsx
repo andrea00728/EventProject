@@ -3,6 +3,7 @@ import { getLocations, getSallesByLocation, createSalle, saveLocation, updateEve
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { url } from '../../api/url';
 
 // Configuration de l'icône personnalisée pour le marqueur de la carte
 const blueIcon = new L.Icon({
@@ -323,7 +324,7 @@ const EventModal = ({ isOpen, onClose, event, onSave }) => {
                 
                 {event.imageUrl && (
                   <div className="bg-gradient-to-r from-gray-50/50 to-gray-100/50 p-6 rounded-2xl border border-gray-100/50">
-                    <img src={event.imageUrl} alt="Événement" className="max-w-sm mx-auto rounded-xl shadow-lg" />
+                    <img src={url+event.imageUrl} alt="Événement" className="max-w-sm mx-auto rounded-xl shadow-lg" />
                   </div>
                 )}
                 
