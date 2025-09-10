@@ -172,10 +172,12 @@ const MenuGrid = ({ menus, addToCart, formatPrice = (val) => formatter.format(va
                     {selectedItem.photo ? (
                       <img
                         src={`${import.meta.env.VITE_API_BASE_URL}${selectedItem.photo}`}
+
                         alt={selectedItem.name}
                         className="w-32 h-32 sm:w-40 sm:h-40 object-cover rounded-xl shadow-md border border-gray-100"
                         loading="lazy"
                       />
+                      
                     ) : (
                       <div className="w-32 h-32 sm:w-40 sm:h-40 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl flex items-center justify-center text-teal-500 text-sm font-medium shadow-inner">
                         <div className="text-center">

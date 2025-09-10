@@ -1,15 +1,17 @@
-import React, { useEffect, useState } from 'react'
-import { Navigate, Outlet, useNavigate } from 'react-router-dom'
+import React, { useEffect, useState } from 'react';
+import { Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { useStateContext } from '../../context/ContextProvider';
 import { Users, Calendar, UserCheck, Utensils, LogOut } from 'lucide-react';
 import LogoutModal from '../../pages/Admin/LogoutModal';
 import { useDarkMode } from '../../context/DarkModeContext';
+import { RxCaretRight, RxCaretLeft } from 'react-icons/rx';
 
 export const PersonnelAutre = () => {
-  const { user, isAuthenticated, handleLogout, setUser, role } = useStateContext()
-  const navigate = useNavigate()
+  const { user, isAuthenticated, handleLogout, setUser, role } = useStateContext();
+  const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // État pour le menu mobile
 
   const handleShowLogout = () => setShowLogoutModal(true);
   const confirmLogout = async () => {
@@ -22,17 +24,13 @@ export const PersonnelAutre = () => {
   const cancelLogout = () => {
     setShowLogoutModal(false);
   };
+  
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
 
   console.log(user);
 
-  // useEffect(() => {
-  //   if (isAuthenticated) {
-  //     if (!user) {
-  //       return <Navigate to={"/"}/>
-
-  //     }
-  //   }
-  // }, [isAuthenticated, user]);
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
@@ -51,12 +49,38 @@ export const PersonnelAutre = () => {
     { id: 'personnel', label: 'Personnel', icon: Users, path: 'personnel_list' }
   ];
 
-  const handleNavigation = (path) => navigate(path);
+  const handleNavigation = (path) => {
+    navigate(path);
+    setIsMenuOpen(false);
+  };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar sobre et pro */}
-      <aside className="w-72 fixed top-0 left-0 h-full bg-white shadow-lg flex flex-col justify-between overflow-hidden">
+    <div className="flex min-h-screen bg-gray-100 relative">
+      {/* Bouton pour ouvrir/fermer le menu mobile */}
+      <div className={`
+        absolute top-4 z-40 lg:hidden
+        transform transition-transform duration-300
+        ${isMenuOpen ? 'left-80' : 'left-2'}
+      `}>
+        <button
+          onClick={toggleMenu}
+          className="p-3 bg-white/30 backdrop-blur-sm shadow-xl border border-gray-200/60 transition-all hover:scale-105 transform hover:-rotate-12"
+        >
+          {isMenuOpen ? (
+            <RxCaretLeft className="w-6 h-6 text-gray-700" />
+          ) : (
+            <RxCaretRight className="w-6 h-6 text-gray-700" />
+          )}
+        </button>
+      </div>
+
+      {/* Sidebar - responsive */}
+      <aside className={`
+        fixed top-0 h-full w-72 bg-white shadow-lg flex flex-col justify-between overflow-hidden z-30
+        transform transition-transform duration-300
+        ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0
+      `}>
         {/* Logo et info utilisateur */}
         <div>
           <div className="p-6 border-b border-gray-200">
@@ -100,12 +124,11 @@ export const PersonnelAutre = () => {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 ml-72 p-8">
+      <main className="flex-1 p-8 lg:ml-72 transition-all duration-300 max-w-[100%]">
         <header className="bg-white shadow-md rounded-2xl p-6 mb-6 border border-gray-100">
           <h2 className="text-3xl font-bold text-gray-900">Gestion des Événements</h2>
           <p className="text-gray-500 mt-2">Bienvenue sur votre tableau de bord</p>
         </header>
-
         <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-8 min-h-[600px]">
           <Outlet />
         </div>
@@ -118,8 +141,5 @@ export const PersonnelAutre = () => {
         darkMode={darkMode}
       />
     </div>
-
-
-
-  )
-}
+  );
+};

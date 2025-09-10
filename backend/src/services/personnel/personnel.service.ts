@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as nodemailer from 'nodemailer';
 import { NotificationService } from '../notification/notification.service';
 import { Admin } from 'src/entities/Admin';
+import { Invite } from 'src/entities/Invite';
 @Injectable()
 export class PersonnelService {
   constructor(
@@ -22,6 +23,9 @@ export class PersonnelService {
 
     private jwtService:JwtService,
     private readonly notificationService:NotificationService,
+
+    @InjectRepository(Invite)
+    private inviteRepository: Repository<Invite>,
   ) {}
 
   private transporter=nodemailer.createTransport({
@@ -279,6 +283,54 @@ async findCountPersonnelByEvenement(evenementId: number): Promise<number> {
     where: { isActive: true },
   });
 }
+
+// trouver evenement par id de personnel
+async findEventsByPersonnelId(personnelId: number): Promise<Evenement[]> {
+    const personnel = await this.personnelRepository.findOne({
+      where: { id: personnelId },
+      relations: ['evenement'],
+    });
+
+    if (!personnel) {
+      throw new NotFoundException('Personnel not found');
+    }
+
+    return [personnel.evenement];
+  }
+
+
+  // trouver invite par personnel
+  async findInviteByPersonnelId(personnelId: number): Promise<Invite[]> {
+    const personnel = await this.personnelRepository.findOne({
+      where: { id: personnelId },
+      relations: ['evenement'],
+    });
+
+    if (!personnel) {
+      throw new NotFoundException('Personnel not found');
+    }
+
+    const invites = await this.inviteRepository.find({
+      where: { event: { id: personnel.evenement.id } },
+      relations: ['table']
+    });
+
+    return invites;
+  }
+
+  // trouver personnel dans evenement
+  async findPersonnelByEventId (eventId: number): Promise<Personnel[]> {
+    const personnel = await this.personnelRepository.find({
+           where: {
+        evenement: {
+          id: eventId,
+        },
+      },
+
+    });
+
+    return personnel;
+  }
 
 
 }

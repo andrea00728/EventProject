@@ -59,7 +59,7 @@ export default function MenuRestauration() {
     price: "",
     category: "",
     stock: "",
-    photo: null,
+    photo: "",
   });
   const [menuForm, setMenuForm] = useState({ name: "" });
   const [editingItem, setEditingItem] = useState(null);

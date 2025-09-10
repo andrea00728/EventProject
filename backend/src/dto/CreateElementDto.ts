@@ -1,4 +1,4 @@
-import { IsNumber, IsString, IsOptional, IsObject } from 'class-validator';
+import { IsNumber, IsString, IsOptional, IsObject , IsIn} from 'class-validator';
 
 export class CreateElementDto {
   @IsNumber()
@@ -9,6 +9,10 @@ export class CreateElementDto {
 
   @IsString()
   type: string;
+
+  @IsOptional()
+  @IsString()
+  customTypeName?: string;
 
   @IsOptional()
   @IsObject()
@@ -33,4 +37,9 @@ export class CreateElementDto {
   @IsOptional()
   @IsString()
   color?: string; // Ajout du champ color
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['rond', 'carre', 'rectangle', 'triangle', null]) // Validation de shape
+  shape?: 'rond' | 'carre' | 'rectangle' | 'triangle' | null;
 }
