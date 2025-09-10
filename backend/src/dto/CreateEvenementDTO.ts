@@ -1,3 +1,4 @@
+// src/dto/CreateEvenementDTO.ts
 import {
   IsBoolean,
   IsDateString,
@@ -16,7 +17,7 @@ export enum EventType {
   REUNION = 'reunion',
   ANNIVERSAIRE = 'anniversaire',
   ENGAGEMENT = 'engagement',
-  FIANCAILLES = 'fiançailles', // Ajout de fiançailles
+  FIANCAILLES = 'fiançailles',
   AUTRE = 'autre',
 }
 
@@ -45,7 +46,7 @@ export class CreateEventDto {
   date_fin: string;
 
   @IsNotEmpty()
-  @IsNumberString() // Accepter les chaînes qui représentent des nombres
+  @IsNumberString()
   locationId: number;
 
   @IsNotEmpty()
@@ -68,7 +69,6 @@ export class CreateEventDto {
   @IsNumber()
   maxGuest?: number;
 }
-
 
 export class UpdateEventDto {
   @IsOptional()
@@ -102,5 +102,8 @@ export class UpdateEventDto {
   @IsOptional()
   @IsBoolean()
   isPublic?: boolean;
-  imageUrl: string | null | undefined;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string | null;
 }

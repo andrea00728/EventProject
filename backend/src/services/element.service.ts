@@ -62,7 +62,7 @@ async createElement(dto: CreateElementDto, utilisateurId: string): Promise<Eleme
 
     const element = this.elementRepository.create({
       nom: nomElement,
-      type: dto.type,
+      type: dto.type === 'custom' && dto.customTypeName ? dto.customTypeName : dto.type, // Utiliser customTypeName si disponible
       position: dto.position || { left: 0, top: 0 },
       rotation: dto.rotation || 0,
       width: dto.width,
@@ -72,6 +72,7 @@ async createElement(dto: CreateElementDto, utilisateurId: string): Promise<Eleme
       event,
     });
 
+    console.log('Élément créé:', element); // Log pour débogage
     const saved = await this.elementRepository.save(element);
     elements.push(saved);
   }
@@ -81,15 +82,17 @@ async createElement(dto: CreateElementDto, utilisateurId: string): Promise<Eleme
     `${elements.length} nouveaux éléments ont été ajoutés à l’événement ${event.nom}.`,
   );
 
-  return elements; // Vérifie que `shape` est inclus dans chaque élément retourné
+  return elements;
 }
 
   async findByEvent(eventId: number): Promise<Element[]> {
-    return this.elementRepository.find({
-      where: { event: { id: eventId } },
-      relations: ['event'],
-    });
-  }
+  const elements = await this.elementRepository.find({
+    where: { event: { id: eventId } },
+    relations: ['event'],
+  });
+  console.log('Éléments récupérés:', elements); // Vérifiez si `shape` est présent
+  return elements;
+}
 
   async updateElementPosition(elementId: number, position: { left: number; top: number }): Promise<Element> {
     const element = await this.elementRepository.findOne({

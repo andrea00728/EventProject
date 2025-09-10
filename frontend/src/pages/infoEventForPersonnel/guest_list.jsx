@@ -12,11 +12,13 @@ const GuestList = () => {
 
   // Filtrage des invités
   const filteredGuests = guests.filter(guest => {
-    const matchesSearch = guest.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      guest.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      guest.company.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = guest.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      guest.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      guest.company?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'Tous' || guest.status === statusFilter;
+    const matchesStatus = statusFilter === 'Tous' ||
+      (statusFilter === 'Confirmé' && guest.checkedIn) ||
+      (statusFilter === 'En attente' && !guest.checkedIn);
 
     return matchesSearch && matchesStatus;
   });
@@ -41,17 +43,19 @@ const GuestList = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
+  const API_URL = `${import.meta.env.VITE_API_BASE_URL}/personnel`;
+
   useEffect(() => {
     // recuperer le personnel depuis le backend avec son email
     async function fetchPersonnel() {
       try {
-        const response = await fetch(`http://localhost:3000/personnel/by-email/${personnelEmail}`);
+        const response = await fetch(`${API_URL}/by-email/${personnelEmail}`);
         const personnelData = await response.json();
         console.log("Personnel Data: ", personnelData.id);
         const personnelId = personnelData.id;
 
         // recuperer les invites associes a l'evenement du personnel
-        const invitesResponse = await fetch(`http://localhost:3000/personnel/invite/${personnelId}`);
+        const invitesResponse = await fetch(`${API_URL}/invite/${personnelId}`);
         const invitesData = await invitesResponse.json();
         console.log("Invites Data: ", invitesData);
 
@@ -155,7 +159,6 @@ const GuestList = () => {
                     <option value="Tous">Tous les statuts</option>
                     <option value="Confirmé">Confirmés</option>
                     <option value="En attente">En attente</option>
-                    <option value="Annulé">Annulés</option>
                   </select>
                 </div>
               </div>

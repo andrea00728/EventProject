@@ -123,7 +123,7 @@
       case "cuisinier":
         return <Navigate to="/personnelCuisine" replace />;
       case "organisateur":
-        return <Navigate to="/pagepublic" replace />;
+        return <Navigate to="/" replace />;
       default:
         return <Navigate to={location.pathname || "/AdminAccueil"} replace />;
     }

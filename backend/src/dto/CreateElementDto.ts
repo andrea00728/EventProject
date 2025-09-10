@@ -11,6 +11,10 @@ export class CreateElementDto {
   type: string;
 
   @IsOptional()
+  @IsString()
+  customTypeName?: string;
+
+  @IsOptional()
   @IsObject()
   position?: { left: number; top: number };
 

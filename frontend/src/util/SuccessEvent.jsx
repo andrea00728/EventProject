@@ -6,6 +6,7 @@ import { getAllEvents } from "../services/evenementServ";
 import { FaCalendarAlt, FaClock } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import defaultImage from "../../public/images/bouquet.jpg"
+import { url } from "../api/url"; 
 
 const SuccessEvent = () => {
   const [allEvents, setAllEvents] = useState([]);
@@ -161,9 +162,9 @@ const SuccessEvent = () => {
                 <div key={event.id} className="group perspective-1000  flex-1 min-w-0 max-w-[280px]">
                   <div className="relative transform-gpu transition-all duration-700 ease-in-out hover:rotate-y-3 hover:-translate-y-2 hover:scale-[1.02] shadow-xl hover:shadow-2xl hover:shadow-purple-200/50 rounded-2xl overflow-hidden bg-white/70 border border-white/80">
                     <div className="relative h-48 overflow-hidden">
-                      {event.image ? (
+                      {event.imageUrl ? (
                         <img
-                          src={event.image}
+                          src={url+event.imageUrl}
                           alt={event.nom}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ease-in-out"
                           onError={(e) => {
@@ -285,9 +286,9 @@ const SuccessEvent = () => {
                   <div key={event.id} className="p-2">
                     <div className="group relative shadow-lg rounded-2xl overflow-hidden bg-white/70 border border-white/80">
                       <div className="relative h-48 overflow-hidden">
-                        {event.image ? (
+                        {event.imageUrl ? (
                           <img
-                            src={event.image}
+                            src={url+event.imageUrl}
                             alt={event.nom}
                             className="w-full h-full object-cover"
                             onError={(e) => {
