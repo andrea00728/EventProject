@@ -737,304 +737,288 @@ const PublicEvents = () => {
         )}
 
         {/* Registration Modal */}
-        {isRegistrationModalOpen && (
-          <AnimatePresence>
-            <div
-              className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-              onClick={closeRegistrationModal}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0 }}
-                transition={{ duration: 0.3 }}
-                className="bg-white rounded-xl shadow-2xl w-1/2 mx-4 overflow-hidden max-h-[90vh] overflow-y-auto p-6"
-                onClick={(e) => e.stopPropagation()}
+{isRegistrationModalOpen && (
+  <AnimatePresence>
+    <div
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity duration-300"
+      onClick={closeRegistrationModal}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="bg-white rounded-2xl shadow-xl w-full max-w-lg sm:max-w-xl md:max-w-2xl mx-4 max-h-[90vh] overflow-y-auto p-6 sm:p-8"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col">
+          {/* Section formulaire */}
+          <div className="w-full">
+            {/* En-tête du formulaire */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 uppercase tracking-tight">
+                Inscription à {selectedEventName || "l'événement"}
+              </h2>
+              <button
+                onClick={closeRegistrationModal}
+                className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                aria-label="Fermer"
               >
-                <div className="flex flex-col lg:flex-row">
-                  {/* Section image - cachée sur mobile */}
-                  {/* <div className="hidden lg:block lg:w-1/2 bg-gray-100">
-                    <img
-                      src="/images/IMG1.jpg"
-                      alt="Événement"
-                      className="w-full h-full object-cover max-h-[65vh]"
-                    />
-                  </div> */}
-
-                  {/* Section formulaire */}
-                  <div className="w-full p-4 sm:p-6">
-                    {/* En-tête du formulaire */}
-                    <div className="flex items-start justify-between mb-6">
-                      <h2 className="text-xl sm:text-2xl font-bold text-slate-800 uppercase tracking-wide leading-tight">
-                        Inscription à {selectedEventName || "l'événement"}
-                      </h2>
-                      <button
-                        onClick={closeRegistrationModal}
-                        className="text-slate-400 hover:text-slate-600 ml-4"
-                      >
-                        <svg
-                          className="w-6 h-6"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-
-                    {/* Formulaire d'inscription */}
-                    <form onSubmit={handleSubmit}>
-                      <div className="space-y-4 mb-6">
-                        {/* Champ Nom */}
-                        <div className="flex flex-col gap-2">
-                          <label className="text-sm font-semibold text-gray-700 mb-1">
-                            Nom <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            name="nom"
-                            value={form.nom}
-                            onChange={handleChange}
-                            required
-                            placeholder="Votre nom"
-                            className={`border ${validationErrors.nom
-                                ? "border-red-500"
-                                : "border-gray-300"
-                              } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
-                            aria-invalid={validationErrors.nom ? "true" : "false"}
-                          />
-                          {validationErrors.nom && (
-                            <p className="text-red-500 text-sm mt-1 flex items-center">
-                              <svg
-                                className="h-4 w-4 mr-1"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                              </svg>
-                              {validationErrors.nom}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Champ Prénom */}
-                        <div className="flex flex-col gap-2">
-                          <label className="text-sm font-semibold text-gray-700 mb-1">
-                            Prénom <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            name="prenom"
-                            value={form.prenom}
-                            onChange={handleChange}
-                            required
-                            placeholder="Votre prénom"
-                            className={`border ${validationErrors.prenom
-                                ? "border-red-500"
-                                : "border-gray-300"
-                              } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
-                            aria-invalid={validationErrors.prenom ? "true" : "false"}
-                          />
-                          {validationErrors.prenom && (
-                            <p className="text-red-500 text-sm mt-1 flex items-center">
-                              <svg
-                                className="h-4 w-4 mr-1"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                              </svg>
-                              {validationErrors.prenom}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Champ Email */}
-                        <div className="flex flex-col gap-2">
-                          <label className="text-sm font-semibold text-gray-700 mb-1">
-                            Email <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="email"
-                            name="email"
-                            value={form.email}
-                            onChange={handleChange}
-                            required
-                            placeholder="Votre email"
-                            className={`border ${validationErrors.email
-                                ? "border-red-500"
-                                : "border-gray-300"
-                              } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
-                            aria-invalid={validationErrors.email ? "true" : "false"}
-                          />
-                          {validationErrors.email && (
-                            <p className="text-red-500 text-sm mt-1 flex items-center">
-                              <svg
-                                className="h-4 w-4 mr-1"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                              </svg>
-                              {validationErrors.email}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Champ Sexe */}
-                        <div className="flex flex-col gap-2">
-                          <label className="text-sm font-semibold text-gray-700 mb-1">
-                            Sexe <span className="text-red-500">*</span>
-                          </label>
-                          <select
-                            name="sex"
-                            value={form.sex}
-                            onChange={handleChange}
-                            required
-                            className={`border ${validationErrors.sex
-                                ? "border-red-500"
-                                : "border-gray-300"
-                              } rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 focus:ring-2 focus:ring-indigo-200 transition`}
-                            aria-invalid={validationErrors.sex ? "true" : "false"}
-                          >
-                            <option value="">-- Sélectionnez --</option>
-                            <option value="M">Masculin</option>
-                            <option value="F">Féminin</option>
-                          </select>
-                          {validationErrors.sex && (
-                            <p className="text-red-500 text-sm mt-1 flex items-center">
-                              <svg
-                                className="h-4 w-4 mr-1"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                              </svg>
-                              {validationErrors.sex}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Champ Événement Associé */}
-                        <div
-                          className={`flex items-center border border-gray-300 bg-gray-100 rounded-lg px-4 py-3 opacity-70 cursor-not-allowed`}
-                          role="button"
-                          tabIndex={-1}
-                          aria-disabled="true"
-                        >
-                          <input
-                            type="text"
-                            name="event"
-                            value={selectedEventName}
-                            readOnly
-                            disabled
-                            placeholder="Sélection désactivée"
-                            className="flex-grow bg-transparent outline-none cursor-not-allowed text-gray-500 placeholder-gray-400"
-                          />
-                        </div>
-
-                      </div>
-
-                      {error && (
-                        <p className="text-red-500 mt-6 text-center bg-red-50 py-3 rounded-xl flex items-center justify-center transition-all duration-200">
-                          <svg
-                            className="h-5 w-5 mr-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                          {error}
-                        </p>
-                      )}
-
-                      <div className="relative flex flex-col sm:flex-row items-center gap-4 pt-6 my-6 border-t border-slate-100">
-                        <button
-                          type="submit"
-                          disabled={isSubmitting}
-                          className={`absolute top-5 right-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg sm:rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-                            } ${selectedEvent?.id % 5 === 0
-                              ? "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
-                              : selectedEvent?.id % 5 === 1
-                                ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                                : selectedEvent?.id % 5 === 2
-                                  ? "bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600"
-                                  : selectedEvent?.id % 5 === 3
-                                    ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
-                                    : "bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600"
-                            }`}
-                        >
-                          {isSubmitting ? (
-                            <>
-                              <svg
-                                className="animate-spin h-5 w-5 mr-2 text-white"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                              >
-                                <circle
-                                  className="opacity-25"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                />
-                                <path
-                                  className="opacity-75"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                />
-                              </svg>
-                              Enregistrement...
-                            </>
-                          ) : (
-                            "Confirmer l'inscription"
-                          )}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </motion.div>
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             </div>
-          </AnimatePresence>
-        )}
+
+            {/* Formulaire d'inscription */}
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-5 mb-8">
+                {/* Champ Nom */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Nom <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="nom"
+                    value={form.nom}
+                    onChange={handleChange}
+                    required
+                    placeholder="Votre nom"
+                    className={`border ${validationErrors.nom
+                        ? "border-red-500"
+                        : "border-gray-200"
+                      } rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 placeholder-gray-400 text-gray-900`}
+                    aria-invalid={validationErrors.nom ? "true" : "false"}
+                  />
+                  {validationErrors.nom && (
+                    <p className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg
+                        className="h-4 w-4 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      {validationErrors.nom}
+                    </p>
+                  )}
+                </div>
+
+                {/* Champ Prénom */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Prénom <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="prenom"
+                    value={form.prenom}
+                    onChange={handleChange}
+                    required
+                    placeholder="Votre prénom"
+                    className={`border ${validationErrors.prenom
+                        ? "border-red-500"
+                        : "border-gray-200"
+                      } rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 placeholder-gray-400 text-gray-900`}
+                    aria-invalid={validationErrors.prenom ? "true" : "false"}
+                  />
+                  {validationErrors.prenom && (
+                    <p className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg
+                        className="h-4 w-4 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      {validationErrors.prenom}
+                    </p>
+                  )}
+                </div>
+
+                {/* Champ Email */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    placeholder="Votre email"
+                    className={`border ${validationErrors.email
+                        ? "border-red-500"
+                        : "border-gray-200"
+                      } rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 placeholder-gray-400 text-gray-900`}
+                    aria-invalid={validationErrors.email ? "true" : "false"}
+                  />
+                  {validationErrors.email && (
+                    <p className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg
+                        className="h-4 w-4 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      {validationErrors.email}
+                    </p>
+                  )}
+                </div>
+
+                {/* Champ Sexe */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Sexe <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="sex"
+                    value={form.sex}
+                    onChange={handleChange}
+                    required
+                    className={`border ${validationErrors.sex
+                        ? "border-red-500"
+                        : "border-gray-200"
+                      } rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 text-gray-900 bg-white`}
+                    aria-invalid={validationErrors.sex ? "true" : "false"}
+                  >
+                    <option value="">-- Sélectionnez --</option>
+                    <option value="M">Masculin</option>
+                    <option value="F">Féminin</option>
+                  </select>
+                  {validationErrors.sex && (
+                    <p className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg
+                        className="h-4 w-4 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      {validationErrors.sex}
+                    </p>
+                  )}
+                </div>
+
+                {/* Champ Événement Associé */}
+                <div
+                  className="flex items-center border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 opacity-70 cursor-not-allowed"
+                  role="button"
+                  tabIndex={-1}
+                  aria-disabled="true"
+                >
+                  <input
+                    type="text"
+                    name="event"
+                    value={selectedEventName}
+                    readOnly
+                    disabled
+                    placeholder="Sélection désactivée"
+                    className="flex-grow bg-transparent outline-none cursor-not-allowed text-gray-500 placeholder-gray-400"
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <p className="text-red-500 text-sm mt-6 text-center bg-red-50 py-3 rounded-lg flex items-center justify-center transition-all duration-200">
+                  <svg
+                    className="h-5 w-5 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {error}
+                </p>
+              )}
+
+              <div className="flex justify-end pt-6 border-t border-gray-100">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-md ${isSubmitting
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    }`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg
+                        className="animate-spin h-5 w-5 mr-2 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      Enregistrement...
+                    </>
+                  ) : (
+                    "Confirmer l'inscription"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  </AnimatePresence>
+)}
 
         {/* Success Modal */}
         {isSuccessModalOpen && (

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { BarChart, Camera, Coffee, DoorClosed, Edit, Flower, GlassWater, LogOut, Monitor, Music, Package, Plus, RefreshCcw, User, Trash } from "lucide-react";
+import { BarChart, Camera, Coffee, DoorClosed, Edit, Flower, GlassWater, LogOut, Monitor, Music, Package, Plus, RefreshCcw, User, Trash, Box } from "lucide-react";
 import { useStateContext } from "../../context/ContextProvider";
 import {
   updateTablePosition,
@@ -28,6 +28,7 @@ const TABLE_TYPES = [
   { value: "rectangle", label: "Table rectangulaire", width: 112, height: 64 },
   { value: "ovale", label: "Table ovale", width: 112, height: 64 },
   { value: "carree", label: "Table carrée", width: 80, height: 80 },
+  { value: "triangle", label: "Table triangulaire", width: 90, height: 78 }
 ];
 
 // Définir les tailles prédéfinies pour le canvas
@@ -63,8 +64,8 @@ function snapToAngle(value, angleStep = 15) {
 // Calcule les positions des chaises autour de la table en fonction de son type et de sa capacité
 function getChairPositions(type, capacity, tableWidth, tableHeight) {
   const positions = [];
-  const chairSize = 30; // Taille de la chaise (en pixels)
-  const minDistanceFromTable = 0; // Distance minimale entre la chaise et la table
+  const chairSize = 30;
+  const minDistanceFromTable = 0;
 
   if (type === "ronde" || type === "ovale") {
     const centerX = tableWidth / 2;
@@ -80,7 +81,55 @@ function getChairPositions(type, capacity, tableWidth, tableHeight) {
       const y = centerY + radius * Math.sin(angle) - chairSize / 2;
       positions.push({ left: `${x}px`, top: `${y}px` });
     }
+  } else if (type === "triangle") {
+    // Logique spécifique pour les tables triangulaires
+    const centerX = tableWidth / 2;
+    const centerY = tableHeight / 2;
+
+    // Points du triangle (triangle équilatéral orienté vers le haut)
+    const trianglePoints = [
+      { x: centerX, y: centerY - tableHeight * 0.3 }, // Sommet du haut
+      { x: centerX - tableWidth * 0.4, y: centerY + tableHeight * 0.2 }, // Coin bas gauche
+      { x: centerX + tableWidth * 0.4, y: centerY + tableHeight * 0.2 }  // Coin bas droit
+    ];
+
+    // Répartir les chaises sur les 3 côtés du triangle
+    const chairsPerSide = Math.ceil(capacity / 3);
+    let chairIndex = 0;
+
+    // Distribuer les chaises sur chaque côté
+    for (let side = 0; side < 3 && chairIndex < capacity; side++) {
+      const point1 = trianglePoints[side];
+      const point2 = trianglePoints[(side + 1) % 3];
+
+      const chairsOnThisSide = Math.min(chairsPerSide, capacity - chairIndex);
+
+      for (let i = 0; i < chairsOnThisSide; i++) {
+        const ratio = (i + 1) / (chairsOnThisSide + 1);
+        const x = point1.x + (point2.x - point1.x) * ratio;
+        const y = point1.y + (point2.y - point1.y) * ratio;
+
+        // Calculer la normale vers l'extérieur pour positionner la chaise
+        const dx = point2.x - point1.x;
+        const dy = point2.y - point1.y;
+        const normalX = -dy;
+        const normalY = dx;
+        const normalLength = Math.sqrt(normalX * normalX + normalY * normalY);
+
+        const offsetDistance = chairSize / 2 + minDistanceFromTable + 10;
+        const offsetX = (normalX / normalLength) * offsetDistance;
+        const offsetY = (normalY / normalLength) * offsetDistance;
+
+        positions.push({
+          left: `${x + offsetX - chairSize / 2}px`,
+          top: `${y + offsetY - chairSize / 2}px`
+        });
+
+        chairIndex++;
+      }
+    }
   } else {
+    // Logique existante pour rectangle et carré
     const perimetre = 2 * (tableWidth + tableHeight);
     const spacingBetweenChairs = perimetre / capacity;
     const topChairs = Math.round((tableWidth / spacingBetweenChairs));
@@ -325,12 +374,19 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       </button>
 
       <div
-        className={`border-4 border-indigo-400 shadow-md flex items-center justify-center ${table.type === "ronde" || table.type === "ovale" ? "rounded-full" : "rounded-md"
-          } w-full h-full bg-pink-200 relative transition-all duration-300 ${dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-md'
-          }`}
+        className={`border-4 border-indigo-400 shadow-md flex items-center justify-center 
+          ${table.type === "ronde" || table.type === "ovale" ? "rounded-full" :
+            table.type === "triangle" ? "triangle" : "rounded-md"} 
+          w-full h-full bg-pink-200 relative transition-all duration-300 
+          ${dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-md'}`}
         style={{
           transform: `rotate(${rotation}deg)`,
-          transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease'
+          transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease',
+          // Ajouter le clipPath pour le triangle
+          ...(table.type === "triangle" && {
+            clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+            borderRadius: '0'
+          })
         }}
       >
         <span className="font-bold text-indigo-700 select-none pointer-events-none">
@@ -372,8 +428,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
 }
 
 // Composant Element : représente un élément supplémentaire (porte, estrade, etc.)
-// Composant Element amélioré avec design moderne et réaliste
-function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, isSelected, zoomLevel, onDelete }) {
+function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, isSelected, zoomLevel, onDelete }) { // Ajout de onDelete en prop
   const { id, nom, type, position, width, height, rotation, color, shape } = element;
   const [dragging, setDragging] = useState(false);
   const [rotating, setRotating] = useState(false);
@@ -387,7 +442,7 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
     setCurrentRotation(rotation || 0);
   }, [position, rotation]);
 
-  // Gestion du drag avec la souris (logique inchangée)
+  // Gestion du drag avec la souris
   const handleMouseDown = (e) => {
     e.stopPropagation();
     if (onSelect) onSelect(id);
@@ -412,7 +467,7 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
     if (onMove) onMove(id, pos);
   };
 
-  // Gestion du touch pour mobile (logique inchangée)
+  // Gestion du touch pour mobile
   const handleTouchStart = (e) => {
     e.preventDefault();
     const touch = e.touches[0];
@@ -462,7 +517,7 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
     if (onMove) onMove(id, pos);
   };
 
-  // Gestion de la rotation (logique inchangée)
+  // Gestion de la rotation
   const handleRotate = (direction) => {
     setRotating(true);
     const angleStep = 15;
@@ -475,129 +530,52 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
     toast.success(`Élément ${nom} pivoté à ${newRotation}°`);
   };
 
-  // Fonction pour obtenir l'icône selon le type (améliorée)
+  // Fonction pour obtenir l'icône selon le type
   const getElementIcon = (type, props = {}) => {
     const iconMap = {
-      porte_entree: <DoorClosed {...props} />,
-      porte_sortie: <LogOut {...props} />,
-      estrade: <Monitor {...props} />,
-      buffet: <Coffee {...props} />,
-      piste_danse: <Music {...props} />,
-      bar: <GlassWater {...props} />,
-      ecran: <Monitor {...props} />,
-      photobooth: <Camera {...props} />,
-      decoration: <Flower {...props} />,
+      porte_entree: <DoorClosed {...props} />, // porte d'entrée
+      porte_sortie: <LogOut {...props} />, // porte de sortie
+      estrade: <Monitor {...props} />, // estrade / scène
+      buffet: <Coffee {...props} />, // buffet / restauration
+      piste_danse: <Music {...props} />, // piste de danse
+      bar: <GlassWater {...props} />, // bar
+      ecran: <Monitor {...props} />, // écran / projection
+      photobooth: <Camera {...props} />, // photobooth
+      decoration: <Flower {...props} />, // décoration
     };
 
     return iconMap[type] || <Package {...props} />;
   };
 
-  // Fonction pour obtenir les couleurs thématiques selon le type
-  const getElementTheme = (type) => {
-    const themes = {
-      porte_entree: {
-        primary: "#059669", // emerald-600
-        secondary: "#10b981", // emerald-500
-        accent: "#d1fae5", // emerald-100
-        shadow: "rgba(16, 185, 129, 0.3)",
-        gradient: "from-emerald-500 to-green-600"
-      },
-      porte_sortie: {
-        primary: "#dc2626", // red-600
-        secondary: "#ef4444", // red-500
-        accent: "#fecaca", // red-200
-        shadow: "rgba(239, 68, 68, 0.3)",
-        gradient: "from-red-500 to-rose-600"
-      },
-      estrade: {
-        primary: "#7c3aed", // violet-600
-        secondary: "#8b5cf6", // violet-500
-        accent: "#ddd6fe", // violet-200
-        shadow: "rgba(139, 92, 246, 0.3)",
-        gradient: "from-violet-500 to-purple-600"
-      },
-      buffet: {
-        primary: "#ea580c", // orange-600
-        secondary: "#f97316", // orange-500
-        accent: "#fed7aa", // orange-200
-        shadow: "rgba(249, 115, 22, 0.3)",
-        gradient: "from-orange-500 to-amber-600"
-      },
-      piste_danse: {
-        primary: "#db2777", // pink-600
-        secondary: "#ec4899", // pink-500
-        accent: "#fce7f3", // pink-100
-        shadow: "rgba(236, 72, 153, 0.3)",
-        gradient: "from-pink-500 to-rose-500"
-      },
-      bar: {
-        primary: "#0891b2", // cyan-600
-        secondary: "#06b6d4", // cyan-500
-        accent: "#cffafe", // cyan-100
-        shadow: "rgba(6, 182, 212, 0.3)",
-        gradient: "from-cyan-500 to-blue-500"
-      },
-      ecran: {
-        primary: "#4f46e5", // indigo-600
-        secondary: "#6366f1", // indigo-500
-        accent: "#e0e7ff", // indigo-200
-        shadow: "rgba(99, 102, 241, 0.3)",
-        gradient: "from-indigo-500 to-blue-600"
-      },
-      photobooth: {
-        primary: "#65a30d", // lime-600
-        secondary: "#84cc16", // lime-500
-        accent: "#ecfccb", // lime-100
-        shadow: "rgba(132, 204, 22, 0.3)",
-        gradient: "from-lime-500 to-green-500"
-      },
-      decoration: {
-        primary: "#c026d3", // fuchsia-600
-        secondary: "#d946ef", // fuchsia-500
-        accent: "#f5d0fe", // fuchsia-200
-        shadow: "rgba(217, 70, 239, 0.3)",
-        gradient: "from-fuchsia-500 to-pink-500"
-      }
-    };
 
-    return themes[type] || {
-      primary: "#6b7280",
-      secondary: "#9ca3af",
-      accent: "#f3f4f6",
-      shadow: "rgba(107, 114, 128, 0.3)",
-      gradient: "from-gray-500 to-slate-600"
+  // Fonction pour obtenir la couleur de bordure selon le type
+  const getBorderColor = (type) => {
+    const colorMap = {
+      porte_entree: "#10b981", // emerald-500
+      porte_sortie: "#f59e0b", // amber-500
+      estrade: "#8b5cf6", // violet-500
+      buffet: "#f97316", // orange-500
+      piste_danse: "#ec4899", // pink-500
+      bar: "#06b6d4", // cyan-500
+      ecran: "#6366f1", // indigo-500
+      photobooth: "#84cc16", // lime-500
+      decoration: "#d946ef", // fuchsia-500
     };
+    return colorMap[type] || "#6b7280";
   };
 
-  const theme = getElementTheme(type);
+  // Détermination dynamique de la forme (borderRadius et clipPath)
+  let elementBorderRadius = (shape === "rond" || type === "piste_danse") ? "50%" : "12px";
+  let elementClipPath = "";
+  if (shape === "triangle") {
+    elementClipPath = "polygon(50% 0%, 0% 100%, 100% 100%)"; // Triangle basique (pointé vers le haut)
+    elementBorderRadius = "0"; // Pas de radius pour triangle
+  }
 
-  // Détermination dynamique de la forme
-  // let elementBorderRadius = (shape === "rond" || type === "piste_danse") ? "50%" : "16px";
-  // let elementClipPath = "";
+  // Pour les overlays, on applique le même borderRadius et clipPath
+  let overlayBorderRadius = elementBorderRadius === "50%" ? "9999px" : "9px"; // Adapté pour overlays
 
-  // if (shape === "triangle") {
-  //   elementClipPath = "polygon(50% 8%, 92% 92%, 8% 92%)";
-  //   elementBorderRadius = "0";
-  // }
-const effectiveShape = shape || (type === "piste_danse" ? "rond" : "rectangle"); // Par défaut rectangle si shape est null
-let elementBorderRadius = effectiveShape === "rond" ? "50%" : effectiveShape === "carre" ? "0" : effectiveShape === "rectangle" ? "16px" : "0";
-let elementClipPath = effectiveShape === "triangle" ? "polygon(50% 8%, 92% 92%, 8% 92%)" : "";
-
-  // Styles 3D et réalistes
-  const element3DStyle = {
-  background: `linear-gradient(135deg, ${theme.accent} 0%, ${color || theme.secondary} 50%, ${theme.primary} 100%)`,
-  borderRadius: elementBorderRadius,
-  clipPath: elementClipPath,
-  boxShadow: `
-    0 8px 32px ${theme.shadow},
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1)
-  `,
-  border: `2px solid ${theme.primary}`,
-  position: 'relative',
-  overflow: 'hidden'
-};
-
+  // Dans le composant Element
   return (
     <div
       ref={elementRef}
@@ -609,8 +587,7 @@ let elementClipPath = effectiveShape === "triangle" ? "polygon(50% 8%, 92% 92%, 
         height: height * zoomLevel,
         zIndex: dragging || rotating ? 50 : 15,
         touchAction: 'none',
-        transition: dragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        filter: dragging ? 'brightness(1.1) saturate(1.2)' : 'none'
+        transition: dragging ? 'none' : 'all 0.2s ease'
       }}
       draggable
       onDragStart={(e) => {
@@ -628,13 +605,13 @@ let elementClipPath = effectiveShape === "triangle" ? "polygon(50% 8%, 92% 92%, 
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
     >
-      {/* Boutons de contrôle avec nouveau design */}
+      {/* Boutons de contrôle */}
       <button
         onClick={(e) => {
           e.stopPropagation();
           handleRotate("counterclockwise");
         }}
-        className={`absolute -top-3 -left-3 w-7 h-7 bg-gradient-to-r ${theme.gradient} text-white rounded-full flex items-center justify-center text-xs hover:scale-110 z-30 transition-all duration-200 shadow-lg ${rotating ? 'ring-2 ring-white ring-offset-2 animate-spin-slow' : ''} opacity-0 group-hover:opacity-100`}
+        className={`absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''} opacity-0 group-hover:opacity-100`}
         title="Pivoter à gauche"
       >
         <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(90deg)' }} />
@@ -645,7 +622,7 @@ let elementClipPath = effectiveShape === "triangle" ? "polygon(50% 8%, 92% 92%, 
           e.stopPropagation();
           handleRotate("clockwise");
         }}
-        className={`absolute -top-3 left-6 w-7 h-7 bg-gradient-to-r ${theme.gradient} text-white rounded-full flex items-center justify-center text-xs hover:scale-110 z-30 transition-all duration-200 shadow-lg ${rotating ? 'ring-2 ring-white ring-offset-2 animate-spin-slow' : ''} opacity-0 group-hover:opacity-100`}
+        className={`absolute -top-2 left-6 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''} opacity-0 group-hover:opacity-100`}
         title="Pivoter à droite"
       >
         <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(-90deg)' }} />
@@ -654,130 +631,96 @@ let elementClipPath = effectiveShape === "triangle" ? "polygon(50% 8%, 92% 92%, 
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onDelete(id);
+          onDelete(id); // Appeler onDelete avec l'ID de l'élément
         }}
-        className="absolute -top-3 -right-3 w-7 h-7 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full flex items-center justify-center text-xs hover:scale-110 z-30 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:from-red-600 hover:to-red-700"
+        className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-700 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
         title="Supprimer l'élément"
       >
         <Trash className="w-3 h-3" />
       </button>
 
-      {/* Corps de l'élément avec design 3D réaliste */}
+      {/* Corps de l'élément avec design amélioré */}
       <div
-        className={`w-full h-full relative overflow-hidden transition-all duration-300 ${dragging ? 'scale-105' : rotating ? 'scale-102' : 'scale-100'
-          } ${isSelected ? 'ring-4 ring-white ring-offset-2' : ''}`}
+        className={`w-full h-full relative overflow-hidden transition-all duration-300 ${dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-lg'} ${isSelected ? 'ring-2 ring-indigo-400 ring-offset-1' : ''}`}
         style={{
-          ...element3DStyle,
-          transform: `rotate(${currentRotation}deg) ${dragging ? 'translateZ(8px)' : rotating ? 'translateZ(4px)' : 'translateZ(0)'}`,
-          transition: rotating || dragging ? 'none' : 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, scale 0.3s ease'
+          backgroundColor: color || "#f3f4f6",
+          border: `3px solid ${getBorderColor(type)}`,
+          borderRadius: elementBorderRadius,
+          clipPath: elementClipPath,
+          transform: `rotate(${currentRotation}deg)`,
+          transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease'
         }}
       >
-        {/* Reflet lumineux sur le dessus */}
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            background: `linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%)`,
-            borderRadius: elementBorderRadius === "50%" ? "50%" : "14px",
-            clipPath: elementClipPath
-          }}
-        />
-
-        {/* Pattern de texture subtile */}
+        {/* Gradient overlay */}
         <div
           className="absolute inset-0 opacity-10"
           style={{
-            backgroundImage: `radial-gradient(circle at 20% 20%, ${theme.primary} 1px, transparent 1px),
-                             radial-gradient(circle at 80% 80%, ${theme.primary} 1px, transparent 1px)`,
-            backgroundSize: '20px 20px',
-            borderRadius: elementBorderRadius === "50%" ? "50%" : "14px",
+            background: `linear-gradient(135deg, ${getBorderColor(type)}, transparent 60%)`,
+            borderRadius: overlayBorderRadius,
             clipPath: elementClipPath
           }}
         />
 
-        {/* Contenu principal de l'élément */}
-        <div className="relative w-full h-full flex flex-col items-center justify-center p-3 text-center">
-          {/* Icône avec effet 3D */}
-          <div
-            className="mb-2 filter drop-shadow-lg transform transition-transform duration-200"
-            style={{
-              color: theme.primary,
-              textShadow: `0 2px 4px ${theme.shadow}`,
-              fontSize: `${Math.max(16, Math.min(32, width / 4))}px`
-            }}
-          >
-            {getElementIcon(type, {
-              size: Math.max(16, Math.min(32, width / 4)),
-              strokeWidth: 2.5
-            })}
+        {/* Pattern de fond subtil */}
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, ${getBorderColor(type)} 10px, ${getBorderColor(type)} 11px)`,
+            borderRadius: overlayBorderRadius,
+            clipPath: elementClipPath
+          }}
+        />
+
+        {/* Contenu de l'élément */}
+        <div className="relative w-full h-full flex flex-col items-center justify-center p-2 text-center">
+          {/* Icône */}
+          <div className="text-2xl mb-1 filter drop-shadow-sm">
+            {getElementIcon(type)}
           </div>
 
-          {/* Nom avec typographie améliorée */}
-          <div
-            className="font-bold text-gray-800 leading-tight break-words max-w-full bg-white/20 backdrop-blur-sm rounded-lg px-2 py-1"
+          {/* Nom */}
+          <span
+            className="font-bold text-gray-800 leading-tight break-words max-w-full"
             style={{
-              fontSize: `${Math.max(10, Math.min(16, width / 6))}px`,
-              textShadow: '0 1px 2px rgba(255,255,255,0.8)',
-              border: `1px solid rgba(255,255,255,0.3)`
+              fontSize: `${Math.max(10, Math.min(14, width / 8))}px`,
+              textShadow: '0 1px 2px rgba(255,255,255,0.8)'
             }}
           >
             {nom}
-          </div>
+          </span>
 
-          {/* Badge de type stylé */}
-          <div
-            className="mt-1 px-2 py-0.5 rounded-full text-white font-medium opacity-90"
-            style={{
-              fontSize: `${Math.max(8, Math.min(11, width / 10))}px`,
-              background: `linear-gradient(90deg, ${theme.primary}, ${theme.secondary})`,
-              boxShadow: `0 2px 8px ${theme.shadow}`
-            }}
+          {/* Type en petite taille */}
+          <span
+            className="text-gray-600 text-xs mt-1 opacity-75 capitalize"
+            style={{ fontSize: `${Math.max(8, Math.min(10, width / 12))}px` }}
           >
-            {ELEMENT_TYPES.find(t => t.value === type)?.label.toLowerCase() || type}
-          </div>
+            {ELEMENT_TYPES.find(t => t.value === type)?.label.replace(/^./, str => str.toLowerCase()) || type}
+          </span>
         </div>
 
-        {/* Indicateur de glissement amélioré */}
+        {/* Indicateur de glissement */}
         {dragging && (
-          <div
-            className="absolute inset-0 flex items-center justify-center backdrop-blur-md"
-            style={{
-              borderRadius: elementBorderRadius,
-              clipPath: elementClipPath,
-              background: `linear-gradient(135deg, ${theme.primary}40, ${theme.secondary}60)`
-            }}
-          >
-            <div className="text-white font-bold text-xs bg-black/30 px-3 py-1 rounded-full border border-white/20 backdrop-blur-sm">
+          <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center" style={{ borderRadius: overlayBorderRadius, clipPath: elementClipPath }}>
+            <div className="text-blue-700 font-bold text-xs bg-blue-100/80 px-2 py-1 rounded-full">
               Déplacement...
             </div>
           </div>
         )}
 
-        {/* Points de coin décoratifs pour formes non-triangulaires */}
-        {shape !== "triangle" && elementBorderRadius !== "50%" && (
+        {/* Points de coin pour le style (désactivés pour triangle car clip-path les coupe) */}
+        {shape !== "triangle" && (
           <>
-            <div className="absolute top-2 left-2 w-1.5 h-1.5 bg-white/60 rounded-full shadow-sm"></div>
-            <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-white/60 rounded-full shadow-sm"></div>
-            <div className="absolute bottom-2 left-2 w-1.5 h-1.5 bg-white/60 rounded-full shadow-sm"></div>
-            <div className="absolute bottom-2 right-2 w-1.5 h-1.5 bg-white/60 rounded-full shadow-sm"></div>
+            <div className="absolute top-1 left-1 w-1 h-1 bg-white/50 rounded-full"></div>
+            <div className="absolute top-1 right-1 w-1 h-1 bg-white/50 rounded-full"></div>
+            <div className="absolute bottom-1 left-1 w-1 h-1 bg-white/50 rounded-full"></div>
+            <div className="absolute bottom-1 right-1 w-1 h-1 bg-white/50 rounded-full"></div>
           </>
-        )}
-
-        {/* Effet de bordure lumineuse pour les éléments sélectionnés */}
-        {isSelected && (
-          <div
-            className="absolute -inset-0.5 opacity-60 animate-pulse"
-            style={{
-              background: `linear-gradient(45deg, ${theme.primary}, ${theme.secondary}, ${theme.primary})`,
-              borderRadius: elementBorderRadius === "50%" ? "50%" : "18px",
-              clipPath: elementClipPath,
-              zIndex: -1
-            }}
-          />
         )}
       </div>
     </div>
   );
 }
+
 // Modal pour créer des tables
 function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, eventId }) {
   const [form, setForm] = useState({
@@ -841,6 +784,7 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
     setForm((prev) => ({ ...prev, eventId: event.id }));
   };
 
+  // Fonction onSubmit corrigée pour TableCreationModal (ligne ~759)
   const onSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -890,8 +834,8 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
         guests: table.guests || [],
       }));
 
-      setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: eventId || 0 });
-      setSelectedEvent(null);
+      onAddTables(formattedTables);
+      onClose();
 
       onAddTables(formattedTables);
       onClose();
@@ -962,6 +906,7 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
                 <option value="carree">Carrée</option>
                 <option value="rectangle">Rectangle</option>
                 <option value="ovale">Ovale</option>
+                <option value="triangle">Triangulaire</option>
               </select>
             </div>
 
@@ -1465,9 +1410,7 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
 
         return {
           nom,
-          // type: isCustom ? form.customTypeName : form.type,
-          type: isCustom ? "custom" : form.type,
-          customTypeName: isCustom ? form.customTypeName : undefined,
+          type: isCustom ? form.customTypeName : form.type,
           eventId: Number(form.eventId),
           position: {
             left: 100 + index * 20,
@@ -1489,15 +1432,14 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
         id: element.id || element.elementId,
         nom: element.nom || element.name,
         type: element.type,
-        eventId: Number(element.event?.id || form.eventId), // Utiliser form.eventId comme fallback
+        eventId: Number(element.eventId),
         position: element.position || { left: 100, top: 100 },
         width: element.width || (form.type === "custom" ? Number(form.customWidth) : ELEMENT_TYPES.find((t) => t.value === element.type)?.width || 100),
         height: element.height || (form.type === "custom" ? Number(form.customHeight) : ELEMENT_TYPES.find((t) => t.value === element.type)?.height || 100),
         rotation: element.rotation || 0,
         color: element.color || "#d1d5db",
-        shape: element.shape || (form.type === "custom" ? form.shape : null), // Propagation correcte de shape
+        shape: element.shape || (form.type === "custom" ? form.shape : null), // Propagation de shape
       }));
-      console.log("Éléments formatés:", formattedElements);
 
       setForm({
         type: "porte_entree",
@@ -1724,29 +1666,29 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
   const [zoomLevel, setZoomLevel] = useState(1);
   const canvasRef = useRef(null);
 
- useEffect(() => {
-  if (isAuthenticated && event?.id) {
-    getMyEvents()
-      .then((response) => {
-        console.log("Événements chargés:", response);
-        setEvents(response);
-      })
-      .catch((err) => {
-        console.error("Erreur chargement événements:", err);
-        toast.error("Erreur lors du chargement des événements");
-      });
+  useEffect(() => {
+    if (isAuthenticated && event?.id) {
+      getMyEvents()
+        .then((response) => {
+          console.log("Événements chargés:", response);
+          setEvents(response);
+        })
+        .catch((err) => {
+          console.error("Erreur chargement événements:", err);
+          toast.error("Erreur lors du chargement des événements");
+        });
 
-    getElementsByEventId(event.id)
-      .then((response) => {
-        console.log("Éléments chargés avec shapes:", response); // Vérifiez que shape est inclus
-        setElements(response);
-      })
-      .catch((err) => {
-        console.error("Erreur chargement éléments:", err);
-        toast.error("Erreur lors du chargement des éléments");
-      });
-  }
-}, [isAuthenticated, event?.id]);
+      getElementsByEventId(event.id)
+        .then((response) => {
+          console.log("Éléments chargés:", response);
+          setElements(response);
+        })
+        .catch((err) => {
+          console.error("Erreur chargement éléments:", err);
+          toast.error("Erreur lors du chargement des éléments");
+        });
+    }
+  }, [isAuthenticated, event?.id]);
 
   useEffect(() => {
     console.log("État tables mis à jour:", tables);
@@ -2030,31 +1972,38 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
     <div className="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center p-4">
       <Toaster position="top-right" />
 
-      <div className="fixed bottom-4 left-4 flex flex-col gap-2 z-50">
+      <div className="fixed bottom-4 flex flex-row gap-2 z-50 lg:flex-col lg:left-4 lg:transform-none lg:gap-3 overflow-x-auto snap-x snap-mandatory max-w-[90vw] lg:max-w-none lg:overflow-x-visible px-2 lg:px-0 scrollbar-hidden">
+        {/* Ajouter invité */}
         <button
           onClick={() => setShowGuestModal(true)}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition hover:bg-green-700"
+          className="bg-gradient-to-br from-emerald-500 to-green-600 text-white px-3 py-2 lg:px-4 lg:py-3 rounded-2xl shadow-xl flex items-center justify-center lg:justify-start gap-2 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm snap-center flex-shrink-0"
+          title="Ajouter un invité"
         >
           <User className="w-5 h-5" />
-          <span className="hidden sm:inline">Ajouter invité</span>
+          <span className="hidden lg:inline text-sm font-medium">Ajouter invité</span>
         </button>
 
+        {/* Ajouter tables */}
         <button
           onClick={() => setShowTableModal(true)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition hover:bg-indigo-700"
+          className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white px-3 py-2 lg:px-4 lg:py-3 rounded-2xl shadow-xl flex items-center justify-center lg:justify-start gap-2 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm snap-center flex-shrink-0"
+          title="Ajouter des tables"
         >
           <Plus className="w-5 h-5" />
-          <span className="hidden sm:inline">Ajouter des tables</span>
+          <span className="hidden lg:inline text-sm font-medium">Ajouter des tables</span>
         </button>
 
+        {/* Ajouter éléments */}
         <button
           onClick={() => setShowElementModal(true)}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow flex items-center cursor-pointer justify-center sm:justify-start gap-2 transition hover:bg-purple-700"
+          className="bg-gradient-to-br from-teal-500 to-cyan-600 text-white px-3 py-2 lg:px-4 lg:py-3 rounded-2xl shadow-xl flex items-center justify-center lg:justify-start gap-2 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm snap-center flex-shrink-0"
+          title="Ajouter des éléments"
         >
-          <Plus className="w-5 h-5" />
-          <span className="hidden sm:inline">Ajouter des éléments</span>
+          <Box className="w-5 h-5" />
+          <span className="hidden lg:inline text-sm font-medium">Ajouter des éléments</span>
         </button>
 
+        {/* Réinitialiser */}
         <button
           onClick={() => {
             const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer toutes les tables et éléments ?");
@@ -2066,23 +2015,27 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
               toast.success("Plan réinitialisé avec succès !");
             }
           }}
-          className="bg-red-600 text-white px-4 py-2 rounded-lg cursor-pointer shadow flex items-center justify-center sm:justify-start gap-2 transition hover:bg-red-700"
+          className="bg-gradient-to-br from-red-500 to-rose-600 text-white px-3 py-2 lg:px-4 lg:py-3 rounded-2xl shadow-xl flex items-center justify-center lg:justify-start gap-2 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm snap-center flex-shrink-0"
+          title="Réinitialiser"
         >
           <RefreshCcw className="w-5 h-5" />
-          <span className="hidden sm:inline">Réinitialiser</span>
+          <span className="hidden lg:inline text-sm font-medium">Réinitialiser</span>
         </button>
 
+        {/* Annuler déplacement */}
         {movingGuest && (
           <button
             onClick={cancelMove}
-            className="bg-yellow-600 text-white px-4 py-2 rounded-lg cursor-pointer shadow flex items-center justify-center sm:justify-start gap-2 transition hover:bg-yellow-700"
+            className="bg-gradient-to-br from-amber-500 to-yellow-600 text-white px-3 py-2 lg:px-4 lg:py-3 rounded-2xl shadow-xl flex items-center justify-center lg:justify-start gap-2 transition-all duration-300 hover:scale-105 hover:shadow-2xl animate-pulse border border-white/20 backdrop-blur-sm snap-center flex-shrink-0"
+            title="Annuler déplacement"
           >
-            <span className="hidden sm:inline">Annuler déplacement</span>
             <span className="sm:hidden">✕</span>
+            <span className="hidden lg:inline text-sm font-medium">Annuler déplacement</span>
           </button>
         )}
 
-        <div className="flex items-center gap-2">
+        {/* Sélecteur taille canvas */}
+        <div className="flex items-center gap-2 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl p-2 border border-white/30 snap-center flex-shrink-0">
           <select
             value={canvasSize.label}
             onChange={(e) => {
@@ -2094,33 +2047,52 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                 toast.success(`Taille du canvas : ${selectedSize.label}`);
               }
             }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow cursor-pointer transition hover:bg-blue-700"
+            className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white px-3 py-2 lg:px-4 lg:py-2 rounded-2xl shadow-xl cursor-pointer transition hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm text-sm"
+            title="Sélectionner la taille du canvas"
           >
             {[...CANVAS_SIZES, { label: "Personnalisé", width: 0, height: 0 }].map(size => (
-              <option key={size.label} value={size.label}>
+              <option key={size.label} value={size.label} className="text-gray-800">
                 Taille : {size.label}
               </option>
             ))}
           </select>
         </div>
 
-        <div className="flex items-center gap-2 bg-white rounded-lg shadow p-2">
+        {/* Zoom controls */}
+        <div className="flex items-center gap-2 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl p-2 border border-white/30 snap-center flex-shrink-0">
           <button
             onClick={() => handleZoom("out")}
             disabled={zoomLevel <= 0.5}
-            className="w-8 h-8 bg-gray-200 text-gray-700 rounded-full flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-8 h-8 bg-gradient-to-br from-gray-200 to-gray-300 text-gray-700 rounded-xl flex items-center justify-center hover:from-gray-300 hover:to-gray-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all duration-200 hover:scale-105"
+            title="Zoom arrière"
           >
             -
           </button>
-          <span className="text-sm font-medium text-gray-700">{(zoomLevel * 100).toFixed(0)}%</span>
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-2 py-1 rounded-lg">
+            <span className="text-sm font-bold text-indigo-700 min-w-[3rem] text-center">
+              {(zoomLevel * 100).toFixed(0)}%
+            </span>
+          </div>
           <button
             onClick={() => handleZoom("in")}
             disabled={zoomLevel >= 2}
-            className="w-8 h-8 bg-gray-200 text-gray-700 rounded-full flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-8 h-8 bg-gradient-to-br from-gray-200 to-gray-300 text-gray-700 rounded-xl flex items-center justify-center hover:from-gray-300 hover:to-gray-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all duration-200 hover:scale-105"
+            title="Zoom avant"
           >
             +
           </button>
         </div>
+
+        {/* Style pour masquer la barre de défilement tout en permettant le scroll */}
+        <style>{`
+    .scrollbar-hidden::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-hidden {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  `}</style>
       </div>
 
       <div
@@ -2267,7 +2239,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           <div className="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-indigo-200/50 rounded-br-lg"></div>
         </div>
 
-        <style jsx>{`
+        <style>{`
           @keyframes slide-down {
             from { 
               opacity: 0; 
@@ -2280,6 +2252,9 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           }
           .animate-slide-down {
             animation: slide-down 0.5s ease-out;
+          }
+          .triangle {
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
           }
         `}</style>
       </div>
