@@ -47,13 +47,13 @@ const GuestList = () => {
     // recuperer le personnel depuis le backend avec son email
     async function fetchPersonnel() {
       try {
-        const response = await fetch(`http://localhost:3000/personnel/by-email/${personnelEmail}`);
+        const response = await fetch(`https://api.mastertable.site/personnel/by-email/${personnelEmail}`);
         const personnelData = await response.json();
         console.log("Personnel Data: ", personnelData.id);
         const personnelId = personnelData.id;
 
         // recuperer les invites associes a l'evenement du personnel
-        const invitesResponse = await fetch(`http://localhost:3000/personnel/invite/${personnelId}`);
+        const invitesResponse = await fetch(`https://api.mastertable.site/personnel/invite/${personnelId}`);
         const invitesData = await invitesResponse.json();
         console.log("Invites Data: ", invitesData);
 
