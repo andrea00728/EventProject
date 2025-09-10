@@ -62,7 +62,17 @@ const EventModal = ({ isOpen, onClose, event, onSave }) => {
       fetchSallesByLocation(form.locationId);
     }
   }, [form.locationId]);
+  
+  const getImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith('http')) return imagePath;
+  // Assurez-vous que le chemin commence par un slash
+  const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+  return `${API_BASE_URL}${normalizedPath}`;
+};
 
+// Utilisation
+const imageUrl = getImageUrl(event.imageUrl)
   // Fonction pour récupérer la liste des lieux
   const fetchLocations = async () => {
     try {

@@ -56,15 +56,19 @@ export class EvenementController {
     dto.utilisateur_id = userIdFromToken;
 
     if (file) {
-      const uploadDir = path.join(__dirname, '../../../Uploads/events');
-      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-      const fileName = `${Date.now()}-${file.originalname}`;
-      const filePath = path.join(uploadDir, fileName);
-      fs.writeFileSync(filePath, file.buffer);
-
-      dto.imageUrl = `/Uploads/events/${fileName}`;
+    const uploadDir = path.join(__dirname, '../../../Uploads/events');
+    // Créer le répertoire s'il n'existe pas
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
     }
+    
+    const fileName = `${Date.now()}-${file.originalname}`;
+    const filePath = path.join(uploadDir, fileName);
+    fs.writeFileSync(filePath, file.buffer);
+
+    // Utiliser un chemin relatif cohérent
+    dto.imageUrl = `/Uploads/events/${fileName}`;
+  }
 
     try {
       return await this.evenementService.create(dto);
@@ -82,7 +86,7 @@ export class EvenementController {
 @UseInterceptors(
   FileInterceptor('image', {
     storage: diskStorage({
-      destination: './Uploads/events',
+      destination: '../../../Uploads/events',
       filename: (req, file, cb) => {
         const randomName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
         return cb(null, `${randomName}${path.extname(file.originalname)}`);

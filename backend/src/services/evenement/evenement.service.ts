@@ -149,12 +149,12 @@ async updateEvent(eventId: number, dto: UpdateEventDto, data: any, file?: Expres
 
 
   private async handleImageUpload(file: Express.Multer.File): Promise<string | null> {
-    if (!file) return null;
-    const fileName = `${Date.now()}-${file.originalname}`;
-    const uploadPath = `./Uploads/Evenements/${fileName}`;
-    await fs.writeFile(uploadPath, file.buffer);
-    return `/Uploads/Evenements/${fileName}`;
-  }
+  if (!file) return null;
+  const fileName = `${Date.now()}-${file.originalname}`;
+  const uploadPath = `../../../Uploads/events/${fileName}`; // Corriger le chemin
+  await fs.writeFile(uploadPath, file.buffer);
+  return `/Uploads/events/${fileName}`; // Retourner le chemin relatif
+}
 
   async findAll(): Promise<Evenement[]> {
     return this.evenementRepository.find({
