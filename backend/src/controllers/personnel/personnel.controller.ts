@@ -1,8 +1,7 @@
-import { Controller, Post, Body, Get, Param, UseGuards, Req, Query, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, Req, Query, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PersonnelService } from 'src/services/personnel/personnel.service';
 import { CreatePersonnelDto } from 'src/dto/PersonnelDto';
 import { AuthGuard } from '@nestjs/passport';
-
 
 @Controller('personnel')
 export class PersonnelController {
@@ -139,5 +138,49 @@ async response(@Query('token') token: string,@Query('action') action: string) {
   async findPersonnelByEventId(@Param('eventId') eventId: string) {
     return this.personnelService.findPersonnelByEventId(Number(eventId));
   }
+
+  @Get('events-by-email')
+async getEventByPersonnelEmail(@Query('email') email: string) {
+  if (!email) throw new BadRequestException('Email manquant');
+
+  const personnel = await this.personnelService.findOneByUserEmail(email);
+
+  if (!personnel || !personnel.evenement) {
+    throw new NotFoundException('Aucun événement trouvé pour ce personnel');
+  }
+
+  const evenement = personnel.evenement;
+  const personnels = await this.personnelService.findPersonnelByEventId(evenement.id);
+
+  // On récupère l'utilisateur qui a créé l'événement
+  // const organisateur = await this.userService.findUserById(evenement.utilisateur_id);
+
+  return {
+    id: evenement.id,
+    eventName: evenement.nom,
+    type: evenement.type,
+    theme: evenement.theme,
+    date: evenement.date,
+    date_fin: evenement.date_fin,
+    location: evenement.location ? evenement.location.nom : null,
+    salle: evenement.salle ? evenement.salle.nom : null,
+    image: evenement.imageUrl,
+    details: evenement.theme,
+    organizer: evenement.user ? evenement.user.name : null,
+    personnels: personnels.map((p) => ({
+      id: p.id,
+      name: p.nom,
+      email: p.email,
+      role: p.role,
+      status: p.status,
+    })),
+  };
+}
+
+
+
+
+
+  
 
 }
