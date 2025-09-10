@@ -95,7 +95,7 @@ const PersonnelList = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            {eventData ? `Personnel de l'événement : ${eventData.name}` : 'Liste du Personnel'}
+            {eventData ? `Personnel de l'événement : ${eventData.nom}` : 'Liste du Personnel'}
           </h1>
           <div className="h-1 w-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
         </div>
