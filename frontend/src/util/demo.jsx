@@ -1827,6 +1827,7 @@ export default function DemoPlanSalle() {
           <p className="text-xs text-amber-700 mt-1">
             • Maximum {MAX_TABLES} tables<br/>
             • Maximum {MAX_GUESTS} invités<br/>
+            • Maximum {MAX_ELEMENTS} éléments<br/>
             • Connectez-vous pour des événements illimités
           </p>
         </div>

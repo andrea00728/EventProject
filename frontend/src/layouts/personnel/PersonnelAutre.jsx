@@ -51,7 +51,7 @@ export const PersonnelAutre = () => {
 
   const handleNavigation = (path) => {
     navigate(path);
-    setIsMenuOpen(false); // Ferme le menu après la navigation sur mobile
+    setIsMenuOpen(false);
   };
 
   return (
