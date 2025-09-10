@@ -97,7 +97,7 @@ async googleAuthRedirect(@Req() req, @Res() res: Response) {
   @UseInterceptors(
     FileInterceptor('photo', {
       storage: diskStorage({
-        destination: resolve(__dirname, '../../../uploads'),
+        destination: resolve(__dirname, '../../../../uploads'),
         filename: (req, file, callback) => {
           const uniqueName =
             Date.now() + '-' + Math.round(Math.random() * 1e9);

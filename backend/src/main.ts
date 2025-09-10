@@ -61,7 +61,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   // Servir les fichiers statiques
-  app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
+  app.use('/uploads', express.static(join(__dirname, '..', '../uploads')));
 
   // Gestion globale des exceptions
   app.useGlobalFilters(new HttpExceptionFilter());
