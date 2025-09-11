@@ -104,8 +104,8 @@ export const InfoEventForPersonnal = () => {
               <InfoCard
                 title="Categorie"
                 value={eventData.type || "N/A"}
-                icon={<BookOpen className="h-6 w-6 text-white" />}
-                color="purple"
+                icon={<Tag className="h-6 w-6 text-white" />}
+                color="yellow"
               />
             </div>
 

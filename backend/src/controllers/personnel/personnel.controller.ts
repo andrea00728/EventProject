@@ -3,6 +3,7 @@ import { PersonnelService } from 'src/services/personnel/personnel.service';
 import { CreatePersonnelDto } from 'src/dto/PersonnelDto';
 import { AuthGuard } from '@nestjs/passport';
 import { table } from 'console';
+import { Personnel } from 'src/entities/Personnel';
 
 @Controller('personnel')
 export class PersonnelController {
@@ -17,12 +18,12 @@ export class PersonnelController {
    */
 
     @Post('/create')
-   @UseGuards(AuthGuard('jwt'))
-  async create(@Body() dto: CreatePersonnelDto, @Req() req) {
-    console.log("donne recu:",dto)
-    const userId = req.user.id; 
-    return this.personnelService.create(dto, userId);
-  }
+    @UseGuards(AuthGuard('jwt'))
+    async create(@Body() dto: CreatePersonnelDto, @Req() req) {
+      console.log("donne recu:",dto)
+      const userId = req.user.id; 
+      return this.personnelService.create(dto, userId);
+    }
 
  
 /**
@@ -61,6 +62,19 @@ export class PersonnelController {
   async find_By_Event(@Param('eventId') eventId: string) {
     return this.personnelService.findAllPersonalForOneEvent(Number(eventId)); 
   }
+
+  @Get()
+  async getAllPersonnels(): Promise<Personnel[]> {
+    return this.personnelService.findAllPersonnels();
+  }
+
+  @Get("count")
+  async countAllPersonnels() {
+    return this.personnelService.countAll();
+  }
+
+
+
 
   /*********************************************************************** */
 
