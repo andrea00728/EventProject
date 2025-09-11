@@ -39,6 +39,7 @@ import {
   Divider,
 } from "@mui/material";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
+import MenuRestaurationDropdown from "./MenuRestaurationDropdown";
 
 export default function MenuRestauration() {
   const { isAuthenticated } = useStateContext();
@@ -259,20 +260,20 @@ export default function MenuRestauration() {
     try {
       const res = await axios.get(`/menus/event/${selectedEvent.id}`);
       setAllMenus(res.data);
-      const items = res.data.flatMap((menu) =>
-        Array.isArray(menu.items)
-          ? menu.items.map((item) => ({ ...item, menuId: menu.id, menuName: menu.name }))
-          : []
-      );
-      setMenuItems(items);
+      // const items = res.data.flatMap((menu) =>
+      //   Array.isArray(menu.items)
+      //     ? menu.items.map((item) => ({ ...item, menuId: menu.id, menuName: menu.name }))
+      //     : []
+      // );
+      // setMenuItems(items);
     } catch (err) {
       console.error("Erreur lors du chargement des menus :", err);
     }
   };
 
-  const filteredItems = selectedMenuId === "all"
-    ? menuItems
-    : menuItems.filter((item) => item.menuId === selectedMenuId);
+  // const filteredItems = selectedMenuId === "all"
+  //   ? menuItems
+  //   : menuItems.filter((item) => item.menuId === selectedMenuId);
 
   const handleOpenForm = (item = null) => {
     setEditingItem(item);
@@ -372,7 +373,8 @@ export default function MenuRestauration() {
     try {
       await axios.delete(`/menus/items/${itemToDelete.id}`);
       setMenuItems((prev) => prev.filter((item) => item.id !== itemToDelete.id));
-      handleCloseDeleteConfirm();
+      await reloadMenus();
+      handleCloseDeleteConfirm((prev) => prev.filter((item) => item.id !== itemToDelete.id));
     } catch (err) {
       console.error("Erreur lors de la suppression de l'élément :", err);
       alert("Erreur lors de la suppression de l'élément.");
@@ -683,7 +685,7 @@ export default function MenuRestauration() {
 
                     <Divider orientation="vertical" flexItem />
 
-                    <Box sx={{ display: "flex", gap: 1 }}>
+                    {/* <Box sx={{ display: "flex", gap: 1 }}>
                       <IconButton
                         onClick={() => setViewMode("card")}
                         sx={{
@@ -706,7 +708,7 @@ export default function MenuRestauration() {
                       >
                         <ViewListIcon />
                       </IconButton>
-                    </Box>
+                    </Box> */}
                   </Box>
                 </Box>
                 <Menu
@@ -760,7 +762,7 @@ export default function MenuRestauration() {
             )}
 
             {/* Contenu principal */}
-            {viewMode === "card" ? (
+            {/* {viewMode === "card" ? (
               <Box sx={{ space: 6 }}>
                 {Object.keys(groupByCategory(filteredItems))
                   .sort()
@@ -967,6 +969,31 @@ export default function MenuRestauration() {
                   }}
                 />
               </Paper>
+            )} */}
+
+            {allMenus.length === 0 ? (
+              <Fade in timeout={600}>
+                <Paper
+                  elevation={2}
+                  sx={{ borderRadius: 3, p: 6, textAlign: "center" }}
+                >
+                  <RestaurantIcon
+                    sx={{ fontSize: 80, color: theme.textLight, mb: 3 }}
+                  />
+                  <Typography
+                    variant="h5"
+                    sx={{ color: theme.text, mb: 2, fontWeight: "bold" }}
+                  >
+                    Aucun {allMenus.find((m) => m.id === selectedMenuId)?.name}{" "}
+                    disponible
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: theme.textLight }}>
+                    Commencez par ajouter des plats à votre menu
+                  </Typography>
+                </Paper>
+              </Fade>
+            ) : (
+              <MenuRestaurationDropdown menus={allMenus} onClickDelete={handleOpenDeleteConfirm} onClickModified={handleOpenForm} />
             )}
           </Box>
         </Fade>
