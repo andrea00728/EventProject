@@ -21,7 +21,7 @@
     { value: "triangle", label: "Triangle" },
   ];
 
-  // Définition des types d'éléments avec leurs dimensions, incluant l'option personnalisée
+  // Définition des types d'objets avec leurs dimensions, incluant l'option personnalisée
   const ELEMENT_TYPES = [
     { value: "carre", label: "Carré", width: 80, height: 80 },
     { value: "rond", label: "Rond", width: 80, height: 80 },
@@ -488,7 +488,7 @@
       setRotation(element.rotation ?? 0);
     }, [element.position, element.rotation]);
 
-    // Utilisation des dimensions et de la forme de l'élément
+    // Utilisation des dimensions et de la forme de l'objets
     const { width: elementWidth, height: elementHeight, shape } = element;
     let shapeClass = "";
     if (element.type === "rond" || element.type === "petit_rond" || element.type === "ovale" || element.type === "petit_ovale" || (element.type === "personnalise" && element.shape === "rond") || (element.type === "personnalise" && element.shape === "ovale")) {
@@ -620,7 +620,7 @@
               onDelete(element.id);
             }}
             className="w-7 h-7 bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 border-2 border-white/20"
-            title="Supprimer l'élément"
+            title="Supprimer l'objets"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -841,7 +841,7 @@
       return true;
     };
 
-    // Vérification des limites d'éléments
+    // Vérification des limites d'objets
     const checkElementLimit = (newElementsCount) => {
       if (elements.length + newElementsCount > MAX_ELEMENTS) {
         setLimitType('elements');
@@ -955,7 +955,7 @@
       }
     };
 
-    // Ajout d'élément
+    // Ajout d'objets
     const handleAddElement = (e) => {
       e.preventDefault();
       const nombre = Number(elementForm.nombre);
@@ -1058,12 +1058,12 @@
       setTables(prev => prev.map(t => (t.id === tableId ? { ...t, rotation } : t)));
     };
 
-    // Déplacement d'élément
+    // Déplacement d'objets
     const handleElementMove = (elementId, position) => {
       setElements(prev => prev.map(e => (e.id === elementId ? { ...e, position } : e)));
     };
 
-    // Rotation d'élément
+    // Rotation d'objets
     const handleElementRotate = (elementId, rotation) => {
       setElements(prev => prev.map(e => (e.id === elementId ? { ...e, rotation } : e)));
     };
@@ -1114,7 +1114,7 @@
       closeModalType();
     };
 
-    // Suppression d'élément
+    // Suppression d'objets
     const handleDeleteElement = (elementId) => {
       setElements(prev => prev.filter(e => e.id !== elementId));
     };
@@ -1134,7 +1134,7 @@
       closeModalType();
     };
 
-    // Gestion du nombre de tables/éléments
+    // Gestion du nombre de tables/objets
     const handleNombreChange = (e, formType) => {
       const nb = Number(e.target.value);
       if (formType === 'table') {
@@ -1217,7 +1217,7 @@
               className="bg-gradient-to-br from-teal-500 to-cyan-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
             >
               <Shapes className="w-5 h-5" />
-              {!isMobile && <span className="text-sm font-medium">Élément</span>}
+              {!isMobile && <span className="text-sm font-medium">objets</span>}
             </button>
             <button
               onClick={handleReset}
@@ -1337,14 +1337,14 @@
                           Créez votre plan parfait
                         </h3>
                         <p className="text-gray-600 mb-4 leading-relaxed">
-                          Commencez par ajouter des tables ou des éléments pour organiser votre événement de rêve
+                          Commencez par ajouter des tables ou des objets pour organiser votre événement de rêve
                         </p>
                         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-4 py-3 rounded-xl border border-indigo-200/50">
                           <p className="text-sm text-indigo-700 font-medium">
                             Version démo
                           </p>
                           <p className="text-xs text-indigo-600 mt-1">
-                            {MAX_TABLES} tables max • {MAX_GUESTS} invités max • {MAX_ELEMENTS} éléments max
+                            {MAX_TABLES} tables max • {MAX_GUESTS} invités max • {MAX_ELEMENTS} objets max
                           </p>
                         </div>
                       </div>
@@ -1390,7 +1390,7 @@
                     <span className="font-semibold text-indigo-600">{guests.length}/{MAX_GUESTS}</span>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <span>Éléments:</span>
+                    <span>objets:</span>
                     <span className="font-semibold text-indigo-600">{elements.length}/{MAX_ELEMENTS}</span>
                   </div>
                 </div>
@@ -1410,7 +1410,7 @@
                 ? `Vous avez atteint la limite de ${MAX_TABLES} tables pour cette démonstration.`
                 : limitType === 'guests'
                   ? `Vous avez atteint la limite de ${MAX_GUESTS} invités pour cette démonstration.`
-                  : `Vous avez atteint la limite de ${MAX_ELEMENTS} éléments pour cette démonstration.`}
+                  : `Vous avez atteint la limite de ${MAX_ELEMENTS} objets pour cette démonstration.`}
             </p>
             <p className="text-indigo-600 font-semibold">
               Connectez-vous pour débloquer toutes les fonctionnalités et créer des événements sans limites !
@@ -1685,11 +1685,11 @@
             </div>
           )}
         </Modal>
-        {/* Modal d'ajout d'élément */}
+        {/* Modal d'ajout d'objets */}
         <Modal
           isOpen={currentModal === MODAL_TYPES.ADD_ELEMENT}
           onClose={() => closeModalType(MODAL_TYPES.ADD_ELEMENT)}
-          title="Ajouter un Élément"
+          title="Ajouter un objets"
         >
           <form onSubmit={handleAddElement} className="space-y-6">
             {error && (
@@ -1698,7 +1698,7 @@
               </div>
             )}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Type d'élément</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Type d'objets</label>
               <select
                 name="type"
                 value={elementForm.type}
@@ -1721,7 +1721,7 @@
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre d'éléments</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre d'objets</label>
               <input
                 name="nombre"
                 type="number"
@@ -1741,7 +1741,7 @@
                 type="text"
                 value={elementForm.nom}
                 onChange={(e) => handleNomChange(0, e.target.value, 'element')}
-                placeholder="Nom de l'élément (optionnel)"
+                placeholder="Nom de l'objets (optionnel)"
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
               />
             </div>
@@ -1811,7 +1811,7 @@
             <div className="text-center">
               <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-3 py-2 rounded-lg text-xs font-medium">
                 <Clock className="w-3 h-3" />
-                {elements.length}/{MAX_ELEMENTS} éléments maximum
+                {elements.length}/{MAX_ELEMENTS} objets maximum
               </div>
             </div>
           </form>
@@ -1847,7 +1847,7 @@
           title="Réinitialiser le plan"
         >
           <p className="text-gray-600 mb-6">
-            Êtes-vous sûr de vouloir réinitialiser le plan ? Toutes les tables, invités et éléments seront supprimés.
+            Êtes-vous sûr de vouloir réinitialiser le plan ? Toutes les tables, invités et objets seront supprimés.
           </p>
           <div className="flex gap-3">
             <button
@@ -1907,10 +1907,10 @@
             <li>Glissez-déposez pour réorganiser les tables et optimiser l'espace.</li>
 
             <li>
-              Ajoutez des éléments décoratifs pour personnaliser votre plan avec le bouton
+              Ajoutez des objets décoratifs pour personnaliser votre plan avec le bouton
               <span className="inline-flex items-center gap-1 px-3 py-1 ml-1 rounded-xl font-semibold text-teal-600 bg-teal-100 hover:bg-teal-200 transition-colors">
                 <MdTableBar className="w-5 h-5" />
-                Élément
+                objets
               </span>.
             </li>
           </ul>
@@ -1922,13 +1922,13 @@
             <p className="text-xs text-amber-700 mt-1">
               • Maximum {MAX_TABLES} tables<br />
               • Maximum {MAX_GUESTS} invités<br />
-              • Maximum 5 éléments<br />
+              • Maximum 5 objets<br />
               • Connectez-vous pour des fonctionnalités illimitées
             </p>
           </div>
           <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-500 italic">
             <strong>Astuces :</strong><br />
-            • Glissez-déposez pour déplacer tables et éléments<br />
+            • Glissez-déposez pour déplacer tables et objets<br />
             • Cliquez sur une chaise occupée pour sélectionner l'invité, puis sur une chaise libre pour le déplacer<br />
             • Utilisez les boutons de zoom pour ajuster la vue
           </p>

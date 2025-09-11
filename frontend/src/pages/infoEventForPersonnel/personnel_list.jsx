@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Search, Filter, Mail, Phone, Clock, UserCheck, UserX } from 'lucide-react';
 import { useStateContext } from '../../context/ContextProvider';
 
@@ -13,39 +13,9 @@ const PersonnelList = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Tous');
-  const [roleFilter, setRoleFilter] = useState('Tous');
+  const [roleFilter, setRoleFilter] = useState('Tous les rôles');
 
-  // --- Fonctions Utilitaires et Logique de Filtrage ---
-  const filteredPersonnel = dataPers.filter(person => {
-    const matchesSearch = 
-      person.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      person.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      person.speciality?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'Tous' || (statusFilter === 'Actif' ? person.checkedIn : !person.checkedIn);
-    const matchesRole = roleFilter === 'Tous' || person.role?.includes(roleFilter);
-    
-    return matchesSearch && matchesStatus && matchesRole;
-  });
-
-  const stats = {
-    total: dataPers.length,
-    active: dataPers.filter(p => p.checkedIn).length,
-    unavailable: dataPers.filter(p => !p.checkedIn).length,
-    onBreak: 0 // Assumant que ce statut n'existe pas dans vos données actuelles
-  };
-  
-  const getStatusColor = (status) => {
-    return status ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-red-100 text-red-800 border-red-200';
-  };
-
-  const getStatusIcon = (status) => {
-    return status ? <UserCheck className="h-4 w-4" /> : <UserX className="h-4 w-4" />;
-  };
-
-  const getInitials = (name) => {
-    return name?.split(' ').map(n => n[0])?.join('').toUpperCase() || '';
-  };
+  const predefinedRoles = ['Accueil', 'Cuisinier', 'Caisse'];
 
   // --- Récupération des données depuis l'API ---
   useEffect(() => {
@@ -88,6 +58,71 @@ const PersonnelList = () => {
     fetchPersonnel();
   }, [personnelEmail]);
 
+  // --- Logique de Filtrage et de Statistiques ---
+  const filteredPersonnel = useMemo(() => {
+    return dataPers.filter(person => {
+      const matchesSearch = 
+        person.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        person.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        person.speciality?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'Tous' || person.status?.toLowerCase() === statusFilter.toLowerCase();
+      
+      let matchesRole;
+      if (roleFilter === 'Tous les rôles') {
+        matchesRole = true;
+      } else if (roleFilter === 'Autre') {
+        matchesRole = !predefinedRoles.some(predefinedRole => 
+          predefinedRole.toLowerCase() === person.role?.toLowerCase()
+        );
+      } else {
+        matchesRole = person.role?.toLowerCase() === roleFilter.toLowerCase();
+      }
+      
+      return matchesSearch && matchesStatus && matchesRole;
+    });
+  }, [dataPers, searchTerm, statusFilter, roleFilter, predefinedRoles]);
+
+  const stats = useMemo(() => {
+    const total = filteredPersonnel.length;
+    const active = filteredPersonnel.filter(p => p.status?.toLowerCase() === 'accepter').length;
+    const awaiting = filteredPersonnel.filter(p => p.status?.toLowerCase() === 'attent').length;
+    const refused = filteredPersonnel.filter(p => p.status?.toLowerCase() === 'refused').length;
+
+    return { total, active, awaiting, refused };
+  }, [filteredPersonnel]);
+
+  // --- Fonctions Utilitaires ---
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'accepted':
+        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'attent':
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'refused':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'accepted':
+        return <UserCheck className="h-4 w-4" />;
+      case 'attent':
+        return <Clock className="h-4 w-4" />;
+      case 'refused':
+        return <UserX className="h-4 w-4" />;
+      default:
+        return <UserCheck className="h-4 w-4" />;
+    }
+  };
+
+  const getInitials = (name) => {
+    return name?.split(' ').map(n => n[0])?.join('').toUpperCase() || '';
+  };
+
   // --- Rendu du composant (JSX) ---
   return (
     <div className="min-h-screen p-8 bg-gray-50">
@@ -102,7 +137,7 @@ const PersonnelList = () => {
 
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <Users className="h-8 w-8 text-blue-200" />
               <div className="w-2 h-2 bg-blue-300 rounded-full animate-pulse"></div>
@@ -116,23 +151,23 @@ const PersonnelList = () => {
               <div className="w-2 h-2 bg-emerald-300 rounded-full animate-pulse"></div>
             </div>
             <div className="text-3xl font-bold mb-1">{stats.active}</div>
-            <div className="text-emerald-100 text-sm font-medium uppercase tracking-wide">Actifs</div>
+            <div className="text-emerald-100 text-sm font-medium uppercase tracking-wide">Accepté</div>
           </div>
           <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <Clock className="h-8 w-8 text-amber-200" />
               <div className="w-2 h-2 bg-amber-300 rounded-full animate-pulse"></div>
             </div>
-            <div className="text-3xl font-bold mb-1">{stats.onBreak}</div>
-            <div className="text-amber-100 text-sm font-medium uppercase tracking-wide">En Pause</div>
+            <div className="text-3xl font-bold mb-1">{stats.awaiting}</div>
+            <div className="text-amber-100 text-sm font-medium uppercase tracking-wide">En Attente</div>
           </div>
           <div className="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-2xl text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <UserX className="h-8 w-8 text-red-200" />
               <div className="w-2 h-2 bg-red-300 rounded-full animate-pulse"></div>
             </div>
-            <div className="text-3xl font-bold mb-1">{stats.unavailable}</div>
-            <div className="text-red-100 text-sm font-medium uppercase tracking-wide">Indisponibles</div>
+            <div className="text-3xl font-bold mb-1">{stats.refused}</div>
+            <div className="text-red-100 text-sm font-medium uppercase tracking-wide">Refusé</div>
           </div>
         </div>
 
@@ -172,8 +207,8 @@ const PersonnelList = () => {
                     className="pl-12 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer transition-all duration-200"
                   >
                     <option value="Tous">Tous les statuts</option>
-                    <option value="Actif">Actifs</option>
-                    <option value="Indisponible">Indisponibles</option>
+                    <option value="attent">En Attente</option>
+                    <option value="accepter">Accepté</option>
                   </select>
                 </div>
                 <div className="relative group">
@@ -183,12 +218,11 @@ const PersonnelList = () => {
                     onChange={(e) => setRoleFilter(e.target.value)}
                     className="pl-12 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer transition-all duration-200"
                   >
-                    <option value="Tous">Tous les rôles</option>
-                    <option value="Coordinateur">Coordinateur</option>
-                    <option value="Technicien">Technicien</option>
-                    <option value="Responsable">Responsable</option>
-                    <option value="Agent">Agent</option>
-                    <option value="Assistant">Assistant</option>
+                    <option value="Tous les rôles">Tous les rôles</option>
+                    <option value="Accueil">Accueil</option>
+                    <option value="Cuisinier">Cuisinier(e)</option>
+                    <option value="Caisse">Caisse</option>
+                    <option value="Autre">Autre</option>
                   </select>
                 </div>
               </div>
@@ -217,8 +251,8 @@ const PersonnelList = () => {
                   <thead className="bg-gradient-to-r from-gray-50 to-blue-50">
                     <tr>
                       <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Personnel</th>
+                      <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Rôle</th>
                       <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contact</th>
-                      {/* <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Spécialité</th> */}
                       <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Statut</th>
                     </tr>
                   </thead>
@@ -232,9 +266,11 @@ const PersonnelList = () => {
                             </div>
                             <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                               {person.nom}
-                              <div className="text-xs text-gray-500">{person.role}</div>
                             </div>
                           </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="text-sm text-gray-500">{person.role}</div>
                         </td>
                         <td className="px-8 py-6">
                           <div className="space-y-2">
@@ -242,15 +278,8 @@ const PersonnelList = () => {
                               <Mail className="h-4 w-4 mr-2" />
                               {person.email}
                             </div>
-                            {/* <div className="text-sm text-gray-600 flex items-center">
-                              <Phone className="h-4 w-4 mr-2" />
-                              {person.phone || 'N/A'}
-                            </div> */}
                           </div>
                         </td>
-                        {/* <td className="px-8 py-6">
-                          <div className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg inline-block">{person.speciality || 'N/A'}</div>
-                        </td> */}
                         <td className="px-8 py-6">
                           <span className={`inline-flex items-center px-3 py-1 rounded-2xl text-xs font-bold shadow-lg border ${getStatusColor(person.status)}`}>
                             {getStatusIcon(person.status)}
