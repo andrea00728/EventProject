@@ -24,6 +24,8 @@ export class TableEvent {
   orders: Order[];
 
 
+  // @Column({ type: 'enum', enum: ['ronde', 'carree', 'rectangle', 'ovale' ], default: 'ronde' })
+  // type: 'ronde' | 'carree' | 'rectangle' | 'ovale' ;
   @Column({ type: 'enum', enum: ['ronde', 'carree', 'rectangle', 'ovale' , 'triangle'], default: 'ronde' })
   type: 'ronde' | 'carree' | 'rectangle' | 'ovale' | 'triangle';
 

@@ -9,6 +9,7 @@ import * as nodemailer from 'nodemailer';
 import { NotificationService } from '../notification/notification.service';
 import { Admin } from 'src/entities/Admin';
 import { Invite } from 'src/entities/Invite';
+import { User } from 'src/Authentication/entities/auth.entity';
 @Injectable()
 export class PersonnelService {
   constructor(
@@ -20,6 +21,10 @@ export class PersonnelService {
 
     @InjectRepository(Admin)
     private adminRepository: Repository<Admin>,
+
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+
 
     private jwtService:JwtService,
     private readonly notificationService:NotificationService,
@@ -253,14 +258,13 @@ async findOneByUserEmailAndEvent(email: string, eventId: number): Promise<Person
  * 
  */
 
-async findOneByUserEmail(email: string): Promise<Personnel | null> {
-  return await this.personnelRepository.findOne({
-    where: {
-      email: email,
-    },
-    relations: ['evenement'],
+async findOneByUserEmail(email: string) {
+  return this.personnelRepository.findOne({
+    where: { email },
+    relations: ['evenement', 'evenement.location', 'evenement.salle','evenement.user']
   });
 }
+
 
 async findCountPersonnelByEvenement(evenementId: number): Promise<number> {
     const count = await this.personnelRepository.count({
@@ -317,6 +321,43 @@ async findEventsByPersonnelId(personnelId: number): Promise<Evenement[]> {
 
     return invites;
   }
+
+  // trouver personnel dans evenement
+  async findPersonnelByEventId (eventId: number): Promise<Personnel[]> {
+    const personnel = await this.personnelRepository.find({
+           where: {
+        evenement: {
+          id: eventId,
+        },
+      },
+
+    });
+
+    return personnel;
+  }
+
+  // personnel.service.ts
+  async getEvenementByEmail(email: string): Promise<Evenement | null> {
+    const personnel = await this.personnelRepository.findOne({
+      where: { email },
+      relations: ['evenement', 'evenement.location', 'evenement.salle', 'evenement.personnels']
+    });
+
+    if (!personnel) return null;
+    return personnel.evenement; // retourne l'événement lié
+  }
+
+  // personnel.service.ts
+  // Dans UserService
+  async findUserById(userId: string): Promise<User | null> {
+    return await this.userRepository.findOne({
+      where: { id: userId },
+    });
+  }
+
+
+
+
 
 
 }

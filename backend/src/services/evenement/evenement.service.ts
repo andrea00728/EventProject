@@ -8,8 +8,10 @@ import { NotificationService } from '../notification/notification.service';
 import { NotificationEntity } from 'src/entities/notification.entity';
 import { NotificationGateway } from 'src/gateway/notification.gateway';
 import { CreateEventDto, UpdateEventDto } from 'src/dto/CreateEvenementDTO';
-import * as fs from 'fs/promises';
+import * as fs from 'fs';
 import { Localisation } from 'src/entities/Location';
+import { file } from 'googleapis/build/src/apis/file';
+import * as path from 'path';
 
 @Injectable()
 export class EvenementService {
@@ -105,56 +107,71 @@ export class EvenementService {
     return event;
   }
 
-async updateEvent(eventId: number, dto: UpdateEventDto, imageFile?: Express.Multer.File): Promise<Evenement> {
-    const event = await this.evenementRepository.findOne({
-      where: { id: eventId },
-      relations: ['location', 'salle'],
-    });
+async updateEvent(eventId: number, dto: UpdateEventDto, file?: Express.Multer.File): Promise<Evenement> {
+  const event = await this.evenementRepository.findOne({
+    where: { id: eventId },
+    relations: ['location', 'salle'],
+  });
 
-    if (!event) throw new NotFoundException(`Événement avec ID ${eventId} non trouvé`);
+  if (!event) throw new NotFoundException(`Événement avec ID ${eventId} non trouvé`);
 
-    // Champs simples
-    if (dto.nom) event.nom = dto.nom;
-    if (dto.type) event.type = dto.type;
-    if (dto.theme) event.theme = dto.theme;
-    if (dto.date) event.date = new Date(dto.date);
-    if (dto.date_fin) event.date_fin = new Date(dto.date_fin);
-    if (dto.isPublic !== undefined) event.isPublic = dto.isPublic;
+  // Mise à jour des champs simples
+  if (dto.nom) event.nom = dto.nom;
+  if (dto.type) event.type = dto.type;
+  if (dto.theme) event.theme = dto.theme;
+  if (dto.date && !isNaN(Date.parse(dto.date))) event.date = new Date(dto.date);
+  if (dto.date_fin && !isNaN(Date.parse(dto.date_fin))) event.date_fin = new Date(dto.date_fin);
+  if (dto.isPublic !== undefined) event.isPublic = dto.isPublic;
 
-    // Gestion du lieu
-    let location;
-    if (dto.locationId) {
-      location = await this.locationService.findLocationById(Number(dto.locationId));
-      event.location = location;
-    }
-
-    // Gestion de la salle
-    if (dto.salleId) {
-      const salle = await this.locationService.findSalleById(Number(dto.salleId));
-
-      // Vérifier que la salle appartient bien au lieu choisi
-      if (location && salle.location.id !== location.id) {
-        throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
+  // Gestion de l'image
+  if (file) {
+    // Supprimer l'ancienne photo si elle existe
+    if (event.imageUrl) {
+      const oldImagePath = path.join(__dirname, '../../../../uploads', path.basename(event.imageUrl));
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
       }
-      event.salle = salle;
     }
 
-    // Gestion de l'image
-    if (imageFile) {
-      event.imageUrl = `/uploads/${imageFile.filename}`;
+    // Mettre à jour avec la nouvelle photo
+    event.imageUrl = `/uploads/${file.filename}`;
+  }
+
+  // Gestion du lieu
+  let location;
+  if (dto.locationId) {
+    location = await this.locationService.findLocationById(Number(dto.locationId));
+    event.location = location;
+  } else {
+    location = event.location;
+  }
+
+  // Gestion de la salle
+  if (dto.salleId) {
+    const salle = await this.locationService.findSalleById(Number(dto.salleId));
+    if (location && salle.location.id !== location.id) {
+      throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
     }
-
-    return this.evenementRepository.save(event);
+    event.salle = salle;
   }
 
+  await this.evenementRepository.save(event);
 
-  private async handleImageUpload(file: Express.Multer.File): Promise<string | null> {
-    if (!file) return null;
-    const fileName = `${Date.now()}-${file.originalname}`;
-    const uploadPath = `./Uploads/Evenements/${fileName}`;
-    await fs.writeFile(uploadPath, file.buffer);
-    return `/Uploads/Evenements/${fileName}`;
-  }
+  return this.evenementRepository.findOneOrFail({
+    where: { id: event.id },
+    relations: ['location', 'salle'],
+  });
+}
+
+
+
+// private async handleImageUpload(file: Express.Multer.File): Promise<string | null> {
+//   if (!file) return null;
+//   const fileName = `${Date.now()}-${file.originalname}`;
+//   const uploadPath = `../../../Uploads/events/${fileName}`; // Corriger le chemin
+//   await fs.writeFile(uploadPath, file.buffer);
+//   return `/Uploads/events/${fileName}`; // Retourner le chemin relatif
+// }
 
   async findAll(): Promise<Evenement[]> {
     return this.evenementRepository.find({
@@ -187,42 +204,54 @@ async updateEvent(eventId: number, dto: UpdateEventDto, imageFile?: Express.Mult
     });
   }
 
-  async deleteEvent(id: number, userId: string): Promise<{ message: string }> {
-    try {
-      const event = await this.evenementRepository.findOne({
-        where: { id, user: { id: userId } },
-        relations: ['user', 'tables', 'invites'],
-      });
-      if (!event) {
-        throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de le supprimer`);
-      }
-
-      const user = await this.userRepo.findOneBy({ id: userId });
-      if (!user) throw new NotFoundException('Utilisateur introuvable');
-
-      const notification = this.notificationRepository.create({
-        title: "Suppression d'un évènement",
-        message: `${user.name} a supprimé l'événement ${event.nom}.`,
-        type: 'warning',
-        date: new Date(),
-      });
-      await this.notificationRepository.save(notification);
-      this.notificationGateway.emitDeleteEventForAdmin({
-        ...notification,
-        date: notification.date.toISOString(),
-      });
-
-      await this.evenementRepository.manager.delete('Invite', { event: { id } });
-      await this.evenementRepository.manager.delete('TableEvent', { event: { id } });
-      await this.evenementRepository.remove(event);
-
-      console.log(`Événement ID ${id} supprimé`);
-      return { message: 'Événement supprimé avec succès' };
-    } catch (error) {
-      console.error('Erreur lors de la suppression de l\'événement:', error);
-      throw error;
+async deleteEvent(id: number, userId: string): Promise<{ message: string }> {
+  try {
+    const event = await this.evenementRepository.findOne({
+      where: { id, user: { id: userId } },
+      relations: ['user', 'tables', 'invites'],
+    });
+    if (!event) {
+      throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de le supprimer`);
     }
+
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    // --- Supprimer l'image associée ---
+    if (event.imageUrl) {
+      const imagePath = path.join(process.cwd(), event.imageUrl.replace('/','\\'));
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
+    // Création de la notification
+    const notification = this.notificationRepository.create({
+      title: "Suppression d'un évènement",
+      message: `${user.name} a supprimé l'événement ${event.nom}.`,
+      type: 'warning',
+      date: new Date(),
+    });
+    await this.notificationRepository.save(notification);
+    this.notificationGateway.emitDeleteEventForAdmin({
+      ...notification,
+      date: notification.date.toISOString(),
+    });
+
+    // Suppression des relations
+    await this.evenementRepository.manager.delete('Invite', { event: { id } });
+    await this.evenementRepository.manager.delete('TableEvent', { event: { id } });
+
+    // Suppression de l'événement
+    await this.evenementRepository.remove(event);
+
+    console.log(`Événement ID ${id} supprimé`);
+    return { message: 'Événement supprimé avec succès' };
+  } catch (error) {
+    console.error('Erreur lors de la suppression de l\'événement:', error);
+    throw error;
   }
+}
 
   async findManagerEvents(utilisateur_id: string): Promise<Evenement[]> {
     return this.evenementRepository.find({
