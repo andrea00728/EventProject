@@ -4,6 +4,7 @@ import { Users, Calendar, MapPin, Clock, FileText, Star, Trophy, Target } from "
 import { url } from "../../api/url";
 import defaultImage from "../../assets/images/bouquet.jpg";
 import { BookOpen } from "lucide-react"; // Icône pour le thème (ou une autre qui te plaît)
+import { Tag } from "lucide-react"; // Icône pour la catégorie (ou une autre qui te plaît)
 
 export const InfoEventForPersonnal = () => {
   const { user } = useStateContext();
@@ -114,7 +115,7 @@ export const InfoEventForPersonnal = () => {
                 <InfoCard
                   title="Categorie"
                   value={eventData.type || "N/A"}
-                  icon={<BookOpen className="h-6 w-6 text-white" />}
+                  icon={<Tag className="h-6 w-6 text-white" />}
                   color="purple"
                 />
               </div>
