@@ -68,7 +68,8 @@ async createElement(dto: CreateElementDto, utilisateurId: string): Promise<Eleme
       width: dto.width,
       height: dto.height,
       color: dto.color || '#d1d5db',
-      shape: dto.type === 'custom' ? dto.shape : null, // Assurer que shape est défini
+      // shape: dto.type === 'custom' ? dto.shape : null,
+      shape: dto.shape || 'rectangle',
       event,
     });
 
