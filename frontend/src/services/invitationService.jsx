@@ -1,7 +1,5 @@
+
 import axiosClient from "../api/axios-client";
-
-m
-
 export const QrCodeValidation = async (payload) => {
   try {
     const qrCodeString = JSON.stringify(payload);
@@ -36,12 +34,10 @@ export const getEventIdByEmail = async () => {
 export const createInvitation = async (eventId) => {
   const response = await axiosClient.post(
     '/invitations/invit',
-    { eventId },
+    { eventId }
   );
   return response.data;
 };
-
-
 
 
 
