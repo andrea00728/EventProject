@@ -1,8 +1,9 @@
-import { Controller, Post, Body, Get, Param, UseGuards, Req, Query, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, Req, Query, BadRequestException, NotFoundException, Delete, Patch } from '@nestjs/common';
 import { PersonnelService } from 'src/services/personnel/personnel.service';
 import { CreatePersonnelDto } from 'src/dto/PersonnelDto';
 import { AuthGuard } from '@nestjs/passport';
 import { table } from 'console';
+import { UpdatePersonnelDto } from 'src/dto/UpdatePersonnelDto';
 
 @Controller('personnel')
 export class PersonnelController {
@@ -178,4 +179,17 @@ async response(@Query('token') token: string,@Query('action') action: string) {
       tables: evenement.tables,
     };
   }
+  // modifier un personnel
+@Patch('/:id')
+@UseGuards(AuthGuard('jwt'))
+async updatePersonnel(@Param('id') id: string, @Body() dto: UpdatePersonnelDto) {
+  return this.personnelService.updatePersonnel(Number(id), dto);
+}
+
+//supprimer un personnel
+@Delete('/:id')
+@UseGuards(AuthGuard('jwt'))
+async deletePersonnel(@Param('id') id: string) {
+  return this.personnelService.deletePersonnel(Number(id));
+}
 }

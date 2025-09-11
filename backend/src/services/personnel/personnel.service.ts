@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { Evenement } from 'src/entities/Evenement';
 import { Personnel } from 'src/entities/Personnel';
 import { CreatePersonnelDto } from 'src/dto/PersonnelDto';
@@ -10,6 +10,7 @@ import { NotificationService } from '../notification/notification.service';
 import { Admin } from 'src/entities/Admin';
 import { Invite } from 'src/entities/Invite';
 import { User } from 'src/Authentication/entities/auth.entity';
+import { UpdatePersonnelDto } from 'src/dto/UpdatePersonnelDto';
 @Injectable()
 export class PersonnelService {
   constructor(
@@ -356,8 +357,53 @@ async findEventsByPersonnelId(personnelId: number): Promise<Evenement[]> {
   }
 
 
+//mettre a jour le personnel
+async updatePersonnel(id: number, dto: UpdatePersonnelDto): Promise<Personnel> {
+  const personnel = await this.personnelRepository.findOne({
+    where: { id },
+    relations: ['evenement']
+  });
+  if (!personnel) {
+    throw new NotFoundException('Personnel not found');
+  }
 
+  // Vérifier si l'email est modifié et s'il est déjà utilisé par un autre personnel dans le même événement
+  if (dto.email && dto.email !== personnel.email) {
+    const existingPersonnel = await this.personnelRepository.findOne({
+      where: {
+        email: dto.email,
+        evenement: { id: personnel.evenement.id },
+        id: Not(id), // Exclure le personnel actuel de la recherche
+      },
+    });
+    if (existingPersonnel) {
+      throw new BadRequestException(`L'email ${dto.email} est déjà utilisé par un autre personnel dans cet événement.`);
+    }
+  }
 
+  // Mettre à jour les champs autorisés
+  if (dto.nom !== undefined) {
+    personnel.nom = dto.nom;
+  }
+  if (dto.email !== undefined) {
+    personnel.email = dto.email;
+  }
+  if (dto.role !== undefined) {
+    personnel.role = dto.role;
+  }
+  
+  return this.personnelRepository.save(personnel);
+}
 
+// supprimer un personnel
+async deletePersonnel(id: number): Promise<{ message: string }> {
+  const personnel = await this.personnelRepository.findOne({ where: { id } });
+  if (!personnel) {
+    throw new NotFoundException('Personnel not found');
+  }
+
+  await this.personnelRepository.remove(personnel);
+  return { message: 'Personnel supprimé avec succès' };
+}
 
 }
