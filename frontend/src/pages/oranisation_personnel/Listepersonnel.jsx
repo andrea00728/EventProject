@@ -89,7 +89,7 @@ const statusLabels = {
   pending: { label: "🕒 En attente", style: "bg-yellow-100 text-yellow-800" },
 };
 
-export default function ListePersonnel({ eventId}) {
+export default function ListePersonnel({ eventId }) {
   const [personnels, setPersonnels] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -393,8 +393,8 @@ export default function ListePersonnel({ eventId}) {
               <button
                 onClick={() => handleFilter("all")}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 transform hover:scale-105 ${selectedRole === "all"
-                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25"
-                    : "bg-white/80 backdrop-blur-sm text-slate-700 hover:bg-white border border-slate-200 hover:border-slate-300"
+                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25"
+                  : "bg-white/80 backdrop-blur-sm text-slate-700 hover:bg-white border border-slate-200 hover:border-slate-300"
                   }`}
               >
                 Tous les rôles ({uniqueRoles.length})
@@ -406,8 +406,8 @@ export default function ListePersonnel({ eventId}) {
                   key={role}
                   onClick={() => handleFilter(role)}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 transform hover:scale-105 ${selectedRole === role
-                      ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/25"
-                      : "bg-white/80 backdrop-blur-sm text-slate-700 hover:bg-white border border-slate-200 hover:border-slate-300"
+                    ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/25"
+                    : "bg-white/80 backdrop-blur-sm text-slate-700 hover:bg-white border border-slate-200 hover:border-slate-300"
                     }`}
                 >
                   {generateRoleLabel(role)}
@@ -420,8 +420,8 @@ export default function ListePersonnel({ eventId}) {
                   key={role}
                   onClick={() => handleFilter(role)}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 transform hover:scale-105 flex items-center gap-1 ${selectedRole === role
-                      ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg shadow-pink-500/25"
-                      : "bg-white/80 backdrop-blur-sm text-slate-700 hover:bg-white border border-slate-200 hover:border-slate-300"
+                    ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg shadow-pink-500/25"
+                    : "bg-white/80 backdrop-blur-sm text-slate-700 hover:bg-white border border-slate-200 hover:border-slate-300"
                     }`}
                 >
                   <Star className="w-3 h-3" />
@@ -602,24 +602,24 @@ export default function ListePersonnel({ eventId}) {
               >
                 <div
                   className={`h-2 ${predefinedRoleLabels[p.role]
-                      ? index % 3 === 0
-                        ? "bg-gradient-to-r from-blue-500 to-blue-600"
-                        : index % 3 === 1
-                          ? "bg-gradient-to-r from-green-500 to-green-600"
-                          : "bg-gradient-to-r from-yellow-500 to-yellow-600"
-                      : "bg-gradient-to-r from-purple-500 to-pink-500"
+                    ? index % 3 === 0
+                      ? "bg-gradient-to-r from-blue-500 to-blue-600"
+                      : index % 3 === 1
+                        ? "bg-gradient-to-r from-green-500 to-green-600"
+                        : "bg-gradient-to-r from-yellow-500 to-yellow-600"
+                    : "bg-gradient-to-r from-purple-500 to-pink-500"
                     }`}
                 ></div>
                 <div className="p-6">
                   <div className="flex items-center mb-4">
                     <div
                       className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4 ${predefinedRoleLabels[p.role]
-                          ? index % 3 === 0
-                            ? "bg-gradient-to-r from-blue-500 to-blue-600"
-                            : index % 3 === 1
-                              ? "bg-gradient-to-r from-green-500 to-green-600"
-                              : "bg-gradient-to-r from-yellow-500 to-yellow-600"
-                          : "bg-gradient-to-r from-purple-500 to-pink-500"
+                        ? index % 3 === 0
+                          ? "bg-gradient-to-r from-blue-500 to-blue-600"
+                          : index % 3 === 1
+                            ? "bg-gradient-to-r from-green-500 to-green-600"
+                            : "bg-gradient-to-r from-yellow-500 to-yellow-600"
+                        : "bg-gradient-to-r from-purple-500 to-pink-500"
                         }`}
                     >
                       {predefinedRoleLabels[p.role] ? (
@@ -651,6 +651,39 @@ export default function ListePersonnel({ eventId}) {
                       {statusLabels[p.status]?.label || p.status}
                     </span>
                   </div>
+                  {/* Ajout des boutons d'action */}
+                  <Box sx={{ display: "flex", gap: 1, mt: 4, justifyContent: "flex-end" }}>
+                    <IconButton
+                      onClick={() => handleOpenEditForm(p)}
+                      sx={{
+                        bgcolor: theme.neutral,
+                        color: theme.primary,
+                        "&:hover": {
+                          bgcolor: theme.primary,
+                          color: "white",
+                          transform: "scale(1.1)",
+                        },
+                        transition: "all 0.3s ease",
+                      }}
+                    >
+                      <FaEdit />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => handleOpenDeleteConfirm(p)}
+                      sx={{
+                        bgcolor: theme.neutral,
+                        color: theme.danger,
+                        "&:hover": {
+                          bgcolor: theme.danger,
+                          color: "white",
+                          transform: "scale(1.1)",
+                        },
+                        transition: "all 0.3s ease",
+                      }}
+                    >
+                      <FaTrash />
+                    </IconButton>
+                  </Box>
                 </div>
               </div>
             ))}
