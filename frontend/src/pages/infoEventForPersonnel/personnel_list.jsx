@@ -185,35 +185,35 @@ const PersonnelList = () => {
               </div>
 
               {/* Barre de recherche et filtres */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative group">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
+              <div class="flex flex-col sm:flex-row gap-4 w-full">
+                <div class="relative group w-full sm:w-auto">
+                  <Search class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors"></Search>
                   <input
                     type="text"
                     placeholder="Rechercher un membre..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-12 pr-4 py-3 w-80 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200 placeholder-gray-400"
+                    onchange={(e) => setSearchTerm(e.target.value)}
+                    class="pl-12 pr-4 py-3 w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200 placeholder-gray-400"
                   />
                 </div>
-                <div className="relative group">
-                  <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
+                <div class="relative group w-full sm:w-auto">
+                  <Filter class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors"></Filter>
                   <select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="pl-12 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer transition-all duration-200"
+                    onchange={(e) => setStatusFilter(e.target.value)}
+                    class="pl-12 pr-10 py-3 w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer transition-all duration-200"
                   >
                     <option value="Tous">Tous les statuts</option>
                     <option value="attent">En Attente</option>
                     <option value="accepter">Accepté</option>
                   </select>
                 </div>
-                <div className="relative group">
-                  <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
+                <div class="relative group w-full sm:w-auto">
+                  <Filter class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors"></Filter>
                   <select
                     value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value)}
-                    className="pl-12 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer transition-all duration-200"
+                    onchange={(e) => setRoleFilter(e.target.value)}
+                    class="pl-12 pr-10 py-3 w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer transition-all duration-200"
                   >
                     <option value="Tous les rôles">Tous les rôles</option>
                     <option value="Accueil">Accueil</option>
