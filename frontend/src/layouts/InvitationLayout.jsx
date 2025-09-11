@@ -3,7 +3,7 @@ import { getMyEvents } from '../services/evenementServ';
 import { createInvitation } from '../services/invitationService';
 import { eventNames } from 'resium';
 
-export default function InvitationLayout({ token }) {
+export default function InvitationLayout({  }) {
   const [evenements, setEvenements] = useState([]);
   const [loadingId, setLoadingId] = useState(null);
   const [message, setMessage] = useState('');
@@ -12,7 +12,7 @@ export default function InvitationLayout({ token }) {
   useEffect(() => {
     const getEvenements = async () => {
       try {
-        const data = await getMyEvents(token);
+        const data = await getMyEvents();
         setEvenements(data);
       } catch (err) {
         console.error('Erreur de récupération des événements', err);
@@ -20,14 +20,14 @@ export default function InvitationLayout({ token }) {
       }
     };
     getEvenements();
-  }, [token]);
+  }, []);
 
   // Gestion de l'envoi d'invitation
   const handleEnvoyer = async (eventId) => {
     setLoadingId(eventId);
     setMessage('');
     try {
-      await createInvitation(eventId, token);
+      await createInvitation(eventId);
 
       // Récupère le nom de l'événement depuis ton state 'evenements'
       const event = evenements.find(e => e.id === eventId);
