@@ -205,7 +205,7 @@ const PersonnelList = () => {
                   >
                     <option value="Tous">Tous les statuts</option>
                     <option value="attent">En Attente</option>
-                    <option value="accepted">Accepté</option>
+                    <option value="accepter">Accepté</option>
                   </select>
                 </div>
                 <div className="relative group">
