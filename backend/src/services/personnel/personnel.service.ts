@@ -262,7 +262,7 @@ async findOneByUserEmailAndEvent(email: string, eventId: number): Promise<Person
 async findOneByUserEmail(email: string) {
   return this.personnelRepository.findOne({
     where: { email },
-    relations: ['evenement', 'evenement.location', 'evenement.salle','evenement.user']
+    relations: ['evenement', 'evenement.location', 'evenement.salle','evenement.user','evenement.tables' ],
   });
 }
 
@@ -341,7 +341,7 @@ async findEventsByPersonnelId(personnelId: number): Promise<Evenement[]> {
   async getEvenementByEmail(email: string): Promise<Evenement | null> {
     const personnel = await this.personnelRepository.findOne({
       where: { email },
-      relations: ['evenement', 'evenement.location', 'evenement.salle', 'evenement.personnels']
+      relations: ['evenement', 'evenement.location', 'evenement.salle', 'evenement.personnels','evenement.user','evenement.tables' ],
     });
 
     if (!personnel) return null;

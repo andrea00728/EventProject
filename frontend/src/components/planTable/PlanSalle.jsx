@@ -38,7 +38,7 @@ const CANVAS_SIZES = [
   { label: "Très grand", width: 1600, height: 1000 },
 ];
 
-// Nouveaux types d'éléments supplémentaires (portes, estrade, buffet, etc.)
+// Nouveaux types d'objets supplémentaires (portes, estrade, buffet, etc.)
 const ELEMENT_TYPES = [
   { value: "porte_entree", label: "Porte d'entrée", width: 40, height: 80 },
   { value: "porte_sortie", label: "Porte de sortie", width: 40, height: 80 },
@@ -61,125 +61,117 @@ function snapToAngle(value, angleStep = 15) {
   return Math.round(value / angleStep) * angleStep;
 }
 
+
+
 // Calcule les positions des chaises autour de la table en fonction de son type et de sa capacité
-function getChairPositions(type, capacity, tableWidth, tableHeight) {
+function getChairPositions(type, capacity, tableWidth, tableHeight, rotation, zoomLevel) {
   const positions = [];
   const chairSize = 30;
   const minDistanceFromTable = 0;
 
-  if (type === "ronde" || type === "ovale") {
+  if (type === "triangle") {
+    // Centre de la table
     const centerX = tableWidth / 2;
     const centerY = tableHeight / 2;
-    const tableRadius = type === "ronde"
-      ? Math.min(tableWidth, tableHeight) / 2
-      : Math.max(tableWidth, tableHeight) / 2;
-    const radius = tableRadius + minDistanceFromTable + chairSize / 2;
-
-    for (let i = 0; i < capacity; i++) {
-      const angle = (2 * Math.PI * i) / capacity - Math.PI / 2;
-      const x = centerX + radius * Math.cos(angle) - chairSize / 2;
-      const y = centerY + radius * Math.sin(angle) - chairSize / 2;
-      positions.push({ left: `${x}px`, top: `${y}px` });
-    }
-  } else if (type === "triangle") {
-    // Logique spécifique pour les tables triangulaires
-    const centerX = tableWidth / 2;
-    const centerY = tableHeight / 2;
-
-    // Points du triangle (triangle équilatéral orienté vers le haut)
+    // Points d'un triangle équilatéral (orienté vers le haut)
     const trianglePoints = [
-      { x: centerX, y: centerY - tableHeight * 0.3 }, // Sommet du haut
-      { x: centerX - tableWidth * 0.4, y: centerY + tableHeight * 0.2 }, // Coin bas gauche
-      { x: centerX + tableWidth * 0.4, y: centerY + tableHeight * 0.2 }  // Coin bas droit
+      { x: centerX, y: centerY - (tableHeight / 2) * 0.866 }, // Sommet haut
+      { x: centerX - tableWidth / 2, y: centerY + (tableHeight / 2) * 0.866 }, // Coin bas gauche
+      { x: centerX + tableWidth / 2, y: centerY + (tableHeight / 2) * 0.866 }, // Coin bas droit
     ];
-
-    // Répartir les chaises sur les 3 côtés du triangle
+    // Répartir les chaises sur les 3 côtés
     const chairsPerSide = Math.ceil(capacity / 3);
     let chairIndex = 0;
-
-    // Distribuer les chaises sur chaque côté
     for (let side = 0; side < 3 && chairIndex < capacity; side++) {
       const point1 = trianglePoints[side];
       const point2 = trianglePoints[(side + 1) % 3];
-
       const chairsOnThisSide = Math.min(chairsPerSide, capacity - chairIndex);
-
       for (let i = 0; i < chairsOnThisSide; i++) {
         const ratio = (i + 1) / (chairsOnThisSide + 1);
-        const x = point1.x + (point2.x - point1.x) * ratio;
-        const y = point1.y + (point2.y - point1.y) * ratio;
-
-        // Calculer la normale vers l'extérieur pour positionner la chaise
+        let x = point1.x + (point2.x - point1.x) * ratio;
+        let y = point1.y + (point2.y - point1.y) * ratio;
+        // Calculer la normale vers l'extérieur
         const dx = point2.x - point1.x;
         const dy = point2.y - point1.y;
         const normalX = -dy;
         const normalY = dx;
         const normalLength = Math.sqrt(normalX * normalX + normalY * normalY);
-
         const offsetDistance = chairSize / 2 + minDistanceFromTable + 10;
         const offsetX = (normalX / normalLength) * offsetDistance;
         const offsetY = (normalY / normalLength) * offsetDistance;
-
+        // Appliquer la rotation de la table
+        const angleRad = (rotation * Math.PI) / 180;
+        const rotatedX = centerX + (x - centerX) * Math.cos(angleRad) - (y - centerY) * Math.sin(angleRad);
+        const rotatedY = centerY + (x - centerX) * Math.sin(angleRad) + (y - centerY) * Math.cos(angleRad);
         positions.push({
-          left: `${x + offsetX - chairSize / 2}px`,
-          top: `${y + offsetY - chairSize / 2}px`
+          left: `calc(${rotatedX + offsetX - chairSize / 2}px * ${zoomLevel})`,
+          top: `calc(${rotatedY + offsetY - chairSize / 2}px * ${zoomLevel})`,
+          rotation: rotation, // Rotation de la chaise alignée avec la table
         });
-
         chairIndex++;
       }
     }
   } else {
-    // Logique existante pour rectangle et carré
-    const perimetre = 2 * (tableWidth + tableHeight);
-    const spacingBetweenChairs = perimetre / capacity;
-    const topChairs = Math.round((tableWidth / spacingBetweenChairs));
-    const rightChairs = Math.round((tableHeight / spacingBetweenChairs));
-    const bottomChairs = Math.round((tableWidth / spacingBetweenChairs));
-    const leftChairs = capacity - topChairs - rightChairs - bottomChairs;
-
-    let count = 0;
-
-    if (topChairs > 0) {
-      const spacing = tableWidth / (topChairs + 1);
-      for (let i = 0; i < topChairs && count < capacity; i++, count++) {
-        positions.push({
-          left: `${(i + 1) * spacing - chairSize / 2}px`,
-          top: `${-minDistanceFromTable - chairSize}px`
-        });
+    // Logique pour les autres formes (non modifiée)
+    if (type === "ronde" || type === "ovale") {
+      const centerX = tableWidth / 2;
+      const centerY = tableHeight / 2;
+      const tableRadius = type === "ronde"
+        ? Math.min(tableWidth, tableHeight) / 2
+        : Math.max(tableWidth, tableHeight) / 2;
+      const radius = tableRadius + minDistanceFromTable + chairSize / 2;
+      for (let i = 0; i < capacity; i++) {
+        const angle = (2 * Math.PI * i) / capacity - Math.PI / 2;
+        const x = centerX + radius * Math.cos(angle) - chairSize / 2;
+        const y = centerY + radius * Math.sin(angle) - chairSize / 2;
+        positions.push({ left: `${x}px`, top: `${y}px` });
       }
-    }
-
-    if (rightChairs > 0) {
-      const spacing = tableHeight / (rightChairs + 1);
-      for (let i = 0; i < rightChairs && count < capacity; i++, count++) {
-        positions.push({
-          left: `${tableWidth + minDistanceFromTable}px`,
-          top: `${(i + 1) * spacing - chairSize / 2}px`,
-        });
+    } else {
+      const perimetre = 2 * (tableWidth + tableHeight);
+      const spacingBetweenChairs = perimetre / capacity;
+      const topChairs = Math.round((tableWidth / spacingBetweenChairs));
+      const rightChairs = Math.round((tableHeight / spacingBetweenChairs));
+      const bottomChairs = Math.round((tableWidth / spacingBetweenChairs));
+      const leftChairs = capacity - topChairs - rightChairs - bottomChairs;
+      let count = 0;
+      if (topChairs > 0) {
+        const spacing = tableWidth / (topChairs + 1);
+        for (let i = 0; i < topChairs && count < capacity; i++, count++) {
+          positions.push({
+            left: `${(i + 1) * spacing - chairSize / 2}px`,
+            top: `${-minDistanceFromTable - chairSize}px`
+          });
+        }
       }
-    }
-
-    if (bottomChairs > 0) {
-      const spacing = tableWidth / (bottomChairs + 1);
-      for (let i = 0; i < bottomChairs && count < capacity; i++, count++) {
-        positions.push({
-          left: `${tableWidth - (i + 1) * spacing - chairSize / 2}px`,
-          top: `${tableHeight + minDistanceFromTable}px`,
-        });
+      if (rightChairs > 0) {
+        const spacing = tableHeight / (rightChairs + 1);
+        for (let i = 0; i < rightChairs && count < capacity; i++, count++) {
+          positions.push({
+            left: `${tableWidth + minDistanceFromTable}px`,
+            top: `${(i + 1) * spacing - chairSize / 2}px`,
+          });
+        }
       }
-    }
-
-    if (leftChairs > 0) {
-      const spacing = tableHeight / (leftChairs + 1);
-      for (let i = 0; i < leftChairs && count < capacity; i++, count++) {
-        positions.push({
-          left: `${-minDistanceFromTable - chairSize}px`,
-          top: `${tableHeight - (i + 1) * spacing - chairSize / 2}px`,
-        });
+      if (bottomChairs > 0) {
+        const spacing = tableWidth / (bottomChairs + 1);
+        for (let i = 0; i < bottomChairs && count < capacity; i++, count++) {
+          positions.push({
+            left: `${tableWidth - (i + 1) * spacing - chairSize / 2}px`,
+            top: `${tableHeight + minDistanceFromTable}px`,
+          });
+        }
+      }
+      if (leftChairs > 0) {
+        const spacing = tableHeight / (leftChairs + 1);
+        for (let i = 0; i < leftChairs && count < capacity; i++, count++) {
+          positions.push({
+            left: `${-minDistanceFromTable - chairSize}px`,
+            top: `${tableHeight - (i + 1) * spacing - chairSize / 2}px`,
+          });
+        }
       }
     }
   }
-
   return positions;
 }
 
@@ -190,9 +182,8 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
       className={`w-5 h-5 rounded-full absolute border border-white shadow-sm flex items-center justify-center text-[10px] font-bold text-white cursor-pointer transition-all duration-200 ${isOccupied
         ? "bg-gradient-to-r from-red-400 to-rose-500 hover:from-red-500 hover:to-rose-600"
         : "bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600"
-        } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''} ${isMoving ? 'ring-2 ring-yellow-400 ring-offset-1 animate-pulse' : ''
-        }`}
-      style={style}
+      } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''} ${isMoving ? 'ring-2 ring-yellow-400 ring-offset-1 animate-pulse' : ''}`}
+      style={style} // Inclut transform: rotate(${rotation}deg)
       title={isOccupied ? `Place ${number} - ${guestName}` : `Place ${number} - Libre`}
       onClick={onClick}
     >
@@ -204,7 +195,6 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
 // Composant Table : représente une table avec ses chaises
 function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace, onEdit, movingGuest, zoomLevel }) {
   if (!table) return null;
-
   const ref = useRef(null);
   const touchDataRef = useRef({});
   const [dragging, setDragging] = useState(false);
@@ -228,7 +218,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   };
 
   const handleDrag = (e) => {
-    if (!ref.current || (e.clientX === 0 && e.clientY === 0)) return; // Ignore les événements de fin de drag
+    if (!ref.current || (e.clientX === 0 && e.clientY === 0)) return;
     const parentRect = ref.current.parentNode.getBoundingClientRect();
     const x = snapToGrid((e.clientX - parentRect.left - tableWidth / 2) / zoomLevel);
     const y = snapToGrid((e.clientY - parentRect.top - tableHeight / 2) / zoomLevel);
@@ -236,7 +226,6 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     const maxY = parentRect.height / zoomLevel - tableHeight;
     const boundedX = Math.max(0, Math.min(x, maxX));
     const boundedY = Math.max(0, Math.min(y, maxY));
-
     setPos({ left: boundedX, top: boundedY });
   };
 
@@ -249,11 +238,9 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     e.preventDefault();
     const touch = e.touches[0];
     if (!ref.current) return;
-
     const tableElement = ref.current;
     const tableRect = tableElement.getBoundingClientRect();
     const dragAreaRect = ref.current.parentNode.getBoundingClientRect();
-
     touchDataRef.current[table.id] = {
       startX: touch.clientX,
       startY: touch.clientY,
@@ -264,7 +251,6 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       dragAreaLeft: dragAreaRect.left,
       dragAreaTop: dragAreaRect.top
     };
-
     setDragging(true);
   };
 
@@ -272,23 +258,18 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     e.preventDefault();
     const touch = e.touches[0];
     const touchData = touchDataRef.current[table.id];
-
     if (!touchData || !ref.current) return;
-
     const newX = (touch.clientX - touchData.dragAreaLeft - touchData.offsetX) / zoomLevel;
     const newY = (touch.clientY - touchData.dragAreaTop - touchData.offsetY) / zoomLevel;
-
     const maxX = ref.current.parentNode.getBoundingClientRect().width / zoomLevel - tableWidth;
     const maxY = ref.current.parentNode.getBoundingClientRect().height / zoomLevel - tableHeight;
     const boundedX = Math.max(0, Math.min(snapToGrid(newX), maxX));
     const boundedY = Math.max(0, Math.min(snapToGrid(newY), maxY));
-
     setPos({ left: boundedX, top: boundedY });
   };
 
   const handleTouchEnd = () => {
     if (!touchDataRef.current[table.id] || !ref.current) return;
-
     delete touchDataRef.current[table.id];
     setDragging(false);
     onMove(table.id, pos);
@@ -355,8 +336,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
           e.stopPropagation();
           handleRotate("counterclockwise");
         }}
-        className={`absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''
-          } opacity-0 group-hover:opacity-100`}
+        className={`absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''} opacity-0 group-hover:opacity-100`}
         title="Pivoter à gauche"
       >
         <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(90deg)' }} />
@@ -366,68 +346,100 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
           e.stopPropagation();
           handleRotate("clockwise");
         }}
-        className={`absolute -top-2 left-6 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''
-          } opacity-0 group-hover:opacity-100`}
+        className={`absolute -top-2 left-6 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-blue-600 z-30 transition-all duration-200 ${rotating ? 'ring-2 ring-blue-300 animate-spin-slow' : ''} opacity-0 group-hover:opacity-100`}
         title="Pivoter à droite"
       >
         <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(-90deg)' }} />
       </button>
-
-      <div
-        className={`border-4 border-indigo-400 shadow-md flex items-center justify-center 
-          ${table.type === "ronde" || table.type === "ovale" ? "rounded-full" :
-            table.type === "triangle" ? "triangle" : "rounded-md"} 
-          w-full h-full bg-pink-200 relative transition-all duration-300 
-          ${dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-md'}`}
-        style={{
-          transform: `rotate(${rotation}deg)`,
-          transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease',
-          // Ajouter le clipPath pour le triangle
-          ...(table.type === "triangle" && {
-            clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
-            borderRadius: '0'
-          })
-        }}
-      >
-        <span className="font-bold text-indigo-700 select-none pointer-events-none">
-          {table.nom}
-        </span>
-
-        {getChairPositions(table.type, table.capacite, tableWidth, tableHeight).map((chairPos, i) => {
-          const isOccupied = isChairOccupied(i);
-          const guest = getGuestForChair(i);
-          const isSelected = selectedPlace?.tableId === table.id && selectedPlace?.placeNumber === i + 1;
-          const isMovingTarget = movingGuest && movingGuest.guestId !== guest?.id;
-
-          return (
-            <Chair
-              key={i}
-              number={i + 1}
-              style={{
-                ...chairPos,
-                left: `calc(${chairPos.left} * ${zoomLevel})`,
-                top: `calc(${chairPos.top} * ${zoomLevel})`,
-                width: `${20 * zoomLevel}px`,
-                height: `${20 * zoomLevel}px`,
-                fontSize: `${10 * zoomLevel}px`
-              }}
-              isOccupied={isOccupied}
-              guestName={guest?.nom}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleChairClick(i);
-              }}
-              isSelected={isSelected}
-              isMoving={isMovingTarget}
-            />
-          );
-        })}
-      </div>
+      {table.type === "triangle" ? (
+        <svg
+          width={tableWidth * zoomLevel}
+          height={tableHeight * zoomLevel}
+          viewBox={`0 0 ${tableWidth} ${tableHeight}`}
+          className={`shadow-md transition-all duration-300
+            ${dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-md'}`}
+          style={{
+            transform: `rotate(${rotation}deg)`,
+            transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease',
+          }}
+        >
+          <polygon
+            points={`${tableWidth / 2},0 0,${tableHeight * 0.866} ${tableWidth},${tableHeight * 0.866}`}
+            fill="#f9a8d4" // Rose pâle
+            stroke="#4f46e5" // Indigo
+            strokeWidth="4"
+          />
+          <polygon
+            points={`${tableWidth / 2},0 0,${tableHeight * 0.866} ${tableWidth},${tableHeight * 0.866}`}
+            fill="url(#gradient)"
+            fillOpacity="0.1"
+          />
+          <defs>
+            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style={{ stopColor: "#4f46e5", stopOpacity: 0.2 }} />
+              <stop offset="60%" style={{ stopColor: "transparent", stopOpacity: 0 }} />
+            </linearGradient>
+          </defs>
+          <text
+            x={tableWidth / 2}
+            y={tableHeight / 2}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="font-bold text-indigo-700 select-none pointer-events-none"
+            style={{ fontSize: `${Math.max(10, tableWidth / 8)}px` }}
+          >
+            {table.nom}
+          </text>
+        </svg>
+      ) : (
+        <div
+          className={`border-4 border-indigo-400 shadow-md flex items-center justify-center
+            ${table.type === "ronde" || table.type === "ovale" ? "rounded-full" : "rounded-md"}
+            w-full h-full bg-pink-200 relative transition-all duration-300
+            ${dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-md'}`}
+          style={{
+            transform: `rotate(${rotation}deg)`,
+            transition: rotating || dragging ? 'none' : 'transform 0.3s ease, box-shadow 0.3s ease, scale 0.3s ease',
+          }}
+        >
+          <span className="font-bold text-indigo-700 select-none pointer-events-none">
+            {table.nom}
+          </span>
+        </div>
+      )}
+      {getChairPositions(table.type, table.capacite, tableWidth, tableHeight, rotation, zoomLevel).map((chairPos, i) => {
+        const isOccupied = isChairOccupied(i);
+        const guest = getGuestForChair(i);
+        const isSelected = selectedPlace?.tableId === table.id && selectedPlace?.placeNumber === i + 1;
+        const isMovingTarget = movingGuest && movingGuest.guestId !== guest?.id;
+        return (
+          <Chair
+            key={i}
+            number={i + 1}
+            style={{
+              left: chairPos.left,
+              top: chairPos.top,
+              width: `${20 * zoomLevel}px`,
+              height: `${20 * zoomLevel}px`,
+              fontSize: `${10 * zoomLevel}px`,
+              transform: `rotate(${chairPos.rotation}deg)`
+            }}
+            isOccupied={isOccupied}
+            guestName={guest?.nom}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleChairClick(i);
+            }}
+            isSelected={isSelected}
+            isMoving={isMovingTarget}
+          />
+        );
+      })}
     </div>
   );
 }
 
-// Composant Element : représente un élément supplémentaire (porte, estrade, etc.)
+// Composant Element : représente un objets supplémentaire (porte, estrade, etc.)
 function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, isSelected, zoomLevel, onDelete }) { // Ajout de onDelete en prop
   const { id, nom, type, position, width, height, rotation, color, shape } = element;
   const [dragging, setDragging] = useState(false);
@@ -527,7 +539,7 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
     setCurrentRotation(newRotation);
     if (onRotate) onRotate(id, newRotation);
     setTimeout(() => setRotating(false), 300);
-    toast.success(`Élément ${nom} pivoté à ${newRotation}°`);
+    toast.success(`objets ${nom} pivoté à ${newRotation}°`);
   };
 
   // Fonction pour obtenir l'icône selon le type
@@ -631,15 +643,15 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onDelete(id); // Appeler onDelete avec l'ID de l'élément
+          onDelete(id); // Appeler onDelete avec l'ID de l'objets
         }}
         className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-700 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-        title="Supprimer l'élément"
+        title="Supprimer l'objets"
       >
         <Trash className="w-3 h-3" />
       </button>
 
-      {/* Corps de l'élément avec design amélioré */}
+      {/* Corps de l'objets avec design amélioré */}
       <div
         className={`w-full h-full relative overflow-hidden transition-all duration-300 ${dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-lg'} ${isSelected ? 'ring-2 ring-indigo-400 ring-offset-1' : ''}`}
         style={{
@@ -671,7 +683,7 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
           }}
         />
 
-        {/* Contenu de l'élément */}
+        {/* Contenu de l'objets */}
         <div className="relative w-full h-full flex flex-col items-center justify-center p-2 text-center">
           {/* Icône */}
           <div className="text-2xl mb-1 filter drop-shadow-sm">
@@ -833,9 +845,6 @@ function TableCreationModal({ isOpen, onClose, onAddTables, events, tables, even
         rotation: table.rotation || 0,
         guests: table.guests || [],
       }));
-
-      onAddTables(formattedTables);
-      onClose();
 
       onAddTables(formattedTables);
       onClose();
@@ -1304,8 +1313,8 @@ function CanvasSizeModal({ isOpen, onClose, onApplySize }) {
   );
 }
 
-// Modal pour créer des éléments (modifié pour ajouter la forme personnalisée)
-// Modal pour créer des éléments
+// Modal pour créer des objets (modifié pour ajouter la forme personnalisée)
+// Modal pour créer des objets
 function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId }) {
   const [form, setForm] = useState({
     type: "porte_entree",
@@ -1385,14 +1394,14 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
         return;
       }
       if (!form.shape) {
-        setError("Veuillez sélectionner une forme pour l'élément personnalisé.");
-        toast.error("Veuillez sélectionner une forme pour l'élément personnalisé.");
+        setError("Veuillez sélectionner une forme pour l'objets personnalisé.");
+        toast.error("Veuillez sélectionner une forme pour l'objets personnalisé.");
         return;
       }
       // Forcer height = width pour "rond" si pas déjà fait
       if (form.shape === "rond" && form.customWidth !== form.customHeight) {
-        setError("Pour un élément rond, la largeur et la hauteur doivent être égales.");
-        toast.error("Pour un élément rond, la largeur et la hauteur doivent être égales.");
+        setError("Pour un objets rond, la largeur et la hauteur doivent être égales.");
+        toast.error("Pour un objets rond, la largeur et la hauteur doivent être égales.");
         return;
       }
     }
@@ -1458,12 +1467,12 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
       onClose();
 
       toast.success(
-        `${nomsFinal.length} élément${nomsFinal.length > 1 ? "s" : ""} créé${nomsFinal.length > 1 ? "s" : ""} avec succès !`
+        `${nomsFinal.length} objets${nomsFinal.length > 1 ? "s" : ""} créé${nomsFinal.length > 1 ? "s" : ""} avec succès !`
       );
     } catch (err) {
-      console.error("Erreur création éléments:", err);
-      setError(err.response?.data?.message || "Erreur lors de la création des éléments");
-      toast.error(err.response?.data?.message || "Erreur lors de la création des éléments");
+      console.error("Erreur création objets:", err);
+      setError(err.response?.data?.message || "Erreur lors de la création des objets");
+      toast.error(err.response?.data?.message || "Erreur lors de la création des objets");
     }
   };
 
@@ -1473,7 +1482,7 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
     <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Créer des Éléments</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Créer des objets</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -1485,7 +1494,7 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
         <form onSubmit={onSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col">
-              <label className="text-gray-700 font-medium mb-2 text-sm">Type d'Élément</label>
+              <label className="text-gray-700 font-medium mb-2 text-sm">Type d'objets</label>
               <select
                 name="type"
                 value={form.type}
@@ -1561,7 +1570,7 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
             )}
 
             <div className="flex flex-col">
-              <label className="text-gray-700 font-medium mb-2 text-sm">Nombre d'éléments</label>
+              <label className="text-gray-700 font-medium mb-2 text-sm">Nombre d'objet</label>
               <input
                 name="nombre"
                 type="number"
@@ -1609,11 +1618,11 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
 
           {form.noms.length > 0 && (
             <div className="mt-6 space-y-4">
-              <h3 className="text-lg font-semibold">Noms des éléments</h3>
+              <h3 className="text-lg font-semibold">Noms des objets</h3>
               {form.noms.map((nom, index) => (
                 <div key={index} className="flex flex-col">
                   <label className="text-gray-700 font-medium mb-2 text-sm">
-                    Nom Élément {index + 1}
+                    Nom objets {index + 1}
                   </label>
                   <input
                     value={nom}
@@ -1640,7 +1649,7 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
               type="submit"
               className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
             >
-              Créer les Éléments
+              Créer les objets
             </button>
           </div>
         </form>
@@ -1680,12 +1689,12 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
 
       getElementsByEventId(event.id)
         .then((response) => {
-          console.log("Éléments chargés:", response);
+          console.log("objets chargés:", response);
           setElements(response);
         })
         .catch((err) => {
-          console.error("Erreur chargement éléments:", err);
-          toast.error("Erreur lors du chargement des éléments");
+          console.error("Erreur chargement objets:", err);
+          toast.error("Erreur lors du chargement des objets");
         });
     }
   }, [isAuthenticated, event?.id]);
@@ -1803,10 +1812,10 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
     try {
       await updateElementPosition(elementId, position);
       setElements((prev) => prev.map((el) => (el.id === elementId ? { ...el, position } : el)));
-      toast.success("Position de l'élément mise à jour !");
+      toast.success("Position de l'objets mise à jour !");
     } catch (error) {
-      console.error("Erreur mise à jour position élément:", error);
-      toast.error("Erreur lors de la mise à jour de la position de l'élément");
+      console.error("Erreur mise à jour position objets:", error);
+      toast.error("Erreur lors de la mise à jour de la position de l'objets");
     }
   };
 
@@ -1814,10 +1823,10 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
     try {
       await updateElementRotation(elementId, rotation);
       setElements((prev) => prev.map((el) => (el.id === elementId ? { ...el, rotation } : el)));
-      toast.success("Rotation de l'élément mise à jour !");
+      toast.success("Rotation de l'objets mise à jour !");
     } catch (error) {
-      console.error("Erreur rotation élément:", error);
-      toast.error("Erreur lors de la rotation de l'élément");
+      console.error("Erreur rotation objets:", error);
+      toast.error("Erreur lors de la rotation de l'objets");
     }
   };
 
@@ -1840,16 +1849,16 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
   };
 
   const handleElementDelete = async (elementId) => {
-    const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cet élément ?");
+    const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cet objets ?");
     if (!confirmed) return;
 
     try {
       await deleteElement(elementId);
       setElements((prev) => prev.filter((el) => el.id !== elementId));
-      toast.success("Élément supprimé avec succès !");
+      toast.success("objets supprimé avec succès !");
     } catch (error) {
-      console.error("Erreur suppression élément:", error);
-      toast.error("Erreur lors de la suppression de l'élément");
+      console.error("Erreur suppression objets:", error);
+      toast.error("Erreur lors de la suppression de l'objets");
     }
   };
 
@@ -1914,10 +1923,10 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           return el;
         })
       );
-      toast.success("Élément mis à jour avec succès !");
+      toast.success("objets mis à jour avec succès !");
     } catch (error) {
-      console.error("Erreur mise à jour élément:", error);
-      toast.error("Erreur lors de la modification de l'élément");
+      console.error("Erreur mise à jour objets:", error);
+      toast.error("Erreur lors de la modification de l'objets");
     }
   };
 
@@ -1993,20 +2002,20 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           <span className="hidden lg:inline text-sm font-medium">Ajouter des tables</span>
         </button>
 
-        {/* Ajouter éléments */}
+        {/* Ajouter objets */}
         <button
           onClick={() => setShowElementModal(true)}
           className="bg-gradient-to-br from-teal-500 to-cyan-600 text-white px-3 py-2 lg:px-4 lg:py-3 rounded-2xl shadow-xl flex items-center justify-center lg:justify-start gap-2 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm snap-center flex-shrink-0"
-          title="Ajouter des éléments"
+          title="Ajouter des objets"
         >
           <Box className="w-5 h-5" />
-          <span className="hidden lg:inline text-sm font-medium">Ajouter des éléments</span>
+          <span className="hidden lg:inline text-sm font-medium">Ajouter des objets</span>
         </button>
 
         {/* Réinitialiser */}
         <button
           onClick={() => {
-            const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer toutes les tables et éléments ?");
+            const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer toutes les tables et objets ?");
             if (confirmed) {
               setTables([]);
               setElements([]);
@@ -2085,14 +2094,14 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
 
         {/* Style pour masquer la barre de défilement tout en permettant le scroll */}
         <style>{`
-    .scrollbar-hidden::-webkit-scrollbar {
-      display: none;
-    }
-    .scrollbar-hidden {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-  `}</style>
+      .scrollbar-hidden::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hidden {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    `}</style>
       </div>
 
       <div
@@ -2210,10 +2219,10 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                   </h3>
                   <div className="space-y-2">
                     <p className="text-gray-600 leading-relaxed">
-                      Aucune table ou élément créé pour le moment
+                      Aucune table ou objets créé pour le moment
                     </p>
                     <p className="text-sm text-gray-500 bg-gray-50/80 px-4 py-2 rounded-xl border border-gray-200/50">
-                      💡 Astuce : Ajoutez des tables ou éléments depuis les boutons en bas à gauche pour commencer l'organisation de votre événement
+                      💡 Astuce : Ajoutez des tables ou objets depuis les boutons en bas à gauche pour commencer l'organisation de votre événement
                     </p>
                   </div>
                 </div>
@@ -2240,23 +2249,23 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
         </div>
 
         <style>{`
-          @keyframes slide-down {
-            from { 
-              opacity: 0; 
-              transform: translateY(-20px); 
+            @keyframes slide-down {
+              from { 
+                opacity: 0; 
+                transform: translateY(-20px); 
+              }
+              to { 
+                opacity: 1; 
+                transform: translateY(0); 
+              }
             }
-            to { 
-              opacity: 1; 
-              transform: translateY(0); 
+            .animate-slide-down {
+              animation: slide-down 0.5s ease-out;
             }
-          }
-          .animate-slide-down {
-            animation: slide-down 0.5s ease-out;
-          }
-          .triangle {
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-          }
-        `}</style>
+            .triangle {
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  }
+          `}</style>
       </div>
 
       <TableCreationModal
@@ -2369,7 +2378,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                 <input
                   value={editingElement.nom}
                   onChange={(e) => handleElementChange(editingElement.id, "nom", e.target.value)}
-                  placeholder="Nom de l'élément"
+                  placeholder="Nom de l'objet"
                   className="w-full border rounded-lg px-3 py-2"
                 />
               </div>

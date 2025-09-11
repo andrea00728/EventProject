@@ -749,7 +749,6 @@ export default function ListePersonnel({ eventId}) {
                 { field: "nom", label: "Nom", type: "text" },
                 { field: "email", label: "Email", type: "email" },
                 { field: "role", label: "Rôle", type: "text" },
-                { field: "status", label: "Statut", type: "text" },
               ].map(({ field, label, type }) => (
                 <TextField
                   key={field}
