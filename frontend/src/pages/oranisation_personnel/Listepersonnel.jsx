@@ -186,9 +186,10 @@ export default function ListePersonnel({ eventId}) {
     if (!itemToEdit) return;
     try {
       // Appel API pour modifier l'élément (corrigé avec headers d'auth si nécessaire)
-      await axiosClient.patch(`/personnel/${itemToEdit.id}`, {
+      await axiosClient.patch(`/personnel/${itemToEdit.id}`, form, {
         withCredentials: true,
-      });
+      }
+      );
       setSnackbar({
         open: true,
         message: `Utilisateur ${form.nom} modifié avec succès`,

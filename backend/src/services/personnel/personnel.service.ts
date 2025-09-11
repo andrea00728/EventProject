@@ -359,7 +359,10 @@ async findEventsByPersonnelId(personnelId: number): Promise<Evenement[]> {
 
 //mettre a jour le personnel
 async updatePersonnel(id: number, dto: UpdatePersonnelDto): Promise<Personnel> {
-  const personnel = await this.personnelRepository.findOne({ where: { id } });
+  const personnel = await this.personnelRepository.findOne({
+    where: { id },
+    relations: ['evenement']
+  });
   if (!personnel) {
     throw new NotFoundException('Personnel not found');
   }
