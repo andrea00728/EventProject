@@ -3,6 +3,7 @@ import { useStateContext } from "../../context/ContextProvider";
 import { Users, Calendar, MapPin, Clock, FileText, Star, Trophy, Target } from "lucide-react";
 import { url } from "../../api/url";
 import defaultImage from "../../assets/images/bouquet.jpg";
+import { BookOpen } from "lucide-react"; // Icône pour le thème (ou une autre qui te plaît)
 
 export const InfoEventForPersonnal = () => {
   const { user } = useStateContext();
@@ -53,8 +54,11 @@ export const InfoEventForPersonnal = () => {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Informations de l'Événement : {eventData.eventName}</h1>
-          <div className="h-1 w-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
+          <h1 className="text-5xl font-extrabold mb-6 drop-shadow-lg leading-snug">
+            <span className="block bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-slideDown">
+              🎉 Informations de l'Événement
+            </span>
+          </h1>
         </div>
 
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden backdrop-blur-sm border border-white/20">
@@ -87,38 +91,80 @@ export const InfoEventForPersonnal = () => {
           <div className="p-8">
             {/* Grid infos principales */}
             <div className="grid lg:grid-cols-2 gap-8 mb-8">
+              {/* Colonne gauche */}
               <div className="space-y-6">
-                <InfoCard title="Organisateur" value={organizer} icon={<Users className="h-6 w-6 text-white" />} color="blue" />
-                <InfoCard title="Date" value={new Date(eventData.date).toLocaleDateString()} icon={<Calendar className="h-6 w-6 text-white" />} color="purple" />
+                <InfoCard
+                  title="Organisateur"
+                  value={organizer || "N/A"}
+                  icon={<Users className="h-6 w-6 text-white" />}
+                  color="blue"
+                />
+                {/* <InfoCard
+                  title="Date"
+                  value={new Date(eventData.date).toLocaleDateString() || "N/A"}
+                  icon={<Calendar className="h-6 w-6 text-white" />}
+                  color="purple"
+                /> */}
+                <InfoCard
+                  title="Thème"
+                  value={eventData.details || eventData.theme || "N/A"}
+                  icon={<BookOpen className="h-6 w-6 text-white" />}
+                  color="purple"
+                />
+                <InfoCard
+                  title="Categorie"
+                  value={eventData.type || "N/A"}
+                  icon={<BookOpen className="h-6 w-6 text-white" />}
+                  color="purple"
+                />
               </div>
 
+              {/* Colonne droite */}
               <div className="space-y-6">
-                <InfoCard title="Horaire" value={`${new Date(eventData.date).toLocaleTimeString()} - ${eventData.date_fin ? new Date(eventData.date_fin).toLocaleTimeString() : "N/A"}`} icon={<Clock className="h-6 w-6 text-white" />} color="orange" />
-                <InfoCard title="Lieu" value={eventData.location || "N/A"} icon={<MapPin className="h-6 w-6 text-white" />} color="red" />
-                <InfoCard title="Salle" value={eventData.salle || "N/A"} icon={<MapPin className="h-6 w-6 text-white" />} color="teal" />
-              </div>
-            </div>
-
-            {/* Détails */}
-            <div className="bg-gradient-to-r from-indigo-50 to-cyan-50 rounded-2xl p-6 border border-indigo-200 mb-8">
-              <div className="flex items-start">
-                <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
-                  <FileText className="h-6 w-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">Détails de l'événement</h3>
-                  <div className="bg-white/70 backdrop-blur p-6 rounded-xl border border-white/50">
-                    <p className="text-gray-700 leading-relaxed text-lg">{eventData.details || eventData.theme}</p>
-                  </div>
-                </div>
+                {/* <InfoCard
+                  title="Horaire"
+                  value={`${new Date(eventData.date).toLocaleTimeString()} - ${eventData.date_fin ? new Date(eventData.date_fin).toLocaleTimeString() : "N/A"}`}
+                  icon={<Clock className="h-6 w-6 text-white" />}
+                  color="orange"
+                /> */}
+                <InfoCard
+                  title="Salle"
+                  value={eventData.salle || "N/A"}
+                  icon={<MapPin className="h-6 w-6 text-white" />}
+                  color="teal"
+                />
+                <InfoCard
+                  title="Lieu"
+                  value={eventData.location || "N/A"}
+                  icon={<MapPin className="h-6 w-6 text-white" />}
+                  color="red"
+                />
               </div>
             </div>
 
             {/* Statistiques */}
             <div className="grid md:grid-cols-3 gap-6">
-              <StatCard icon={<Star className="h-8 w-8 text-blue-200" />} value={eventData.personnels?.length || 0} label="Invités attendus" colorFrom="blue-500" colorTo="blue-600" />
-              <StatCard icon={<Trophy className="h-8 w-8 text-emerald-200" />} value={eventData.personnels?.length || 0} label="Membres du personnel" colorFrom="emerald-500" colorTo="emerald-600" />
-              <StatCard icon={<Target className="h-8 w-8 text-purple-200" />} value={eventData.tables?.length || 0} label="Tables disponibles" colorFrom="purple-500" colorTo="purple-600" />
+              <StatCard
+                icon={<Star className="h-8 w-8 text-blue-200" />}
+                value={eventData.personnels?.length || 0}
+                label="Invités attendus"
+                colorFrom="blue-500"
+                colorTo="blue-600"
+              />
+              <StatCard
+                icon={<Trophy className="h-8 w-8 text-emerald-200" />}
+                value={eventData.personnels?.length || 0}
+                label="Membres du personnel"
+                colorFrom="emerald-500"
+                colorTo="emerald-600"
+              />
+              <StatCard
+                icon={<Target className="h-8 w-8 text-purple-200" />}
+                value={eventData.tables?.length || 0}
+                label="Tables disponibles"
+                colorFrom="purple-500"
+                colorTo="purple-600"
+              />
             </div>
           </div>
         </div>
