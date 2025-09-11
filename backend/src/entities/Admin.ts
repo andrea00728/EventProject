@@ -42,5 +42,6 @@ export class Admin {
   
   @Column({ type: 'text', nullable: true })
   bio: string;
+  nom: any;
 
 }
