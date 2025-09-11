@@ -29,7 +29,7 @@ export const InfoEventForPersonnal = () => {
 
         const data = await res.json();
         setEventData(data);
-        console.log("Données de l'événement récupérées :", data);
+        // console.log("Données de l'événement récupérées :", data);
       
       } catch (err) {
         setError(err.message);
