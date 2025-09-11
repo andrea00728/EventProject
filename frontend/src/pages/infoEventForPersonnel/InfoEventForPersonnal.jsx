@@ -19,7 +19,7 @@ export const InfoEventForPersonnal = () => {
       setIsLoading(true);
       try {
         const res = await fetch(
-          `http://localhost:3000/personnel/events-by-email?email=${encodeURIComponent(personnelEmail)}`
+          `https://api.mastertable.site/personnel/events-by-email?email=${encodeURIComponent(personnelEmail)}`
         );
 
         if (!res.ok) {
