@@ -56,11 +56,11 @@ import { getAllForfait, addForfait, editForfait, deleteForfait } from '../../ser
 // Composant de modal pour l'ajout/modification de forfaits
 const PackageModal = ({ isOpen, onClose, packageData, onSave }) => {
   const [formData, setFormData] = useState(
-    packageData || { nom: '', price: '', maxevents: '', maxinvites: '', description: '' }
+    packageData || { nom: '', price: '', maxevents: '', maxinvites: '', fonctionnalite: '', ideal: '' }
   );
 
   useEffect(() => {
-    setFormData(packageData || { nom: '', price: '', maxevents: '', maxinvites: '', description: '' });
+    setFormData(packageData || { nom: '', price: '', maxevents: '', maxinvites: '', fonctionnalite: '', ideal: '' });
   }, [packageData]);
 
   const handleChange = (e) => {
@@ -108,7 +108,7 @@ const PackageModal = ({ isOpen, onClose, packageData, onSave }) => {
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">Max. événements</label>
             <input
-              type="number"
+              type="string"
               name="maxevents"
               value={formData.maxevents}
               onChange={handleChange}
@@ -128,10 +128,20 @@ const PackageModal = ({ isOpen, onClose, packageData, onSave }) => {
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Description</label>
+            <label className="block text-gray-700 text-sm font-bold mb-2">Fonctionnalités</label>
             <textarea
-              name="description"
-              value={formData.description}
+              name="fonctionnalite"
+              value={formData.fonctionnalite}
+              onChange={handleChange}
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">Idéaliste</label>
+            <textarea
+              name="ideal"
+              value={formData.ideal}
               onChange={handleChange}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               required
@@ -308,7 +318,9 @@ const PackageManagementPage = () => {
                       <p className="text-gray-900 whitespace-no-wrap">
                         Max. événements: {pkg.maxevents}, Max. invités: {pkg.maxinvites}
                         <br />
-                        Description: {pkg.description}
+                        Fonctionnalités: {pkg.fonctionnalite}
+                        <br />
+                        l'Ideal: {pkg.ideal}
                       </p>
                     </td>
                     <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">

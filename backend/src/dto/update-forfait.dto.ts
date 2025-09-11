@@ -6,8 +6,8 @@ export class UpdateForfaitDto {
   nom?: string;
 
   @IsOptional()
-  @IsNumber()
-  maxevents?: number | null;
+  @IsString()
+  maxevents?: string | null;
 
   @IsOptional()
   @IsNumber()
@@ -24,4 +24,12 @@ export class UpdateForfaitDto {
   @IsOptional()
   @IsNumber()
   price?: number;
+
+  @IsOptional()
+  @IsString()
+  fonctionnalite?: string;
+
+  @IsOptional()
+  @IsString()
+  ideal?: string;
 }

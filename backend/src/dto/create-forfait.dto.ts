@@ -5,8 +5,8 @@ export class CreateForfaitDto {
   nom: string;
 
   @IsOptional()
-  @IsNumber()
-  maxevents?: number | null;
+  @IsString()
+  maxevents?: string | null;
 
   @IsOptional()
   @IsNumber()
@@ -18,7 +18,16 @@ export class CreateForfaitDto {
   @IsOptional()
   @IsString()
   paypalplanid?: string;
-
+  
   @IsNumber()
   price: number;
+  
+  @IsOptional()
+  @IsString()
+  fonctionnalite?: string;
+
+  @IsOptional()
+  @IsString()
+  ideal?: string;
+  
 }

@@ -26,14 +26,28 @@ export class ForfaitService {
     });
     if (!user) return false;
 
-    const maxEvents = user.forfait?.maxevents;
-    if (maxEvents == null) return true;
+    // maxEvents est une chaîne de caractères (string), potentiellement 'null' ou 'illimité'
+    const maxEventsString = user.forfait?.maxevents;
+    if (maxEventsString == null || maxEventsString.toLowerCase() === 'illimité') {
+      return true; // Accès illimité
+    }
+
+    // Convertit la chaîne de caractères en nombre
+    const maxEventsNumber = parseInt(maxEventsString, 10);
+
+    // Vérifie si la conversion a réussi et est un nombre valide
+    if (isNaN(maxEventsNumber)) {
+        // Gérer le cas où la chaîne n'est ni un nombre ni "illimité"
+        // Peut être une valeur par défaut, ou une erreur
+        return false;
+    }
 
     const count = await this.evenementRepository.count({
       where: { user: { id: userId } },
     });
 
-    return count < maxEvents;
+    // Effectue la comparaison après avoir converti le type
+    return count < maxEventsNumber;
   }
 
   async canAddInvite(userId: string, currentInviteCount: number): Promise<boolean> {
