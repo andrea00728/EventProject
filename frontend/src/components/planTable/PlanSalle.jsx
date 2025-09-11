@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Plus, RefreshCcw, User, Box, AlertTriangle, CheckCircle } from "lucide-react";
+import { Plus, RefreshCcw, User, Box } from "lucide-react";
 import { useStateContext } from "../../context/ContextProvider";
 import {
   updateTablePosition,
@@ -8,7 +8,7 @@ import {
   reassignGuestToTable,
   updateTable,
 } from "../../services/tableService";
-import { getMyEvents } from "../../services/evenementServ";
+import { getEvent, getMyEvents } from "../../services/evenementServ";
 import {
   getElementsByEventId,
   updateElementPosition,
@@ -46,6 +46,20 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
   const [canvasSize, setCanvasSize] = useState(CANVAS_SIZES[0]);
   const [zoomLevel, setZoomLevel] = useState(1);
   const canvasRef = useRef(null);
+  const [eventSelected, setEventSelected] = useState();
+
+
+ 
+  useEffect(() => {
+    if (event?.id) {
+      getEvent(event?.id)
+        .then((data) => {
+          console.log("Événements séléctionné:", data);
+          setEventSelected(data)
+        })
+    }
+  }, [event?.id]);
+
 
   useEffect(() => {
     if (isAuthenticated && event?.id) {
@@ -378,6 +392,8 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
     }
   };
 
+  console.log("Event actuel:", event);
+
   return (
     <div className="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center p-4">
       <Toaster position="top-right" />
@@ -550,7 +566,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
               <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50"></div>
               <div className="relative px-6 py-3">
                 <h1 className="text-2xl font-black bg-gradient-to-r from-indigo-700 via-purple-600 to-indigo-800 bg-clip-text text-transparent tracking-wide drop-shadow-sm">
-                  Plan des Tables - {event?.nom || "Événement"}
+                  Plan des Tables - {eventSelected?.nom || "Événement"}
                 </h1>
                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"></div>
               </div>
