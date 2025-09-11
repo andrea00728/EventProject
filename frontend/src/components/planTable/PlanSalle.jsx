@@ -38,7 +38,7 @@ const CANVAS_SIZES = [
   { label: "Très grand", width: 1600, height: 1000 },
 ];
 
-// Nouveaux types d'éléments supplémentaires (portes, estrade, buffet, etc.)
+// Nouveaux types d'objets supplémentaires (portes, estrade, buffet, etc.)
 const ELEMENT_TYPES = [
   { value: "porte_entree", label: "Porte d'entrée", width: 40, height: 80 },
   { value: "porte_sortie", label: "Porte de sortie", width: 40, height: 80 },
@@ -427,7 +427,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   );
 }
 
-// Composant Element : représente un élément supplémentaire (porte, estrade, etc.)
+// Composant Element : représente un objets supplémentaire (porte, estrade, etc.)
 function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, isSelected, zoomLevel, onDelete }) { // Ajout de onDelete en prop
   const { id, nom, type, position, width, height, rotation, color, shape } = element;
   const [dragging, setDragging] = useState(false);
@@ -527,7 +527,7 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
     setCurrentRotation(newRotation);
     if (onRotate) onRotate(id, newRotation);
     setTimeout(() => setRotating(false), 300);
-    toast.success(`Élément ${nom} pivoté à ${newRotation}°`);
+    toast.success(`objets ${nom} pivoté à ${newRotation}°`);
   };
 
   // Fonction pour obtenir l'icône selon le type
@@ -631,15 +631,15 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onDelete(id); // Appeler onDelete avec l'ID de l'élément
+          onDelete(id); // Appeler onDelete avec l'ID de l'objets
         }}
         className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-700 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-        title="Supprimer l'élément"
+        title="Supprimer l'objets"
       >
         <Trash className="w-3 h-3" />
       </button>
 
-      {/* Corps de l'élément avec design amélioré */}
+      {/* Corps de l'objets avec design amélioré */}
       <div
         className={`w-full h-full relative overflow-hidden transition-all duration-300 ${dragging ? 'shadow-2xl scale-110' : rotating ? 'shadow-xl scale-105 ring-2 ring-blue-300' : 'shadow-lg'} ${isSelected ? 'ring-2 ring-indigo-400 ring-offset-1' : ''}`}
         style={{
@@ -671,7 +671,7 @@ function Element({ element, onMove, onRotate, onSelect, onResize, canvasSize, is
           }}
         />
 
-        {/* Contenu de l'élément */}
+        {/* Contenu de l'objets */}
         <div className="relative w-full h-full flex flex-col items-center justify-center p-2 text-center">
           {/* Icône */}
           <div className="text-2xl mb-1 filter drop-shadow-sm">
@@ -1304,8 +1304,8 @@ function CanvasSizeModal({ isOpen, onClose, onApplySize }) {
   );
 }
 
-// Modal pour créer des éléments (modifié pour ajouter la forme personnalisée)
-// Modal pour créer des éléments
+// Modal pour créer des objets (modifié pour ajouter la forme personnalisée)
+// Modal pour créer des objets
 function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId }) {
   const [form, setForm] = useState({
     type: "porte_entree",
@@ -1385,14 +1385,14 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
         return;
       }
       if (!form.shape) {
-        setError("Veuillez sélectionner une forme pour l'élément personnalisé.");
-        toast.error("Veuillez sélectionner une forme pour l'élément personnalisé.");
+        setError("Veuillez sélectionner une forme pour l'objets personnalisé.");
+        toast.error("Veuillez sélectionner une forme pour l'objets personnalisé.");
         return;
       }
       // Forcer height = width pour "rond" si pas déjà fait
       if (form.shape === "rond" && form.customWidth !== form.customHeight) {
-        setError("Pour un élément rond, la largeur et la hauteur doivent être égales.");
-        toast.error("Pour un élément rond, la largeur et la hauteur doivent être égales.");
+        setError("Pour un objets rond, la largeur et la hauteur doivent être égales.");
+        toast.error("Pour un objets rond, la largeur et la hauteur doivent être égales.");
         return;
       }
     }
@@ -1458,12 +1458,12 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
       onClose();
 
       toast.success(
-        `${nomsFinal.length} élément${nomsFinal.length > 1 ? "s" : ""} créé${nomsFinal.length > 1 ? "s" : ""} avec succès !`
+        `${nomsFinal.length} objets${nomsFinal.length > 1 ? "s" : ""} créé${nomsFinal.length > 1 ? "s" : ""} avec succès !`
       );
     } catch (err) {
-      console.error("Erreur création éléments:", err);
-      setError(err.response?.data?.message || "Erreur lors de la création des éléments");
-      toast.error(err.response?.data?.message || "Erreur lors de la création des éléments");
+      console.error("Erreur création objets:", err);
+      setError(err.response?.data?.message || "Erreur lors de la création des objets");
+      toast.error(err.response?.data?.message || "Erreur lors de la création des objets");
     }
   };
 
@@ -1473,7 +1473,7 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
     <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Créer des Éléments</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Créer des objets</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -1485,7 +1485,7 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
         <form onSubmit={onSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col">
-              <label className="text-gray-700 font-medium mb-2 text-sm">Type d'Élément</label>
+              <label className="text-gray-700 font-medium mb-2 text-sm">Type d'objets</label>
               <select
                 name="type"
                 value={form.type}
@@ -1561,7 +1561,7 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
             )}
 
             <div className="flex flex-col">
-              <label className="text-gray-700 font-medium mb-2 text-sm">Nombre d'éléments</label>
+              <label className="text-gray-700 font-medium mb-2 text-sm">Nombre d'objets</label>
               <input
                 name="nombre"
                 type="number"
@@ -1609,11 +1609,11 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
 
           {form.noms.length > 0 && (
             <div className="mt-6 space-y-4">
-              <h3 className="text-lg font-semibold">Noms des éléments</h3>
+              <h3 className="text-lg font-semibold">Noms des objets</h3>
               {form.noms.map((nom, index) => (
                 <div key={index} className="flex flex-col">
                   <label className="text-gray-700 font-medium mb-2 text-sm">
-                    Nom Élément {index + 1}
+                    Nom objets {index + 1}
                   </label>
                   <input
                     value={nom}
@@ -1640,7 +1640,7 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
               type="submit"
               className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
             >
-              Créer les Éléments
+              Créer les objets
             </button>
           </div>
         </form>
@@ -1680,12 +1680,12 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
 
       getElementsByEventId(event.id)
         .then((response) => {
-          console.log("Éléments chargés:", response);
+          console.log("objets chargés:", response);
           setElements(response);
         })
         .catch((err) => {
-          console.error("Erreur chargement éléments:", err);
-          toast.error("Erreur lors du chargement des éléments");
+          console.error("Erreur chargement objets:", err);
+          toast.error("Erreur lors du chargement des objets");
         });
     }
   }, [isAuthenticated, event?.id]);
@@ -1803,10 +1803,10 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
     try {
       await updateElementPosition(elementId, position);
       setElements((prev) => prev.map((el) => (el.id === elementId ? { ...el, position } : el)));
-      toast.success("Position de l'élément mise à jour !");
+      toast.success("Position de l'objets mise à jour !");
     } catch (error) {
-      console.error("Erreur mise à jour position élément:", error);
-      toast.error("Erreur lors de la mise à jour de la position de l'élément");
+      console.error("Erreur mise à jour position objets:", error);
+      toast.error("Erreur lors de la mise à jour de la position de l'objets");
     }
   };
 
@@ -1814,10 +1814,10 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
     try {
       await updateElementRotation(elementId, rotation);
       setElements((prev) => prev.map((el) => (el.id === elementId ? { ...el, rotation } : el)));
-      toast.success("Rotation de l'élément mise à jour !");
+      toast.success("Rotation de l'objets mise à jour !");
     } catch (error) {
-      console.error("Erreur rotation élément:", error);
-      toast.error("Erreur lors de la rotation de l'élément");
+      console.error("Erreur rotation objets:", error);
+      toast.error("Erreur lors de la rotation de l'objets");
     }
   };
 
@@ -1840,16 +1840,16 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
   };
 
   const handleElementDelete = async (elementId) => {
-    const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cet élément ?");
+    const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cet objets ?");
     if (!confirmed) return;
 
     try {
       await deleteElement(elementId);
       setElements((prev) => prev.filter((el) => el.id !== elementId));
-      toast.success("Élément supprimé avec succès !");
+      toast.success("objets supprimé avec succès !");
     } catch (error) {
-      console.error("Erreur suppression élément:", error);
-      toast.error("Erreur lors de la suppression de l'élément");
+      console.error("Erreur suppression objets:", error);
+      toast.error("Erreur lors de la suppression de l'objets");
     }
   };
 
@@ -1914,10 +1914,10 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           return el;
         })
       );
-      toast.success("Élément mis à jour avec succès !");
+      toast.success("objets mis à jour avec succès !");
     } catch (error) {
-      console.error("Erreur mise à jour élément:", error);
-      toast.error("Erreur lors de la modification de l'élément");
+      console.error("Erreur mise à jour objets:", error);
+      toast.error("Erreur lors de la modification de l'objets");
     }
   };
 
@@ -1993,20 +1993,20 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           <span className="hidden lg:inline text-sm font-medium">Ajouter des tables</span>
         </button>
 
-        {/* Ajouter éléments */}
+        {/* Ajouter objets */}
         <button
           onClick={() => setShowElementModal(true)}
           className="bg-gradient-to-br from-teal-500 to-cyan-600 text-white px-3 py-2 lg:px-4 lg:py-3 rounded-2xl shadow-xl flex items-center justify-center lg:justify-start gap-2 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm snap-center flex-shrink-0"
-          title="Ajouter des éléments"
+          title="Ajouter des objets"
         >
           <Box className="w-5 h-5" />
-          <span className="hidden lg:inline text-sm font-medium">Ajouter des éléments</span>
+          <span className="hidden lg:inline text-sm font-medium">Ajouter des objets</span>
         </button>
 
         {/* Réinitialiser */}
         <button
           onClick={() => {
-            const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer toutes les tables et éléments ?");
+            const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer toutes les tables et objets ?");
             if (confirmed) {
               setTables([]);
               setElements([]);
@@ -2210,10 +2210,10 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                   </h3>
                   <div className="space-y-2">
                     <p className="text-gray-600 leading-relaxed">
-                      Aucune table ou élément créé pour le moment
+                      Aucune table ou objets créé pour le moment
                     </p>
                     <p className="text-sm text-gray-500 bg-gray-50/80 px-4 py-2 rounded-xl border border-gray-200/50">
-                      💡 Astuce : Ajoutez des tables ou éléments depuis les boutons en bas à gauche pour commencer l'organisation de votre événement
+                      💡 Astuce : Ajoutez des tables ou objets depuis les boutons en bas à gauche pour commencer l'organisation de votre événement
                     </p>
                   </div>
                 </div>
@@ -2369,7 +2369,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                 <input
                   value={editingElement.nom}
                   onChange={(e) => handleElementChange(editingElement.id, "nom", e.target.value)}
-                  placeholder="Nom de l'élément"
+                  placeholder="Nom de l'objets"
                   className="w-full border rounded-lg px-3 py-2"
                 />
               </div>
