@@ -89,7 +89,7 @@ const statusLabels = {
   pending: { label: "🕒 En attente", style: "bg-yellow-100 text-yellow-800" },
 };
 
-export default function ListePersonnel({ eventId, refreshTrigger }) {
+export default function ListePersonnel({ eventId}) {
   const [personnels, setPersonnels] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -248,11 +248,8 @@ export default function ListePersonnel({ eventId, refreshTrigger }) {
   // Chargement des données
   useEffect(() => {
     if (!eventId) return;
-
     fetchPersonnels();
-    const interval = setInterval(fetchPersonnels, 6000);
-    return () => clearInterval(interval);
-  }, [eventId, refreshTrigger]);
+  }, [eventId]);
 
   // Application des filtres quand ils changent
   useEffect(() => {
