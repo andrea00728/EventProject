@@ -66,6 +66,18 @@ export class PersonnelService {
     });
   }
 
+  async findAllPersonnels(): Promise<Personnel[]> {
+    return this.personnelRepository.find({
+      relations: ["evenement"], // si tu veux récupérer aussi les infos de l’événement
+    });
+  }
+
+  async countAll(): Promise<number> {
+    return this.personnelRepository.count();
+  }
+
+
+
 
   /**
    * confirmer le demande  pour etre un membre du personnel
