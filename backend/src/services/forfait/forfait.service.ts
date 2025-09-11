@@ -1,9 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from 'src/Authentication/entities/auth.entity';
 import { Evenement } from 'src/entities/Evenement';
 import { Forfait } from 'src/entities/Forfait';
+import { CreateForfaitDto } from 'src/dto/create-forfait.dto';
+import { UpdateForfaitDto } from 'src/dto/update-forfait.dto';
+
 
 @Injectable()
 export class ForfaitService {
@@ -171,5 +174,36 @@ export class ForfaitService {
       type: result.type,
       count: parseInt(result.count) || 0
     }));
+  }
+
+
+
+  // by claudio
+  // Nouveaux services pour la gestion des forfaits
+  async create(createForfaitDto: CreateForfaitDto): Promise<Forfait> {
+    const nouveauForfait = this.forfaitRepository.create(createForfaitDto);
+    return this.forfaitRepository.save(nouveauForfait);
+  }
+
+  // modifier les forfaits
+  async update(idForfait: number, updateForfaitDto: UpdateForfaitDto): Promise<Forfait> {
+    const forfait = await this.forfaitRepository.preload({
+      id: idForfait,
+      ...updateForfaitDto,
+    });
+
+    if (!forfait) {
+      throw new NotFoundException(`Forfait with ID ${idForfait} not found`);
+    }
+
+    return this.forfaitRepository.save(forfait);
+  }
+
+  // fonction pour supprimer le forfaits
+    async remove(id: number): Promise<void> {
+    const result = await this.forfaitRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Forfait with ID ${id} not found`);
+    }
   }
 }

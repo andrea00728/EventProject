@@ -2,8 +2,14 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Patch,
   Post,
+  Put,
   Query,
   Req,
   Res,
@@ -21,6 +27,12 @@ import { AuthGuard } from '@nestjs/passport';
 import { addDays } from 'date-fns';
 import { NotificationService } from 'src/services/notification/notification.service';
 import { ForfaitService } from 'src/services/forfait/forfait.service';
+import { CreateForfaitDto } from 'src/dto/create-forfait.dto';
+import { UpdateForfaitDto } from 'src/dto/update-forfait.dto';
+
+
+// Interface pour les données de création/modification de forfait
+
 @Controller('forfait')
 export class ForfaitController {
   constructor(
@@ -219,6 +231,28 @@ async getDashboardCharts(@Query('period') period: string = '12') {
     throw error;
   }
 }
+
+
+
+
+// by claudio
+// NOUVELLES ROUTES POUR LA GESTION DES FORFAITS
+  @Post()
+  async create(@Body() createForfaitDto: CreateForfaitDto): Promise<Forfait> {
+    return this.forfaitService.create(createForfaitDto);
+  }
+
+  //endpoint pour modifier le forfait
+  @Patch(':id') // L'ID est passé dans l'URL, par exemple: /forfait/123
+  async update(@Param('id') idForfait: number, @Body() updateForfaitDto: UpdateForfaitDto): Promise<Forfait> {
+    return this.forfaitService.update(Number(idForfait), updateForfaitDto);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  async remove(@Param('id') id: number): Promise<void> {
+    return this.forfaitService.remove(id);
+  }
 
 
 }
