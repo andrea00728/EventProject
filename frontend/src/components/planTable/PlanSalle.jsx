@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import {Plus, RefreshCcw, User,  Box } from "lucide-react";
+import { Plus, RefreshCcw, User, Box, AlertTriangle, CheckCircle } from "lucide-react";
 import { useStateContext } from "../../context/ContextProvider";
 import {
   updateTablePosition,
@@ -25,6 +25,45 @@ import TableManipule from "./TableManipule";
 import { Element } from "./Element";
 import CanvasSizeModal from "./CanvaSizeModal";
 
+// Nouveau composant : Modal de confirmation professionnel
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, type = "delete" }) => {
+  if (!isOpen) return null;
+
+  const icon = type === "delete" ? AlertTriangle : CheckCircle;
+  const bgColor = type === "delete" ? "from-red-50 to-rose-50" : "from-emerald-50 to-green-50";
+  const textColor = type === "delete" ? "text-red-800" : "text-emerald-800";
+  const borderColor = type === "delete" ? "border-red-200" : "border-emerald-200";
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50 p-4">
+      <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 border ${borderColor}`}>
+        <div className="p-6">
+          <div className="flex items-center justify-center mb-4">
+            <div className={`p-3 rounded-full bg-gradient-to-br ${bgColor} border`}>
+              <icon className={`w-6 h-6 ${textColor}`} />
+            </div>
+          </div>
+          <h2 className="text-xl font-semibold text-center mb-2">{title}</h2>
+          <p className="text-gray-600 text-center mb-6">{message}</p>
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors rounded-xl"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={onConfirm}
+              className={`px-4 py-2 text-white rounded-xl transition-all hover:scale-105 shadow-md bg-gradient-to-r ${type === "delete" ? "from-red-500 to-red-600" : "from-emerald-500 to-emerald-600"}`}
+            >
+              Confirmer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Composant principal : PlanSalle
 export default function PlanSalle({ event, tables, setTables, onAddTable, onAddGuest }) {
@@ -37,6 +76,8 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
   const [showElementModal, setShowElementModal] = useState(false);
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [showCanvasSizeModal, setShowCanvasSizeModal] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [confirmationConfig, setConfirmationConfig] = useState({ title: "", message: "", onConfirm: null, type: "delete" });
   const [events, setEvents] = useState([]);
   const [elements, setElements] = useState([]);
   const [canvasSize, setCanvasSize] = useState(CANVAS_SIZES[0]);
@@ -57,7 +98,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
 
       getElementsByEventId(event.id)
         .then((response) => {
-          console.log("objets chargés:", response);
+          console.log("Objets chargés:", response);
           setElements(response);
         })
         .catch((err) => {
@@ -70,6 +111,11 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
   useEffect(() => {
     console.log("État tables mis à jour:", tables);
   }, [tables]);
+
+  const showConfirmation = (title, message, onConfirm, type = "delete") => {
+    setConfirmationConfig({ title, message, onConfirm, type });
+    setShowConfirmationModal(true);
+  };
 
   const handleZoom = (direction) => {
     setZoomLevel((prev) => {
@@ -180,10 +226,10 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
     try {
       await updateElementPosition(elementId, position);
       setElements((prev) => prev.map((el) => (el.id === elementId ? { ...el, position } : el)));
-      toast.success("Position de l'objets mise à jour !");
+      toast.success("Position de l'objet mise à jour !");
     } catch (error) {
-      console.error("Erreur mise à jour position objets:", error);
-      toast.error("Erreur lors de la mise à jour de la position de l'objets");
+      console.error("Erreur mise à jour position objet:", error);
+      toast.error("Erreur lors de la mise à jour de la position de l'objet");
     }
   };
 
@@ -191,43 +237,67 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
     try {
       await updateElementRotation(elementId, rotation);
       setElements((prev) => prev.map((el) => (el.id === elementId ? { ...el, rotation } : el)));
-      toast.success("Rotation de l'objets mise à jour !");
+      toast.success("Rotation de l'objet mise à jour !");
     } catch (error) {
-      console.error("Erreur rotation objets:", error);
-      toast.error("Erreur lors de la rotation de l'objets");
+      console.error("Erreur rotation objet:", error);
+      toast.error("Erreur lors de la rotation de l'objet");
     }
   };
 
   const handleTableDelete = async (tableId) => {
-    const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cette table ? Tous les invités assignés seront également supprimés.");
-    if (!confirmed) return;
-
-    try {
-      await deleteTable(tableId);
-      setTables((prev) => prev.filter((t) => t.id !== tableId));
-      if (selectedPlace?.tableId === tableId) {
-        setSelectedPlace(null);
-        setMovingGuest(null);
+    showConfirmation(
+      "Supprimer la table ?",
+      "Êtes-vous sûr de vouloir supprimer cette table ? Tous les invités assignés seront également supprimés.",
+      async () => {
+        try {
+          await deleteTable(tableId);
+          setTables((prev) => prev.filter((t) => t.id !== tableId));
+          if (selectedPlace?.tableId === tableId) {
+            setSelectedPlace(null);
+            setMovingGuest(null);
+          }
+          toast.success("Table supprimée avec succès !");
+        } catch (error) {
+          console.error("Erreur suppression table:", error);
+          toast.error("Erreur lors de la suppression de la table");
+        }
+        setShowConfirmationModal(false);
       }
-      toast.success("Table supprimée avec succès !");
-    } catch (error) {
-      console.error("Erreur suppression table:", error);
-      toast.error("Erreur lors de la suppression de la table");
-    }
+    );
   };
 
   const handleElementDelete = async (elementId) => {
-    const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cet objets ?");
-    if (!confirmed) return;
+    showConfirmation(
+      "Supprimer l'objet ?",
+      "Êtes-vous sûr de vouloir supprimer cet objet ?",
+      async () => {
+        try {
+          await deleteElement(elementId);
+          setElements((prev) => prev.filter((el) => el.id !== elementId));
+          toast.success("Objet supprimé avec succès !");
+        } catch (error) {
+          console.error("Erreur suppression objet:", error);
+          toast.error("Erreur lors de la suppression de l'objet");
+        }
+        setShowConfirmationModal(false);
+      }
+    );
+  };
 
-    try {
-      await deleteElement(elementId);
-      setElements((prev) => prev.filter((el) => el.id !== elementId));
-      toast.success("objets supprimé avec succès !");
-    } catch (error) {
-      console.error("Erreur suppression objets:", error);
-      toast.error("Erreur lors de la suppression de l'objets");
-    }
+  const handleResetPlan = () => {
+    showConfirmation(
+      "Réinitialiser le plan ?",
+      "Êtes-vous sûr de vouloir supprimer toutes les tables et objets ? Cette action est irréversible.",
+      () => {
+        setTables([]);
+        setElements([]);
+        setMovingGuest(null);
+        setSelectedPlace(null);
+        toast.success("Plan réinitialisé avec succès !");
+        setShowConfirmationModal(false);
+      },
+      "reset" // Type personnalisé pour un style différent si besoin
+    );
   };
 
   const handleOpenTableEdit = (table) => setEditingTable(table);
@@ -291,10 +361,10 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           return el;
         })
       );
-      toast.success("objets mis à jour avec succès !");
+      toast.success("Objet mis à jour avec succès !");
     } catch (error) {
-      console.error("Erreur mise à jour objets:", error);
-      toast.error("Erreur lors de la modification de l'objets");
+      console.error("Erreur mise à jour objet:", error);
+      toast.error("Erreur lors de la modification de l'objet");
     }
   };
 
@@ -382,16 +452,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
 
         {/* Réinitialiser */}
         <button
-          onClick={() => {
-            const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer toutes les tables et objets ?");
-            if (confirmed) {
-              setTables([]);
-              setElements([]);
-              setMovingGuest(null);
-              setSelectedPlace(null);
-              toast.success("Plan réinitialisé avec succès !");
-            }
-          }}
+          onClick={handleResetPlan}
           className="bg-gradient-to-br from-red-500 to-rose-600 text-white px-3 py-2 lg:px-4 lg:py-3 rounded-2xl shadow-xl flex items-center justify-center lg:justify-start gap-2 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm snap-center flex-shrink-0"
           title="Réinitialiser"
         >
@@ -587,7 +648,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                   </h3>
                   <div className="space-y-2">
                     <p className="text-gray-600 leading-relaxed">
-                      Aucune table ou objets créé pour le moment
+                      Aucune table ou objet créé pour le moment
                     </p>
                     <p className="text-sm text-gray-500 bg-gray-50/80 px-4 py-2 rounded-xl border border-gray-200/50">
                       💡 Astuce : Ajoutez des tables ou objets depuis les boutons en bas à gauche pour commencer l'organisation de votre événement
@@ -667,14 +728,24 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
         onApplySize={handleApplyCanvasSize}
       />
 
+      {/* Modal de confirmation */}
+      <ConfirmationModal
+        isOpen={showConfirmationModal}
+        onClose={() => setShowConfirmationModal(false)}
+        onConfirm={confirmationConfig.onConfirm}
+        title={confirmationConfig.title}
+        message={confirmationConfig.message}
+        type={confirmationConfig.type}
+      />
+
       {editingTable && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md mx-4 border border-gray-200">
             <h2 className="text-xl font-semibold mb-4">
               Modification de {editingTable.nom}
             </h2>
             <div className="space-y-4">
-              <p className="text-yellow-600 bg-yellow-100 border border-yellow-300 rounded-lg p-3 text-center">
+              <p className="text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-center">
                 🚧 <strong>Fonctionnalité en maintenance</strong> 🚧<br />
                 La modification des tables est temporairement désactivée. Veuillez réessayer plus tard.
               </p>
@@ -684,7 +755,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                   value={editingTable.nom}
                   disabled
                   placeholder="Nom de la table"
-                  className="w-full border rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed"
+                  className="w-full border rounded-xl px-3 py-2 bg-gray-100 cursor-not-allowed"
                 />
               </div>
               <div>
@@ -695,7 +766,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                   disabled
                   min="1"
                   placeholder="Capacité"
-                  className="w-full border rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed"
+                  className="w-full border rounded-xl px-3 py-2 bg-gray-100 cursor-not-allowed"
                 />
               </div>
               <div>
@@ -703,7 +774,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                 <select
                   value={editingTable.type}
                   disabled
-                  className="w-full border rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed"
+                  className="w-full border rounded-xl px-3 py-2 bg-gray-100 cursor-not-allowed"
                 >
                   {TABLE_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>
@@ -715,13 +786,13 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
             </div>
             <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
               <button
-                className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 cursor-pointer"
+                className="px-4 py-2 bg-gray-300 rounded-xl hover:bg-gray-400 transition-colors"
                 onClick={handleCloseTableEdit}
               >
                 Annuler
               </button>
               <button
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cursor-pointer"
+                className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
                 onClick={() => {
                   handleTableDelete(editingTable.id);
                   handleCloseTableEdit();
@@ -735,8 +806,8 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
       )}
 
       {editingElement && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md mx-4 border border-gray-200">
             <h2 className="text-xl font-semibold mb-4">
               Modification de {editingElement.nom}
             </h2>
@@ -747,7 +818,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                   value={editingElement.nom}
                   onChange={(e) => handleElementChange(editingElement.id, "nom", e.target.value)}
                   placeholder="Nom de l'objet"
-                  className="w-full border rounded-lg px-3 py-2"
+                  className="w-full border rounded-xl px-3 py-2"
                 />
               </div>
               <div>
@@ -755,7 +826,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                 <select
                   value={editingElement.type}
                   onChange={(e) => handleElementChange(editingElement.id, "type", e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2"
+                  className="w-full border rounded-xl px-3 py-2"
                 >
                   {ELEMENT_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>
@@ -770,19 +841,19 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                   type="color"
                   value={editingElement.color || '#d1d5db'}
                   onChange={(e) => handleElementChange(editingElement.id, "color", e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 h-12"
+                  className="w-full border rounded-xl px-3 py-2 h-12"
                 />
               </div>
             </div>
             <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
               <button
-                className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 cursor-pointer"
+                className="px-4 py-2 bg-gray-300 rounded-xl hover:bg-gray-400 transition-colors"
                 onClick={handleCloseElementEdit}
               >
                 Annuler
               </button>
               <button
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cursor-pointer"
+                className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
                 onClick={() => {
                   handleElementDelete(editingElement.id);
                   handleCloseElementEdit();
