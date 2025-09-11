@@ -175,7 +175,7 @@ async response(@Query('token') token: string,@Query('action') action: string) {
         role: p.role,
         status: p.status,
       })),
-      tables: evenement.tables
+      tables: evenement.tables,
     };
   }
 }

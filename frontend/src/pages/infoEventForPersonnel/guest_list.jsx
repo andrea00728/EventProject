@@ -121,7 +121,7 @@ const GuestList = () => {
       </div>
 
       {/* Contenu principal */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20">
+      {/* <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20"> */}
         <div className="p-8 border-b border-gray-100">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="flex items-center space-x-4">
@@ -145,16 +145,16 @@ const GuestList = () => {
                   placeholder="Rechercher un invité..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 pr-4 py-3 w-80 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200 placeholder-gray-400"
+                  className="pl-12 pr-10 py-3 w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200 placeholder-gray-400"
                 />
               </div>
 
-              <div className="relative group">
+              <div className="relative group w-full sm:w-auto">
                 <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="pl-12 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white appearance-none cursor-pointer transition-all duration-200"
+                  className="pl-12 pr-10 py-3 w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white appearance-none cursor-pointer transition-all duration-200"
                 >
                   <option value="Tous">Tous les statuts</option>
                   <option value="Confirmé">Confirmés</option>
@@ -257,7 +257,7 @@ const GuestList = () => {
             </p>
           </div>
         )}
-      </div>
+      {/* </div> */}
     </>
   );
 };
