@@ -31,7 +31,7 @@ export class InvitationController {
    * 
    * 
    */
-  @Post()
+  @Post('/invit')
   async createInvitation(
     @Body() dto: CreateInvitationDto,
   ): Promise<Invitation> {
@@ -44,6 +44,7 @@ export class InvitationController {
       return invitation;
       
     } catch (error) {
+      console.error('Erreur backend:', error);
       throw new HttpException(
         'Erreur lors de la création ou de l’envoi des invitations',
         HttpStatus.INTERNAL_SERVER_ERROR,
