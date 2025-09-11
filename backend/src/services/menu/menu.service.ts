@@ -85,7 +85,7 @@ export class MenuService {
   
     for (const item of menu.items) {
       if (item.photo) {
-        const filePath = join(__dirname, '..', '..', '..', item.photo);
+        const filePath = join(process.cwd(), 'uploads');
         try {
           await new Promise((resolve, reject) => {
             unlink(filePath, (err) => {
