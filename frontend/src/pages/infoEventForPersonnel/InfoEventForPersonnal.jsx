@@ -118,7 +118,7 @@ export const InfoEventForPersonnal = () => {
             <div className="grid md:grid-cols-3 gap-6">
               <StatCard icon={<Star className="h-8 w-8 text-blue-200" />} value={eventData.personnels?.length || 0} label="Invités attendus" colorFrom="blue-500" colorTo="blue-600" />
               <StatCard icon={<Trophy className="h-8 w-8 text-emerald-200" />} value={eventData.personnels?.length || 0} label="Membres du personnel" colorFrom="emerald-500" colorTo="emerald-600" />
-              <StatCard icon={<Target className="h-8 w-8 text-purple-200" />} value={0} label="Tables disponibles" colorFrom="purple-500" colorTo="purple-600" />
+              <StatCard icon={<Target className="h-8 w-8 text-purple-200" />} value={eventData.tables?.length || 0} label="Tables disponibles" colorFrom="purple-500" colorTo="purple-600" />
             </div>
           </div>
         </div>

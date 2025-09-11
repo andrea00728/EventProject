@@ -30,8 +30,8 @@ const PersonnelList = () => {
 
   const stats = {
     total: dataPers.length,
-    active: dataPers.filter(p => p.checkedIn).length,
-    unavailable: dataPers.filter(p => !p.checkedIn).length,
+    active: dataPers.filter(p => p.status).length,
+    unavailable: dataPers.filter(p => !p.status).length,
     onBreak: 0 // Assumant que ce statut n'existe pas dans vos données actuelles
   };
   
