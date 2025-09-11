@@ -1689,7 +1689,7 @@
         <Modal
           isOpen={currentModal === MODAL_TYPES.ADD_ELEMENT}
           onClose={() => closeModalType(MODAL_TYPES.ADD_ELEMENT)}
-          title="Ajouter un objets"
+          title="Ajouter un objet"
         >
           <form onSubmit={handleAddElement} className="space-y-6">
             {error && (
@@ -1721,7 +1721,7 @@
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre d'objets</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre d'objet</label>
               <input
                 name="nombre"
                 type="number"
@@ -1741,7 +1741,7 @@
                 type="text"
                 value={elementForm.nom}
                 onChange={(e) => handleNomChange(0, e.target.value, 'element')}
-                placeholder="Nom de l'objets (optionnel)"
+                placeholder="Nom de l'objet (optionnel)"
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
               />
             </div>

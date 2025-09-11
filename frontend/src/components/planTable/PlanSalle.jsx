@@ -1570,7 +1570,7 @@ function ElementCreationModal({ isOpen, onClose, onAddElements, events, eventId 
             )}
 
             <div className="flex flex-col">
-              <label className="text-gray-700 font-medium mb-2 text-sm">Nombre d'objets</label>
+              <label className="text-gray-700 font-medium mb-2 text-sm">Nombre d'objet</label>
               <input
                 name="nombre"
                 type="number"
@@ -2378,7 +2378,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
                 <input
                   value={editingElement.nom}
                   onChange={(e) => handleElementChange(editingElement.id, "nom", e.target.value)}
-                  placeholder="Nom de l'objets"
+                  placeholder="Nom de l'objet"
                   className="w-full border rounded-lg px-3 py-2"
                 />
               </div>
