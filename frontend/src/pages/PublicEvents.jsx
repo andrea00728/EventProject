@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import axiosClient from '../api/axios-client';
-import { createInviteForSpecificEvent } from '../services/inviteService';
-import { textControll } from '../services/controll_champs/controll_champs';
+import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import axiosClient from "../api/axios-client";
+import { createInviteForSpecificEvent } from "../services/inviteService";
+import { textControll } from "../services/controll_champs/controll_champs";
+import { url } from "../api/url";
+import defaultImage from "../../public/images/bouquet.jpg"
 
 // const EventSelectionModal = ({ events, onSelectEvent, onClose }) => {
 //   return (
@@ -61,7 +63,7 @@ const PublicEvents = () => {
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  
+
   // États pour les modals
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -97,7 +99,9 @@ const PublicEvents = () => {
         setError(null);
       } catch (err) {
         console.error(err);
-        setError("Impossible de charger les événements. Veuillez réessayer plus tard.");
+        setError(
+          "Impossible de charger les événements. Veuillez réessayer plus tard."
+        );
       } finally {
         setIsLoading(false);
       }
@@ -107,7 +111,7 @@ const PublicEvents = () => {
   }, []);
 
   // Filtrage des événements selon le filtre sélectionné
-  const filteredEvents = events.filter(ev => {
+  const filteredEvents = events.filter((ev) => {
     if (filter === "public") return ev.isPublic === true;
     if (filter === "private") return ev.isPublic === false;
     return true;
@@ -137,7 +141,9 @@ const PublicEvents = () => {
     if (event) {
       setSelectedEvent(event);
       setForm({ nom: "", prenom: "", email: "", sex: "", eventId: event.id });
-      setSelectedEventName(`${event.nom} (${new Date(event.date).toLocaleDateString("fr-FR")})`);
+      setSelectedEventName(
+        `${event.nom} (${new Date(event.date).toLocaleDateString("fr-FR")})`
+      );
     } else {
       setForm({ nom: "", prenom: "", email: "", sex: "", eventId: null });
       setSelectedEventName("");
@@ -163,11 +169,11 @@ const PublicEvents = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
-      [name]: name === "nom" || name === "prenom" ? textControll(value) : value
+      [name]: name === "nom" || name === "prenom" ? textControll(value) : value,
     }));
-    setValidationErrors(prev => ({ ...prev, [name]: undefined }));
+    setValidationErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleOpenModal = () => {
@@ -175,10 +181,12 @@ const PublicEvents = () => {
   };
 
   const handleSelectEvent = (event) => {
-    setForm(prev => ({ ...prev, eventId: event.id }));
-    setSelectedEventName(`${event.nom} (${new Date(event.date).toLocaleDateString("fr-FR")})`);
+    setForm((prev) => ({ ...prev, eventId: event.id }));
+    setSelectedEventName(
+      `${event.nom} (${new Date(event.date).toLocaleDateString("fr-FR")})`
+    );
     setIsModalOpen(false);
-    setValidationErrors(prev => ({ ...prev, eventId: undefined }));
+    setValidationErrors((prev) => ({ ...prev, eventId: undefined }));
   };
 
   const handleCloseModal = () => {
@@ -227,7 +235,7 @@ const PublicEvents = () => {
       console.error("Erreur back-end:", err.response?.data || err.message);
       setError(
         err.response?.data?.message ||
-        "Erreur lors de la création de l'invité. Veuillez réessayer."
+          "Erreur lors de la création de l'invité. Veuillez réessayer."
       );
     } finally {
       setIsSubmitting(false);
@@ -351,13 +359,29 @@ const PublicEvents = () => {
                     >
                       {/* Barre colorée en haut de la carte */}
                       <div
-                        className={`h-2 bg-gradient-to-r ${event.id % 3 === 0
+                        className={`h-2 bg-gradient-to-r ${
+                          event.id % 3 === 0
                             ? "from-indigo-500 to-cyan-500"
                             : event.id % 3 === 1
                               ? "from-pink-500 to-rose-500"
                               : "from-emerald-500 to-lime-500"
-                          }`}
+                        }`}
                       ></div>
+
+                      {/* Image de l'événement */}
+                      {event.imageUrl ? (
+                        <img
+                          src={url + event.imageUrl}
+                          alt={`Image de l'événement ${event.nom}`}
+                          className="w-full h-48 object-cover"
+                        />
+                      ) : (
+                        <img
+                          src={defaultImage}
+                          alt="Image par défaut"
+                          className="w-full h-48 object-cover"
+                          />
+                      )}
 
                       <div className="p-6">
                         {/* Titre de l'événement */}
@@ -396,8 +420,10 @@ const PublicEvents = () => {
                             <span className="text-slate-500 font-medium">
                               Lieu :
                             </span>{" "}
-                            {event.location?.nom.split(",").slice(0, 2).join(", ") || "Non précisé"}
-
+                            {event.location?.nom
+                              .split(",")
+                              .slice(0, 2)
+                              .join(", ") || "Non précisé"}
                           </p>
                         </div>
 
@@ -418,7 +444,8 @@ const PublicEvents = () => {
                                 e.stopPropagation();
                                 openRegistrationModal(event);
                               }}
-                              className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all duration-200 transform hover:scale-105 ${event.id % 5 === 0
+                              className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all duration-200 transform hover:scale-105 ${
+                                event.id % 5 === 0
                                   ? "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
                                   : event.id % 5 === 1
                                     ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
@@ -427,53 +454,24 @@ const PublicEvents = () => {
                                       : event.id % 5 === 3
                                         ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
                                         : "bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600"
-                                }`}
+                              }`}
                             >
                               S'inscrire
                             </button>
                           )}
                         </div>
-
-                        {/* Boutons d'action conditionnels */}
-                        {/* <div className="flex gap-3 justify-end"> */}
-                          {/* Bouton Détails - toujours présent */}
-                          {/* <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEventModal(event);
-                            }}
-                            className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors duration-200"
-                          >
-                            Détails
-                          </button> */}
-
-                          {/* Bouton S'inscrire - seulement pour les événements publics */}
-                          {/* {event.isPublic && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openRegistrationModal(event);
-                              }}
-                              className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all duration-200 transform hover:scale-105 ${event.id % 5 === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' :
-                                event.id % 5 === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' :
-                                  event.id % 5 === 2 ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600' :
-                                    event.id % 5 === 3 ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600' :
-                                      'bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600'
-                                }`}
-                            >
-                              S'inscrire
-                            </button>
-                          )}
-                        </div> */}
                       </div>
                     </div>
                   ))}
                 </div>
+
                 {/* Pagination */}
                 {filteredEvents.length > 0 && (
                   <div className="flex justify-center mt-8">
                     <button
-                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(prev - 1, 1))
+                      }
                       disabled={currentPage === 1}
                       className="px-4 py-2 mx-1 bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50"
                     >
@@ -544,7 +542,9 @@ const PublicEvents = () => {
                       <h3 className="text-lg font-semibold text-slate-700 mb-2">
                         Description
                       </h3>
-                      <p className="text-slate-600">{selectedEvent.description}</p>
+                      <p className="text-slate-600">
+                        {selectedEvent.description}
+                      </p>
                     </div>
                   )}
 
@@ -708,7 +708,8 @@ const PublicEvents = () => {
                     {selectedEvent.isPublic && (
                       <button
                         onClick={openRegistrationModal}
-                        className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${selectedEvent.id % 5 === 0
+                        className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 transform hover:scale-105 shadow-lg ${
+                          selectedEvent.id % 5 === 0
                             ? "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
                             : selectedEvent.id % 5 === 1
                               ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
@@ -717,7 +718,7 @@ const PublicEvents = () => {
                                 : selectedEvent.id % 5 === 3
                                   ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
                                   : "bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600"
-                          }`}
+                        }`}
                         aria-label={`S'inscrire à l'événement ${selectedEvent.nom}`}
                       >
                         S'inscrire
@@ -1055,8 +1056,8 @@ const PublicEvents = () => {
                     Inscription réussie
                   </h2>
                   <p className="text-slate-600 mb-6">
-                    Votre inscription à {selectedEventName || "l'événement"} a été
-                    enregistrée avec succès.
+                    Votre inscription à {selectedEventName || "l'événement"} a
+                    été enregistrée avec succès.
                   </p>
                   <button
                     onClick={closeSuccessModal}
