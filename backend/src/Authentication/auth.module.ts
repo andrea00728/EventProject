@@ -31,7 +31,7 @@ import { Admin } from 'src/entities/Admin';
     PassportModule.register({ defaultStrategy: 'jwt' }),
 
     JwtModule.register({
-      secret: 'andreanadjasylvanoilaina',
+      secret: process.env.JWT_SECRET || 'andreanadjasylvanoilaina',
       signOptions: { expiresIn: '60m' },
     }),
   ],

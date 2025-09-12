@@ -74,6 +74,12 @@ export class User {
   @OneToMany(() => Goal, (goal) => goal.user, { onDelete: 'CASCADE' })
   goals: Goal[];
 
+  @Column({ type: 'boolean', default: false })
+  isVerified: boolean;
+
+  @Column({ type: 'varchar', nullable: true })
+  verificationCode: string | null;
+
 
 }
 
