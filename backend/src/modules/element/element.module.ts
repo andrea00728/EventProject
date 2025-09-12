@@ -7,10 +7,11 @@ import { ElementService } from 'src/services/element.service';
 import { NotificationService } from 'src/services/notification/notification.service';
 import { NotificationModule } from '../notification/notification.module';
 import { EvenementModule } from '../evenement/evenement.module';
+import { User } from 'src/Authentication/entities/auth.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Element, Evenement]),
+    TypeOrmModule.forFeature([Element, Evenement , User]),
     NotificationModule,
     EvenementModule,
 ],

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ELEMENT_TYPES } from "./constant";
-import { Camera, Coffee, DoorClosed, Flower, GlassWater, LogOut, Monitor, MonitorCheck, Music, Package, RefreshCcw, Trash } from "lucide-react";
+import { Camera, Coffee, DoorClosed, Flower, GlassWater, LogOut, Monitor, MonitorCheck, Music, Package, Pen, PenBox, RefreshCcw, Trash } from "lucide-react";
 
 // Fonction pour aligner les positions sur une grille (snap to grid)
 function snapToGrid(value, gridSize = 40) {
@@ -21,6 +21,10 @@ export function Element({ element, onMove, onRotate, onSelect, onResize, canvasS
   const [currentRotation, setCurrentRotation] = useState(rotation || 0);
   const elementRef = useRef(null);
   const touchDataRef = useRef({});
+
+  const handleUpdate = () => {
+    alert("demain ity ataoko e")
+  }
 
   useEffect(() => {
     setPos(position || { left: 100, top: 100 });
@@ -211,6 +215,17 @@ export function Element({ element, onMove, onRotate, onSelect, onResize, canvasS
         title="Pivoter à droite"
       >
         <RefreshCcw className="w-3 h-3" style={{ transform: 'rotate(-90deg)' }} />
+      </button>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleUpdate(); // Appeler onDelete avec l'ID de l'objets
+        }}
+        className="absolute -top-2 right-6 w-6 h-6 bg-gray-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-gray-700 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+        title="Modifier l'objets"
+      >
+        <Pen className="w-3 h-3" />
       </button>
 
       <button
