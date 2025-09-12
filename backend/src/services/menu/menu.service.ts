@@ -7,6 +7,7 @@ import { CreateMenuItemDto } from 'src/dto/menu.dto';
 import { join } from 'path';
 import { unlink } from 'fs';
 
+
 @Injectable()
 export class MenuService {
   constructor(
@@ -54,6 +55,25 @@ export class MenuService {
     return this.menuItemRepository.save(menuItem);
   }
 
+  async deletePhoto(photoPath: string): Promise<void> {
+    if (!photoPath) return;
+
+    // Normalise : supprime le / initial si présent
+    const relativePath = photoPath.startsWith('/') ? photoPath.slice(1) : photoPath;
+
+    const filePath = join(process.cwd(), relativePath);
+    try {
+      await new Promise<void>((resolve, reject) => {
+        unlink(filePath, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    } catch (err) {
+      console.warn('Erreur lors de la suppression du fichier image :', err.message);
+    }
+  }
+
   async updateMenuItem(
     menuItemId: number,
     updatedFields: Partial<{ name: string; description: string; price: number; category: string; stock: number }>,
@@ -65,6 +85,9 @@ export class MenuService {
     Object.assign(menuItem, updatedFields);
   
     if (photoPath) {
+      if (menuItem.photo) {
+        await this.deletePhoto(menuItem.photo);
+      }
       menuItem.photo = photoPath;
     }
   
@@ -103,24 +126,15 @@ export class MenuService {
     return { message: 'Menu supprimé avec succès' };
   }
 
+
   async deleteMenuItem(menuItemId: number): Promise<{ message: string }> {
     const item = await this.menuItemRepository.findOne({ where: { id: menuItemId } });
     if (!item) throw new NotFoundException('Menu item not found');
-  
+
     if (item.photo) {
-      const filePath = join(__dirname, '..', '..', '..', item.photo);
-      try {
-        await new Promise((resolve, reject) => {
-          unlink(filePath, (err) => {
-            if (err) reject(err);
-            else resolve(null);
-          });
-        });
-      } catch (err) {
-        console.warn('Erreur lors de la suppression du fichier image :', err.message);
-      }
+      await this.deletePhoto(item.photo);
     }
-  
+
     await this.menuItemRepository.delete(menuItemId);
     return { message: 'Menu item supprimé avec succès' };
   }
