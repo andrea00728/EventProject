@@ -1,19 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useState, useMemo } from "react";
-import PropTypes from "prop-types";
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  Typography,
-  Button,
-  Box,
-} from "@mui/material";
-import RestaurantIcon from "@mui/icons-material/Restaurant";
-import DeleteIcon from "@mui/icons-material/Delete";
-import MenuRestaurationGrid from "./MenuRestaurationGrid";
 
 const formatter = new Intl.NumberFormat("fr-FR", {
   style: "currency",
@@ -36,24 +22,20 @@ const MenuRestaurationDropdown = ({
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+
   const theme = {
-    primary: "#4f46e5",
-    primaryHover: "#3730a3",
-    primaryLight: "#a5b4fc",
-    secondary: "#3b82f6",
-    secondaryHover: "#1d4ed8",
-    accent: "#06b6d4",
-    success: "#10b981",
+    primary: "#4763ed",
+    primaryHover: "#3b5fe0",
+    primaryLight: "#e5e9fe",
+    primaryBorder: "#d0d7fd",
     danger: "#ef4444",
     dangerHover: "#dc2626",
-    warning: "#f59e0b",
     neutral: "#f8fafc",
     neutralDark: "#e2e8f0",
     text: "#1e293b",
     textLight: "#64748b",
     background: "#ffffff",
-    gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    gradientCard: "linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)",
+    gradient: "linear-gradient(135deg, #4763ed 0%, #3b5fe0 100%)",
   };
 
   const handleCloseForm = () => {
@@ -79,8 +61,8 @@ const MenuRestaurationDropdown = ({
           transition={{ duration: 0.4, ease: "easeOut" }}
           className={`p-4 sm:p-6 rounded-xl cursor-pointer border-2 transition-all duration-300 ease-in-out ${
             selectedItem?.id === item.id
-              ? "bg-gradient-to-r from-teal-50 to-cyan-50 border-teal-200 shadow-lg scale-[1.02]"
-              : "bg-white hover:bg-gradient-to-r hover:from-teal-50 hover:to-cyan-50 border-transparent hover:border-teal-200 hover:shadow-md"
+              ? "bg-gradient-to-r from-[#f3f4ff] to-[#e8ebff] border-[#d0d7fd] shadow-lg scale-[1.02]"
+              : "bg-white hover:bg-gradient-to-r hover:from-[#f3f4ff] hover:to-[#e8ebff] border-transparent hover:border-[#d0d7fd] hover:shadow-md"
           }`}
           onClick={(e) => {
             e.stopPropagation();
@@ -93,7 +75,7 @@ const MenuRestaurationDropdown = ({
         >
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-[#4763ed] rounded-full"></div>
               <span className="font-semibold text-base text-gray-900">
                 {item.name}
               </span>
@@ -102,7 +84,7 @@ const MenuRestaurationDropdown = ({
               <span
                 className={`px-3 py-1 text-sm font-medium rounded-full ${
                   item.stock > 0
-                    ? "bg-teal-100 text-teal-700 border border-teal-200"
+                    ? "bg-[#e5e9fe] text-[#4763ed] border border-[#d0d7fd]"
                     : "bg-red-100 text-red-700 border border-red-200"
                 }`}
                 aria-label={`Stock : ${item.stock}`}
@@ -117,10 +99,10 @@ const MenuRestaurationDropdown = ({
   }, [menus, selectedItem]);
 
   return (
-    <div className="space-y-6 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="space-y-6 w-full mx-auto px-0 sm:px-6">
       {/* LISTE DES MENUS */}
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-teal-500 to-cyan-500 px-6 py-4">
+        <div className="bg-gradient-to-r from-[#4763ed] to-[#3b5fe0] px-6 py-4">
           <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
             Nos Menus
           </h2>
@@ -130,7 +112,7 @@ const MenuRestaurationDropdown = ({
           {renderedMenus.map((menu) => (
             <React.Fragment key={menu.id}>
               <div
-                className="hover:bg-gradient-to-r hover:from-teal-50 hover:to-cyan-50 cursor-pointer transition-all duration-300 ease-in-out hover:shadow-sm"
+                className="hover:bg-gradient-to-r hover:from-[#f3f4ff] hover:to-[#e8ebff] cursor-pointer transition-all duration-300 ease-in-out hover:shadow-sm"
                 onClick={() =>
                   setExpandedMenu(expandedMenu === menu.id ? null : menu.id)
                 }
@@ -144,7 +126,7 @@ const MenuRestaurationDropdown = ({
                 aria-label={`Afficher les plats du menu ${menu.name}`}
               >
                 <div className="px-6 py-5 flex items-center justify-between">
-                  <h3 className="font-bold text-lg text-teal-700 uppercase tracking-wider">
+                  <h3 className="font-bold text-lg text-[#4763ed] uppercase tracking-wider">
                     {menu.name}
                   </h3>
                   <div className="flex items-center space-x-3">
@@ -154,7 +136,7 @@ const MenuRestaurationDropdown = ({
                     <motion.div
                       animate={{ rotate: expandedMenu === menu.id ? 180 : 0 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="text-teal-600"
+                      className="text-[#4763ed]"
                     >
                       <svg
                         className="w-5 h-5"
@@ -175,7 +157,7 @@ const MenuRestaurationDropdown = ({
               </div>
 
               <AnimatePresence>
-                {expandedMenu === menu.id && (
+                {expandedMenu === menu.id && menu.items?.length > 0 && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
@@ -216,7 +198,7 @@ const MenuRestaurationDropdown = ({
               onClick={(e) => e.stopPropagation()}
             >
               {/* HEADER */}
-              <div className="bg-gradient-to-r from-teal-500 to-cyan-500 px-6 py-5 flex justify-between items-center">
+              <div className="bg-gradient-to-r from-[#4763ed] to-[#3b5fe0] px-6 py-5 flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-white">
                   {selectedItem.name}
                 </h2>
@@ -251,7 +233,7 @@ const MenuRestaurationDropdown = ({
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-32 h-32 sm:w-40 sm:h-40 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl flex items-center justify-center text-teal-500 text-sm font-medium shadow-inner">
+                    <div className="w-32 h-32 sm:w-40 sm:h-40 bg-gradient-to-br from-[#f3f4ff] to-[#e8ebff] rounded-xl flex items-center justify-center text-[#4763ed] text-sm font-medium shadow-inner">
                       <svg
                         className="w-8 h-8 mx-auto mb-2"
                         fill="none"
@@ -281,7 +263,7 @@ const MenuRestaurationDropdown = ({
                       <span className="text-sm font-medium text-gray-600">
                         Prix
                       </span>
-                      <span className="text-lg font-semibold text-teal-700">
+                      <span className="text-lg font-semibold text-[#4763ed]">
                         {formatter.format(selectedItem.price)}
                       </span>
                     </div>
@@ -293,7 +275,7 @@ const MenuRestaurationDropdown = ({
                       <span
                         className={`px-4 py-2 text-sm font-medium rounded-full ${
                           selectedItem.stock > 0
-                            ? "bg-teal-100 text-teal-700 border border-teal-200"
+                            ? "bg-[#e5e9fe] text-[#4763ed] border border-[#d0d7fd]"
                             : "bg-red-100 text-red-700 border border-red-200"
                         }`}
                       >
@@ -311,14 +293,14 @@ const MenuRestaurationDropdown = ({
                         setSelectedItem(null);
                         onClickModified(selectedItem);
                       }}
-                      className="flex-1 font-semibold px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
+                      className="flex-1 font-semibold px-5 py-3 rounded-xl bg-gradient-to-r from-[#4763ed] to-[#3b5fe0] text-white hover:from-[#3a53d6] hover:to-[#3246b8] hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
                     >
                       Modifier
                     </button>
                     <button
                       onClick={() => {
-                        setItemToDelete(selectedItem);
-                        setDeleteConfirmOpen(true);
+                        onClickDelete(selectedItem);
+                        setSelectedItem(null);
                       }}
                       className="flex-1 font-semibold px-5 py-3 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700 hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
                     >
@@ -331,224 +313,8 @@ const MenuRestaurationDropdown = ({
           </motion.div>
         </AnimatePresence>
       )}
-
-      {/* AUCUN MENU DISPONIBLE */}
-      {menus.length === 0 && (
-        <motion.div
-          className="text-center py-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        >
-          <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl p-8 border border-gray-100 shadow-md">
-            <svg
-              className="w-16 h-16 mx-auto mb-4 text-teal-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <p className="text-teal-600 font-semibold text-base">
-              Aucun menu disponible
-            </p>
-            <p className="text-gray-600 text-sm mt-2">
-              Les menus seront bientôt disponibles
-            </p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* DIALOG FORM */}
-      <Dialog
-        open={formOpen}
-        onClose={handleCloseForm}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 4,
-            background: `linear-gradient(135deg, ${theme.background} 0%, ${theme.neutral} 100%)`,
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            background: theme.gradientCard,
-            color: "white",
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            fontWeight: "bold",
-            fontSize: "1.5rem",
-          }}
-        >
-          <RestaurantIcon />
-          {editingItem
-            ? `Modifier ${menus.find((m) => m.id === selectedMenuId)?.name || "menu"}`
-            : `Ajouter un(e) ${menus.find((m) => m.id === selectedMenuId)?.name || ""}`}
-        </DialogTitle>
-        <DialogContent sx={{ p: 4 }}>
-          <Box sx={{ display: "grid", gap: 3, mt: 2 }}>
-            {[
-              { field: "name", label: "Nom", type: "text" },
-              {
-                field: "description",
-                label: "Description",
-                type: "text",
-                multiline: true,
-              },
-              { field: "price", label: "Prix (€)", type: "number" },
-              { field: "category", label: "Catégorie", type: "text" },
-              { field: "stock", label: "Stock", type: "number" },
-            ].map(({ field, label, type, multiline }) => (
-              <TextField
-                key={field}
-                label={label}
-                value={form[field] || ""}
-                type={type}
-                fullWidth
-                multiline={multiline}
-                rows={multiline ? 3 : 1}
-                variant="outlined"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 3,
-                    "&:hover fieldset": { borderColor: theme.primary },
-                    "&.Mui-focused fieldset": { borderColor: theme.primary },
-                  },
-                  "& .MuiInputLabel-root.Mui-focused": { color: theme.primary },
-                }}
-                onChange={(e) => setForm({ ...form, [field]: e.target.value })}
-              />
-            ))}
-            <Box>
-              <Typography
-                variant="body2"
-                sx={{
-                  mb: 1,
-                  color: theme.textLight,
-                  fontWeight: "medium",
-                }}
-              >
-                Image
-              </Typography>
-              <TextField
-                type="file"
-                fullWidth
-                variant="outlined"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 3,
-                    "&:hover fieldset": { borderColor: theme.primary },
-                    "&.Mui-focused fieldset": { borderColor: theme.primary },
-                  },
-                }}
-                onChange={(e) => setForm({ ...form, photo: e.target.files[0] })}
-              />
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, gap: 2 }}>
-          <Button
-            onClick={handleCloseForm}
-            variant="outlined"
-            sx={{
-              borderRadius: 3,
-              px: 3,
-              py: 1.5,
-              borderColor: theme.textLight,
-              color: theme.textLight,
-            }}
-          >
-            Annuler
-          </Button>
-          {/* <Button
-            variant="contained"
-            onClick={handleSave}
-            sx={{
-              borderRadius: 3,
-              px: 4,
-              py: 1.5,
-              background: theme.gradientCard,
-              fontWeight: "bold",
-              "&:hover": {
-                background: theme.gradientCard,
-                opacity: 0.9,
-              },
-            }}
-          >
-            Enregistrer
-          </Button> */}
-        </DialogActions>
-      </Dialog>
-
-      {/* DIALOG SUPPRESSION */}
-      <Dialog
-        open={deleteConfirmOpen}
-        onClose={handleCloseDeleteConfirm}
-        maxWidth="sm"
-        PaperProps={{ sx: { borderRadius: 4 } }}
-      >
-        <DialogTitle
-          sx={{
-            color: theme.danger,
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            fontWeight: "bold",
-          }}
-        >
-          <DeleteIcon />
-          Confirmer la suppression
-        </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
-          <Typography variant="body1">
-            Êtes-vous sûr de vouloir supprimer le plat{" "}
-            <strong>"{itemToDelete?.name}"</strong> ?
-          </Typography>
-          <Typography variant="body2" sx={{ color: theme.textLight, mt: 1 }}>
-            Cette action est irréversible.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, gap: 2 }}>
-          <Button
-            onClick={handleCloseDeleteConfirm}
-            variant="outlined"
-            sx={{ borderRadius: 3, px: 3, py: 1.5 }}
-          >
-            Annuler
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              onClickDelete(itemToDelete);
-              setSelectedItem(null);
-              handleCloseDeleteConfirm();
-            }}
-            sx={{
-              borderRadius: 3,
-              px: 4,
-              py: 1.5,
-              bgcolor: theme.danger,
-              fontWeight: "bold",
-              "&:hover": {
-                bgcolor: theme.dangerHover,
-                transform: "translateY(-1px)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            Supprimer
-          </Button>
-        </DialogActions>
-      </Dialog>
     </div>
   );
 };
+
 export default MenuRestaurationDropdown;
