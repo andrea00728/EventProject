@@ -80,6 +80,8 @@ export default function NosForfaits() {
               id: forfait.id,
               nom: (forfait.nom || "").toUpperCase(),
               price: formatPrice(forfait.price),
+              invitations: forfait.maxinvites ?? "Illimité",
+              evenements: forfait.maxevents ?? "Illimité",
               duration: getDurationText(forfait.validationduration),
               paypalplanid: forfait.paypalplanid,
               rawPrice: forfait.price,
@@ -87,10 +89,9 @@ export default function NosForfaits() {
                 forfait.maxevents ??
                 (events !== "Illimité" ? Number(events) : null), // utile si tu veux un nombre
               maxInvites: forfait.maxinvites,
-              invitations : forfait.maxinvites,
               validationDuration: forfait.validationduration,
               fonctionnalite: forfait.fonctionnalite || "Fonctionnalité non spécifiée",
-              ideal: forfait.ideal || "Idéal non spécifié",
+              ideal: forfait.idealiste || "Idéal non spécifié",
 
             };
           });
@@ -248,10 +249,10 @@ export default function NosForfaits() {
 
               <ul className="text-sm space-y-2 mb-6">
                 <li>
-                  Invitations : <span className="font-semibold">{f.maxInvites}</span>
+                  Invitations : <span className="font-semibold">{f.invitations}</span>
                 </li>
                 <li>
-                  Événements : <span className="font-semibold">{f.maxEvents}</span>
+                  Événements : <span className="font-semibold">{f.evenements}</span>
                 </li>
                 <li>
                   Fonctionalité : <span className="font-semibold">{f.fonctionnalite}</span></li>
