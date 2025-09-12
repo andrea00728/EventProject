@@ -91,7 +91,7 @@ const MenuListWithCart = () => {
     if (!selectedEvent) return;
     try {
       setIsLoading(true);
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${selectedEvent.nom}`);
       const formattedMenus = res.data.map((menu) => ({
         ...menu,
         items: menu.items.map((item) => ({
