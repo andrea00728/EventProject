@@ -1,66 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { getAllForfait, addForfait, editForfait, deleteForfait } from '../../services/forfaitService';
-
-// Fonctions de service pour l'API des forfaits (simulées pour l'exemple)
-// const API_URL = `${import.meta.env.VITE_API_BASE_URL}/forfait`;
-
-// const getAllForfait = async () => {
-//   // Remplacer par un véritable appel API
-//   console.log('Fetching all forfaits...');
-//   const response = await fetch(`${API_URL}/forfait/all`);
-//   if (!response.ok) {
-//     throw new Error('Erreur lors de la récupération des forfaits');
-//   }
-//   return await response.json();
-// };
-
-// const addForfait = async (forfaitData) => {
-//   // Remplacer par un véritable appel API
-//   console.log('Adding new forfait:', forfaitData);
-//   const response = await fetch(`${API_URL}/forfait`, {
-//     method: 'POST',
-//     headers: { 'Content-Type': 'application/json' },
-//     body: JSON.stringify(forfaitData),
-//   });
-//   if (!response.ok) {
-//     throw new Error("Erreur lors de l'ajout du forfait");
-//   }
-//   return await response.json();
-// };
-
-// const editForfait = async (id, forfaitData) => {
-//   // Remplacer par un véritable appel API
-//   console.log(`Editing forfait with ID ${id}:`, forfaitData);
-//   const response = await fetch(`${API_URL}/forfait/${id}`, {
-//     method: 'PATCH',
-//     headers: { 'Content-Type': 'application/json' },
-//     body: JSON.stringify(forfaitData),
-//   });
-//   if (!response.ok) {
-//     throw new Error('Erreur lors de la modification du forfait');
-//   }
-//   return await response.json();
-// };
-
-// const deleteForfait = async (id) => {
-//   // Remplacer par un véritable appel API
-//   console.log(`Deleting forfait with ID ${id}`);
-//   const response = await fetch(`${API_URL}/forfait/${id}`, {
-//     method: 'DELETE',
-//   });
-//   if (!response.ok) {
-//     throw new Error('Erreur lors de la suppression du forfait');
-//   }
-// };
+import { useDarkMode } from "../../context/DarkModeContext";
 
 // Composant de modal pour l'ajout/modification de forfaits
 const PackageModal = ({ isOpen, onClose, packageData, onSave }) => {
   const [formData, setFormData] = useState(
-    packageData || { nom: '', price: '', maxevents: '', maxinvites: '', fonctionnalite: '', ideal: '' }
+    packageData || { nom: '', price: '', maxevents: '', maxinvites: '', validationduration: '', fonctionnalite: '', ideal: '' }
   );
 
+  const { darkMode } = useDarkMode();
+
   useEffect(() => {
-    setFormData(packageData || { nom: '', price: '', maxevents: '', maxinvites: '', fonctionnalite: '', ideal: '' });
+    setFormData(packageData || { nom: '', price: '', maxevents: '', maxinvites: '', validationduration: '', fonctionnalite: '', ideal: '' });
   }, [packageData]);
 
   const handleChange = (e) => {
@@ -78,86 +29,97 @@ const PackageModal = ({ isOpen, onClose, packageData, onSave }) => {
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center">
-      <div className="relative p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div className={`relative p-5 border w-96 shadow-lg rounded-md transition-colors duration-500 ${darkMode ? 'bg-gray-800 text-gray-200 border-gray-700' : 'bg-white text-gray-800 border-gray-200'}`}>
         <h3 className="text-lg font-bold text-center mb-4">
           {packageData ? 'Modifier le forfait' : 'Ajouter un nouveau forfait'}
         </h3>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Nom du forfait</label>
+            <label className="block text-sm font-bold mb-2">Nom du forfait</label>
             <input
               type="text"
               name="nom"
               value={formData.nom}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline transition-colors duration-500 ${darkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'text-gray-700 border-gray-300'}`}
               required
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Prix (€)</label>
+            <label className="block text-sm font-bold mb-2">Prix (€)</label>
             <input
               type="number"
               name="price"
               value={formData.price}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline transition-colors duration-500 ${darkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'text-gray-700 border-gray-300'}`}
               required
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Max. événements</label>
+            <label className="block text-sm font-bold mb-2">Max. événements</label>
             <input
-              type="string"
+              type="text"
               name="maxevents"
               value={formData.maxevents}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline transition-colors duration-500 ${darkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'text-gray-700 border-gray-300'}`}
               required
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Max. invités</label>
+            <label className="block text-sm font-bold mb-2">Max. invités</label>
             <input
-              type="number"
+              type="text"
               name="maxinvites"
               value={formData.maxinvites}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline transition-colors duration-500 ${darkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'text-gray-700 border-gray-300'}`}
               required
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Fonctionnalités</label>
+            <label className="block text-sm font-bold mb-2">Durée</label>
+            <input
+              type="text"
+              name="validationduration"
+              value={formData.validationduration}
+              onChange={handleChange}
+              className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline transition-colors duration-500 ${darkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'text-gray-700 border-gray-300'}`}
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-bold mb-2">Fonctionnalités</label>
             <textarea
               name="fonctionnalite"
               value={formData.fonctionnalite}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline transition-colors duration-500 ${darkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'text-gray-700 border-gray-300'}`}
               required
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Idéaliste</label>
+            <label className="block text-sm font-bold mb-2">l'Idéal</label>
             <textarea
               name="ideal"
               value={formData.ideal}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline transition-colors duration-500 ${darkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'text-gray-700 border-gray-300'}`}
               required
             />
           </div>
           <div className="flex items-center justify-between">
             <button
               type="submit"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-all duration-300"
             >
               Sauvegarder
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors duration-300"
             >
               Annuler
             </button>
@@ -170,29 +132,30 @@ const PackageModal = ({ isOpen, onClose, packageData, onSave }) => {
 
 // Composant de modal de confirmation
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
-    if (!isOpen) return null;
+  const { darkMode } = useDarkMode();
+  if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center">
-            <div className="relative p-5 border w-96 shadow-lg rounded-md bg-white text-center">
-                <p className="mb-4">{message}</p>
-                <div className="flex justify-around">
-                    <button
-                        onClick={onConfirm}
-                        className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full"
-                    >
-                        Confirmer
-                    </button>
-                    <button
-                        onClick={onClose}
-                        className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full"
-                    >
-                        Annuler
-                    </button>
-                </div>
-            </div>
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center">
+      <div className={`relative p-5 border w-96 shadow-lg rounded-md text-center transition-colors duration-500 ${darkMode ? 'bg-gray-800 text-gray-200 border-gray-700' : 'bg-white text-gray-800 border-gray-200'}`}>
+        <p className="mb-4">{message}</p>
+        <div className="flex justify-around">
+          <button
+            onClick={onConfirm}
+            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full transition-colors duration-300"
+          >
+            Confirmer
+          </button>
+          <button
+            onClick={onClose}
+            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full transition-colors duration-300"
+          >
+            Annuler
+          </button>
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
 // Composant principal de la page de gestion
@@ -204,13 +167,16 @@ const PackageManagementPage = () => {
   const [packageToDeleteId, setPackageToDeleteId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { darkMode } = useDarkMode();
 
   const fetchPackages = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getAllForfait(); // Utilisez la fonction importée !
-      setPackages(data);
+      const data = await getAllForfait();
+      // Tri des forfaits par ID pour maintenir un ordre stable
+      const sortedData = data.sort((a, b) => a.id - b.id);
+      setPackages(sortedData);
     } catch (err) {
       console.error("Erreur lors du chargement des forfaits:", err);
       setError("Impossible de charger les forfaits. Veuillez réessayer.");
@@ -242,7 +208,7 @@ const PackageManagementPage = () => {
     setIsConfirmModalOpen(false);
     setIsLoading(true);
     try {
-      await deleteForfait(packageToDeleteId); // Importée !
+      await deleteForfait(packageToDeleteId);
       await fetchPackages();
     } catch (err) {
       console.error("Erreur lors de la suppression:", err);
@@ -257,9 +223,9 @@ const PackageManagementPage = () => {
     setIsLoading(true);
     try {
       if (selectedPackage) {
-        await editForfait(selectedPackage.id, newPackage); // Importée !
+        await editForfait(selectedPackage.id, newPackage);
       } else {
-        await addForfait(newPackage); // Importée !
+        await addForfait(newPackage);
       }
       await fetchPackages();
     } catch (err) {
@@ -271,36 +237,36 @@ const PackageManagementPage = () => {
   };
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
-      <div className="max-w-4xl mx-auto">
+    <div className={`p-8 min-h-full transition-colors duration-500 ${darkMode ? 'bg-gray-900 text-gray-200' : 'bg-gray-100 text-gray-800'}`}>
+      <div className="max-w-full mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Gestion des forfaits</h1>
+          {/* <h1 className="text-3xl font-bold">Gestion des forfaits</h1> */}
           <button
             onClick={handleAddPackage}
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
+            className="bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-bold py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
           >
             + Ajouter un forfait
           </button>
         </div>
 
-        {isLoading && <p className="text-center text-gray-600">Chargement des forfaits...</p>}
+        {isLoading && <p className="text-center">Chargement des forfaits...</p>}
         {error && <p className="text-center text-red-500">{error}</p>}
 
         {!isLoading && !error && (
-          <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+          <div className={`shadow-lg rounded-lg overflow-hidden transition-colors duration-500 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <table className="min-w-full leading-normal">
               <thead>
-                <tr>
-                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <tr className={darkMode ? 'bg-gray-700' : 'bg-gray-100'}>
+                  <th className={`px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider transition-colors duration-500 ${darkMode ? 'text-gray-300 border-gray-600' : 'text-gray-600 border-gray-200'}`}>
                     Nom
                   </th>
-                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className={`px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider transition-colors duration-500 ${darkMode ? 'text-gray-300 border-gray-600' : 'text-gray-600 border-gray-200'}`}>
                     Prix (€)
                   </th>
-                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className={`px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider transition-colors duration-500 ${darkMode ? 'text-gray-300 border-gray-600' : 'text-gray-600 border-gray-200'}`}>
                     Fonctionnalités
                   </th>
-                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className={`px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider transition-colors duration-500 ${darkMode ? 'text-gray-300 border-gray-600' : 'text-gray-600 border-gray-200'}`}>
                     Actions
                   </th>
                 </tr>
@@ -308,32 +274,32 @@ const PackageManagementPage = () => {
               <tbody>
                 {packages.map(pkg => (
                   <tr key={pkg.id}>
-                    <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                      <p className="text-gray-900 whitespace-no-wrap">{pkg.nom}</p>
+                    <td className={`px-5 py-5 border-b border-gray-200 text-sm transition-colors duration-500 ${darkMode ? 'border-gray-700' : 'bg-white'}`}>
+                      <p className={`whitespace-no-wrap transition-colors duration-500 ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{pkg.nom}</p>
                     </td>
-                    <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                      <p className="text-gray-900 whitespace-no-wrap">{pkg.price} €</p>
+                    <td className={`px-5 py-5 border-b border-gray-200 text-sm transition-colors duration-500 ${darkMode ? 'border-gray-700' : 'bg-white'}`}>
+                      <p className={`whitespace-no-wrap transition-colors duration-500 ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{pkg.price} €</p>
                     </td>
-                    <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                      <p className="text-gray-900 whitespace-no-wrap">
-                        Max. événements: {pkg.maxevents}, Max. invités: {pkg.maxinvites}
+                    <td className={`px-5 py-5 border-b border-gray-200 text-sm transition-colors duration-500 ${darkMode ? 'border-gray-700' : 'bg-white'}`}>
+                      <p className={`whitespace-no-wrap transition-colors duration-500 ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                        Max. événements: {pkg.maxevents}, Max. invités: {pkg.maxinvites}, Durée: {pkg.validationduration}
                         <br />
                         Fonctionnalités: {pkg.fonctionnalite}
                         <br />
                         l'Ideal: {pkg.ideal}
                       </p>
                     </td>
-                    <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                    <td className={`px-5 py-5 border-b border-gray-200 text-sm transition-colors duration-500 ${darkMode ? 'border-gray-700' : 'bg-white'}`}>
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleEditPackage(pkg)}
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded-full text-xs"
+                          className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold py-1 px-3 rounded-full text-xs transition-all duration-300"
                         >
                           Modifier
                         </button>
                         <button
                           onClick={() => handleDeleteClick(pkg.id)}
-                          className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-full text-xs"
+                          className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-full text-xs transition-colors duration-300"
                         >
                           Supprimer
                         </button>
