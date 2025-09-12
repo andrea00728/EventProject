@@ -9,11 +9,11 @@ export class CreateForfaitDto {
   maxevents?: string | null;
 
   @IsOptional()
-  @IsNumber()
-  maxinvites?: number;
+  @IsString()
+  maxinvites?: string | null;
 
-  @IsNumber()
-  validationduration: number;
+  @IsString()
+  validationduration: string | null;
 
   @IsOptional()
   @IsString()
