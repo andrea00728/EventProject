@@ -7,7 +7,6 @@ import { Forfait } from 'src/entities/Forfait';
 import { CreateForfaitDto } from 'src/dto/create-forfait.dto';
 import { UpdateForfaitDto } from 'src/dto/update-forfait.dto';
 
-
 @Injectable()
 export class ForfaitService {
   constructor(
@@ -16,9 +15,10 @@ export class ForfaitService {
     @InjectRepository(Evenement)
     private evenementRepository: Repository<Evenement>,
     @InjectRepository(Forfait)
-    private forfaitRepository: Repository<Forfait>
+    private forfaitRepository: Repository<Forfait>,
   ) {}
 
+  // Vérifier si un utilisateur peut créer un événement selon son forfait
   async canCreateEvent(userId: string): Promise<boolean> {
     const user = await this.userRepo.findOne({
       where: { id: userId },
@@ -26,41 +26,34 @@ export class ForfaitService {
     });
     if (!user) return false;
 
-    // maxEvents est une chaîne de caractères (string), potentiellement 'null' ou 'illimité'
     const maxEventsString = user.forfait?.maxevents;
-    if (maxEventsString == null || maxEventsString.toLowerCase() === 'illimité') {
-      return true; // Accès illimité
-    }
+    if (!maxEventsString || maxEventsString.trim().toLowerCase() === 'illimité') return true;
 
-    // Convertit la chaîne de caractères en nombre
     const maxEventsNumber = parseInt(maxEventsString, 10);
+    if (isNaN(maxEventsNumber)) return false;
 
-    // Vérifie si la conversion a réussi et est un nombre valide
-    if (isNaN(maxEventsNumber)) {
-        // Gérer le cas où la chaîne n'est ni un nombre ni "illimité"
-        // Peut être une valeur par défaut, ou une erreur
-        return false;
-    }
-
-    const count = await this.evenementRepository.count({
-      where: { user: { id: userId } },
-    });
-
-    // Effectue la comparaison après avoir converti le type
+    const count = await this.evenementRepository.count({ where: { user: { id: userId } } });
     return count < maxEventsNumber;
   }
 
+  // Vérifier si un utilisateur peut ajouter un invité selon son forfait
   async canAddInvite(userId: string, currentInviteCount: number): Promise<boolean> {
     const user = await this.userRepo.findOne({
       where: { id: userId },
       relations: ['forfait'],
     });
-    const maxInvites = user?.forfait?.maxinvites;
-    if (maxInvites == null) return true;
+    if (!user) return false;
 
-    return currentInviteCount < maxInvites;
+    const maxInvitesString = user.forfait?.maxinvites;
+    if (!maxInvitesString || maxInvitesString.trim().toLowerCase() === 'illimité') return true;
+
+    const maxInvitesNumber = parseInt(maxInvitesString, 10);
+    if (isNaN(maxInvitesNumber)) return false;
+
+    return currentInviteCount < maxInvitesNumber;
   }
 
+  // Vérifie si le forfait d’un utilisateur est expiré
   async checkForfaitExpiration(userId: string): Promise<void> {
     const user = await this.userRepo.findOne({
       where: { id: userId },
@@ -80,6 +73,7 @@ export class ForfaitService {
     }
   }
 
+  // Somme totale des forfaits des utilisateurs
   async getSumForUsersForfait(): Promise<number> {
     const result = await this.userRepo
       .createQueryBuilder('users')
@@ -90,6 +84,7 @@ export class ForfaitService {
     return Number(result?.sum) || 0;
   }
 
+  // Dernières transactions (abonnements forfaits)
   async findLastTransactions(limit: number = 5): Promise<
     { name: string; photo: string; nameForfait: string; amount: number; date: Date }[]
   > {
@@ -118,6 +113,7 @@ export class ForfaitService {
     }));
   }
 
+  // Revenus mensuels des forfaits
   async getMonthlyForfaitRevenue(months: number = 12): Promise<{ month: string; total: number }[]> {
     const results = await this.userRepo.query(`
       SELECT 
@@ -134,7 +130,7 @@ export class ForfaitService {
 
     return results.map(result => ({
       month: this.formatMonth(result.month_key),
-      total: parseFloat(result.total) || 0
+      total: parseFloat(result.total) || 0,
     }));
   }
 
@@ -142,11 +138,12 @@ export class ForfaitService {
     const [year, month] = monthKey.split('-');
     const months = [
       'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
     ];
     return `${months[parseInt(month) - 1]} ${year}`;
   }
 
+  // Revenus par type de forfait (%)
   async getRevenusPourcentagesParForfait(): Promise<{ name: string; total: number; percentage: number }[]> {
     const results = await this.userRepo
       .createQueryBuilder('user')
@@ -158,7 +155,6 @@ export class ForfaitService {
       .getRawMany();
 
     const totalRevenu = results.reduce((acc, curr) => acc + parseFloat(curr.total || 0), 0);
-
     const allForfaits = await this.forfaitRepository.find();
 
     return allForfaits.map(forfait => {
@@ -174,6 +170,7 @@ export class ForfaitService {
     });
   }
 
+  // Nombre d'événements par type
   async getEventsByType(): Promise<{ type: string; count: number }[]> {
     const results = await this.evenementRepository
       .createQueryBuilder('evenement')
@@ -186,38 +183,74 @@ export class ForfaitService {
 
     return results.map(result => ({
       type: result.type,
-      count: parseInt(result.count) || 0
+      count: parseInt(result.count) || 0,
     }));
   }
 
-
-
-  // by claudio
-  // Nouveaux services pour la gestion des forfaits
+  // Créer un forfait
   async create(createForfaitDto: CreateForfaitDto): Promise<Forfait> {
-    const nouveauForfait = this.forfaitRepository.create(createForfaitDto);
+    const nouveauForfait = this.forfaitRepository.create({
+      ...createForfaitDto,
+      maxevents:
+        createForfaitDto.maxevents?.trim().toLowerCase() === 'illimité'
+          ? 'illimité'
+          : createForfaitDto.maxevents?.trim() ?? null,
+      maxinvites:
+        createForfaitDto.maxinvites?.trim().toLowerCase() === 'illimité'
+          ? 'illimité'
+          : createForfaitDto.maxinvites?.trim() ?? null,
+    });
+
     return this.forfaitRepository.save(nouveauForfait);
   }
 
-  // modifier les forfaits
+  // Modifier un forfait
   async update(idForfait: number, updateForfaitDto: UpdateForfaitDto): Promise<Forfait> {
-    const forfait = await this.forfaitRepository.preload({
-      id: idForfait,
-      ...updateForfaitDto,
-    });
+    const forfait = await this.forfaitRepository.findOne({ where: { id: idForfait } });
+    if (!forfait) throw new NotFoundException(`Forfait avec ID ${idForfait} introuvable`);
 
-    if (!forfait) {
-      throw new NotFoundException(`Forfait with ID ${idForfait} not found`);
+    // maxevents
+    if (updateForfaitDto.maxevents != null) {
+      forfait.maxevents =
+        updateForfaitDto.maxevents.trim().toLowerCase() === 'illimité'
+          ? 'illimité'
+          : updateForfaitDto.maxevents.trim();
     }
+
+    // maxinvites
+    if (updateForfaitDto.maxinvites != null) {
+      const value = String(updateForfaitDto.maxinvites); // convertit en string
+      forfait.maxinvites = value.toLowerCase() === 'illimité' ? 'illimité' : value.trim();
+    }
+
+    // Autres champs string
+    forfait.nom = updateForfaitDto.nom != null ? String(updateForfaitDto.nom).trim() : forfait.nom;
+    forfait.validationduration =
+      updateForfaitDto.validationduration != null
+        ? String(updateForfaitDto.validationduration).trim()
+        : forfait.validationduration;
+    forfait.paypalplanid =
+      updateForfaitDto.paypalplanid != null
+        ? String(updateForfaitDto.paypalplanid).trim()
+        : forfait.paypalplanid;
+    forfait.fonctionnalite =
+      updateForfaitDto.fonctionnalite != null
+        ? String(updateForfaitDto.fonctionnalite).trim()
+        : forfait.fonctionnalite;
+    forfait.ideal =
+      updateForfaitDto.ideal != null
+        ? String(updateForfaitDto.ideal).trim()
+        : forfait.ideal;
+
+    // Champs number
+    forfait.price = updateForfaitDto.price != null ? updateForfaitDto.price : forfait.price;
 
     return this.forfaitRepository.save(forfait);
   }
 
-  // fonction pour supprimer le forfaits
-    async remove(id: number): Promise<void> {
+  // Supprimer un forfait
+  async remove(id: number): Promise<void> {
     const result = await this.forfaitRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Forfait with ID ${id} not found`);
-    }
+    if (result.affected === 0) throw new NotFoundException(`Forfait avec ID ${id} introuvable`);
   }
 }

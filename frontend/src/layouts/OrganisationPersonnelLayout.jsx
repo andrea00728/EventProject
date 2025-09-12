@@ -247,7 +247,7 @@ export default function OrganisationPersonnelLayout() {
                 </div>
                 <div className="min-w-0 flex-1" onClick={versDashboard}>
                   <p className="text-sm font-bold text-emerald-700 truncate">
-                    Total du personnel
+                    Nombre du personnel
                   </p>
                     <p className="text-2xl font-bold text-emerald-600">
                         {totalPersonnels}

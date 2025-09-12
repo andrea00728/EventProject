@@ -12,11 +12,11 @@ export class Forfait{
     @Column({nullable:true,type:'varchar'})
     maxevents:string|null;
 
-    @Column({nullable:true,type:'int'})
-    maxinvites:number;
+    @Column({nullable:true,type:'varchar'})
+    maxinvites:string|null;
 
-    @Column({default:1})
-    validationduration:number;
+    @Column({nullable:true,type:'varchar'})
+    validationduration:string|null;
 
     // @Column({type:'timestamp',nullable:true})
     // expirationdate:Date;
