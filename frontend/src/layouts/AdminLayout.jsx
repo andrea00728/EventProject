@@ -109,7 +109,7 @@
     }, []);
 
     if (isLoading) return <div>Chargement ...</div>;
-    if (!isAuthenticated) return <Navigate to="/pagepublic" replace />;
+    if (!isAuthenticated) return <Navigate to="/" replace />;
 
     switch (role) {
       case "admin":
