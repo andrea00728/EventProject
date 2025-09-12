@@ -611,7 +611,7 @@ export default function MenuRestauration() {
             {selectedMenuId !== "all" && (
               <Paper elevation={2} sx={{ borderRadius: 3, p: 3, mb: 4 }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography variant="h6" sx={{ color: theme.text, fontWeight: 'bold' }}>
+                  <Typography variant="h6" sx={{ color: theme.text, fontWeight: 'bold', mr:2 }}>
                     {allMenus.find((m) => m.id === selectedMenuId)?.name || "Menu"}
                   </Typography>
                   <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
