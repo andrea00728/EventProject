@@ -131,8 +131,14 @@ export class GuestService {
       throw new BadRequestException('Utilisateur non trouvé');
     }
 
-    const maxInvites = user.forfait?.maxinvites;
-    if (!maxInvites) return;
+    const maxInvitesRaw = user.forfait?.maxinvites;
+    if (!maxInvitesRaw) return;
+
+    // Gestion du cas "illimité"
+    if (maxInvitesRaw.trim().toLowerCase() === 'illimité') return;
+
+    const maxInvites = parseInt(maxInvitesRaw, 10);
+    if (isNaN(maxInvites)) return; // si malformé, on ignore la limite
 
     const currentCount = await this.guestRepository.count({
       where: { event: { id: eventId } },
@@ -144,6 +150,7 @@ export class GuestService {
       );
     }
   }
+
 
 
   async createPublicGuest(dto: CreateInviteDto): Promise<Invite> {
