@@ -1,8 +1,10 @@
 import { Injectable,HttpException, HttpStatus, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as QRCode from 'qrcode';
-import * as PDFDocument from 'pdfkit';
+// import * as QRCode from 'qrcode';
+import QRCode from 'qrcode';
+// import * as PDFDocument from 'pdfkit';
+import PDFDocument from 'pdfkit';
 import { PassThrough } from 'stream';
 import * as nodemailer from 'nodemailer';
 import { Invitation } from 'src/entities/Invitation';
