@@ -236,8 +236,8 @@ const PackageManagementPage = () => {
   };
 
   return (
-    <div className={`min-h-screen p-4 sm:p-8 transition-colors duration-500 ${darkMode ? 'bg-gray-900 text-gray-200' : 'bg-gray-100 text-gray-800'}`}>
-      <div className="max-w-7xl mx-auto">
+    <div className={`min-h-full p-4 sm:p-8 transition-colors duration-500 ${darkMode ? 'bg-gray-900 text-gray-200' : 'bg-gray-100 text-gray-800'}`}>
+      <div className="max-w-full mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
           <h1 className="text-2xl sm:text-3xl font-bold text-center sm:text-left">Gestion des forfaits</h1>
           <button
