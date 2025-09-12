@@ -79,11 +79,12 @@ const PackageModal = ({ isOpen, onClose, packageData, onSave }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-bold mb-2">Durée</label>
+            <label className="block text-sm font-bold mb-2">Durée(en jour)</label>
             <input
               type="text"
               name="validationduration"
               value={formData.validationduration}
+              placeholder='ex: 30 pour 30 jours'
               onChange={handleChange}
               className={`shadow-sm appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-500 ${darkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'text-gray-700 border-gray-300'}`}
               required
