@@ -18,12 +18,13 @@ import { Redis } from 'ioredis';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { NotificationGateway } from 'src/gateway/notification.gateway';
 import { Admin } from 'src/entities/Admin';
+import * as nodemailer from 'nodemailer';
 
 
 @Injectable()
 export class AuthService {
   emailVerificationService: any;
-
+  private transporter: nodemailer.Transporter;
 
   constructor(
     private readonly jwtService: JwtService,
@@ -44,7 +45,15 @@ export class AuthService {
     @InjectRedis()
     private readonly redis: Redis,
     private readonly notificationGateway: NotificationGateway,
-  ) { }
+  ) {
+    this.transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+  }
 
 
   async replyToMessage(email: string, message: string) {
@@ -54,155 +63,6 @@ export class AuthService {
     }
     // TODO: envoyer le message par email (nodemailer, etc.)
   }
-
-  async validateUser(profile: any): Promise<any> {
-    try {
-      const { emails, displayName, photos } = profile;
-      const email = emails[0].value;
-
-      // Vérification admin
-      const adminIsExist = await this.adminRepository.findOne({
-        where: { email: email }
-      });
-      
-      if (adminIsExist) {
-        console.log("C'est un email d'un administrateur:", email);
-        return { error: "c'est un email d'un administrateur" }; 
-        
-      }
-
-      // Vérification dans Personnel
-      const personnel = await this.personnelRepository.findOne({
-        where: { email },
-        relations: ['evenement'],
-      });
-
-      const isInPersonnel = !!personnel;
-      const isdetectedRole = isInPersonnel ? personnel.role : 'organisateur';
-
-      let user = await this.userRepository.findOne({ where: { email } });
-
-      if (!user) {
-        const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
-
-        if (!freemium) {
-          throw new Error('Forfait freemium non trouvé');
-        }
-        user = this.userRepository.create({
-          id: uuidv4(),
-          email,
-          name: displayName || null,
-          photo: photos?.[0]?.value || null,
-          role: isdetectedRole,
-          forfait: { id: 11 } as Forfait,
-        });
-
-        await this.userRepository.save(user);
-        console.log('Nouvel utilisateur créé:', { id: user.id, email, role: user.role });
-
-        const notification = this.notificationRepository.create({
-          title: 'Nouvel organisateur inscrit',
-          message: `L'organisateur ${displayName || email} s'est inscrit.`,
-          type: 'info',
-          date: new Date(),
-        });
-        await this.notificationRepository.save(notification);
-        this.notificationGateway.emitNotifRegisterToAdmin({
-          ...notification,
-          date: notification.date.toISOString(),
-        });
-      } else {
-        // Mettre à jour name, photo et role
-        user.name = displayName || null;
-        user.photo = photos?.[0]?.value || null;
-        user.role = isdetectedRole;
-        await this.userRepository.save(user);
-      }
-
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        photo: user.photo,
-        role: isdetectedRole,
-        isInPersonnel,
-      };
-
-    } catch (error) {
-      console.error('Erreur dans validateUser:', error);
-      throw error; // On relance pour que Nest gère avec BadRequestException ou autre
-    }
-  }
-
-
-  //REGISTRE MANUEL BY LIOKA
-  async registerUser(data: { name: string; email: string; password: string; photo?: string }) {
-    const { name, email, password, photo } = data;
-
-    //verification admin
-    const adminIsExist = await this.adminRepository.findOne({
-      where: { email: email }
-    })
-    if (adminIsExist) {
-      throw new BadRequestException("c'est un email d'un administrateur")
-    }
-
-    // Vérification dans Personnel
-    const personnel = await this.personnelRepository.findOne({
-      where: { email },
-      relations: ['evenement'],
-    });
-
-    const isInPersonnel = !!personnel;
-    const isdetectedRole = isInPersonnel ? personnel.role : 'organisateur';
-
-    // Vérifier si email existe déjà
-    const existing = await this.userRepository.findOne({ where: { email } });
-    if (existing) {
-      throw new BadRequestException('Cet email est déjà utilisé');
-    }
-
-    // Récupérer le forfait freemium
-    const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
-    if (!freemium) {
-      throw new BadRequestException('Forfait freemium non trouvé');
-    }
-
-    // Hasher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Créer l'utilisateur
-    const newUser = this.userRepository.create({
-      id: uuidv4(),
-      name,
-      email,
-      password: hashedPassword,
-      photo: photo || null, // nom du fichier
-      role: isdetectedRole,
-      forfait: freemium,
-    });
-
-    await this.userRepository.save(newUser);
-
-    const notification = this.notificationRepository.create({
-      title: 'Nouvel organisateur inscrit',
-      message: `L'organisateur ${name || email} s'est inscrit.`,
-      type: 'info',
-      date: new Date(),
-    });
-    await this.notificationRepository.save(notification);
-    this.notificationGateway.emitNotifRegisterToAdmin({
-      ...notification,
-      date: notification.date.toISOString(),
-    });
-
-    return {
-      message: 'Utilisateur créé avec succès',
-      userId: newUser.id,
-    };
-  }
-
-
 
 
 
@@ -217,14 +77,21 @@ export class AuthService {
 
   async login(user: any, res: Response) {
     try {
+      // Vérifier si c'est un admin
       const adminIsExist = await this.adminRepository.findOne({
         where: { email: user?.email },
       });
-
+  
       if (adminIsExist) {
         return { error: "c'est un email d'un administrateur" };
       }
-
+  
+      // Vérifier si l'utilisateur est déjà marqué comme vérifié
+      if (!user.isVerified) {
+        user.isVerified = true;
+        await this.userRepository.save(user); // on met à jour la colonne dans la DB
+      }
+  
       const payload = {
         email: user.email,
         sub: user.id,
@@ -232,32 +99,33 @@ export class AuthService {
         name: user.name,
         photo: user.photo,
       };
-
+  
       const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
       const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
-
+  
       res.cookie('jwt', access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 60 * 60 * 1000,
       });
-
+  
       res.cookie('refresh_token', refresh_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-
+  
       console.log('✅ JWT Payload:', payload);
-
+  
       return { access_token, refresh_token };
     } catch (error) {
       console.error('❌ Erreur login():', error.message);
       return { error: error.message };
     }
   }
+  
 
 
 
@@ -334,33 +202,6 @@ export class AuthService {
     }
   }
 
-  // async logout(token: string, res: Response): Promise<{ message: string }> {
-  //     try {
-  //       // Verify token (optional, for additional security)
-  //       await this.jwtService.verifyAsync(token, {
-  //         secret: process.env.JWT_SECRET || 'your-secret-key',
-  //       });
-
-  //       // Add token to blacklist
-  //       this.tokenBlacklist.add(token);
-
-  //       // Clear the JWT cookie
-  //       res.clearCookie('jwt', {
-  //         httpOnly: true,
-  //         secure: process.env.NODE_ENV === 'production',
-  //         sameSite: 'strict',
-  //       });
-
-  //       return { message: 'Déconnexion réussie' };
-  //     } catch (error) {
-  //       throw new Error('Token invalide ou erreur lors de la déconnexion');
-  //     }
-  //   }
-
-  // Method to check if a token is blacklisted (for use in auth guard)
-  // isTokenBlacklisted(token: string): boolean {
-  //   return this.tokenBlacklist.has(token);
-  // }
 
 
   /**
@@ -381,7 +222,13 @@ export class AuthService {
 
 
   async createUser(dto: CreateUserDto) {
+    // Crée une nouvelle instance User avec les données du DTO
     const user = this.userRepository.create(dto);
+  
+    // On force la vérification directement
+    user.isVerified = true;
+  
+    // Si c’est un organisateur, on génère une notification
     if (dto.role === 'organisateur') {
       const notification = this.notificationRepository.create({
         title: 'Nouvel organisateur inscrit',
@@ -390,8 +237,11 @@ export class AuthService {
       });
       await this.notificationRepository.save(notification);
     }
+  
+    // On enregistre l’utilisateur
     return this.userRepository.save(user);
   }
+  
 
 
   async getManagerList(): Promise<any> {
@@ -465,15 +315,15 @@ export class AuthService {
       const email = decodedToken.email;
       const displayName = decodedToken.name || 'Admin';
       const photoURL = decodedToken.picture || null;
-
+  
       let adminUser = await this.userRepository.findOne({
         where: { email, role: 'admin' },
       });
-
+  
       if (!adminUser) {
         const adminCount = await this.userRepository.count({ where: { role: 'admin' } });
         if (adminCount > 0) throw new UnauthorizedException('Un admin existe déjà');
-
+  
         adminUser = this.userRepository.create({
           id: uuidv4(),
           email,
@@ -482,19 +332,26 @@ export class AuthService {
           role: 'admin',
           isOnline: true,
           lastLogin: new Date(),
+          isVerified: true, // ✅ déjà marqué comme vérifié
         } as Partial<User>);
-
+  
         await this.userRepository.save(adminUser);
+      } else {
+        // ✅ Si l’admin existe déjà mais n’est pas vérifié, on le met à jour
+        if (!adminUser.isVerified) {
+          adminUser.isVerified = true;
+          await this.userRepository.save(adminUser);
+        }
       }
-
+  
       const payload = {
         sub: adminUser.id,
         email: adminUser.email,
         role: adminUser.role,
       };
-
+  
       const access_token = this.jwtService.sign(payload);
-
+  
       return {
         access_token,
         user: {
@@ -503,12 +360,14 @@ export class AuthService {
           name: adminUser.name,
           photo: adminUser.photo,
           role: adminUser.role,
+          isVerified: adminUser.isVerified, // 👈 utile côté front
         },
       };
     } catch (error) {
       throw new UnauthorizedException('Token Firebase invalide ou autre erreur');
     }
   }
+  
 
   async findUserStats(): Promise<any> {
     const countTotal = this.userRepository.count();
@@ -625,63 +484,6 @@ export class AuthService {
 
 
 
-  // /**
-  //  * 
-  //  * @param email 
-  //  * @param eventId 
-  //  * @returns 
-  //  * Finds a user entry by user email and event ID.
-  //  */
-  // async findOneById(userId: string): Promise<User > {
-  //   const user = await this.userRepository.findOne({ where: { id:userId } });
-
-  //   if (!user) {
-  //     throw new NotFoundException(`L'utilisateur avec l'ID ${userId} n'a pas été trouvé.`);
-  //   }
-
-  //   return user;
-  // }
-
-  async loginUser(email: string, password: string, res: Response) {
-    const user = await this.userRepository.findOne({ where: { email } });
-    if (!user) throw new BadRequestException('Email ou mot de passe incorrect');
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) throw new BadRequestException('Email ou mot de passe incorrect');
-
-    // Payload JWT
-    const payload = { sub: user.id, email: user.email, role: user.role, name: user.name, photo: user.photo };
-    const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
-    const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
-
-    // Envoyer le JWT dans un cookie HttpOnly
-    res.cookie('jwt', access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 1000, // 1h
-    });
-
-    res.cookie('refresh_token', refresh_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
-    });
-
-  return {
-    message: 'Connexion réussie',
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      // photo: user.photo ? `https://api.mastertable.site${user.photo}` : null,
-      photo: user.photo ? `https://api.mastertable.site${user.photo}` : null,
-    },
-  };
-}
-
   async updateProfile(
     userId: string,
     data: {
@@ -778,4 +580,220 @@ export class AuthService {
       photo: user.photo ? `https://api.mastertable.site${user.photo}?t=${Date.now()}` : null,
     } as User;
   }
+
+
+
+
+  //modif de ilaina
+  async registerUser(data: { name: string; email: string; password: string; photo?: string }) {
+    const { name, email, password, photo } = data;
+
+    const adminIsExist = await this.adminRepository.findOne({ where: { email } });
+    if (adminIsExist) {
+      throw new BadRequestException("Cet email appartient à un administrateur");
+    }
+
+    const personnel = await this.personnelRepository.findOne({
+      where: { email },
+      relations: ['evenement'],
+    });
+
+    const isInPersonnel = !!personnel;
+    const isdetectedRole = isInPersonnel ? personnel.role : 'organisateur';
+
+    const existing = await this.userRepository.findOne({ where: { email } });
+    if (existing) {
+      throw new BadRequestException('Cet email est déjà utilisé');
+    }
+
+    const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
+    if (!freemium) {
+      throw new BadRequestException('Forfait freemium non trouvé');
+    }
+
+    const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = this.userRepository.create({
+      id: uuidv4(),
+      name,
+      email,
+      password: hashedPassword,
+      photo: photo || null,
+      role: isdetectedRole,
+      forfait: freemium,
+      isVerified: false,
+      verificationCode,
+    });
+
+    try {
+      await this.userRepository.save(newUser);
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Vérifiez votre adresse email',
+        html: `
+          <h2>Bienvenue, ${name} !</h2>
+          <p>Veuillez vérifier votre adresse email en utilisant le code suivant :</p>
+          <h3>${verificationCode}</h3>
+          <p>Entrez ce code dans l'application pour activer votre compte.</p>
+          <p>Ce code expire dans 1 heure.</p>
+        `,
+      };
+
+      await this.transporter.sendMail(mailOptions);
+
+      await this.redis.set(`verify:${email}`, verificationCode, 'EX', 3600);
+
+      const notification = this.notificationRepository.create({
+        title: 'Nouvel organisateur inscrit',
+        message: `L'organisateur ${name || email} s'est inscrit. En attente de vérification.`,
+        type: 'info',
+        date: new Date(),
+      });
+      await this.notificationRepository.save(notification);
+      this.notificationGateway.emitNotifRegisterToAdmin({
+        ...notification,
+        date: notification.date.toISOString(),
+      });
+
+      return {
+        message: 'Utilisateur créé avec succès. Veuillez vérifier votre email.',
+        userId: newUser.id,
+      };
+    } catch (error) {
+      await this.userRepository.delete(newUser.id);
+      console.error('Erreur lors de l\'envoi de l\'email:', error);
+      throw new BadRequestException('Erreur lors de l\'envoi de l\'email de vérification: ' + error.message);
+    }
+  }
+
+  async verifyEmail(email: string, code: string): Promise<{ message: string }> {
+    const storedCode = await this.redis.get(`verify:${email}`);
+    if (!storedCode || storedCode !== code) {
+      throw new BadRequestException('Code de vérification invalide ou expiré');
+    }
+
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+
+    user.isVerified = true;
+    user.verificationCode = null;
+    await this.userRepository.save(user);
+
+    await this.redis.del(`verify:${email}`);
+
+    return { message: 'Email vérifié avec succès' };
+  }
+
+
+  async loginUser(email: string, password: string, res: Response) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) throw new BadRequestException('Email ou mot de passe incorrect');
+    if (!user.isVerified) throw new BadRequestException('Veuillez vérifier votre email avant de vous connecter');
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) throw new BadRequestException('Email ou mot de passe incorrect');
+
+    const payload = { sub: user.id, email: user.email, role: user.role, name: user.name, photo: user.photo };
+    const access_token = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+    res.cookie('jwt', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 1000,
+    });
+
+    res.cookie('refresh_token', refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return {
+      message: 'Connexion réussie',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        photo: user.photo ? `https://api.mastertable.site${user.photo}` : null,
+      },
+    };
+  }
+
+  async validateUser(profile: any): Promise<any> {
+    try {
+      const { emails, displayName, photos } = profile;
+      const email = emails[0].value;
+
+      const adminIsExist = await this.adminRepository.findOne({ where: { email } });
+      if (adminIsExist) {
+        return { error: "c'est un email d'un administrateur" };
+      }
+
+      const personnel = await this.personnelRepository.findOne({
+        where: { email },
+        relations: ['evenement'],
+      });
+
+      const isInPersonnel = !!personnel;
+      const isdetectedRole = isInPersonnel ? personnel.role : 'organisateur';
+
+      let user = await this.userRepository.findOne({ where: { email } });
+
+      if (!user) {
+        const freemium = await this.forfaitRepository.findOne({ where: { id: 11 } });
+        if (!freemium) {
+          throw new Error('Forfait freemium non trouvé');
+        }
+        user = this.userRepository.create({
+          id: uuidv4(),
+          email,
+          name: displayName || null,
+          photo: photos?.[0]?.value || null,
+          role: isdetectedRole,
+          forfait: { id: 11 } as Forfait,
+          isVerified: true,
+        });
+
+        await this.userRepository.save(user);
+        const notification = this.notificationRepository.create({
+          title: 'Nouvel organisateur inscrit',
+          message: `L'organisateur ${displayName || email} s'est inscrit via Google.`,
+          type: 'info',
+          date: new Date(),
+        });
+        await this.notificationRepository.save(notification);
+        this.notificationGateway.emitNotifRegisterToAdmin({
+          ...notification,
+          date: notification.date.toISOString(),
+        });
+      } else {
+        user.name = displayName || null;
+        user.photo = photos?.[0]?.value || null;
+        user.role = isdetectedRole;
+        await this.userRepository.save(user);
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        photo: user.photo,
+        role: isdetectedRole,
+        isInPersonnel,
+      };
+    } catch (error) {
+      console.error('Erreur dans validateUser:', error);
+      throw error;
+    }
+  }
+  
 }

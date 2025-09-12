@@ -2,8 +2,14 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Patch,
   Post,
+  Put,
   Query,
   Req,
   Res,
@@ -21,6 +27,12 @@ import { AuthGuard } from '@nestjs/passport';
 import { addDays } from 'date-fns';
 import { NotificationService } from 'src/services/notification/notification.service';
 import { ForfaitService } from 'src/services/forfait/forfait.service';
+import { CreateForfaitDto } from 'src/dto/create-forfait.dto';
+import { UpdateForfaitDto } from 'src/dto/update-forfait.dto';
+
+
+// Interface pour les données de création/modification de forfait
+
 @Controller('forfait')
 export class ForfaitController {
   constructor(
@@ -118,10 +130,6 @@ async redirectTofrontend(
    * 
    * 
    */
-
-
-
-
   @Get('success-confirmation')
   @UseGuards(AuthGuard('jwt'))
   async handleSuccess(
@@ -144,22 +152,30 @@ async redirectTofrontend(
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new BadRequestException('Utilisateur introuvable');
 
-    // Mettre à jour le forfait et la date d'expiration
+    // ✅ Mettre à jour le forfait et la date d'expiration
     user.forfait = forfait;
     user.datedowngraded = null;
-    user.forfaitexpirationdate = addDays(new Date(), forfait.validationduration); // Ajouter la durée de validation
+
+    if (forfait.validationduration && !isNaN(Number(forfait.validationduration))) {
+      user.forfaitexpirationdate = addDays(new Date(), Number(forfait.validationduration));
+    } else {
+      // Cas "illimité"
+      user.forfaitexpirationdate = null;
+    }
 
     const success = await this.userRepository.save(user);
+
+    // ✅ Message d’expiration adapté
+    const expirationMsg = user.forfaitexpirationdate
+      ? `Expiration le ${user.forfaitexpirationdate.toISOString()}`
+      : 'Sans date d’expiration (illimité)';
+
     await this.notificationService.notifyAll(
-      'payement accepté',
-      `votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
-    )
+      'paiement accepté',
+      `Votre forfait ${forfait.nom} a été activé ! ${expirationMsg}`,
+    );
 
     return success;
-
-    // return {
-    //   message: `Paiement accepté, votre forfait ${forfait.nom} a été activé ! Expiration le ${user.forfaitexpirationdate.toISOString()}`,
-    // };
   }
 
 
@@ -228,5 +244,22 @@ async getDashboardCharts(@Query('period') period: string = '12') {
   }
 }
 
+// by claudio
+// NOUVELLES ROUTES POUR LA GESTION DES FORFAITS
+  @Post()
+  async create(@Body() createForfaitDto: CreateForfaitDto): Promise<Forfait> {
+    return this.forfaitService.create(createForfaitDto);
+  }
 
+  //endpoint pour modifier le forfait
+  @Patch(':id') // L'ID est passé dans l'URL, par exemple: /forfait/123
+  async update(@Param('id') idForfait: number, @Body() updateForfaitDto: UpdateForfaitDto): Promise<Forfait> {
+    return this.forfaitService.update(Number(idForfait), updateForfaitDto);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  async remove(@Param('id') id: number): Promise<void> {
+    return this.forfaitService.remove(id);
+  }
 }

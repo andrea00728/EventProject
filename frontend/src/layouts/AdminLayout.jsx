@@ -20,7 +20,7 @@
   } from "react-icons/fa";
   import { FaBell, FaEnvelope } from "react-icons/fa6";
   import { FiLayout } from "react-icons/fi";
-  import { ChevronDown, X } from "lucide-react";
+  import { ChevronDown, Package, X } from "lucide-react";
   import {
     MdAdminPanelSettings,
     MdCalendarToday,
@@ -109,7 +109,7 @@
     }, []);
 
     if (isLoading) return <div>Chargement ...</div>;
-    if (!isAuthenticated) return <Navigate to="/pagepublic" replace />;
+    if (!isAuthenticated) return <Navigate to="/login-site/super/admin" replace />;
 
     switch (role) {
       case "admin":
@@ -158,6 +158,11 @@
       path: "/AdminOrganisateur",
       name: "Organisateurs",
       icon: <FaUsers className="text-lg" />,
+    },
+    {
+      path: "/AdminForfait",
+      name: "Gestion Forfaits",
+      icon: <Package className="text-lg" />,
     },
     {
       path: "/LocationSalle",

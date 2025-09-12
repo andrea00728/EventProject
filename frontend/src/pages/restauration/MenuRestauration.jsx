@@ -39,6 +39,7 @@ import {
   Divider,
 } from "@mui/material";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
+import MenuRestaurationDropdown from "./MenuRestaurationDropdown";
 
 export default function MenuRestauration() {
   const { isAuthenticated } = useStateContext();
@@ -259,20 +260,20 @@ export default function MenuRestauration() {
     try {
       const res = await axios.get(`/menus/event/${selectedEvent.id}`);
       setAllMenus(res.data);
-      const items = res.data.flatMap((menu) =>
-        Array.isArray(menu.items)
-          ? menu.items.map((item) => ({ ...item, menuId: menu.id, menuName: menu.name }))
-          : []
-      );
-      setMenuItems(items);
+      // const items = res.data.flatMap((menu) =>
+      //   Array.isArray(menu.items)
+      //     ? menu.items.map((item) => ({ ...item, menuId: menu.id, menuName: menu.name }))
+      //     : []
+      // );
+      // setMenuItems(items);
     } catch (err) {
       console.error("Erreur lors du chargement des menus :", err);
     }
   };
 
   const filteredItems = selectedMenuId === "all"
-    ? menuItems
-    : menuItems.filter((item) => item.menuId === selectedMenuId);
+    ? allMenus
+    : allMenus.filter((item) => item.id === selectedMenuId);
 
   const handleOpenForm = (item = null) => {
     setEditingItem(item);
@@ -372,7 +373,8 @@ export default function MenuRestauration() {
     try {
       await axios.delete(`/menus/items/${itemToDelete.id}`);
       setMenuItems((prev) => prev.filter((item) => item.id !== itemToDelete.id));
-      handleCloseDeleteConfirm();
+      await reloadMenus();
+      handleCloseDeleteConfirm((prev) => prev.filter((item) => item.id !== itemToDelete.id));
     } catch (err) {
       console.error("Erreur lors de la suppression de l'élément :", err);
       alert("Erreur lors de la suppression de l'élément.");
@@ -416,42 +418,7 @@ export default function MenuRestauration() {
       background: `linear-gradient(135deg, ${theme.neutral} 0%, #e0e7ff 100%)`,
       p: 3
     }}>
-      {/* Header avec gradient */}
-      {/* <Paper
-        elevation={0}
-        sx={{
-          background: theme.gradientCard,
-          borderRadius: 4,
-          p: 4,
-          mb: 4,
-          color: 'gray',
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            width: '200px',
-            height: '200px',
-            background: 'rgba(255,255,255,0.1)',
-            borderRadius: '50%',
-            transform: 'translate(50%, -50%)'
-          }
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, position: 'relative', zIndex: 1 }}>
-          <RestaurantIcon sx={{ fontSize: 40 }} />
-          <Box>
-            <Typography variant="h3" fontWeight="bold" sx={{ mb: 1 }}>
-              Gestion des Menus
-            </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.9 }}>
-              Créez et gérez vos menus de restauration
-            </Typography>
-          </Box>
-        </Box>
-      </Paper> */}
+
 
       {/* Sélection d'événement */}
       <Paper elevation={2} sx={{ borderRadius: 3, mb: 4, overflow: 'hidden' }}>
@@ -644,7 +611,7 @@ export default function MenuRestauration() {
             {selectedMenuId !== "all" && (
               <Paper elevation={2} sx={{ borderRadius: 3, p: 3, mb: 4 }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography variant="h6" sx={{ color: theme.text, fontWeight: 'bold' }}>
+                  <Typography variant="h6" sx={{ color: theme.text, fontWeight: 'bold', mr:2 }}>
                     {allMenus.find((m) => m.id === selectedMenuId)?.name || "Menu"}
                   </Typography>
                   <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
@@ -683,7 +650,7 @@ export default function MenuRestauration() {
 
                     <Divider orientation="vertical" flexItem />
 
-                    <Box sx={{ display: "flex", gap: 1 }}>
+                    {/* <Box sx={{ display: "flex", gap: 1 }}>
                       <IconButton
                         onClick={() => setViewMode("card")}
                         sx={{
@@ -706,7 +673,7 @@ export default function MenuRestauration() {
                       >
                         <ViewListIcon />
                       </IconButton>
-                    </Box>
+                    </Box> */}
                   </Box>
                 </Box>
                 <Menu
@@ -760,213 +727,30 @@ export default function MenuRestauration() {
             )}
 
             {/* Contenu principal */}
-            {viewMode === "card" ? (
-              <Box sx={{ space: 6 }}>
-                {Object.keys(groupByCategory(filteredItems))
-                  .sort()
-                  .map((category, categoryIndex) => (
-                    <Fade in timeout={400 + categoryIndex * 200} key={category}>
-                      <Paper elevation={2} sx={{ borderRadius: 3, p: 4, mb: 4 }}>
-                        <Box sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 2,
-                          mb: 3,
-                          pb: 2,
-                          borderBottom: `3px solid ${theme.primary}`
-                        }}>
-                          <CategoryIcon sx={{ color: theme.primary, fontSize: 30 }} />
-                          <Typography variant="h4" sx={{
-                            fontWeight: 'bold',
-                            color: theme.text,
-                            background: theme.gradientCard,
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent'
-                          }}>
-                            {category}
-                          </Typography>
-                        </Box>
 
-                        <Box sx={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-                          gap: 3
-                        }}>
-                          {groupByCategory(filteredItems)[category].map((item, itemIndex) => (
-                            <Zoom in timeout={200 + itemIndex * 100} key={item.id}>
-                              <Card
-                                sx={{
-                                  borderRadius: 4,
-                                  overflow: 'hidden',
-                                  transition: 'all 0.3s ease',
-                                  cursor: 'pointer',
-                                  border: `2px solid transparent`,
-                                  '&:hover': {
-                                    transform: 'translateY(-8px)',
-                                    boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-                                    border: `2px solid ${theme.primaryLight}`,
-                                  }
-                                }}
-                              >
-                                {item.photo && (
-                                  <CardMedia
-                                    component="img"
-                                    height="200"
-                                    image={`${import.meta.env.VITE_API_BASE_URL}${item.photo}`}
-                                    alt={item.name}
-                                    sx={{
-                                      transition: 'transform 0.3s ease',
-                                      '&:hover': { transform: 'scale(1.05)' }
-                                    }}
-                                  />
-                                )}
-
-                                <CardContent sx={{ p: 3 }}>
-                                  <Typography variant="h6" sx={{
-                                    fontWeight: 'bold',
-                                    color: theme.text,
-                                    mb: 2,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 1
-                                  }}>
-                                    <RestaurantIcon sx={{ color: theme.primary, fontSize: 20 }} />
-                                    {item.name}
-                                  </Typography>
-
-                                  <Typography variant="body2" sx={{ color: theme.textLight, mb: 3, lineHeight: 1.6 }}>
-                                    {item.description || "Aucune description disponible"}
-                                  </Typography>
-
-                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
-                                    <Chip
-                                      icon={<EuroIcon sx={{ fontSize: 16 }} />}
-                                      label={item.price ? `${item.price} €` : "Prix non défini"}
-                                      size="small"
-                                      sx={{
-                                        bgcolor: theme.success,
-                                        color: 'white',
-                                        fontWeight: 'bold'
-                                      }}
-                                    />
-                                    <Chip
-                                      icon={<InventoryIcon sx={{ fontSize: 16 }} />}
-                                      label={`Stock: ${item.stock || 0}`}
-                                      size="small"
-                                      sx={{
-                                        bgcolor: (item.stock || 0) > 0 ? theme.accent : theme.danger,
-                                        color: 'white',
-                                        fontWeight: 'medium'
-                                      }}
-                                    />
-                                    <Chip
-                                      label={item.menuName || "N/A"}
-                                      size="small"
-                                      variant="outlined"
-                                      sx={{
-                                        borderColor: theme.secondary,
-                                        color: theme.secondary,
-                                        fontWeight: 'medium'
-                                      }}
-                                    />
-                                  </Box>
-
-                                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 'auto' }}>
-                                    <IconButton
-                                      onClick={() => handleOpenForm(item)}
-                                      sx={{
-                                        bgcolor: theme.neutral,
-                                        color: theme.primary,
-                                        '&:hover': {
-                                          bgcolor: theme.primary,
-                                          color: 'gray',
-                                          transform: 'scale(1.1)'
-                                        },
-                                        transition: 'all 0.3s ease'
-                                      }}
-                                    >
-                                      <EditIcon />
-                                    </IconButton>
-                                    <IconButton
-                                      onClick={() => handleOpenDeleteConfirm(item)}
-                                      sx={{
-                                        bgcolor: theme.neutral,
-                                        color: theme.danger,
-                                        '&:hover': {
-                                          bgcolor: theme.danger,
-                                          color: 'gray',
-                                          transform: 'scale(1.1)'
-                                        },
-                                        transition: 'all 0.3s ease'
-                                      }}
-                                    >
-                                      <DeleteIcon />
-                                    </IconButton>
-                                  </Box>
-                                </CardContent>
-                              </Card>
-                            </Zoom>
-                          ))}
-                        </Box>
-                      </Paper>
-                    </Fade>
-                  ))}
-
-                {filteredItems.length === 0 && (
-                  <Fade in timeout={600}>
-                    <Paper elevation={2} sx={{ borderRadius: 3, p: 6, textAlign: 'center' }}>
-                      <RestaurantIcon sx={{ fontSize: 80, color: theme.textLight, mb: 3 }} />
-                      <Typography variant="h5" sx={{ color: theme.text, mb: 2, fontWeight: 'bold' }}>
-                        Aucun {allMenus.find((m) => m.id === selectedMenuId)?.name} disponible
-                      </Typography>
-                      <Typography variant="body1" sx={{ color: theme.textLight }}>
-                        Commencez par ajouter des plats à votre menu
-                      </Typography>
-                    </Paper>
-                  </Fade>
-                )}
-              </Box>
+            {allMenus.length === 0 ? (
+              <Fade in timeout={600}>
+                <Paper
+                  elevation={2}
+                  sx={{ borderRadius: 3, p: 6, textAlign: "center" }}
+                >
+                  <RestaurantIcon
+                    sx={{ fontSize: 80, color: theme.textLight, mb: 3 }}
+                  />
+                  <Typography
+                    variant="h5"
+                    sx={{ color: theme.text, mb: 2, fontWeight: "bold" }}
+                  >
+                    Aucun {allMenus.find((m) => m.id === selectedMenuId)?.name}{" "}
+                    disponible
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: theme.textLight }}>
+                    Commencez par ajouter des plats à votre menu
+                  </Typography>
+                </Paper>
+              </Fade>
             ) : (
-              <Paper elevation={2} sx={{ borderRadius: 3, overflow: 'hidden' }}>
-                <DataGrid
-                  rows={filteredItems}
-                  columns={columns}
-                  autoHeight
-                  getRowId={(row) => row.id}
-                  pageSizeOptions={[5, 10, 25]}
-                  sx={{
-                    border: 'none',
-                    '& .MuiDataGrid-columnHeaders': {
-                      background: theme.gradientCard,
-                      color: 'gray',
-                      fontWeight: 'bold',
-                      fontSize: '1rem',
-                      '& .MuiDataGrid-columnHeader': {
-                      }
-                    },
-                    '& .MuiDataGrid-cell': {
-                      borderBottom: `1px solid ${theme.neutralDark}`,
-                      color: theme.text,
-                      fontSize: '0.95rem',
-                      py: 1
-                    },
-                    '& .MuiDataGrid-row': {
-                      '&:hover': {
-                        bgcolor: theme.neutral,
-                        transform: 'scale(1.005)',
-                        transition: 'all 0.2s ease'
-                      },
-                      '&:nth-of-type(even)': {
-                        bgcolor: '#f8fafc'
-                      }
-                    },
-                    '& .MuiDataGrid-footerContainer': {
-                      borderTop: `2px solid ${theme.neutralDark}`,
-                      bgcolor: theme.neutral
-                    }
-                  }}
-                />
-              </Paper>
+              <MenuRestaurationDropdown menus={filteredItems} onClickDelete={handleOpenDeleteConfirm} onClickModified={handleOpenForm} />
             )}
           </Box>
         </Fade>

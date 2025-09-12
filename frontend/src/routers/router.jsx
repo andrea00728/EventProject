@@ -85,6 +85,7 @@ import { PersonnelAutre } from "../layouts/personnel/PersonnelAutre.jsx";
 import { InfoEventForPersonnal } from "../pages/infoEventForPersonnel/InfoEventForPersonnal.jsx";
 import GuestList from "../pages/infoEventForPersonnel/guest_list.jsx";
 import PersonnelList from "../pages/infoEventForPersonnel/personnel_list.jsx";
+import PackageManagementPage from "../pages/Admin/AdminGestionForfait.jsx";
 
 
 const router = createBrowserRouter([
@@ -536,6 +537,10 @@ const router = createBrowserRouter([
       {
         path: "/AdminOrganisateur",
         element: <Organisateur />,
+      },
+      {
+        path: "/AdminForfait",
+        element: <PackageManagementPage />,
       },
       {
         path: "/AdminParametre",

@@ -200,17 +200,6 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
                 />
               </div>
 
-              {/* Warning Info */}
-              <div
-                className={`mx-4 my-2 p-2 rounded text-xs ${
-                  darkMode
-                    ? "bg-yellow-800 text-yellow-100"
-                    : "bg-yellow-100 text-yellow-800"
-                }`}
-              >
-                ⚠️ Vérifiez votre dossier spam ! Les emails envoyés depuis ce serveur local peuvent arriver dans le spam.
-              </div>
-
               {/* File Upload */}
               {file && (
                 <div className="text-xs text-green-600 dark:text-green-400">
