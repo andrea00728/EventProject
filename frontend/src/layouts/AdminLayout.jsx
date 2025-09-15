@@ -739,7 +739,7 @@
                 items={filteredNotifications}
                 onItemClick={handleNotificationClick}
                 onDelete={handleDeleteNotification}
-                onViewMore={() => console.log("Voir plus de notifications")}
+                onViewMore={() => setShowNotificationsModal(true)}   // ✅ ouvre le modal
               >
                 {/* Filtres */}
                 <div className="flex gap-2 p-2">

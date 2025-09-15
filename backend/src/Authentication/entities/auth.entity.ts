@@ -80,6 +80,9 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   verificationCode: string | null;
 
+  @Column({type:'timestamp',nullable:true})
+  forfaitcreationdate:Date|null;
+
 
 }
 

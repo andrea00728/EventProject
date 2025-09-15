@@ -27,76 +27,90 @@ export class EvenementService {
     private readonly notificationGateway: NotificationGateway,
   ) {}
 
-  async create(dto: CreateEventDto): Promise<Evenement> {
-    try {
-      const location = await this.locationService.findLocationById(dto.locationId);
-      const salle = await this.locationService.findSalleById(dto.salleId);
+async create(dto: CreateEventDto): Promise<Evenement> {
+  try {
+    const user = await this.userRepo.findOne({
+      where: { id: dto.utilisateur_id },
+      relations: ['forfait', 'evenement']
+    });
 
-      if (!salle || salle.location.id !== location.id) {
-        throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
-      }
-
-      const parsedDate = new Date(dto.date);
-      const parsedDateFin = new Date(dto.date_fin);
-      if (isNaN(parsedDate.getTime()) || isNaN(parsedDateFin.getTime())) {
-        throw new BadRequestException('La date ou la date de fin est invalide');
-      }
-
-      const existingEvent = await this.evenementRepository.findOne({
-        where: {
-          salle: { id: dto.salleId },
-          date: LessThanOrEqual(parsedDateFin),
-          date_fin: MoreThanOrEqual(parsedDate),
-        },
-        relations: ['user'],
-      });
-
-      if (existingEvent) {
-        throw new BadRequestException(`Cette salle est déjà réservée pendant cette période`);
-      }
-
-      const user = await this.userRepo.findOneBy({ id: dto.utilisateur_id });
-      if (!user) throw new NotFoundException('Utilisateur introuvable');
-
-      const evenement = this.evenementRepository.create({
-        nom: dto.nom,
-        type: dto.type,
-        theme: dto.theme,
-        date: parsedDate,
-        date_fin: parsedDateFin,
-        location,
-        salle,
-        user,
-        isPublic: dto.isPublic,
-        imageUrl: dto.imageUrl,
-      });
-
-      const event = await this.evenementRepository.save(evenement);
-      console.log('Événement créé:', event);
-
-      await this.notificationService.notifyAll(
-        'Nouvel Événement',
-        `Le nouvel Événement ${event.nom} a bien été créé`
-      );
-
-      const notification = this.notificationRepository.create({
-        title: 'Nouvel évènement créé',
-        message: `${user.name} a créé l'événement ${evenement.nom}.`,
-        type: 'info',
-        date: new Date(),
-      });
-      await this.notificationRepository.save(notification);
-      this.notificationGateway.emitNotifEventForAdmin({
-        ...notification,
-        date: notification.date.toISOString(),
-      });
-
-      return event;
-    } catch (error) {
-      console.error('Erreur lors de la création de l\'événement:', error);
-      throw error;
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable');
     }
+
+    // Check event limit based on user's plan
+    if (user.forfait) {
+      const maxEvents = user.forfait.maxevents;
+      if (maxEvents !== null && user.evenement.length >= parseInt(maxEvents, 10)) {
+        throw new BadRequestException(`La limite d'événements de votre forfait (${maxEvents}) a été atteinte.`);
+      }
+    }
+
+    const location = await this.locationService.findLocationById(dto.locationId);
+    const salle = await this.locationService.findSalleById(dto.salleId);
+
+    if (!salle || salle.location.id !== location.id) {
+      throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
+    }
+
+    const parsedDate = new Date(dto.date);
+    const parsedDateFin = new Date(dto.date_fin);
+    if (isNaN(parsedDate.getTime()) || isNaN(parsedDateFin.getTime())) {
+      throw new BadRequestException('La date ou la date de fin est invalide');
+    }
+
+    const existingEvent = await this.evenementRepository.findOne({
+      where: {
+        salle: { id: dto.salleId },
+        date: LessThanOrEqual(parsedDateFin),
+        date_fin: MoreThanOrEqual(parsedDate),
+      },
+      relations: ['user'],
+    });
+
+    if (existingEvent) {
+      throw new BadRequestException(`Cette salle est déjà réservée pendant cette période`);
+    }
+
+    const evenement = this.evenementRepository.create({
+      nom: dto.nom,
+      type: dto.type,
+      theme: dto.theme,
+      date: parsedDate,
+      date_fin: parsedDateFin,
+      location,
+      salle,
+      user,
+      isPublic: dto.isPublic,
+      imageUrl: dto.imageUrl,
+    });
+
+    const event = await this.evenementRepository.save(evenement);
+    console.log('Événement créé:', event);
+
+    await this.notificationService.notifyAll(
+      'Nouvel Événement',
+      `Le nouvel Événement ${event.nom} a bien été créé`
+    );
+
+    const notification = this.notificationRepository.create({
+      title: 'Nouvel évènement créé',
+      message: `${user.name} a créé l'événement ${evenement.nom}.`,
+      type: 'info',
+      date: new Date(),
+    });
+    await this.notificationRepository.save(notification);
+    this.notificationGateway.emitNotifEventForAdmin({
+      ...notification,
+      date: notification.date.toISOString(),
+    });
+
+    return event;
+  } catch (error) {
+    console.error('Erreur lors de la création de l\'événement:', error);
+    throw error;
   }
+}
 
   async findOneById(id: number): Promise<Evenement> {
     const event = await this.evenementRepository.findOne({
@@ -127,7 +141,7 @@ async updateEvent(eventId: number, dto: UpdateEventDto, file?: Express.Multer.Fi
   if (file) {
     // Supprimer l'ancienne photo si elle existe
     if (event.imageUrl) {
-      const oldImagePath = path.join(__dirname, '../../../../uploads', path.basename(event.imageUrl));
+      const oldImagePath = path.join(process.cwd(), 'uploads', path.basename(event.imageUrl));
       if (fs.existsSync(oldImagePath)) {
         fs.unlinkSync(oldImagePath);
       }
