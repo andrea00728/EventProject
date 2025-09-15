@@ -29,7 +29,7 @@ const textColorMap = {
   GOLD: "text-yellow-500",
 };
 
-// Fonction pour déterminer la durée basée sur validationduration ito ko  mbola izy aan 
+// Fonction pour déterminer la durée basée sur validationduration
 const getDurationText = (validationDuration) => {
   if (validationDuration === 30) return "1 mois";
   if (validationDuration === 180) return "6 mois";
@@ -92,9 +92,11 @@ export default function NosForfaits() {
               validationDuration: forfait.validationduration,
               fonctionnalite: forfait.fonctionnalite || "Fonctionnalité non spécifiée",
               ideal: forfait.idealiste || "Idéal non spécifié",
-
             };
           });
+
+        // ⭐ Ligne ajoutée pour trier les forfaits par leur ID
+        transformedForfaits.sort((a, b) => a.id - b.id);
 
         setForfaits(transformedForfaits);
         setError(null);
@@ -141,7 +143,6 @@ export default function NosForfaits() {
 
     fetchUserForfait();
   }, [isAuthenticated, user]);
-
 
   const handleAcheter = (forfait) => {
     setSelectedForfait(forfait);
@@ -234,10 +235,11 @@ export default function NosForfaits() {
           return (
             <div
               key={f.id}
-              className={`relative rounded-3xl shadow-lg p-8 border transition-transform transform hover:-translate-y-2 hover:shadow-2xl text ${isActive
+              className={`relative rounded-3xl shadow-lg p-8 border transition-transform transform hover:-translate-y-2 hover:shadow-2xl text ${
+                isActive
                   ? `bg-gradient-to-br ${defaultColorMap[f.nom]} text-white scale-105 border-white`
                   : "bg-white border-gray-200 text-gray-800"
-                }`}
+              }`}
             >
               <div className="flex justify-center mb-4">{iconMap[f.nom]}</div>
               <div className="text-center ">
@@ -255,7 +257,8 @@ export default function NosForfaits() {
                   Événements : <span className="font-semibold">{f.evenements}</span>
                 </li>
                 <li>
-                  Fonctionalité : <span className="font-semibold">{f.fonctionnalite}</span></li>
+                  Fonctionalité : <span className="font-semibold">{f.fonctionnalite}</span>
+                </li>
               </ul>
 
               {isAuthenticated ? (
@@ -285,10 +288,11 @@ export default function NosForfaits() {
                     <button
                       onClick={() => handleAcheter(f)}
                       disabled={isDisabled}
-                      className={`w-full py-3 rounded-xl font-semibold shadow transition-all duration-300 focus:outline-none focus:ring ${isDisabled
+                      className={`w-full py-3 rounded-xl font-semibold shadow transition-all duration-300 focus:outline-none focus:ring ${
+                        isDisabled
                           ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                           : `bg-gradient-to-r ${defaultColorMap[f.nom]} text-white hover:opacity-90`
-                        }`}
+                      }`}
                     >
                       Acheter
                     </button>
@@ -325,7 +329,9 @@ export default function NosForfaits() {
             </span>
 
             {/* Bandeau coloré en haut */}
-            <div className={`absolute inset-x-0 top-0 h-2 rounded-t-3xl bg-gradient-to-r ${defaultColorMap[selectedForfait.nom]}`}></div>
+            <div
+              className={`absolute inset-x-0 top-0 h-2 rounded-t-3xl bg-gradient-to-r ${defaultColorMap[selectedForfait.nom]}`}
+            ></div>
 
             {/* Titre et prix */}
             <div className="text-center mb-6">
@@ -361,8 +367,8 @@ export default function NosForfaits() {
               <li className="flex items-start gap-3">
                 <Calendar className="text-pink-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
-                  <span className="font-semibold">Durée :</span>{" "}
-                  Ce forfait est actif pendant <span className="font-semibold">{selectedForfait.duration}</span>, avec la possibilité de changer de forfait à tout moment selon vos besoins.
+                  <span className="font-semibold">Durée :</span> Ce forfait est actif pendant{" "}
+                  <span className="font-semibold">{selectedForfait.duration}</span>, avec la possibilité de changer de forfait à tout moment selon vos besoins.
                 </div>
               </li>
 
@@ -379,7 +385,8 @@ export default function NosForfaits() {
               <li className="flex items-start gap-3">
                 <Rocket className="text-green-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
-                  <span className="font-semibold">Idéal pour :</span>{selectedForfait.ideal}
+                  <span className="font-semibold">Idéal pour :</span>
+                  {selectedForfait.ideal}
                 </div>
               </li>
             </ul>

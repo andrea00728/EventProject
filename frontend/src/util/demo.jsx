@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Edit, Plus, RefreshCcw, User, Clock, Minus, X, Move, RotateCcw, Box, Shapes } from "lucide-react";
+import { Edit, Plus, RefreshCcw, User, Clock, Minus, X, Move, RotateCcw, Shapes, List } from "lucide-react";
 import { AuthModal } from "../components/Modal/authModal";
 import { MdTableBar } from "react-icons/md";
+
 // Définition des types de tables avec leurs dimensions
 const TABLE_TYPES = [
   { value: "ronde", label: "Table ronde", width: 80, height: 80 },
@@ -10,6 +11,7 @@ const TABLE_TYPES = [
   { value: "carree", label: "Table carrée", width: 80, height: 80 },
   { value: "triangle", label: "Triangle", width: 80, height: 80 },
 ];
+
 // Définition des formes disponibles pour l'option personnalisée
 const CUSTOM_SHAPES = [
   { value: "carre", label: "Carré" },
@@ -18,6 +20,7 @@ const CUSTOM_SHAPES = [
   { value: "ovale", label: "Ovale" },
   { value: "triangle", label: "Triangle" },
 ];
+
 // Définition des types d'objets avec leurs dimensions, incluant l'option personnalisée
 const ELEMENT_TYPES = [
   { value: "carre", label: "Carré", width: 80, height: 80 },
@@ -31,16 +34,19 @@ const ELEMENT_TYPES = [
   { value: "triangle", label: "Triangle", width: 80, height: 80 },
   { value: "personnalise", label: "Personnalisé", width: 80, height: 80 },
 ];
+
 // Définir les tailles prédéfinies pour le canvas
 const CANVAS_SIZES = [
   { label: "Petit", width: 600, height: 400 },
   { label: "Normal", width: 900, height: 650 },
   { label: "Grand", width: 1200, height: 800 },
 ];
+
 // Limites pour la démo
 const MAX_TABLES = 3;
 const MAX_GUESTS = 5;
 const MAX_ELEMENTS = 5;
+
 // Types de modales pour une meilleure gestion
 const MODAL_TYPES = {
   NONE: 'none',
@@ -52,15 +58,19 @@ const MODAL_TYPES = {
   DELETE_TABLE_CONFIRM: 'delete_table_confirm',
   RESET_CONFIRM: 'reset_confirm',
   ADD_ELEMENT: 'add_element',
+  LIST_TABLES: 'list_tables', // Nouveau type de modale
 };
+
 // Fonction pour aligner les positions sur une grille
 function snapToGrid(value, gridSize = 40) {
   return Math.round(value / gridSize) * gridSize;
 }
+
 // Fonction pour aligner les angles de rotation
 function snapToAngle(value, angleStep = 15) {
   return Math.round(value / angleStep) * angleStep;
 }
+
 // Calcule les positions des chaises autour de la table
 const getChairPositions = (type, capacity, tableWidth, tableHeight) => {
   const positions = [];
@@ -156,6 +166,7 @@ const getChairPositions = (type, capacity, tableWidth, tableHeight) => {
   }
   return positions;
 };
+
 // Composant Chaise
 function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMoving, zoomLevel }) {
   const adjustedStyle = {
@@ -181,6 +192,7 @@ function Chair({ number, style, isOccupied, guestName, onClick, isSelected, isMo
     </div>
   );
 }
+
 // Composant Table
 function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace, onEdit, movingGuest, zoomLevel, isMobile }) {
   if (!table) return null;
@@ -191,13 +203,16 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
   const [pos, setPos] = useState(table.position ?? { left: 100, top: 100 });
   const [rotation, setRotation] = useState(table.rotation ?? 0);
   const [isHovered, setIsHovered] = useState(false);
+
   // Synchronisation de la position et rotation avec les props
   useEffect(() => {
     setPos(table.position ?? { left: 100, top: 100 });
     setRotation(table.rotation ?? 0);
   }, [table.position, table.rotation]);
+
   const tableType = TABLE_TYPES.find(t => t.value === table.type) || TABLE_TYPES[0];
   const { width: tableWidth, height: tableHeight } = tableType;
+
   // Gestion du drag start
   const handleDragStart = (e) => {
     const img = new Image();
@@ -205,6 +220,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     e.dataTransfer.setDragImage(img, 0, 0);
     setDragging(true);
   };
+
   // Gestion de la fin du drag
   const handleDragEnd = (e) => {
     if (!ref.current) return;
@@ -220,6 +236,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     setDragging(false);
     onMove(table.id, newPos);
   };
+
   // Gestion du touch start pour mobile
   const handleTouchStart = (e) => {
     if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(e.target.tagName)) return;
@@ -240,6 +257,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     };
     setDragging(true);
   };
+
   // Gestion du touch move pour mobile
   const handleTouchMove = (e) => {
     if (!touchDataRef.current || ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
@@ -255,6 +273,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     const boundedY = Math.max(0, Math.min(snapToGrid(newY), maxY));
     setPos({ left: boundedX, top: boundedY });
   };
+
   // Gestion de la fin du touch
   const handleTouchEnd = () => {
     if (touchDataRef.current) {
@@ -263,6 +282,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
       setDragging(false);
     }
   };
+
   // Gestion de la rotation
   const handleRotate = (direction) => {
     setRotating(true);
@@ -274,18 +294,22 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     onRotate(table.id, newRotation);
     setTimeout(() => setRotating(false), 300);
   };
+
   // Vérifie si une chaise est occupée
   const isChairOccupied = (chairIndex) => {
     return table.guests?.some(g => g.place === chairIndex + 1) || false;
   };
+
   // Récupère l'invité pour une chaise donnée
   const getGuestForChair = (chairIndex) => {
     return table.guests?.find(g => g.place === chairIndex + 1) || null;
   };
+
   // Gestion du clic sur une chaise
   const handleChairClick = (chairIndex) => {
     onPlaceClick(table, chairIndex + 1);
   };
+
   return (
     <div
       ref={ref}
@@ -439,6 +463,7 @@ function Table({ table, onMove, onRotate, onDelete, onPlaceClick, selectedPlace,
     </div>
   );
 }
+
 // Composant Element
 function Element({ element, onMove, onRotate, onDelete, onEdit, zoomLevel, isMobile }) {
   if (!element) return null;
@@ -449,22 +474,26 @@ function Element({ element, onMove, onRotate, onDelete, onEdit, zoomLevel, isMob
   const [pos, setPos] = useState(element.position ?? { left: 100, top: 100 });
   const [rotation, setRotation] = useState(element.rotation ?? 0);
   const [isHovered, setIsHovered] = useState(false);
+
   useEffect(() => {
     setPos(element.position ?? { left: 100, top: 100 });
     setRotation(element.rotation ?? 0);
   }, [element.position, element.rotation]);
+
   // Utilisation des dimensions et de la forme de l'objets
   const { width: elementWidth, height: elementHeight, shape } = element;
   let shapeClass = "";
   if (element.type === "rond" || element.type === "petit_rond" || element.type === "ovale" || element.type === "petit_ovale" || (element.type === "personnalise" && element.shape === "rond") || (element.type === "personnalise" && element.shape === "ovale")) {
     shapeClass = "rounded-full";
   }
+
   const handleDragStart = (e) => {
     const img = new Image();
     img.src = "";
     e.dataTransfer.setDragImage(img, 0, 0);
     setDragging(true);
   };
+
   const handleDragEnd = (e) => {
     if (!ref.current) return;
     const parentRect = ref.current.parentNode.getBoundingClientRect();
@@ -479,6 +508,7 @@ function Element({ element, onMove, onRotate, onDelete, onEdit, zoomLevel, isMob
     setDragging(false);
     onMove(element.id, newPos);
   };
+
   const handleTouchStart = (e) => {
     if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(e.target.tagName)) return;
     e.preventDefault();
@@ -498,6 +528,7 @@ function Element({ element, onMove, onRotate, onDelete, onEdit, zoomLevel, isMob
     };
     setDragging(true);
   };
+
   const handleTouchMove = (e) => {
     if (!touchDataRef.current || ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
     e.preventDefault();
@@ -512,6 +543,7 @@ function Element({ element, onMove, onRotate, onDelete, onEdit, zoomLevel, isMob
     const boundedY = Math.max(0, Math.min(snapToGrid(newY), maxY));
     setPos({ left: boundedX, top: boundedY });
   };
+
   const handleTouchEnd = () => {
     if (touchDataRef.current) {
       onMove(element.id, pos);
@@ -519,6 +551,7 @@ function Element({ element, onMove, onRotate, onDelete, onEdit, zoomLevel, isMob
       setDragging(false);
     }
   };
+
   const handleRotate = (direction) => {
     setRotating(true);
     const angleStep = 15;
@@ -529,6 +562,7 @@ function Element({ element, onMove, onRotate, onDelete, onEdit, zoomLevel, isMob
     onRotate(element.id, newRotation);
     setTimeout(() => setRotating(false), 300);
   };
+
   return (
     <div
       ref={ref}
@@ -551,7 +585,6 @@ function Element({ element, onMove, onRotate, onDelete, onEdit, zoomLevel, isMob
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-
       <div className={`absolute transition-all duration-300 z-50 ${isHovered ? 'opacity-100 scale-100' : 'opacity-70 scale-90'} ${elementWidth * zoomLevel < 60 || isMobile ? 'top-0 -left-8 flex flex-col gap-1' : '-top-12 left-0 flex flex-row gap-1'}`}>
         <button
           onClick={(e) => {
@@ -662,6 +695,7 @@ function Element({ element, onMove, onRotate, onDelete, onEdit, zoomLevel, isMob
     </div>
   );
 }
+
 // Composant Modal générique
 function Modal({ isOpen, onClose, title, children, className = "" }) {
   if (!isOpen) return null;
@@ -695,6 +729,7 @@ function Modal({ isOpen, onClose, title, children, className = "" }) {
     </div>
   );
 }
+
 // Composant principal
 export default function DemoPlanSalle() {
   const [tables, setTables] = useState([]);
@@ -733,6 +768,7 @@ export default function DemoPlanSalle() {
   });
   const canvasRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
+
   // Détection mobile
   useEffect(() => {
     const checkMobile = () => {
@@ -742,10 +778,12 @@ export default function DemoPlanSalle() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
   // Ajuster la taille du canvas pour mobile
   useEffect(() => {
     setCanvasSize(isMobile ? CANVAS_SIZES[0] : CANVAS_SIZES[1]);
   }, [isMobile]);
+
   // Gestionnaire pour fermer les modales
   const closeModalType = useCallback((modalType) => {
     setCurrentModal(MODAL_TYPES.NONE);
@@ -758,6 +796,7 @@ export default function DemoPlanSalle() {
       setAuthForm({ email: "", password: "" });
     }
   }, []);
+
   // Gestionnaire d'événement pour la touche Escape
   const handleKeyDown = useCallback(
     (e) => {
@@ -772,10 +811,12 @@ export default function DemoPlanSalle() {
     },
     [movingGuest, closeModalType]
   );
+
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
+
   // Gestion du zoom
   const handleZoom = (direction) => {
     setZoomLevel((prev) => {
@@ -784,6 +825,7 @@ export default function DemoPlanSalle() {
       return Math.max(0.5, Math.min(newZoom, 2));
     });
   };
+
   // Vérification des limites de tables
   const checkTableLimit = (newTablesCount) => {
     if (tables.length + newTablesCount > MAX_TABLES) {
@@ -793,6 +835,7 @@ export default function DemoPlanSalle() {
     }
     return true;
   };
+
   // Vérification des limites d'invités
   const checkGuestLimit = () => {
     if (guests.length >= MAX_GUESTS) {
@@ -802,6 +845,7 @@ export default function DemoPlanSalle() {
     }
     return true;
   };
+
   // Vérification des limites d'objets
   const checkElementLimit = (newElementsCount) => {
     if (elements.length + newElementsCount > MAX_ELEMENTS) {
@@ -811,18 +855,27 @@ export default function DemoPlanSalle() {
     }
     return true;
   };
+
   const handleAddTableClick = () => {
     if (!checkTableLimit(1)) return;
     setCurrentModal(MODAL_TYPES.ADD_TABLE);
   };
+
   const handleAddGuestClick = () => {
     if (!checkGuestLimit()) return;
     setCurrentModal(MODAL_TYPES.ADD_GUEST);
   };
+
   const handleAddElementClick = () => {
     if (!checkElementLimit(1)) return;
     setCurrentModal(MODAL_TYPES.ADD_ELEMENT);
   };
+
+  // Gestionnaire pour ouvrir la modale de liste des tables
+  const handleListTablesClick = () => {
+    setCurrentModal(MODAL_TYPES.LIST_TABLES);
+  };
+
   // Ajout de tables
   const handleAddTable = (e) => {
     e.preventDefault();
@@ -856,6 +909,7 @@ export default function DemoPlanSalle() {
     setError('');
     setCurrentModal(MODAL_TYPES.NONE);
   };
+
   // Ajout d'invité
   const handleAddGuest = (e) => {
     e.preventDefault();
@@ -899,6 +953,7 @@ export default function DemoPlanSalle() {
     setError('');
     setCurrentModal(MODAL_TYPES.NONE);
   };
+
   // Gestion de la personnalisation des dimensions et de la forme
   const handleCustomDimensionsChange = (field, value) => {
     const numValue = Number(value);
@@ -909,6 +964,7 @@ export default function DemoPlanSalle() {
       }));
     }
   };
+
   // Ajout d'objets
   const handleAddElement = (e) => {
     e.preventDefault();
@@ -940,6 +996,7 @@ export default function DemoPlanSalle() {
     setError('');
     setCurrentModal(MODAL_TYPES.NONE);
   };
+
   // Gestion du clic sur une chaise
   const handlePlaceClick = (table, placeNumber) => {
     const guestAtPlace = table.guests?.find(g => g.place === placeNumber);
@@ -1000,22 +1057,27 @@ export default function DemoPlanSalle() {
       });
     }
   };
+
   // Déplacement de table
   const handleTableMove = (tableId, position) => {
     setTables(prev => prev.map(t => (t.id === tableId ? { ...t, position } : t)));
   };
+
   // Rotation de table
   const handleTableRotate = (tableId, rotation) => {
     setTables(prev => prev.map(t => (t.id === tableId ? { ...t, rotation } : t)));
   };
+
   // Déplacement d'objets
   const handleElementMove = (elementId, position) => {
     setElements(prev => prev.map(e => (e.id === elementId ? { ...e, position } : e)));
   };
+
   // Rotation d'objets
   const handleElementRotate = (elementId, rotation) => {
     setElements(prev => prev.map(e => (e.id === elementId ? { ...e, rotation } : e)));
   };
+
   // Modification de table
   const handleTableChange = (id, field, value) => {
     setTables(prev =>
@@ -1043,6 +1105,7 @@ export default function DemoPlanSalle() {
       setEditingTable(prev => ({ ...prev, [field]: value }));
     }
   };
+
   // Modification d'objet
   const handleElementChange = (id, field, value) => {
     setElements(prev =>
@@ -1064,11 +1127,13 @@ export default function DemoPlanSalle() {
       setEditingElement(prev => ({ ...prev, [field]: value }));
     }
   };
+
   // Suppression de table
   const handleDeleteTable = (tableId) => {
     setTableToDelete(tableId);
     setCurrentModal(MODAL_TYPES.DELETE_TABLE_CONFIRM);
   };
+
   // Confirmation de suppression de table
   const confirmDeleteTable = () => {
     if (!tableToDelete) return;
@@ -1080,14 +1145,17 @@ export default function DemoPlanSalle() {
     }
     closeModalType();
   };
+
   // Suppression d'objets
   const handleDeleteElement = (elementId) => {
     setElements(prev => prev.filter(e => e.id !== elementId));
   };
+
   // Réinitialisation
   const handleReset = () => {
     setCurrentModal(MODAL_TYPES.RESET_CONFIRM);
   };
+
   // Confirmation de réinitialisation
   const confirmReset = () => {
     setTables([]);
@@ -1097,6 +1165,7 @@ export default function DemoPlanSalle() {
     setSelectedPlace(null);
     closeModalType();
   };
+
   // Gestion du nombre de tables/objets
   const handleNombreChange = (e, formType) => {
     const nb = Number(e.target.value);
@@ -1114,6 +1183,7 @@ export default function DemoPlanSalle() {
       }));
     }
   };
+
   // Gestion des noms
   const handleNomChange = (index, value, formType) => {
     if (formType === 'table') {
@@ -1124,6 +1194,7 @@ export default function DemoPlanSalle() {
       setElementForm(prev => ({ ...prev, nom: value }));
     }
   };
+
   return (
     <div className="w-full min-h-screen flex flex-col overflow-auto bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-100/50">
       <div className="md:hidden bg-white/80 backdrop-blur-xl p-4 shadow-lg border-b border-white/20">
@@ -1159,6 +1230,13 @@ export default function DemoPlanSalle() {
           ? 'fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-row gap-3'
           : 'fixed bottom-6 left-6 flex flex-col gap-3'
           } z-50`}>
+            <button
+            onClick={handleListTablesClick}
+            className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
+          >
+            <List className="w-5 h-5" />
+            {!isMobile && <span className="text-sm font-medium">Liste des tables</span>}
+          </button>
           <button
             onClick={handleAddGuestClick}
             className="bg-gradient-to-br from-emerald-500 to-green-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
@@ -1180,6 +1258,7 @@ export default function DemoPlanSalle() {
             <Shapes className="w-5 h-5" />
             {!isMobile && <span className="text-sm font-medium">objets</span>}
           </button>
+          
           <button
             onClick={handleReset}
             className="bg-gradient-to-br from-red-500 to-rose-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
@@ -1463,7 +1542,7 @@ export default function DemoPlanSalle() {
               <div className="space-y-3">
                 {form.noms.map((nom, index) => (
                   <input
-                    key={index}
+                                       key={index}
                     value={nom}
                     onChange={(e) => handleNomChange(index, e.target.value, 'table')}
                     placeholder={`Table ${index + 1}`}
@@ -1473,26 +1552,20 @@ export default function DemoPlanSalle() {
               </div>
             </div>
           )}
-          <div className="flex gap-3 pt-6">
+          <div className="flex flex-col sm:flex-row gap-3 justify-end">
             <button
               type="button"
               onClick={() => closeModalType(MODAL_TYPES.ADD_TABLE)}
-              className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 font-medium"
+              className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 cursor-pointer transition-all duration-200"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+              className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 cursor-pointer transition-all duration-200"
             >
-              Créer
+              Ajouter
             </button>
-          </div>
-          <div className="text-center">
-            <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-2 rounded-lg text-xs font-medium">
-              <Clock className="w-3 h-3" />
-              {tables.length}/{MAX_TABLES} tables maximum
-            </div>
           </div>
         </form>
       </Modal>
@@ -1508,75 +1581,65 @@ export default function DemoPlanSalle() {
               {error}
             </div>
           )}
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Nom</label>
-                <input
-                  name="nom"
-                  type="text"
-                  value={guestForm.nom}
-                  onChange={(e) => setGuestForm({ ...guestForm, nom: e.target.value })}
-                  placeholder="Nom de l'invité"
-                  required
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-200 bg-gray-50/50"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Prénom</label>
-                <input
-                  name="prenom"
-                  type="text"
-                  value={guestForm.prenom}
-                  onChange={(e) => setGuestForm({ ...guestForm, prenom: e.target.value })}
-                  placeholder="Prénom de l'invité"
-                  required
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-200 bg-gray-50/50"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Table</label>
-                <select
-                  name="tableId"
-                  value={guestForm.tableId || ""}
-                  onChange={(e) => setGuestForm({ ...guestForm, tableId: e.target.value })}
-                  required
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-200 bg-gray-50/50"
-                >
-                  <option value="" disabled>Sélectionner une table</option>
-                  {tables.map(table => (
-                    <option key={table.id} value={table.id}>
-                      {table.nom} ({table.guests?.length || 0}/{table.capacite} places)
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Nom</label>
+              <input
+                name="nom"
+                type="text"
+                value={guestForm.nom}
+                onChange={(e) => setGuestForm({ ...guestForm, nom: e.target.value })}
+                placeholder="Nom de l'invité"
+                required
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+              />
             </div>
-            <div className="flex gap-3 pt-6">
-              <button
-                type="button"
-                onClick={() => closeModalType(MODAL_TYPES.ADD_GUEST)}
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 font-medium"
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Prénom</label>
+              <input
+                name="prenom"
+                type="text"
+                value={guestForm.prenom}
+                onChange={(e) => setGuestForm({ ...guestForm, prenom: e.target.value })}
+                placeholder="Prénom de l'invité"
+                required
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Table</label>
+              <select
+                name="tableId"
+                value={guestForm.tableId || ""}
+                onChange={(e) => setGuestForm({ ...guestForm, tableId: e.target.value })}
+                required
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
               >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
-              >
-                Ajouter
-              </button>
+                <option value="" disabled>Sélectionnez une table</option>
+                {tables.map(table => (
+                  <option key={table.id} value={table.id}>{table.nom}</option>
+                ))}
+              </select>
             </div>
-            <div className="text-center">
-              <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-2 rounded-lg text-xs font-medium">
-                <Clock className="w-3 h-3" />
-                {guests.length}/{MAX_GUESTS} invités maximum
-              </div>
-            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 justify-end">
+            <button
+              type="button"
+              onClick={() => closeModalType(MODAL_TYPES.ADD_GUEST)}
+              className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 cursor-pointer transition-all duration-200"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 cursor-pointer transition-all duration-200"
+            >
+              Ajouter
+            </button>
           </div>
         </form>
       </Modal>
-      {/* Modal d'édition de table */}
+      {/* Modal de modification de table */}
       <Modal
         isOpen={currentModal === MODAL_TYPES.EDIT_TABLE}
         onClose={() => closeModalType(MODAL_TYPES.EDIT_TABLE)}
@@ -1584,177 +1647,109 @@ export default function DemoPlanSalle() {
       >
         {editingTable && (
           <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Nom</label>
-              <input
-                type="text"
-                value={editingTable.nom}
-                onChange={(e) => setEditingTable({ ...editingTable, nom: e.target.value })}
-                placeholder="Nom de la table"
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Nom</label>
+                <input
+                  type="text"
+                  value={editingTable.nom}
+                  onChange={(e) => setEditingTable({ ...editingTable, nom: e.target.value })}
+                  placeholder="Nom de la table"
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Capacité</label>
+                <input
+                  type="number"
+                  value={editingTable.capacite}
+                  onChange={(e) => handleTableChange(editingTable.id, "capacite", e.target.value)}
+                  min="1"
+                  max="12"
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
+                <select
+                  value={editingTable.type}
+                  onChange={(e) => handleTableChange(editingTable.id, "type", e.target.value)}
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+                >
+                  {TABLE_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
-              <select
-                value={editingTable.type}
-                onChange={(e) => handleTableChange(editingTable.id, "type", e.target.value)}
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
-              >
-                {TABLE_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Capacité</label>
-              <input
-                type="number"
-                value={editingTable.capacite}
-                onChange={(e) => handleTableChange(editingTable.id, "capacite", e.target.value)}
-                min="1"
-                max="12"
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
-              />
-            </div>
-            <div className="flex gap-3 pt-6">
+            <div className="flex flex-col sm:flex-row gap-3 justify-end">
               <button
-                type="button"
                 onClick={() => closeModalType(MODAL_TYPES.EDIT_TABLE)}
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 font-medium"
+                className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 cursor-pointer transition-all duration-200"
               >
                 Annuler
               </button>
               <button
-                type="button"
-                onClick={() => {
-                  setTables(prev =>
-                    prev.map(t =>
-                      t.id === editingTable.id ? { ...t, ...editingTable } : t
-                    )
-                  );
-                  closeModalType(MODAL_TYPES.EDIT_TABLE);
-                }}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+                onClick={() => closeModalType(MODAL_TYPES.EDIT_TABLE)}
+                className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 cursor-pointer transition-all duration-200"
               >
-                Sauvegarder
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDeleteTable(editingTable.id)}
-                className="flex-1 px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
-              >
-                Supprimer
+                Enregistrer
               </button>
             </div>
           </div>
         )}
       </Modal>
-      {/* Modal d'édition d'objet */}
+      {/* Modal de confirmation de suppression de table */}
       <Modal
-        isOpen={currentModal === MODAL_TYPES.EDIT_ELEMENT}
-        onClose={() => closeModalType(MODAL_TYPES.EDIT_ELEMENT)}
-        title="Modifier l'Objet"
+        isOpen={currentModal === MODAL_TYPES.DELETE_TABLE_CONFIRM}
+        onClose={() => closeModalType(MODAL_TYPES.DELETE_TABLE_CONFIRM)}
+        title="Confirmer la suppression"
       >
-        {editingElement && (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Nom</label>
-              <input
-                type="text"
-                value={editingElement.nom}
-                onChange={(e) => setEditingElement({ ...editingElement, nom: e.target.value })}
-                placeholder="Nom de l'objet"
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
-              <select
-                value={editingElement.type}
-                onChange={(e) => handleElementChange(editingElement.id, "type", e.target.value)}
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
-              >
-                {ELEMENT_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </div>
-            {/* Champs pour dimensions et forme personnalisées (affichés uniquement pour le type "personnalisé") */}
-            {editingElement.type === "personnalise" && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Largeur (px)</label>
-                    <input
-                      type="number"
-                      value={editingElement.width}
-                      onChange={(e) => handleElementChange(editingElement.id, "width", Number(e.target.value))}
-                      placeholder="Ex: 80"
-                      min="20"
-                      max="200"
-                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Hauteur (px)</label>
-                    <input
-                      type="number"
-                      value={editingElement.height}
-                      onChange={(e) => handleElementChange(editingElement.id, "height", Number(e.target.value))}
-                      placeholder="Ex: 80"
-                      min="20"
-                      max="200"
-                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Forme</label>
-                  <select
-                    value={editingElement.shape}
-                    onChange={(e) => handleElementChange(editingElement.id, "shape", e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
-                  >
-                    {CUSTOM_SHAPES.map(s => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
-            <div className="flex gap-3 pt-6">
-              <button
-                type="button"
-                onClick={() => closeModalType(MODAL_TYPES.EDIT_ELEMENT)}
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 font-medium"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setElements(prev =>
-                    prev.map(e =>
-                      e.id === editingElement.id ? { ...e, ...editingElement } : e
-                    )
-                  );
-                  closeModalType(MODAL_TYPES.EDIT_ELEMENT);
-                }}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
-              >
-                Sauvegarder
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDeleteElement(editingElement.id)}
-                className="flex-1 px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
-              >
-                Supprimer
-              </button>
-            </div>
-          </div>
-        )}
+        <div className="text-center mb-6">
+          <p className="text-gray-600 mb-4">
+            Êtes-vous sûr de vouloir supprimer cette table et tous ses invités associés ?
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            onClick={() => closeModalType(MODAL_TYPES.DELETE_TABLE_CONFIRM)}
+            className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 cursor-pointer transition-all duration-200"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={confirmDeleteTable}
+            className="px-6 py-2 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg hover:from-red-700 hover:to-rose-700 cursor-pointer transition-all duration-200"
+          >
+            Supprimer
+          </button>
+        </div>
+      </Modal>
+      {/* Modal de confirmation de réinitialisation */}
+      <Modal
+        isOpen={currentModal === MODAL_TYPES.RESET_CONFIRM}
+        onClose={() => closeModalType(MODAL_TYPES.RESET_CONFIRM)}
+        title="Confirmer la réinitialisation"
+      >
+        <div className="text-center mb-6">
+          <p className="text-gray-600 mb-4">
+            Êtes-vous sûr de vouloir réinitialiser le plan ? Toutes les tables, invités et objets seront supprimés.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            onClick={() => closeModalType(MODAL_TYPES.RESET_CONFIRM)}
+            className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 cursor-pointer transition-all duration-200"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={confirmReset}
+            className="px-6 py-2 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg hover:from-red-700 hover:to-rose-700 cursor-pointer transition-all duration-200"
+          >
+            Réinitialiser
+          </button>
+        </div>
       </Modal>
       {/* Modal d'ajout d'objets */}
       <Modal
@@ -1768,172 +1763,193 @@ export default function DemoPlanSalle() {
               {error}
             </div>
           )}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Type d'objets</label>
-            <select
-              name="type"
-              value={elementForm.type}
-              onChange={(e) => {
-                const selectedType = ELEMENT_TYPES.find(t => t.value === e.target.value);
-                setElementForm({
-                  ...elementForm,
-                  type: e.target.value,
-                  width: selectedType.width,
-                  height: selectedType.height,
-                  shape: e.target.value === "personnalise" ? "carre" : e.target.value,
-                });
-              }}
-              required
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
-            >
-              {ELEMENT_TYPES.map(t => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre d'objet</label>
-            <input
-              name="nombre"
-              type="number"
-              value={elementForm.nombre}
-              onChange={(e) => handleNombreChange(e, 'element')}
-              placeholder="Ex: 1"
-              required
-              min="1"
-              max={MAX_ELEMENTS - elements.length}
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Nom</label>
-            <input
-              name="nom"
-              type="text"
-              value={elementForm.nom}
-              onChange={(e) => handleNomChange(0, e.target.value, 'element')}
-              placeholder="Nom de l'objet (optionnel)"
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
-            />
-          </div>
-          {/* Champs pour dimensions et forme personnalisées (affichés uniquement pour le type "personnalisé") */}
-          {elementForm.type === "personnalise" && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Largeur (px)</label>
-                  <input
-                    type="number"
-                    value={elementForm.width}
-                    onChange={(e) =>
-                      setElementForm((prev) => ({ ...prev, width: Number(e.target.value) }))
-                    }
-                    placeholder="Ex: 80"
-                    min="20"
-                    max="200"
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Hauteur (px)</label>
-                  <input
-                    type="number"
-                    value={elementForm.height}
-                    onChange={(e) =>
-                      setElementForm((prev) => ({ ...prev, height: Number(e.target.value) }))
-                    }
-                    placeholder="Ex: 80"
-                    min="20"
-                    max="200"
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Forme</label>
-                <select
-                  name="shape"
-                  value={elementForm.shape}
-                  onChange={(e) => setElementForm({ ...elementForm, shape: e.target.value })}
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all duration-200 bg-gray-50/50"
-                >
-                  {CUSTOM_SHAPES.map(s => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
-                  ))}
-                </select>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre d'objets</label>
+              <input
+                name="nombre"
+                type="number"
+                value={elementForm.nombre}
+                onChange={(e) => handleNombreChange(e, 'element')}
+                placeholder="Ex: 1"
+                required
+                min="1"
+                max={MAX_ELEMENTS - elements.length}
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+              />
             </div>
-          )}
-          <div className="flex gap-3 pt-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Nom</label>
+              <input
+                name="nom"
+                type="text"
+                value={elementForm.nom}
+                onChange={(e) => handleNomChange(0, e.target.value, 'element')}
+                placeholder="Nom de l'objet"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Type d'objet</label>
+              <select
+                name="type"
+                value={elementForm.type}
+                onChange={(e) => setElementForm({ ...elementForm, type: e.target.value })}
+                required
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+              >
+                {ELEMENT_TYPES.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+            {elementForm.type === "personnalise" && (
+              <div className="sm:col-span-2 space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Forme</label>
+                  <select
+                    name="shape"
+                    value={elementForm.shape}
+                    onChange={(e) => setElementForm({ ...elementForm, shape: e.target.value })}
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+                  >
+                    {CUSTOM_SHAPES.map(s => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Largeur (px)</label>
+                    <input
+                      type="number"
+                      value={elementForm.width}
+                      onChange={(e) => handleCustomDimensionsChange("width", e.target.value)}
+                      min="20"
+                      max="200"
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Hauteur (px)</label>
+                    <input
+                      type="number"
+                      value={elementForm.height}
+                      onChange={(e) => handleCustomDimensionsChange("height", e.target.value)}
+                      min="20"
+                      max="200"
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 justify-end">
             <button
               type="button"
               onClick={() => closeModalType(MODAL_TYPES.ADD_ELEMENT)}
-              className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 font-medium"
+              className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 cursor-pointer transition-all duration-200"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+              className="px-6 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg hover:from-teal-700 hover:to-cyan-700 cursor-pointer transition-all duration-200"
             >
               Ajouter
             </button>
           </div>
-          <div className="text-center">
-            <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-3 py-2 rounded-lg text-xs font-medium">
-              <Clock className="w-3 h-3" />
-              {elements.length}/{MAX_ELEMENTS} objets maximum
-            </div>
-          </div>
         </form>
       </Modal>
-      {/* Modal de confirmation de suppression */}
+      {/* Modal de modification d'objets */}
       <Modal
-        isOpen={currentModal === MODAL_TYPES.DELETE_TABLE_CONFIRM}
-        onClose={() => closeModalType(MODAL_TYPES.DELETE_TABLE_CONFIRM)}
-        title="Confirmer la suppression"
+        isOpen={currentModal === MODAL_TYPES.EDIT_ELEMENT}
+        onClose={() => closeModalType(MODAL_TYPES.EDIT_ELEMENT)}
+        title="Modifier l'objet"
       >
-        <p className="text-gray-600 mb-6">
-          Êtes-vous sûr de vouloir supprimer cette table ? Tous les invités associés seront également supprimés.
-        </p>
-        <div className="flex gap-3">
-          <button
-            onClick={() => closeModalType(MODAL_TYPES.DELETE_TABLE_CONFIRM)}
-            className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 font-medium"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={confirmDeleteTable}
-            className="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
-          >
-            Supprimer
-          </button>
-        </div>
-      </Modal>
-      {/* Modal de confirmation de réinitialisation */}
-      <Modal
-        isOpen={currentModal === MODAL_TYPES.RESET_CONFIRM}
-        onClose={() => closeModalType(MODAL_TYPES.RESET_CONFIRM)}
-        title="Réinitialiser le plan"
-      >
-        <p className="text-gray-600 mb-6">
-          Êtes-vous sûr de vouloir réinitialiser le plan ? Toutes les tables, invités et objets seront supprimés.
-        </p>
-        <div className="flex gap-3">
-          <button
-            onClick={() => closeModalType(MODAL_TYPES.RESET_CONFIRM)}
-            className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 font-medium"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={confirmReset}
-            className="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
-          >
-            Réinitialiser
-          </button>
-        </div>
+        {editingElement && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Nom</label>
+                <input
+                  type="text"
+                  value={editingElement.nom}
+                  onChange={(e) => handleElementChange(editingElement.id, "nom", e.target.value)}
+                  placeholder="Nom de l'objet"
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
+                <select
+                  value={editingElement.type}
+                  onChange={(e) => handleElementChange(editingElement.id, "type", e.target.value)}
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+                >
+                  {ELEMENT_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+              {editingElement.type === "personnalise" && (
+                <div className="sm:col-span-2 space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Forme</label>
+                    <select
+                      value={editingElement.shape}
+                      onChange={(e) => handleElementChange(editingElement.id, "shape", e.target.value)}
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+                    >
+                      {CUSTOM_SHAPES.map(s => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Largeur (px)</label>
+                      <input
+                        type="number"
+                        value={editingElement.width}
+                        onChange={(e) => handleElementChange(editingElement.id, "width", Number(e.target.value))}
+                        min="20"
+                        max="200"
+                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Hauteur (px)</label>
+                      <input
+                        type="number"
+                        value={editingElement.height}
+                        onChange={(e) => handleElementChange(editingElement.id, "height", Number(e.target.value))}
+                        min="20"
+                        max="200"
+                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50/50"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 justify-end">
+              <button
+                onClick={() => closeModalType(MODAL_TYPES.EDIT_ELEMENT)}
+                className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 cursor-pointer transition-all duration-200"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => closeModalType(MODAL_TYPES.EDIT_ELEMENT)}
+                className="px-6 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg hover:from-teal-700 hover:to-cyan-700 cursor-pointer transition-all duration-200"
+              >
+                Enregistrer
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
       {/* Modal d'authentification */}
       <AuthModal
@@ -1942,69 +1958,77 @@ export default function DemoPlanSalle() {
         authForm={authForm}
         setAuthForm={setAuthForm}
       />
-      {/* Instructions */}
-      <div className="max-w-full sm:max-w-4xl w-full mx-auto p-3 sm:p-6 animate-fade-in animate-slide-up">
-        <h2 className="text-base sm:text-2xl font-extrabold text-indigo-700 mb-3 sm:mb-4 tracking-wide drop-shadow-sm">
-          Instructions
-        </h2>
-        <ul className="list-disc list-inside space-y-2 text-gray-700 prose prose-sm sm:prose">
-          <li>
-            Ajoutez une table avec le bouton
-            <span className="inline-block px-3 py-1 rounded-xl font-semibold text-indigo-600 bg-indigo-100">
-              Table
-            </span>. Déplacez-la librement dans la zone.
-          </li>
-          <li>
-            Modifiez une table : sur desktop, double-cliquez dessus ; sur mobile, utilisez le bouton
-            <span className="inline-block px-3 py-1 rounded-xl font-semibold text-indigo-600 bg-indigo-100">
-              Edit
-            </span>
-            pour ajuster nom, capacité ou forme.
-          </li>
-          <li>Les chaises s'organisent automatiquement selon la forme et la capacité de la table.</li>
-          <li>Tables rondes/ovales : chaises en cercle. Tables carrées/rectangulaires : chaises sur les côtés.</li>
-          <li>
-            Ajoutez des invités à une table via le bouton
-            <span className="inline-flex items-center gap-1 px-3 py-1 ml-1 rounded-xl font-semibold text-emerald-600 bg-emerald-100 hover:bg-emerald-200 transition-colors">
-              <User className="w-5 h-5" />
-              Invité
-            </span>.
-          </li>
-          <li>Ajoutez plusieurs tables en répétant l'opération.</li>
-          <li>Glissez-déposez pour réorganiser les tables et optimiser l'espace.</li>
-          <li>
-            Ajoutez des objets décoratifs pour personnaliser votre plan avec le bouton
-            <span className="inline-flex items-center gap-1 px-3 py-1 ml-1 rounded-xl font-semibold text-teal-600 bg-teal-100 hover:bg-teal-200 transition-colors">
-              <Shapes className="w-5 h-5" />
-              objets
-            </span>.
-          </li>
-          <li>
-            Modifiez un objet : utilisez le bouton
-            <span className="inline-block px-3 py-1 rounded-xl font-semibold text-teal-600 bg-teal-100">
-              Edit
-            </span>
-            pour ajuster nom, type, dimensions ou forme.
-          </li>
-        </ul>
-        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-sm text-amber-800 font-medium flex items-center">
-            <Clock className="w-4 h-4 mr-1" /> Version démo limitée :
-          </p>
-          <p className="text-xs text-amber-700 mt-1">
-            • Maximum {MAX_TABLES} tables<br />
-            • Maximum {MAX_GUESTS} invités<br />
-            • Maximum {MAX_ELEMENTS} objets<br />
-            • Connectez-vous pour des fonctionnalités illimitées
-          </p>
+      {/* Nouvelle modale pour la liste des tables */}
+      <Modal
+        isOpen={currentModal === MODAL_TYPES.LIST_TABLES}
+        onClose={() => closeModalType(MODAL_TYPES.LIST_TABLES)}
+        title="Liste des Tables"
+        className="max-w-2xl"
+      >
+        <div className="space-y-6">
+          {tables.length === 0 ? (
+            <div className="text-center text-gray-600">
+              Aucune table n'a été ajoutée pour le moment.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {tables.map((table) => (
+                <div
+                  key={table.id}
+                  className="border border-gray-200 rounded-xl p-4 bg-gray-50/50"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold text-indigo-700">{table.nom}</h3>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingTable(table);
+                          setCurrentModal(MODAL_TYPES.EDIT_TABLE);
+                        }}
+                        className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all duration-200"
+                        title="Modifier la table"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTable(table.id)}
+                        className="p-2 bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 transition-all duration-200"
+                        title="Supprimer la table"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <p><strong>Type :</strong> {TABLE_TYPES.find(t => t.value === table.type)?.label}</p>
+                    <p><strong>Capacité :</strong> {table.capacite} places</p>
+                    <p><strong>Invités :</strong></p>
+                    {table.guests && table.guests.length > 0 ? (
+                      <ul className="list-disc pl-5 mt-2">
+                        {table.guests.map((guest) => (
+                          <li key={guest.id}>
+                            {guest.nom} (Place {guest.place})
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="pl-5 mt-2 text-gray-500">Aucun invité assigné</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex justify-end">
+            <button
+              onClick={() => closeModalType(MODAL_TYPES.LIST_TABLES)}
+              className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 cursor-pointer transition-all duration-200"
+            >
+              Fermer
+            </button>
+          </div>
         </div>
-        <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-500 italic">
-          <strong>Astuces :</strong><br />
-          • Glissez-déposez pour déplacer tables et objets<br />
-          • Cliquez sur une chaise occupée pour sélectionner l'invité, puis sur une chaise libre pour le déplacer<br />
-          • Utilisez les boutons de zoom pour ajuster la vue
-        </p>
-      </div>
+      </Modal>
     </div>
   );
 }
