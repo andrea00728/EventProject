@@ -23,7 +23,7 @@ export default function InvitationLayout({ token }) {
   }, [token]);
   
 
- // Gestion de l'envoi d'invitation
+  // Gestion de l'envoi d'invitation
   const handleEnvoyer = async (eventId) => {
     setLoadingId(eventId);
     setMessage('');
