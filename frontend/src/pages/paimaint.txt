@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   CreditCard,
@@ -7,18 +7,16 @@ import {
   Clock,
   Users,
   Gift,
-  Zap,
   Crown,
   DollarSign,
   Smartphone,
+  Zap,
   Calendar,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useStateContext } from "../context/ContextProvider";
 import { getAllForfait, updateForfait } from "../services/forfaitService";
 import { Event, MobileFriendly, Rocket } from "@mui/icons-material";
-
-
 
 const paymentMethods = [
   { id: "card", name: "Carte bancaire", icon: CreditCard },
@@ -44,8 +42,8 @@ const PaymentPage = ({ forfait, onClose }) => {
     forfait && forfait.nom ? forfait.nom.toLowerCase() : "pro"
   );
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("card");
-  const [loading, setLoading] = useState(false);
   const [forfaits, setForfaits] = useState({});
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Charger les forfaits depuis le backend
@@ -108,7 +106,6 @@ const PaymentPage = ({ forfait, onClose }) => {
     fetchForfaits();
   }, []);
 
-
   const selectedForfait = forfaits[selectedPlan];
   const PlanIcon = selectedForfait?.icon;
 
@@ -150,6 +147,25 @@ const PaymentPage = ({ forfait, onClose }) => {
       setLoading(false);
     }
   }, [isAuthenticated, selectedPlan, selectedPaymentMethod]);
+
+  if (loading) {
+    return (
+      <motion.div
+        className="text-center p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.span
+          className="text-gray-600 font-semibold"
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ repeat: Infinity, duration: 1.2 }}
+        >
+          Chargement des forfaits...
+        </motion.span>
+      </motion.div>
+    );
+  }
 
   if (!selectedForfait) {
     return (
@@ -217,17 +233,13 @@ const PaymentPage = ({ forfait, onClose }) => {
                     </span>
                   </div>
                 </div>
-                {/* <div className="flex items-center gap-2 text-gray-600">
-                  <Clock className="w-5 h-5" />
-                  <span>{selectedPlan === "freemium" ? "Gratuit mais limité" : "Facturation mensuelle"}</span>
-                </div> */}
               </div>
 
               {/* Section détaillée des fonctionnalités */}
               <ul className="space-y-4 text-gray-700 leading-relaxed">
                 <li className="flex items-start gap-3">
                   <MobileFriendly className="text-blue-500 w-5 h-5 flex-shrink-0 mt-1"/>
-                    <div>
+                  <div>
                     <span className="font-semibold">Invitations :</span>{" "}
                     {selectedForfait.maxInvites
                       ? `Envoyez jusqu'à ${selectedForfait.maxInvites} invitations personnalisées à vos proches.`
@@ -267,10 +279,7 @@ const PaymentPage = ({ forfait, onClose }) => {
                   <Rocket className="text-green-500 w-5 h-5 flex-shrink-0 mt-1" />
                   <div>
                     <span className="font-semibold">Idéal pour :</span>{" "}
-                    {selectedForfait.nom === "STARTER" && "Petits événements privés ou débutants."}
-                    {selectedForfait.nom === "PRO" && "Organisateurs réguliers d'événements de taille moyenne."}
-                    {selectedForfait.nom === "PREMIUM" && "Événements professionnels et groupes étendus."}
-                    {selectedForfait.nom === "GOLD" && "Entreprises ou organisateurs ambitieux cherchant toutes les fonctionnalités."}
+                    {selectedForfait.ideal}
                   </div>
                 </li>
               </ul>
@@ -305,7 +314,35 @@ const PaymentPage = ({ forfait, onClose }) => {
                 disabled={loading}
                 className={`w-full py-4 rounded-xl font-bold text-white text-lg transition-transform duration-300 hover:scale-105 shadow-lg ${selectedForfait.buttonColor}`}
               >
-                {loading ? "Chargement..." : selectedPlan === "freemium" ? "Commencer gratuitement" : "Confirmer l'abonnement"}
+                <AnimatePresence mode="wait">
+                  {loading ? (
+                    <motion.span
+                      key="loading"
+                      className="flex items-center justify-center gap-2"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <motion.span
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ repeat: Infinity, duration: 1 }}
+                      >
+                        Chargement...
+                      </motion.span>
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="confirm"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {selectedPlan === "freemium" ? "Commencer gratuitement" : "Confirmer l'abonnement"}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </button>
             </div>
           </div>

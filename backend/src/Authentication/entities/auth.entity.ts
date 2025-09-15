@@ -25,12 +25,6 @@ export class User {
   @Column({ default: 'organisateur' })
   role: string;
 
-  @Column({ type: 'boolean', default: false })
-  isVerified: boolean;
-
-  @Column({ type: 'varchar', nullable: true })
-  verificationCode: string | null;
-
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
@@ -64,4 +58,10 @@ export class User {
 
   @OneToMany(() => Goal, (goal) => goal.user, { onDelete: 'CASCADE' })
   goals: Goal[];
+
+   @Column({ type: 'boolean', default: false })
+  isVerified: boolean;
+
+  @Column({ type: 'varchar', nullable: true })
+  verificationCode: string | null;
 }

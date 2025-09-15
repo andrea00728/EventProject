@@ -444,6 +444,7 @@ const LocationSalle = () => {
         </div>
       </td>
     </tr>
+
   );
 
   const backdropVariants = {
@@ -834,6 +835,7 @@ const LocationSalle = () => {
           </div>
         </div>
       </div>
+      
 
       <AnimatePresence>
         {showDeleteModal && deleteItem && (

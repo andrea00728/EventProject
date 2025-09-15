@@ -747,7 +747,7 @@ const RevenuPage = () => {
     >
       <div className="max-w-7xl mx-auto flex flex-col space-y-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+          <h1 className="text-3xl font-bold text-gray-800 tracking-tight bg-clip-text  bg-gradient-to-r from-indigo-600 to-purple-600">
             Tableau de Bord des Revenus
           </h1>
           <Link
