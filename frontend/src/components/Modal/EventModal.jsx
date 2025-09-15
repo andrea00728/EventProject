@@ -21,7 +21,8 @@ function MapClickHandler({ onLocationSelect }) {
     click(e) {
       onLocationSelect(e.latlng); // Appelle la fonction lorsqu'on clique sur la carte
     },
-  });
+  });0
+   
   return null;
 }
 
