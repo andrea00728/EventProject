@@ -592,7 +592,7 @@ const fetchCommandes = useCallback(async () => {
             to="/caisse"
             className="flex items-center px-4 py-2 bg-slate-800 text-white rounded-full shadow-lg"
           >
-            <FaArrowLeft className="mr-2" />
+            <ArrowLeft className="mr-2" />
             Retour
           </Link>
         </div>
