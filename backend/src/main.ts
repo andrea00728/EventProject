@@ -16,7 +16,7 @@ async function bootstrap() {
 
   // CORS HTTP + WebSocket
   app.enableCors({
-    //  origin: 'https://mastertable.site',
+    
      origin: 'https://mastertable.site',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
@@ -29,7 +29,7 @@ async function bootstrap() {
       const server = super.createIOServer(port, {
         ...options,
         cors: {
-          // origin: 'https://mastertable.site',
+        
           origin: 'https://mastertable.site',
           methods: ['GET', 'POST'],
           credentials: true,
