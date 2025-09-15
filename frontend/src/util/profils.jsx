@@ -390,7 +390,7 @@ export default function Profil() {
               exit="hidden"
               onClick={(e)=>e.stopPropagation()}
             >
-              <EventPlatformSettings />
+              <EventPlatformSettings/>
             </motion.div>
           </div>
         </AnimatePresence>

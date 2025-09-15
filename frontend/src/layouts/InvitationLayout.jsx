@@ -24,26 +24,6 @@ export default function InvitationLayout({ token }) {
   
 
  // Gestion de l'envoi d'invitation
-const handleEnvoyer = async (eventId) => {
-  setLoadingId(eventId);
-  setMessage('');
-
-  try {
-    await createInvitation(eventId, token);
-    
-    // On cherche l'événement correspondant dans la liste des événements
-    const evenement = evenements.find(ev => ev.id === eventId);
-
-    setMessage(`Invitation envoyée pour l'événement "${evenement?.nom || 'Inconnu'}"`);
-  } catch (err) {
-    setMessage("Erreur lors de l'envoi de l'invitation.");
-    console.error(err);
-  } finally {
-    setLoadingId(null);
-  }
-};
-
-  // Gestion de l'envoi d'invitation
   const handleEnvoyer = async (eventId) => {
     setLoadingId(eventId);
     setMessage('');
