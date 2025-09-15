@@ -30,6 +30,6 @@ export class Element {
   @Column({ type: 'varchar', nullable: true }) // Ajout du champ shape
   shape: 'rond' | 'carre' | 'rectangle' | 'triangle' | null;
 
-  @ManyToOne(() => Evenement, (event) => event.elements)
+  @ManyToOne(() => Evenement, (event) => event.elements, { onDelete: 'CASCADE' })
   event: Evenement;
 }
