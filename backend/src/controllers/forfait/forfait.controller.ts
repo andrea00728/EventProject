@@ -147,6 +147,7 @@ async redirectToFrontend(
     // ✅ Mettre à jour le forfait et la date d'expiration
     user.forfait = forfait;
     user.datedowngraded = null;
+    user.forfaitcreationdate = new Date();
 
     if (forfait.validationduration && !isNaN(Number(forfait.validationduration))) {
       user.forfaitexpirationdate = addDays(new Date(), Number(forfait.validationduration));
