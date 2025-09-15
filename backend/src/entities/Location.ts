@@ -17,7 +17,7 @@ export class Localisation {
   @Column({ type: 'float', nullable: true })
   longitude: number | null;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE'})
   createur: User | null;
 
   @OneToMany(() => Salle, (salle) => salle.location)
