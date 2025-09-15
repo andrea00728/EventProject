@@ -5,6 +5,7 @@ import { Evenement } from 'src/entities/Evenement';
 import { CreateElementDto } from 'src/dto/CreateElementDto';
 import { Element } from 'src/entities/Element';
 import { NotificationService } from './notification/notification.service';
+import { User } from 'src/Authentication/entities/auth.entity';
 
 @Injectable()
 export class ElementService {
@@ -14,6 +15,8 @@ export class ElementService {
     @InjectRepository(Evenement)
     private readonly eventRepository: Repository<Evenement>,
     private readonly notificationService: NotificationService,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
   ) {}
 
   async findOneById(elementId: number): Promise<Element | null> {
@@ -25,26 +28,74 @@ export class ElementService {
 
 async createElement(dto: CreateElementDto, utilisateurId: string): Promise<Element[]> {
   if (!dto || dto.nom === undefined || !dto.eventId || !dto.type) {
-    throw new BadRequestException('Données de création d\'élément incomplètes');
+    throw new BadRequestException("Données de création d'élément incomplètes");
   }
 
-  // Validation supplémentaire pour shape si type est "custom"
   if (dto.type === 'custom' && !dto.shape) {
-    throw new BadRequestException('Le champ shape est requis pour un élément personnalisé');
+    throw new BadRequestException(
+      'Le champ shape est requis pour un élément personnalisé',
+    );
   }
 
+  // Vérifier que l’événement appartient bien à l’utilisateur
   const event = await this.eventRepository.findOne({
-    where: {
-      id: dto.eventId,
-      user: { id: utilisateurId },
-    },
+    where: { id: dto.eventId, user: { id: utilisateurId } },
     relations: ['user'],
   });
 
   if (!event) {
-    throw new UnauthorizedException("Cet événement n'appartient pas à l'utilisateur connecté");
+    throw new UnauthorizedException(
+      "Cet événement n'appartient pas à l'utilisateur connecté",
+    );
   }
 
+  // Récupérer l’utilisateur + son forfait
+  const user = await this.userRepo.findOne({
+    where: { id: utilisateurId },
+    relations: ['forfait'],
+  });
+  if (!user) throw new UnauthorizedException();
+
+  // Règles de limitation selon le forfait
+  const nomForfait = user.forfait.nom.toLowerCase();
+  let maxElements: number | null; // null = illimité
+
+  switch (nomForfait) {
+    case 'freemium':
+      throw new BadRequestException(
+        "Votre forfait 'Freemium' ne permet pas de créer des objets.",
+      );
+    case 'starter':
+      maxElements = 5;
+      break;
+    case 'pro':
+      maxElements = 15;
+      break;
+    case 'premium':
+      maxElements = 30;
+      break;
+    case 'gold':
+      maxElements = null; // illimité
+      break;
+    default:
+      maxElements = 1000; // sécurité si forfait inconnu
+  }
+
+  // Vérifier la limite seulement si elle est définie
+  if (maxElements !== null) {
+    const current = await this.elementRepository.count({
+      where: { event: { id: dto.eventId } },
+    });
+    const nombre = dto.nombre || 1;
+
+    if (current + nombre > maxElements) {
+      throw new BadRequestException(
+        `Limite atteinte : votre forfait ${user.forfait.nom} autorise ${maxElements} éléments maximum.`,
+      );
+    }
+  }
+
+  // Création des éléments
   const elements: Element[] = [];
   const nombre = dto.nombre || 1;
 
@@ -52,28 +103,25 @@ async createElement(dto: CreateElementDto, utilisateurId: string): Promise<Eleme
     const nomElement = `${dto.nom}-${i}`;
 
     const existing = await this.elementRepository.findOne({
-      where: {
-        nom: nomElement,
-        event: { id: dto.eventId },
-      },
+      where: { nom: nomElement, event: { id: dto.eventId } },
     });
-
     if (existing) continue;
 
     const element = this.elementRepository.create({
       nom: nomElement,
-      type: dto.type === 'custom' && dto.customTypeName ? dto.customTypeName : dto.type, // Utiliser customTypeName si disponible
+      type:
+        dto.type === 'custom' && dto.customTypeName
+          ? dto.customTypeName
+          : dto.type,
       position: dto.position || { left: 0, top: 0 },
       rotation: dto.rotation || 0,
       width: dto.width,
       height: dto.height,
       color: dto.color || '#d1d5db',
-      // shape: dto.type === 'custom' ? dto.shape : null,
       shape: dto.shape || 'rectangle',
       event,
     });
 
-    console.log('Élément créé:', element); // Log pour débogage
     const saved = await this.elementRepository.save(element);
     elements.push(saved);
   }
@@ -85,6 +133,8 @@ async createElement(dto: CreateElementDto, utilisateurId: string): Promise<Eleme
 
   return elements;
 }
+
+
 
   async findByEvent(eventId: number): Promise<Element[]> {
   const elements = await this.elementRepository.find({

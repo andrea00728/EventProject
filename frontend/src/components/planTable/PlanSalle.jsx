@@ -689,6 +689,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
         isOpen={showElementModal}
         onClose={() => setShowElementModal(false)}
         onAddElements={addNewElements}
+        elements={elements}  
         events={events}
         eventId={event?.id}
       />
