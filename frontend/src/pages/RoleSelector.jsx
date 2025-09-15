@@ -26,6 +26,11 @@ export default function RoleSelector() {
     }
   };
 
+  // Si user est null, on affiche un petit message ou un loader
+  if (!user) {
+    return <div className="text-center mt-10 text-red-500">Utilisateur non connecté</div>;
+  }
+
   return (
   <div className="flex w-full h-full items-center justify-center px-4 sm:px-6 lg:px-8">
     <div className="w-full max-w-md mx-auto">

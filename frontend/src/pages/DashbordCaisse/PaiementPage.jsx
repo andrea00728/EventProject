@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import { DataGrid } from "@mui/x-data-grid";
+<<<<<<< HEAD
 import { motion } from "framer-motion";
 import { useStateContext } from "../../context/ContextProvider";
 import { Link } from "react-router-dom";
@@ -18,6 +19,31 @@ import {
 import io from "socket.io-client";
 import axiosClient from "../../api/axios-client";
 import { url } from "../../api/url";
+=======
+import { motion, AnimatePresence } from 'framer-motion';
+import { useStateContext } from "../../context/ContextProvider";
+import { Link } from "react-router-dom";
+import { getEventIdByEmail } from "../../services/invitationService";
+import { useSocket } from "../../socket";
+import { ArrowLeft } from "lucide-react";
+ 
+const CashIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-8 w-8 text-green-500"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth={2}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+    />
+  </svg>
+);
+>>>>>>> ec982660 (profil setting)
 
 const noScrollbarCSS = `
   .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -592,7 +618,7 @@ const fetchCommandes = useCallback(async () => {
             to="/caisse"
             className="flex items-center px-4 py-2 bg-slate-800 text-white rounded-full shadow-lg"
           >
-            <FaArrowLeft className="mr-2" />
+            <ArrowLeft className="mr-2" />
             Retour
           </Link>
         </div>

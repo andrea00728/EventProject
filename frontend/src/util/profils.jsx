@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useStateContext } from "../context/ContextProvider";
+<<<<<<< HEAD
 import { Camera, LogOut, Mail, User, X, Save, Upload } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axiosClient from "../api/axios-client";
@@ -37,6 +38,20 @@ const modalVariants = {
 };
 const buttonVariants = { hover: { scale: 1.05 }, tap: { scale: 0.95 } };
 
+=======
+import { Camera, Check, LogOut, Mail, Settings, User, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  UserIcon,
+  EnvelopeIcon,
+  LockClosedIcon,
+  BellIcon,
+  CreditCardIcon,
+  UsersIcon,
+  GlobeAltIcon,
+} from '@heroicons/react/24/outline';
+import EventPlatformSettings from "./setting";
+>>>>>>> ec982660 (profil setting)
 export default function Profil() {
   const { user, setUser, isLoading, handleLogout } = useStateContext();
   const navigate = useNavigate();
@@ -49,6 +64,7 @@ export default function Profil() {
   const [openEditProfil, setOpenEditProfil] = useState(false);
   const [confirmLogOut, setConfirmLogOut] = useState(false);
 
+<<<<<<< HEAD
   const [editFormData, setEditFormData] = useState({
     name: "",
     email: "",
@@ -61,6 +77,27 @@ export default function Profil() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
+=======
+  const buttonVariants = {
+    hover: {
+      scale: 1.05,
+      transition: { duration: 0.2 }
+    },
+    tap: { scale: 0.95 }
+  };
+
+  const { user, isLoading } = useStateContext();
+  const [userName, setUserName] = useState("Utilisateur");
+  const [userEmail, setUserEmail] = useState("email@example.com");
+  const [userPhoto, setUserPhoto] = useState("");
+  const [isParametre, setIsParametre] = useState(false);
+
+  const variants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: 20 },
+  };
+>>>>>>> ec982660 (profil setting)
 
   useEffect(() => {
     if (!user) return;
@@ -79,12 +116,22 @@ export default function Profil() {
     });
   }, [user]);
 
+<<<<<<< HEAD
   if (isLoading) return <p className="text-center text-gray-600">Chargement...</p>;
 
   const handleConfirmLogOut = async () => {
     try { await axiosClient.post("/auth/logout"); }
     finally {
       handleLogout();
+=======
+  const [isOpenProfil, setIsOpenProfil] = useState(false)
+  const [isProfil, setIsProfil] = useState(false)
+  const [confirmLogOut, setConfirmLogOut] = useState(false);
+  const handleDelete = () => {
+    if (confirmLogOut) {
+      // Logic to delete the event goes here
+      console.log("Event deleted");
+>>>>>>> ec982660 (profil setting)
       setConfirmLogOut(false);
       navigate("/", { replace: true });
     }
@@ -195,11 +242,25 @@ export default function Profil() {
       {/* Profil Modal */}
       <AnimatePresence>
         {isOpenProfil && (
+<<<<<<< HEAD
           <motion.div className="fixed top-15 inset-0 z-50 flex items-start justify-end p-4 sm:p-6" variants={backdropVariants} initial="hidden" animate="visible" exit="hidden" onClick={() => setIsOpenProfil(false)}>
             <motion.div className="relative bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100/20 w-full max-w-xs sm:max-w-sm p-6" variants={modalVariants} onClick={e => e.stopPropagation()}>
               <motion.button className="absolute top-3 right-3 p-1.5 bg-gray-100/80 rounded-full" onClick={() => setIsOpenProfil(false)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                 <X size={18} />
               </motion.button>
+=======
+          <div className="fixed top-0 h-screen left-0 w-screen z-50 flex justify-center sm:justify-end items-start p-4 sm:pr-10 pt-20 sm:pt-28"
+            onClick={() => setIsOpenProfil(false)}
+          >
+            <motion.div
+              className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-6 sm:p-8 w-full max-w-xs sm:max-w-sm transform transition-all duration-300"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              {/* Gradient Background Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-pink-50/50 rounded-3xl" />
+>>>>>>> ec982660 (profil setting)
 
               <div className="relative z-10 flex flex-col items-center">
                 <div className="relative group mb-6">
@@ -219,6 +280,7 @@ export default function Profil() {
                   </div>
                 </div>
 
+<<<<<<< HEAD
                 <div className="w-full space-y-3">
                   <motion.button className="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-semibold" onClick={() => setOpenEditProfil(true)} variants={buttonVariants} whileHover="hover" whileTap="tap">
                     <User size={18} />Éditer mon profil
@@ -226,6 +288,49 @@ export default function Profil() {
                   <motion.button className="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg font-semibold" onClick={() => setConfirmLogOut(true)} variants={buttonVariants} whileHover="hover" whileTap="tap">
                     <LogOut size={18} />Déconnexion
                   </motion.button>
+=======
+                {/* User Info */}
+                <div className="text-center mb-6 sm:mb-8">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text break-words">
+                    {userName}
+                  </h2>
+                  <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 flex items-center justify-center gap-2 break-all">
+                    <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                    <span className="truncate">{userEmail}</span>
+                  </p>
+
+                  {/* Status Badge */}
+                  <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
+                    En ligne
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-2.5 sm:space-y-3">
+
+                  <button
+                    className="w-full flex items-center justify-center gap-2.5 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 transform hover:-translate-y-0.5 cursor-pointer text-sm sm:text-base"
+                    onClick={() => setIsParametre(true)}
+                  >
+                    <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+                    Paramètres
+                  </button>
+
+                  <button className="w-full flex items-center justify-center gap-2.5 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 bg-white hover:bg-gray-50 text-gray-700 rounded-xl font-semibold border-2 border-gray-200 hover:border-gray-300 transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer text-sm sm:text-base"
+                    onClick={() => setIsProfil(true)}>
+                    <User className="w-4 h-4 sm:w-5 sm:h-5" />
+                    Editer mon profil
+                  </button>
+
+                  <button
+                    className="w-full flex items-center justify-center gap-2.5 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white rounded-xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-red-500/25 transform hover:-translate-y-0.5 cursor-pointer text-sm sm:text-base"
+                    onClick={() => setConfirmLogOut(true)}
+                  >
+                    <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+                    Déconnexion
+                  </button>
+>>>>>>> ec982660 (profil setting)
                 </div>
               </div>
             </motion.div>
@@ -309,6 +414,91 @@ export default function Profil() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {isProfil && (
+        <AnimatePresence>
+          <div
+            onClick={() => setIsProfil(false)}
+            className="fixed top-0 h-screen bg-black/30 left-0 w-screen z-50 flex justify-center sm:justify-end items-start p-4 sm:pr-10 pt-20 sm:pt-28">
+            <motion.div
+              className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-6 sm:p-8 w-full max-w-xs sm:max-w-sm transform transition-all duration-300"
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative z-10">
+                {/* Profile Picture Section */}
+                <div className="flex flex-col items-center mb-5 sm:mb-6">
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full blur-md opacity-30 group-hover:opacity-50 transition-opacity duration-300" />
+                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
+                      <img
+                        src={userPhoto}
+                        alt="Profil"
+                        className="w-full h-full rounded-full object-cover border-2 border-white"
+                      />
+                    </div>
+
+                    {/* Camera Icon Overlay */}
+                    <div className="absolute bottom-0 right-0 w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-gray-100 group-hover:bg-blue-50 transition-colors duration-200 cursor-pointer">
+                      <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* User Info */}
+                <div className="text-center mb-6 sm:mb-8 ">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                    <input
+                      type="text"
+                      defaultValue={userName}
+                      className="border border-gray-300 rounded px-3 py-1 text-sm w-full"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                    <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                    <input
+                      type="email"
+                      defaultValue={userEmail}
+                      className="border border-gray-300 rounded px-3 py-1 text-sm w-full"
+                    />
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-2.5 sm:space-y-3">
+                  <button className="w-full flex items-center justify-center gap-2.5 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 transform hover:-translate-y-0.5 cursor-pointer text-sm sm:text-base">
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5" />
+                    Enregistrer
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </AnimatePresence>
+      )}
+
+      {isParametre && (
+        <AnimatePresence>
+          <div className="fixed inset-0 top-0 left-0 right-0 w-screen h-screen bg-black/30 flex items-center justify-center z-1000"
+            onClick={() => setIsParametre(false)}
+          >
+            <motion.div
+              className="  z-50 flex-col  p-4 bg-white"
+              variants={backdropVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <EventPlatformSettings />
+            </motion.div>
+          </div>
+        </AnimatePresence>
+      )}
     </>
   );
 }
