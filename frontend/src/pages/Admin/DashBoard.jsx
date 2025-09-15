@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import { useDarkMode } from "../../context/DarkModeContext";
 import {
   FaCogs,
@@ -19,6 +20,8 @@ import {
   MdAttachMoney,
   MdEventAvailable,
   MdEventNote,
+  MdMoneyOff,
+  MdOutlineMoney,
 } from "react-icons/md";
 import { ChevronDown } from "lucide-react";
 import {
@@ -30,10 +33,11 @@ import { getCountForAllEventStats } from "../../services/evenementServ";
 import { getOrgStats, getUserCount } from "../../services/userService";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-// import { io } from "socket.io-client";
 import { FaRegMoneyBill1 } from "react-icons/fa6";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { darkMode, toggleDarkMode } = useDarkMode();
 
   const [showNotifications, setShowNotifications] = useState(false);
@@ -46,7 +50,6 @@ export default function Dashboard() {
   const msgRef = useRef(null);
   const profileRef = useRef(null);
 
-  /************** */
   const [totalRevenu, setTotalRevenu] = useState(0);
   const [statEvent, setStatEvent] = useState({
     total: 0,
@@ -55,7 +58,27 @@ export default function Dashboard() {
   });
   const [orgStats, setOrgStats] = useState({});
   const [transactions, setTransactions] = useState([]);
-  /*************** */
+  // Ajout de l'état sessionStats
+  const [sessionStats, setSessionStats] = useState({});
+  // État pour engagementStats
+  const [engagementStats, setEngagementStats] = useState([
+    { label: "Taux d'ouverture", value: "0%", progress: 0 },
+    {
+      label: "Taux de participation aux événements",
+      value: "50%",
+      progress: 50,
+    },
+    {
+      label: "Taux de réponse aux notifications/messages",
+      value: "60%",
+      progress: 60,
+    },
+    {
+      label: "Temps moyen passé par utilisateur (min)",
+      value: "0 min",
+      progress: 0,
+    },
+  ]);
 
   useEffect(() => {
     document.title = "Tableau de bord - Admin";
@@ -65,10 +88,48 @@ export default function Dashboard() {
         const CountForAllEventStats = await getCountForAllEventStats();
         const orgaStat = await getOrgStats();
         const transaction = await getLastTransactions();
+        // Requête pour le Taux d'ouverture
+        const userStats = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/auth/user/stats`
+        ).then((res) => res.json());
+
+        // Requête pour les statistiques de temps passé
+        const sessionStats = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/auth/session-stats`
+        ).then((res) => res.json());
+
         setTransactions(transaction);
         setOrgStats(orgaStat);
         setStatEvent(CountForAllEventStats);
-        setTotalRevenu(SumForUsersForfait);
+        setTotalRevenu(Number(SumForUsersForfait).toFixed(2));
+        setSessionStats(sessionStats);
+
+        // Mise à jour des statistiques d'engagement
+        setEngagementStats((prevStats) =>
+          prevStats.map((stat) => {
+            if (stat.label === "Taux d'ouverture") {
+              return {
+                ...stat,
+                value:
+                  Number(userStats.onlinePercentage) % 1 === 0
+                    ? `${Math.floor(Number(userStats.onlinePercentage))}%`
+                    : `${Number(userStats.onlinePercentage).toFixed(2)}%`,
+                progress: parseFloat(userStats.onlinePercentage),
+              };
+            }
+            if (stat.label === "Temps moyen passé par utilisateur (min)") {
+              return {
+                ...stat,
+                value: `${sessionStats.averageSessionDuration} min`,
+                progress: Math.min(
+                  parseFloat(sessionStats.averageSessionDuration),
+                  100
+                ), // Limiter à 100 pour la barre de progression
+              };
+            }
+            return stat;
+          })
+        );
       } catch (error) {
         console.error("Erreur lors de la récupération des données :", error);
       }
@@ -102,11 +163,12 @@ export default function Dashboard() {
       label: "Nombre d'événements",
       value: statEvent.total,
       icon: <MdCalendarToday />,
+      path: "/AdminEvenement"
     },
     {
       label: "Total des revenus",
-      value: `$${totalRevenu}`,
-      icon: <MdAttachMoney />,
+      value: `€ ${totalRevenu}`,
+      icon: <MdOutlineMoney />,
     },
     {
       label: "Événements passés",
@@ -118,51 +180,17 @@ export default function Dashboard() {
       value: statEvent.avenir,
       icon: <MdEventAvailable />,
     },
-    { label: "Organisateurs", value: orgStats.count, icon: <FaUsers /> },
+    { label: "Organisateurs", value: orgStats.count, icon: <FaUsers />, path: "/AdminOrganisateur" },
   ];
 
   const quickActions = [
-    { label: "Gérer utilisateurs", icon: <FaUsers /> },
-    { label: "Paramètres", icon: <FaCogs /> },
-    { label: "Voir rapports", icon: <MdEventNote /> },
-  ];
-
-  const notifications = [
-    "Nouvel organisateur inscrit",
-    "Événement 'Conférence Tech' mis à jour",
-    "Paiement reçu pour 'Atelier React'",
-    "Nouveau message de support",
-  ];
-
-  const messages = [
-    { from: "Alice", text: "Bonjour, j’ai une question sur l’événement." },
-    { from: "Bob", text: "Le planning a été modifié." },
-    { from: "Charlie", text: "Merci pour la confirmation." },
-  ];
-
-  const recentOrganizers = [
-    { name: "Claire Dupont", email: "claire.dupont@mail.com" },
-    { name: "Jean Martin", email: "jean.martin@mail.com" },
-    { name: "Sophie Lemoine", email: "sophie.lemoine@mail.com" },
-  ];
-
-  const engagementStats = [
-    { label: "Taux d'ouverture", value: "75%", progress: 75 },
     {
-      label: "Taux de participation aux événements",
-      value: "50%",
-      progress: 50,
+      label: "Gérer organisateurs",
+      icon: <FaUsers />,
+      path: "/AdminOrganisateur",
     },
-    {
-      label: "Taux de réponse aux notifications/messages",
-      value: "60%",
-      progress: 60,
-    },
-    {
-      label: "Temps moyen passé par utilisateur (min)",
-      value: "35 min",
-      progress: 58,
-    },
+    { label: "Paramètres", icon: <FaCogs />, path: "/AdminParametre" },
+    // { label: "Voir rapports", icon: <MdEventNote /> },
   ];
 
   const engagementGradientColors = [
@@ -174,18 +202,6 @@ export default function Dashboard() {
 
   const gradientTitle =
     "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-300 bg-clip-text text-transparent";
-  // const gradientButton =
-  //   "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-400 text-white";
-  // const gradientButton1 =
-  //   "bg_gradient-to-r from-red-500 via-orange-500 to-yellow-400 text-white";
-
-  // const gradients = [
-  //   "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-400 text-white",
-  //   // "bg-gradient-to-r from-red-500 via-orange-500 to-yellow-400 text-white",
-  //   "bg-gradient-to-r from-red-500 via-pink-500 to-rose-400 text-white",
-  //   // "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-400 text-white",
-  //   "bg-gradient-to-r from-lime-400 via-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/30",
-  // ];
 
   const gradients = [
     "bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-500 text-white shadow-lg shadow-blue-500/30",
@@ -202,19 +218,21 @@ export default function Dashboard() {
     ? "bg-gray-900 text-gray-200"
     : "bg-gray-50 text-gray-800";
 
+  const MotionLink = motion(Link);
+
   return (
     <div
       className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${pageBg}`}
     >
-
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         <div className="flex-1 flex flex-col gap-6">
           <div className="flex flex-wrap gap-4 sm:gap-5 justify-center">
             {stats.map((stat, index) => (
               <motion.div
                 key={index}
+                onClick={stat.path ? () => navigate(stat.path) : undefined}
                 whileHover={{ scale: 1.05 }}
-                className={`flex-1 min-w-[150px] sm:min-w-[180px] max-w-[230px] pt-5 px-6 rounded-2xl shadow-xl transition duration-300 cursor-pointer ${
+                className={`flex-1 max-w-[300px] min-w-[250px] pt-5 px-4 sm:px-6 rounded-2xl shadow-xl transition duration-300 cursor-pointer ${
                   darkMode
                     ? "bg-gray-800 text-gray-200"
                     : "bg-white text-gray-900"
@@ -224,10 +242,10 @@ export default function Dashboard() {
                   {stat.label}
                 </h3>
                 <div className="flex justify-between items-center pt-8 pb-3">
-                  <span className="text-[20px] sm:text-[22px] font-bold">
+                  <span className="text-[20px] sm:text-[22px] font-bold break-words overflow-hidden text-ellipsis max-w-full">
                     {stat.value}
                   </span>
-                  <span className="text-[24px] sm:text-[26px] text-gray-500 dark:text-gray-400">
+                  <span className="text-[24px] sm:text-[26px] text-gray-500 dark:text-gray-400 flex-shrink-0">
                     {stat.icon}
                   </span>
                 </div>
@@ -244,7 +262,10 @@ export default function Dashboard() {
                   : "bg-white text-gray-900"
               }`}
             >
-              <EventChart darkMode={darkMode} eventData={statEvent.eventTypeStat} />
+              <EventChart
+                darkMode={darkMode}
+                eventData={statEvent.eventTypeStat}
+              />
             </motion.div>
             <motion.div
               whileHover={{ scale: 1.02 }}
@@ -263,18 +284,15 @@ export default function Dashboard() {
             darkMode={darkMode}
             gradientTitle={gradientTitle}
           >
+            {/* Affichage des statistiques existantes */}
             {engagementStats.map(({ label, value, progress }, i) => (
-              <div key={i} className="mb-4">
+              <div key={`engagement-${i}`} className="mb-4">
                 <div className="flex justify-between font-semibold mb-1">
                   {label} : {value}
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700">
                   <div
-                    className={`${
-                      engagementGradientColors[
-                        i % engagementGradientColors.length
-                      ]
-                    } h-3 rounded-full transition-all duration-500`}
+                    className={`${engagementGradientColors[i % engagementGradientColors.length]} h-3 rounded-full transition-all duration-500`}
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
@@ -296,7 +314,7 @@ export default function Dashboard() {
                   ({ name, email, photo, createdAt }, i) => (
                     <li
                       key={i}
-                      className="flex items-center gap-4 p-3 border-b border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded-md"
+                      className="flex items-center gap-4 p-3 border-b border-gray-300 dark:border-gray-700 hover:bg-gray-400/30 dark:hover:bg-gray-400/30 cursor-pointer rounded-md"
                     >
                       {photo ? (
                         <img
@@ -309,16 +327,34 @@ export default function Dashboard() {
                       )}
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm sm:text-base">
-                          <p className="font-semibold text-base sm:text-lg text-gray-800 dark:text-gray-100">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm sm:text-base ">
+                          <p
+                            className={`font-semibold text-base sm:text-lg  ${
+                              darkMode
+                                ? "bg-transparent border-gray-700 text-gray-200"
+                                : "bg-transparent border-gray-200 text-gray-900"
+                            }`}
+                          >
                             {name}
                           </p>
-                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1 sm:mt-0">
+                          <p
+                            className={`text-xs sm:text-sm text-gray-300 dark:text-gray-400 mt-1 sm:mt-0 ${
+                              darkMode
+                                ? "bg-transparent border-gray-700 text-gray-200"
+                                : "bg-transparent border-gray-200 text-gray-900"
+                            }`}
+                          >
                             Inscrit le{" "}
                             {format(new Date(createdAt), "dd/MM/yyyy")}
                           </p>
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                        <p
+                          className={`text-sm text-gray-300 dark:text-gray-400 truncate ${
+                            darkMode
+                              ? "bg-transparent border-gray-700 text-gray-200"
+                              : "bg-transparent border-gray-200 text-gray-900"
+                          }`}
+                        >
                           {email}
                         </p>
                       </div>
@@ -359,7 +395,7 @@ export default function Dashboard() {
                     {transactions.map(({ name, amount, date, photo }, i) => (
                       <tr
                         key={i}
-                        className="hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-150"
+                        className="hover:bg-gray-400/30 dark:hover:bg-gray-400/30 transition duration-150 cursor-pointer rounded-md"
                       >
                         <td className="p-3 flex items-center gap-3">
                           {photo ? (
@@ -375,10 +411,22 @@ export default function Dashboard() {
                             {name}
                           </span>
                         </td>
-                        <td className="p-3 font-semibold text-green-600 dark:text-green-400">
-                          ${Number(amount).toFixed(2)}
+                        <td
+                          className={`p-3 font-semibold ${
+                            darkMode
+                              ? "bg-transparent border-gray-700 text-green-400"
+                              : "bg-transparent border-gray-200 text-green-600"
+                          }`}
+                        >
+                          € {Number(amount).toFixed(2)}
                         </td>
-                        <td className="p-3 text-sm text-gray-600 dark:text-gray-400">
+                        <td
+                          className={`p-3 text-sm ${
+                            darkMode
+                              ? "bg-transparent border-gray-700 text-gray-400"
+                              : "bg-transparent border-gray-200 text-gray-600"
+                          }`}
+                        >
                           {format(new Date(date), "dd MMM yyyy, HH:mm", {
                             locale: fr,
                           })}
@@ -398,14 +446,15 @@ export default function Dashboard() {
 
           <div className="flex flex-col gap-4">
             {quickActions.map((action, i) => (
-              <motion.button
+              <MotionLink
                 key={i}
+                to={action.path}
                 whileHover={{ scale: 1, boxShadow: glowEffects[i] }}
                 className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-3 font-semibold rounded-xl shadow-md hover:scale-105 transition ${gradients[i]}`}
               >
                 {action.icon}
                 {action.label}
-              </motion.button>
+              </MotionLink>
             ))}
           </div>
         </div>
@@ -522,66 +571,76 @@ function SectionWrapper({ children, title, darkMode, gradientTitle }) {
 }
 
 function EventChart({ darkMode, eventData }) {
-  // Exemple de données passées en props :
-  // eventData = [
-  //   { type: 'anniversaire', total: 1, percentage: 25 },
-  //   { type: 'mariage', total: 3, percentage: 75 }
-  // ]
-
-  // Nettoyage des types null ou vides
   const filteredData = eventData?.filter((item) => item.type) || [];
 
   const labels = filteredData.map(item => item.type);
   const totals = filteredData.map(item => item.total);
   const percentages = filteredData.map(item => item.percentage);
+  const chartRef = useRef(null);
+  const [chartWidth, setChartWidth] = useState(480);
 
-  return (
-    <div>
-      <h3 className="text-base sm:text-lg font-semibold mb-2 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-        Événements par type
-      </h3>
-      <BarChart
-        series={[
-          {
-            data: totals,
-            label: "Nombre total",
-          },
-          {
-            data: percentages,
-            label: "Pourcentage",
-          },
-        ]}
-        xAxis={[
-          {
-            data: labels,
-            tickLabelStyle: {
-              fill: darkMode ? "#ffffff" : "#000000",
-            },
-          },
-        ]}
-        yAxis={[
-          {
-            tickLabelStyle: {
-              fill: darkMode ? "#ffffff" : "#000000",
-            },
-          },
-        ]}
-        height={270}
-        margin={{ top: 20, right: 10, bottom: 20, left: 5 }}
-        width={480}
-        className={`p-4 rounded-2xl shadow-xl flex-1 min-w-[280px] sm:min-w-[300px] max-w-full lg:max-w-[550px] ${
-          darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"
-        }`}
-      />
-    </div>
-  );
+  useEffect(() => {
+    const handleResize = () => {
+      if (chartRef.current) {
+        setChartWidth(chartRef.current.offsetWidth);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return (
+    <div ref={chartRef}>
+      <h3 className="text-base sm:text-lg font-semibold mb-2 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+        Événements par type
+      </h3>
+      <BarChart
+        series={[
+          {
+            data: totals,
+            label: "Nombre total",
+            LabelStyle: {
+              fill: darkMode ? "#ffffff" : "#000000",
+            },
+          },
+          {
+            data: percentages,
+            label: "Pourcentage",
+            LabelStyle: {
+              fill: darkMode ? "#ffffff" : "#000000",
+            },
+          },
+        ]}
+        xAxis={[
+          {
+            data: labels,
+            tickLabelStyle: {
+              fill: darkMode ? "#ffffff" : "#000000",
+            },
+          },
+        ]}
+        yAxis={[
+          {
+            tickLabelStyle: {
+              fill: darkMode ? "#ffffff" : "#000000",
+            },
+          },
+        ]}
+        height={270}
+        margin={{ top: 20, right: 10, bottom: 20, left: 5 }}
+        width={chartWidth}
+      />
+    </div>
+  );
 }
-
 
 function MoneyChart({ darkMode }) {
   const margin = { right: 24 };
   const [revenus, setRevenus] = useState([]);
   const [labels, setLabels] = useState([]);
+  const chartRef = useRef(null);
+  const [chartWidth, setChartWidth] = useState(480);
 
   const colorsMap = {
     freemium: "#a3a3a3",
@@ -590,8 +649,6 @@ function MoneyChart({ darkMode }) {
     premium: "#fbbf24",
     gold: "#f59e0b",
   };
-
-  // console.log('voalohany',typeof(Object.keys(colorsMap)[0]))
 
   const fetchData = async () => {
     try {
@@ -607,10 +664,21 @@ function MoneyChart({ darkMode }) {
 
   useEffect(() => {
     fetchData();
+
+    const handleResize = () => {
+      if (chartRef.current) {
+        setChartWidth(chartRef.current.offsetWidth);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
-    <div>
+    <div ref={chartRef}>
       <h3 className="text-base sm:text-lg font-semibold mb-2 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
         Revenus par Forfait
       </h3>

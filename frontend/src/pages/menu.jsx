@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import MenuItemForm from './menuItem';
+import { useStateContext } from '../context/ContextProvider';
 
 const MenuForm = () => {
   const [name, setName] = useState('');
@@ -10,14 +11,12 @@ const MenuForm = () => {
   const [message, setMessage] = useState('');
   const [createdMenuId, setCreatedMenuId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const token = localStorage.getItem('token');
+  const {isAuthenticated}=useStateContext();
 
   // Récupérer les événements
   const fetchEvents = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/evenements', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/evenements`);
       setEvents(res.data);
     } catch (error) {
       setMessage('Erreur lors du chargement des événements.');
@@ -28,9 +27,7 @@ const MenuForm = () => {
   // Récupérer les menus pour vérifier les doublons
   const fetchMenus = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/menus', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus`);
       setMenus(res.data);
     } catch (error) {
       setMessage('Erreur lors du chargement des menus.');
@@ -68,9 +65,7 @@ const MenuForm = () => {
 
     try {
       const body = { name: name.trim(), eventId: Number(eventId) };
-      const response = await axios.post('http://localhost:3000/menus', body, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/menus`, body);
 
       if (response.data && response.data.id) {
         setCreatedMenuId(response.data.id);
@@ -93,7 +88,7 @@ const MenuForm = () => {
   return (
     <div className="max-w-lg mx-auto p-6 bg-white dark:bg-gray-900 rounded-md shadow-md mt-10">
       {createdMenuId ? (
-        <MenuItemForm menuId={createdMenuId} token={token} />
+        <MenuItemForm menuId={createdMenuId} token={isAuthenticated} />
       ) : (
         <>
           <h2 className="text-2xl font-semibold mb-6 text-center text-blue-600 dark:text-blue-400">

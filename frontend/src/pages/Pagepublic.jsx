@@ -1,15 +1,13 @@
-import Image from "../assets/vecteezy_impressive-minimalist-white-conference-table-with_57724294.png";
-import ButtonConnexion from "../util/buttonconnexion";
-import Confidentialite from "../util/Confidentialite";
-import NosService from "../util/nosService";
-import Footer from "./footer";
+import React from 'react';
+import Image from '../assets/vecteezy_impressive-minimalist-white-conference-table-with_57724294.png';
+import ButtonConnexion from '../util/buttonconnexion';
+import Confidentialite from '../util/Confidentialite';
+import NosService from '../util/nosService';
 
 export default function Pagepublic() {
-  const loginwithgoogle = () => {};
-
-  const registerItems=[
-    
-  ];
+  const loginwithgoogle = () => {
+    console.log('Connexion avec Google');
+  };
 
   return (
     <>

@@ -1,26 +1,52 @@
+// frontend/src/api/axios-client.jsx
 import axios from "axios";
-import { Navigate } from "react-router-dom";
 
+const axiosClient = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000",
+  withCredentials: true, // ⬅️ IMPORTANT pour envoyer les cookies
+});
 
-const axiosClient=axios.create({
-    baseURL:`${import.meta.env.VITE_API_BASE_URL}`
-})
+// Intercepteur de requête : ne fait plus rien avec le token
+axiosClient.interceptors.request.use(
+  (config) => config,
+  (error) => Promise.reject(error)
+);
 
-axiosClient.interceptors.request.use((config)=>{
-     const token=sessionStorage.getItem("ACCESS_TOKEN")
-    config.headers.Authorization=`Bearer ${token}`
-    return config;
-})
+axiosClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const { response, config } = error;
+    if (response?.status === 401 && !config._retry) {
+      config._retry = true;
+    } else if (!response) {
+      console.error("Erreur réseau ou serveur indisponible :", error);
+    }
+    return Promise.reject(error);
+  }
+);
 
-axiosClient.interceptors.response.use((response)=>{
-     
-    return response;
-},(error)=>{
-const {response}=error;
-if(response.status===401){
-    sessionStorage.removeItem("ACCESS_TOKEN")
-}
+axiosClient.interceptors.response.use(
+  response => response,
+  async error => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        const response = await axiosClient.post('/auth/refresh', {}, { withCredentials: true });
+        console.log('Token rafraîchi:', response.data);
+        return axiosClient(originalRequest);
+      } catch (refreshError) {
+        console.error('Échec du rafraîchissement:', refreshError);
+        setUser(null);
+        setIsAuthenticated(false);
+        window.location.href = '/login'; // Redirigez vers la page de connexion
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
-throw error;
-})
 export default axiosClient;
+
+

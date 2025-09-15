@@ -1,50 +1,64 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import axiosClient from "../api/axios-client";
 
 const StateContext = createContext({
   user: null,
-  token: null,
-  isLoading: false,
+  isAuthenticated: false,
+  isLoading: true,
   setUser: () => {},
-  setToken: () => {},
+  setIsAuthenticated: () => {},
+  handleLogout: () => {},
 });
 
 export const ContextProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, _setToken] = useState(() => {
-    const storedToken = sessionStorage.getItem("ACCESS_TOKEN");
-    return storedToken || null;
-  });
+  const [user, setUserState] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // --- Chargement initial : vérifie localStorage d'abord ---
   useEffect(() => {
-    const storedUser = sessionStorage.getItem("USER");
+    const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error("Erreur lors du parsing du USER :", error);
-      }
+      setUserState(JSON.parse(storedUser));
+      setIsAuthenticated(true);
+      setIsLoading(false);
+      return; 
     }
-    setIsLoading(false); 
+
+    const checkAuthStatus = async () => {
+      try {
+        const response = await axiosClient.get("/auth/status", { withCredentials: true });
+        setUserState(response.data.user);
+        setIsAuthenticated(true);
+      } catch (error) {
+        setUserState(null);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthStatus();
   }, []);
 
-  const setToken = (newToken) => {
-    _setToken(newToken);
-    if (newToken) {
-      sessionStorage.setItem("ACCESS_TOKEN", newToken);
-      setIsLoading(false);
-    } else {
-      sessionStorage.removeItem("ACCESS_TOKEN");
-    }
+  // --- Wrapper pour setUser avec persistance locale ---
+  const setUser = (userData) => {
+    setUserState(userData);
+    if (userData) localStorage.setItem("user", JSON.stringify(userData));
+    else localStorage.removeItem("user");
   };
 
-  const setUserAndStore = (userData) => {
-    setUser(userData);
-    if (userData) {
-      sessionStorage.setItem("USER", JSON.stringify(userData));
-    } else {
-      sessionStorage.removeItem("USER");
+  // --- Déconnexion ---
+  const handleLogout = async () => {
+    try {
+      await axiosClient.post("/auth/logout");
+    } catch (error) {
+      if (error.response?.status !== 401) {
+        console.error("Erreur lors de la déconnexion :", error);
+      }
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
     }
   };
 
@@ -52,10 +66,12 @@ export const ContextProvider = ({ children }) => {
     <StateContext.Provider
       value={{
         user,
-        token,
-        role: user?.role || null, 
-        setUser: setUserAndStore,
-        setToken,
+        isAuthenticated,
+        isLoading,
+        setUser,
+        role: user?.role || null,
+        setIsAuthenticated,
+        handleLogout,
       }}
     >
       {children}

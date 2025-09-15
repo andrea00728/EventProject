@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
+import { useStateContext } from '../context/ContextProvider';
 
 const MenuListWithCart = () => {
   const { id } = useParams();
@@ -12,7 +13,7 @@ const MenuListWithCart = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
   const [isConfirmOrderModalOpen, setIsConfirmOrderModalOpen] = useState(false);
-  const token = localStorage.getItem('token');
+  const {isAuthenticated}=useStateContext();
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedTable, setSelectedTable] = useState(null);
   const [guestName, setGuestName] = useState('');
@@ -46,7 +47,7 @@ const MenuListWithCart = () => {
   const fetchMenus = async (id) => {
     try {
       setIsLoading(true);
-      const res = await axios.get(`http://localhost:3000/menus/event/${id}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/event/${id}`);
       const formattedMenus = res.data.map(menu => ({
         ...menu,
         items: menu.items.map(item => ({
@@ -65,9 +66,7 @@ const MenuListWithCart = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/menus/categories', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menus/categories`);
       setCategories(['all', ...res.data]);
     } catch (error) {
       console.error(error);
@@ -76,9 +75,7 @@ const MenuListWithCart = () => {
 
   const fetchFavorites = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/favorites', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/favorites`);
       setFavorites(res.data.map(item => item.id));
     } catch (error) {
       console.error(error);
@@ -87,9 +84,7 @@ const MenuListWithCart = () => {
 
   const fetchOrderHistory = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/orders/user', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders/user`);
       setOrderHistory(res.data);
     } catch (error) {
       console.error(error);
@@ -280,7 +275,7 @@ const MenuListWithCart = () => {
       }));
 
       await axios.post(
-        'http://localhost:3000/orders',
+        `${import.meta.env.VITE_API_BASE_URL}/orders`,
         {
           tableId: selectedTable.id,
           nom: guestName,
@@ -290,7 +285,7 @@ const MenuListWithCart = () => {
         },
 
        
-        // { headers: { Authorization: `Bearer ${token}` } }
+     
       );
       if (await requestNotificationPermission()) {
         sendNotification(
@@ -390,15 +385,11 @@ const MenuListWithCart = () => {
   const toggleFavorite = async (itemId) => {
     try {
       if (favorites.includes(itemId)) {
-        await axios.delete(`http://localhost:3000/favorites/${itemId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/favorites/${itemId}`);
         setFavorites(favorites.filter(id => id !== itemId));
         setMessage('Retiré des favoris.');
       } else {
-        await axios.post(`http://localhost:3000/favorites/${itemId}`, {}, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/favorites/${itemId}`, {});
         setFavorites([...favorites, itemId]);
         setMessage('Ajouté aux favoris.');
       }
@@ -413,9 +404,8 @@ const MenuListWithCart = () => {
   const submitRating = async (itemId, rating, comment) => {
     try {
       await axios.post(
-        `http://localhost:3000/menus/items/${itemId}/ratings`,
+        `${import.meta.env.VITE_API_BASE_URL}/menus/items/${itemId}/ratings`,
         { rating, comment },
-        { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessage('Évaluation enregistrée !');
       setTimeout(() => setMessage(''), 3000);
@@ -548,7 +538,7 @@ const MenuListWithCart = () => {
                         <div className="flex-shrink-0">
                           {item.photo ? (
                             <img
-                              src={`http://localhost:3000${item.photo}`}
+                              src={`${import.meta.env.VITE_API_BASE_URL}${item.photo}`}
                               alt={item.name}
                               className="w-20 h-20 object-cover rounded-lg shadow-sm group-hover:scale-105 transition-transform duration-200"
                               loading="lazy"
@@ -720,7 +710,7 @@ const MenuListWithCart = () => {
                     <div className="flex-shrink-0">
                       {ci.photo ? (
                         <img
-                          src={`http://localhost:3000${ci.photo}`}
+                          src={`${import.meta.env.VITE_API_BASE_URL}${ci.photo}`}
                           alt={ci.name}
                           className="w-16 h-16 object-cover rounded-lg"
                           loading="lazy"

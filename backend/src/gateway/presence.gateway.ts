@@ -10,8 +10,10 @@ import { AuthService } from 'src/Authentication/auth.service';
 
 @WebSocketGateway({
   cors: {
-    origin: '*', // autoriser tous les domaines (ajuste selon besoin)
-  },
+   origin: 'http://localhost:5173',
+  credentials: true,
+  //  path: '/socket.io',
+},
 })
 export class PresenceGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -23,10 +25,10 @@ export class PresenceGateway implements OnGatewayConnection, OnGatewayDisconnect
     const userId = client.handshake.auth?.userId;
     console.log('[Gateway] Connexion WebSocket userId =', userId);
 
-    if (!userId) {
-      client.disconnect();
-      return;
-    }
+    // if (!userId) {
+    //   client.disconnect();
+    //   return;
+    // }
 
     await this.usersService.updateStatus(userId, true);
 
@@ -37,7 +39,7 @@ export class PresenceGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   async handleDisconnect(client: Socket) {
     const userId = client.handshake.auth?.userId;
-    if (!userId) return;
+    // if (!userId) return;
 
     await this.usersService.updateStatus(userId, false);
     this.server.emit('organizer_disconnected', { userId });

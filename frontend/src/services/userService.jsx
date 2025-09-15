@@ -1,6 +1,12 @@
 import axiosClient from "../api/axios-client";
 
 
+
+// export const getUserIdForToken = async () => {
+//   const response = await axiosClient.get("/auth/getId");
+//   return response.data;
+// };
+
 export const getUserIdForToken = async (token) => {
   const response = await axiosClient.get("/auth/getId",{
     headers: {
@@ -9,6 +15,7 @@ export const getUserIdForToken = async (token) => {
   });
   return response.data;
 };
+
 
 /**
  * 
@@ -20,11 +27,37 @@ export const getUserCount = async () => {
     return response.data;
 }
 
-export const getOrgStats = async (/*token*/) => {
+export const getOrgStats = async () => {
   const response = await axiosClient.get("/auth/org/stats"/*,{
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    
   }*/);
+  return response.data;
+}
+
+export const getIfAdminHasPassword = async (id) => {
+  const response = await axiosClient.get(`/admin/has-password/${id}`,)
+  return response.data;
+}
+
+export const updateAdmin = async (id, data) => {
+  const response = await axiosClient.put(`/admin/${id}`, data, {
+    withCredentials: true, // Ne pas mettre Content-Type
+  });
+  return response.data;
+}
+
+
+export const getListOfAllAdmins = async () => {
+  const response = await axiosClient.get("/admin/all");
+  return response.data;
+}
+
+export const deleteOneAdmin = async (id) => {
+  const response = await axiosClient.delete(`/admin/${id}`);
+  return response.data;
+}
+
+export const createOneAdmin = async (admin) => {
+  const response = await axiosClient.post("/admin", admin);
   return response.data;
 }

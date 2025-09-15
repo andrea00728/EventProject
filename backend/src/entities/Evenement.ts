@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn,Unique } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, Unique } from 'typeorm';
 import { Localisation } from './Location';
 import { Salle } from './salle';
 import { TableEvent } from './Table';
@@ -11,9 +11,9 @@ import { Balance } from './balance.entity';
 import { Payment } from './payment.entity';
 import { MenuItem } from './menu-item.entity';
 import { Favorite } from './Favorite';
+import { Element } from './Element';
 
-
-@Unique(['nom','user'])
+@Unique(['nom', 'user'])
 @Entity()
 export class Evenement {
   @PrimaryGeneratedColumn()
@@ -31,12 +31,12 @@ export class Evenement {
   @Column()
   date: Date;
 
-  @Column({nullable:true})
+  @Column({ nullable: true })
   date_fin: Date;
+
   @OneToMany(() => Menu, (menu) => menu.evenement)
   menus: Menu[];
 
-  
   @ManyToOne(() => Localisation, (localisation) => localisation.salles)
   location: Localisation;
 
@@ -46,10 +46,10 @@ export class Evenement {
   @Column({ nullable: true })
   salleId: number;
 
-  @OneToMany(() => TableEvent, (table) => table.event, {onDelete: 'CASCADE'})
+  @OneToMany(() => TableEvent, (table) => table.event, { onDelete: 'CASCADE' })
   tables: TableEvent[];
 
-  @OneToMany(() => Invite, (invite) => invite.event,{onDelete: 'CASCADE'})
+  @OneToMany(() => Invite, (invite) => invite.event, { onDelete: 'CASCADE' })
   invites: Invite[];
 
   @OneToMany(() => Balance, (balance) => balance.event)
@@ -58,33 +58,36 @@ export class Evenement {
   @OneToMany(() => Payment, (payment) => payment.event)
   payments: Payment[];
 
-  /**
-   * natoko anio ko lony
-   */
-    // @ManyToOne(()=>User,(user)=>user.id,{nullable:false})
-    // @JoinColumn({name:'utilisateur_id'})
-    // user:User
+  @ManyToOne(() => User, (user) => user.evenement, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'utilisateur_id' })
+  user: User;
 
-    @ManyToOne(() => User, (user) => user.evenement, { nullable: false ,onDelete: 'CASCADE'})
-    @JoinColumn({ name: 'utilisateur_id' })
-    user: User;
+  @Column({ type: 'float', nullable: true })
+  montanttransaction?: number;
 
+  @OneToMany(() => Personnel, (personnel) => personnel.evenement, { onDelete: 'CASCADE' })
+  personnels: Personnel[];
 
-    @Column({type:'float',nullable:true})
-    montanttransaction?: number;
+  @Column({ nullable: true })
+  createdAt: Date;
 
-    @OneToMany(() => Personnel, (personnel) => personnel.evenement, { onDelete: 'CASCADE' })
-    personnels:Personnel[];
-    @Column({nullable:true})
-    createdAt: Date;
+  @Column({ type: 'boolean', default: false })
+  isPublic: boolean;
 
-    @Column({type:'boolean',default:false})
-    isPublic:boolean;
+  @OneToMany(() => Invitation, (inv) => inv.event)
+  invitation: Invitation[];
 
-    @OneToMany(()=>Invitation,(inv)=>inv.event)
-    invitation:Invitation[];
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
 
-    @OneToMany(() => Favorite, (favorite) => favorite.evenement, { onDelete: 'CASCADE' })
-    favorites: Favorite[];
+  @OneToMany(() => Favorite, (favorite) => favorite.evenement, { onDelete: 'CASCADE' })
+  favorites: Favorite[];
+
+  maxGuest: number;
+
+  @OneToMany(() => Element, (element) => element.event, { onDelete: 'CASCADE' })
+  elements: Element[];
+
+  @Column({ type: 'varchar', nullable: true }) // Définition explicite du type varchar
+  imageUrl: string | null;
 }
-

@@ -68,18 +68,34 @@ button.btn-primary:hover {
   height: 8px;
 }
 
-/* Fond de la scrollbar */
+/* Fond de la scrollbar (transparent) */
 .scrollable::-webkit-scrollbar-track {
-  background: none;
+  background-color: transparent;
 }
 
 /* Curseur de la scrollbar */
 .scrollable::-webkit-scrollbar-thumb {
-  background-color: #c4c4c4; /* violet */
+  background-color: #c4c4c4; /* gris clair */
   border-radius: 6px;
 }
 
 /* Curseur au hover */
 .scrollable::-webkit-scrollbar-thumb:hover {
   background-color: #9e9d9e;
+}
+
+.leaflet-container {
+  background: #fff; /* Fond clair par défaut */
+}
+
+.leaflet-dark .leaflet-container {
+  background: #2d3748; /* Fond sombre pour le mode sombre */
+}
+
+.leaflet-dark .leaflet-tile {
+  filter: brightness(0.8) invert(0.9);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

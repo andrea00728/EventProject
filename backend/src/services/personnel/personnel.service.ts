@@ -1,12 +1,16 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { Evenement } from 'src/entities/Evenement';
 import { Personnel } from 'src/entities/Personnel';
 import { CreatePersonnelDto } from 'src/dto/PersonnelDto';
 import { JwtService } from '@nestjs/jwt';
 import * as nodemailer from 'nodemailer';
 import { NotificationService } from '../notification/notification.service';
+import { Admin } from 'src/entities/Admin';
+import { Invite } from 'src/entities/Invite';
+import { User } from 'src/Authentication/entities/auth.entity';
+import { UpdatePersonnelDto } from 'src/dto/UpdatePersonnelDto';
 @Injectable()
 export class PersonnelService {
   constructor(
@@ -16,8 +20,18 @@ export class PersonnelService {
     @InjectRepository(Evenement)
     private evenementRepository: Repository<Evenement>,
 
+    @InjectRepository(Admin)
+    private adminRepository: Repository<Admin>,
+
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+
+
     private jwtService:JwtService,
     private readonly notificationService:NotificationService,
+
+    @InjectRepository(Invite)
+    private inviteRepository: Repository<Invite>,
   ) {}
 
   private transporter=nodemailer.createTransport({
@@ -51,6 +65,18 @@ export class PersonnelService {
       }
     });
   }
+
+  async findAllPersonnels(): Promise<Personnel[]> {
+    return this.personnelRepository.find({
+      relations: ["evenement"], // si tu veux récupérer aussi les infos de l’événement
+    });
+  }
+
+  async countAll(): Promise<number> {
+    return this.personnelRepository.count();
+  }
+
+
 
 
   /**
@@ -133,13 +159,56 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
     throw new BadRequestException("Événement non trouvé pour cet utilisateur.");
   }
 
+  //verification Admin
+  const isExistAdmin = await this.adminRepository.findOne({
+    where :  {email : dto.email}
+  })
+
+  if (isExistAdmin) {
+    throw new BadRequestException("c'est un email de l'administrateur")
+  }
+
+
+  // Vérification si l'utilisateur a déjà un rôle dans cet événement
+  const existingPersonnel = await this.personnelRepository.findOne({
+    where: {
+      email: dto.email,
+      evenement: { id: Number(dto.evenementId) },
+    },
+  });
+
+  if (existingPersonnel) {
+    throw new BadRequestException(`L'utilisateur ${dto.email} a deja un rôle dans cet événement.`);
+  }
+
+  // Vérification des chevauchements de dates avec d'autres événements
+  const personnelEvents = await this.personnelRepository.find({
+    where: {
+      email: dto.email,
+    },
+    relations: ['evenement'],
+  });
+
+  const isDateConflict = personnelEvents.some((personnel) => {
+    const otherEvent = personnel.evenement;
+    // Vérifier si les dates de l'événement actuel chevauchent celles d'un autre événement
+    return (
+      evenement.date <= otherEvent.date_fin &&
+      evenement.date_fin >= otherEvent.date
+    );
+  });
+  if (isDateConflict) {
+    throw new BadRequestException(`L'utilisateur ${dto.email} a déjà un rôle dans un autre événement à ces dates.`);
+  }
+  
+
   //  Création du personnel avec statut "pending"
   const personnel = this.personnelRepository.create({
     nom: dto.nom,
     email: dto.email,
     role: dto.role,
     evenement,
-    status: 'attent', 
+    status: 'attent',
   });
 
   const savedPersonnel = await this.personnelRepository.save(personnel);
@@ -155,6 +224,7 @@ async create(dto: CreatePersonnelDto, userId: string): Promise<Personnel> {
 
   const confirmationLink = `http://localhost:5173/personnel/response?token=${token}&action=confirm`;
   const refuseLink = `http://localhost:5173/personnel/response?token=${token}&action=refuse`;
+
 
   const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -201,14 +271,13 @@ async findOneByUserEmailAndEvent(email: string, eventId: number): Promise<Person
  * 
  */
 
-async findOneByUserEmail(email: string): Promise<Personnel | null> {
-  return await this.personnelRepository.findOne({
-    where: {
-      email: email,
-    },
-    relations: ['evenement'],
+async findOneByUserEmail(email: string) {
+  return this.personnelRepository.findOne({
+    where: { email },
+    relations: ['evenement', 'evenement.location', 'evenement.salle','evenement.user','evenement.tables' ],
   });
 }
+
 
 async findCountPersonnelByEvenement(evenementId: number): Promise<number> {
     const count = await this.personnelRepository.count({
@@ -220,4 +289,133 @@ async findCountPersonnelByEvenement(evenementId: number): Promise<number> {
     });
     return count;
   }
+
+  /**
+   * 
+   * @returns 
+   * utilise pour filtre a partire des historique les personnel disponnible
+   */
+  async findAvailablePersonnel(): Promise<Personnel[]> {
+  return this.personnelRepository.find({
+    where: { isActive: true },
+  });
+}
+
+// trouver evenement par id de personnel
+async findEventsByPersonnelId(personnelId: number): Promise<Evenement[]> {
+    const personnel = await this.personnelRepository.findOne({
+      where: { id: personnelId },
+      relations: ['evenement'],
+    });
+
+    if (!personnel) {
+      throw new NotFoundException('Personnel not found');
+    }
+
+    return [personnel.evenement];
+  }
+
+
+  // trouver invite par personnel
+  async findInviteByPersonnelId(personnelId: number): Promise<Invite[]> {
+    const personnel = await this.personnelRepository.findOne({
+      where: { id: personnelId },
+      relations: ['evenement'],
+    });
+
+    if (!personnel) {
+      throw new NotFoundException('Personnel not found');
+    }
+
+    const invites = await this.inviteRepository.find({
+      where: { event: { id: personnel.evenement.id } },
+      relations: ['table']
+    });
+
+    return invites;
+  }
+
+  // trouver personnel dans evenement
+  async findPersonnelByEventId (eventId: number): Promise<Personnel[]> {
+    const personnel = await this.personnelRepository.find({
+           where: {
+        evenement: {
+          id: eventId,
+        },
+      },
+
+    });
+
+    return personnel;
+  }
+
+  // personnel.service.ts
+  async getEvenementByEmail(email: string): Promise<Evenement | null> {
+    const personnel = await this.personnelRepository.findOne({
+      where: { email },
+      relations: ['evenement', 'evenement.location', 'evenement.salle', 'evenement.personnels','evenement.user','evenement.tables' ],
+    });
+
+    if (!personnel) return null;
+    return personnel.evenement; // retourne l'événement lié
+  }
+
+  // personnel.service.ts
+  // Dans UserService
+  async findUserById(userId: string): Promise<User | null> {
+    return await this.userRepository.findOne({
+      where: { id: userId },
+    });
+  }
+
+
+//mettre a jour le personnel
+async updatePersonnel(id: number, dto: UpdatePersonnelDto): Promise<Personnel> {
+  const personnel = await this.personnelRepository.findOne({
+    where: { id },
+    relations: ['evenement']
+  });
+  if (!personnel) {
+    throw new NotFoundException('Personnel not found');
+  }
+
+  // Vérifier si l'email est modifié et s'il est déjà utilisé par un autre personnel dans le même événement
+  if (dto.email && dto.email !== personnel.email) {
+    const existingPersonnel = await this.personnelRepository.findOne({
+      where: {
+        email: dto.email,
+        evenement: { id: personnel.evenement.id },
+        id: Not(id), // Exclure le personnel actuel de la recherche
+      },
+    });
+    if (existingPersonnel) {
+      throw new BadRequestException(`L'email ${dto.email} est déjà utilisé par un autre personnel dans cet événement.`);
+    }
+  }
+
+  // Mettre à jour les champs autorisés
+  if (dto.nom !== undefined) {
+    personnel.nom = dto.nom;
+  }
+  if (dto.email !== undefined) {
+    personnel.email = dto.email;
+  }
+  if (dto.role !== undefined) {
+    personnel.role = dto.role;
+  }
+  
+  return this.personnelRepository.save(personnel);
+}
+
+// supprimer un personnel
+async deletePersonnel(id: number): Promise<{ message: string }> {
+  const personnel = await this.personnelRepository.findOne({ where: { id } });
+  if (!personnel) {
+    throw new NotFoundException('Personnel not found');
+  }
+
+  await this.personnelRepository.remove(personnel);
+  return { message: 'Personnel supprimé avec succès' };
+}
+
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef, use } from "react";
 import { deleteManager, getManagerList } from "../../services/inviteService";
 import { formatDate } from "./Evenement";
 import {
@@ -16,13 +16,16 @@ import { TbTrashXFilled } from "react-icons/tb";
 import { getAllManagerEvents } from "../../services/evenementServ";
 import ModalManager from "./ModalManager";
 import DeleteModal from "./DeleteModal";
-import { FaUsers, FaEye, FaUser } from "react-icons/fa";
+import { FaUsers, FaEye, FaUser, FaUserSlash, FaSort, FaSortUp, FaSortDown } from "react-icons/fa"; // Ajout de FaUserSlash
 import { handleDownloadXLSX } from "../../services/downloadXLSX";
 import { DataGrid } from "@mui/x-data-grid";
 import { useDarkMode } from "../../context/DarkModeContext";
 import { FaBell, FaEnvelope } from "react-icons/fa6";
 import { ChevronDown } from "lucide-react";
 import { io } from "socket.io-client";
+import { getUserIdForToken } from "../../services/userService";
+import { useStateContext } from "../../context/ContextProvider";
+import { url } from "../../api/url";
 
 // Composant StatsCard
 const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
@@ -37,9 +40,8 @@ const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
 
   return (
     <div
-      className={`rounded-xl p-4 shadow-sm border ${
-        darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-      } relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
+      className={`rounded-xl p-4 shadow-sm border ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+        } relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
     >
       <div
         className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${colors[color].bg} opacity-10 rounded-full -mr-4 -mt-4`}
@@ -48,30 +50,26 @@ const StatsCard = ({ title, value, icon: Icon, trend, color = "blue" }) => {
       <div className="flex items-center justify-between">
         <div>
           <p
-            className={`text-sm font-medium ${
-              darkMode ? "text-blue-300" : "text-blue-600"
-            } mb-1`}
+            className={`text-sm font-medium ${darkMode ? "text-blue-300" : "text-blue-600"
+              } mb-1`}
           >
             {title}
           </p>
           <p
-            className={`text-2xl font-bold ${
-              darkMode ? "text-white" : "text-gray-900"
-            }`}
+            className={`text-2xl font-bold ${darkMode ? "text-white" : "text-gray-900"
+              }`}
           >
             {value}
           </p>
           {trend && (
             <div className="flex items-center mt-1">
               <MdTrendingUp
-                className={`mr-1 ${
-                  trend > 0 ? "text-green-500" : "text-red-500"
-                }`}
+                className={`mr-1 ${trend > 0 ? "text-green-500" : "text-red-500"
+                  }`}
               />
               <span
-                className={`text-sm ${
-                  trend > 0 ? "text-green-600" : "text-red-600"
-                }`}
+                className={`text-sm ${trend > 0 ? "text-green-600" : "text-red-600"
+                  }`}
               >
                 {trend > 0 ? "+" : ""}
                 {trend}%
@@ -105,9 +103,8 @@ const Dropdown = React.forwardRef(
       <div className="relative" ref={ref}>
         <button
           onClick={() => setShow(!show)}
-          className={`relative p-2 rounded-full transition-all duration-200 ${
-            darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-          }`}
+          className={`relative p-2 rounded-full transition-all duration-200 ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+            }`}
           aria-label={label}
         >
           <div className="relative">
@@ -122,20 +119,17 @@ const Dropdown = React.forwardRef(
 
         {show && (
           <div
-            className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] overflow-y-auto rounded-xl shadow-xl border ${
-              darkMode
+            className={`fixed sm:absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] overflow-y-auto rounded-xl shadow-xl border ${darkMode
                 ? "bg-gray-800 border-gray-700 text-gray-200"
                 : "bg-white border-gray-200 text-gray-900"
-            } z-50 transition-all duration-200 ${
-              isMobile ? "left-4 right-4" : "right-0"
-            }`}
+              } z-50 transition-all duration-200 ${isMobile ? "left-4 right-4" : "right-0"
+              }`}
           >
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
               {React.cloneElement(icon, { className: "w-5 h-5" })}
               <h4
-                className={`font-semibold text-sm sm:text-base ${
-                  darkMode ? "text-purple-300" : "text-purple-600" // Changé en violet
-                }`}
+                className={`font-semibold text-sm sm:text-base ${darkMode ? "text-purple-300" : "text-purple-600"
+                  }`}
               >
                 {label}
               </h4>
@@ -151,11 +145,10 @@ const Dropdown = React.forwardRef(
                 items.map((item, i) => (
                   <div
                     key={i}
-                    className={`p-3 transition-colors duration-150 border-b ${
-                      darkMode
+                    className={`p-3 transition-colors duration-150 border-b ${darkMode
                         ? "border-gray-700 hover:bg-gray-700"
                         : "border-gray-200 hover:bg-gray-50"
-                    } cursor-pointer`}
+                      } cursor-pointer`}
                   >
                     <p className="text-sm line-clamp-2">
                       {typeof item === "object"
@@ -163,9 +156,8 @@ const Dropdown = React.forwardRef(
                         : item}
                     </p>
                     <p
-                      className={`text-xs mt-1 ${
-                        darkMode ? "text-gray-400" : "text-gray-500"
-                      }`}
+                      className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
                     >
                       Il y a {Math.floor(Math.random() * 60)} min
                     </p>
@@ -174,9 +166,8 @@ const Dropdown = React.forwardRef(
               ) : (
                 <div className="p-4 text-center">
                   <p
-                    className={`text-sm ${
-                      darkMode ? "text-gray-400" : "text-gray-500"
-                    }`}
+                    className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"
+                      }`}
                   >
                     Aucun {label.toLowerCase()}
                   </p>
@@ -199,39 +190,35 @@ const OrganisateurCard = ({
 }) => {
   return (
     <div
-      className={`p-4 mb-4 rounded-xl shadow-sm border transition-all duration-300 ${
-        darkMode
+      className={`p-4 mb-4 rounded-xl shadow-sm border transition-all duration-300 ${darkMode
           ? "bg-gray-800 border-gray-700 hover:border-gray-600"
           : "bg-white border-gray-200 hover:border-gray-300"
-      }`}
+        }`}
     >
       <div className="flex justify-between items-start mb-2">
         <div>
           <h3
-            className={`text-lg font-semibold ${
-              darkMode ? "text-blue-300" : "text-blue-600"
-            }`}
+            className={`text-lg font-semibold ${darkMode ? "text-blue-300" : "text-blue-600"
+              }`}
           >
             {organisateur.name}
           </h3>
           <p
-            className={`text-sm ${
-              darkMode ? "text-gray-300" : "text-gray-600"
-            }`}
+            className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"
+              }`}
           >
             {organisateur.email}
           </p>
         </div>
         <span
-          className={`px-2 py-1 rounded-full text-xs ${
-            organisateur.isOnline
+          className={`px-2 py-1 rounded-full text-xs ${organisateur.isOnline
               ? darkMode
                 ? "bg-green-900/50 text-green-300"
                 : "bg-green-100 text-green-800"
               : darkMode
-              ? "bg-gray-700/50 text-gray-400"
-              : "bg-gray-100 text-gray-600"
-          }`}
+                ? "bg-gray-700/50 text-gray-400"
+                : "bg-gray-100 text-gray-600"
+            }`}
         >
           {organisateur.isOnline ? "Actif" : "Inactif"}
         </span>
@@ -240,14 +227,12 @@ const OrganisateurCard = ({
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="flex items-center gap-2">
           <MdEvent
-            className={`text-sm ${
-              darkMode ? "text-blue-400" : "text-blue-600"
-            }`}
+            className={`text-sm ${darkMode ? "text-blue-400" : "text-blue-600"
+              }`}
           />
           <span
-            className={`text-sm ${
-              darkMode ? "text-gray-300" : "text-gray-600"
-            }`}
+            className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"
+              }`}
           >
             {organisateur.forfait?.nom || "Aucun forfait"}
           </span>
@@ -255,14 +240,12 @@ const OrganisateurCard = ({
 
         <div className="flex items-center gap-2">
           <MdCalendarToday
-            className={`text-sm ${
-              darkMode ? "text-cyan-400" : "text-cyan-600"
-            }`}
+            className={`text-sm ${darkMode ? "text-cyan-400" : "text-cyan-600"
+              }`}
           />
           <span
-            className={`text-sm ${
-              darkMode ? "text-gray-300" : "text-gray-600"
-            }`}
+            className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"
+              }`}
           >
             {organisateur.createdAt.split(" ")[0]}
           </span>
@@ -272,16 +255,14 @@ const OrganisateurCard = ({
       <div className="flex justify-between items-center mt-3">
         <div>
           <p
-            className={`text-xs ${
-              darkMode ? "text-gray-400" : "text-gray-500"
-            }`}
+            className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"
+              }`}
           >
             Expiration forfait
           </p>
           <p
-            className={`text-sm ${
-              darkMode ? "text-gray-200" : "text-gray-700"
-            }`}
+            className={`text-sm ${darkMode ? "text-gray-200" : "text-gray-700"
+              }`}
           >
             {organisateur.forfaitexpirationdate || "N/A"}
           </p>
@@ -290,11 +271,10 @@ const OrganisateurCard = ({
         <div className="flex gap-2">
           <button
             onClick={() => onViewEvents(organisateur.id, organisateur.name)}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm ${
-              darkMode
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm ${darkMode
                 ? "bg-blue-600 hover:bg-blue-700 text-white"
                 : "bg-blue-500 hover:bg-blue-600 text-white"
-            } transition-colors duration-200`}
+              } transition-colors duration-200`}
           >
             <FaEye className="text-sm" />
             <span>Événements</span>
@@ -302,11 +282,10 @@ const OrganisateurCard = ({
 
           <button
             onClick={() => onDelete(organisateur)}
-            className={`p-2 rounded-lg ${
-              darkMode
+            className={`p-2 rounded-lg ${darkMode
                 ? "text-red-400 hover:text-red-300"
                 : "text-red-600 hover:text-red-800"
-            } transition-colors duration-200`}
+              } transition-colors duration-200`}
           >
             <TbTrashXFilled className="text-lg" />
           </button>
@@ -333,10 +312,44 @@ export default function Organisateur() {
   const [showProfile, setShowProfile] = useState(false);
 
   const { darkMode, toggleDarkMode } = useDarkMode();
+  const { user } = useStateContext();
 
   const notifRef = useRef(null);
   const msgRef = useRef(null);
   const profileRef = useRef(null);
+
+  const tableContainerClasses = `hidden md:block rounded-xl shadow-lg border transition-colors duration-300 ${
+    darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
+  }`;
+
+  const gradientsEvent = {
+    eventButton:
+      "bg-gradient-to-r from-indigo-600 via-blue-500 to-indigo-700 text-white",
+  };
+
+  const headerClasses = `grid grid-cols-[minmax(150px,1fr)_minmax(200px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,0.8fr)_minmax(160px,1.2fr)_minmax(140px,1fr)] gap-4 px-6 py-4 font-bold uppercase text-sm border-b transition-colors duration-300 ${
+    darkMode ? "bg-gray-800 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"
+  }`;
+
+  const rowClasses = `grid grid-cols-[minmax(150px,1fr)_minmax(200px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,0.8fr)_minmax(160px,1.2fr)_minmax(140px,1fr)] gap-4 px-6 py-4 items-center border-b transition-colors duration-150 ${
+    darkMode ? "border-gray-700 hover:bg-gray-700" : "border-gray-200 hover:bg-gray-100"
+  }`;
+
+  const paginationClasses = `px-6 py-4 flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0 text-sm border-t transition-colors duration-300 ${
+    darkMode ? "border-gray-700 bg-gray-800 text-gray-300" : "border-gray-200 bg-gray-50 text-gray-600"
+  }`;
+
+  const textPrimary = darkMode ? "text-gray-200" : "text-gray-900";
+  const textMuted = darkMode ? "text-gray-400" : "text-gray-500";
+  const textBlue = darkMode ? "text-blue-300" : "text-blue-600";
+  const textPurple = darkMode ? "text-purple-300" : "text-purple-600";
+
+  const statusOnlineClasses = "flex items-center gap-2 text-green-500";
+  const statusOfflineClasses = "flex items-center gap-2 text-gray-400";
+  
+  const buttonBase = "px-3 py-2 rounded-lg font-semibold shadow-sm transition-all duration-200 hover:shadow-md";
+  const deleteButtonClasses = `p-2 rounded-lg transition-colors duration-200 ${darkMode ? "text-red-400 hover:bg-red-900/50" : "text-red-600 hover:bg-red-100"}`;
+  const actionButtonClasses = `${buttonBase} flex items-center gap-2 ${gradientsEvent.eventButton}`;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -354,82 +367,71 @@ export default function Organisateur() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const socketRef = useRef(null);
   useEffect(() => {
-    document.title = "Organisateur - Admin";
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const data = await getManagerList();
-        setData(
-          data.map((org) => ({
-            ...org,
-            forfait: org.forfait || null,
-            createdAt: formatDate(org.createdAt),
-            forfaitexpirationdate: org.forfaitexpirationdate
-              ? formatDate(org.forfaitexpirationdate)
-              : "N/A",
-          }))
-        );
-      } catch (error) {
-        console.error(
-          "Erreur lors de la récupération des organisateurs :",
-          error
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  document.title = "Organisateur - Admin";
 
-    // const userId = await getUserIdForToken(token);
-    // const socket = io("http://localhost:3000", {
-    //   auth: {
-    //     userId: userId, // très important : doit être l’ID réel de l’organisateur
-    //   },
-    // });
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const data = await getManagerList();
+      setData(
+        data.map((org) => ({
+          ...org,
+          forfait: org.forfait || null,
+          createdAt: formatDate(org.createdAt),
+          forfaitexpirationdate: org.forfaitexpirationdate
+            ? formatDate(org.forfaitexpirationdate)
+            : "N/A",
+        }))
+      );
+    } catch (error) {
+      console.error("Erreur lors de la récupération des organisateurs :", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchData();
 
-    const socket = io("http://localhost:3000", {
-      auth: {
-        userId: "455b0bed-dd7f-4214-a5dd-5a1ebb66de67", // Remplace par un ID réel, ex: "admin-1"
-      },
+
+
+const connectSocket = async () => {
+    const userId = await getUserIdForToken();
+    if (!userId || socketRef.current) return; // éviter doublon
+
+    const socket = io(`${url}`, {
+      path: "/socket.io/",
+      transports: ["websocket", "polling"],
+      auth: { userId },
     });
 
-    socket.on("connect", () => {
-      console.log("🟢 SuperAdmin connecté au WebSocket !");
-    });
-
-    socket.on("connect_error", (err) => {
-      console.error("❌ Erreur WebSocket SuperAdmin :", err.message);
-    });
+    socket.on("connect", () => console.log("🟢 SuperAdmin connecté !"));
 
     socket.on("organizer_connected", ({ userId }) => {
-      console.log("📡 SuperAdmin reçoit organizer_connected :", userId);
-
-      setData((prev) => {
-        const match = prev.find((m) => m.id === userId);
-        console.log("Correspondance trouvée :", !!match);
-        return prev.map((m) =>
-          m.id === userId
-            ? { ...m, isOnline: true, lastLogin: new Date().toISOString() }
-            : m
-        );
-      });
-    });
-
-    socket.on("organizer_disconnected", ({ userId }) => {
-      setData((prev) =>
-        prev.map((m) =>
-          m.id === userId
-            ? { ...m, isOnline: false, lastLogin: new Date().toISOString() }
-            : m
-        )
+      setData(prev =>
+        prev.map(m => m.id === userId ? { ...m, isOnline: true, lastLogin: new Date().toISOString() } : m)
       );
     });
 
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+    socket.on("organizer_disconnected", ({ userId }) => {
+      setData(prev =>
+        prev.map(m => m.id === userId ? { ...m, isOnline: false, lastLogin: new Date().toISOString() } : m)
+      );
+    });
+
+    socketRef.current = socket;
+  };
+
+  connectSocket();
+
+  return () => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+  };
+}, []);
+
 
   const filteredData = data.filter((organisateur) =>
     organisateur[filterType]?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -480,19 +482,6 @@ export default function Organisateur() {
     setIsModalOpen(false);
   };
 
-  const notifications = [
-    "Nouvel organisateur inscrit",
-    "Événement 'Conférence Tech' mis à jour",
-    "Paiement reçu pour 'Atelier React'",
-    "Nouveau message de support",
-  ];
-
-  const messages = [
-    { from: "Alice", text: "Bonjour, j'ai une question sur l'événement." },
-    { from: "Bob", text: "Le planning a été modifié." },
-    { from: "Charlie", text: "Merci pour la confirmation." },
-  ];
-
   const handleDownload = () => {
     const page = data.map((p) => ({
       Nom: p.name,
@@ -506,20 +495,21 @@ export default function Organisateur() {
 
   const stats = useMemo(() => {
     const total = data.length;
-    const active = data.filter((e) => e.status === "active").length;
+    const active = data.filter((e) => e.isOnline === true).length;
     const withForfait = data.filter((e) => e.forfait && e.forfait.nom).length;
-    // const eventCount = data.reduce((sum,e) => sum + (e.eventsCount || 0), 0);
+    const inactive = data.filter((e) => e.isOnline === false).length; // Ajout pour compter les organisateurs hors ligne
     const avgEvents =
       total > 0
         ? Math.round(
-            data.reduce((sum, e) => sum + (e.eventsCount || 0), 0) / total
-          )
+          data.reduce((sum, e) => sum + (e.eventsCount || 0), 0) / total
+        )
         : 0;
 
     return {
       total,
       active,
       withForfait,
+      inactive, // Ajout de la nouvelle propriété
       avgEvents,
     };
   }, [data]);
@@ -529,21 +519,63 @@ export default function Organisateur() {
   const gradientButton =
     "bg-gradient-to-r from-blue-500 via-violet-500 to-purple-400 text-white";
 
-  const gradientsEvent = {
-    eventButton:
-      "bg-gradient-to-r from-indigo-600 via-blue-500 to-indigo-700 text-white",
-  };
+  
 
-  const bgClass = darkMode 
-    ? "bg-gray-900 text-gray-200" 
+  const bgClass = darkMode
+    ? "bg-gray-900 text-gray-200"
     : "bg-gray-50 text-gray-800";
 
   const [currentPage, setCurrentPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+
+  const onSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedData = useMemo(() => {
+    let sortableItems = [...filteredData];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+        
+        if (aValue === null || aValue === undefined) aValue = '';
+        if (bValue === null || bValue === undefined) bValue = '';
+        
+        if (sortConfig.key === 'forfait') {
+          aValue = a.forfait?.nom || '';
+          bValue = b.forfait?.nom || '';
+        }
+        
+        if (sortConfig.key === 'lastLogin' && a.lastLogin && b.lastLogin) {
+          const dateA = new Date(a.lastLogin);
+          const dateB = new Date(b.lastLogin);
+          return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
+        }
+        
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          if (aValue.toLowerCase() < bValue.toLowerCase()) {
+            return sortConfig.direction === 'asc' ? -1 : 1;
+          }
+          if (aValue.toLowerCase() > bValue.toLowerCase()) {
+            return sortConfig.direction === 'asc' ? 1 : -1;
+          }
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filteredData, sortConfig]);
+
   return (
     <div
-      className={`min-h-screen p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${bgClass}`}
+      className={`min-h-100vh p-4 sm:p-6 md:p-8 w-full mx-auto transition duration-500 ${bgClass}`}
     >
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -562,33 +594,31 @@ export default function Organisateur() {
           color="green"
         />
         <StatsCard
+          title="Organisateurs Hors Ligne" // Changement de titre
+          value={stats.inactive} // Utilisation de la nouvelle valeur
+          icon={FaUserSlash} // Nouvelle icône pour hors ligne
+          trend={-5} // Ajustement de la tendance
+          color="orange"
+        />
+        <StatsCard
           title="Avec Forfait"
           value={stats.withForfait}
           icon={MdEvent}
           trend={12}
           color="purple"
         />
-        <StatsCard
-          title="Moyenne Événements"
-          value={stats.avgEvents}
-          icon={MdCalendarToday}
-          trend={-2}
-          color="orange"
-        />
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
           <div
-            className={`flex items-center gap-2 px-5 py-0.5 rounded-lg ${
-              darkMode ? "bg-gray-800" : "bg-gray-100"
-            }`}
+            className={`flex items-center gap-2 px-5 py-0.5 rounded-lg ${darkMode ? "bg-gray-800" : "bg-gray-100"
+              }`}
           >
             <MdFilterList className="text-gray-500" />
             <select
-              className={`p-2 bg-transparent focus:outline-none ${
-                darkMode ? "text-blue-300" : "text-blue-600"
-              }`}
+              className={`p-2 bg-transparent focus:outline-none ${darkMode ? "text-blue-300" : "text-blue-600"
+                }`}
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
             >
@@ -598,21 +628,18 @@ export default function Organisateur() {
           </div>
 
           <div
-            className={`relative w-full sm:w-64 flex items-center ${
-              darkMode ? "bg-gray-800" : "bg-white"
-            } rounded-lg shadow-sm border ${
-              darkMode ? "border-gray-700" : "border-gray-200"
-            }`}
+            className={`relative w-full sm:w-64 flex items-center ${darkMode ? "bg-gray-800" : "bg-white"
+              } rounded-lg shadow-sm border ${darkMode ? "border-gray-700" : "border-gray-200"
+              }`}
           >
             <MdSearch className="absolute left-3 text-gray-400" />
             <input
               type="text"
               placeholder={`Rechercher par ${filterType}...`}
-              className={`w-full pl-10 pr-4 py-2 bg-transparent focus:outline-none ${
-                darkMode
+              className={`w-full pl-10 pr-4 py-2 bg-transparent focus:outline-none ${darkMode
                   ? "text-blue-300 placeholder-gray-400"
                   : "text-blue-600 placeholder-gray-500"
-              }`}
+                }`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -637,14 +664,12 @@ export default function Organisateur() {
         ) : filteredData.length === 0 ? (
           <div className="text-center py-12">
             <FaUsers
-              className={`w-16 h-16 mx-auto mb-4 ${
-                darkMode ? "text-gray-600" : "text-gray-300"
-              }`}
+              className={`w-16 h-16 mx-auto mb-4 ${darkMode ? "text-gray-600" : "text-gray-300"
+                }`}
             />
             <p
-              className={`text-lg ${
-                darkMode ? "text-purple-300" : "text-purple-600"
-              }`}
+              className={`text-lg ${darkMode ? "text-purple-300" : "text-purple-600"
+                }`}
             >
               Aucun organisateur trouvé
             </p>
@@ -668,123 +693,110 @@ export default function Organisateur() {
             </div>
 
             {/* Version desktop - DataGrid */}
-            <div className="hidden md:block rounded-tl-xl rounded-br-xl rounded-tr-none rounded-bl-none border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800 w-full">
-              {/* En-têtes du tableau - Modifié pour l'ajustement automatique */}
-              <div className="grid grid-cols-[minmax(150px,1fr)_minmax(200px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,0.8fr)_minmax(160px,1.2fr)_minmax(140px,1fr)] gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-                <div className="truncate">NOM</div>
-                <div className="truncate">EMAIL</div>
-                <div className="truncate">FORFAIT</div>
+            <div className={tableContainerClasses}>
+              {/* En-têtes du tableau */}
+              <div className={`rounded-t-xl ${headerClasses}`}>
+                <button onClick={() => onSort('name')} className="truncate flex items-center gap-2">
+                  NOM
+                  {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />) : <FaSort className="opacity-50" />}
+                </button>
+                <button onClick={() => onSort('email')} className="truncate flex items-center gap-2">
+                  EMAIL
+                  {sortConfig.key === 'email' ? (sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />) : <FaSort className="opacity-50" />}
+                </button>
+                <button onClick={() => onSort('forfait')} className="truncate flex items-center gap-2">
+                  FORFAIT
+                  {sortConfig.key === 'forfait' ? (sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />) : <FaSort className="opacity-50" />}
+                </button>
                 <div className="truncate">DATE CRÉATION</div>
                 <div className="truncate">EXPIRATION</div>
                 <div className="truncate">STATUT</div>
-                <div className="truncate">DERNIÈRE CONNEXION</div>
+                <button onClick={() => onSort('lastLogin')} className="truncate flex items-center gap-2">
+                  DERNIÈRE CONNEXION
+                  {sortConfig.key === 'lastLogin' ? (sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />) : <FaSort className="opacity-50" />}
+                </button>
                 <div className="truncate text-center">ACTIONS</div>
               </div>
 
-              {/* Contenu du tableau - Structure identique mais avec ajustement automatique */}
+              {/* Contenu du tableau */}
               <div
-                className="divide-y divide-gray-200 dark:divide-gray-700"
+                className="divide-y transition-colors duration-300"
                 style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}
               >
-                {filteredData
-                  .slice(
-                    currentPage * rowsPerPage,
-                    (currentPage + 1) * rowsPerPage
-                  )
-                  .map((manager, index) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-[minmax(150px,1fr)_minmax(200px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,0.8fr)_minmax(160px,1.2fr)_minmax(140px,1fr)] gap-2 px-4 py-3 items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"
-                    >
-                      {/* Nom */}
-                      <div className="truncate font-medium dark:text-blue-300 text-blue-600">
-                        {manager.name}
+                {sortedData.length > 0 ? (
+                  sortedData
+                    .slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage)
+                    .map((manager, index) => (
+                      <div key={index} className={rowClasses}>
+                        {/* Nom */}
+                        <div className={`truncate font-medium ${textBlue}`}>{manager.name}</div>
+                        {/* Email */}
+                        <div className={`truncate ${textBlue}`}>{manager.email}</div>
+                        {/* Forfait */}
+                        <div className={`truncate ${textPurple}`}>{manager.forfait?.nom || "Aucun forfait"}</div>
+                        {/* Date Création */}
+                        <div className={`truncate text-sm ${textMuted}`}>
+                          {manager.createdAt}
+                        </div>
+                        {/* Expiration */}
+                        <div className={`truncate text-sm ${textMuted}`}>
+                          {manager.forfaitexpirationdate || "N/A"}
+                        </div>
+                        {/* Statut */}
+                        <div className="truncate text-sm">
+                          <span className={manager.isOnline ? statusOnlineClasses : statusOfflineClasses}>
+                            <span className="w-2.5 h-2.5 rounded-full bg-current inline-block animate-pulse" />
+                            {manager.isOnline ? "En ligne" : "Hors ligne"}
+                          </span>
+                        </div>
+                        {/* Dernière connexion */}
+                        <div className={`truncate text-sm ${textMuted}`}>
+                          {manager.lastLogin ? new Date(manager.lastLogin).toLocaleString("fr-FR") : "Jamais connecté"}
+                        </div>
+                        {/* Actions */}
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => {
+                              handleTakeManagerEvents(manager.id);
+                              setManagerName(manager.name);
+                            }}
+                            className={actionButtonClasses}
+                          >
+                            <FaEye className="text-sm" />
+                            <span>Événements</span>
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(manager)}
+                            className={deleteButtonClasses}
+                          >
+                            <TbTrashXFilled className="text-xl" />
+                          </button>
+                        </div>
                       </div>
-
-                      {/* Email */}
-                      <div className="truncate dark:text-blue-300 text-blue-600">
-                        {manager.email}
-                      </div>
-
-                      {/* Forfait */}
-                      <div className="truncate dark:text-purple-300 text-purple-600">
-                        {manager.forfait?.nom || "Aucun forfait"}
-                      </div>
-
-                      {/* Date Création */}
-                      <div className="truncate text-sm dark:text-blue-300 text-blue-600">
-                        {manager.createdAt}
-                      </div>
-
-                      {/* Expiration */}
-                      <div className="truncate text-sm dark:text-blue-300 text-blue-600">
-                        {manager.forfaitexpirationdate}
-                      </div>
-
-                      {/* Statut */}
-                      <div className="truncate text-sm">
-                        <span
-                          className={`flex items-center gap-1 ${
-                            manager.isOnline
-                              ? "text-green-500"
-                              : "text-gray-400"
-                          }`}
-                        >
-                          <span className="w-2 h-2 rounded-full bg-current inline-block" />
-                          {manager.isOnline ? "En ligne" : "Hors ligne"}
-                        </span>
-                      </div>
-
-                      {/* Dernière connexion */}
-                      <div className="truncate text-sm dark:text-blue-300 text-blue-600">
-                        {manager.lastLogin
-                          ? new Date(manager.lastLogin).toLocaleString("fr-FR")
-                          : "Jamais connecté"}
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => {
-                            handleTakeManagerEvents(manager.id);
-                            setManagerName(manager.name);
-                          }}
-                          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs ${gradientsEvent.eventButton} transition-colors duration-200 shadow-sm hover:shadow-md truncate`}
-                        >
-                          <FaEye className="text-xs" />
-                          <span>Événements</span>
-                        </button>
-
-                        <button
-                          onClick={() => openDeleteModal(manager)}
-                          className={`p-1.5 rounded-lg ${
-                            darkMode
-                              ? "text-red-400 hover:text-red-300"
-                              : "text-red-600 hover:text-red-800"
-                          } transition-colors duration-200`}
-                        >
-                          <TbTrashXFilled className="text-lg" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                ) : (
+                  <div className={`px-6 py-8 text-center text-lg font-medium ${textMuted}`}>
+                    Aucun gestionnaire trouvé
+                  </div>
+                )}
               </div>
 
-              {/* Pagination - Inchangé */}
-              {filteredData.length > 0 && (
-                <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-600 dark:text-gray-300">
-                  {/* Sélection du nombre de lignes */}
+              {/* Pagination */}
+              {sortedData.length > 0 && (
+                <div className={`rounded-b-xl ${paginationClasses}`}>
                   <div className="flex items-center space-x-2">
-                    <span>Lignes par page:</span>
+                    <span className={textMuted}>Lignes par page:</span>
                     <select
                       value={rowsPerPage}
                       onChange={(e) => {
                         setRowsPerPage(Number(e.target.value));
                         setCurrentPage(0);
                       }}
-                      className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700"
+                      className={`border rounded px-2 py-1 transition-colors duration-200 ${
+                        darkMode ? "bg-gray-700 border-gray-600 text-gray-200" : "bg-white border-gray-300 text-gray-800"
+                      }`}
                     >
-                      {[5, 10, 20].map((option) => (
+                      {[5, 10, 20, 50].map((option) => (
                         <option key={option} value={option}>
                           {option}
                         </option>
@@ -792,43 +804,32 @@ export default function Organisateur() {
                     </select>
                   </div>
 
-                  {/* Info de pagination */}
-                  <div>
+                  <div className={textMuted}>
                     Affichage de {currentPage * rowsPerPage + 1} à{" "}
-                    {Math.min(
-                      (currentPage + 1) * rowsPerPage,
-                      filteredData.length
-                    )}{" "}
-                    sur {filteredData.length} gestionnaires
+                    {Math.min((currentPage + 1) * rowsPerPage, sortedData.length)}{" "}
+                    sur {sortedData.length} gestionnaires
                   </div>
 
-                  {/* Boutons de navigation */}
                   <div className="flex space-x-2">
                     <button
-                      className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                      className={`px-4 py-2 rounded-lg border transition-colors duration-200 ${
+                        darkMode ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800" : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"
+                      } disabled:opacity-50`}
                       disabled={currentPage === 0}
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(0, prev - 1))
-                      }
+                      onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
                     >
                       Précédent
                     </button>
                     <button
-                      className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
-                      disabled={
-                        (currentPage + 1) * rowsPerPage >= filteredData.length
-                      }
+                      className={`px-4 py-2 rounded-lg border transition-colors duration-200 ${
+                        darkMode ? "border-gray-600 hover:bg-gray-700 disabled:bg-gray-800" : "border-gray-300 hover:bg-gray-100 disabled:bg-gray-50"
+                      } disabled:opacity-50`}
+                      disabled={(currentPage + 1) * rowsPerPage >= sortedData.length}
                       onClick={() => setCurrentPage((prev) => prev + 1)}
                     >
                       Suivant
                     </button>
                   </div>
-                </div>
-              )}
-
-              {filteredData.length === 0 && (
-                <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                  Aucun gestionnaire trouvé
                 </div>
               )}
             </div>

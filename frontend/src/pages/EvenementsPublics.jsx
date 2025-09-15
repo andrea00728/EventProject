@@ -1,4 +1,3 @@
-// pages/EvenementsPublics.jsx
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,7 +8,7 @@ const EvenementsPublics = () => {
   const [evenements, setEvenements] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:3000/evenements/publics') // Adapte le port si nécessaire
+    axios.get(`${import.meta.env.VITE_API_BASE_URL}/evenements/publics`) // Adapte le port si nécessaire
       .then(response => {
         setEvenements(response.data);
       })

@@ -9,20 +9,21 @@ import { TableEvent } from 'src/entities/Table';
 import { EvenementService } from 'src/services/evenement/evenement.service';
 import { ForfaitModule } from '../forfait/forfait.module';
 import { NotificationModule } from '../notification/notification.module';
-
-// IMPORT du LocationModule pour utiliser LocationService
 import { LocationModule } from '../localisation/localisation.module';
-import { Favorite } from 'src/entities/Favorite';
+import { NotificationEntity } from 'src/entities/notification.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Evenement, Localisation, Salle, TableEvent, User,Favorite]),
+    TypeOrmModule.forFeature([Evenement, Localisation, Salle, TableEvent, User, NotificationEntity]),
     ForfaitModule,
     NotificationModule,
-    LocationModule,  // <-- Import ici au lieu de déclarer LocationService dans providers
+    LocationModule,
   ],
   controllers: [EvenementController],
-  providers: [EvenementService], // LocationService SUPPRIMÉ d'ici
-  exports: [EvenementService],
+  providers: [EvenementService],
+  exports: [
+    EvenementService,
+    TypeOrmModule,
+  ],
 })
 export class EvenementModule {}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AnimatePresence, motion } from 'framer-motion';
+import axiosClient from '../api/axios-client';
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -55,7 +56,7 @@ export default function ChatWidget() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:3000/mastertable/chat', { prompt });
+      const response = await axiosClient.post('/mastertable/chat', { prompt });
       const botMessage = { role: 'bot', text: response.data.response };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
@@ -72,7 +73,7 @@ export default function ChatWidget() {
     <>
       {/* Floating Button */}
       <button
-        className="fixed bottom-6 right-6 bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 z-50 cursor-pointer"
+        className="fixed bottom-6 right-6 bg-indigo-600 text-white p-1 rounded-full shadow-lg hover:bg-indigo-700 z-50 cursor-pointer"
         onClick={() => {
           if (!isOpen && messages.length === 0) {
             setMessages([{ role: 'bot', text: '👋 Bonjour ! Je suis l’assistant MasterTable. Comment puis-je vous aider ?' }]);

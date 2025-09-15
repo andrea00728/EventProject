@@ -9,11 +9,14 @@ lerna-debug.log*
 package-lock.json
 package.json
 yarn.lock
-node_modules
+/node_modules
 dist
 dist-ssr
-public
 *.local
+public
+App.jsx
+
+.env
 
 # Editor directories and files
 .vscode/*
@@ -24,4 +27,8 @@ public
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+*.sw?   
+.env
+package.json
+package-lock.json
+

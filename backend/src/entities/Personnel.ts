@@ -14,11 +14,22 @@ export class Personnel {
   @Column()
   email: string;
 
-  @Column({ type: 'enum', enum: ['accueil', 'caissier', 'cuisinier'] })
-  role: 'accueil' | 'caissier' | 'cuisinier';
+  // @Column({ type: 'enum', enum: ['accueil', 'caissier', 'cuisinier'] })
+  // role: 'accueil' | 'caissier' | 'cuisinier' ;
+
+  // On passe de l'enum à string libre
+  @Column({ type: 'varchar', length: 50})
+  role: string;
 
   @ManyToOne(() => Evenement, evenement => evenement.personnels, { onDelete: 'CASCADE' })
   evenement: Evenement;
+
+
+  /**
+   * utilise pour la desactivation du personnel apres expiration de l'evenement
+   */
+  @Column({type:'boolean',default:true})
+  isActive:boolean;
 
 
   @Column({ type: 'enum', enum: ['attent', 'accepter'], default: 'attent' })

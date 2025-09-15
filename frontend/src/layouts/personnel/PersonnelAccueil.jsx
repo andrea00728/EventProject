@@ -5,9 +5,9 @@ import Profil_Accueil from "../../util/profilAccueil";
 import LogoutButton from "../../util/DeconnexionGoogle";
 
 export default function PersonnelAccueil() {
-  const { token, role } = useStateContext();
-  if (!token) {
-    return <Navigate to="/pagepublic" replace />;
+  const { isAuthenticated, role } = useStateContext();
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
   }
 
   switch (role) {
@@ -21,7 +21,7 @@ export default function PersonnelAccueil() {
     case "cuisinier":
       return <Navigate to="/personnelCuisine" replace />;
     default:
-      return <Navigate to="/pagepublic" replace />;
+      return <Navigate to="/" replace />;
   }
   const dashboard=[
     {path:'/personnelAccueil',name:'Dashboard'}

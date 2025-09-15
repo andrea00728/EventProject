@@ -1,6 +1,7 @@
 export class CreatePersonnelDto {
   nom: string;
   email: string;
-  role: 'cuisinier' | 'accueil' | 'caissier';
+  // role: 'cuisinier' | 'accueil' | 'caissier';
+  role : string;
   evenementId: number; 
 }

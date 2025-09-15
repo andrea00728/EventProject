@@ -1,12 +1,6 @@
-/* eslint-disable prettier/prettier */
-import * as crypto from 'crypto';
-(global as any).crypto = crypto;
-
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
-
 import { ScheduleModule } from '@nestjs/schedule';
 
 // Entités
@@ -30,18 +24,21 @@ import { SystemPrompt } from './entities/system-prompt.entity';
 import { ShortLink } from './entities/ShortLink';
 import { Commentaire } from './entities/Commentaire';
 import { Satisfaction } from './entities/satisfaction.entity';
+import { Favorite } from './entities/Favorite';
+import { ContactMessage } from './entities/ContactMessage';
+import { NotificationEntity } from './entities/notification.entity';
+import { Admin } from './entities/Admin';
+import { Goal } from './entities/Goal'; // ⬅️ ajoute ceci
+
 
 // Modules fonctionnels
 import { AuthModule } from './Authentication/auth.module';
 import { EvenementModule } from './modules/evenement/evenement.module';
-import { LocationModule } from './modules/localisation/localisation.module';  // <- Import du module localisation
+import { LocationModule } from './modules/localisation/localisation.module';
 import { ForfaitModule } from './modules/forfait/forfait.module';
 import { TableModule } from './modules/table/table.module';
 import { InviteModule } from './modules/invite/invite.module';
 import { InvitationModule } from './modules/invitation/invitation.module';
-// Importez vos services et contrôleurs
-import { MailerModule } from '@nestjs-modules/mailer';
-import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 import { PaiementModule } from './modules/paiement/paiement.module';
 import { PersonnelModule } from './modules/personnel/personnel.module';
 import { QrCodeModule } from './modules/qrcode/qrcode.module';
@@ -53,85 +50,77 @@ import { PaypalModule } from './modules/paypal/paypal.module';
 import { SystemPromptModule } from './modules/system-prompt/system-prompt.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { FavoriteModule } from './modules/favorite/favorite.module';
-import { Favorite } from './entities/Favorite';
 import { ShortLinkModule } from './modules/short-link/short-link.module';
 import { CommentaireModule } from './modules/commentaire/commentaire.module';
 import { SatisfactionModule } from './modules/satisfaction/satisfaction.module';
+import { ContactModule } from './modules/contact/contact.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { TasksModule } from './modules/tasks/tasks.module';
+import { GoalModule } from './modules/goal/goal.module'; // ⬅️ import du module Goal
 
-// Contrôleurs et services globaux
+
+// Email
+import { EmailModule } from './modules/email/email.module';
+
+// Contrôleurs globaux
 import { ProfileController } from './controllers/profile/profile.controller';
-import { NotificationController } from './controllers/notification/notification.controller';
-import { NotificationEntity } from './entities/notification.entity';
+import { ElementModule } from './modules/element/element.module';
+import { Element } from './entities/Element';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: ['.env'],
-    }),
-
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env'] }),
     ScheduleModule.forRoot(),
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => {
-        const dbHost = configService.get<string>('DB_HOST');
-        const dbPort = configService.get<number>('DB_PORT');
-        const dbUsername = configService.get<string>('DB_USERNAME');
-        const dbPassword = configService.get<string>('DB_PASSWORD');
-        const dbDatabase = configService.get<string>('DB_DATABASE');
-
-        if (!dbHost || !dbPort || !dbUsername || !dbPassword || !dbDatabase) {
-          throw new Error("Les variables d'environnement de la base de données sont manquantes");
-        }
-
-        return {
-          type: 'postgres',
-          host: dbHost,
-          port: dbPort,
-          username: dbUsername,
-          password: dbPassword,
-          database: dbDatabase,
-          entities: [User,Evenement,Localisation,Invitation,Invite,Salle,TableEvent,Place,Personnel, Menu, MenuItem, Order, OrderItem, Payment, Balance, Forfait, SystemPrompt, ShortLink, Commentaire, Satisfaction,Favorite],
-     
-          synchronize: false, 
-        };
-      },
-      inject: [ConfigService],
-    }),
-
-    MailerModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        transport: {
-          host: configService.get<string>('SMTP_HOST'),
-          port: configService.get<number>('SMTP_PORT'),
-          secure: configService.get<number>('SMTP_PORT') === 465,
-          auth: {
-            user: configService.get<string>('SMTP_USER'),
-            pass: configService.get<string>('SMTP_PASS'),
-          },
-        },
-        defaults: {
-          from: `"${configService.get<string>('APP_NAME') || 'Mon Application'}" <${configService.get<string>('SMTP_USER')}>`,
-        },
-        template: {
-          dir: process.cwd() + '/templates/',
-          adapter: new PugAdapter(),
-          options: {
-            strict: true,
-          },
-        },
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_DATABASE'),
+        entities: [
+          User,
+          Evenement,
+          Localisation,
+          Invitation,
+          Invite,
+          Salle,
+          TableEvent,
+          Place,
+          Personnel,
+          Menu,
+          MenuItem,
+          Order,
+          OrderItem,
+          Payment,
+          Balance,
+          Forfait,
+          SystemPrompt,
+          ShortLink,
+          Commentaire,
+          Satisfaction,
+          NotificationEntity,
+          Favorite,
+          Admin,
+          Goal,
+          ContactMessage,
+          Element
+        ],
+        synchronize: true,
       }),
       inject: [ConfigService],
     }),
 
     // Modules fonctionnels
     AuthModule,
-    LocationModule,       // <--- IMPORTANT
-    EvenementModule,      // <--- IMPORTANT
+    LocationModule,
+    EvenementModule,
     ForfaitModule,
     NotificationModule,
+    GoalModule, 
     TableModule,
     InviteModule,
     InvitationModule,
@@ -148,9 +137,14 @@ import { NotificationEntity } from './entities/notification.entity';
     CommentaireModule,
     SatisfactionModule,
     FavoriteModule,
-
+    ContactModule,
+    AdminModule,
+    TasksModule,
+    EmailModule,
+    ElementModule
+    
   ],
-  controllers: [ProfileController], // Contrôleurs globaux ici (pas besoin d'ajouter EvenementController ici)
-  providers: [], // Services globaux si besoin
+  controllers: [ProfileController],
+  providers: [],
 })
 export class AppModule {}

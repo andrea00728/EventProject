@@ -2,10 +2,10 @@ import { useStateContext } from "../../context/ContextProvider";
 import { Navigate, Outlet } from "react-router-dom";
 
 export default function PersonnelCaisse() {
-  const { token, role } = useStateContext();
+  const { isAuthenticated, role } = useStateContext();
 
-  if (!token) {
-    return <Navigate to="/pagepublic" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
   }
   switch (role) {
     case "caissier":
@@ -17,7 +17,7 @@ export default function PersonnelCaisse() {
     case "cuisinier":
       return <Navigate to="/personnelCuisine" replace />;
     default:
-      return <Navigate to="/pagepublic" replace />;
+      return <Navigate to="/" replace />;
   }
   return (
     <>

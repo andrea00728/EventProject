@@ -1,28 +1,29 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import flowbiteReact from "flowbite-react/plugin/vite";
-import history from 'connect-history-api-fallback'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import flowbiteReact from 'flowbite-react/plugin/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), flowbiteReact()],
+  
   server: {
     port: 5173,
-    fs: {
-      strict: false,
+    proxy: {
+      '/forfait': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+        bypass: (req) => {
+          if (req.url.includes('/forfait/success') || req.url.includes('/forfait/cancel')) {
+            return req.url; // Laisse passer directement au frontend
+          }
+        },
+      },
+      '/auth': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+      },
     },
-    middlewareMode: false,
   },
-  // Redirection fallback pour react-router
-  configureServer: (server) => {
-    server.middlewares.use(
-      history({
-        verbose: true,
-        rewrites: [
-          { from: /^\/evenements-publics$/, to: '/index.html' },
-          { from: /./, to: '/index.html' },
-        ],
-      })
-    );
-  },
-})
+});

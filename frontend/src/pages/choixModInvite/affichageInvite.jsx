@@ -5,7 +5,6 @@ import { useStateContext } from "../../context/ContextProvider";
 import { DataGrid } from "@mui/x-data-grid";
 import DeleteGuestButton from "../../util/DeleteInviteButton";
 import EditGuestButton from "../../util/buttonModifIvite";
-import { motion, AnimatePresence } from "framer-motion";
 
 const EventOption = ({ event, onSelect }) => (
   <div
@@ -23,7 +22,7 @@ const EventOption = ({ event, onSelect }) => (
 );
 
 export default function AffichageInvite() {
-  const { token } = useStateContext();
+  const { isAuthenticated } = useStateContext();
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [selectedEventName, setSelectedEventName] = useState("");
@@ -33,9 +32,9 @@ export default function AffichageInvite() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
+    if (!isAuthenticated) return;
     setIsLoading(true);
-    getMyEvents(token)
+    getMyEvents()
       .then((data) => {
         setEvents(data);
         setIsLoading(false);
@@ -45,12 +44,12 @@ export default function AffichageInvite() {
         setError("Erreur lors du chargement des événements.");
         setIsLoading(false);
       });
-  }, [token]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    if (!selectedEventId || !token) return;
+    if (!selectedEventId || !isAuthenticated) return;
     setIsLoading(true);
-    getGuestsByEventId(selectedEventId, token)
+    getGuestsByEventId(selectedEventId)
       .then((guestsData) => {
         setGuests(guestsData);
         setIsLoading(false);
@@ -60,7 +59,7 @@ export default function AffichageInvite() {
         setError("Erreur lors du chargement des invités.");
         setIsLoading(false);
       });
-  }, [selectedEventId, token]);
+  }, [selectedEventId, isAuthenticated]);
 
   const handleEventSelect = (id, name) => {
     setSelectedEventId(id);
@@ -149,13 +148,8 @@ export default function AffichageInvite() {
 
           {/* Modal */}
           {showModal && (
-            <AnimatePresence>
-            <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50" onClick={()=>setShowModal(false)}>
-              <motion.div
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-              onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-[90vw] max-w-2xl max-h-[80vh] flex flex-col">
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50">
+              <div className="bg-white rounded-2xl shadow-2xl w-[90vw] max-w-2xl max-h-[80vh] flex flex-col">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
                   <h3 className="text-xl font-bold text-gray-800">Sélectionner un événement</h3>
                   <button
@@ -176,9 +170,8 @@ export default function AffichageInvite() {
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
-            </AnimatePresence>
           )}
         </div>
 

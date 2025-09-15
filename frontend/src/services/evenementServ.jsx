@@ -1,22 +1,20 @@
 import axiosClient from "../api/axios-client";
 
-
 /**
  * Crée un événement lié à l'utilisateur connecté.
  * @param {Object} eventData - Les données de l'événement (nom, type, theme, date, locationId, salleId)
  * @returns {Promise<Object>} - L'événement créé
  */
-// export const createEvent = async (eventData) => {
-//   const response = await axiosClient.post('/evenements', eventData);
-//   return response.data;
-// };
-
 export const createEvent = async (eventData) => {
   try {
-    const response = await axiosClient.post('/evenements', eventData);
+    const response = await axiosClient.post("/evenements", eventData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return response.data;
   } catch (error) {
-    throw error; // pour que le frontend récupère le message
+    throw error;
   }
 };
 
@@ -28,67 +26,176 @@ export const getLocations = async () => {
   const response = await axiosClient.get('/locations');
   return response.data;
 };
+
 /**
- * 
- * recuperation des salles a partire des lieu existe
- * 
+ * Récupère les salles à partir d'un lieu existant.
+ * @param {number} locationId - L'ID du lieu
+ * @returns {Promise<Array>} - Liste des salles
  */
 export const getSallesByLocation = async (locationId) => {
   const response = await axiosClient.get(`/locations/${locationId}/salles`);
   return response.data;
 };
 
-export const getMyEvents = async (token) => {
-  const response = await axiosClient.get('/evenements/me', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+/**
+ * Récupère tous les événements de l'utilisateur connecté.
+ */
+export const getMyEvents = async () => {
+  const response = await axiosClient.get('/evenements/me');
   return response.data;
 };
 
-export const DeleteEvent = async (eventId, token) => {
-  const response = await axiosClient.delete(`/evenements/${eventId}/delete`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+/**
+ * Supprime un événement.
+ * @param {number} eventId - L'ID de l'événement
+ * @returns {Promise<Object>} - Réponse de la suppression
+ */
+export const DeleteEvent = async (eventId) => {
+  const response = await axiosClient.delete(`/evenements/${eventId}/delete`);
   return response.data;
-}
-
-
-/*********************  Modification que j'ai fait dans la partie Admin  ********************* */
+};
 
 /**
- * Récupère tous les événements.
+ * Récupère tous les événements (pour l'admin).
  */
 export const getAllEvents = async () => {
   const response = await axiosClient.get('/evenements');
   return response.data;
 };
 
+/**
+ * Récupère tous les événements d'un manager spécifique.
+ * @param {number} id - L'ID du manager
+ */
 export const getAllManagerEvents = async (id) => {
   const response = await axiosClient.get(`/evenements/${id}/managerEvents`);
   return response.data;
 };
 
-
 /**
- * 
- * @returns 
- * nombre total des événements creer par tout les organisateur
- * 
+ * Récupère le nombre total des événements créés par tous les organisateurs.
  */
 export const getCountEvents = async () => {
-  const response =  await axiosClient.get('/evenements/countEvent');
+  const response = await axiosClient.get('/evenements/countEvent');
   return response.data;
 };
 
+/**
+ * Récupère les statistiques de tous les événements.
+ */
 export const getCountForAllEventStats = async () => {
-  const response = await axiosClient.get(`/evenements/events/statistics`/*, {
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
-}*/);
+  const response = await axiosClient.get(`/evenements/events/statistics`);
   return response.data;
-}
+};
+
+/**
+ * Crée une nouvelle salle pour un lieu.
+ * @param {number} locationId - L'ID du lieu
+ * @param {Object} salleData - Les données de la salle (nom)
+ * @returns {Promise<Object>} - La salle créée
+ */
+export const createSalle = async (locationId, salleData) => {
+  try {
+    const response = await axiosClient.post(`/locations/${locationId}/salles`, salleData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Met à jour une salle existante.
+ * @param {number} salleId - L'ID de la salle
+ * @param {Object} salleData - Les données de la salle (nom)
+ * @returns {Promise<Object>} - La salle mise à jour
+ */
+export const updateSalle = async (salleId, salleData) => {
+  try {
+    const response = await axiosClient.put(`/locations/salles/${salleId}`, salleData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Supprime une salle.
+ * @param {number} salleId - L'ID de la salle
+ * @returns {Promise<void>} - Rien si la suppression réussit
+ */
+export const deleteSalle = async (salleId) => {
+  try {
+    const response = await axiosClient.delete(`/locations/salles/${salleId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Crée un nouveau lieu à partir d'une requête de géocodage.
+ * @param {string} query - La requête de recherche pour le lieu
+ * @param {number} [createurId=0] - L'ID de l'utilisateur créateur (optionnel, défaut à 0 pour admin)
+ * @returns {Promise<Object>} - Le lieu créé
+ */
+export const saveLocation = async (query, createurId) => {
+  try {
+    const response = await axiosClient.post('/locations/save', {
+      query,
+      createurId,
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || 'Erreur lors de la sauvegarde du lieu';
+  }
+};
+
+
+/**
+ * Récupère les lieux créés par un utilisateur spécifique ou par l'admin.
+ * @param {string} createurId - L'ID du créateur (utilisateur ou 0 pour admin)
+ * @returns {Promise<Array>} - Liste des lieux associés au créateur et à l'admin
+ */
+export const getLocationsByCreator = async (createurId) => {
+  const response = await axiosClient.get(`/locations/by-creator/${createurId}`);
+  return response.data;
+};
+/**
+ * Récupère les lieux créés par un utilisateur spécifique ou par l'admin.
+ * @param {string} createurId - L'ID du créateur (utilisateur ou 0 pour admin)
+ * @returns {Promise<Array>} - Liste des lieux associés au créateur et à l'admin
+ */
+export const getLocationsByCreatorAndAdmin = async (createurId) => {
+  const response = await axiosClient.get(`/locations/byadminandcreator/${createurId}`);
+  return response.data;
+};
+
+export const updateEvent = async ({ eventId, eventData }) => {
+  try {
+    console.log('Mise à jour de l\'événement avec ID:', eventId); // Débogage
+    const response = await axiosClient.put(`/evenements/${eventId}`, eventData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Erreur backend:", error);
+    throw error.response?.data?.message || 'Erreur lors de la mise à jour de l\'événement';
+  }
+};
+
+
+
+export const getEvent = async (eventId) => {
+  console.log('Récupération de l\'événement avec ID:', eventId);
+  try {
+    const response = await axiosClient.get(`/evenements/${eventId}`);
+    console.log('Événement récupéré:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération de l\'événement:', error.response?.data);
+    throw error.response?.data?.message || 'Erreur lors de la récupération de l\'événement';
+  }
+};
+

@@ -1,0 +1,412 @@
+import React, { useState } from "react";
+import {
+  Calendar,
+  Users,
+  UserCheck,
+  Table as TableIcon,
+  Clock,
+  MapPin,
+  Activity,
+  MoreVertical,
+  Eye,
+  X,
+  Phone,
+  Mail,
+  User,
+  Badge,
+  LayoutGrid,
+  List,
+} from "lucide-react";
+
+export default function DashboardEvenement() {
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("invites");
+  const [viewMode, setViewMode] = useState("list"); // 👈 ajout toggle
+
+  const [evenementsRecents] = useState([
+    {
+      id: 1,
+      nom: "Mariage Sophie & Marc",
+      date: "2025-09-05",
+      invites: 120,
+      lieu: "Château de Malmaison",
+      type: "Mariage",
+      description:
+        "Célébration du mariage de Sophie et Marc dans un cadre élégant et romantique.",
+      organisateur: "Marie Dubois",
+      invitesList: [
+        {
+          id: 1,
+          nom: "Jean Dupont",
+          email: "jean.dupont@email.com",
+          telephone: "+33 6 12 34 56 78",
+          statut: "Confirmé",
+          table: 1,
+        },
+      ],
+      personnelList: [
+        {
+          id: 1,
+          nom: "Chef Antoine",
+          role: "Chef Cuisinier",
+          telephone: "+33 6 12 12 12 12",
+          statut: "Assigné",
+        },
+      ],
+      tablesList: [
+        { id: 1, numero: 1, capacite: 8, invites: 8, statut: "Complète" },
+      ],
+    },
+    {
+      id: 2,
+      nom: "Conférence Tech Summit",
+      date: "2025-09-08",
+      invites: 300,
+      lieu: "Centre des Congrès",
+      type: "Conférence",
+      description:
+        "Conférence technologique rassemblant les leaders de l'industrie tech.",
+      organisateur: "Tech Events Co.",
+      invitesList: [],
+      personnelList: [],
+      tablesList: [],
+    },
+    {
+      id: 3,
+      nom: "Gala de Charité",
+      date: "2025-09-12",
+      invites: 200,
+      lieu: "Hôtel Ritz",
+      type: "Gala",
+      description:
+        "Gala de bienfaisance pour soutenir les enfants défavorisés.",
+      organisateur: "Association Espoir",
+      invitesList: [],
+      personnelList: [],
+      tablesList: [],
+    },
+  ]);
+
+  const [activitesRecentes] = useState([
+    {
+      id: 1,
+      action: "Nouveau invité ajouté",
+      evenement: "Mariage Sophie & Marc",
+      temps: "Il y a 2 heures",
+      type: "invite",
+    },
+    {
+      id: 2,
+      action: "Personnel assigné",
+      evenement: "Conférence Tech Summit",
+      temps: "Il y a 4 heures",
+      type: "personnel",
+    },
+  ]);
+
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case "invite":
+        return <UserCheck className="w-4 h-4" />;
+      case "personnel":
+        return <Users className="w-4 h-4" />;
+      case "table":
+        return <TableIcon className="w-4 h-4" />;
+      case "evenement":
+        return <Calendar className="w-4 h-4" />;
+      default:
+        return <Activity className="w-4 h-4" />;
+    }
+  };
+
+  const getInviteStatutColor = (statut) => {
+    switch (statut) {
+      case "Confirmé":
+        return "bg-green-100 text-green-800";
+      case "En attente":
+        return "bg-yellow-100 text-yellow-800";
+      case "Décliné":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getPersonnelStatutColor = (statut) => {
+    switch (statut) {
+      case "Assigné":
+        return "bg-blue-100 text-blue-800";
+      case "En attente":
+        return "bg-orange-100 text-orange-800";
+      case "Indisponible":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getTableStatutColor = (statut) => {
+    switch (statut) {
+      case "Complète":
+        return "bg-green-100 text-green-800";
+      case "Disponible":
+        return "bg-blue-100 text-blue-800";
+      case "VIP":
+        return "bg-purple-100 text-purple-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const openEventModal = (event) => {
+    setSelectedEvent(event);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedEvent(null);
+  };
+
+  return (
+    <div className="min-h-screen">
+      {/* En-tête */}
+      <div className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Dashboard Événements
+          </h1>
+          <p className="text-gray-600">
+            Vue d'ensemble de tous vos événements et activités
+          </p>
+        </div>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setViewMode("list")}
+            className={`p-2 rounded-lg border ${
+              viewMode === "list"
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white text-gray-600 border-gray-300"
+            }`}
+          >
+            <List className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setViewMode("card")}
+            className={`p-2 rounded-lg border ${
+              viewMode === "card"
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white text-gray-600 border-gray-300"
+            }`}
+          >
+            <LayoutGrid className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Événements récents */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Événements Récents
+              </h2>
+              <MoreVertical className="w-5 h-5 text-gray-400" />
+            </div>
+
+            {/* Mode Liste */}
+            {viewMode === "list" && (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Événement
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Invités
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Lieu
+                      </th>
+                      <th className="px-6 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {evenementsRecents.map((event) => (
+                      <tr key={event.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {event.nom}
+                            </p>
+                            <p className="text-sm text-gray-500">{event.type}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          {new Date(event.date).toLocaleDateString("fr-FR")}
+                        </td>
+                        <td className="px-6 py-4 text-sm flex items-center">
+                          <Users className="w-4 h-4 mr-1 text-gray-400" />
+                          {event.invites}
+                        </td>
+                        <td className="px-6 py-4 text-sm flex items-center">
+                          <MapPin className="w-4 h-4 mr-1 text-gray-400" />
+                          {event.lieu}
+                        </td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => openEventModal(event)}
+                            className="text-blue-600 hover:underline flex items-center"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Voir
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Mode Carte */}
+            {viewMode === "card" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
+                {evenementsRecents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="border rounded-lg p-4 shadow-sm hover:shadow-md transition"
+                  >
+                    <h3 className="font-semibold text-gray-900 mb-1">
+                      {event.nom}
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-2">{event.type}</p>
+                    <p className="text-sm flex items-center mb-1 text-gray-600">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {new Date(event.date).toLocaleDateString("fr-FR")}
+                    </p>
+                    <p className="text-sm flex items-center mb-1 text-gray-600">
+                      <Users className="w-4 h-4 mr-1" />
+                      {event.invites} invités
+                    </p>
+                    <p className="text-sm flex items-center mb-3 text-gray-600">
+                      <MapPin className="w-4 h-4 mr-1" />
+                      {event.lieu}
+                    </p>
+                    <button
+                      onClick={() => openEventModal(event)}
+                      className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                    >
+                      Voir détails
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Activités récentes */}
+        <div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Activités Récentes
+              </h2>
+              <MoreVertical className="w-5 h-5 text-gray-400" />
+            </div>
+            <div className="p-6 space-y-4">
+              {activitesRecentes.map((a) => (
+                <div key={a.id} className="flex items-start space-x-3">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-600 flex items-center justify-center text-white">
+                    {getTypeIcon(a.type)}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{a.action}</p>
+                    <p className="text-sm text-blue-600">{a.evenement}</p>
+                    <p className="text-xs text-gray-500 flex items-center">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {a.temps}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal des détails */}
+      {modalOpen && selectedEvent && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-4xl w-full shadow-lg">
+            <div className="flex justify-between items-center p-4 border-b bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+              <div>
+                <h3 className="text-lg font-semibold">{selectedEvent.nom}</h3>
+                <p className="text-sm">
+                  {selectedEvent.type} •{" "}
+                  {new Date(selectedEvent.date).toLocaleDateString("fr-FR")}
+                </p>
+              </div>
+              <button onClick={closeModal}>
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-700">{selectedEvent.description}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
+                {/* Activités récentes */}
+                {/* <div>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div className="px-6 py-4 border-b border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-lg font-semibold text-gray-900">Activités Récentes</h2>
+                                <button className="text-gray-400 hover:text-gray-600">
+                                    <MoreVertical className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-6">
+                            <div className="space-y-4">
+                                {activitesRecentes.map((activite, index) => (
+                                    <div key={activite.id} className={`flex items-start space-x-3 ${index < activitesRecentes.length - 1 ? 'pb-4 border-b border-gray-100' : ''}`}>
+                                        <div className="flex-shrink-0">
+                                            <div className="h-8 w-8 bg-gradient-to-r from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
+                                                <div className="text-white">
+                                                    {getTypeIcon(activite.type)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-900">
+                                                {activite.action}
+                                            </p>
+                                            <p className="text-sm text-blue-600 font-medium">
+                                                {activite.evenement}
+                                            </p>
+                                            <p className="text-xs text-gray-500 flex items-center mt-1">
+                                                <Clock className="w-3 h-3 mr-1" />
+                                                {activite.temps}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div> */}

@@ -3,10 +3,10 @@ import { Navigate } from "react-router-dom";
 import DashboardpersCuisine from "../../pages/PersonnelCuisine/Dashboard";
 
 export default function PersonnelCuisine() {
-  const { token, role } = useStateContext();
+  const { isAuthenticated, token, role } = useStateContext();
 
-  if (!token) {
-    return <Navigate to="/pagepublic" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
   }
 
   switch (role) {
@@ -19,7 +19,7 @@ export default function PersonnelCuisine() {
     case "caissier":
       return <Navigate to="/personnelCaisse" replace />;
     default:
-      return <Navigate to="/pagepublic" replace />;
+      return <Navigate to="/" replace />;
   }
 
   return (

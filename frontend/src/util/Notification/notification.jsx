@@ -1,0 +1,31 @@
+import { useEffect } from 'react';
+import { io } from 'socket.io-client';
+import { toast } from 'react-toastify'; 
+import { url } from '../../api/url';
+
+
+
+const NotificationListener = () => {
+  useEffect(() => {
+    const socket = io(url);
+
+    socket.on('connect', () => {
+      console.log('Connecté au WebSocket');
+    });
+
+    socket.on('notification', (data) => {
+      console.log('Notification reçue :', data);
+      toast(`${data.title} - ${data.message}`, {
+        type: data.type || 'info',
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  return null;
+};
+
+export default NotificationListener;

@@ -1,55 +1,109 @@
 import { useState, useEffect } from "react";
 import { getMyEvents } from "../../services/evenementServ";
-
 import { useStateContext } from "../../context/ContextProvider";
-import { chiffreControll } from "../../services/controll_champs/controll_champs";
+import { getMaxCapacity } from "../../services/controll_champs/controll_champs";
+import { createTable } from "../../services/tableService";
 
-export default function Tablecreation({onSubmitTable}) {
-  const { token } = useStateContext();
-  const [form, setForm] = useState({ nom: "", capacite: "", type: "ronde",nombre:"", eventId: 0 });
+export default function Tablecreation() {
+  const { isAuthenticated } = useStateContext();
+
+  // Formulaire
+  const [form, setForm] = useState({
+    capacite: "",
+    type: "ronde",
+    nombre: "",
+    noms: [],
+    eventId: 0
+  });
+
+  // États pour alertes et UI
   const [error, setError] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // États pour événements
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [eventError, setEventError] = useState(null);
 
-  // Récupérer les événements de l'utilisateur
+  // Charger événements de l'utilisateur
   useEffect(() => {
     const fetchEvents = async () => {
       setIsLoadingEvents(true);
       try {
-        const data = await getMyEvents(token);
+        const data = await getMyEvents();
         setEvents(data);
       } catch (err) {
         setEventError(
-          err.response && err.response.data
-            ? err.response.data.message
-            : "Impossible de charger les événements"
+          err.response?.data?.message || "Impossible de charger les événements"
         );
-        console.error("Erreur chargement événements:", err);
       } finally {
         setIsLoadingEvents(false);
       }
     };
-    if (token) {
-      fetchEvents();
-    }
-  }, [token]);
 
-  
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    if (isAuthenticated) fetchEvents();
+  }, [isAuthenticated]);
+
+  // Gestion changement du nombre → crée un tableau de noms vides
+  const handleNombreChange = (e) => {
+    const nb = Number(e.target.value);
+    setForm((prev) => ({
+      ...prev,
+      nombre: nb,
+      noms: Array(nb).fill("")
+    }));
   };
 
+  // Gestion changement d’un nom spécifique
+  const handleNomChange = (index, value) => {
+    const updatedNoms = [...form.noms];
+    updatedNoms[index] = value;
+    setForm((prev) => ({ ...prev, noms: updatedNoms }));
+  };
+
+  // Gestion des autres champs (capacite, type)
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "capacite") {
+      const numericValue = parseInt(value, 10);
+      const max = getMaxCapacity(form.type);
+      if (numericValue > max) {
+        setError(`La capacité maximale pour une table ${form.type} est ${max}`);
+        return;
+      } else {
+        setError(null);
+      }
+      setForm({ ...form, [name]: numericValue });
+      return;
+    }
+
+    if (name === "type") {
+      const max = getMaxCapacity(value);
+      const newCapacite = Math.min(form.capacite, max);
+      if (form.capacite > max) {
+        setError(`Capacité ajustée à ${newCapacite} pour le type ${value}`);
+      } else {
+        setError(null);
+      }
+      setForm({ ...form, [name]: value, capacite: newCapacite });
+      return;
+    }
+
+    setForm({ ...form, [name]: value });
+  };
+
+  // Sélectionner un événement
   const selectEvent = (event) => {
     setSelectedEvent(event);
-    setForm({ ...form, eventId: event.id });
+    setForm((prev) => ({ ...prev, eventId: event.id }));
     setIsModalOpen(false);
   };
 
+  // Soumission du formulaire
   const onSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -62,69 +116,42 @@ export default function Tablecreation({onSubmitTable}) {
     }
 
     try {
-      const formDataArray=[];
-      for (let i=0; i<Number(form.nombre);i++){
-        formDataArray.push({
-          ...form,
-          nombre:i+1,
-        })
-      }
-      await onSubmitTable(formDataArray);
-      setForm({ nom: "", capacite: "", type: "ronde",nombre:"", eventId: 0 });
+      const nomsFinal = form.noms.map((nom, index) =>
+        nom && nom.trim() !== "" ? nom : `Table ${index + 1}`
+      );
+
+      const formDataArray = nomsFinal.map((nom) => ({
+        nom,
+        capacite: form.capacite,
+        type: form.type,
+        eventId: form.eventId
+      }));
+
+      await Promise.all(formDataArray.map((t) => createTable(t)));
+
+      setForm({ capacite: "", type: "ronde", nombre: "", noms: [], eventId: 0 });
       setSelectedEvent(null);
-      setSuccessMessage("Table créée avec succès");
+      setSuccessMessage("Tables créées avec succès");
     } catch (err) {
-      if (
-        err.response &&
-        err.response.data &&
-        err.response.data.message &&
-        err.response.data.message.includes("déjà utilisé")
-      ) {
+      if (err.response?.data?.message?.includes("déjà utilisé")) {
         setShowAlert(true);
       } else {
-        // Afficher un message d'erreur personnalisé si le serveur ne donne pas de détail
-        setError(
-          err.response && err.response.data && err.response.data.message
-            ? err.response.data.message
-            : "Erreur lors de la création de la table. Veuillez réessayer."
-            
-        );
+        setError(err.response?.data?.message || "Erreur lors de la création des tables");
       }
     }
   };
 
-  const closeAlert = () => {
-    setShowAlert(false);
-  };
-
-  const closeSuccess = () => {
-    setSuccessMessage(null);
-  };
-
   return (
-    <div className="relative">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <form
         onSubmit={onSubmit}
-        className="p-8 bg-gray-50 max-w-md mx-auto shadow-lg rounded-xl mb-10 border border-gray-100"
+        className="p-8 bg-white max-w-lg w-full mx-auto shadow-2xl rounded-2xl border border-gray-200 transition-all duration-300"
       >
-        <h2 className="text-2xl font-bold text-center mb-8 text-gray-900">Créer une Table</h2>
+        <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">Créer une Table</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Capacité */}
           <div className="flex flex-col">
-            <label htmlFor="numero" className="text-gray-700 font-medium mb-2 text-sm">
-              Nom de Table
-            </label>
-            <input
-              id="nom"
-              name="nom"
-              value={form.nom}
-              onChange={handleChange}
-              placeholder="Ex: 1, 2, G1, G2..."
-              required
-              className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="capacite" className="text-gray-700 font-medium mb-2 text-sm">
+            <label htmlFor="capacite" className="text-gray-700 font-semibold mb-2 text-sm">
               Capacité
             </label>
             <input
@@ -136,27 +163,32 @@ export default function Tablecreation({onSubmitTable}) {
               placeholder="Ex: 4, 6, 8"
               required
               min="1"
-              className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
+              className="border border-gray-300 bg-gray-50 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
             />
+            {error && <p className="text-red-500 text-sm mt-2 animate-pulse">{error}</p>}
           </div>
-           <div className="flex flex-col">
-            <label htmlFor="nombre" className="text-gray-700 font-medium mb-2 text-sm">
-              nombre
+
+          {/* Nombre */}
+          <div className="flex flex-col">
+            <label htmlFor="nombre" className="text-gray-700 font-semibold mb-2 text-sm">
+              Nombre de tables
             </label>
             <input
               id="nombre"
               name="nombre"
               type="number"
               value={form.nombre}
-              onChange={handleChange}
-              placeholder="Ex: 4, 6, 8"
+              onChange={handleNombreChange}
+              placeholder="Ex: 4"
               required
               min="1"
-              className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
+              className="border border-gray-300 bg-gray-50 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
             />
           </div>
+
+          {/* Type */}
           <div className="flex flex-col">
-            <label htmlFor="type" className="text-gray-700 font-medium mb-2 text-sm">
+            <label htmlFor="type" className="text-gray-700 font-semibold mb-2 text-sm">
               Type de Table
             </label>
             <select
@@ -165,7 +197,7 @@ export default function Tablecreation({onSubmitTable}) {
               value={form.type}
               onChange={handleChange}
               required
-              className="border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
+              className="border border-gray-300 bg-gray-50 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
             >
               <option value="ronde">Ronde</option>
               <option value="carree">Carrée</option>
@@ -173,113 +205,89 @@ export default function Tablecreation({onSubmitTable}) {
               <option value="ovale">Ovale</option>
             </select>
           </div>
+
+          {/* Événement */}
           <div className="flex flex-col">
-            <label className="text-gray-700 font-medium mb-2 text-sm">Événement Associé</label>
+            <label className="text-gray-700 font-semibold mb-2 text-sm">Événement Associé</label>
             <div
-              className="flex items-center border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 focus-within:ring-2 focus-within:ring-indigo-600 cursor-pointer transition-all duration-200"
+              className="flex items-center border border-gray-300 bg-gray-50 rounded-lg px-4 py-3 cursor-pointer hover:bg-gray-100 transition-all duration-200"
               onClick={() => setIsModalOpen(true)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === "Enter" && setIsModalOpen(true)}
             >
               <input
                 type="text"
                 value={selectedEvent ? `${selectedEvent.nom} (${new Date(selectedEvent.date).toLocaleDateString("fr-FR")})` : "Sélectionner un événement"}
                 readOnly
-                placeholder="Cliquez pour sélectionner un événement"
-                className="flex-grow bg-transparent outline-none cursor-pointer text-gray-900 placeholder-gray-400"
+                className="flex-grow bg-transparent outline-none cursor-pointer text-gray-600"
               />
-              <button
-                type="button"
-                className="ml-2 text-gray-500 hover:text-indigo-600 focus:outline-none transition-colors duration-200"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
             </div>
           </div>
         </div>
-        {error && (
-          <p className="text-red-500 mt-6 text-center bg-red-50 py-3 rounded-xl flex items-center justify-center">
-            <svg
-              className="h-5 w-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            {error}
-          </p>
+
+        {/* Inputs pour chaque nom */}
+        {form.noms.length > 0 && (
+          <div className="mt-8 space-y-4">
+            {form.noms.map((nom, index) => (
+              <div key={index} className="flex flex-col">
+                <label className="text-gray-700 font-semibold mb-2 text-sm">
+                  Nom Table {index + 1}
+                </label>
+                <input
+                  value={nom}
+                  onChange={(e) => handleNomChange(index, e.target.value)}
+                  placeholder={`Table ${index + 1}`}
+                  className="border border-gray-300 bg-gray-50 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                />
+              </div>
+            ))}
+          </div>
         )}
+
+        {error && <p className="text-red-500 mt-6 text-center font-medium">{error}</p>}
+
         <div className="mt-8">
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold py-3 rounded-lg hover:from-indigo-700 hover:to-indigo-800 focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
+            className="w-full bg-gradient-to-r from-indigo-600 to-indigo-800 text-white font-semibold py-3 rounded-lg hover:from-indigo-700 hover:to-indigo-900 transition-all duration-300"
           >
             Ajouter Table
           </button>
         </div>
       </form>
+
+      {/* Modal événements */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center mt-[80px] bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl mx-auto transform transition-all duration-300 ease-out scale-100 animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-500">
+          <div className="bg-gradient-to-b from-white to-gray-50 rounded-2xl p-6 max-w-5xl w-full mx-4 relative shadow-xl transform transition-all duration-300 scale-95 hover:scale-100">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 text-xl font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-600 rounded-full p-2 transition-colors duration-200 cursor-pointer"
+              className="absolute top-4 right-4 text-gray-600 hover:text-indigo-600 transition-colors duration-200"
             >
-              ×
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
-            <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center font-sans">
-              Sélectionner un événement
-            </h3>
-            <div className="w-[100%] h-[400px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <h3 className="text-3xl font-extrabold text-center mb-8 text-indigo-700">Choisir un événement</h3>
+            <div className="w-full h-[450px] overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-300 scrollbar-track-gray-200 pr-2">
               {isLoadingEvents ? (
-                <p className="p-6 text-center text-gray-500 bg-gray-50 rounded-xl">
-                  Chargement des événements...
-                </p>
+                <p className="p-8 text-center text-gray-600 text-lg animate-pulse">Chargement...</p>
               ) : eventError ? (
-                <p className="p-6 text-center text-red-500 bg-red-50 rounded-xl">
-                  {eventError}
-                </p>
+                <p className="p-8 text-center text-red-600 text-lg font-medium">{eventError}</p>
               ) : events.length === 0 ? (
-                <p className="p-6 text-center text-gray-500 bg-gray-50 rounded-xl">
-                  Aucun événement disponible.
-                </p>
+                <p className="p-8 text-center text-gray-600 text-lg">Aucun événement disponible.</p>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {events.map((event) => (
                     <div
                       key={event.id}
-                      className="bg-gradient-to-br from-gray-800 to-gray-900 text-white p-6 rounded-xl shadow-lg hover:shadow-xl hover:from-gray-700 hover:to-gray-800 cursor-pointer transition-all duration-300 transform hover:-translate-y-1"
+                      className="bg-white border border-gray-200 p-5 rounded-lg cursor-pointer hover:shadow-lg hover:border-indigo-400 transition-all duration-300 transform hover:-translate-y-1"
                       onClick={() => selectEvent(event)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => e.key === "Enter" && selectEvent(event)}
                     >
-                      <p className="font-semibold text-lg mb-2">{event.nom}</p>
-                      <p className="text-sm text-gray-200">
+                      <p className="font-bold text-xl text-gray-800">{event.nom}</p>
+                      <p className="text-sm text-gray-500 mt-1">
                         Date: {new Date(event.date).toLocaleDateString("fr-FR")}
                       </p>
                       {event.description && (
-                        <p className="text-xs text-gray-300 mt-2 line-clamp-2">
-                          {event.description}
-                        </p>
+                        <p className="text-sm text-gray-400 mt-2 line-clamp-2">{event.description}</p>
                       )}
                     </div>
                   ))}
@@ -290,30 +298,15 @@ export default function Tablecreation({onSubmitTable}) {
         </div>
       )}
 
-      {/* Alerte pour numéro de table déjà utilisé */}
+      {/* Alerte duplication */}
       {showAlert && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full animate-fadeIn">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-yellow-700">Avertissement</h3>
-              <button
-                onClick={closeAlert}
-                className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <p className="text-gray-900 mb-4">Le numéro de table est déjà utilisé dans cet événement.</p>
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-yellow-600 mb-4">Avertissement</h3>
+            <p className="mb-4 text-gray-700">Le numéro de table est déjà utilisé dans cet événement.</p>
             <button
-              onClick={closeAlert}
-              className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-semibold py-2 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-colors duration-200"
+              onClick={() => setShowAlert(false)}
+              className="w-full bg-yellow-500 text-white py-2 rounded-lg hover:bg-yellow-600 transition-all duration-200"
             >
               Fermer
             </button>
@@ -321,30 +314,15 @@ export default function Tablecreation({onSubmitTable}) {
         </div>
       )}
 
-      {/* Alerte pour création réussie */}
+      {/* Alerte succès */}
       {successMessage && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full animate-fadeIn">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-green-700">Succès</h3>
-              <button
-                onClick={closeSuccess}
-                className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <p className="text-gray-900 mb-4">{successMessage}</p>
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-green-600 mb-4">Succès</h3>
+            <p className="mb-4 text-gray-700">{successMessage}</p>
             <button
-              onClick={closeSuccess}
-              className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold py-2 rounded-lg hover:from-green-600 hover:to-green-700 transition-colors duration-200"
+              onClick={() => setSuccessMessage(null)}
+              className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-all duration-200"
             >
               Fermer
             </button>
