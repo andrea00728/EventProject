@@ -102,8 +102,8 @@ export default function RestaurationPage() {
         sx={{
           flex: 1,
           p: { xs: 1, sm: 2, md: 3, lg: 4 }, 
-          overflow: "auto",
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          overflow: 'auto',
         }}
         className="flex-1 flex flex-col overflow-hidden lg:ml-64"
       >

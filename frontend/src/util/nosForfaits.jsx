@@ -29,7 +29,7 @@ const textColorMap = {
   GOLD: "text-yellow-500",
 };
 
-// Fonction pour déterminer la durée basée sur validationduration ito ko  mbola izy aan 
+// Fonction pour déterminer la durée basée sur validationduration
 const getDurationText = (validationDuration) => {
   if (validationDuration === 30) return "1 mois";
   if (validationDuration === 180) return "6 mois";
@@ -81,7 +81,7 @@ export default function NosForfaits() {
               nom: (forfait.nom || "").toUpperCase(),
               price: formatPrice(forfait.price),
               invitations: forfait.maxinvites ?? "Illimité",
-              events, // ✅ corrigé: toujours défini
+              evenements: forfait.maxevents ?? "Illimité",
               duration: getDurationText(forfait.validationduration),
               paypalplanid: forfait.paypalplanid,
               rawPrice: forfait.price,
@@ -90,24 +90,19 @@ export default function NosForfaits() {
                 (events !== "Illimité" ? Number(events) : null), // utile si tu veux un nombre
               maxInvites: forfait.maxinvites,
               validationDuration: forfait.validationduration,
+              fonctionnalite: forfait.fonctionnalite || "Fonctionnalité non spécifiée",
+              ideal: forfait.idealiste || "Idéal non spécifié",
             };
           });
+
+        // ⭐ Ligne ajoutée pour trier les forfaits par leur ID
+        transformedForfaits.sort((a, b) => a.id - b.id);
 
         setForfaits(transformedForfaits);
         setError(null);
       } catch (err) {
         console.error("Erreur détaillée:", err);
-
-        // Fallback sur des données statiques si l'API échoue
-        console.warn("Utilisation des données de fallback");
-        const fallbackForfaits = [
-          { id: 12, nom: "STARTER", price: "€10", invitations: 100, events: "2", duration: "6 mois", rawPrice: 10, maxInvites: 100, validationDuration: 180 },
-          { id: 13, nom: "PRO", price: "€25.99", invitations: 500, events: "5", duration: "6 mois", rawPrice: 25.99, maxInvites: 500, validationDuration: 180 },
-          { id: 14, nom: "PREMIUM", price: "€39.99", invitations: 1000, events: "20", duration: "6 mois", rawPrice: 39.99, maxInvites: 1000, validationDuration: 180 },
-          { id: 15, nom: "GOLD", price: "€59.99", invitations: "Illimité", events: "50", duration: "12 mois", rawPrice: 59.99, maxInvites: null, validationDuration: 365 },
-        ];
-        setForfaits(fallbackForfaits);
-        setError(null);
+        setError("Impossible de charger les forfaits. Veuillez réessayer plus tard.");
       } finally {
         setLoading(false);
       }
@@ -116,39 +111,38 @@ export default function NosForfaits() {
     fetchForfaits();
   }, []);
 
- useEffect(() => {
-  const fetchUserForfait = async () => {
-    if (!isAuthenticated) return;
-    if (user?.role === "organisateur") {
-      try {
-        const userForfait = await getUserForfait();
+  useEffect(() => {
+    const fetchUserForfait = async () => {
+      if (!isAuthenticated) return;
+      if (user?.role === "organisateur") {
+        try {
+          const userForfait = await getUserForfait();
 
-        if (userForfait?.forfait) {
-          setActiveForfait(userForfait.forfait);
-          setExpirationDate(userForfait.forfaitExpirationDate);
-        } else {
-          // Pas de forfait actif → pas d’erreur rouge
-          setActiveForfait(null);
-          setExpirationDate(null);
-        }
-      } catch (err) {
-        // Si c’est juste un 401 → ignorer silencieusement
-        if (err.response?.status === 401) {
-          setActiveForfait(null);
-          setExpirationDate(null);
-          return;
-        }
+          if (userForfait?.forfait) {
+            setActiveForfait(userForfait.forfait);
+            setExpirationDate(userForfait.forfaitExpirationDate);
+          } else {
+            // Pas de forfait actif → pas d’erreur rouge
+            setActiveForfait(null);
+            setExpirationDate(null);
+          }
+        } catch (err) {
+          // Si c’est juste un 401 → ignorer silencieusement
+          if (err.response?.status === 401) {
+            setActiveForfait(null);
+            setExpirationDate(null);
+            return;
+          }
 
-        // Sinon → vraie erreur
-        console.error("Erreur lors du chargement du forfait actif :", err);
-        alert("Impossible de charger votre forfait actif.");
+          // Sinon → vraie erreur
+          console.error("Erreur lors du chargement du forfait actif :", err);
+          alert("Impossible de charger votre forfait actif.");
+        }
       }
-    }
-  };
+    };
 
-  fetchUserForfait();
-}, [isAuthenticated, user]);
-
+    fetchUserForfait();
+  }, [isAuthenticated, user]);
 
   const handleAcheter = (forfait) => {
     setSelectedForfait(forfait);
@@ -260,9 +254,11 @@ export default function NosForfaits() {
                   Invitations : <span className="font-semibold">{f.invitations}</span>
                 </li>
                 <li>
-                  Événements : <span className="font-semibold">{f.events}</span>
+                  Événements : <span className="font-semibold">{f.evenements}</span>
                 </li>
-                <li>{f.nom === "STARTER" ? "Module personnel" : "Modules personnel et restauration"}</li>
+                <li>
+                  Fonctionalité : <span className="font-semibold">{f.fonctionnalite}</span>
+                </li>
               </ul>
 
               {isAuthenticated ? (
@@ -333,7 +329,9 @@ export default function NosForfaits() {
             </span>
 
             {/* Bandeau coloré en haut */}
-            <div className={`absolute inset-x-0 top-0 h-2 rounded-t-3xl bg-gradient-to-r ${defaultColorMap[selectedForfait.nom]}`}></div>
+            <div
+              className={`absolute inset-x-0 top-0 h-2 rounded-t-3xl bg-gradient-to-r ${defaultColorMap[selectedForfait.nom]}`}
+            ></div>
 
             {/* Titre et prix */}
             <div className="text-center mb-6">
@@ -359,8 +357,8 @@ export default function NosForfaits() {
                 <Event className="text-purple-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
                   <span className="font-semibold">Événements :</span>{" "}
-                  {selectedForfait.events && selectedForfait.events !== "Illimité"
-                    ? `Organisez jusqu'à ${selectedForfait.events} événements privés ou publics.`
+                  {selectedForfait.maxEvents && selectedForfait.maxEvents !== "Illimité"
+                    ? `Organisez jusqu'à ${selectedForfait.maxEvents} événements privés ou publics.`
                     : "Nombre d'événements illimité, sans restriction."}
                 </div>
               </li>
@@ -369,8 +367,8 @@ export default function NosForfaits() {
               <li className="flex items-start gap-3">
                 <Calendar className="text-pink-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
-                  <span className="font-semibold">Durée :</span>{" "}
-                  Ce forfait est actif pendant <span className="font-semibold">{selectedForfait.duration}</span>, avec la possibilité de changer de forfait à tout moment selon vos besoins.
+                  <span className="font-semibold">Durée :</span> Ce forfait est actif pendant{" "}
+                  <span className="font-semibold">{selectedForfait.duration}</span>, avec la possibilité de changer de forfait à tout moment selon vos besoins.
                 </div>
               </li>
 
@@ -379,9 +377,7 @@ export default function NosForfaits() {
                 <Star className="text-yellow-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
                   <span className="font-semibold">Fonctionnalités :</span>{" "}
-                  {selectedForfait.nom === "STARTER"
-                    ? "Vous avez accès aux fonctions de base avec le module personnel."
-                    : "Vous avez toutes les fonctionnalités, incluant le module personnel et restauration."}
+                  {selectedForfait.fonctionnalite}
                 </div>
               </li>
 
@@ -389,11 +385,8 @@ export default function NosForfaits() {
               <li className="flex items-start gap-3">
                 <Rocket className="text-green-500 w-5 h-5 flex-shrink-0 mt-1" />
                 <div>
-                  <span className="font-semibold">Idéal pour :</span>{" "}
-                  {selectedForfait.nom === "STARTER" && "Petits événements privés ou débutants."}
-                  {selectedForfait.nom === "PRO" && "Organisateurs réguliers d'événements de taille moyenne."}
-                  {selectedForfait.nom === "PREMIUM" && "Événements professionnels et groupes étendus."}
-                  {selectedForfait.nom === "GOLD" && "Entreprises ou organisateurs ambitieux cherchant toutes les fonctionnalités."}
+                  <span className="font-semibold">Idéal pour :</span>
+                  {selectedForfait.ideal}
                 </div>
               </li>
             </ul>

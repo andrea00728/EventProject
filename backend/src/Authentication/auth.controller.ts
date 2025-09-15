@@ -62,33 +62,6 @@ export class AuthController {
     }
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Get('status')
-  // getStatus(@Req() req) {
-  //   return {
-  //     isAuthenticated: true,
-  //     user: req.user, // payload JWT décodé
-  //   };
-  // }
-
-  // @UseGuards(JwtAuthGuard)
-  // @Get('status')
-  // async getAuthStatus(@Req() req: Request & { user: JwtPayload }) {
-  //   const user = await this.authService.getStatus(req.user.sub); // Ajout : Appeler getStatus
-  //   console.log('Réponse de /auth/status:', { // Ajout : Log pour débogage
-  //     isAuthenticated: true,
-  //     user: {
-  //       id: user.id,
-  //       name: user.name,
-  //       email: user.email,
-  //       photo: user.photo,
-  //     },
-  //   });
-  //   return {
-  //     isAuthenticated: true,
-  //     user,
-  //   };
-  // }
 
   @UseGuards(JwtAuthGuard)
   @Get('status')
@@ -154,20 +127,25 @@ export class AuthController {
   @Post('register')
   @UseInterceptors(FileInterceptor('photo', {
     storage: diskStorage({
-      destination: './uploads',
+      destination: './Uploads',
       filename: (req, file, callback) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const ext = extname(file.originalname);
         callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-      }
+      },
     }),
-    limits: { fileSize: 20 * 1024 * 1024 } // 20Mo
+    limits: { fileSize: 20 * 1024 * 1024 },
   }))
   async register(@Body() body: any, @UploadedFile() file?: Express.Multer.File) {
     if (!body.name || !body.email || !body.password) {
       throw new BadRequestException('Champs requis manquants');
     }
     return this.authService.registerUser({ ...body, photo: file?.filename || null });
+  }
+
+  @Post('verify-email')
+  async verifyEmail(@Body() body: { email: string; code: string }) {
+    return this.authService.verifyEmail(body.email, body.code);
   }
 
   @Post('login')
