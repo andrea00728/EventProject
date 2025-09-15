@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import PlanSalleAffectation from '../components/planTable/PlanSalleAffectation';
 
 const PublicEvents = () => {
   const [events, setEvents] = useState([]);
@@ -34,6 +35,8 @@ const PublicEvents = () => {
     fetchPublicEvents();
   }, []);
 
+
+
   const openEventModal = (event) => {
     setSelectedEvent(event);
     setIsEventModalOpen(true);
@@ -44,13 +47,15 @@ const PublicEvents = () => {
     setSelectedEvent(null);
   };
 
-  const openRegistrationModal = () => {
+  const openRegistrationModal =async () => {
+   
     setIsRegistrationModalOpen(true);
     setIsEventModalOpen(false);
     setRegistrationStatus(null);
   };
 
   const closeRegistrationModal = () => {
+
     setIsRegistrationModalOpen(false);
     setFormData({ nom: '', prenom: '', email: '' });
   };
@@ -86,15 +91,47 @@ const PublicEvents = () => {
   const [showPlaceModal, setShowPlaceModal] = useState(false);
   const [tables, setTables] = useState([]); // Supposons que vous avez une liste de tables
   const [selectedTable, setSelectedTable] = useState(null);
-  const [places, setPlaces] = useState([]); // Supposons que vous avez une liste de places
+  const [places, setPlaces] = useState([]); 
+  const [selectedPlace, setSelectedPlace] = useState(null);
 
   const handleTableClick = () => {
-    // Ici vous pourriez faire un appel API pour récupérer les tables si ce n'est pas déjà fait
+    
     setShowTableModal(true);
   };
 
+
+    useEffect(() => {
+  const fetchTables = async () => {
+    if (selectedEvent?.id && isRegistrationModalOpen) {
+      try {
+        const response = await getTable_Public(selectedEvent.id);
+        setTables(response); 
+      } catch (error) {
+        console.error("Erreur lors de la récupération des tables :", error);
+      }
+    }
+  };
+
+  fetchTables();
+}, [selectedEvent, isRegistrationModalOpen]);
+
+  useEffect(() => {
+  const fetchPlace = async () => {
+    if (selectedEvent?.id && isRegistrationModalOpen) {
+      try {
+        const response = await getTable_Public(selectedEvent.id);
+        setPlaces(response); 
+      } catch (error) {
+        console.error("Erreur lors de la récupération des places :", error);
+      }
+    }
+  };
+
+  fetchPlace();
+}, [selectedEvent, isRegistrationModalOpen]);
+
   const handlePlaceClick = () => {
-    if (selectedTable?.places?.length > 0) {
+    if (selectedTable?.placeReserve?.length > 0) {
       setPlaces(selectedTable.places); // Ou récupérer les places disponibles pour cette table
       setShowPlaceModal(true);
     }
@@ -106,7 +143,7 @@ const PublicEvents = () => {
   };
 
   const selectPlace = (place) => {
-    // Mettre à jour l'état avec la place sélectionnée
+    setSelectedPlace(place);
     setShowPlaceModal(false);
   };
 
@@ -385,11 +422,12 @@ const PublicEvents = () => {
               <div className='flex flex-col lg:flex-row'>
                 {/* Image Section - Hidden on mobile */}
                 <div className='hidden lg:block lg:w-1/2 bg-gray-100'>
-                  <img
+                  {/* <img
                     src="/images/IMG1.jpg"
                     alt="Événement"
                     className='w-full h-full object-cover max-h-[65vh]'
-                  />
+                  /> */}
+                  <PlanSalleAffectation/>
                 </div>
 
                 {/* Form Section */}
@@ -462,18 +500,7 @@ const PublicEvents = () => {
                         </div>
 
                         {/* Place */}
-                        {selectedTable && (
-                          <div className="flex flex-col gap-2 mt-4">
-                            <label className="text-sm font-semibold text-gray-700 mb-1">Place <span className="text-red-500">*</span></label>
-                            <div
-                              onClick={handlePlaceClick}
-                              className={`border border-gray-300 rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-3 bg-gray-50 focus:ring-2 focus:ring-indigo-200 transition ${selectedTable.places?.length > 0 ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
-                                }`}
-                            >
-                              {selectedEvent.salle?.nom || "Sélectionner une place"}
-                            </div>
-                          </div>
-                        )}
+                      
 
                         {/* Modal pour les tables */}
                         {showTableModal && (
@@ -483,7 +510,7 @@ const PublicEvents = () => {
                                 initial={{ opacity: 0, scale: 0 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0 }}
-                                transition={{ duration: 0.3 }} 
+                                transition={{ duration: 0.3 }}
                                 className="bg-white rounded-lg p-6 w-full max-w-md">
                                 <h2 className="text-xl font-bold mb-4">Liste des tables</h2>
                                 <div className="max-h-96 overflow-y-auto">
@@ -510,36 +537,6 @@ const PublicEvents = () => {
                               </motion.div>
                             </div>
                           </AnimatePresence>
-                        )}
-
-                        {/* Modal pour les places */}
-                        {showPlaceModal && (
-                          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                              <h2 className="text-xl font-bold mb-4">Places disponibles pour {selectedTable.nom}</h2>
-                              <div className="max-h-96 overflow-y-auto">
-                                {places.length > 0 ? (
-                                  places.map((place) => (
-                                    <div
-                                      key={place.id}
-                                      onClick={() => selectPlace(place)}
-                                      className="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
-                                    >
-                                      {place.nom}
-                                    </div>
-                                  ))
-                                ) : (
-                                  <p>Aucune place disponible</p>
-                                )}
-                              </div>
-                              <button
-                                onClick={() => setShowPlaceModal(false)}
-                                className="mt-4 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                              >
-                                Fermer
-                              </button>
-                            </div>
-                          </div>
                         )}
                       </div>
                     </div>
