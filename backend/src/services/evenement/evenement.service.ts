@@ -110,7 +110,7 @@ export class EvenementService {
 async updateEvent(eventId: number, dto: UpdateEventDto, file?: Express.Multer.File): Promise<Evenement> {
   const event = await this.evenementRepository.findOne({
     where: { id: eventId },
-    relations: ['location', 'salle'],
+    relations: ['location', 'salle', 'user'],
   });
 
   if (!event) throw new NotFoundException(`Événement avec ID ${eventId} non trouvé`);
@@ -156,6 +156,21 @@ async updateEvent(eventId: number, dto: UpdateEventDto, file?: Express.Multer.Fi
   }
 
   await this.evenementRepository.save(event);
+
+  const user = await this.userRepo.findOneBy({ id: event?.user?.id });
+  if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+  const notification = this.notificationRepository.create({
+    title: "Modification d'un évènement",
+    message: `${user.name} a modifié l'événement ${event.nom}.`,
+    type: 'warning',
+    date: new Date(),
+  });
+  await this.notificationRepository.save(notification);
+  this.notificationGateway.emitDeleteEventForAdmin({
+    ...notification,
+    date: notification.date.toISOString(),
+  });
 
   return this.evenementRepository.findOneOrFail({
     where: { id: event.id },
