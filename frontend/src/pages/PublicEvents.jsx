@@ -156,6 +156,7 @@ const PublicEvents = () => {
 
   // Fonction pour fermer le modal d'inscription
   const closeRegistrationModal = () => {
+
     setIsRegistrationModalOpen(false);
     setForm({ nom: "", prenom: "", email: "", sex: "", eventId: null });
     setSelectedEventName("");
