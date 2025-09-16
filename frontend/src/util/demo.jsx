@@ -1230,7 +1230,7 @@ export default function DemoPlanSalle() {
           ? 'fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-row gap-3'
           : 'fixed bottom-6 left-6 flex flex-col gap-3'
           } z-50`}>
-            <button
+          <button
             onClick={handleListTablesClick}
             className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
           >
@@ -1258,7 +1258,7 @@ export default function DemoPlanSalle() {
             <Shapes className="w-5 h-5" />
             {!isMobile && <span className="text-sm font-medium">objets</span>}
           </button>
-          
+
           <button
             onClick={handleReset}
             className="bg-gradient-to-br from-red-500 to-rose-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
@@ -1542,7 +1542,7 @@ export default function DemoPlanSalle() {
               <div className="space-y-3">
                 {form.noms.map((nom, index) => (
                   <input
-                                       key={index}
+                    key={index}
                     value={nom}
                     onChange={(e) => handleNomChange(index, e.target.value, 'table')}
                     placeholder={`Table ${index + 1}`}
@@ -2029,6 +2029,168 @@ export default function DemoPlanSalle() {
           </div>
         </div>
       </Modal>
+
+
+      {/* Section Instructions */}
+      <div className=" relative  ">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 via-purple-600/10 to-pink-600/10" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-black text-white mb-6">
+              Comment utiliser l'éditeur de plans
+            </h2>
+            <p className="text-xl text-indigo-200 max-w-3xl mx-auto leading-relaxed">
+              Découvrez toutes les fonctionnalités pour créer votre plan de table parfait en quelques clics
+            </p>
+          </div>
+
+          {/* Instructions Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+            {/* Ajouter des tables */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group">
+              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <MdTableBar className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Créer des tables</h3>
+              <p className="text-indigo-200 text-sm leading-relaxed mb-4">
+                Cliquez sur le bouton "Table" pour ajouter des tables rondes, rectangulaires ou carrées avec la capacité de votre choix.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-indigo-500/20 text-indigo-200 rounded-full text-xs font-medium">Jusqu'à 12 places</span>
+                <span className="px-3 py-1 bg-purple-500/20 text-purple-200 rounded-full text-xs font-medium">5 formes disponibles</span>
+              </div>
+            </div>
+
+            {/* Gérer les invités */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <User className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Ajouter des invités</h3>
+              <p className="text-indigo-200 text-sm leading-relaxed mb-4">
+                Ajoutez vos invités et assignez-les automatiquement aux tables. Déplacez-les en cliquant sur les chaises.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-200 rounded-full text-xs font-medium">Assignment automatique</span>
+                <span className="px-3 py-1 bg-green-500/20 text-green-200 rounded-full text-xs font-medium">Glisser-déposer</span>
+              </div>
+            </div>
+
+            {/* Personnaliser */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group">
+              <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Shapes className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Objets décoratifs</h3>
+              <p className="text-indigo-200 text-sm leading-relaxed mb-4">
+                Ajoutez des éléments décoratifs : buffets, scènes, bars ou créez vos propres formes personnalisées.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-teal-500/20 text-teal-200 rounded-full text-xs font-medium">Formes prédéfinies</span>
+                <span className="px-3 py-1 bg-cyan-500/20 text-cyan-200 rounded-full text-xs font-medium">Dimensions custom</span>
+              </div>
+            </div>
+
+            {/* Déplacer et orienter */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group lg:col-span-2 xl:col-span-1">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Move className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Positionner et orienter</h3>
+              <p className="text-indigo-200 text-sm leading-relaxed mb-4">
+                Faites glisser les éléments pour les repositionner. Utilisez les boutons de rotation pour l'orientation parfaite.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-blue-500/20 text-blue-200 rounded-full text-xs font-medium">Magnétisme intelligent</span>
+                <span className="px-3 py-1 bg-cyan-500/20 text-cyan-200 rounded-full text-xs font-medium">Rotation par pas</span>
+              </div>
+            </div>
+
+            {/* Zoom et navigation */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Plus className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Zoom et vue d'ensemble</h3>
+              <p className="text-indigo-200 text-sm leading-relaxed mb-4">
+                Zoomez pour travailler dans les détails ou prenez du recul pour avoir une vue d'ensemble de votre plan.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-amber-500/20 text-amber-200 rounded-full text-xs font-medium">Zoom 50% à 200%</span>
+                <span className="px-3 py-1 bg-orange-500/20 text-orange-200 rounded-full text-xs font-medium">Responsive</span>
+              </div>
+            </div>
+
+            {/* Liste et gestion */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group">
+              <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <List className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Gestion avancée</h3>
+              <p className="text-indigo-200 text-sm leading-relaxed mb-4">
+                Consultez la liste de toutes vos tables, modifiez les détails et gérez facilement l'ensemble de votre événement.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-violet-500/20 text-violet-200 rounded-full text-xs font-medium">Vue liste</span>
+                <span className="px-3 py-1 bg-purple-500/20 text-purple-200 rounded-full text-xs font-medium">Édition rapide</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tips Section */}
+          <div className="mt-16 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 backdrop-blur-xl border border-white/10 rounded-3xl p-8">
+            <h3 className="text-2xl font-bold text-white mb-6 text-center">Conseils d'utilisation</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="text-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <span className="text-white font-bold text-sm">1</span>
+                </div>
+                <p className="text-indigo-200 text-sm">
+                  <strong className="text-white">Commencez par les tables</strong><br />
+                  Définissez d'abord le nombre et le type de tables avant d'ajouter les invités.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <span className="text-white font-bold text-sm">2</span>
+                </div>
+                <p className="text-indigo-200 text-sm">
+                  <strong className="text-white">Utilisez le zoom</strong><br />
+                  Zoomez pour placer précisément les éléments, dézoomez pour voir l'ensemble.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <span className="text-white font-bold text-sm">3</span>
+                </div>
+                <p className="text-indigo-200 text-sm">
+                  <strong className="text-white">Sauvegardez régulièrement</strong><br />
+                  N'oubliez pas de sauvegarder votre travail pour ne pas perdre vos modifications.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Demo Limitations */}
+          <div className="mt-12 text-center">
+            <div className="inline-flex items-center gap-3 bg-amber-500/10 backdrop-blur-xl border border-amber-400/20 rounded-2xl px-6 py-4">
+              <Clock className="w-5 h-5 text-amber-400" />
+              <div className="text-left">
+                <p className="text-amber-200 font-semibold text-sm">Version de démonstration</p>
+                <p className="text-amber-300 text-xs">
+                  Limitée à {MAX_TABLES} tables, {MAX_GUESTS} invités et {MAX_ELEMENTS} objets décoratifs
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
     </div>
   );
 }

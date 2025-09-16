@@ -138,7 +138,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop:backdrop-blur-md overflow-y-auto h-full w-full flex justify-center items-center p-4">
       <div className={`relative p-6 sm:p-8 border w-full max-w-sm mx-auto shadow-2xl rounded-lg text-center transform transition-all duration-500 ${darkMode ? 'bg-gray-800 text-gray-200 border-gray-700' : 'bg-white text-gray-800 border-gray-200'}`}>
         <p className="mb-6 text-lg font-semibold">{message}</p>
         <div className="flex justify-around space-x-4">

@@ -33,19 +33,19 @@ export const getConditionalSubMenus = (forfait) => {
     {
       path: "/evenement/personnel",
       name: "Personnel",
-      icon: "/invitation.png",
+      icon: "/iconPersonnel.jpg",
       description: "Coordonnez votre équipe et assignez les rôles et tâches",
     },
     {
       path: "/evenement/restauration",
       name: "Restauration",
-      icon: "/invitation.png",
+      icon: "/restauration.jpg",
       description: "Gérez les services de restauration pour vos événements",
     },
     {
       path: "/evenement/dashboard",
       name: "dashboard",
-      icon: "/dashboard_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png",
+      icon: "/dash.webp",
       description: "Vus d'ensemble de votre organisation",
     },
   ];
