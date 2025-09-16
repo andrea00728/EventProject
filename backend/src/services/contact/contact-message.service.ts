@@ -74,6 +74,11 @@ export class ContactService {
     await transporter.sendMail(mailOptions);
     }
 
-
+    async getAllMessagesEmail(email: string): Promise<ContactMessage[]> {
+        return await this.contactMessageRepository.find({
+            where: { email },
+            order: { createdAt: 'DESC' }
+        });
+    }
 
 }

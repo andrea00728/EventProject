@@ -29,4 +29,9 @@ export class ContactController {
         return this.contactService.updateReadStatus(id, isRead);
     }
 
+    @Get('/getAllMessagesForOneEmail')
+    async findAllMessagesForOneEmail(@Body() email: string): Promise<ContactMessage[]> {
+        return await this.contactService.getAllMessagesEmail(email);
+    }
+
 }
