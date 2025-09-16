@@ -118,5 +118,15 @@ export class ContactService {
 
   return await this.contactMessageRepository.save(emailRecord);
 }
+async getConversationByEmail(email: string) {
+  return this.contactMessageRepository.find({
+    where: [
+      { email },          // messages envoyés par l’utilisateur
+      { senderEmail: email } // messages envoyés par le support
+    ],
+    order: { createdAt: 'ASC' }
+  });
+}
+
 
 }
