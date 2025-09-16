@@ -18,6 +18,7 @@ import {
 import io from "socket.io-client";
 import axiosClient from "../../api/axios-client";
 import { url } from "../../api/url";
+import { ArrowLeft } from "lucide-react";
 
 const noScrollbarCSS = `
   .no-scrollbar::-webkit-scrollbar { display: none; }
