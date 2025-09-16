@@ -72,9 +72,6 @@ export class ContactService {
     },
   });
 
-// console.log('Réponse reçue:', { originalMessageId, responseContent });
-
-
   // HTML pour l'email
   const logoPath = path.resolve('assets/images/logo_icone.gif');
   
@@ -117,6 +114,13 @@ export class ContactService {
   });
 
   return await this.contactMessageRepository.save(emailRecord);
+}
+
+async getAllMessagesEmail(email: string): Promise<ContactMessage[]> {
+    return await this.contactMessageRepository.find({
+        where: { email },
+        order: { createdAt: 'DESC' }
+    });
 }
 
 }
