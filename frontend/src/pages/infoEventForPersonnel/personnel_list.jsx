@@ -30,19 +30,19 @@ const PersonnelList = () => {
 
       try {
         // ÉTAPE 1: Récupérer l'ID de l'événement via l'email du personnel
-        const personnelResponse = await fetch(`https://api.mastertable.site/personnel/by-email/${personnelEmail}`);
+        const personnelResponse = await fetch(`http://localhost:3000/personnel/by-email/${personnelEmail}`);
         if (!personnelResponse.ok) throw new Error("Personnel non trouvé.");
         const personnelData = await personnelResponse.json();
         const evenementId = personnelData.evenement?.id;
         if (!evenementId) throw new Error("ID d'événement manquant.");
 
         // ÉTAPE 2: Récupérer les données de l'événement pour l'affichage
-        const eventResponse = await fetch(`https://api.mastertable.site/evenements/${evenementId}`);
+        const eventResponse = await fetch(`http://localhost:3000/evenements/${evenementId}`);
         const event = await eventResponse.json();
         setEventData(event);
 
         // ÉTAPE 3: Récupérer la liste complète du personnel de cet événement
-        const personnelListResponse = await fetch(`https://api.mastertable.site/personnel/event/${evenementId}/personnel`);
+        const personnelListResponse = await fetch(`http://localhost:3000/personnel/event/${evenementId}/personnel`);
         if (!personnelListResponse.ok) throw new Error("Erreur lors de la récupération de la liste.");
         const data = await personnelListResponse.json();
         setDataPers(data);
