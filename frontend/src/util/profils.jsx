@@ -18,7 +18,7 @@ const resolvePhotoSrc = (photo, email, previewImage) => {
     if (isDataUrl(photo)) return photo;
     if (isLikelyBase64(photo)) return `data:image/jpeg;base64,${photo}`;
     if (isHttpUrl(photo)) return photo;
-    const base = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "https://api.mastertable.site";
+    const base = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "http://localhost:3000";
     const path = photo.startsWith("/") ? photo : `/${photo}`;
     return `${base}${path}`;
   }

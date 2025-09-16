@@ -119,7 +119,7 @@ export const AuthModal = ({ isOpen, onClose, isSignIn = false, onError = "" }) =
     setLoading(true);
 
     try {
-      const response = await axios.post('https://api.mastertable.site/auth/verify-email', {
+      const response = await axios.post('http://localhost:3000/auth/verify-email', {
         email: formData.email,
         code: verificationCode,
       });
