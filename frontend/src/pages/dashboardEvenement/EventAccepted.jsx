@@ -225,9 +225,8 @@ const EventAccept = () => {
 
         {notification.show && (
           <div
-            className={`fixed top-4 right-4 max-w-sm w-full p-4 rounded-lg shadow-lg text-white ${
-              notification.type === "success" ? "bg-green-600" : "bg-red-600"
-            }`}
+            className={`fixed top-4 right-4 max-w-sm w-full p-4 rounded-lg shadow-lg text-white ${notification.type === "success" ? "bg-green-600" : "bg-red-600"
+              }`}
             role="alert"
             aria-live="assertive"
           >
@@ -349,17 +348,16 @@ const EventAccept = () => {
                       className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden transform hover:-translate-y-1 h-full flex flex-col"
                     >
                       <div
-                        className={`h-2 bg-gradient-to-r ${
-                          index % 5 === 0
+                        className={`h-2 bg-gradient-to-r ${index % 5 === 0
                             ? "from-blue-500 to-purple-500"
                             : index % 5 === 1
-                            ? "from-purple-500 to-pink-500"
-                            : index % 5 === 2
-                            ? "from-pink-500 to-orange-500"
-                            : index % 5 === 3
-                            ? "from-orange-500 to-amber-500"
-                            : "from-amber-500 to-blue-500"
-                        }`}
+                              ? "from-purple-500 to-pink-500"
+                              : index % 5 === 2
+                                ? "from-pink-500 to-orange-500"
+                                : index % 5 === 3
+                                  ? "from-orange-500 to-amber-500"
+                                  : "from-amber-500 to-blue-500"
+                          }`}
                       ></div>
                       <div className="p-6 relative flex flex-col flex-grow">
                         <div className="mb-6 relative w-full h-48 rounded-lg overflow-hidden border border-slate-200 shadow-sm group-hover:shadow-md transition-shadow duration-300">

@@ -2083,16 +2083,21 @@ export default function DemoPlanSalle() {
               </p>
             </div>
 
-            {/* Déplacer et orienter */}
+            {/* Refresh */}
             <div className="group bg-white shadow-sm border border-gray-200 rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:bg-gray-50">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
-                <Move className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                <RefreshCcw className="w-5 h-5 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Positionnement précis</h3>
-              <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                Déplacez les objets par glisser-déposer et ajustez leur orientation avec précision.
+
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Réinitialisation rapide
+              </h3>
+
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Remettez les objets ou paramètres à leur état initial en un seul clic.
               </p>
             </div>
+
 
             {/* Zoom et navigation */}
             <div className="group bg-white shadow-sm border border-gray-200 rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:bg-gray-50">
