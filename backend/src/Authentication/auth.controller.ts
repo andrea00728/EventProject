@@ -203,4 +203,10 @@ export class AuthController {
       token: updatedData.token, // Ajout : Retourner le nouveau token
     };
   }
+
+  @Get('informationUser')
+  @UseGuards(JwtAuthGuard)
+  async findInformationUser(@Req() req: any): Promise<any> {
+    return this.authService.getInformationUser(req.user.id || req.user.sub);
+  }
 }

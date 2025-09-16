@@ -795,5 +795,15 @@ export class AuthService {
       throw error;
     }
   }
+
+  async getInformationUser(userId){
+    const information =  await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!information) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+
+    return {id: information.id, name: information.name, email: information.email, photo: information.photo, role: information.role, forfaitexpirationdate: information.forfaitexpirationdate};
+  }
   
 }

@@ -1,5 +1,4 @@
-// contact-message.service.ts
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ContactMessage } from '../../entities/ContactMessage';
@@ -11,7 +10,7 @@ export class ContactService {
     constructor(
         @InjectRepository(ContactMessage)
         private readonly contactMessageRepository: Repository<ContactMessage>,
-        private readonly notificationGateway: NotificationGateway,
+        private readonly notificationGateway: NotificationGateway, // Assuming you have a NotificationGateway for real-time notifications
     ) {}
 
     async create(contactData: Partial<ContactMessage>): Promise<ContactMessage> {
@@ -25,12 +24,12 @@ export class ContactService {
 
     async findAll(): Promise<ContactMessage[]> {
         return await this.contactMessageRepository.find({
-            order: { createdAt: 'DESC' },
+            order: { createdAt: 'DESC' }
         });
     }
 
     async delete(id: number) {
-        return await this.contactMessageRepository.delete(id);
+    return await this.contactMessageRepository.delete(id);
     }
 
     async updateReadStatus(id: number, isRead: boolean): Promise<ContactMessage> {
@@ -42,45 +41,44 @@ export class ContactService {
         return this.contactMessageRepository.save(message);
     }
 
-    async sendResponseMessage(to: string, name: string, message: string, subject?: string, attachment?: any): Promise<void> {
-        // Validation des entrées
-        if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
-            throw new BadRequestException('Adresse e-mail invalide.');
-        }
-        if (!message) {
-            throw new BadRequestException('Le message ne peut pas être vide.');
-        }
+    async sendResponseMessage(to: string, name: string, message: string) {
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+        },
+    });
 
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
-            },
-        });
+    const mailOptions = {
+        from: `"MasterTable Support" <${process.env.SMTP_USER}>`,
+        to: to,
+        // replyTo: "support@mastertable.com", // si tu as une adresse officielle
+        subject: `Réponse à votre message - MasterTable`,
+        html: `
+        <div style="font-family: Arial, sans-serif; color: #333; line-height:1.6; max-width:600px; margin:auto; padding:20px; border:1px solid #e0e0e0; border-radius:8px;">
+            <h2 style="color:#4CAF50; text-align:center;">MasterTable</h2>
+            <p>Bonjour <b>${name}</b>,</p>
+            <p>${message}</p>
+            <br>
+            <p style="font-size:14px; color:#555;">Si vous avez d'autres questions, n'hésitez pas à nous contacter en répondant directement à cet e-mail.</p>
+            <hr style="margin:20px 0; border:none; border-top:1px solid #ddd;">
+            <p style="font-size:12px; color:#999; text-align:center;">
+            Cet e-mail a été envoyé automatiquement par <b>MasterTable</b>.<br>
+            Merci de ne pas y répondre directement.
+            </p>
+        </div>
+        `,
+    };
 
-        const mailOptions: nodemailer.SendMailOptions = {
-            from: process.env.SMTP_USER,
-            to,
-            subject: subject || 'Réponse du message MasterTable',
-            html: `<p>Bonjour ${name},</p><p>${message}</p><p>Cordialement,<br>L'équipe MasterTable</p>`,
-        };
-
-        // Ajouter une pièce jointe si fournie
-        if (attachment) {
-            mailOptions.attachments = [
-                {
-                    filename: attachment.name,
-                    content: attachment.data, // Buffer ou stream
-                },
-            ];
-        }
-
-        try {
-            await transporter.sendMail(mailOptions);
-        } catch (error) {
-            console.error('Erreur lors de l\'envoi de l\'e-mail:', error);
-            throw new BadRequestException('Échec de l\'envoi de l\'e-mail.');
-        }
+    await transporter.sendMail(mailOptions);
     }
+
+    async getAllMessagesEmail(email: string): Promise<ContactMessage[]> {
+        return await this.contactMessageRepository.find({
+            where: { email },
+            order: { createdAt: 'DESC' }
+        });
+    }
+
 }

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { getAllManagerEvents } from "../../services/evenementServ";
 import { getUserForfait } from "../../services/forfaitService";
 import {
+  Calendar,
   Crown,
   Gem,
   Handshake,
@@ -15,6 +16,8 @@ import {
   Users,
 } from "lucide-react";
 import { getUserGoal, updateUserGoal } from "../../services/goalService";
+import { getInformationUser } from "../../services/userService";
+import { format } from "date-fns";
 
 const DashboardGlobal = () => {
   const navigate = useNavigate();
@@ -91,9 +94,11 @@ const DashboardGlobal = () => {
         : Math.max(Number(totalEventsAllowed) - eventsCreated, 0);
       const forfaitExpiration = user.forfaitexpirationdate;
       
-      const formattedDate = forfaitExpiration
-        ? new Date(forfaitExpiration).toLocaleDateString("fr-FR")
-        : "N/A";
+      // const formattedDate = forfaitExpiration
+      //   ? new Date(forfaitExpiration).toLocaleDateString("fr-FR")
+      //   : "N/A";
+
+        const informationUser = await getInformationUser();
 
       setDashboardData((prevData) => ({
         ...prevData,
@@ -104,7 +109,7 @@ const DashboardGlobal = () => {
         upcomingEvents: isUnlimited
           ? "Illimité"
           : Math.max(Number(totalEventsAllowed) - eventsCreated, 0),
-        limitForfait: formattedDate,
+        limitForfait: format(informationUser.forfaitexpirationdate, 'dd/MM/yyyy HH:mm'),
       }));
     };
 
@@ -241,7 +246,7 @@ const DashboardGlobal = () => {
           </div>
 
           {/* Date d'expiration du forfait */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-pink-500 hover:shadow-2xl transition-shadow duration-300">
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500 hover:shadow-2xl transition-shadow duration-300">
             <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
               Date d'expiration Forfait
             </h2>
@@ -249,7 +254,7 @@ const DashboardGlobal = () => {
               <span className="text-3xl font-bold text-gray-900">
                 {dashboardData.limitForfait}
               </span>
-              <Users className="w-12 h-12 text-pink-400" strokeWidth={2.5} />
+              <Calendar className="w-12 h-12 text-red-400" strokeWidth={2.5} />
             </div>
             <p className="text-xs text-gray-400 mt-1">
               Événements restants disponibles avec votre forfait actuel.
