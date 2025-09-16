@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Plus, RefreshCcw, User, Box } from "lucide-react";
+import { Plus, RefreshCcw, User, Box, Shapes } from "lucide-react";
 import { useStateContext } from "../../context/ContextProvider";
 import {
   updateTablePosition,
@@ -25,6 +25,7 @@ import TableManipule from "./TableManipule";
 import { Element } from "./Element";
 import CanvasSizeModal from "./CanvaSizeModal";
 import ConfirmationModal from "./Confirmationmodal";
+import { MdTableBar } from "react-icons/md";
 
 
 
@@ -415,7 +416,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white px-3 py-2 lg:px-4 lg:py-3 rounded-2xl shadow-xl flex items-center justify-center lg:justify-start gap-2 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm snap-center flex-shrink-0"
           title="Ajouter des tables"
         >
-          <Plus className="w-5 h-5" />
+          <MdTableBar className="w-5 h-5" />
           <span className="hidden lg:inline text-sm font-medium">Ajouter des tables</span>
         </button>
 
@@ -425,7 +426,7 @@ export default function PlanSalle({ event, tables, setTables, onAddTable, onAddG
           className="bg-gradient-to-br from-teal-500 to-cyan-600 text-white px-3 py-2 lg:px-4 lg:py-3 rounded-2xl shadow-xl flex items-center justify-center lg:justify-start gap-2 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm snap-center flex-shrink-0"
           title="Ajouter des objets"
         >
-          <Box className="w-5 h-5" />
+          <Shapes className="w-5 h-5" />
           <span className="hidden lg:inline text-sm font-medium">Ajouter des objets</span>
         </button>
 
