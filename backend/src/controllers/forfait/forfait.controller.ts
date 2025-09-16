@@ -213,8 +213,8 @@ async redirectToFrontend(
     return this.forfaitService.getRevenusPourcentagesParForfait();
   }
 
-  // stat by lioka
-  @Get('dashboard-charts')
+// stat by lioka
+@Get('dashboard-charts')
 async getDashboardCharts(@Query('period') period: string = '12') {
   console.log('🔥 Route dashboard-charts appelée avec period:', period);
   
