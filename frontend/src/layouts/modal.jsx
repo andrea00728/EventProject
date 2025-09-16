@@ -29,7 +29,7 @@ const Modalist = ({ show, onClose, title, items, onItemClick, onDelete }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black bg-opacity-50 transition-opacity duration-300"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop:backdrop-blur-lg transition-opacity duration-300"
       onClick={onClose}
     >
       <div
