@@ -32,8 +32,8 @@ async googleAuthRedirect(@Req() req, @Res() res: Response) {
     await this.adminService.loginWithGoogleOAuth(user, res);
 
     // Redirection en cas de succès
-    // const redirectUrl = `http://localhost:3000/AdminAccueil`;
-    const redirectUrl = `http://localhost:5173/AdminAccueil`;
+    // const redirectUrl = `https://api.mastertable.site/AdminAccueil`;
+    const redirectUrl = `https://mastertable.site/AdminAccueil`;
     return res.redirect(redirectUrl);
 
   } catch (error) {
@@ -41,8 +41,8 @@ async googleAuthRedirect(@Req() req, @Res() res: Response) {
 
     // Encoder le message d'erreur pour l'URL
     const errorMsg = encodeURIComponent(error.message || 'Erreur lors de la connexion Google');
-    // const redirectUrl = `http://localhost:3000/login-site/super/admin?error=${errorMsg}`;
-    const redirectUrl = `http://localhost:5173/login-site/super/admin?error=${errorMsg}`;
+    // const redirectUrl = `https://api.mastertable.site/login-site/super/admin?error=${errorMsg}`;
+    const redirectUrl = `https://mastertable.site/login-site/super/admin?error=${errorMsg}`;
     return res.redirect(redirectUrl);
   }
 }
