@@ -34,6 +34,8 @@ async create(dto: CreateEventDto): Promise<Evenement> {
       relations: ['forfait', 'evenement']
     });
 
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable');
       if (!salle || salle.location.id !== location.id) {
         throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
       }
