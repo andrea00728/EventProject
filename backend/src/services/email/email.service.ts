@@ -5,16 +5,30 @@ import path from 'path';
 
 @Injectable()
 export class EmailService {
+  private readonly transporter;
   private readonly fromEmail: string;
 
   constructor() {
-    const from = process.env.SENDGRID_FROM_EMAIL;
-    if (!from) throw new Error('SENDGRID_FROM_EMAIL n’est pas défini dans le .env');
-    this.fromEmail = from;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const smtpPort = parseInt(process.env.SMTP_PORT || '465', 10);
 
-    const apiKey = process.env.SENDGRID_API_KEY;
-    if (!apiKey) throw new Error('SENDGRID_API_KEY n’est pas défini dans le .env');
-    sgMail.setApiKey(apiKey);
+    if (!smtpUser || !smtpPass) {
+      throw new Error('❌ SMTP_USER ou SMTP_PASS manquant dans le .env');
+    }
+
+    this.fromEmail = smtpUser;
+
+    this.transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465, // true pour SSL (465), false pour TLS (587)
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
   }
 
   async sendEmail(to: string, subject: string, message: string) {
@@ -39,12 +53,6 @@ export class EmailService {
           </div>
           <h2 style="color:#4CAF50; text-align:center;">MasterTable</h2>
           <p>${message.replace(/\n/g, "<br>")}</p>
-          <br>
-          <p style="font-size:14px; color:#555;">Si vous avez des questions, vous pouvez répondre directement à cet email.</p>
-          <hr style="margin:20px 0; border:none; border-top:1px solid #ddd;">
-          <p style="font-size:12px; color:#999; text-align:center;">
-            Cet email a été envoyé automatiquement par <b>MasterTable</b>.
-          </p>
         </div>
       `,
       attachments: [
