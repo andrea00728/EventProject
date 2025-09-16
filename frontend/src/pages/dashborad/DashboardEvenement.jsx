@@ -716,7 +716,7 @@ export default function DashboardEvenement() {
                                                     <tr>
                                                         <th className="px-4 sm:px-6 md:px-8 py-3 sm:py-5 text-left text-xs font-bold text-blue-600 uppercase tracking-widest border-b border-blue-100">Nom</th>
                                                         <th className="px-4 sm:px-6 md:px-8 py-3 sm:py-5 text-left text-xs font-bold text-blue-600 uppercase tracking-widest border-b border-blue-100">Email</th>
-                                                        <th className="px-4 sm:px-6 md:px-8 py-3 sm:py-5 text-left text-xs font-bold text-blue-600 uppercase tracking-widest border-b border-blue-100">Téléphone</th>
+                                                        
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -729,7 +729,7 @@ export default function DashboardEvenement() {
                                                                 </div>
                                                             </td>
                                                             <td className="px-4 sm:px-6 md:px-8 py-3 sm:py-5 text-gray-600 group-hover:text-gray-700 transition-colors text-sm sm:text-base">{guest.email}</td>
-                                                            <td className="px-4 sm:px-6 md:px-8 py-3 sm:py-5 text-gray-600 group-hover:text-gray-700 transition-colors text-sm sm:text-base">{guest.telephone}</td>
+                                                            
                                                         </tr>
                                                     ))}
                                                 </tbody>
@@ -747,8 +747,8 @@ export default function DashboardEvenement() {
                                                     <tr>
                                                         <th className="px-4 sm:px-6 md:px-8 py-3 sm:py-5 text-left text-xs font-bold text-purple-600 uppercase tracking-widest border-b border-purple-100">Nom</th>
                                                         <th className="px-4 sm:px-6 md:px-8 py-3 sm:py-5 text-left text-xs font-bold text-purple-600 uppercase tracking-widest border-b border-purple-100">Rôle</th>
-                                                        <th className="px-4 sm:px-6 md:px-8 py-3 sm:py-5 text-left text-xs font-bold text-purple-600 uppercase tracking-widest border-b border-purple-100">Téléphone</th>
-                                                        <th className="px-4 sm:px-6 md:px-8 py-3 sm:py-5 text-left text-xs font-bold text-purple-600 uppercase tracking-widest border-b border-purple-100">Statut</th>
+                                                        <th className="px-4 sm:px-6 md:px-8 py-3 sm:py-5 text-left text-xs font-bold text-purple-600 uppercase tracking-widest border-b border-purple-100">Email</th>
+                                                        
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -765,12 +765,8 @@ export default function DashboardEvenement() {
                                                                     {p.role}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-4 sm:px-6 md:px-8 py-3 sm:py-5 text-gray-600 group-hover:text-gray-700 transition-colors text-sm sm:text-base">{p.telephone}</td>
-                                                            <td className="px-4 sm:px-6 md:px-8 py-3 sm:py-5">
-                                                                <span className={`inline-flex items-center px-3 sm:px-4 py-1 sm:py-2 rounded-2xl text-xs font-bold border shadow-sm ${getPersonnelStatutColor(p.statut)}`}>
-                                                                    {p.statut}
-                                                                </span>
-                                                            </td>
+                                                            <td className="px-4 sm:px-6 md:px-8 py-3 sm:py-5 text-gray-600 group-hover:text-gray-700 transition-colors text-sm sm:text-base">{p.email}</td>
+                                                           
                                                         </tr>
                                                     ))}
                                                 </tbody>

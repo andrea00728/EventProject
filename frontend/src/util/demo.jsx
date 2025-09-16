@@ -1230,7 +1230,7 @@ export default function DemoPlanSalle() {
           ? 'fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-row gap-3'
           : 'fixed bottom-6 left-6 flex flex-col gap-3'
           } z-50`}>
-            <button
+          <button
             onClick={handleListTablesClick}
             className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
           >
@@ -1258,7 +1258,7 @@ export default function DemoPlanSalle() {
             <Shapes className="w-5 h-5" />
             {!isMobile && <span className="text-sm font-medium">objets</span>}
           </button>
-          
+
           <button
             onClick={handleReset}
             className="bg-gradient-to-br from-red-500 to-rose-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-white/20 backdrop-blur-sm"
@@ -1542,7 +1542,7 @@ export default function DemoPlanSalle() {
               <div className="space-y-3">
                 {form.noms.map((nom, index) => (
                   <input
-                                       key={index}
+                    key={index}
                     value={nom}
                     onChange={(e) => handleNomChange(index, e.target.value, 'table')}
                     placeholder={`Table ${index + 1}`}
@@ -2029,6 +2029,111 @@ export default function DemoPlanSalle() {
           </div>
         </div>
       </Modal>
+
+
+      {/* Section Instructions */}
+      <section className="relative py-16 lg:py-24 bg-white">
+        {/* Fond avec motif subtil */}
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(180deg,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:50px_50px] opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-100/50 via-blue-100/20 to-indigo-100/20" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* En-tête */}
+          <header className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+              Guide de l'éditeur de plans
+            </h2>
+            <p className="mt-4 text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              Créez des plans de table élégants et personnalisés en quelques étapes simples.
+            </p>
+          </header>
+
+          {/* Grille d'instructions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {/* Ajouter des tables */}
+            <div className="group bg-white shadow-sm border border-gray-200 rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:bg-gray-50">
+              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                <MdTableBar className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Création des tables</h3>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                Ajoutez des tables rondes, rectangulaires ou carrées avec la capacité souhaitée via le bouton "Table".
+              </p>
+            </div>
+
+            {/* Gérer les invités */}
+            <div className="group bg-white shadow-sm border border-gray-200 rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:bg-gray-50">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                <User className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Gestion des invités</h3>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                Importez vos invités et assignez-les automatiquement ou manuellement aux tables via un glisser-déposer.
+              </p>
+            </div>
+
+            {/* Personnaliser */}
+            <div className="group bg-white shadow-sm border border-gray-200 rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:bg-gray-50">
+              <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                <Shapes className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Décoration personnalisée</h3>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                Enrichissez votre plan avec des buffets, scènes, bars ou des formes personnalisées.
+              </p>
+            </div>
+
+            {/* Déplacer et orienter */}
+            <div className="group bg-white shadow-sm border border-gray-200 rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:bg-gray-50">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                <Move className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Positionnement précis</h3>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                Déplacez les objets par glisser-déposer et ajustez leur orientation avec précision.
+              </p>
+            </div>
+
+            {/* Zoom et navigation */}
+            <div className="group bg-white shadow-sm border border-gray-200 rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:bg-gray-50">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                <Plus className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Zoom et navigation</h3>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                Zoomez pour affiner les détails ou dézoomez pour une vue globale de votre plan.
+              </p>
+            </div>
+
+            {/* Liste et gestion */}
+            <div className="group bg-white shadow-sm border border-gray-200 rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:bg-gray-50">
+              <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                <List className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Gestion avancée</h3>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                Consultez et modifiez facilement la liste de vos tables et invités pour une organisation optimale.
+              </p>
+            </div>
+          </div>
+
+
+          {/* Limites de la démo */}
+          <div className="mt-12 text-center">
+            <div className="inline-flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-xl px-6 py-4">
+              <Clock className="w-6 h-6 text-amber-600" />
+              <div className="text-left">
+                <p className="text-amber-900 font-semibold text-sm">Version d'essai</p>
+                <p className="text-amber-700 text-xs">
+                  Limitée à {MAX_TABLES} tables, {MAX_GUESTS} invités et {MAX_ELEMENTS} objets décoratifs.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
     </div>
   );
 }

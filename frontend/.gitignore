@@ -13,7 +13,6 @@ yarn.lock
 dist
 dist-ssr
 *.local
-public
 App.jsx
 
 .env
