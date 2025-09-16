@@ -58,56 +58,78 @@ export class GuestService {
    * @param userId 
    * @returns 
    */
-  async createGuest(dto: CreateInviteDto, eventId: number, userId?: string | null): Promise<Invite> {
-    const evenement = await this.evenementRepository.findOne({ where: { id: eventId } });
-    if (!evenement) {
-      throw new BadRequestException('Événement non trouvé');
-    }
-
-    const userIdForLimitCheck = userId ?? 'public-guest';
-
-    await this.checkInviteLimit(eventId, userIdForLimitCheck, 1);
-
-    const existing = await this.guestRepository.findOne({
-      where: { email: dto.email, event: { id: eventId } },
-    });
-     if (existing) {
-      throw new BadRequestException(`L'email ${dto.email} est déjà utilisé.`);
-    }
-
-    const Existing_personnel = await this.personnelService.findOneByUserEmailAndEvent(dto.email, eventId);
-    if (Existing_personnel){
-      throw new BadRequestException(`L'email ${dto.email} est deja utilisé par un membre du personnel de votre evenement ${evenement.nom}.`);
-    }
-
-    let Existing_user:User |  null = null;
-     if(userId){
-       Existing_user = await this.findOneById(userId);
-     }
-    if(Existing_user && Existing_user.email === dto.email){
-      throw new BadRequestException(`L'email ${dto.email} est votre email.`);
-    }
-
-    const { table, place } = await this.findNextAvailablePlace(eventId);
-
-    const inv = this.guestRepository.create({
-      ...dto,
-      event: evenement,
-      table,
-      place,
-    });
-
-    const saved = await this.guestRepository.save(inv);
-
-    await this.notificationservice.notifyAll(
-      'invite cree avec success',
-      `${saved.nom} ${saved.prenom} a été ajouté comme invité de l'événement ${evenement.nom}`,
-    );
-
-    await this.tableService.updatePlaceReserve(table.id);
-
-    return this.findById(saved.id);
+async createGuest(dto: CreateInviteDto, eventId: number, userId?: string | null): Promise<Invite> {
+  // 1. Fetch event and user data
+  const event = await this.evenementRepository.findOne({ 
+    where: { id: eventId }, 
+    relations: ['user', 'user.forfait'] 
+  });
+  if (!event) {
+    throw new BadRequestException('Événement non trouvé');
   }
+
+  const user = event.user.forfait;
+
+  if (!user) {
+    throw new BadRequestException('L\'organisateur de cet événement n\'a pas de forfait associé.');
+  }
+
+  // 2. Check guest limit
+  const guestCount = await this.guestRepository.count({ where: { event: { id: eventId } } });
+  const maxGuests = user.maxinvites;
+
+  if (maxGuests !== null && guestCount >= parseInt(maxGuests, 10)) {
+    throw new BadRequestException(`La limite d'invités de votre forfait (${maxGuests}) a été atteinte pour cet événement.`);
+  }
+
+  // Rest of the original code
+  const userIdForLimitCheck = userId ?? 'public-guest';
+
+  await this.checkInviteLimit(eventId, userIdForLimitCheck, 1);
+
+  const existing = await this.guestRepository.findOne({
+    where: { email: dto.email, event: { id: eventId } },
+  });
+  if (existing) {
+    throw new BadRequestException(`L'email ${dto.email} est déjà utilisé.`);
+  }
+
+  const existingPersonnel = await this.personnelService.findOneByUserEmailAndEvent(dto.email, eventId);
+  if (existingPersonnel) {
+    throw new BadRequestException(`L'email ${dto.email} est deja utilisé par un membre du personnel de votre evenement ${event.nom}.`);
+  }
+
+  let existingUser: User | null = null;
+  if (userId) {
+    existingUser = await this.findOneById(userId);
+  }
+  if (existingUser && existingUser.email === dto.email) {
+    throw new BadRequestException(`L'email ${dto.email} est votre email.`);
+  }
+
+  const { table, place } = await this.findNextAvailablePlace(eventId);
+
+  const inv = this.guestRepository.create({
+    ...dto,
+    event: event,
+    table,
+    place,
+  });
+
+  const saved = await this.guestRepository.save(inv);
+
+  await this.notificationservice.notifyAll(
+    'invite cree avec success',
+    `${saved.nom} ${saved.prenom} a été ajouté comme invité de l'événement ${event.nom}`,
+  );
+
+  await this.tableService.updatePlaceReserve(table.id);
+
+  return this.findById(saved.id);
+}
+
+
+
 
   // Limite des invités par utilisateur / public
   /**

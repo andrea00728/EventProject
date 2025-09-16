@@ -61,3 +61,8 @@ export const createOneAdmin = async (admin) => {
   const response = await axiosClient.post("/admin", admin);
   return response.data;
 }
+
+export const getInformationUser = async () => {
+  const response = await axiosClient.get(`/auth/informationUser`);
+  return response.data;
+}

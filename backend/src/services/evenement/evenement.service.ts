@@ -1,7 +1,6 @@
-// src/services/evenement/evenement.service.ts
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Repository, LessThanOrEqual, MoreThanOrEqual, Not } from 'typeorm';
 import { Evenement, EventStatus } from 'src/entities/Evenement';
 import { LocationService } from '../localisation-service/localisation-service.service';
 import { User } from 'src/Authentication/entities/auth.entity';
@@ -11,6 +10,7 @@ import { NotificationGateway } from 'src/gateway/notification.gateway';
 import { CreateEventDto, UpdateEventDto } from 'src/dto/CreateEvenementDTO';
 import * as fs from 'fs';
 import { Localisation } from 'src/entities/Location';
+import { file } from 'googleapis/build/src/apis/file';
 import * as path from 'path';
 
 @Injectable()
@@ -27,203 +27,75 @@ export class EvenementService {
     private readonly notificationGateway: NotificationGateway,
   ) {}
 
-  async create(dto: CreateEventDto): Promise<Evenement> {
-    try {
-      const location = await this.locationService.findLocationById(dto.locationId);
-      const salle = await this.locationService.findSalleById(dto.salleId);
-
-      if (!salle || salle.location.id !== location.id) {
-        throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
-      }
-
-      const parsedDate = new Date(dto.date);
-      const parsedDateFin = new Date(dto.date_fin);
-      if (isNaN(parsedDate.getTime()) || isNaN(parsedDateFin.getTime())) {
-        throw new BadRequestException('La date ou la date de fin est invalide');
-      }
-
-      const existingEvent = await this.evenementRepository.findOne({
-        where: {
-          salle: { id: dto.salleId },
-          date: LessThanOrEqual(parsedDateFin),
-          date_fin: MoreThanOrEqual(parsedDate),
-          status: EventStatus.PLANNED,
-        },
-        relations: ['user'],
-      });
-
-      if (existingEvent) {
-        throw new BadRequestException(`Cette salle est déjà réservée pendant cette période`);
-      }
-
-      const user = await this.userRepo.findOneBy({ id: dto.utilisateur_id });
-      if (!user) throw new NotFoundException('Utilisateur introuvable');
-
-      const evenement = this.evenementRepository.create({
-        nom: dto.nom,
-        type: dto.type,
-        theme: dto.theme,
-        date: parsedDate,
-        date_fin: parsedDateFin,
-        location,
-        salle,
-        user,
-        isPublic: dto.isPublic,
-        imageUrl: dto.imageUrl,
-        status: EventStatus.PLANNED,
-      });
-
-      const event = await this.evenementRepository.save(evenement);
-      console.log('Événement créé:', event);
-
-      await this.notificationService.notifyAll(
-        'Nouvel Événement',
-        `Le nouvel Événement ${event.nom} a bien été créé`
-      );
-
-      const notification = this.notificationRepository.create({
-        title: 'Nouvel évènement créé',
-        message: `${user.name} a créé l'événement ${evenement.nom}.`,
-        type: 'info',
-        date: new Date(),
-      });
-      await this.notificationRepository.save(notification);
-      this.notificationGateway.emitNotifEventForAdmin({
-        ...notification,
-        date: notification.date.toISOString(),
-      });
-
-      return event;
-    } catch (error) {
-      console.error('Erreur lors de la création de l\'événement:', error);
-      throw error;
-    }
-  }
-
-  async findOneById(id: number): Promise<Evenement> {
-    const event = await this.evenementRepository.findOne({
-      where: { id },
-      relations: ['user', 'location', 'salle'],
-    });
-    if (!event) throw new NotFoundException(`Événement ID ${id} non trouvé`);
-    return event;
-  }
-
-  async updateEvent(eventId: number, dto: UpdateEventDto, file?: Express.Multer.File): Promise<Evenement> {
-    const event = await this.evenementRepository.findOne({
-      where: { id: eventId },
-      relations: ['location', 'salle', 'user'],
+async create(dto: CreateEventDto): Promise<Evenement> {
+  try {
+    const user = await this.userRepo.findOne({
+      where: { id: dto.utilisateur_id },
+      relations: ['forfait', 'evenement']
     });
 
-    if (!event) throw new NotFoundException(`Événement avec ID ${eventId} non trouvé`);
-
-    if (dto.nom) event.nom = dto.nom;
-    if (dto.type) event.type = dto.type;
-    if (dto.theme) event.theme = dto.theme;
-    if (dto.date && !isNaN(Date.parse(dto.date))) event.date = new Date(dto.date);
-    if (dto.date_fin && !isNaN(Date.parse(dto.date_fin))) event.date_fin = new Date(dto.date_fin);
-    if (dto.isPublic !== undefined) event.isPublic = dto.isPublic;
-    if (dto.status) event.status = dto.status;
-
-    if (file) {
-      if (event.imageUrl) {
-        const oldImagePath = path.join(__dirname, '../../../../Uploads', path.basename(event.imageUrl));
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
-      }
-      event.imageUrl = `/Uploads/${file.filename}`;
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable');
     }
 
-    let location;
-    if (dto.locationId) {
-      location = await this.locationService.findLocationById(Number(dto.locationId));
-      event.location = location;
-    } else {
-      location = event.location;
-    }
-
-    if (dto.salleId) {
-      const salle = await this.locationService.findSalleById(Number(dto.salleId));
-      if (location && salle.location.id !== location.id) {
-        throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
+    // Check event limit based on user's plan
+    if (user.forfait) {
+      const maxEvents = user.forfait.maxevents;
+      if (maxEvents !== null && user.evenement.length >= parseInt(maxEvents, 10)) {
+        throw new BadRequestException(`La limite d'événements de votre forfait (${maxEvents}) a été atteinte.`);
       }
-      event.salle = salle;
     }
 
-    await this.evenementRepository.save(event);
+    const location = await this.locationService.findLocationById(dto.locationId);
+    const salle = await this.locationService.findSalleById(dto.salleId);
 
-    const user = await this.userRepo.findOneBy({ id: event?.user?.id });
-    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (!salle || salle.location.id !== location.id) {
+      throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
+    }
 
-    const notification = this.notificationRepository.create({
-      title: "Modification d'un évènement",
-      message: `${user.name} a modifié l'événement ${event.nom}.`,
-      type: 'warning',
-      date: new Date(),
-    });
-    await this.notificationRepository.save(notification);
-    this.notificationGateway.emitDeleteEventForAdmin({
-      ...notification,
-      date: notification.date.toISOString(),
-    });
+    const parsedDate = new Date(dto.date);
+    const parsedDateFin = new Date(dto.date_fin);
+    if (isNaN(parsedDate.getTime()) || isNaN(parsedDateFin.getTime())) {
+      throw new BadRequestException('La date ou la date de fin est invalide');
+    }
 
-    return this.evenementRepository.findOneOrFail({
-      where: { id: event.id },
-      relations: ['location', 'salle'],
-    });
-  }
-
-  async cancelEvent(id: number, userId: string): Promise<Evenement> {
-    const event = await this.evenementRepository.findOne({
-      where: { id, user: { id: userId } },
+    const existingEvent = await this.evenementRepository.findOne({
+      where: {
+        salle: { id: dto.salleId },
+        date: LessThanOrEqual(parsedDateFin),
+        date_fin: MoreThanOrEqual(parsedDate),
+      },
       relations: ['user'],
     });
 
-    if (!event) {
-      throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de l'annuler`);
+    if (existingEvent) {
+      throw new BadRequestException(`Cette salle est déjà réservée pendant cette période`);
     }
 
-    event.status = EventStatus.CANCELED;
-    await this.evenementRepository.save(event);
+    const evenement = this.evenementRepository.create({
+      nom: dto.nom,
+      type: dto.type,
+      theme: dto.theme,
+      date: parsedDate,
+      date_fin: parsedDateFin,
+      location,
+      salle,
+      user,
+      isPublic: dto.isPublic,
+      imageUrl: dto.imageUrl,
+    });
 
-    const user = await this.userRepo.findOneBy({ id: userId });
-    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    const event = await this.evenementRepository.save(evenement);
+    console.log('Événement créé:', event);
+
+    await this.notificationService.notifyAll(
+      'Nouvel Événement',
+      `Le nouvel Événement ${event.nom} a bien été créé`
+    );
 
     const notification = this.notificationRepository.create({
-      title: "Annulation d'un évènement",
-      message: `${user.name} a annulé l'événement ${event.nom}.`,
-      type: 'warning',
-      date: new Date(),
-    });
-    await this.notificationRepository.save(notification);
-    this.notificationGateway.emitNotifEventForAdmin({
-      ...notification,
-      date: notification.date.toISOString(),
-    });
-
-    return event;
-  }
-
-  async restoreEvent(id: number, userId: string): Promise<Evenement> {
-    const event = await this.evenementRepository.findOne({
-      where: { id, user: { id: userId } },
-      relations: ['user'],
-    });
-
-    if (!event) {
-      throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de le restaurer`);
-    }
-
-    event.status = EventStatus.PLANNED;
-    await this.evenementRepository.save(event);
-
-    const user = await this.userRepo.findOneBy({ id: userId });
-    if (!user) throw new NotFoundException('Utilisateur introuvable');
-
-    const notification = this.notificationRepository.create({
-      title: "Restauration d'un évènement",
-      message: `${user.name} a restauré l'événement ${event.nom}.`,
+      title: 'Nouvel évènement créé',
+      message: `${user.name} a créé l'événement ${evenement.nom}.`,
       type: 'info',
       date: new Date(),
     });
@@ -234,7 +106,101 @@ export class EvenementService {
     });
 
     return event;
+  } catch (error) {
+    console.error('Erreur lors de la création de l\'événement:', error);
+    throw error;
   }
+}
+
+  async findOneById(id: number): Promise<Evenement> {
+    const event = await this.evenementRepository.findOne({
+      where: { id },
+      relations: ['user', 'location', 'salle'],
+    });
+    if (!event) throw new NotFoundException(`Événement ID ${id} non trouvé`);
+    return event;
+  }
+
+async updateEvent(eventId: number, dto: UpdateEventDto, file?: Express.Multer.File): Promise<Evenement> {
+  const event = await this.evenementRepository.findOne({
+    where: { id: eventId },
+    relations: ['location', 'salle', 'user'],
+  });
+
+  if (!event) throw new NotFoundException(`Événement avec ID ${eventId} non trouvé`);
+
+  // Mise à jour des champs simples
+  if (dto.nom) event.nom = dto.nom;
+  if (dto.type) event.type = dto.type;
+  if (dto.theme) event.theme = dto.theme;
+  if (dto.date && !isNaN(Date.parse(dto.date))) event.date = new Date(dto.date);
+  if (dto.date_fin && !isNaN(Date.parse(dto.date_fin))) event.date_fin = new Date(dto.date_fin);
+  if (dto.isPublic !== undefined) event.isPublic = dto.isPublic;
+
+  // Gestion de l'image
+  if (file) {
+    // Supprimer l'ancienne photo si elle existe
+    if (event.imageUrl) {
+      const oldImagePath = path.join(process.cwd(), 'uploads', path.basename(event.imageUrl));
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+      }
+    }
+
+    // Mettre à jour avec la nouvelle photo
+    event.imageUrl = `/uploads/${file.filename}`;
+  }
+
+  // Gestion du lieu
+  let location;
+  if (dto.locationId) {
+    location = await this.locationService.findLocationById(Number(dto.locationId));
+    event.location = location;
+  } else {
+    location = event.location;
+  }
+
+  // Gestion de la salle
+  if (dto.salleId) {
+    const salle = await this.locationService.findSalleById(Number(dto.salleId));
+    if (location && salle.location.id !== location.id) {
+      throw new BadRequestException('La salle ne correspond pas au lieu sélectionné');
+    }
+    event.salle = salle;
+  }
+
+  await this.evenementRepository.save(event);
+
+  const user = await this.userRepo.findOneBy({ id: event?.user?.id });
+  if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+  const notification = this.notificationRepository.create({
+    title: "Modification d'un évènement",
+    message: `${user.name} a modifié l'événement ${event.nom}.`,
+    type: 'warning',
+    date: new Date(),
+  });
+  await this.notificationRepository.save(notification);
+  this.notificationGateway.emitDeleteEventForAdmin({
+    ...notification,
+    date: notification.date.toISOString(),
+  });
+
+  return this.evenementRepository.findOneOrFail({
+    where: { id: event.id },
+    relations: ['location', 'salle'],
+  });
+}
+
+
+
+// private async handleImageUpload(file: Express.Multer.File): Promise<string | null> {
+//   if (!file) return null;
+//   const fileName = `${Date.now()}-${file.originalname}`;
+//   const uploadPath = `../../../Uploads/events/${fileName}`; // Corriger le chemin
+//   await fs.writeFile(uploadPath, file.buffer);
+//   return `/Uploads/events/${fileName}`; // Retourner le chemin relatif
+// }
 
   async findAll(): Promise<Evenement[]> {
     return this.evenementRepository.find({
@@ -254,15 +220,8 @@ export class EvenementService {
 
   async findByUser(utilisateur_id: string): Promise<Evenement[]> {
     return this.evenementRepository.find({
-      where: { user: { id: utilisateur_id }, status: EventStatus.PLANNED },
+      where: { user: { id: utilisateur_id } },
       relations: ['user', 'location', 'salle', 'tables', 'invites'],
-    });
-  }
-
-  async findHiddenEventsByUser(utilisateur_id: string): Promise<Evenement[]> {
-    return this.evenementRepository.find({
-      where: { user: { id: utilisateur_id }, status: EventStatus.CANCELED },
-      relations: ['user', 'location', 'salle'],
     });
   }
 
@@ -274,50 +233,54 @@ export class EvenementService {
     });
   }
 
-  async deleteEvent(id: number, userId: string): Promise<{ message: string }> {
-    try {
-      const event = await this.evenementRepository.findOne({
-        where: { id, user: { id: userId } },
-        relations: ['user', 'tables', 'invites'],
-      });
-      if (!event) {
-        throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de le supprimer`);
-      }
-
-      const user = await this.userRepo.findOneBy({ id: userId });
-      if (!user) throw new NotFoundException('Utilisateur introuvable');
-
-      if (event.imageUrl) {
-        const imagePath = path.join(process.cwd(), event.imageUrl.replace('/','\\'));
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath);
-        }
-      }
-
-      const notification = this.notificationRepository.create({
-        title: "Suppression d'un évènement",
-        message: `${user.name} a supprimé l'événement ${event.nom}.`,
-        type: 'warning',
-        date: new Date(),
-      });
-      await this.notificationRepository.save(notification);
-      this.notificationGateway.emitDeleteEventForAdmin({
-        ...notification,
-        date: notification.date.toISOString(),
-      });
-
-      await this.evenementRepository.manager.delete('Invite', { event: { id } });
-      await this.evenementRepository.manager.delete('TableEvent', { event: { id } });
-
-      await this.evenementRepository.remove(event);
-
-      console.log(`Événement ID ${id} supprimé`);
-      return { message: 'Événement supprimé avec succès' };
-    } catch (error) {
-      console.error('Erreur lors de la suppression de l\'événement:', error);
-      throw error;
+async deleteEvent(id: number, userId: string): Promise<{ message: string }> {
+  try {
+    const event = await this.evenementRepository.findOne({
+      where: { id, user: { id: userId } },
+      relations: ['user', 'tables', 'invites'],
+    });
+    if (!event) {
+      throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de le supprimer`);
     }
+
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    // --- Supprimer l'image associée ---
+    if (event.imageUrl) {
+      const imagePath = path.join(process.cwd(), event.imageUrl.replace('/','\\'));
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
+    // Création de la notification
+    const notification = this.notificationRepository.create({
+      title: "Suppression d'un évènement",
+      message: `${user.name} a supprimé l'événement ${event.nom}.`,
+      type: 'warning',
+      date: new Date(),
+    });
+    await this.notificationRepository.save(notification);
+    this.notificationGateway.emitDeleteEventForAdmin({
+      ...notification,
+      date: notification.date.toISOString(),
+    });
+
+    // Suppression des relations
+    await this.evenementRepository.manager.delete('Invite', { event: { id } });
+    await this.evenementRepository.manager.delete('TableEvent', { event: { id } });
+
+    // Suppression de l'événement
+    await this.evenementRepository.remove(event);
+
+    console.log(`Événement ID ${id} supprimé`);
+    return { message: 'Événement supprimé avec succès' };
+  } catch (error) {
+    console.error('Erreur lors de la suppression de l\'événement:', error);
+    throw error;
   }
+}
 
   async findManagerEvents(utilisateur_id: string): Promise<Evenement[]> {
     return this.evenementRepository.find({
@@ -332,7 +295,7 @@ export class EvenementService {
 
   async findPublicEvents(): Promise<Evenement[]> {
     return this.evenementRepository.find({
-      where: { isPublic: true, status: EventStatus.PLANNED },
+      where: { isPublic: true },
       relations: ['location', 'salle', 'tables', 'invites', 'user'],
       order: { date: 'ASC' },
     });
@@ -349,11 +312,11 @@ export class EvenementService {
     const total = await this.evenementRepository.count();
 
     const passes = await this.evenementRepository.count({
-      where: { date_fin: LessThanOrEqual(now), status: EventStatus.COMPLETED },
+      where: { date_fin: LessThanOrEqual(now) },
     });
 
     const avenir = await this.evenementRepository.count({
-      where: { date_fin: MoreThanOrEqual(now), status: EventStatus.PLANNED },
+      where: { date_fin: MoreThanOrEqual(now) },
     });
 
     const eventTypeStats = await this.evenementRepository
@@ -375,4 +338,107 @@ export class EvenementService {
 
     return { total, passes, avenir, eventTypeStat };
   }
+  
+  async cancelEvent(id: number, userId: string): Promise<Evenement> {
+  try {
+    const event = await this.evenementRepository.findOne({
+      where: { id, user: { id: userId } },
+      relations: ['user'],
+    });
+
+    if (!event) {
+      throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de le modifier`);
+    }
+
+    if (event.status === EventStatus.CANCELED) {
+      throw new BadRequestException('Cet événement est déjà annulé');
+    }
+
+    event.status = EventStatus.CANCELED;
+    const updatedEvent = await this.evenementRepository.save(event);
+
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    const notification = this.notificationRepository.create({
+      title: "Annulation d'un événement",
+      message: `${user.name} a annulé l'événement ${event.nom}.`,
+      type: 'warning',
+      date: new Date(),
+    });
+    await this.notificationRepository.save(notification);
+    this.notificationGateway.emitNotifEventForAdmin({
+      ...notification,
+      date: notification.date.toISOString(),
+    });
+
+    return updatedEvent;
+  } catch (error) {
+    console.error("Erreur lors de l'annulation de l'événement:", error);
+    throw error;
+  }
+}
+
+async restoreEvent(id: number, userId: string): Promise<Evenement> {
+  try {
+    const event = await this.evenementRepository.findOne({
+      where: { id, user: { id: userId } },
+      relations: ['user', 'salle'],
+    });
+
+    if (!event) {
+      throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de le modifier`);
+    }
+
+    if (event.status !== EventStatus.CANCELED) {
+      throw new BadRequestException("Cet événement n'est pas annulé");
+    }
+
+    const parsedDate = new Date(event.date);
+    const parsedDateFin = new Date(event.date_fin);
+    const conflictingEvent = await this.evenementRepository.findOne({
+      where: {
+        salle: { id: event.salle.id },
+        date: LessThanOrEqual(parsedDateFin),
+        date_fin: MoreThanOrEqual(parsedDate),
+        status: Not(EventStatus.CANCELED),
+      },
+    });
+
+    if (conflictingEvent) {
+      throw new BadRequestException('La salle est déjà réservée pour cette période');
+    }
+
+    event.status = EventStatus.PLANNED;
+    const updatedEvent = await this.evenementRepository.save(event);
+
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    const notification = this.notificationRepository.create({
+      title: "Restauration d'un événement",
+      message: `${user.name} a restauré l'événement ${event.nom}.`,
+      type: 'info',
+      date: new Date(),
+    });
+    await this.notificationRepository.save(notification);
+    this.notificationGateway.emitNotifEventForAdmin({
+      ...notification,
+      date: notification.date.toISOString(),
+    });
+
+    return updatedEvent;
+  } catch (error) {
+    console.error("Erreur lors de la restauration de l'événement:", error);
+    throw error;
+  }
+}
+
+async findHiddenEventsByUser(userId: string): Promise<Evenement[]> {
+  return this.evenementRepository.find({
+    where: { user: { id: userId }, status: EventStatus.CANCELED },
+    relations: ['user', 'location', 'salle'],
+  });
+}
+  
 }

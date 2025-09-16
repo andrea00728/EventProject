@@ -1,4 +1,3 @@
-// src/controllers/evenement.controller.ts
 import {
   Controller,
   Post,
@@ -14,7 +13,6 @@ import {
   UseInterceptors,
   Put,
   NotFoundException,
-  ForbiddenException,
   ParseIntPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -119,6 +117,9 @@ export class EvenementController {
     @Body() dto: UpdateEventDto,
     @UploadedFile() imageFile?: Express.Multer.File,
   ) {
+    if (imageFile) {
+      dto.imageUrl = `/Uploads/${imageFile.filename}`;
+    }
     return this.evenementService.updateEvent(id, dto, imageFile);
   }
 
@@ -160,7 +161,7 @@ export class EvenementController {
 
   @Get('/me/hidden')
   @UseGuards(AuthGuard('jwt'))
-  async findHiddenUserEvents(@Req() req: any): Promise<Evenement[]> {
+  async findHiddenEvents(@Req() req: any): Promise<Evenement[]> {
     const userIdFromToken = req.user?.sub;
     if (!userIdFromToken) {
       throw new UnauthorizedException('Utilisateur non authentifié');
