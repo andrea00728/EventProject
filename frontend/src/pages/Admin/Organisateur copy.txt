@@ -382,13 +382,13 @@ export default function Organisateur() {
     fetchData();
 
     // const userId = await getUserIdForToken(token);
-    // const socket = io("http://localhost:3000", {
+    // const socket = io("https://api.mastertable.site", {
     //   auth: {
     //     userId: userId, // très important : doit être l’ID réel de l’organisateur
     //   },
     // });
 
-    const socket = io("http://localhost:3000", {
+    const socket = io("https://api.mastertable.site", {
       auth: {
         userId: "455b0bed-dd7f-4214-a5dd-5a1ebb66de67", // Remplace par un ID réel, ex: "admin-1"
       },

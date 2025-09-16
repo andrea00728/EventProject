@@ -1,4 +1,4 @@
-export const getImageUrl = (imagePath, apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000') => {
+export const getImageUrl = (imagePath, apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.mastertable.site') => {
   if (!imagePath) {
     console.warn('Aucun chemin d\'image fourni');
     return 'https://placehold.co/300x150?text=Aucune+image';
