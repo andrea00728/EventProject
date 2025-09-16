@@ -1,4 +1,3 @@
-// frontend/EventAccept.tsx
 import React, { useState, useEffect, useCallback } from "react";
 import { getMyEvents, updateEvent, cancelEvent, restoreEvent, getHiddenEvents } from "../../services/evenementServ";
 import { useStateContext } from "../../context/ContextProvider";
@@ -12,7 +11,7 @@ const EventAccept = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isRestoring, setIsRestoring] = useState(false); // Nouvel état pour le chargement de la restauration
+  const [isRestoring, setIsRestoring] = useState(false);
   const [showHiddenEvents, setShowHiddenEvents] = useState(false);
   const [error, setError] = useState(null);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -23,7 +22,6 @@ const EventAccept = () => {
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-  // Utilitaire pour afficher les notifications
   const showNotification = useCallback((message, type) => {
     setNotification({ show: true, message, type });
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
@@ -44,7 +42,9 @@ const EventAccept = () => {
     try {
       const data = await getMyEvents();
       console.log("Événements récupérés:", data);
-      setEvents(data);
+      // Filtrer les événements pour exclure ceux avec status 'canceled'
+      const filteredEvents = data.filter((event) => event.status !== "canceled");
+      setEvents(filteredEvents);
       setError(null);
     } catch (error) {
       console.error("Erreur lors de la récupération des événements:", error);
@@ -115,7 +115,12 @@ const EventAccept = () => {
 
     try {
       await cancelEvent(eventToCancel);
+      // Retirer l'événement annulé de la liste principale
       setEvents(events.filter((event) => event.id !== eventToCancel));
+      // Rafraîchir la liste des événements annulés si elle est affichée
+      if (showHiddenEvents) {
+        await fetchHiddenEvents();
+      }
       showNotification("Événement annulé avec succès", "success");
     } catch (error) {
       console.error("Erreur lors de l'annulation de l'événement:", error);
@@ -124,7 +129,7 @@ const EventAccept = () => {
       setIsCancelModalOpen(false);
       setEventToCancel(null);
     }
-  }, [eventToCancel, events, showNotification]);
+  }, [eventToCancel, events, showHiddenEvents, showNotification]);
 
   const closeModalConfirm = () => {
     setIsCancelModalOpen(false);
@@ -142,7 +147,9 @@ const EventAccept = () => {
     setIsRestoring(true);
     try {
       await restoreEvent(eventToRestore);
+      // Retirer l'événement restauré de la liste des événements annulés
       setHiddenEvents(hiddenEvents.filter((event) => event.id !== eventToRestore));
+      // Rafraîchir la liste principale pour inclure l'événement restauré
       await fetchEvents();
       showNotification("Événement restauré avec succès", "success");
     } catch (error) {
@@ -534,7 +541,6 @@ const EventAccept = () => {
           />
         )}
 
-        {/* Cancel Confirmation Modal */}
         {isCancelModalOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title">
             <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
@@ -562,7 +568,6 @@ const EventAccept = () => {
           </div>
         )}
 
-        {/* Restore Confirmation Modal */}
         {isRestoreModalOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-labelledby="restore-modal-title">
             <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
