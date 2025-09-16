@@ -46,7 +46,15 @@ export class ContactController {
     ): Promise<ContactMessage> {
     console.log('API respond appelée:', { originalMessageId, responseContent }); // debug
     return await this.contactService.sendResponseMessage(originalMessageId, responseContent);
-}
+ }
+
+    @Get('email/:email')
+    async getConversation(@Param('email') email: string): Promise<ContactMessage[]> {
+    return await this.contactService.getConversationByEmail(email);
+    }
+
+
+
 
     @Get('/getAllMessagesForOneEmail')
     async findAllMessagesForOneEmail(@Body() email: string): Promise<ContactMessage[]> {
