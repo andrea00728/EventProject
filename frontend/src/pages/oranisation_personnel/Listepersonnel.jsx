@@ -513,12 +513,6 @@ export default function ListePersonnel({ eventId }) {
                       scope="col"
                       className="px-6 py-4 text-left text-sm font-bold text-slate-800"
                     >
-                      Statut
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-4 text-left text-sm font-bold text-slate-800"
-                    >
                       Actions
                     </th>
                   </tr>
@@ -543,14 +537,6 @@ export default function ListePersonnel({ eventId }) {
                           )}`}
                         >
                           {generateRoleLabel(p.role)}
-                        </span>
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm">
-                        <span
-                          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${statusLabels[p.status]?.style || "bg-slate-100 text-slate-800"
-                            }`}
-                        >
-                          {statusLabels[p.status]?.label || p.status}
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm">
