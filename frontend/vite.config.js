@@ -10,7 +10,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/forfait': {
-        target: 'https://api.mastertable.site',
+        target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
         bypass: (req) => {
@@ -20,7 +20,7 @@ export default defineConfig({
         },
       },
       '/auth': {
-        target: 'https://api.mastertable.site',
+        target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
       },

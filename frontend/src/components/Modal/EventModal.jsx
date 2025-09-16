@@ -6,7 +6,7 @@ import L from 'leaflet';
 import { url } from '../../api/url';
 
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.mastertable.site';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 // Configuration de l'icône personnalisée pour le marqueur de la carte
 const blueIcon = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',

@@ -47,7 +47,7 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
     console.log("Body envoyé au backend:", body); // debug
 
     try {
-      const res = await fetch("https://api.mastertable.site/contact_messages/respond", {
+      const res = await fetch("http://localhost:3000/contact_messages/respond", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
