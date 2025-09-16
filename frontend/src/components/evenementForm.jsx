@@ -872,28 +872,28 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                   </button>
                 </>
               ) : (
-      <div className="flex flex-col items-center justify-center text-gray-400">
-        <MdImage size={40} />
-        <p className="mt-2 text-sm">Aucune image sélectionnée</p>
-        <button
-          type="button"
-          className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
-          onClick={() => document.getElementById("image-upload").click()}
-        >
-          Ajouter une image
-        </button>
-      </div>
-    )}
-    <input
-      id="image-upload"
-      type="file"
-      accept="image/*"
-      onChange={handleImageChange}
-      className="hidden"
-    />
-  </div>
-  <p className="text-xs text-gray-500">Formats acceptés : JPG, PNG, GIF (max 5 Mo)</p>
-</div>
+                <div className="flex flex-col items-center justify-center text-gray-400">
+                  <MdImage size={40} />
+                  <p className="mt-2 text-sm">Aucune image sélectionnée</p>
+                  <button
+                    type="button"
+                    className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                    onClick={() => document.getElementById("image-upload").click()}
+                  >
+                    Ajouter une image
+                  </button>
+                </div>
+              )}
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </div>
+            <p className="text-xs text-gray-500">Formats acceptés : JPG, PNG, GIF (max 5 Mo)</p>
+          </div>
           <div className="col-span-1 sm:col-span-2 mt-4 flex flex-col sm:flex-row gap-4">
             <button
               type="submit"
