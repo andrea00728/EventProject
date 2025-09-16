@@ -1,10 +1,7 @@
-import {
-  Injectable,
-  BadRequestException,
-  InternalServerErrorException,
-  ForbiddenException,
-} from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
+import { Injectable, BadRequestException, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
+import sgMail from '@sendgrid/mail';
+import nodemailer from "nodemailer";
+import path from 'path';
 
 @Injectable()
 export class EmailService {
@@ -35,37 +32,39 @@ export class EmailService {
   }
 
   async sendEmail(to: string, subject: string, message: string) {
-    if (!to || !message) {
-      throw new BadRequestException('Destinataire et message requis.');
-    }
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
 
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!regex.test(to)) {
-      throw new BadRequestException(`Email invalide: ${to}`);
-    }
+    const logoPath = path.resolve('assets/images/logo_icone.gif');
 
     const mailOptions = {
-      from: this.fromEmail,
+      from: `"MasterTable Support" <${process.env.SMTP_USER}>`,
       to,
-      subject: subject || 'Réponse à votre message',
-      text: message,
-      html: `<p>${message.replace(/\n/g, '<br>')}</p>`,
+      subject: subject || "Réponse à votre message - MasterTable",
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height:1.6; max-width:600px; margin:auto; padding:20px; border:1px solid #e0e0e0; border-radius:8px;">
+          <div style="text-align:center; margin-bottom:20px;">
+            <img src="cid:logoMasterTable" alt="MasterTable Logo" style="max-width:150px;"/>
+          </div>
+          <h2 style="color:#4CAF50; text-align:center;">MasterTable</h2>
+          <p>${message.replace(/\n/g, "<br>")}</p>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: "logo.png",
+          path: logoPath, 
+          cid: "logoMasterTable",   // doit correspondre au src="cid:logoMasterTable"
+        },
+      ],
     };
 
-    try {
-      console.log('📨 Envoi email via SMTP:', mailOptions);
-      await this.transporter.sendMail(mailOptions);
-      return { success: true, message: 'Email envoyé ✅' };
-    } catch (err: any) {
-      console.error('❌ Erreur SMTP:', err);
-
-      if (err.code === 'EAUTH') {
-        throw new ForbiddenException(
-          'Authentification SMTP échouée. Vérifie SMTP_USER / SMTP_PASS.',
-        );
-      }
-
-      throw new InternalServerErrorException('Impossible d’envoyer l’email.');
-    }
+    await transporter.sendMail(mailOptions);
+    console.log("✅ Email envoyé avec logo intégré à", to);
   }
 }

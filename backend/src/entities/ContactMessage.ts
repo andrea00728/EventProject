@@ -11,8 +11,11 @@ export class ContactMessage {
     @Column()
     lastName: string;
 
-    @Column()
+    @Column() // email de l'utilisateur
     email: string;
+
+    @Column({ nullable: true }) // email de l'expéditeur (support)
+    senderEmail: string;
 
     @Column({ nullable: true })
     phone: string;
@@ -20,8 +23,11 @@ export class ContactMessage {
     @Column('text')
     message: string;
 
-    @Column({ default: false })   // <-- Nouveau champ pour marquer la lecture
+    @Column({ default: false })   // lecture du message
     isRead: boolean;
+
+    @Column({ default: false })   // indique si c'est un email envoyé
+    isSent: boolean;
 
     @CreateDateColumn()
     createdAt: Date;
