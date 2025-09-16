@@ -21,6 +21,12 @@ export enum EventType {
   AUTRE = 'autre',
 }
 
+export enum EventStatus {
+  PLANNED = 'planned',
+  CANCELED = 'canceled',
+  COMPLETED = 'completed',
+}
+
 export class CreateEventDto {
   @IsUUID()
   utilisateur_id: string;
@@ -106,4 +112,8 @@ export class UpdateEventDto {
   @IsOptional()
   @IsString()
   imageUrl?: string | null;
+
+  @IsOptional()
+  @IsEnum(EventStatus)
+  status?: EventStatus;
 }

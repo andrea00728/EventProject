@@ -1,4 +1,3 @@
-
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
@@ -18,18 +17,16 @@ import { NotificationGateway } from 'src/gateway/notification.gateway';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { Admin } from 'src/entities/Admin';
 
-
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User,Personnel, Evenement,Forfait,NotificationEntity,ContactMessage , Admin]),
+    TypeOrmModule.forFeature([User, Personnel, Evenement, Forfait, NotificationEntity, ContactMessage, Admin]),
     RedisModule.forRoot({
-      config:{
-        host:'localhost',
-        port:6379,
+      config: {
+        host: 'localhost',
+        port: 6379,
       },
     }),
     PassportModule.register({ defaultStrategy: 'jwt' }),
-
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'andreanadjasylvanoilaina',
       signOptions: { expiresIn: '60m' },

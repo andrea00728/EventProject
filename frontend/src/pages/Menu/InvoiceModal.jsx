@@ -2,8 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import jsPDF from 'jspdf';
 import PropTypes from 'prop-types';
 import FocusTrap from 'focus-trap-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useStateContext } from '../../context/ContextProvider';
 import axiosClient from '../../api/axios-client';
+import { Loader2, X, CheckCircle, AlertCircle, Download } from 'lucide-react';
 
 const InvoiceModal = ({
   isOpen,
@@ -64,22 +66,21 @@ const InvoiceModal = ({
         setInviteExists(true);
         setSuccess('Invité existant pour cet événement.');
       } else {
-        await axiosClient.post(
-          `/guests/${eventId}`,
-          {
-            nom: 'Client invité',
-            prenom: 'Automatique',
-            email,
-            sex: 'M',
-          }
-        );
+        await axiosClient.post(`/guests/${eventId}`, {
+          nom: 'Client invité',
+          prenom: 'Automatique',
+          email,
+          sex: 'M',
+        });
         setInviteExists(false);
         setSuccess('Nouvel invité enregistré avec succès.');
       }
 
       setIsEmailChecked(true);
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Erreur lors de la vérification ou création de l\'invité.';
+      const errorMessage =
+        err.response?.data?.message ||
+        "Erreur lors de la vérification ou création de l'invité.";
       setError(errorMessage);
       setIsEmailChecked(false);
     } finally {
@@ -93,7 +94,7 @@ const InvoiceModal = ({
       return;
     }
     if (!isEmailChecked) {
-      setError('Veuillez vérifier l\'email avant de valider.');
+      setError("Veuillez vérifier l'email avant de valider.");
       return;
     }
 
@@ -103,30 +104,28 @@ const InvoiceModal = ({
     setError(null);
 
     try {
-      await axiosClient.post(
-        `/orders`,
-        {
-          tableId,
-          items: cart.map((item) => ({
-            menuItemId: item.id,
-            quantity: item.quantity,
-          })),
-          nom: 'Client invité',
-          email,
-          slug: crypto.randomUUID(),
-        }
-      );
+      await axiosClient.post(`/orders`, {
+        tableId,
+        items: cart.map((item) => ({
+          menuItemId: item.id,
+          quantity: item.quantity,
+        })),
+        nom: 'Client invité',
+        email,
+        slug: crypto.randomUUID(),
+      });
 
       setSuccess('Commande validée avec succès !');
-      
-      // Appeler onValidateSuccess pour vider le panier et recharger les menus
+
       if (onValidateSuccess) {
         onValidateSuccess();
       }
-      
+
       onClose();
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Erreur lors de la validation de la commande.';
+      const errorMessage =
+        err.response?.data?.message ||
+        'Erreur lors de la validation de la commande.';
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -165,8 +164,12 @@ const InvoiceModal = ({
     doc.setFontSize(11);
     cart.forEach((item, i) => {
       doc.text(`${i + 1}. ${item.name}`, margin, y);
-      doc.text(`${item.quantity} x ${formatPrice(item.price)}`, 140, y, { align: 'right' });
-      doc.text(`${formatPrice(item.quantity * item.price)}`, 180, y, { align: 'right' });
+      doc.text(`${item.quantity} x ${formatPrice(item.price)}`, 140, y, {
+        align: 'right',
+      });
+      doc.text(`${formatPrice(item.quantity * item.price)}`, 180, y, {
+        align: 'right',
+      });
       y += 8;
     });
 
@@ -178,103 +181,127 @@ const InvoiceModal = ({
     doc.save(`facture-${Date.now()}.pdf`);
   };
 
-  useEffect(() => {
-    const handleEsc = (event) => {
-      if (event.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [isOpen, onClose]);
-
   if (!isOpen) return null;
 
   return (
     <FocusTrap active={isOpen}>
-      <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded-xl shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto relative modal-content">
-          <h2 className="text-xl font-semibold mb-4">Facture</h2>
-
-          {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
-          {success && <p className="text-green-600 text-sm mb-2">{success}</p>}
-
-          <label className="block mb-1 text-sm font-medium" htmlFor="email-input">
-            Votre email :
-          </label>
-          <div className="flex gap-2 mb-4">
-            <input
-              id="email-input"
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setIsEmailChecked(false);
-                setError(null);
-                setSuccess(null);
-              }}
-              placeholder="client@example.com"
-              className="w-full px-3 py-2 border rounded-md"
-              aria-label="Adresse email"
-            />
-            <button
-              onClick={handleEmailCheck}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-              disabled={!validateEmail(email) || isLoading}
-              aria-label={isLoading ? 'Vérification en cours' : 'Vérifier l\'email'}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative"
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 120 }}
             >
-              {isLoading ? '...' : 'Vérifier'}
-            </button>
-          </div>
+              {/* Close Button */}
+              <button
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100"
+                onClick={onClose}
+              >
+                <X size={20} />
+              </button>
 
-          <div className="space-y-2 mb-4">
-            {cart.map((item) => (
-              <div key={item.id} className="flex justify-between">
-                <span>{item.name} x{item.quantity}</span>
-                <span>{formatPrice(item.price * item.quantity)} €</span>
+              <h2 className="text-2xl font-bold text-center mb-4">🧾 Facture</h2>
+
+              {/* Messages */}
+              {error && (
+                <div className="flex items-center gap-2 text-red-600 bg-red-100 px-3 py-2 rounded-lg mb-3 text-sm">
+                  <AlertCircle size={16} /> {error}
+                </div>
+              )}
+              {success && (
+                <div className="flex items-center gap-2 text-green-600 bg-green-100 px-3 py-2 rounded-lg mb-3 text-sm">
+                  <CheckCircle size={16} /> {success}
+                </div>
+              )}
+
+              {/* Email Input */}
+              <label
+                className="block mb-1 text-sm font-medium"
+                htmlFor="email-input"
+              >
+                Votre email :
+              </label>
+              <div className="flex gap-2 mb-4">
+                <input
+                  id="email-input"
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setIsEmailChecked(false);
+                    setError(null);
+                    setSuccess(null);
+                  }}
+                  placeholder="client@example.com"
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+                <button
+                  onClick={handleEmailCheck}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center disabled:opacity-50"
+                  disabled={!validateEmail(email) || isLoading}
+                >
+                  {isLoading ? <Loader2 className="animate-spin" size={18} /> : 'Vérifier'}
+                </button>
               </div>
-            ))}
-          </div>
 
-          <div className="flex justify-between font-bold text-lg border-t pt-4">
-            <span>Total</span>
-            <span>{formatPrice(totalPrice)} €</span>
-          </div>
+              {/* Cart Items */}
+              <div className="space-y-2 mb-4">
+                {cart.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex justify-between items-center p-2 border rounded-lg bg-gray-50"
+                  >
+                    <span>
+                      {item.name} × {item.quantity}
+                    </span>
+                    <span className="font-semibold">
+                      {formatPrice(item.price * item.quantity)} €
+                    </span>
+                  </div>
+                ))}
+              </div>
 
-          <div className="mt-6 flex flex-col sm:flex-row gap-3">
-            <button
-              className="flex-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-              onClick={handleSubmit}
-              disabled={isSubmitting || !isEmailChecked}
-              aria-label={isSubmitting ? 'Validation en cours' : 'Valider la commande'}
-            >
-              {isSubmitting ? 'Validation...' : 'Valider'}
-            </button>
-            <button
-              className="flex-1 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-              onClick={generatePDF}
-              disabled={!cart.length}
-              aria-label="Télécharger la facture en PDF"
-            >
-              Télécharger PDF
-            </button>
-            <button
-              className="flex-1 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
-              onClick={onClose}
-              disabled={isSubmitting}
-              aria-label="Fermer la fenêtre"
-            >
-              Fermer
-            </button>
-          </div>
+              {/* Total */}
+              <div className="flex justify-between font-bold text-lg border-t pt-4">
+                <span>Total</span>
+                <span>{formatPrice(totalPrice)} €</span>
+              </div>
 
-          {isSubmitting && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/50">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-600"></div>
-            </div>
-          )}
-        </div>
-      </div>
+              {/* Actions */}
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <button
+                  className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 disabled:opacity-50"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || !isEmailChecked}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} /> Validation...
+                    </>
+                  ) : (
+                    'Valider la commande'
+                  )}
+                </button>
+                <button
+                  className="flex-1 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center justify-center gap-2"
+                  onClick={generatePDF}
+                  disabled={!cart.length}
+                >
+                  <Download size={18} /> Télécharger
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </FocusTrap>
   );
 };

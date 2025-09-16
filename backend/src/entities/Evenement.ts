@@ -9,11 +9,16 @@ import { Invitation } from './Invitation';
 import { Menu } from './menu.entity';
 import { Balance } from './balance.entity';
 import { Payment } from './payment.entity';
-import { MenuItem } from './menu-item.entity';
 import { Favorite } from './Favorite';
 import { Element } from './Element';
 
-@Unique(['nom', 'user'])
+export enum EventStatus {
+  PLANNED = 'planned',
+  CANCELED = 'canceled',
+  COMPLETED = 'completed',
+}
+
+@Unique(['nom', 'user']) // Unique constraint on event name per user
 @Entity()
 export class Evenement {
   @PrimaryGeneratedColumn()
@@ -34,13 +39,14 @@ export class Evenement {
   @Column({ nullable: true })
   date_fin: Date;
 
-  @OneToMany(() => Menu, (menu) => menu.evenement)
+  @OneToMany(() => Menu, (menu) => menu.evenement, { onDelete: 'CASCADE' })
   menus: Menu[];
 
-  @ManyToOne(() => Localisation, (localisation) => localisation.salles)
+  @ManyToOne(() => Localisation, (localisation) => localisation.salles, { onDelete: 'SET NULL' })
   location: Localisation;
 
   @ManyToOne(() => Salle, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'salleId' })
   salle: Salle;
 
   @Column({ nullable: true })
@@ -52,10 +58,10 @@ export class Evenement {
   @OneToMany(() => Invite, (invite) => invite.event, { onDelete: 'CASCADE' })
   invites: Invite[];
 
-  @OneToMany(() => Balance, (balance) => balance.event)
+  @OneToMany(() => Balance, (balance) => balance.event, { onDelete: 'CASCADE' })
   balances: Balance[];
 
-  @OneToMany(() => Payment, (payment) => payment.event)
+  @OneToMany(() => Payment, (payment) => payment.event, { onDelete: 'CASCADE' })
   payments: Payment[];
 
   @ManyToOne(() => User, (user) => user.evenement, { nullable: false, onDelete: 'CASCADE' })
@@ -74,20 +80,24 @@ export class Evenement {
   @Column({ type: 'boolean', default: false })
   isPublic: boolean;
 
-  @OneToMany(() => Invitation, (inv) => inv.event)
+  @OneToMany(() => Invitation, (inv) => inv.event, { onDelete: 'CASCADE' })
   invitation: Invitation[];
 
-  @Column({ type: 'boolean', default: true })
-  isActive: boolean;
+  @Column({ type: 'enum', enum: EventStatus, default: EventStatus.PLANNED })
+  status: EventStatus;
 
   @OneToMany(() => Favorite, (favorite) => favorite.evenement, { onDelete: 'CASCADE' })
   favorites: Favorite[];
 
+  @Column({ type: 'int', nullable: true }) // Added missing Column decorator
   maxGuest: number;
 
   @OneToMany(() => Element, (element) => element.event, { onDelete: 'CASCADE' })
   elements: Element[];
 
-  @Column({ type: 'varchar', nullable: true }) // Définition explicite du type varchar
+  @Column({ type: 'varchar', nullable: true })
   imageUrl: string | null;
+
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
 }

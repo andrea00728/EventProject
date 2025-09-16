@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual, MoreThanOrEqual, Not } from 'typeorm';
-import { Evenement } from 'src/entities/Evenement';
+import { Evenement, EventStatus } from 'src/entities/Evenement';
 import { LocationService } from '../localisation-service/localisation-service.service';
 import { User } from 'src/Authentication/entities/auth.entity';
 import { NotificationService } from '../notification/notification.service';
@@ -338,4 +338,107 @@ async deleteEvent(id: number, userId: string): Promise<{ message: string }> {
 
     return { total, passes, avenir, eventTypeStat };
   }
+  
+  async cancelEvent(id: number, userId: string): Promise<Evenement> {
+  try {
+    const event = await this.evenementRepository.findOne({
+      where: { id, user: { id: userId } },
+      relations: ['user'],
+    });
+
+    if (!event) {
+      throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de le modifier`);
+    }
+
+    if (event.status === EventStatus.CANCELED) {
+      throw new BadRequestException('Cet événement est déjà annulé');
+    }
+
+    event.status = EventStatus.CANCELED;
+    const updatedEvent = await this.evenementRepository.save(event);
+
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    const notification = this.notificationRepository.create({
+      title: "Annulation d'un événement",
+      message: `${user.name} a annulé l'événement ${event.nom}.`,
+      type: 'warning',
+      date: new Date(),
+    });
+    await this.notificationRepository.save(notification);
+    this.notificationGateway.emitNotifEventForAdmin({
+      ...notification,
+      date: notification.date.toISOString(),
+    });
+
+    return updatedEvent;
+  } catch (error) {
+    console.error("Erreur lors de l'annulation de l'événement:", error);
+    throw error;
+  }
+}
+
+async restoreEvent(id: number, userId: string): Promise<Evenement> {
+  try {
+    const event = await this.evenementRepository.findOne({
+      where: { id, user: { id: userId } },
+      relations: ['user', 'salle'],
+    });
+
+    if (!event) {
+      throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de le modifier`);
+    }
+
+    if (event.status !== EventStatus.CANCELED) {
+      throw new BadRequestException("Cet événement n'est pas annulé");
+    }
+
+    const parsedDate = new Date(event.date);
+    const parsedDateFin = new Date(event.date_fin);
+    const conflictingEvent = await this.evenementRepository.findOne({
+      where: {
+        salle: { id: event.salle.id },
+        date: LessThanOrEqual(parsedDateFin),
+        date_fin: MoreThanOrEqual(parsedDate),
+        status: Not(EventStatus.CANCELED),
+      },
+    });
+
+    if (conflictingEvent) {
+      throw new BadRequestException('La salle est déjà réservée pour cette période');
+    }
+
+    event.status = EventStatus.PLANNED;
+    const updatedEvent = await this.evenementRepository.save(event);
+
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    const notification = this.notificationRepository.create({
+      title: "Restauration d'un événement",
+      message: `${user.name} a restauré l'événement ${event.nom}.`,
+      type: 'info',
+      date: new Date(),
+    });
+    await this.notificationRepository.save(notification);
+    this.notificationGateway.emitNotifEventForAdmin({
+      ...notification,
+      date: notification.date.toISOString(),
+    });
+
+    return updatedEvent;
+  } catch (error) {
+    console.error("Erreur lors de la restauration de l'événement:", error);
+    throw error;
+  }
+}
+
+async findHiddenEventsByUser(userId: string): Promise<Evenement[]> {
+  return this.evenementRepository.find({
+    where: { user: { id: userId }, status: EventStatus.CANCELED },
+    relations: ['user', 'location', 'salle'],
+  });
+}
+  
 }
