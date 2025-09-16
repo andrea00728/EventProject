@@ -132,39 +132,50 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
 
             {showDetails && (
   <div className="mt-2 flex flex-col space-y-2">
-    {/* Bulle email de l'utilisateur */}
+    {/* Message de l'utilisateur (email) */}
     {conversation?.content?.email && (
       <div className="flex justify-start">
-        <div
-          className={`p-2 rounded-lg max-w-[70%] text-sm break-words
-            ${darkMode ? "bg-gray-700 text-gray-200" : "bg-gray-200 text-gray-900"}`}
-        >
-          <p className="font-medium">Utilisateur</p>
-          <p className="italic">{conversation.content.email}</p>
+        <div className={`flex items-end space-x-2 max-w-[70%]`}>
+          <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-xs text-white font-semibold">
+            U
+          </div>
+          <div
+            className={`p-3 rounded-xl shadow-sm break-words
+              ${darkMode ? "bg-gray-700 text-gray-200" : "bg-gray-200 text-gray-900"}`}
+          >
+            <p className="font-medium text-sm">Utilisateur</p>
+            <p className="italic text-sm">{conversation.content.email}</p>
+          </div>
         </div>
       </div>
     )}
 
+    {/* Messages échangés */}
     {messages.length > 0 ? (
       messages.map((msg) => {
-        const isSentByUser = msg.isSent; // true si envoyé par le support (MasterTable)
+        const isSentByUser = msg.isSent; // true = support (MasterTable)
         return (
           <div
             key={msg.id}
             className={`flex ${isSentByUser ? "justify-end" : "justify-start"}`}
           >
-            <div
-              className={`p-2 rounded-lg max-w-[70%] text-sm break-words
-                ${isSentByUser
-                  ? "bg-blue-600 text-white"
-                  : darkMode
-                  ? "bg-gray-700 text-gray-200"
-                  : "bg-gray-200 text-gray-900"}`}
-            >
-              <p className="italic">{msg.message}</p>
-              <p className="text-xs text-gray-400 mt-1 text-right">
-                {new Date(msg.createdAt).toLocaleString()}
-              </p>
+            <div className={`flex items-end space-x-2 max-w-[70%] ${isSentByUser ? "flex-row-reverse" : ""}`}>
+              <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-xs text-white font-semibold">
+                {isSentByUser ? "S" : "U"}
+              </div>
+              <div
+                className={`p-3 rounded-xl shadow-sm break-words
+                  ${isSentByUser
+                    ? "bg-blue-600 text-white"
+                    : darkMode
+                    ? "bg-gray-700 text-gray-200"
+                    : "bg-gray-200 text-gray-900"}`}
+              >
+                <p className="italic text-sm">{msg.message}</p>
+                <p className="text-xs text-gray-400 mt-1 text-right">
+                  {new Date(msg.createdAt).toLocaleString()}
+                </p>
+              </div>
             </div>
           </div>
         );
@@ -176,6 +187,7 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
     )}
   </div>
 )}
+
 
           </div>
         )}
