@@ -1029,7 +1029,7 @@
           <Modalist
             show={showMessagesModal}
             onClose={() => setShowMessagesModal(false)}
-            title="Tous les messages"
+            title="Tous les messages" 
             items={messages}
             onItemClick={handleMessageClick}
             onDelete={handleDeleteMessage}
