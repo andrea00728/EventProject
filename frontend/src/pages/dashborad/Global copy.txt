@@ -48,15 +48,8 @@ const DashboardGlobal = () => {
 
   const handleGoalChange = (key, increment) => {
     setGoals((prevGoals) => {
-      let newValue = prevGoals[key] + increment;
-      let updatedGoals = { ...prevGoals };
-
-      // Logique modifiée : Limiter l'objectif mensuel au nombre de points d'événement
-      if (key === "monthlyEvents" && dashboardData.eventPoints !== "Illimité") {
-        newValue = Math.min(newValue, dashboardData.eventPoints);
-      }
-
-      updatedGoals = {
+      const newValue = prevGoals[key] + increment;
+      const updatedGoals = {
         ...prevGoals,
         [key]: newValue > 0 ? newValue : prevGoals[key],
       };
