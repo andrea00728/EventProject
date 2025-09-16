@@ -1,3 +1,4 @@
+// frontend/SuccessEvent.tsx
 import React, { useState, useEffect } from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
@@ -33,7 +34,7 @@ const SuccessEvent = () => {
 
         // Filter out canceled events and sort by date descending
         const sortedEvents = events
-          .filter((event) => !event.isCanceled) // Exclude canceled events
+          .filter((event) => event.status !== "canceled")
           .sort((a, b) => new Date(b.date) - new Date(a.date));
         setAllEvents(sortedEvents);
       } catch (err) {
@@ -74,17 +75,16 @@ const SuccessEvent = () => {
     });
   };
 
-  const getEventStatus = (event) => {
-    const now = new Date();
-    const startDate = new Date(event.date);
-    const endDate = new Date(event.date_fin);
-
-    if (now < startDate) {
-      return { status: "en attente", color: "bg-yellow-500", text: "En attente" };
-    } else if (now >= startDate && now <= endDate) {
-      return { status: "en cours", color: "bg-blue-500", text: "En cours" };
-    } else {
-      return { status: "terminé", color: "bg-green-500", text: "Terminé" };
+  const getStatusTextAndColor = (status) => {
+    switch (status) {
+      case "planned":
+        return { status: "en attente", color: "bg-yellow-500", text: "En attente" };
+      case "completed":
+        return { status: "terminé", color: "bg-green-500", text: "Terminé" };
+      case "canceled":
+        return { status: "annuler", color: "bg-red-500", text: "Annulé" };
+      default:
+        return { status: "inconnu", color: "bg-gray-500", text: "Inconnu" };
     }
   };
 
@@ -128,7 +128,7 @@ const SuccessEvent = () => {
         <>
           <div className="hidden md:flex flex-wrap justify-center gap-8 w-full">
             {allEvents.slice(0, 4).map((event) => {
-              const { status, color, text } = getEventStatus(event);
+              const { status, color, text } = getStatusTextAndColor(event.status);
               return (
                 <div key={event.id} className="group perspective-1000 flex-1 min-w-0 max-w-[280px]">
                   <div className="relative transform-gpu transition-all duration-700 ease-in-out hover:rotate-y-3 hover:-translate-y-2 hover:scale-[1.02] shadow-xl hover:shadow-2xl hover:shadow-purple-200/50 rounded-2xl overflow-hidden bg-white/70 border border-white/80">
@@ -166,20 +166,10 @@ const SuccessEvent = () => {
                         </div>
                         <div className="absolute bottom-4 right-4">
                           <div
-                            className={`bg-gradient-to-r ${
-                              status === "terminé"
-                                ? "from-emerald-500 to-green-600"
-                                : status === "en cours"
-                                ? "from-blue-500 to-blue-600"
-                                : "from-yellow-500 to-yellow-600"
-                            } text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-md`}
+                            className={`bg-gradient-to-r ${color} text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-md`}
                           >
                             {status === "terminé" && (
-                              <svg
-                                className="w-3.5 h-3.5"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
+                              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                                 <path
                                   fillRule="evenodd"
                                   d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -269,7 +259,7 @@ const SuccessEvent = () => {
           <div className="md:hidden">
             <Slider {...sliderSettings}>
               {allEvents.map((event) => {
-                const { status, color, text } = getEventStatus(event);
+                const { status, color, text } = getStatusTextAndColor(event.status);
                 return (
                   <div key={event.id} className="p-2">
                     <div className="group relative shadow-lg rounded-2xl overflow-hidden bg-white/70 border border-white/80">
@@ -307,20 +297,10 @@ const SuccessEvent = () => {
                           </div>
                           <div className="absolute bottom-4 right-4">
                             <div
-                              className={`bg-gradient-to-r ${
-                                status === "terminé"
-                                  ? "from-emerald-500 to-green-600"
-                                  : status === "en cours"
-                                  ? "from-blue-500 to-blue-600"
-                                  : "from-yellow-500 to-yellow-600"
-                              } text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-md`}
+                              className={`bg-gradient-to-r ${color} text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-md`}
                             >
                               {status === "terminé" && (
-                                <svg
-                                  className="w-3.5 h-3.5"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
+                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                                   <path
                                     fillRule="evenodd"
                                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -335,13 +315,9 @@ const SuccessEvent = () => {
                       </div>
                       <div className="p-6 space-y-5">
                         <div>
-                          <h3 className="text-xl font-extrabold text-slate-900 mb-2 line-clamp-2">
-                            {event.nom}
-                          </h3>
+                          <h3 className="text-xl font-extrabold text-slate-900 mb-2 line-clamp-2">{event.nom}</h3>
                           {event.theme && (
-                            <p className="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-full inline-block">
-                              {event.theme}
-                            </p>
+                            <p className="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-full inline-block">{event.theme}</p>
                           )}
                         </div>
                         <div className="space-y-3">
@@ -351,9 +327,7 @@ const SuccessEvent = () => {
                           </div>
                           <div className="flex items-center gap-3 text-slate-600">
                             <FaClock className="w-4 h-4 text-fuchsia-500" />
-                            <span className="text-sm">
-                              {formatTime(event.date)} - {formatTime(event.date_fin)}
-                            </span>
+                            <span className="text-sm">{formatTime(event.date)} - {formatTime(event.date_fin)}</span>
                           </div>
                           {event.salle && (
                             <div className="text-sm text-slate-700 bg-gradient-to-r from-slate-50 to-purple-50/50 px-4 py-3 rounded-xl border border-slate-100">
@@ -361,9 +335,7 @@ const SuccessEvent = () => {
                                 <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
                                 <span className="font-semibold">{event.salle.nom}</span>
                               </div>
-                              <span className="text-slate-500 text-xs ml-4">
-                                Capacité : {event.salle.capacite} personnes
-                              </span>
+                              <span className="text-slate-500 text-xs ml-4">Capacité : {event.salle.capacite} personnes</span>
                             </div>
                           )}
                         </div>

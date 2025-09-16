@@ -1,3 +1,4 @@
+// src/controllers/evenement.controller.ts
 import {
   Controller,
   Post,
@@ -75,7 +76,6 @@ export class EvenementController {
     dto.utilisateur_id = userIdFromToken;
 
     if (file) {
-      // Préparer le chemin relatif pour la DB ou l'accès statique
       dto.imageUrl = `/Uploads/${file.filename}`;
     }
 
@@ -119,9 +119,6 @@ export class EvenementController {
     @Body() dto: UpdateEventDto,
     @UploadedFile() imageFile?: Express.Multer.File,
   ) {
-    if (imageFile) {
-      dto.imageUrl = `/Uploads/${imageFile.filename}`;
-    }
     return this.evenementService.updateEvent(id, dto, imageFile);
   }
 

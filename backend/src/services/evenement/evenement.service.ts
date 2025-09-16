@@ -1,7 +1,8 @@
+// src/services/evenement/evenement.service.ts
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual, MoreThanOrEqual, Not } from 'typeorm';
-import { Evenement } from 'src/entities/Evenement';
+import { Repository, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Evenement, EventStatus } from 'src/entities/Evenement';
 import { LocationService } from '../localisation-service/localisation-service.service';
 import { User } from 'src/Authentication/entities/auth.entity';
 import { NotificationService } from '../notification/notification.service';
@@ -46,6 +47,7 @@ export class EvenementService {
           salle: { id: dto.salleId },
           date: LessThanOrEqual(parsedDateFin),
           date_fin: MoreThanOrEqual(parsedDate),
+          status: EventStatus.PLANNED,
         },
         relations: ['user'],
       });
@@ -68,6 +70,7 @@ export class EvenementService {
         user,
         isPublic: dto.isPublic,
         imageUrl: dto.imageUrl,
+        status: EventStatus.PLANNED,
       });
 
       const event = await this.evenementRepository.save(evenement);
@@ -114,29 +117,24 @@ export class EvenementService {
 
     if (!event) throw new NotFoundException(`Événement avec ID ${eventId} non trouvé`);
 
-    // Mise à jour des champs simples
     if (dto.nom) event.nom = dto.nom;
     if (dto.type) event.type = dto.type;
     if (dto.theme) event.theme = dto.theme;
     if (dto.date && !isNaN(Date.parse(dto.date))) event.date = new Date(dto.date);
     if (dto.date_fin && !isNaN(Date.parse(dto.date_fin))) event.date_fin = new Date(dto.date_fin);
     if (dto.isPublic !== undefined) event.isPublic = dto.isPublic;
+    if (dto.status) event.status = dto.status;
 
-    // Gestion de l'image
     if (file) {
-      // Supprimer l'ancienne photo si elle existe
       if (event.imageUrl) {
         const oldImagePath = path.join(__dirname, '../../../../Uploads', path.basename(event.imageUrl));
         if (fs.existsSync(oldImagePath)) {
           fs.unlinkSync(oldImagePath);
         }
       }
-
-      // Mettre à jour avec la nouvelle photo
       event.imageUrl = `/Uploads/${file.filename}`;
     }
 
-    // Gestion du lieu
     let location;
     if (dto.locationId) {
       location = await this.locationService.findLocationById(Number(dto.locationId));
@@ -145,7 +143,6 @@ export class EvenementService {
       location = event.location;
     }
 
-    // Gestion de la salle
     if (dto.salleId) {
       const salle = await this.locationService.findSalleById(Number(dto.salleId));
       if (location && salle.location.id !== location.id) {
@@ -187,7 +184,7 @@ export class EvenementService {
       throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de l'annuler`);
     }
 
-    event.isActive = false;
+    event.status = EventStatus.CANCELED;
     await this.evenementRepository.save(event);
 
     const user = await this.userRepo.findOneBy({ id: userId });
@@ -218,7 +215,7 @@ export class EvenementService {
       throw new NotFoundException(`Événement avec ID ${id} non trouvé ou vous n'avez pas la permission de le restaurer`);
     }
 
-    event.isActive = true;
+    event.status = EventStatus.PLANNED;
     await this.evenementRepository.save(event);
 
     const user = await this.userRepo.findOneBy({ id: userId });
@@ -257,14 +254,14 @@ export class EvenementService {
 
   async findByUser(utilisateur_id: string): Promise<Evenement[]> {
     return this.evenementRepository.find({
-      where: { user: { id: utilisateur_id }, isActive: true },
+      where: { user: { id: utilisateur_id }, status: EventStatus.PLANNED },
       relations: ['user', 'location', 'salle', 'tables', 'invites'],
     });
   }
 
   async findHiddenEventsByUser(utilisateur_id: string): Promise<Evenement[]> {
     return this.evenementRepository.find({
-      where: { user: { id: utilisateur_id }, isActive: false },
+      where: { user: { id: utilisateur_id }, status: EventStatus.CANCELED },
       relations: ['user', 'location', 'salle'],
     });
   }
@@ -290,7 +287,6 @@ export class EvenementService {
       const user = await this.userRepo.findOneBy({ id: userId });
       if (!user) throw new NotFoundException('Utilisateur introuvable');
 
-      // --- Supprimer l'image associée ---
       if (event.imageUrl) {
         const imagePath = path.join(process.cwd(), event.imageUrl.replace('/','\\'));
         if (fs.existsSync(imagePath)) {
@@ -298,7 +294,6 @@ export class EvenementService {
         }
       }
 
-      // Création de la notification
       const notification = this.notificationRepository.create({
         title: "Suppression d'un évènement",
         message: `${user.name} a supprimé l'événement ${event.nom}.`,
@@ -311,11 +306,9 @@ export class EvenementService {
         date: notification.date.toISOString(),
       });
 
-      // Suppression des relations
       await this.evenementRepository.manager.delete('Invite', { event: { id } });
       await this.evenementRepository.manager.delete('TableEvent', { event: { id } });
 
-      // Suppression de l'événement
       await this.evenementRepository.remove(event);
 
       console.log(`Événement ID ${id} supprimé`);
@@ -339,7 +332,7 @@ export class EvenementService {
 
   async findPublicEvents(): Promise<Evenement[]> {
     return this.evenementRepository.find({
-      where: { isPublic: true },
+      where: { isPublic: true, status: EventStatus.PLANNED },
       relations: ['location', 'salle', 'tables', 'invites', 'user'],
       order: { date: 'ASC' },
     });
@@ -356,11 +349,11 @@ export class EvenementService {
     const total = await this.evenementRepository.count();
 
     const passes = await this.evenementRepository.count({
-      where: { date_fin: LessThanOrEqual(now) },
+      where: { date_fin: LessThanOrEqual(now), status: EventStatus.COMPLETED },
     });
 
     const avenir = await this.evenementRepository.count({
-      where: { date_fin: MoreThanOrEqual(now) },
+      where: { date_fin: MoreThanOrEqual(now), status: EventStatus.PLANNED },
     });
 
     const eventTypeStats = await this.evenementRepository

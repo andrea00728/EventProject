@@ -13,6 +13,12 @@ import { MenuItem } from './menu-item.entity';
 import { Favorite } from './Favorite';
 import { Element } from './Element';
 
+export enum EventStatus {
+  PLANNED = 'planned',
+  CANCELED = 'canceled',
+  COMPLETED = 'completed',
+}
+
 @Unique(['nom', 'user'])
 @Entity()
 export class Evenement {
@@ -77,8 +83,8 @@ export class Evenement {
   @OneToMany(() => Invitation, (inv) => inv.event)
   invitation: Invitation[];
 
-  @Column({ type: 'boolean', default: true })
-  isActive: boolean;
+  @Column({ type: 'enum', enum: EventStatus, default: EventStatus.PLANNED })
+  status: EventStatus;
 
   @OneToMany(() => Favorite, (favorite) => favorite.evenement, { onDelete: 'CASCADE' })
   favorites: Favorite[];
@@ -88,6 +94,12 @@ export class Evenement {
   @OneToMany(() => Element, (element) => element.event, { onDelete: 'CASCADE' })
   elements: Element[];
 
-  @Column({ type: 'varchar', nullable: true }) // Définition explicite du type varchar
+  @Column({ type: 'varchar', nullable: true })
   imageUrl: string | null;
+
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
 }
+
+
+
