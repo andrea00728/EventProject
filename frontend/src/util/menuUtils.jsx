@@ -45,7 +45,7 @@ export const getConditionalSubMenus = (forfait) => {
     {
       path: "/evenement/dashboard",
       name: "dashboard",
-      icon: "/iconDash.png",
+      icon: "/dashboard_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png",
       description: "Vus d'ensemble de votre organisation",
     },
   ];
