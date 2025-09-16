@@ -2090,7 +2090,7 @@ export default function DemoPlanSalle() {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Positionnement précis</h3>
               <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                Déplacez les éléments par glisser-déposer et ajustez leur orientation avec précision.
+                Déplacez les objets par glisser-déposer et ajustez leur orientation avec précision.
               </p>
             </div>
 
@@ -2125,7 +2125,7 @@ export default function DemoPlanSalle() {
               <div className="text-left">
                 <p className="text-amber-900 font-semibold text-sm">Version d'essai</p>
                 <p className="text-amber-700 text-xs">
-                  Limitée à {MAX_TABLES} tables, {MAX_GUESTS} invités et {MAX_ELEMENTS} éléments décoratifs.
+                  Limitée à {MAX_TABLES} tables, {MAX_GUESTS} invités et {MAX_ELEMENTS} objets décoratifs.
                 </p>
               </div>
             </div>
