@@ -118,6 +118,9 @@ const LocationSalle = () => {
   const [showEditConfirmationModal, setShowEditConfirmationModal] = useState(false);
   const [showEditSuccessModal, setShowEditSuccessModal] = useState(false);
   const [showSaveConfirmationModal, setShowSaveConfirmationModal] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
 
@@ -301,6 +304,7 @@ const LocationSalle = () => {
       setGeocodeResultText("Veuillez entrer une adresse valide.");
       return;
     }
+    setIsGeocoding(true);
     try {
       const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(geocodeAddress)}`);
       const data = await response.json();
@@ -320,6 +324,8 @@ const LocationSalle = () => {
     } catch (err) {
       setGeocodeResultText("Erreur lors du géocodage. Veuillez réessayer.");
       console.error("Geocode error:", err);
+    } finally {
+      setIsGeocoding(false);
     }
   };
 
@@ -329,6 +335,7 @@ const LocationSalle = () => {
       setShowEditConfirmationModal(true);
       return;
     }
+    setIsSaving(true);
     try {
       await axios.post(`${API_URL}/save`, {
         query: `${geocodeResult.nom}, ${geocodeResult.latitude}, ${geocodeResult.longitude}`,
@@ -343,11 +350,14 @@ const LocationSalle = () => {
     } catch (err) {
       setError("Erreur lors de la sauvegarde de la localisation.");
       console.error("Save error:", err);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleConfirmEdit = async () => {
     if (!geocodeResult || !editingLocation || geocodeResult.latitude == null || geocodeResult.longitude == null) return;
+    setIsUpdating(true);
     try {
       await axios.put(`${API_URL}/geocode/${editingLocation.id}`, {
         query: `${geocodeResult.nom}, ${geocodeResult.latitude}, ${geocodeResult.longitude}`
@@ -361,6 +371,8 @@ const LocationSalle = () => {
     } catch (err) {
       setError("Erreur lors de la modification du lieu.");
       console.error("Edit error:", err);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -987,10 +999,23 @@ const LocationSalle = () => {
                   </button>
                   <button
                     onClick={handleConfirmEdit}
-                    className={`flex-1 px-6 py-3 rounded-xl flex items-center justify-center font-semibold transition-all duration-300 ${gradientButton}`}
+                    disabled={isUpdating}
+                    className={`flex-1 px-6 py-3 rounded-xl flex items-center justify-center font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${gradientButton}`}
                   >
-                    <MdSave className="mr-2 text-xl" />
-                    Confirmer
+                    {isUpdating ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Chargement...
+                      </span>
+                    ) : (
+                      <>
+                        <MdSave className="mr-2 text-xl" />
+                        Confirmer
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1084,15 +1109,39 @@ const LocationSalle = () => {
                   className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition ${darkMode ? 'bg-gray-700 border-gray-600 focus:ring-blue-500 text-white' : 'border-gray-300 focus:ring-indigo-500'}`}
                 />
                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                  <button onClick={handleGeocode} className={`p-3 rounded-lg flex-1 ${gradientButton}`}>
-                    Chercher
+                  <button 
+                      onClick={handleGeocode} 
+                      disabled={isGeocoding}
+                      className={`p-3 rounded-lg flex-1 disabled:opacity-50 disabled:cursor-not-allowed ${gradientButton}`}
+                  >
+                      {isGeocoding ? (
+                          <span className="flex items-center justify-center">
+                              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Chargement...
+                          </span>
+                      ) : (
+                          "Chercher"
+                      )}
                   </button>
                   <button
                     onClick={handleSave}
-                    disabled={!geocodeResult || geocodeResult.latitude == null || geocodeResult.longitude == null}
-                    className={`p-3 rounded-lg flex-1 disabled:opacity-50 ${gradientButton}`}
+                    disabled={!geocodeResult || geocodeResult.latitude == null || geocodeResult.longitude == null || isSaving}
+                    className={`p-3 rounded-lg flex-1 disabled:opacity-50 disabled:cursor-not-allowed ${gradientButton}`}
                   >
-                    {editingLocation ? 'Modifier' : 'Sauvegarder'}
+                    {isSaving ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Chargement...
+                      </span>
+                    ) : (
+                      editingLocation ? 'Modifier' : 'Sauvegarder'
+                    )}
                   </button>
                   <button onClick={handleResetGeocode} className={`p-3 rounded-lg flex-1 ${gradientButton}`}>
                     Réinitialiser
