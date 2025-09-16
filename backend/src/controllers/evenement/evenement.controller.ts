@@ -13,7 +13,6 @@ import {
   UseInterceptors,
   Put,
   NotFoundException,
-  ForbiddenException,
   ParseIntPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -33,100 +32,122 @@ export class EvenementController {
     private readonly forfaitService: ForfaitService,
   ) {}
 
-@Post()
-@UseGuards(AuthGuard('jwt'))
-@UseInterceptors(
-  FileInterceptor('image', {
-    storage: diskStorage({
-      destination: (req, file, callback) => {
-        const uploadDir = path.join(process.cwd(), 'uploads');
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        callback(null, uploadDir);
-      },
-      filename: (req, file, callback) => {
-        const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        const ext = path.extname(file.originalname);
-        callback(null, `${uniqueName}${ext}`);
-      },
+  @Post()
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: (req, file, callback) => {
+          const uploadDir = path.join(process.cwd(), 'Uploads');
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          callback(null, uploadDir);
+        },
+        filename: (req, file, callback) => {
+          const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = path.extname(file.originalname);
+          callback(null, `${uniqueName}${ext}`);
+        },
+      }),
     }),
-  }),
-)
-async create(
-  @UploadedFile() file: Express.Multer.File,
-  @Body() dto: CreateEventDto,
-  @Req() req: any,
-): Promise<Evenement> {
-  console.log('Requête POST reçue:', { dto, file, user: req.user });
+  )
+  async create(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: CreateEventDto,
+    @Req() req: any,
+  ): Promise<Evenement> {
+    console.log('Requête POST reçue:', { dto, file, user: req.user });
 
-  const userIdFromToken = req.user?.sub;
-  if (!userIdFromToken) {
-    throw new UnauthorizedException('Utilisateur non authentifié');
-  }
-
-  await this.forfaitService.checkForfaitExpiration(userIdFromToken);
-
-  const canCreateEvent = await this.forfaitService.canCreateEvent(userIdFromToken);
-  if (!canCreateEvent) {
-    throw new BadRequestException("Vous avez atteint le nombre maximum d'événements");
-  }
-
-  dto.utilisateur_id = userIdFromToken;
-
-  if (file) {
-    // Préparer le chemin relatif pour la DB ou l'accès statique
-    dto.imageUrl = `/uploads/${file.filename}`;
-  }
-
-  try {
-    return await this.evenementService.create(dto);
-  } catch (error) {
-    console.error('Erreur lors de la création:', error);
-    if (error.code === '23505') {
-      throw new BadRequestException("Vous avez déjà créé un événement avec ce nom.");
+    const userIdFromToken = req.user?.sub;
+    if (!userIdFromToken) {
+      throw new UnauthorizedException('Utilisateur non authentifié');
     }
-    throw new BadRequestException(error.message || "Erreur lors de la création de l'événement");
-  }
-}
 
+    await this.forfaitService.checkForfaitExpiration(userIdFromToken);
 
-@Put(':id')
-@UseGuards(AuthGuard('jwt'))
-@UseInterceptors(
-  FileInterceptor('image', {
-    storage: diskStorage({
-      destination: (req, file, cb) => {
-        const uploadDir = path.join(process.cwd(), 'uploads');
-        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-        cb(null, uploadDir);
-      },
-      filename: (req, file, cb) => {
-        const randomName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-        cb(null, `${randomName}${path.extname(file.originalname)}`);
-      },
-    }),
-    fileFilter: (req, file, cb) => {
-      if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
-        return cb(new BadRequestException('Seules les images sont autorisées'), false);
+    const canCreateEvent = await this.forfaitService.canCreateEvent(userIdFromToken);
+    if (!canCreateEvent) {
+      throw new BadRequestException("Vous avez atteint le nombre maximum d'événements");
+    }
+
+    dto.utilisateur_id = userIdFromToken;
+
+    if (file) {
+      dto.imageUrl = `/Uploads/${file.filename}`;
+    }
+
+    try {
+      return await this.evenementService.create(dto);
+    } catch (error) {
+      console.error('Erreur lors de la création:', error);
+      if (error.code === '23505') {
+        throw new BadRequestException("Vous avez déjà créé un événement avec ce nom.");
       }
-      cb(null, true);
-    },
-    limits: { fileSize: 5 * 1024 * 1024 },
-  }),
-)
-async updateEvent(
-  @Param('id', ParseIntPipe) id: number,
-  @Body() dto: UpdateEventDto,
-  @UploadedFile() imageFile?: Express.Multer.File,
-){
-  if (imageFile) {
-    dto.imageUrl = `/uploads/${imageFile.filename}`;
+      throw new BadRequestException(error.message || "Erreur lors de la création de l'événement");
+    }
   }
-  return this.evenementService.updateEvent(id, dto, imageFile);
-}
 
+  @Put(':id')
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          const uploadDir = path.join(process.cwd(), 'Uploads');
+          if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+          cb(null, uploadDir);
+        },
+        filename: (req, file, cb) => {
+          const randomName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+          cb(null, `${randomName}${path.extname(file.originalname)}`);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+          return cb(new BadRequestException('Seules les images sont autorisées'), false);
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  async updateEvent(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateEventDto,
+    @UploadedFile() imageFile?: Express.Multer.File,
+  ) {
+    if (imageFile) {
+      dto.imageUrl = `/Uploads/${imageFile.filename}`;
+    }
+    return this.evenementService.updateEvent(id, dto, imageFile);
+  }
 
+  @Put(':id/cancel')
+  @UseGuards(AuthGuard('jwt'))
+  async cancelEvent(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: any,
+  ): Promise<Evenement> {
+    const userIdFromToken = req.user?.sub;
+    if (!userIdFromToken) {
+      throw new UnauthorizedException('Utilisateur non authentifié');
+    }
+    return this.evenementService.cancelEvent(id, userIdFromToken);
+  }
+
+  @Put(':id/restore')
+  @UseGuards(AuthGuard('jwt'))
+  async restoreEvent(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: any,
+  ): Promise<Evenement> {
+    const userIdFromToken = req.user?.sub;
+    if (!userIdFromToken) {
+      throw new UnauthorizedException('Utilisateur non authentifié');
+    }
+    return this.evenementService.restoreEvent(id, userIdFromToken);
+  }
 
   @Get('/me')
   @UseGuards(AuthGuard('jwt'))
@@ -136,6 +157,16 @@ async updateEvent(
       throw new UnauthorizedException('Utilisateur non authentifié');
     }
     return this.evenementService.findByUser(userIdFromToken);
+  }
+
+  @Get('/me/hidden')
+  @UseGuards(AuthGuard('jwt'))
+  async findHiddenEvents(@Req() req: any): Promise<Evenement[]> {
+    const userIdFromToken = req.user?.sub;
+    if (!userIdFromToken) {
+      throw new UnauthorizedException('Utilisateur non authentifié');
+    }
+    return this.evenementService.findHiddenEventsByUser(userIdFromToken);
   }
 
   @Get()

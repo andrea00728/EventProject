@@ -93,7 +93,7 @@ async redirectToFrontend(
   @Res() res: Response,
 ) {
   // Inclure le token JWT dans la redirection
-  const url = `http://localhost:5173/forfait/success?subscription_id=${subscriptionId}&token=${token}`;
+  const url = `https://mastertable.site/forfait/success?subscription_id=${subscriptionId}&token=${token}`;
   return res.redirect(url);
 }
 
@@ -104,7 +104,7 @@ async redirectTofrontend(
   @Query('ba_token') baToken: string,
   @Res() res: Response,
 ) {
-  const url = `http://localhost:5173/forfait/cancel?subscription_id=${subscriptionId}&token=${token}&ba_token=${baToken}`;
+  const url = `https://mastertable.site/forfait/cancel?subscription_id=${subscriptionId}&token=${token}&ba_token=${baToken}`;
   return res.redirect(url);
 }
   @Get('cancel')
@@ -221,8 +221,8 @@ async redirectTofrontend(
     return this.forfaitService.getRevenusPourcentagesParForfait();
   }
 
-  // stat by lioka
-  @Get('dashboard-charts')
+// stat by lioka
+@Get('dashboard-charts')
 async getDashboardCharts(@Query('period') period: string = '12') {
   console.log('🔥 Route dashboard-charts appelée avec period:', period);
   

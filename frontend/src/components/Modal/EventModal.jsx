@@ -5,6 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { url } from '../../api/url';
 
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.mastertable.site';
 // Configuration de l'icône personnalisée pour le marqueur de la carte
 const blueIcon = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
@@ -19,7 +21,8 @@ function MapClickHandler({ onLocationSelect }) {
     click(e) {
       onLocationSelect(e.latlng); // Appelle la fonction lorsqu'on clique sur la carte
     },
-  });
+  });0
+   
   return null;
 }
 

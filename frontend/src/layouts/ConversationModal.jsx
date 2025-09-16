@@ -31,49 +31,45 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
   };
 
   const handleSendEmail = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!emailData.message) {
-    toast.warning("⚠️ Veuillez écrire un message avant d'envoyer.");
-    return;
-  }
+    if (!emailData.message) {
+      toast.warning("⚠️ Veuillez écrire un message avant d'envoyer.");
+      return;
+    }
 
-  // Définir body **avant** de l'utiliser
-  const body = {
-    to: conversation?.content?.email,
-    subject: emailData.subject || "Réponse à votre message",
-    message: emailData.message,
-  };
+    // Body pour le backend qui sauvegarde dans la DB
+    const body = {
+      originalMessageId: conversation?.content?.id, // l'ID du message original
+      responseContent: emailData.message,
+    };
 
-  console.log("Body envoyé au backend:", body); // debug
+    console.log("Body envoyé au backend:", body); // debug
 
-  try {
-    const res = await fetch("http://localhost:3000/send-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    try {
+      const res = await fetch("https://api.mastertable.site/contact_messages/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-    const data = await res.json();
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
 
-    if (res.ok) {
-      toast.success(`✅ Email envoyé avec succès à ${conversation.content.email}`);
+      const data = await res.json();
+      console.log("Réponse sauvegardée dans la DB:", data);
+
+      toast.success(`✅ Email envoyé et sauvegardé pour ${conversation.content.email}`);
       setEmailData({ subject: "", message: "" });
       onClose();
-    } else if (res.status === 400) {
-      toast.error("❌ Erreur : Email destinataire invalide ou message vide");
-    } else if (res.status === 403) {
-      toast.error(
-        "❌ Envoi interdit par SendGrid (403). Vérifie la clé API et l'adresse expéditeur."
-      );
-    } else {
-      toast.error(`❌ Erreur inattendue : ${data.message || JSON.stringify(data)}`);
+    } catch (err) {
+      console.error("Erreur envoi email:", err);
+      toast.error("❌ Impossible d’envoyer l’email ou sauvegarder dans la DB.");
     }
-  } catch (err) {
-    console.error("Erreur envoi email:", err);
-    toast.error("❌ Impossible d’envoyer l’email (erreur réseau ou serveur).");
-  }
-};
+  };
+
 
 
   if (!show) return null;

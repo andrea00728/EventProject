@@ -4,29 +4,53 @@ import { ContactMessage } from '../../entities/ContactMessage';
 
 @Controller('contact_messages')
 export class ContactController {
-    constructor(private readonly contactService: ContactService) {}
+  constructor(private readonly contactService: ContactService) {}
 
-    @Post()
-    async create(@Body() body: Partial<ContactMessage>): Promise<ContactMessage> {
-        return await this.contactService.create(body);
-    }
+  // Créer un message reçu par un utilisateur
+  @Post()
+  async create(@Body() body: Partial<ContactMessage>): Promise<ContactMessage> {
+    return await this.contactService.create(body);
+  }
 
-    @Get()
-    async findAll(): Promise<ContactMessage[]> {
-        return await this.contactService.findAll();
-    }
+  // Récupérer tous les messages séparés par type (reçus / envoyés)
+  @Get('all')
+  async findAllSeparated(): Promise<{
+    receivedMessages: ContactMessage[];
+    sentEmails: ContactMessage[];
+  }> {
+    const receivedMessages = await this.contactService.findAll(false);
+    const sentEmails = await this.contactService.findAll(true);
+    return { receivedMessages, sentEmails };
+  }
 
-     @Delete(':id')
-    async remove(@Param('id') id: number) {
-        return this.contactService.delete(id);
-    }
+  // Supprimer un message
+  @Delete(':id')
+  async remove(@Param('id') id: number) {
+    return this.contactService.delete(id);
+  }
 
-    @Patch(':id')
-    async updateReadStatus(
-        @Param('id') id: number,
-        @Body('isRead') isRead: boolean,
+  // Mettre à jour le statut lu
+  @Patch(':id')
+  async updateReadStatus(
+    @Param('id') id: number,
+    @Body('isRead') isRead: boolean,
+  ): Promise<ContactMessage> {
+    return this.contactService.updateReadStatus(id, isRead);
+  }
+
+  // Envoyer une réponse à un message existant
+  @Post('respond')
+    async respondToMessage(
+    @Body('originalMessageId') originalMessageId: number,
+    @Body('responseContent') responseContent: string,
     ): Promise<ContactMessage> {
-        return this.contactService.updateReadStatus(id, isRead);
+    console.log('API respond appelée:', { originalMessageId, responseContent }); // debug
+    return await this.contactService.sendResponseMessage(originalMessageId, responseContent);
+}
+
+    @Get('/getAllMessagesForOneEmail')
+    async findAllMessagesForOneEmail(@Body() email: string): Promise<ContactMessage[]> {
+        return await this.contactService.getAllMessagesEmail(email);
     }
 
 }

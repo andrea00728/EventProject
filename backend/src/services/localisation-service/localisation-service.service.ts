@@ -160,7 +160,7 @@ export class LocationService {
 
   async deleteLocation(id: number): Promise<void> {
     const location = await this.findLocationById(id);
-    if (location.salles.length > 0) {
+    if (location.salles?.length > 0) {
       throw new BadRequestException('Impossible de supprimer un lieu avec des salles associées');
     }
     await this.locationRepository.delete(id);

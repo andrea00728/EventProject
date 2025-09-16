@@ -39,7 +39,7 @@ export class InvitationController {
       const invitation= await this.invitationService.createInvitation(dto);
       await this.notificationService.notifyAll(
         'ivitation envoyee',
-        `invitation evoye pour l'evenement ${dto.eventId}`,
+        `invitation envoyee pour l'evenement ${dto.eventId}`,
       )
       return invitation;
       
@@ -53,24 +53,24 @@ export class InvitationController {
   }
 
 
-@Post('/qrCodeVerification')
-@UseGuards(AuthGuard('jwt'))
-async VerificationQrCode(
-  @Req() req,
-  @Body() body: { qrCode: string }
-) {
-  const userEmail = req.user?.email; 
-  if (!body.qrCode) {
-    throw new BadRequestException('QR code invalide');
+  @Post('/qrCodeVerification')
+  @UseGuards(AuthGuard('jwt'))
+  async VerificationQrCode(
+    @Req() req,
+    @Body() body: { qrCode: string }
+  ) {
+    const userEmail = req.user?.email; 
+    if (!body.qrCode) {
+      throw new BadRequestException('QR code invalide');
+    }
+
+    try {
+    const result = await this.invitationService.VerificationQrcode(body.qrCode, userEmail);
+    return result;
+  } catch (error) {
+    throw error; 
   }
 
-  try {
-  const result = await this.invitationService.VerificationQrcode(body.qrCode, userEmail);
-  return result;
-} catch (error) {
-  throw error; 
-}
-
-}
+  }
 }
 

@@ -171,6 +171,13 @@ const modalVariants = {
 const gradientButton = `bg-gradient-to-r from-indigo-500 to-blue-500 text-white hover:from-indigo-600 hover:to-blue-600`;
 const gradientTitle = `bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent`;
 
+const Spinner = () => (
+    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+);
+
 export default function Evenementform({ onNext, isPublic, isExit }) {
   const [form, setForm] = useState({
     nom: "",
@@ -218,6 +225,16 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
   const [selectedLocationSalles, setSelectedLocationSalles] = useState([]);
   const [selectedLocationForSalles, setSelectedLocationForSalles] = useState(null);
   const [expandedLocationId, setExpandedLocationId] = useState(null);
+
+  // Loading states
+  const [isCreatingEvent, setIsCreatingEvent] = useState(false);
+  const [isSavingLocation, setIsSavingLocation] = useState(false);
+  const [isSavingSalle, setIsSavingSalle] = useState(false);
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
+  const [isEditingSalle, setIsEditingSalle] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+
 
   const API_URL = `${import.meta.env.VITE_API_BASE_URL}/locations`;
 
@@ -326,6 +343,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       toast.error("Le nom de la salle est requis");
       return;
     }
+    setIsSavingSalle(true);
     try {
       await createSalle(form.locationId, { nom: newSalleName });
       setNewSalleName("");
@@ -338,6 +356,8 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       const errorMessage = err.response?.data?.message || "Erreur lors de la création de la salle";
       setError(errorMessage);
       toast.error(errorMessage);
+    } finally {
+      setIsSavingSalle(false);
     }
   };
 
@@ -347,6 +367,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       toast.error("Le nom de la salle est requis");
       return;
     }
+    setIsEditingSalle(true);
     try {
       await axios.put(`${API_URL}/salles/${editingSalle.id}`, { nom: newSalleName });
       setNewSalleName("");
@@ -361,6 +382,8 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       const errorMessage = err.response?.data?.message || "Erreur lors de la modification de la salle";
       setError(errorMessage);
       toast.error(errorMessage);
+    } finally {
+      setIsEditingSalle(false);
     }
   };
 
@@ -427,6 +450,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       return;
     }
 
+    setIsCreatingEvent(true);
     try {
       const formData = new FormData();
       formData.append("utilisateur_id", user.id || user.sub);
@@ -463,6 +487,8 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       const errorMessage = error?.response?.data?.message || "Erreur lors de la création de l'événement.";
       setError(errorMessage);
       toast.error(errorMessage);
+    } finally {
+      setIsCreatingEvent(false);
     }
   };
 
@@ -492,39 +518,42 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     }
   };
 
-  const handleGeocode = async () => {
+const handleGeocode = async () => {
     if (!geocodeAddress.trim()) {
-      setGeocodeResultText("Veuillez entrer une adresse valide.");
-      toast.error("Veuillez entrer une adresse valide.");
-      return;
+        setGeocodeResultText("Veuillez entrer une adresse valide.");
+        toast.error("Veuillez entrer une adresse valide.");
+        return;
     }
+    setIsGeocoding(true);
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(geocodeAddress)}`
-      );
-      const data = await response.json();
-      if (data.length > 0 && data[0].lat != null && data[0].lon != null) {
-        const { lat, lon, display_name } = data[0];
-        const latitude = parseFloat(lat);
-        const longitude = parseFloat(lon);
-        setGeocodeResult({ nom: display_name, latitude, longitude });
-        setGeocodeResultText(`Nom: ${display_name}, Latitude: ${lat}, Longitude: ${lon}`);
-        setNewLocation({ ...newLocation, nom: display_name, latitude, longitude });
-        setCustomMarker({ lat: latitude, lng: longitude });
-        if (mapRef.current && !isNaN(latitude) && !isNaN(longitude)) {
-          mapRef.current.setView([latitude, longitude], 13);
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(geocodeAddress)}`
+        );
+        const data = await response.json();
+        if (data.length > 0 && data[0].lat != null && data[0].lon != null) {
+            const { lat, lon, display_name } = data[0];
+            const latitude = parseFloat(lat);
+            const longitude = parseFloat(lon);
+            setGeocodeResult({ nom: display_name, latitude, longitude });
+            setGeocodeResultText(`Nom: ${display_name}, Latitude: ${lat}, Longitude: ${lon}`);
+            setNewLocation({ ...newLocation, nom: display_name, latitude, longitude });
+            setCustomMarker({ lat: latitude, lng: longitude });
+            if (mapRef.current && !isNaN(latitude) && !isNaN(longitude)) {
+                mapRef.current.setView([latitude, longitude], 13);
+            }
+        } else {
+            setGeocodeResult(null);
+            setGeocodeResultText("Aucun résultat trouvé pour cette adresse.");
+            toast.error("Aucun résultat trouvé pour cette adresse.");
         }
-      } else {
-        setGeocodeResult(null);
-        setGeocodeResultText("Aucun résultat trouvé pour cette adresse.");
-        toast.error("Aucun résultat trouvé pour cette adresse.");
-      }
     } catch (err) {
-      setGeocodeResultText("Erreur lors du géocodage. Veuillez réessayer.");
-      toast.error("Erreur lors du géocodage. Veuillez réessayer.");
-      console.error("Geocode error:", err);
+        setGeocodeResultText("Erreur lors du géocodage. Veuillez réessayer.");
+        toast.error("Erreur lors du géocodage. Veuillez réessayer.");
+        console.error("Geocode error:", err);
+    } finally {
+        setIsGeocoding(false);
     }
-  };
+};
 
   const handleResetGeocode = () => {
     setGeocodeAddress("");
@@ -542,7 +571,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     }
   };
 
-  const handleConfirmLieu = () => {
+  const handleConfirmLieu = async () => {
     if (activeTab === 'default') {
       if (selectedLieu) {
         setForm({ ...form, locationId: selectedLieu.id, salleId: "" });
@@ -552,28 +581,30 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       }
     } else {
       if (newLocation.nom && newLocation.latitude && newLocation.longitude) {
+        setIsSavingLocation(true);
         const query = newLocation.nom;
         const createurId = isAuthenticated && (user.id || user.sub);
-        saveLocation(query, createurId)
-          .then((createdLoc) => {
-            setLocations([...locations, createdLoc]);
-            setUserLocations([...userLocations, createdLoc]);
-            setForm({ ...form, locationId: createdLoc.id, salleId: "" });
-            setModalLieuOpen(false);
-            setCustomMarker(null);
-            setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
-            setGeocodeAddress("");
-            setGeocodeResult(null);
-            setGeocodeResultText("");
-            setSelectedLocationSalles([]);
-            setSelectedLocationForSalles(null);
-            toast.success("Nouveau lieu créé avec succès !");
-          })
-          .catch((error) => {
-            const errorMessage = error.response?.data?.message || "Erreur lors de la création du lieu.";
-            setError(errorMessage);
-            toast.error(errorMessage);
-          });
+        try {
+          const createdLoc = await saveLocation(query, createurId);
+          setLocations([...locations, createdLoc]);
+          setUserLocations([...userLocations, createdLoc]);
+          setForm({ ...form, locationId: createdLoc.id, salleId: "" });
+          setModalLieuOpen(false);
+          setCustomMarker(null);
+          setNewLocation({ nom: '', latitude: '', longitude: '', createurId: 0 });
+          setGeocodeAddress("");
+          setGeocodeResult(null);
+          setGeocodeResultText("");
+          setSelectedLocationSalles([]);
+          setSelectedLocationForSalles(null);
+          toast.success("Nouveau lieu créé avec succès !");
+        } catch (error) {
+          const errorMessage = error.response?.data?.message || "Erreur lors de la création du lieu.";
+          setError(errorMessage);
+          toast.error(errorMessage);
+        } finally {
+          setIsSavingLocation(false);
+        }
       } else {
         setError("Veuillez remplir le nom et sélectionner un point sur la carte.");
         toast.error("Veuillez remplir le nom et sélectionner un point sur la carte.");
@@ -593,6 +624,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
 
   const handleConfirmEdit = async () => {
     if (!geocodeResult || !editingLocation) return;
+    setIsEditingLocation(true);
     try {
       await axios.put(`${API_URL}/${editingLocation.id}`, {
         nom: geocodeResult.nom,
@@ -609,9 +641,12 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
       setSelectedLocationSalles([]);
       setSelectedLocationForSalles(null);
       setExpandedLocationId(null);
+      toast.success("Lieu modifié avec succès !");
     } catch (err) {
       setError(err.response?.data?.message || "Erreur lors de la modification du lieu");
       toast.error(err.response?.data?.message || "Erreur lors de la modification du lieu");
+    } finally {
+      setIsEditingLocation(false);
     }
   };
 
@@ -622,6 +657,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
 
   const handleConfirmDelete = async () => {
     if (!deleteItem) return;
+    setIsDeleting(true);
     try {
       if (deleteItem.type === "location") {
         await axios.delete(`${API_URL}/${deleteItem.id}`);
@@ -641,6 +677,8 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
     } catch (err) {
       setError(err.response?.data?.message || "Erreur lors de la suppression");
       toast.error(err.response?.data?.message || "Erreur lors de la suppression");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -872,34 +910,42 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                   </button>
                 </>
               ) : (
-      <div className="flex flex-col items-center justify-center text-gray-400">
-        <MdImage size={40} />
-        <p className="mt-2 text-sm">Aucune image sélectionnée</p>
-        <button
-          type="button"
-          className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
-          onClick={() => document.getElementById("image-upload").click()}
-        >
-          Ajouter une image
-        </button>
-      </div>
-    )}
-    <input
-      id="image-upload"
-      type="file"
-      accept="image/*"
-      onChange={handleImageChange}
-      className="hidden"
-    />
-  </div>
-  <p className="text-xs text-gray-500">Formats acceptés : JPG, PNG, GIF (max 5 Mo)</p>
-</div>
+                <div className="flex flex-col items-center justify-center text-gray-400">
+                  <MdImage size={40} />
+                  <p className="mt-2 text-sm">Aucune image sélectionnée</p>
+                  <button
+                    type="button"
+                    className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                    onClick={() => document.getElementById("image-upload").click()}
+                  >
+                    Ajouter une image
+                  </button>
+                </div>
+              )}
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </div>
+            <p className="text-xs text-gray-500">Formats acceptés : JPG, PNG, GIF (max 5 Mo)</p>
+          </div>
           <div className="col-span-1 sm:col-span-2 mt-4 flex flex-col sm:flex-row gap-4">
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-[#6B46C1] via-purple-600 to-indigo-600 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition"
+              disabled={isCreatingEvent}
+              className="w-full bg-gradient-to-r from-[#6B46C1] via-purple-600 to-indigo-600 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Créer l'événement
+              {isCreatingEvent ? (
+                <span className="flex items-center justify-center">
+                  <Spinner />
+                  Chargement...
+                </span>
+              ) : (
+                "Créer l'événement"
+              )}
             </button>
             <button
               type="button"
@@ -942,9 +988,17 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                 <div className="flex gap-4">
                   <button
                     onClick={handleCreateSalle}
-                    className="flex-1 bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition"
+                    disabled={isSavingSalle}
+                    className="flex-1 bg-indigo-700 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Sauvegarder
+                    {isSavingSalle ? (
+                      <span className="flex items-center justify-center">
+                        <Spinner />
+                        Chargement...
+                      </span>
+                    ) : (
+                      "Sauvegarder"
+                    )}
                   </button>
                   <button
                     onClick={() => {
@@ -1153,16 +1207,34 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                       <div className="flex flex-col sm:flex-row gap-2">
                         <button
                           onClick={handleGeocode}
-                          className={`flex-1 p-2 sm:p-3 rounded-lg ${gradientButton}`}
+                          disabled={isGeocoding}
+                          className={`flex-1 p-2 sm:p-3 rounded-lg ${gradientButton} disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
-                          Rechercher
+                          {isGeocoding ? (
+                              <span className="flex items-center justify-center">
+                                  <Spinner />
+                                  Chargement...
+                              </span>
+                          ) : (
+                              "Rechercher"
+                          )}
                         </button>
                         <button
                           onClick={editingLocation ? () => setShowEditConfirmationModal(true) : handleConfirmLieu}
-                          disabled={editingLocation ? !geocodeResult : (!newLocation.nom || !newLocation.latitude)}
+                          disabled={editingLocation ? !geocodeResult : (!newLocation.nom || !newLocation.latitude || isSavingLocation)}
                           className={`flex-1 p-2 sm:p-3 rounded-lg disabled:opacity-50 ${gradientButton}`}
                         >
-                          {editingLocation ? 'Modifier' : 'Sauvegarder'}
+                          {editingLocation ? (isEditingLocation ? (
+                                <span className="flex items-center justify-center">
+                                  <Spinner />
+                                  Chargement...
+                                </span>
+                              ) : 'Modifier') : (isSavingLocation ? (
+                                <span className="flex items-center justify-center">
+                                  <Spinner />
+                                  Chargement...
+                                </span>
+                              ) : 'Sauvegarder')}
                         </button>
                         <button
                           onClick={handleResetGeocode}
@@ -1239,9 +1311,15 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                                               <div className="flex gap-2">
                                                 <button
                                                   onClick={() => setShowEditSalleConfirmationModal(true)}
-                                                  className="flex-1 bg-indigo-700 text-white font-bold py-2 rounded-lg hover:bg-indigo-800 transition"
+                                                  disabled={isEditingSalle}
+                                                  className="flex-1 bg-indigo-700 text-white font-bold py-2 rounded-lg hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
-                                                  Sauvegarder
+                                                  {isEditingSalle ? (
+                                                    <span className="flex items-center justify-center">
+                                                      <Spinner />
+                                                      Chargement...
+                                                    </span>
+                                                  ) : 'Sauvegarder'}
                                                 </button>
                                                 <button
                                                   onClick={() => {
@@ -1313,6 +1391,7 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                                               toast.error("Le nom de la salle est requis");
                                               return;
                                             }
+                                            setIsSavingSalle(true);
                                             try {
                                               await createSalle(loc.id, { nom: newSalleName });
                                               setNewSalleName("");
@@ -1325,11 +1404,21 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                                               const errorMessage = err.response?.data?.message || "Erreur lors de la création de la salle";
                                               setError(errorMessage);
                                               toast.error(errorMessage);
+                                            } finally {
+                                              setIsSavingSalle(false);
                                             }
                                           }}
-                                          className="flex-1 bg-indigo-700 text-white font-bold py-2 rounded-lg hover:bg-indigo-800 transition"
+                                          disabled={isSavingSalle}
+                                          className="flex-1 bg-indigo-700 text-white font-bold py-2 rounded-lg hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                          Sauvegarder
+                                          {isSavingSalle ? (
+                                            <span className="flex items-center justify-center">
+                                              <Spinner />
+                                              Chargement...
+                                            </span>
+                                          ) : (
+                                            "Sauvegarder"
+                                          )}
                                         </button>
                                         <button
                                           onClick={() => {
@@ -1440,10 +1529,20 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                   </button>
                   <button
                     onClick={handleConfirmDelete}
-                    className={`flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl flex items-center justify-center font-semibold ${gradientButton}`}
+                    disabled={isDeleting}
+                    className={`flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl flex items-center justify-center font-semibold ${gradientButton} disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
-                    <MdDelete className="mr-2 text-xl" />
-                    Supprimer
+                    {isDeleting ? (
+                      <span className="flex items-center justify-center">
+                        <Spinner />
+                        Chargement...
+                      </span>
+                    ) : (
+                      <>
+                        <MdDelete className="mr-2 text-xl" />
+                        Supprimer
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1491,10 +1590,20 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                   </button>
                   <button
                     onClick={handleConfirmEdit}
-                    className={`flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl flex items-center justify-center font-semibold ${gradientButton}`}
+                    disabled={isEditingLocation}
+                    className={`flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl flex items-center justify-center font-semibold ${gradientButton} disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
-                    <MdSave className="mr-2 text-xl" />
-                    Confirmer
+                    {isEditingLocation ? (
+                      <span className="flex items-center justify-center">
+                        <Spinner />
+                        Chargement...
+                      </span>
+                    ) : (
+                      <>
+                        <MdSave className="mr-2 text-xl" />
+                        Confirmer
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1586,10 +1695,20 @@ export default function Evenementform({ onNext, isPublic, isExit }) {
                   </button>
                   <button
                     onClick={handleEditSalle}
-                    className={`flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl flex items-center justify-center font-semibold ${gradientButton}`}
+                    disabled={isEditingSalle}
+                    className={`flex-1 px-4 sm:px-6 py-2 sm:py-3 rounded-xl flex items-center justify-center font-semibold ${gradientButton} disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
-                    <MdSave className="mr-2 text-xl" />
-                    Confirmer
+                    {isEditingSalle ? (
+                      <span className="flex items-center justify-center">
+                        <Spinner />
+                        Chargement...
+                      </span>
+                    ) : (
+                      <>
+                        <MdSave className="mr-2 text-xl" />
+                        Confirmer
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

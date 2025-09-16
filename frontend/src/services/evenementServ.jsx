@@ -18,7 +18,6 @@ export const createEvent = async (eventData) => {
   }
 };
 
-
 /**
  * Récupère tous les lieux.
  */
@@ -52,6 +51,47 @@ export const getMyEvents = async () => {
  */
 export const DeleteEvent = async (eventId) => {
   const response = await axiosClient.delete(`/evenements/${eventId}/delete`);
+  return response.data;
+};
+
+/**
+ * Annule un événement en le marquant comme inactif.
+ * @param {number} eventId - L'ID de l'événement
+ * @returns {Promise<Object>} - Réponse de l'annulation
+ */
+export const cancelEvent = async (eventId) => {
+  try {
+    const response = await axiosClient.put(`/evenements/${eventId}/cancel`, {
+      isActive: false,
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || "Erreur lors de l'annulation de l'événement";
+  }
+};
+
+/**
+ * Restaure un événement annulé en le marquant comme actif.
+ * @param {number} eventId - L'ID de l'événement
+ * @returns {Promise<Object>} - Réponse de la restauration
+ */
+export const restoreEvent = async (eventId) => {
+  try {
+    const response = await axiosClient.put(`/evenements/${eventId}/restore`, {
+      isActive: true,
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || "Erreur lors de la restauration de l'événement";
+  }
+};
+
+/**
+ * Récupère tous les événements annulés (inactifs) de l'utilisateur connecté.
+ * @returns {Promise<Array>} - Liste des événements annulés
+ */
+export const getHiddenEvents = async () => {
+  const response = await axiosClient.get('/evenements/me/hidden');
   return response.data;
 };
 
@@ -150,7 +190,6 @@ export const saveLocation = async (query, createurId) => {
   }
 };
 
-
 /**
  * Récupère les lieux créés par un utilisateur spécifique ou par l'admin.
  * @param {string} createurId - L'ID du créateur (utilisateur ou 0 pour admin)
@@ -160,6 +199,7 @@ export const getLocationsByCreator = async (createurId) => {
   const response = await axiosClient.get(`/locations/by-creator/${createurId}`);
   return response.data;
 };
+
 /**
  * Récupère les lieux créés par un utilisateur spécifique ou par l'admin.
  * @param {string} createurId - L'ID du créateur (utilisateur ou 0 pour admin)
@@ -170,6 +210,11 @@ export const getLocationsByCreatorAndAdmin = async (createurId) => {
   return response.data;
 };
 
+/**
+ * Met à jour un événement.
+ * @param {Object} params - Paramètres contenant l'ID de l'événement et les données à mettre à jour
+ * @returns {Promise<Object>} - L'événement mis à jour
+ */
 export const updateEvent = async ({ eventId, eventData }) => {
   try {
     console.log('Mise à jour de l\'événement avec ID:', eventId); // Débogage
@@ -185,8 +230,11 @@ export const updateEvent = async ({ eventId, eventData }) => {
   }
 };
 
-
-
+/**
+ * Récupère un événement spécifique par son ID.
+ * @param {number} eventId - L'ID de l'événement
+ * @returns {Promise<Object>} - L'événement récupéré
+ */
 export const getEvent = async (eventId) => {
   console.log('Récupération de l\'événement avec ID:', eventId);
   try {
@@ -198,4 +246,3 @@ export const getEvent = async (eventId) => {
     throw error.response?.data?.message || 'Erreur lors de la récupération de l\'événement';
   }
 };
-

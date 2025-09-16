@@ -1,41 +1,70 @@
 import { Injectable, BadRequestException, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
 import sgMail from '@sendgrid/mail';
+import nodemailer from "nodemailer";
+import path from 'path';
 
 @Injectable()
 export class EmailService {
+  private readonly transporter;
   private readonly fromEmail: string;
 
   constructor() {
-    const from = process.env.SENDGRID_FROM_EMAIL;
-    if (!from) throw new Error('SENDGRID_FROM_EMAIL n’est pas défini dans le .env');
-    this.fromEmail = from;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const smtpPort = parseInt(process.env.SMTP_PORT || '465', 10);
 
-    const apiKey = process.env.SENDGRID_API_KEY;
-    if (!apiKey) throw new Error('SENDGRID_API_KEY n’est pas défini dans le .env');
-    sgMail.setApiKey(apiKey);
+    if (!smtpUser || !smtpPass) {
+      throw new Error('❌ SMTP_USER ou SMTP_PASS manquant dans le .env');
+    }
+
+    this.fromEmail = smtpUser;
+
+    this.transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465, // true pour SSL (465), false pour TLS (587)
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
   }
 
   async sendEmail(to: string, subject: string, message: string) {
-    // Vérification simple du format email
-    if (!to || !message) throw new BadRequestException('Destinataire et message requis.');
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!regex.test(to)) throw new BadRequestException(`Email invalide: ${to}`);
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
 
-    const msg = { to, from: this.fromEmail, subject: subject || 'Réponse à votre message', text: message, html: `<p>${message.replace(/\n/g, '<br>')}</p>` };
+    const logoPath = path.resolve('assets/images/logo_icone.gif');
 
-    try {
-      console.log('Envoi email:', msg);
-      await sgMail.send(msg);
-      return { success: true, message: 'Email envoyé ✅' };
-    } catch (err: any) {
-      console.error('Erreur SendGrid:', err);
+    const mailOptions = {
+      from: `"MasterTable Support" <${process.env.SMTP_USER}>`,
+      to,
+      subject: subject || "Réponse à votre message - MasterTable",
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height:1.6; max-width:600px; margin:auto; padding:20px; border:1px solid #e0e0e0; border-radius:8px;">
+          <div style="text-align:center; margin-bottom:20px;">
+            <img src="cid:logoMasterTable" alt="MasterTable Logo" style="max-width:150px;"/>
+          </div>
+          <h2 style="color:#4CAF50; text-align:center;">MasterTable</h2>
+          <p>${message.replace(/\n/g, "<br>")}</p>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: "logo.png",
+          path: logoPath, 
+          cid: "logoMasterTable",   // doit correspondre au src="cid:logoMasterTable"
+        },
+      ],
+    };
 
-      // Si SendGrid renvoie Forbidden (403)
-      if (err.code === 403) {
-        throw new ForbiddenException('SendGrid interdit l’envoi de cet email (403). Vérifie ta clé API et l’adresse expéditeur.');
-      }
-
-      throw new InternalServerErrorException('Impossible d’envoyer l’email.');
-    }
+    await transporter.sendMail(mailOptions);
+    console.log("✅ Email envoyé avec logo intégré à", to);
   }
 }

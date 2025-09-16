@@ -21,8 +21,13 @@ const EventPending = () => {
       setIsLoading(true);
       try {
         const data = await getMyEvents();
-        // Filtrer les événements sans tables ni invités
-        const pendingEvents = data.filter(event => !event.tables?.length && !event.invites?.length);
+        // Filtrer les événements sans tables ni invités ET non annulés
+        const pendingEvents = data.filter(
+          (event) =>
+            !event.tables?.length &&
+            !event.invites?.length &&
+            event.status !== 'canceled' // Exclure les événements annulés
+        );
         setEvents(pendingEvents);
         setError(null);
       } catch (error) {
@@ -110,7 +115,7 @@ const EventPending = () => {
         {/* Events Grid */}
         {!isLoading && !error && events.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {events.map((event, index) => (
+            {events.map((event) => (
               <div
                 key={event.id}
                 className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-orange-100 overflow-hidden transform hover:-translate-y-2"
@@ -174,7 +179,7 @@ const EventPending = () => {
                             month: 'long',
                             year: 'numeric',
                             hour: '2-digit',
-                            minute: '2-digit'
+                            minute: '2-digit',
                           })}
                         </p>
                       </div>
@@ -235,7 +240,6 @@ const EventPending = () => {
                       Configurer l'événement
                     </button>
                   </div>
-
                 </div>
               </div>
             ))}
