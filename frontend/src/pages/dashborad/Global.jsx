@@ -257,7 +257,7 @@ const DashboardGlobal = () => {
               <Calendar className="w-12 h-12 text-red-400" strokeWidth={2.5} />
             </div>
             <p className="text-xs text-gray-400 mt-1">
-              Événements restants disponibles avec votre forfait actuel.
+              Votre forfait prendra fin à cette date. D'ici là, laissez votre inspiration guider vos événements.
             </p>
           </div>
         </section>
