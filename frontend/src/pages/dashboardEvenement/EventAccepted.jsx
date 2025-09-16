@@ -1,6 +1,5 @@
-// src/components/EventAccept.jsx
 import React, { useState, useEffect } from "react";
-import { getMyEvents, updateEvent } from "../../services/evenementServ";
+import { getMyEvents, updateEvent, cancelEvent, restoreEvent, getHiddenEvents } from "../../services/evenementServ";
 import { useStateContext } from "../../context/ContextProvider";
 import Modal from "../../components/Modal/EventModal";
 import DeleteEventButton from "../../util/DeleteEvenement";
@@ -8,9 +7,11 @@ import DeleteEventButton from "../../util/DeleteEvenement";
 const EventAccept = () => {
   const { isAuthenticated } = useStateContext();
   const [events, setEvents] = useState([]);
+  const [hiddenEvents, setHiddenEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showHiddenEvents, setShowHiddenEvents] = useState(false);
   const [error, setError] = useState(null);
 
   const API_BASE_URL =
@@ -23,26 +24,35 @@ const EventAccept = () => {
       return;
     }
 
-    const fetchEvents = async () => {
-      setIsLoading(true);
-      try {
-        const data = await getMyEvents();
-        console.log("Événements récupérés:", data); // Débogage : vérifier les données renvoyées
-        setEvents(data);
-        setError(null);
-      } catch (error) {
-        console.error("Erreur lors de la récupération des événements:", error);
-        setError("Erreur lors du chargement des événements.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchEvents();
   }, [isAuthenticated]);
 
+  const fetchEvents = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getMyEvents();
+      console.log("Événements récupérés:", data);
+      setEvents(data);
+      setError(null);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des événements:", error);
+      setError("Erreur lors du chargement des événements.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchHiddenEvents = async () => {
+    try {
+      const data = await getHiddenEvents();
+      setHiddenEvents(data);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des événements masqués:", error);
+    }
+  };
+
   const openModal = (event, mode = "view") => {
-    console.log("Ouverture de la modale pour l'événement:", event); // Débogage
+    console.log("Ouverture de la modale pour l'événement:", event);
     setSelectedEvent({ ...event, mode });
     setIsModalOpen(true);
   };
@@ -58,7 +68,7 @@ const EventAccept = () => {
       return;
     }
     try {
-      console.log("Mise à jour de l'événement:", updatedEvent); // Débogage
+      console.log("Mise à jour de l'événement:", updatedEvent);
       const formData = new FormData();
       Object.keys(updatedEvent).forEach((key) => {
         if (key === "image" && updatedEvent[key] instanceof File) {
@@ -71,7 +81,7 @@ const EventAccept = () => {
         eventId: updatedEvent.id,
         eventData: formData,
       });
-      console.log("Événement mis à jour:", response); // Débogage
+      console.log("Événement mis à jour:", response);
       setEvents(events.map((e) => (e.id === updatedEvent.id ? response : e)));
       setIsModalOpen(false);
       setSelectedEvent(null);
@@ -79,6 +89,47 @@ const EventAccept = () => {
       console.error("Erreur lors de la mise à jour de l'événement:", error);
       alert(error || "Erreur lors de la mise à jour de l'événement");
     }
+  };
+
+  const handleCancelEvent = async (eventId) => {
+    if (window.confirm("Êtes-vous sûr de vouloir annuler cet événement ? Il sera masqué mais pas supprimé.")) {
+      try {
+        await cancelEvent(eventId);
+        setEvents(events.filter(event => event.id !== eventId));
+        alert("Événement annulé avec succès");
+      } catch (error) {
+        console.error("Erreur lors de l'annulation de l'événement:", error);
+        alert("Erreur lors de l'annulation de l'événement");
+      }
+    }
+  };
+
+  const handleRestoreEvent = async (eventId) => {
+    try {
+      await restoreEvent(eventId);
+      setHiddenEvents(hiddenEvents.filter(event => event.id !== eventId));
+      fetchEvents();
+      alert("Événement restauré avec succès");
+    } catch (error) {
+      console.error("Erreur lors de la restauration de l'événement:", error);
+      alert("Erreur lors de la restauration de l'événement");
+    }
+  };
+
+  const toggleHiddenEvents = async () => {
+    if (!showHiddenEvents) {
+      await fetchHiddenEvents();
+    }
+    setShowHiddenEvents(!showHiddenEvents);
+  };
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith("http")) return imagePath;
+    const normalizedPath = imagePath.startsWith("/")
+      ? imagePath
+      : `/${imagePath}`;
+    return `${API_BASE_URL}${normalizedPath}`;
   };
 
   return (
@@ -107,7 +158,68 @@ const EventAccept = () => {
           <p className="text-slate-600 text-lg max-w-2xl mx-auto">
             Gérez et consultez tous vos événements créés en un seul endroit
           </p>
+
+          <button
+            onClick={toggleHiddenEvents}
+            className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:ring-2 focus:ring-gray-400 focus:outline-none transition-colors"
+            aria-label={showHiddenEvents ? "Masquer les événements annulés" : "Voir les événements annulés"}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            <span>{showHiddenEvents ? "Masquer les événements annulés" : "Voir les événements annulés"}</span>
+          </button>
         </div>
+
+        {/* Afficher les événements masqués */}
+        {showHiddenEvents && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-700 mb-4">Événements Annulés</h2>
+            {hiddenEvents.length === 0 ? (
+              <p className="text-gray-500">Aucun événement annulé.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                {hiddenEvents.map((event) => {
+                  const imageUrl = getImageUrl(event.imageUrl);
+                  return (
+                    <div key={event.id} className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                      <div className="mb-4 relative w-full h-32 rounded-lg overflow-hidden border border-slate-200">
+                        {event.imageUrl ? (
+                          <img
+                            src={imageUrl || "https://placehold.co/300x150?text=Aucune+image"}
+                            alt={`Image de l'événement ${event.nom}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.src = "https://placehold.co/300x150?text=Image+non+disponible";
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2">{event.nom}</h3>
+                      <p className="text-gray-600 mb-1"><span className="font-medium">Type:</span> {event.type}</p>
+                      <p className="text-gray-600 mb-1"><span className="font-medium">Thème:</span> {event.theme}</p>
+                      <p className="text-gray-600 mb-3"><span className="font-medium">Date:</span> {new Date(event.date).toLocaleDateString("fr-FR")}</p>
+                      <button
+                        onClick={() => handleRestoreEvent(event.id)}
+                        className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none transition-colors"
+                        aria-label={`Restaurer l'événement ${event.nom}`}
+                      >
+                        Restaurer
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Loading Indicator */}
         {isLoading && (
@@ -157,7 +269,7 @@ const EventAccept = () => {
         )}
 
         {/* Events Grid */}
-        {!isLoading && !error && (
+        {!isLoading && !error && !showHiddenEvents && (
           <>
             {events.length === 0 ? (
               <div className="text-center py-16">
@@ -186,22 +298,6 @@ const EventAccept = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-stretch">
                 {events.map((event, index) => {
-                  console.log(
-                    `Image pour l'événement ${event.nom}:`,
-                    event.imageUrl
-                  ); // Débogage
-                  const getImageUrl = (imagePath) => {
-                    if (!imagePath) return null;
-                    if (imagePath.startsWith("http")) return imagePath;
-
-                    // Normaliser le chemin pour qu'il commence par un slash
-                    const normalizedPath = imagePath.startsWith("/")
-                      ? imagePath
-                      : `/${imagePath}`;
-                    return `${API_BASE_URL}${normalizedPath}`;
-                  };
-
-                  // Dans votre composant
                   const imageUrl = getImageUrl(event.imageUrl);
                   return (
                     <div
@@ -228,20 +324,13 @@ const EventAccept = () => {
                         <div className="mb-6 relative w-full h-48 rounded-lg overflow-hidden border border-slate-200 shadow-sm group-hover:shadow-md transition-shadow duration-300">
                           {event.imageUrl ? (
                             <img
-                              src={
-                                imageUrl ||
-                                "https://placehold.co/300x150?text=Aucune+image"
-                              }
+                              src={imageUrl || "https://placehold.co/300x150?text=Aucune+image"}
                               alt={`Image de l'événement ${event.nom}`}
                               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                               loading="lazy"
                               onError={(e) => {
-                                console.error(
-                                  `Erreur de chargement de l'image pour l'événement ${event.nom}:`,
-                                  imageUrl
-                                );
-                                e.target.src =
-                                  "https://placehold.co/300x150?text=Image+non+disponible";
+                                console.error(`Erreur de chargement de l'image pour l'événement ${event.nom}:`, imageUrl);
+                                e.target.src = "https://placehold.co/300x150?text=Image+non+disponible";
                               }}
                             />
                           ) : (
@@ -438,80 +527,85 @@ const EventAccept = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-200">
-                          <div className="flex items-center gap-3">
-                            {/* Bouton Détail */}
-                            <button
-                              onClick={() => openModal(event, "view")}
-                              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white transition-all duration-200 transform hover:scale-105 shadow-md whitespace-nowrap ${
-                                index % 5 === 0
-                                  ? "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
-                                  : index % 5 === 1
-                                    ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                                    : index % 5 === 2
-                                      ? "bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600"
-                                      : index % 5 === 3
-                                        ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
-                                        : "bg-gradient-to-r from-amber-500 to-blue-500 hover:from-amber-600 hover:to-blue-600"
-                              }`}
-                              aria-label={`Voir les tables pour l'événement ${event.nom}`}
+                        <div className="flex flex-wrap items-center justify-start gap-3 pt-6 mt-6 border-t border-slate-200">
+                          <button
+                            onClick={() => openModal(event, "view")}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors text-sm font-medium"
+                            aria-label={`Voir les détails de l'événement ${event.nom}`}
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
                             >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                />
-                              </svg>
-                              <span className="hidden sm:inline">Détail</span>
-                            </button>
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                              />
+                            </svg>
+                            Détails
+                          </button>
 
-                            {/* Bouton Modifier */}
-                            <button
-                              onClick={() => openModal(event, "edit")}
-                              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white transition-all duration-200 transform hover:scale-105 shadow-md whitespace-nowrap bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600"
-                              aria-label={`Modifier l'événement ${event.nom}`}
+                          <button
+                            onClick={() => openModal(event, "edit")}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none transition-colors text-sm font-medium"
+                            aria-label={`Modifier l'événement ${event.nom}`}
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
                             >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                              </svg>
-                              <span className="hidden sm:inline">Modifier</span>
-                            </button>
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                            Modifier
+                          </button>
 
-                            {/* Bouton Supprimer */}
-                            <DeleteEventButton
-                              eventId={event.id}
-                              onDeleted={(deletedId) =>
-                                setEvents(
-                                  events.filter((e) => e.id !== deletedId)
-                                )
-                              }
-                              className="whitespace-nowrap"
-                              showLabel={false} // ⚡️ tu peux gérer ça dans ton composant DeleteEventButton
-                            />
-                          </div>
+                          <button
+                            onClick={() => handleCancelEvent(event.id)}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none transition-colors text-sm font-medium"
+                            aria-label={`Annuler l'événement ${event.nom}`}
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                            Annuler
+                          </button>
+
+                          <DeleteEventButton
+                            eventId={event.id}
+                            onDeleted={(deletedId) =>
+                              setEvents(events.filter((e) => e.id !== deletedId))
+                            }
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-colors text-sm font-medium"
+                            showLabel={true}
+                            label="Supprimer"
+                          />
                         </div>
                       </div>
                     </div>
