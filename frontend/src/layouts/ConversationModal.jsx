@@ -79,13 +79,13 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
   if (!show) return null;
 
   return (
-    <div className="fixed bottom-0 right-4 z-[101] flex items-end justify-end p-4">
+    <div className="fixed bottom-0 right-4 z-[101] flex items-end justify-end p-4 w-full">
       <div
-        className={`rounded-t-lg shadow-[0_1px_8px_rgba(0,0,0,0.2)] transition-all duration-300
+        className={`rounded-t-xl shadow-[0_6px_16px_rgba(0,0,0,0.3)] transition-all duration-300
         ${darkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-900"}
-        ${maximized ? "w-[75vw] h-[75vh]" : "w-full max-w-[1000px]"}
+        ${maximized ? "w-[40vw] h-[40vh]" : "w-full max-w-[1000px]"}
         ${minimized ? "h-[100px] overflow-hidden" : "h-auto"} 
-        flex flex-col font-sans text-sm`}
+        flex flex-col font-sans text-base`}
       >
         {/* Header */}
         <div
@@ -131,62 +131,47 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
             </div>
 
             {showDetails && (
-  <div className="mt-2 flex flex-col space-y-2">
-    {/* Message de l'utilisateur (email) */}
-    {conversation?.content?.email && (
-      <div className="flex justify-start">
-        <div className={`flex items-end space-x-2 max-w-[70%]`}>
-          <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-xs text-white font-semibold">
-            U
-          </div>
-          <div
-            className={`p-3 rounded-xl shadow-sm break-words
-              ${darkMode ? "bg-gray-700 text-gray-200" : "bg-gray-200 text-gray-900"}`}
-          >
-            <p className="font-medium text-sm">Utilisateur</p>
-            <p className="italic text-sm">{conversation.content.email}</p>
-          </div>
-        </div>
-      </div>
-    )}
+            <div className="mt-2 flex flex-col space-y-2">
+              {/* Messages échangés */}
+              {messages.length > 0 ? (
+                messages.map((msg) => {
+                const isSentByUser = msg.isSent; // true = support
+                const supportInitial = "M"; // Exemple: MasterTable → "M"
+                const userInitial = conversation?.content?.firstName?.[0]?.toUpperCase() || "U";
+                const senderEmail = isSentByUser ? "mastertable37@gmail.com" : conversation.content.email;
 
-    {/* Messages échangés */}
-    {messages.length > 0 ? (
-      messages.map((msg) => {
-        const isSentByUser = msg.isSent; // true = support (MasterTable)
-        return (
-          <div
-            key={msg.id}
-            className={`flex ${isSentByUser ? "justify-end" : "justify-start"}`}
-          >
-            <div className={`flex items-end space-x-2 max-w-[70%] ${isSentByUser ? "flex-row-reverse" : ""}`}>
-              <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-xs text-white font-semibold">
-                {isSentByUser ? "S" : "U"}
-              </div>
-              <div
-                className={`p-3 rounded-xl shadow-sm break-words
-                  ${isSentByUser
-                    ? "bg-blue-600 text-white"
-                    : darkMode
-                    ? "bg-gray-700 text-gray-200"
-                    : "bg-gray-200 text-gray-900"}`}
-              >
-                <p className="italic text-sm">{msg.message}</p>
-                <p className="text-xs text-gray-400 mt-1 text-right">
-                  {new Date(msg.createdAt).toLocaleString()}
+
+                return (
+                  <div key={msg.id} className={`flex ${isSentByUser ? "justify-end" : "justify-start"}`}>
+                    <div className={`flex items-end space-x-2 max-w-[70%] ${isSentByUser ? "flex-row-reverse" : ""}`}>
+                      <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-bold">
+                        {isSentByUser ? supportInitial : userInitial}
+                      </div>
+                      <div
+                        className={`p-3 rounded-xl shadow-sm break-words
+                          ${isSentByUser
+                            ? "bg-blue-600 text-white"
+                            : darkMode
+                            ? "bg-gray-700 text-gray-200"
+                            : "bg-gray-200 text-gray-900"}`}
+                      >
+                        <p className="italic text-sm">{senderEmail}</p>  {/* ← ici */}
+                        <p className="italic text-sm">{msg.message}</p>
+                        <p className="text-xs text-gray-400 mt-1 text-right">
+                          {new Date(msg.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+              ) : (
+                <p className="text-center text-gray-500 italic mt-2">
+                  Aucun message échangé pour cet email.
                 </p>
-              </div>
+              )}
             </div>
-          </div>
-        );
-      })
-    ) : (
-      <p className="text-center text-gray-500 italic mt-2">
-        Aucun message échangé pour cet email.
-      </p>
-    )}
-  </div>
-)}
+          )}
 
 
           </div>
