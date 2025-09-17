@@ -133,7 +133,7 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
             {showDetails && (
   <div className="mt-2 flex flex-col space-y-2">
     {/* Message de l'utilisateur (email) */}
-    {conversation?.content?.email && (
+    {/* {conversation?.content?.email && (
       <div className="flex justify-start">
         <div className={`flex items-end space-x-2 max-w-[70%]`}>
           <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-xs text-white font-semibold">
@@ -148,7 +148,7 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
           </div>
         </div>
       </div>
-    )}
+    )} */}
 
     {/* Messages échangés */}
     {messages.length > 0 ? (
@@ -171,6 +171,8 @@ const ConversationModal = ({ show, onClose, conversation, darkMode }) => {
                     ? "bg-gray-700 text-gray-200"
                     : "bg-gray-200 text-gray-900"}`}
               >
+                <p className="font-medium text-sm">{msg.name}</p>
+                <p className="italic text-sm">{conversation.content.email}</p>
                 <p className="italic text-sm">{msg.message}</p>
                 <p className="text-xs text-gray-400 mt-1 text-right">
                   {new Date(msg.createdAt).toLocaleString()}

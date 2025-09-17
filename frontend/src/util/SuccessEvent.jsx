@@ -232,7 +232,7 @@ const SuccessEvent = () => {
             })}
           </div>
 
-          {allEvents.length > 4 && (
+          {allEvents.length > 0 && (
             <div className="text-center mt-12">
               <button
                 onClick={handleRedirect}
